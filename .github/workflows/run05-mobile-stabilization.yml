@@ -101,7 +101,8 @@ jobs:
           grep -F "isHighflyMobileCameraDecoupled" src/game/input.ts
           grep -F "highflyWorldX" src/sim/types.ts
           grep -F "HIGHFLY action-style movement" src/sim/player_motion.ts
-          grep -F "stepAngleToward(playerFacing, desired, 12 * DT)" src/main.ts
+          grep -F "const localRight = -highflyMove.x;" src/main.ts
+          grep -F "facing = desired;" src/main.ts
 
       - name: Setup Node
         uses: actions/setup-node@v4
