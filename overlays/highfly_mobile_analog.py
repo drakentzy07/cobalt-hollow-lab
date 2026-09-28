@@ -54,7 +54,10 @@ resolve_new = """    // HIGHFLY RUN0.5 analog locomotion. The left stick becomes
     const highflyMagnitude = Math.min(1, Math.hypot(highflyMove.x, highflyMove.y));
     if (!input.suspendMovement && highflyMagnitude > 0.001) {
       const localForward = -highflyMove.y;
-      const localRight = highflyMove.x;
+      // ClaudeCraft's world convention defines camera screen-right as
+      // (-cos(yaw), sin(yaw)), so touch X must be negated here.
+      // Without this, both lower diagonals land in the opposite quadrant.
+      const localRight = -highflyMove.x;
       const sin = Math.sin(input.camYaw);
       const cos = Math.cos(input.camYaw);
       const worldX = localForward * sin - localRight * cos;
@@ -63,10 +66,11 @@ resolve_new = """    // HIGHFLY RUN0.5 analog locomotion. The left stick becomes
       mi.highflyWorldZ = worldZ;
       mi.highflyAnalog = highflyMagnitude;
 
-      // Translation follows the stick immediately; the body catches up smoothly.
-      // A half-turn now takes a fraction of a second instead of snapping 180°.
+      // HIGHFLY/Lucid rule: body faces the stick direction immediately.
+      // The camera remains independent, but locomotion never translates one way
+      // while the avatar still faces another (the "moonwalk" seen on reverse diagonals).
       const desired = Math.atan2(worldX, worldZ);
-      facing = stepAngleToward(playerFacing, desired, 12 * DT);
+      facing = desired;
 
       // Keep ClaudeCraft's movement/cast gates alive, but the movement kernel
       // below ignores these directional booleans whenever highflyWorld* exists.
