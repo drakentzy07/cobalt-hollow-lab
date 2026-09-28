@@ -58,31 +58,14 @@ jobs:
           test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
           echo "UPSTREAM_OK=1"
 
-      - name: Apply Pages subpath compatibility overlay
+      - name: Apply lab overlay patches
         working-directory: upstream
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('src/render/assets/media.ts')
-          s = p.read_text()
-          old = """export function assetUrl(url: string): string {
-  const logical = logicalPath(url);
-  if (import.meta.env.DEV) return `/${logical}`;
-  return MEDIA_ASSETS[logical] ?? `/${logical}`;
-}"""
-          new = """export function assetUrl(url: string): string {
-  const logical = logicalPath(url);
-  const raw = import.meta.env.DEV ? `/${logical}` : (MEDIA_ASSETS[logical] ?? `/${logical}`);
-  const base = import.meta.env.BASE_URL.replace(/\\/$/, '');
-  return base && raw.startsWith('/') ? `${base}${raw}` : raw;
-}"""
-          if old not in s:
-              raise SystemExit('media.ts overlay target not found')
-          p.write_text(s.replace(old, new))
-          print('Applied BASE_URL media overlay')
-          PY
+          git apply ../overlays/pages-media-base.patch
+          git diff --check
+          git diff -- src/render/assets/media.ts
 
       - name: Setup Node
         uses: actions/setup-node@v4
