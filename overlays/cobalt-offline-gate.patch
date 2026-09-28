@@ -1,0 +1,14 @@
+diff --git a/src/game/offline_mode_gate.ts b/src/game/offline_mode_gate.ts
+--- a/src/game/offline_mode_gate.ts
++++ b/src/game/offline_mode_gate.ts
+@@ -6,5 +6,8 @@
+ // builds must not expose it. `isDev` is meant to be `import.meta.env.DEV`,
+ // Vite's standard dev/production flag (true under `npm run dev`, false in a
+ // production `vite build`).
+ export function isOfflineModeAvailable(isDev: boolean): boolean {
+-  return isDev;
++  return (
++    isDev ||
++    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_COBALT_OFFLINE === '1')
++  );
+ }
