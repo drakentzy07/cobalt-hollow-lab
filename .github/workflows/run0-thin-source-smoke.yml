@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: run0-thin-offline
+  cancel-in-progress: true
+
 jobs:
   thin-offline:
     runs-on: ubuntu-latest
@@ -66,7 +70,7 @@ jobs:
           set -euo pipefail
           git apply ../overlays/pages-media-base.patch
           git apply ../overlays/cobalt-offline-gate.patch
-          git apply ../overlays/cobalt-vite-base.patch
+          python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
           git diff -- src/render/assets/media.ts src/game/offline_mode_gate.ts vite.config.ts
 
