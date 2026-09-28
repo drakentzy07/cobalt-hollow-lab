@@ -224,7 +224,7 @@ jobs:
             }
 
             gameBooted = await page
-              .waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 30000 })
+              .waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 60000 })
               .then(() => true)
               .catch(() => false);
             await page.waitForTimeout(4000);
@@ -335,6 +335,9 @@ jobs:
               : null;
           }).catch(() => null);
 
+          const ui404s = [...new Map(bad.map((x) => [x.url, x])).values()].filter(
+            (x) => x.kind === 'http' && x.status === 404 && x.url.includes('/ui/'),
+          );
           const report = {
             url: page.url(),
             title: await page.title().catch(() => ''),
@@ -342,6 +345,7 @@ jobs:
             gameBooted,
             gameState,
             gameplay,
+            ui404s,
             bodyText: (await page.locator('body').innerText().catch(() => '')).slice(0, 5000),
             navigationError,
             offlineEntryError,
@@ -352,7 +356,7 @@ jobs:
           await page.screenshot({ path: '../run0-browser.png', fullPage: true }).catch(() => {});
           console.log('RUN0_BROWSER_REPORT');
           console.log(JSON.stringify(report, null, 2));
-          if (!gameBooted) process.exitCode = 2;
+          if (!gameBooted || ui404s.length > 0) process.exitCode = 2;
           await browser.close();
           NODE
 
