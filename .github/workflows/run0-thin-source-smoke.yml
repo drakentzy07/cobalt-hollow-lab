@@ -64,8 +64,9 @@ jobs:
         run: |
           set -euo pipefail
           git apply ../overlays/pages-media-base.patch
+          git apply ../overlays/cobalt-offline-gate.patch
           git diff --check
-          git diff -- src/render/assets/media.ts
+          git diff -- src/render/assets/media.ts src/game/offline_mode_gate.ts
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -91,6 +92,8 @@ jobs:
       - name: Vite production build
         working-directory: upstream
         shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
         run: pnpm exec vite build --base=/cobalt-hollow-lab/
 
       - name: Browser smoke against built shell
@@ -128,21 +131,66 @@ jobs:
           page.on('pageerror', (err) => consoleErrors.push(String(err)));
 
           let navigationError = null;
+          let offlineEntryError = null;
+          let offlineSelectorVisible = false;
+          let gameBooted = false;
           try {
             await page.goto('http://127.0.0.1:4173/cobalt-hollow-lab/', {
               waitUntil: 'domcontentloaded',
               timeout: 30000,
             });
-            await page.waitForTimeout(8000);
+
+            await page.locator('#btn-offline').waitFor({ state: 'attached', timeout: 15000 });
+            await page.evaluate(() => document.querySelector('#btn-offline')?.click());
+            await page.locator('#offline-select').waitFor({ state: 'visible', timeout: 15000 });
+            offlineSelectorVisible = true;
+
+            const name = page.locator('#char-name');
+            if (await name.count()) await name.fill('CobaltWarrior');
+
+            const warrior = page.locator('#offline-select .mini-class[data-class="warrior"]');
+            await warrior.waitFor({ state: 'visible', timeout: 15000 });
+            await warrior.click({ force: true });
+            await page.locator('#btn-start-offline').click({ force: true });
+
+            const preflight = page.locator('#mobile-preflight-continue');
+            if (await preflight.count()) {
+              await preflight.click({ force: true }).catch(() => {});
+            }
+
+            gameBooted = await page
+              .waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 30000 })
+              .then(() => true)
+              .catch(() => false);
+            await page.waitForTimeout(4000);
           } catch (err) {
             navigationError = String(err);
+            offlineEntryError = String(err);
           }
+
+          const gameState = await page.evaluate(() => {
+            const g = window.__game;
+            return g?.sim?.player
+              ? {
+                  player: {
+                    id: g.sim.player.id,
+                    name: g.sim.player.name,
+                    level: g.sim.player.level,
+                  },
+                  hasRenderer: Boolean(g.renderer),
+                }
+              : null;
+          }).catch(() => null);
 
           const report = {
             url: page.url(),
             title: await page.title().catch(() => ''),
-            bodyText: (await page.locator('body').innerText().catch(() => '')).slice(0, 4000),
+            offlineSelectorVisible,
+            gameBooted,
+            gameState,
+            bodyText: (await page.locator('body').innerText().catch(() => '')).slice(0, 5000),
             navigationError,
+            offlineEntryError,
             badRequests: [...new Map(bad.map((x) => [x.url, x])).values()].slice(0, 500),
             consoleErrors: [...new Set(consoleErrors)].slice(0, 200),
           };
