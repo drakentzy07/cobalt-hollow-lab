@@ -33,6 +33,7 @@ jobs:
             /data/
             /patches/
             /private/
+            /public/
             /package.json
             /pnpm-lock.yaml
             /vite.config.ts
@@ -65,8 +66,9 @@ jobs:
           set -euo pipefail
           git apply ../overlays/pages-media-base.patch
           git apply ../overlays/cobalt-offline-gate.patch
+          git apply ../overlays/cobalt-vite-base.patch
           git diff --check
-          git diff -- src/render/assets/media.ts src/game/offline_mode_gate.ts
+          git diff -- src/render/assets/media.ts src/game/offline_mode_gate.ts vite.config.ts
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -89,12 +91,19 @@ jobs:
         shell: bash
         run: pnpm exec tsc --noEmit --incremental false
 
-      - name: Vite production build
+      - name: Official ClaudeCraft bundle build
         working-directory: upstream
         shell: bash
         env:
           VITE_COBALT_OFFLINE: "1"
-        run: pnpm exec vite build --base=/cobalt-hollow-lab/
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          pnpm run build:bundle
+          node scripts/build_media_manifest.mjs prune
+          echo "=== official bundle ==="
+          du -sh dist
+          du -sh dist/media || true
 
       - name: Browser smoke against built shell
         working-directory: upstream
@@ -240,10 +249,9 @@ jobs:
           echo "=== filesystem ==="
           df -h .
 
-      - name: Upload RUN0 build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: run0-thin-offline-dist
-          path: upstream/dist
-          if-no-files-found: error
-          retention-days: 7
+      - name: Record RUN0 bundle size
+        shell: bash
+        run: |
+          set -euo pipefail
+          du -sh upstream/dist
+          find upstream/dist/media -type f 2>/dev/null | wc -l || true
