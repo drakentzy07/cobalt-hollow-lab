@@ -1,0 +1,96 @@
+name: RUN0 thin source smoke
+
+on:
+  push:
+    branches:
+      - run0-thin-offline
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  thin-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout lab overlay
+        uses: actions/checkout@v4
+
+      - name: Checkout frozen ClaudeCraft code slice
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+
+      - name: Verify exact upstream commit
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          echo "UPSTREAM_OK=1"
+
+      - name: Measure thin checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== disk before install ==="
+          du -sh upstream
+          df -h .
+          echo "files=$(find upstream -type f | wc -l)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Enable pinned pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm --version
+
+      - name: Install dependencies without lifecycle scripts
+        working-directory: upstream
+        shell: bash
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Measure installed workspace
+        shell: bash
+        run: |
+          du -sh upstream
+          du -sh upstream/node_modules || true
+          df -h .
+
+      - name: TypeScript source smoke
+        working-directory: upstream
+        shell: bash
+        run: pnpm exec tsc --noEmit --incremental false
