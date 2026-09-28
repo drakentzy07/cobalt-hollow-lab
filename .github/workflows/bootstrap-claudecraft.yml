@@ -1,0 +1,90 @@
+name: Bootstrap ClaudeCraft v0.44.0
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/bootstrap-claudecraft.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-upstream:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout lab repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch pinned ClaudeCraft release
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/world-of-claudecraft
+          git clone --filter=blob:none --no-checkout https://github.com/levy-street/world-of-claudecraft.git /tmp/world-of-claudecraft
+          git -C /tmp/world-of-claudecraft checkout --detach v0.44.0
+          ACTUAL="$(git -C /tmp/world-of-claudecraft rev-parse HEAD)"
+          EXPECTED="9b57e49c9676d75962700f828cc00a50a9a988b5"
+          echo "Pinned upstream: $ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+
+      - name: Import gameplay snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Preserve this bootstrap workflow so the import can complete safely.
+          # Upstream workflows are archived separately for audit instead of enabled.
+          rsync -a --delete \
+            --exclude='.git/' \
+            --exclude='.github/workflows/' \
+            /tmp/world-of-claudecraft/ "$GITHUB_WORKSPACE/"
+
+          rm -rf upstream-workflows-snapshot
+          mkdir -p upstream-workflows-snapshot
+          if [ -d /tmp/world-of-claudecraft/.github/workflows ]; then
+            rsync -a /tmp/world-of-claudecraft/.github/workflows/ upstream-workflows-snapshot/
+          fi
+
+          cat > CLAUDECRAFT_UPSTREAM.lock <<'EOF'
+SOURCE=https://github.com/levy-street/world-of-claudecraft
+TAG=v0.44.0
+COMMIT=9b57e49c9676d75962700f828cc00a50a9a988b5
+IMPORT_MODE=exact_snapshot_except_upstream_workflows_archived
+EOF
+
+          cat > COBALT_LAB_RULES.md <<'EOF'
+# Cobalt Hollow Lab
+
+Public donor/integration laboratory.
+
+## Frozen upstream
+ClaudeCraft v0.44.0
+Commit: 9b57e49c9676d75962700f828cc00a50a9a988b5
+
+## Rules
+- Keep upstream gameplay/content files traceable to the pinned release.
+- Do not modify older HIGHFLY repositories from this lab.
+- Experimental changes go on dedicated lab branches.
+- Preserve LICENSE, CREDITS.md and third-party notices.
+- Treat media licensing separately from the MIT source-code license.
+- Original HIGHFLY-only systems/content move to the private product repository when that phase begins.
+EOF
+
+      - name: Commit imported snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "cobalt-lab-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing to import."
+            exit 0
+          fi
+          git commit -m "bootstrap: import ClaudeCraft v0.44.0 pinned snapshot [bootstrap]"
+          git push origin HEAD:main
