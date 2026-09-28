@@ -84,6 +84,77 @@ jobs:
         shell: bash
         run: pnpm exec vite build --base=/cobalt-hollow-lab/
 
+      - name: Browser smoke against built shell
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vite preview --host 127.0.0.1 --port 4173 > ../run0-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright';
+          import fs from 'node:fs';
+
+          const browser = await chromium.launch({ channel: 'chrome', headless: true });
+          const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+          const bad = [];
+          const consoleErrors = [];
+          page.on('response', (res) => {
+            if (res.status() >= 400) bad.push({ kind: 'http', status: res.status(), url: res.url() });
+          });
+          page.on('requestfailed', (req) => {
+            bad.push({ kind: 'failed', error: req.failure()?.errorText ?? '', url: req.url() });
+          });
+          page.on('console', (msg) => {
+            if (msg.type() === 'error') consoleErrors.push(msg.text());
+          });
+          page.on('pageerror', (err) => consoleErrors.push(String(err)));
+
+          let navigationError = null;
+          try {
+            await page.goto('http://127.0.0.1:4173/cobalt-hollow-lab/', {
+              waitUntil: 'domcontentloaded',
+              timeout: 30000,
+            });
+            await page.waitForTimeout(8000);
+          } catch (err) {
+            navigationError = String(err);
+          }
+
+          const report = {
+            url: page.url(),
+            title: await page.title().catch(() => ''),
+            bodyText: (await page.locator('body').innerText().catch(() => '')).slice(0, 4000),
+            navigationError,
+            badRequests: [...new Map(bad.map((x) => [x.url, x])).values()].slice(0, 500),
+            consoleErrors: [...new Set(consoleErrors)].slice(0, 200),
+          };
+          fs.writeFileSync('../run0-browser-report.json', JSON.stringify(report, null, 2));
+          await page.screenshot({ path: '../run0-browser.png', fullPage: true }).catch(() => {});
+          console.log('RUN0_BROWSER_REPORT');
+          console.log(JSON.stringify(report, null, 2));
+          await browser.close();
+          NODE
+
+      - name: Upload browser diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: run0-browser-diagnostics
+          path: |
+            run0-browser-report.json
+            run0-browser.png
+            run0-preview.log
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Inspect RUN0 output
         shell: bash
         run: |
