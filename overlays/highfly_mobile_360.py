@@ -66,6 +66,18 @@ clear_touch_new = clear_touch + """
 """
 replace_once(input_path, clear_touch, clear_touch_new, "input highfly vector methods")
 
+touch_swipe_yaw = """    this.camYaw -= dx * dragSens;
+"""
+touch_swipe_yaw_new = """    this.camYaw += dx * dragSens;
+"""
+replace_once(input_path, touch_swipe_yaw, touch_swipe_yaw_new, "touch swipe horizontal direction")
+
+touch_stick_yaw = """    this.camYaw -= this.touchLookVector.x * TOUCH_LOOK_YAW_RATE * this.touchLookSpeed * dt;
+"""
+touch_stick_yaw_new = """    this.camYaw += this.touchLookVector.x * TOUCH_LOOK_YAW_RATE * this.touchLookSpeed * dt;
+"""
+replace_once(input_path, touch_stick_yaw, touch_stick_yaw_new, "touch stick horizontal direction")
+
 map_fn = """export function mapJoystickVector(x: number, y: number, deadzone = DEADZONE): TouchMoveInput {
   const mag = Math.hypot(x, y);
   if (mag < deadzone) return { forward: false, back: false, strafeLeft: false, strafeRight: false };
@@ -96,47 +108,41 @@ export function mapHighflyJoystickVector(
 """
 replace_once(mobile_path, map_fn, map_fn_new, "mobile analog mapper")
 
-move_line = """    const move = mapJoystickVector(x, y, this.moveDeadzone);
+move_block = """    const move = mapJoystickVector(x, y, this.moveDeadzone);
     const inAutorunTarget = isMoveAutorunPush(rawY);
-"""
-move_line_new = """    const move = mapJoystickVector(x, y, this.moveDeadzone);
-    const highflyMove = mapHighflyJoystickVector(x, y, this.moveDeadzone);
-    const inAutorunTarget = isMoveAutorunPush(rawY);
-"""
-replace_once(mobile_path, move_line, move_line_new, "mobile move vector capture")
-
-autorun1 = """    if (this.moveAutorunLocked && inAutorunTarget) {
+    if (this.moveAutorunLocked && inAutorunTarget) {
       this.input.clearTouchMove();
       this.input.setAutorun(true);
-"""
-autorun1_new = """    if (this.moveAutorunLocked && inAutorunTarget) {
-      this.input.clearTouchMove();
-      this.input.clearHighflyTouchVector();
-      this.input.setAutorun(true);
-"""
-replace_once(mobile_path, autorun1, autorun1_new, "mobile autorun locked clear")
-
-autorun2 = """    if (inAutorunTarget) {
+      this.syncMoveAutorunTarget('locked');
+      return;
+    }
+    if (this.moveAutorunLocked && !inAutorunTarget) {
+      this.moveAutorunLocked = false;
+      this.input.setAutorun(false);
+    }
+    if (inAutorunTarget) {
       this.moveAutorunLocked = true;
       this.input.clearTouchMove();
       this.input.setAutorun(true);
-"""
-autorun2_new = """    if (inAutorunTarget) {
-      this.moveAutorunLocked = true;
-      this.input.clearTouchMove();
-      this.input.clearHighflyTouchVector();
-      this.input.setAutorun(true);
-"""
-replace_once(mobile_path, autorun2, autorun2_new, "mobile autorun engage clear")
-
-set_move = """    this.input.setTouchMove(move);
-    const moving = move.forward || move.back || move.strafeLeft || move.strafeRight;
-"""
-set_move_new = """    this.input.setHighflyTouchVector(highflyMove);
+      this.syncMoveAutorunTarget('locked');
+      return;
+    }
     this.input.setTouchMove(move);
     const moving = move.forward || move.back || move.strafeLeft || move.strafeRight;
+    if (moving && this.input.autorun) this.input.setAutorun(false);
+    this.syncMoveAutorunTarget(isMoveAutorunNear(rawY) ? 'near' : 'hidden');
 """
-replace_once(mobile_path, set_move, set_move_new, "mobile set analog vector")
+move_block_new = """    const move = mapJoystickVector(x, y, this.moveDeadzone);
+    const highflyMove = mapHighflyJoystickVector(x, y, this.moveDeadzone);
+    // HIGHFLY golden mobile: no drag-to-autorun. Left thumb always means
+    // direct locomotion and releasing it always stops movement.
+    this.moveAutorunLocked = false;
+    if (this.input.autorun) this.input.setAutorun(false);
+    this.syncMoveAutorunTarget('hidden');
+    this.input.setHighflyTouchVector(highflyMove);
+    this.input.setTouchMove(move);
+"""
+replace_once(mobile_path, move_block, move_block_new, "mobile remove autorun and set analog vector")
 
 release_move = """    this.input.clearTouchMove();
     if (this.moveStick) this.moveStick.style.transform = '';
@@ -173,7 +179,7 @@ resolve_head_new = """    const mi = input.readMoveInput();
     const highflyMove = input.highflyTouchVector();
     if (!input.suspendMovement && Math.hypot(highflyMove.x, highflyMove.y) > 0.001) {
       const localForward = -highflyMove.y;
-      const localRight = highflyMove.x;
+      const localRight = -highflyMove.x;
       const desired = input.camYaw + Math.atan2(localRight, localForward);
       facing = Math.atan2(Math.sin(desired), Math.cos(desired));
       mi.forward = true;
@@ -230,5 +236,13 @@ camera_driven_new = """    const cameraDrivenFacing = isCameraDrivenFacingActive
     );
 """
 replace_once(main_path, camera_driven, camera_driven_new, "main release-facing decouple")
+
+follow_camera = """      cameraDriven: input.isMouseCameraMode() && cameraMoveActive(),
+"""
+follow_camera_new = """      cameraDriven:
+        (input.isMouseCameraMode() && cameraMoveActive()) ||
+        Math.hypot(input.highflyTouchVector().x, input.highflyTouchVector().y) > 0.001,
+"""
+replace_once(main_path, follow_camera, follow_camera_new, "main keep camera fixed during touch locomotion")
 
 print("HIGHFLY_MOBILE_360_APPLIED=1")
