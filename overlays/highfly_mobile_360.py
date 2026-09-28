@@ -199,15 +199,35 @@ mouselook_new = """    const highflyMobileCamera = input.isHighflyMobileCameraDe
 """
 replace_once(main_path, mouselook_line, mouselook_new, "main decoupled body mouselook")
 
-camera_driven = """      input.isMouseCameraMode(),
+render_facing = """    return isCameraDrivenFacingActive(
+      input.isMouseCameraMode(),
       cameraMoveActive(),
       input.isMouselookActive(),
       movementFrozen(),
+    )
 """
-camera_driven_new = """      input.isMouseCameraMode(),
+render_facing_new = """    return isCameraDrivenFacingActive(
+      input.isMouseCameraMode(),
+      cameraMoveActive(),
+      input.isMouselookActive() && !input.isHighflyMobileCameraDecoupled(),
+      movementFrozen(),
+    )
+"""
+replace_once(main_path, render_facing, render_facing_new, "main render-facing decouple")
+
+camera_driven = """    const cameraDrivenFacing = isCameraDrivenFacingActive(
+      input.isMouseCameraMode(),
+      cameraMoveActive(),
+      input.isMouselookActive(),
+      movementFrozen(),
+    );
+"""
+camera_driven_new = """    const cameraDrivenFacing = isCameraDrivenFacingActive(
+      input.isMouseCameraMode(),
       cameraMoveActive(),
       input.isMouselookActive() && !highflyMobileCamera,
       movementFrozen(),
+    );
 """
 replace_once(main_path, camera_driven, camera_driven_new, "main release-facing decouple")
 
