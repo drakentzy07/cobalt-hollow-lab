@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  import:
+  bootstrap:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout cobalt lab
@@ -42,31 +42,31 @@ jobs:
             rsync -a /tmp/world-of-claudecraft/.github/workflows/ "$GITHUB_WORKSPACE/upstream-workflows-snapshot/"
           fi
 
-          cat > "$GITHUB_WORKSPACE/CLAUDECRAFT_UPSTREAM.lock" <<'EOF'
-SOURCE=https://github.com/levy-street/world-of-claudecraft
-TAG=v0.44.0
-COMMIT=9b57e49c9676d75962700f828cc00a50a9a988b5
-IMPORT_MODE=pinned_snapshot_upstream_workflows_archived_not_enabled
-EOF
+          printf '%s\n' \
+            'SOURCE=https://github.com/levy-street/world-of-claudecraft' \
+            'TAG=v0.44.0' \
+            'COMMIT=9b57e49c9676d75962700f828cc00a50a9a988b5' \
+            'IMPORT_MODE=pinned_snapshot_upstream_workflows_archived_not_enabled' \
+            > "$GITHUB_WORKSPACE/CLAUDECRAFT_UPSTREAM.lock"
 
-          cat > "$GITHUB_WORKSPACE/COBALT_LAB_RULES.md" <<'EOF'
-# Cobalt Hollow Lab
-
-Public ClaudeCraft donor and integration laboratory.
-
-## Frozen upstream
-- Release: v0.44.0
-- Commit: 9b57e49c9676d75962700f828cc00a50a9a988b5
-- Source: levy-street/world-of-claudecraft
-
-## Lab rules
-- Old HIGHFLY repositories are never modified from this lab.
-- ClaudeCraft gameplay/content remains traceable to the pinned upstream release.
-- Upstream GitHub workflows are archived under upstream-workflows-snapshot and are not enabled automatically.
-- LICENSE, CREDITS.md and third-party notices stay intact.
-- Source-code licensing and media-asset licensing are treated separately.
-- Original HIGHFLY-only content moves to the private product repository when that phase begins.
-EOF
+          printf '%s\n' \
+            '# Cobalt Hollow Lab' \
+            '' \
+            'Public ClaudeCraft donor and integration laboratory.' \
+            '' \
+            '## Frozen upstream' \
+            '- Release: v0.44.0' \
+            '- Commit: 9b57e49c9676d75962700f828cc00a50a9a988b5' \
+            '- Source: levy-street/world-of-claudecraft' \
+            '' \
+            '## Lab rules' \
+            '- Old HIGHFLY repositories are never modified from this lab.' \
+            '- ClaudeCraft gameplay/content remains traceable to the pinned upstream release.' \
+            '- Upstream GitHub workflows are archived under upstream-workflows-snapshot and are not enabled automatically.' \
+            '- LICENSE, CREDITS.md and third-party notices stay intact.' \
+            '- Source-code licensing and media-asset licensing are treated separately.' \
+            '- Original HIGHFLY-only content moves to the private product repository when that phase begins.' \
+            > "$GITHUB_WORKSPACE/COBALT_LAB_RULES.md"
 
       - name: Commit snapshot
         run: |
@@ -74,7 +74,6 @@ EOF
           git config user.name "cobalt-lab-bot"
           git config user.email "actions@users.noreply.github.com"
           git add -A
-          git status --short
           if git diff --cached --quiet; then
             echo "Snapshot already current."
             exit 0
