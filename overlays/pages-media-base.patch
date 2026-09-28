@@ -2,7 +2,7 @@ diff --git a/src/render/assets/media.ts b/src/render/assets/media.ts
 index 2f6de2d..0000000 100644
 --- a/src/render/assets/media.ts
 +++ b/src/render/assets/media.ts
-@@ -5,6 +5,8 @@ function logicalPath(url: string): string {
+@@ -5,6 +5,7 @@ function logicalPath(url: string): string {
  
  export function assetUrl(url: string): string {
    const logical = logicalPath(url);
