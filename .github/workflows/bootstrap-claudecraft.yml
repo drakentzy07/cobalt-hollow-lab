@@ -1,82 +1,23 @@
-name: Import ClaudeCraft v0.44.0
+name: Verify ClaudeCraft upstream pin
 on:
   push:
     branches:
       - main
-    paths:
-      - ".github/workflows/bootstrap-claudecraft.yml"
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  bootstrap:
+  verify-upstream:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout cobalt lab
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Clone pinned upstream
+      - name: Verify v0.44.0 resolves to frozen commit
+        shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/world-of-claudecraft
-          git clone --depth 1 --branch v0.44.0 --single-branch https://github.com/levy-street/world-of-claudecraft.git /tmp/world-of-claudecraft
-          ACTUAL="$(git -C /tmp/world-of-claudecraft rev-parse HEAD)"
           EXPECTED="9b57e49c9676d75962700f828cc00a50a9a988b5"
-          echo "Actual upstream commit: $ACTUAL"
-          test "$ACTUAL" = "$EXPECTED"
-
-      - name: Import pinned snapshot
-        run: |
-          set -euo pipefail
-          rsync -a --delete \
-            --exclude=".git/" \
-            --exclude=".github/workflows/" \
-            /tmp/world-of-claudecraft/ "$GITHUB_WORKSPACE/"
-
-          rm -rf "$GITHUB_WORKSPACE/upstream-workflows-snapshot"
-          mkdir -p "$GITHUB_WORKSPACE/upstream-workflows-snapshot"
-          if [ -d /tmp/world-of-claudecraft/.github/workflows ]; then
-            rsync -a /tmp/world-of-claudecraft/.github/workflows/ "$GITHUB_WORKSPACE/upstream-workflows-snapshot/"
-          fi
-
-          printf '%s\n' \
-            'SOURCE=https://github.com/levy-street/world-of-claudecraft' \
-            'TAG=v0.44.0' \
-            'COMMIT=9b57e49c9676d75962700f828cc00a50a9a988b5' \
-            'IMPORT_MODE=pinned_snapshot_upstream_workflows_archived_not_enabled' \
-            > "$GITHUB_WORKSPACE/CLAUDECRAFT_UPSTREAM.lock"
-
-          printf '%s\n' \
-            '# Cobalt Hollow Lab' \
-            '' \
-            'Public ClaudeCraft donor and integration laboratory.' \
-            '' \
-            '## Frozen upstream' \
-            '- Release: v0.44.0' \
-            '- Commit: 9b57e49c9676d75962700f828cc00a50a9a988b5' \
-            '- Source: levy-street/world-of-claudecraft' \
-            '' \
-            '## Lab rules' \
-            '- Old HIGHFLY repositories are never modified from this lab.' \
-            '- ClaudeCraft gameplay/content remains traceable to the pinned upstream release.' \
-            '- Upstream GitHub workflows are archived under upstream-workflows-snapshot and are not enabled automatically.' \
-            '- LICENSE, CREDITS.md and third-party notices stay intact.' \
-            '- Source-code licensing and media-asset licensing are treated separately.' \
-            '- Original HIGHFLY-only content moves to the private product repository when that phase begins.' \
-            > "$GITHUB_WORKSPACE/COBALT_LAB_RULES.md"
-
-      - name: Commit snapshot
-        run: |
-          set -euo pipefail
-          git config user.name "cobalt-lab-bot"
-          git config user.email "actions@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "Snapshot already current."
-            exit 0
-          fi
-          git commit -m "bootstrap: import ClaudeCraft v0.44.0 pinned snapshot"
-          git push origin HEAD:main
+          git ls-remote https://github.com/levy-street/world-of-claudecraft.git \
+            "refs/tags/v0.44.0" "refs/tags/v0.44.0^{}" | tee /tmp/refs.txt
+          grep -q "$EXPECTED" /tmp/refs.txt
+          echo "ClaudeCraft v0.44.0 pin verified: $EXPECTED"
