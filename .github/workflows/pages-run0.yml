@@ -129,4 +129,4 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-# publish-pin: run0.5-mobile-stabilization 14610a31
+# publish-pin: run0.5-mobile-stabilization cc9ec0bd
