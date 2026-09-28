@@ -48,6 +48,7 @@ jobs:
             /guide.html
             /editor.html
             /play.html
+            /wallet-handoff.html
 
       - name: Verify exact upstream commit
         working-directory: upstream
