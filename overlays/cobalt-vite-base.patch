@@ -1,10 +1,7 @@
 diff --git a/vite.config.ts b/vite.config.ts
 --- a/vite.config.ts
 +++ b/vite.config.ts
-@@ -397,7 +397,7 @@
- }
- 
+@@ -399,2 +399,2 @@
  export default defineConfig({
 -  base: '/',
 +  base: env(['VITE_COBALT_BASE']) ?? '/',
-   plugins: [
