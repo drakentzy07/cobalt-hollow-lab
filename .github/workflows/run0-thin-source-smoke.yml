@@ -1,4 +1,4 @@
-name: RUN0 thin source smoke
+name: RUN0 thin offline build
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  thin-source:
+  thin-offline:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout lab overlay
@@ -57,15 +57,6 @@ jobs:
           test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
           echo "UPSTREAM_OK=1"
 
-      - name: Measure thin checkout
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "=== disk before install ==="
-          du -sh upstream
-          df -h .
-          echo "files=$(find upstream -type f | wc -l)"
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -76,21 +67,38 @@ jobs:
         run: |
           corepack enable
           corepack prepare pnpm@10.34.5 --activate
-          pnpm --version
 
-      - name: Install dependencies without lifecycle scripts
+      - name: Install dependencies
         working-directory: upstream
         shell: bash
         run: pnpm install --frozen-lockfile --ignore-scripts
-
-      - name: Measure installed workspace
-        shell: bash
-        run: |
-          du -sh upstream
-          du -sh upstream/node_modules || true
-          df -h .
 
       - name: TypeScript source smoke
         working-directory: upstream
         shell: bash
         run: pnpm exec tsc --noEmit --incremental false
+
+      - name: Vite production build
+        working-directory: upstream
+        shell: bash
+        run: pnpm exec vite build --base=/cobalt-hollow-lab/
+
+      - name: Inspect RUN0 output
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== checkout ==="
+          du -sh upstream
+          echo "=== dist ==="
+          du -sh upstream/dist
+          find upstream/dist -maxdepth 2 -type f -printf '%s %p\n' | sort -nr | head -40
+          echo "=== filesystem ==="
+          df -h .
+
+      - name: Upload RUN0 build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: run0-thin-offline-dist
+          path: upstream/dist
+          if-no-files-found: error
+          retention-days: 7
