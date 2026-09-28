@@ -95,7 +95,7 @@ jobs:
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
           git diff -- src/render/assets/media.ts src/game/offline_mode_gate.ts src/game/input.ts src/game/mobile_controls.ts src/main.ts src/ui/icons.ts src/ui/class_icon_art.ts src/ui/chrome_icon_art.ts vite.config.ts
-          grep -F "HIGHFLY RUN0.5 mobile locomotion" src/main.ts
+          grep -F "HIGHFLY RUN0.5 analog locomotion" src/main.ts
           grep -F "/cobalt-hollow-lab/ui/skills" src/ui/icons.ts
           grep -F "/cobalt-hollow-lab/ui/classes" src/ui/class_icon_art.ts
           grep -F "/cobalt-hollow-lab/ui/chrome" src/ui/chrome_icon_art.ts
