@@ -85,6 +85,33 @@ resolve_new = """    // HIGHFLY RUN0.5 analog locomotion. The left stick becomes
 """
 replace_once(main_path, resolve_old, resolve_new, "main true analog locomotion")
 
+# ClaudeCraft has a SECOND, render-only diagonal-facing layer that reads the
+# legacy forward/back/strafe flags again after gameplay facing is resolved.
+# That is correct for classic MMO strafing, but wrong for HIGHFLY action
+# movement: it re-rotates the visible avatar on reverse diagonals and creates
+# the inverted/moonwalk presentation even when travel/facing math is correct.
+visual_old = """  function visualFacingFor(
+    mi: ReturnType<typeof input.readMoveInput>,
+    baseFacing: number,
+  ): number | null {
+    return !movementFrozen() ? glider.gliderAwareVisualFacing(world, mi, baseFacing) : null;
+  }
+"""
+visual_new = """  function visualFacingFor(
+    mi: ReturnType<typeof input.readMoveInput>,
+    baseFacing: number,
+  ): number | null {
+    const highfly = input.highflyTouchVector();
+    if (Math.hypot(highfly.x, highfly.y) > 0.001) {
+      // HIGHFLY action locomotion owns the whole body's facing. Never apply
+      // ClaudeCraft's classic diagonal strafe/backpedal visual yaw on top.
+      return !movementFrozen() ? baseFacing : null;
+    }
+    return !movementFrozen() ? glider.gliderAwareVisualFacing(world, mi, baseFacing) : null;
+  }
+"""
+replace_once(main_path, visual_old, visual_new, "disable legacy diagonal visual facing during HIGHFLY touch")
+
 motion_old = """    const len = Math.hypot(mx, mz);
     mx /= len;
     mz /= len;
