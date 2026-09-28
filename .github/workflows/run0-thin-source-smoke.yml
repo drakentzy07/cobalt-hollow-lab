@@ -141,9 +141,25 @@ jobs:
             });
 
             await page.locator('#btn-offline').waitFor({ state: 'attached', timeout: 15000 });
-            await page.evaluate(() => document.querySelector('#btn-offline')?.click());
-            await page.locator('#offline-select').waitFor({ state: 'visible', timeout: 15000 });
-            offlineSelectorVisible = true;
+
+            // The compat trigger exists in static HTML before main.ts has necessarily
+            // finished wiring its listener. ClaudeCraft's own E2E harness retries this
+            // exact click until the offline panel becomes visible.
+            for (let attempt = 0; attempt < 60; attempt++) {
+              await page.evaluate(() => document.querySelector('#btn-offline')?.click());
+              const visible = await page
+                .locator('#offline-select')
+                .isVisible()
+                .catch(() => false);
+              if (visible) {
+                offlineSelectorVisible = true;
+                break;
+              }
+              await page.waitForTimeout(250);
+            }
+            if (!offlineSelectorVisible) {
+              throw new Error('offline-select did not open after hydration retry window');
+            }
 
             const name = page.locator('#char-name');
             if (await name.count()) await name.fill('CobaltWarrior');
