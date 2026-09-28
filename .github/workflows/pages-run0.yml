@@ -1,4 +1,4 @@
-name: Pages RUN0 probe
+name: Pages RUN0 playable
 
 on:
   push:
@@ -21,8 +21,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout lab control repo
+      - name: Checkout green RUN0 overlay
         uses: actions/checkout@v4
+        with:
+          ref: run0-thin-offline
 
       - name: Checkout frozen ClaudeCraft slice
         uses: actions/checkout@v4
@@ -41,6 +43,7 @@ jobs:
             /data/
             /patches/
             /private/
+            /public/
             /package.json
             /pnpm-lock.yaml
             /vite.config.ts
@@ -58,20 +61,50 @@ jobs:
             /play.html
             /wallet-handoff.html
 
+      - name: Verify frozen upstream
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+
+      - name: Apply RUN0 overlays
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply ../overlays/pages-media-base.patch
+          git apply ../overlays/cobalt-offline-gate.patch
+          python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
+          git diff --check
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "24"
 
-      - name: Build thin probe
-        working-directory: upstream
+      - name: Enable pinned pnpm
         shell: bash
         run: |
-          set -euo pipefail
           corepack enable
           corepack prepare pnpm@10.34.5 --activate
-          pnpm install --frozen-lockfile --ignore-scripts
-          pnpm exec vite build --base=/cobalt-hollow-lab/
+
+      - name: Install dependencies
+        working-directory: upstream
+        shell: bash
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build green RUN0 bundle
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          pnpm run build:bundle
+          node scripts/build_media_manifest.mjs prune
+          python ../overlays/rewrite_pages_static.py
           touch dist/.nojekyll
           du -sh dist
 
