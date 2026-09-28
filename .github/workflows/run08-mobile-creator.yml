@@ -88,6 +88,7 @@ jobs:
           git apply ../overlays/pages-media-base.patch
           git apply ../overlays/cobalt-offline-gate.patch
           python ../overlays/highfly_mobile_360.py
+          python ../overlays/highfly_mobile_creator.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -98,6 +99,8 @@ jobs:
           grep -F "/cobalt-hollow-lab/ui/chrome" src/ui/chrome_icon_art.ts
           grep -F "mapHighflyJoystickVector" src/game/mobile_controls.ts
           grep -F "isHighflyMobileCameraDecoupled" src/game/input.ts
+          grep -F "height: clamp(180px, 42vh, 240px);" src/styles/shell.css
+          grep -F "min-height: 180px;" src/styles/shell.css
 
       - name: Setup Node
         uses: actions/setup-node@v4
