@@ -54,10 +54,11 @@ resolve_new = """    // HIGHFLY RUN0.5 analog locomotion. The left stick becomes
     const highflyMagnitude = Math.min(1, Math.hypot(highflyMove.x, highflyMove.y));
     if (!input.suspendMovement && highflyMagnitude > 0.001) {
       const localForward = -highflyMove.y;
-      // ClaudeCraft's world convention defines camera screen-right as
-      // (-cos(yaw), sin(yaw)), so touch X must be negated here.
-      // Without this, both lower diagonals land in the opposite quadrant.
-      const localRight = -highflyMove.x;
+      // Exact Lucid rule: desired = cameraFlatForward * stickY
+      //                  + cameraFlatRight * stickX.
+      // ClaudeCraft's camera-flat-right basis is (-cos(yaw), sin(yaw)),
+      // therefore screen-stick X stays POSITIVE here.
+      const localRight = highflyMove.x;
       const sin = Math.sin(input.camYaw);
       const cos = Math.cos(input.camYaw);
       const worldX = localForward * sin - localRight * cos;
@@ -66,9 +67,9 @@ resolve_new = """    // HIGHFLY RUN0.5 analog locomotion. The left stick becomes
       mi.highflyWorldZ = worldZ;
       mi.highflyAnalog = highflyMagnitude;
 
-      // HIGHFLY/Lucid rule: body faces the stick direction immediately.
-      // The camera remains independent, but locomotion never translates one way
-      // while the avatar still faces another (the "moonwalk" seen on reverse diagonals).
+      // HIGHFLY/Lucid action rule: joystick direction IS body-forward.
+      // No strafing and no backpedal: left/right/back/diagonals rotate the whole
+      // avatar so its chest faces the same world vector it is travelling along.
       const desired = Math.atan2(worldX, worldZ);
       facing = desired;
 
