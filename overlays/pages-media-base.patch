@@ -1,0 +1,14 @@
+diff --git a/src/render/assets/media.ts b/src/render/assets/media.ts
+index 2f6de2d..0000000 100644
+--- a/src/render/assets/media.ts
++++ b/src/render/assets/media.ts
+@@ -5,6 +5,8 @@ function logicalPath(url: string): string {
+ 
+ export function assetUrl(url: string): string {
+   const logical = logicalPath(url);
+-  if (import.meta.env.DEV) return `/${logical}`;
+-  return MEDIA_ASSETS[logical] ?? `/${logical}`;
++  const raw = import.meta.env.DEV ? `/${logical}` : (MEDIA_ASSETS[logical] ?? `/${logical}`);
++  const base = import.meta.env.BASE_URL.replace(/\/$/, '');
++  return base && raw.startsWith('/') ? `${base}${raw}` : raw;
+ }
