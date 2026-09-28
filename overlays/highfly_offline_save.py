@@ -246,7 +246,7 @@ replace_once(main, appearance_old, appearance_new, "restore appearance")
 
 tail_old = """  // Offline characters are not persisted (a fresh name is typed each session),
   // so the only stable handle is class + name. Keybinds scope to that pair.
-  void startGame(sim, sim, null, \`offline:\${playerClass}:\${name}\`, true);
+  void startGame(sim, sim, null, `offline:${playerClass}:${name}`, true);
 """
 tail_new = """  if (!world) {
     installHighflyOfflineAutosave(() => {
@@ -269,7 +269,7 @@ tail_new = """  if (!world) {
   }
 
   // Stable local identity also scopes keybinds; the RPG state itself now persists.
-  void startGame(sim, sim, null, \`offline:\${playerClass}:\${name}\`, true);
+  void startGame(sim, sim, null, `offline:${playerClass}:${name}`, true);
 """
 replace_once(main, tail_old, tail_new, "install autosave")
 
