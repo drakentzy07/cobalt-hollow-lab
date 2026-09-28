@@ -1,0 +1,4 @@
+SOURCE=https://github.com/levy-street/world-of-claudecraft
+TAG=v0.44.0
+COMMIT=9b57e49c9676d75962700f828cc00a50a9a988b5
+MODE=thin-overlay
