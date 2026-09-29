@@ -72,11 +72,24 @@ new = """  const recoverHighflyOfflinePreview = async (cls: PlayerClass): Promis
         characterPreview = new CharacterPreview(container, canvas, {
           constrainedMemory: GFX.constrainedMemory,
         });
-      } else {
-        characterPreview.setContainer(container);
       }
-      previewClassBody(cls);
-      characterPreview.setSkin(0);
+
+      const settlePreview = () => {
+        if (!characterPreview) return;
+        characterPreview.setContainer(container);
+        previewClassBody(cls);
+        characterPreview.setSkin(selectedSkin('#offline-skin-row', offlineSkin));
+        characterPreview.armOpen();
+        characterPreview.syncSize();
+      };
+
+      // Mobile Chrome sometimes opens the fullscreen creator while visualViewport
+      // is still settling after the address bar/status chrome moves. Re-seat the
+      // shared canvas across that short window instead of leaving a black stage.
+      settlePreview();
+      requestAnimationFrame(() => requestAnimationFrame(settlePreview));
+      window.setTimeout(settlePreview, 250);
+      window.setTimeout(settlePreview, 900);
       syncPreviewAfterPanelLayout();
     } catch (err) {
       console.error('[HIGHFLY] offline preview recovery failed', err);
