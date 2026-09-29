@@ -24,7 +24,7 @@ jobs:
       - name: Checkout green RUN0.9.3 Phase 0
         uses: actions/checkout@v4
         with:
-          ref: 08b9f4ed9c79d032f6ed3682fa62da60e0348abd
+          ref: b40a9b68d1bac946976878d788cf21771cc8c0d3
 
       - name: Checkout isolated Skin Lab S2
         uses: actions/checkout@v4
@@ -159,4 +159,4 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-# publish-pin: run0.9.3-phase0-mobile-combat 08b9f4ed
+# publish-pin: run0.9.3-phase0-mobile-combat b40a9b68
