@@ -1,4 +1,4 @@
-name: HIGHFLY TRAINING CORE RUN1-A
+name: HIGHFLY TRAINING CORE RUN1-B
 
 on:
   push:
@@ -180,7 +180,7 @@ jobs:
         shell: bash
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Verify Foundation + Training RUN1-A contracts
+      - name: Verify Foundation + Training RUN1-B contracts
         working-directory: .
         shell: bash
         run: |
@@ -199,20 +199,24 @@ jobs:
           test -s training/runtime/core.ts
           test -s training/runtime/reference_routine.ts
           test -s training/tests/highfly_training_core.test.ts
+          test -s training/tests/highfly_training_engine.test.ts
+          test -s training/runtime/engine.ts
           test -s overlays/highfly_training_core_v1.py
           grep -q "HIGHFLY_CORE_STATS" training/runtime/core.ts
           grep -q "training-performance-gate" training/runtime/core.ts
           grep -q "HF_REFERENCE_5D_SUPREME_V1" training/runtime/reference_routine.ts
+          grep -q "evaluateTrainingSession" training/runtime/engine.ts
+          grep -q "scoreTrainingSet" training/runtime/engine.ts
 
       - name: TypeScript source smoke
         working-directory: upstream
         shell: bash
         run: pnpm exec tsc --noEmit --incremental false
 
-      - name: Training Core RUN1-A unit tests
+      - name: Training Core RUN1-B unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -593,7 +597,7 @@ jobs:
           await browser.close();
           NODE
 
-      - name: TRAINING RUN1-A golden preview + combo + soft-target smoke
+      - name: TRAINING RUN1-B golden preview + combo + soft-target smoke
         working-directory: upstream
         shell: bash
         run: |
