@@ -769,44 +769,74 @@ jobs:
 
           const attack = page.locator('#mobile-action-attack');
           await attack.waitFor({ state: 'visible', timeout: 15000 });
+
+          // Drive the exact raw touch path used by bindTouchTap. locator.tap()
+          // performs actionability/stability work that can consume hundreds of
+          // milliseconds, which makes an "immediate fourth tap" nondeterministic.
+          const rawTouchAttack = async (pointerId) => {
+            await page.evaluate((id) => {
+              const el = document.getElementById('mobile-action-attack');
+              if (!(el instanceof HTMLElement)) throw new Error('attack button missing');
+              const opts = {
+                bubbles: true,
+                cancelable: true,
+                pointerType: 'touch',
+                pointerId: id,
+                isPrimary: true,
+                clientX: 8,
+                clientY: 8,
+              };
+              el.dispatchEvent(new PointerEvent('pointerdown', opts));
+              el.dispatchEvent(new PointerEvent('pointerup', opts));
+            }, pointerId);
+          };
+
           const acceptedBefore = await page.evaluate(() =>
             Number(document.body.dataset.highflyBasicAttackCount ?? '0')
           );
 
-          await attack.tap();
+          await rawTouchAttack(101);
           await page.waitForTimeout(430);
-          await attack.tap();
+          await rawTouchAttack(102);
           await page.waitForTimeout(470);
-          await attack.tap();
-          await page.waitForTimeout(80);
+          await rawTouchAttack(103);
 
           const acceptedAfterThree = await page.evaluate(() =>
             Number(document.body.dataset.highflyBasicAttackCount ?? '0')
           );
           if (acceptedAfterThree !== acceptedBefore + 3) {
-            throw new Error('HIGHFLY combo did not accept exactly three opening strikes');
+            throw new Error(
+              'HIGHFLY combo did not accept exactly three opening strikes: ' +
+              JSON.stringify({ acceptedBefore, acceptedAfterThree })
+            );
           }
 
-          // Finisher recovery contract: an immediate fourth tap must be ignored.
-          // Count accepted intents instead of HP because the third animation can
-          // land damage after the button event that launched it.
-          await attack.tap();
-          await page.waitForTimeout(120);
+          // Same JS task sequence: this is genuinely immediate and must be
+          // rejected by the post-finisher recovery gate.
+          await rawTouchAttack(104);
           const acceptedAfterBlockedFourth = await page.evaluate(() =>
             Number(document.body.dataset.highflyBasicAttackCount ?? '0')
           );
           if (acceptedAfterBlockedFourth !== acceptedAfterThree) {
-            throw new Error('HIGHFLY combo accepted an immediate fourth hit after finisher');
+            throw new Error(
+              'HIGHFLY combo accepted an immediate fourth hit after finisher: ' +
+              JSON.stringify({ acceptedAfterThree, acceptedAfterBlockedFourth })
+            );
           }
 
-          await page.waitForTimeout(500);
-          await attack.tap();
+          // After the authored recovery (0.55s; finisher swing 0.58s), a fresh
+          // step 1 must be accepted.
+          await page.waitForTimeout(650);
+          await rawTouchAttack(105);
           await page.waitForTimeout(700);
           const acceptedAfterRecovery = await page.evaluate(() =>
             Number(document.body.dataset.highflyBasicAttackCount ?? '0')
           );
           if (acceptedAfterRecovery !== acceptedAfterThree + 1) {
-            throw new Error('HIGHFLY combo did not restart at step 1 after finisher recovery');
+            throw new Error(
+              'HIGHFLY combo did not restart at step 1 after finisher recovery: ' +
+              JSON.stringify({ acceptedAfterThree, acceptedAfterRecovery })
+            );
           }
 
           const after = await page.evaluate((id) => {
