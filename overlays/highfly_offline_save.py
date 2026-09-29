@@ -162,12 +162,15 @@ export async function loadHighflyOfflineSave(
   if (!playerClass || !name) return primary;
 
   const exact = await readIdbKey(identitySlotKey(playerClass, name));
-  if (exact) return exact;
+  const matchingPrimary =
+    primary?.playerClass === playerClass && primary.name === name ? primary : null;
 
-  // Backwards-compatible migration for installs created before multislot saves:
-  // the old primary snapshot remains a valid exact save until its next autosave,
-  // at which point writeIdb() also materialises the identity slot.
-  if (primary?.playerClass === playerClass && primary.name === name) return primary;
+  // The localStorage primary mirror is synchronous while IndexedDB writes are
+  // async. A reload can therefore observe an older exact IDB slot alongside a
+  // newer primary snapshot for the SAME Hunter. Always select by updatedAt.
+  const best = newest(exact, matchingPrimary);
+  if (best) return best;
+
   return null;
 }
 
