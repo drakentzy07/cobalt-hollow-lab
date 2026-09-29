@@ -85,7 +85,7 @@ new = """  const recoverHighflyOfflinePreview = async (cls: PlayerClass): Promis
 
   const selectHighflyOfflineClass = (cls: PlayerClass): void => {
     const card = document.querySelector(
-      \`#offline-select .mini-class[data-class="\${cls}"]\`,
+      `#offline-select .mini-class[data-class="${cls}"]`,
     ) as HTMLElement | null;
     if (!card) return;
     document.querySelectorAll('#offline-select .mini-class').forEach((c) => {
