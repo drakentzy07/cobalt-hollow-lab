@@ -113,6 +113,40 @@ addition = anchor + """
       unicode-bidi: plaintext;
       text-align: left !important;
     }
+
+    /* The creator columns intentionally scroll vertically on short landscape
+       phones. Explicitly suppress horizontal overflow: otherwise overflow-y:auto
+       promotes tiny child overflows into a second sideways scrollbar. */
+    body.mobile-touch #offline-select .charselect-col-left,
+    body.mobile-touch #offline-select .charselect-col-right {
+      overflow-x: hidden !important;
+      min-width: 0 !important;
+    }
+
+    body.mobile-touch #offline-select .char-create,
+    body.mobile-touch #offline-select #offline-appearance,
+    body.mobile-touch #offline-select .appearance-customizer {
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      overflow-x: hidden;
+    }
+
+    body.mobile-touch #offline-select .appearance-customizer .ac-head,
+    body.mobile-touch #offline-select .appearance-customizer .ac-tools {
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+
+    body.mobile-touch #offline-select .appearance-customizer .ac-tabs {
+      width: 100%;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    body.mobile-touch #offline-select .appearance-customizer .ac-tab {
+      min-width: 0;
+    }
 """
 if text.count(anchor) != 1:
     raise SystemExit(f"mobile creator polished anchor: expected 1, found {text.count(anchor)}")
