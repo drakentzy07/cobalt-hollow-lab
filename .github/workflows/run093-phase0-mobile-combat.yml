@@ -610,7 +610,7 @@ jobs:
           await page.evaluate(() => {
             const name = document.querySelector('#char-name');
             if (name instanceof HTMLInputElement) {
-              name.value = 'Run093Warrior';
+              name.value = 'RunWarrior';
               name.dispatchEvent(new Event('input', { bubbles: true }));
             }
             document
