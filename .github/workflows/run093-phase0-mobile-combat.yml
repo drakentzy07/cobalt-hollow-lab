@@ -8,8 +8,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: run0.9.3-phase0-mobile-combat
@@ -833,20 +831,3 @@ jobs:
           set -euo pipefail
           du -sh upstream/dist
           find upstream/dist/media -type f 2>/dev/null | wc -l || true
-
-
-      - name: Upload RUN0.9.3 Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: upstream/dist
-
-  deploy-pages:
-    needs: thin-offline
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy RUN0.9.3 to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
