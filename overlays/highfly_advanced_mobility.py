@@ -14,9 +14,21 @@ motion = Path("src/sim/player_motion.ts")
 # MoveInput carries a monotonically increasing edge token. The ordinary jump
 # boolean remains untouched for ClaudeCraft's held/latch semantics.
 move_old = """  jump: boolean;
+  /** HIGHFLY local/mobile extension: camera-relative WORLD movement vector.
+   * Optional so every original ClaudeCraft input path remains unchanged. */
+  highflyWorldX?: number;
+  highflyWorldZ?: number;
+  /** 0..1 radial joystick magnitude after dead-zone remapping. */
+  highflyAnalog?: number;
   /** Swim DOWN. Only ever read while swimming, where it is the mirror of
 """
 move_new = """  jump: boolean;
+  /** HIGHFLY local/mobile extension: camera-relative WORLD movement vector.
+   * Optional so every original ClaudeCraft input path remains unchanged. */
+  highflyWorldX?: number;
+  highflyWorldZ?: number;
+  /** 0..1 radial joystick magnitude after dead-zone remapping. */
+  highflyAnalog?: number;
   /** HIGHFLY transient press sequence. Increments once per physical/touch jump
    * press, so a latched mobile jump can never masquerade as a second tap. */
   highflyJumpSeq?: number;
