@@ -121,6 +121,15 @@ jobs:
           touch dist/.nojekyll
           du -sh dist
 
+      - name: Publish HIGHFLY Skin Lab
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/skin-lab
+          cp ../skinlab/index.html dist/skin-lab/index.html
+          test -s dist/skin-lab/index.html
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
