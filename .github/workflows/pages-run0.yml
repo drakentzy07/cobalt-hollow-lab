@@ -148,4 +148,4 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-# publish-pin: run0.9.2-hud-comfort 14ec4c0f
+# publish-pin: run0.9.2-hud-comfort 0b20e5d9
