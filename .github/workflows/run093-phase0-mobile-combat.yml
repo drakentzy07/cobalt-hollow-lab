@@ -770,11 +770,24 @@ jobs:
           const attack = page.locator('#mobile-action-attack');
           await attack.waitFor({ state: 'visible', timeout: 15000 });
           await attack.tap();
-          await page.waitForTimeout(380);
+          await page.waitForTimeout(430);
           await attack.tap();
-          await page.waitForTimeout(380);
+          await page.waitForTimeout(470);
           await attack.tap();
-          await page.waitForTimeout(900);
+          await page.waitForTimeout(120);
+
+          // Finisher recovery contract: a fourth immediate tap must not start
+          // the next chain. After the recovery window, a fresh step 1 may start.
+          const finisherHp = await page.evaluate((id) => window.__game.sim.entities.get(id)?.hp ?? null, before.id);
+          await attack.tap();
+          await page.waitForTimeout(120);
+          const blockedFourthHp = await page.evaluate((id) => window.__game.sim.entities.get(id)?.hp ?? null, before.id);
+          if (blockedFourthHp !== finisherHp) {
+            throw new Error('HIGHFLY combo accepted an immediate fourth hit after finisher');
+          }
+          await page.waitForTimeout(320);
+          await attack.tap();
+          await page.waitForTimeout(700);
 
           const after = await page.evaluate((id) => {
             const g = window.__game;
