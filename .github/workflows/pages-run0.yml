@@ -135,4 +135,4 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-# publish-pin: run0.8-integrated-baseline d40a44cb
+# publish-pin: run0.8-integrated-baseline 0b8e3c1e
