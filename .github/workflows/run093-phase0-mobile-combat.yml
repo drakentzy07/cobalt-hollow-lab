@@ -747,6 +747,13 @@ jobs:
               if (q < d) { d = q; wolf = e; }
             }
             if (!wolf) throw new Error('RUN093 no forest wolf');
+
+            // Keep the combat fixture alive through multiple combo cycles.
+            // ClaudeCraft's own probes use the same high-HP dummy pattern.
+            wolf.maxHp = 1_000_000;
+            wolf.hp = wolf.maxHp;
+            wolf.dead = false;
+
             p.pos.x = wolf.pos.x + 2.2;
             p.pos.z = wolf.pos.z;
             p.prevPos = { ...p.pos };
