@@ -133,32 +133,22 @@ replace_once(
     "offline preview uses selected assets",
 )
 
-replace_once(
-    main,
-    """      if (container && canvas) {
-        characterPreview = new CharacterPreview(container, canvas, {
-          // GFX.constrainedMemory covers every iOS WebKit host (Safari and other iOS
-          // browsers, not just the packaged app) plus the general touch/coarse-pointer
-          // detector, not just NATIVE_APP: the launcher's char-select preview sits in the
-          // same entry-allocation window the boot preload defers/streams for
-          // (assets/preload.ts: "a 12 GB iPhone 17 Pro was killed 1.6s into the LAUNCHER").
-          constrainedMemory: GFX.constrainedMemory,
-        });""",
-    """      if (container && canvas) {
-        if (!characterPreview) {
-          characterPreview = new CharacterPreview(container, canvas, {
-            // GFX.constrainedMemory covers every iOS WebKit host (Safari and other iOS
-            // browsers, not just the packaged app) plus the general touch/coarse-pointer
-            // detector, not just NATIVE_APP: the launcher's char-select preview sits in the
-            // same entry-allocation window the boot preload defers/streams for
-            // (assets/preload.ts: "a 12 GB iPhone 17 Pro was killed 1.6s into the LAUNCHER").
-            constrainedMemory: GFX.constrainedMemory,
-          });
-        } else if (canvas.parentElement !== container) {
-          characterPreview.setContainer(container);
-        }""",
-    "global preview must not recreate fast preview",
-)
+main_text = main.read_text(encoding="utf-8")
+gate = "  charactersReady()\n    .then(() => {"
+gate_at = main_text.find(gate)
+if gate_at < 0:
+    raise SystemExit("global preview gate missing")
+assign = "        characterPreview = new CharacterPreview(container, canvas, {"
+assign_at = main_text.find(assign, gate_at)
+if assign_at < 0:
+    raise SystemExit("global preview constructor missing")
+close = "        });"
+close_at = main_text.find(close, assign_at)
+if close_at < 0:
+    raise SystemExit("global preview constructor close missing")
+ctor = main_text[assign_at:close_at + len(close)]
+wrapped = "        if (!characterPreview) {\n" + ctor.replace("        characterPreview", "          characterPreview", 1) + "\n        } else if (canvas.parentElement !== container) {\n          characterPreview.setContainer(container);\n        }"
+main.write_text(main_text[:assign_at] + wrapped + main_text[close_at + len(close):], encoding="utf-8")
 
 preview_text = preview.read_text(encoding="utf-8")
 old_preview = """    this.currentVisualSig = null;
