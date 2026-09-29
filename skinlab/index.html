@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>HIGHFLY Skin Lab</title>
+<link rel="icon" href="data:,">
 <style>
 :root{color-scheme:dark;--bg:#0b0e14;--panel:#151a23;--line:#2b3444;--txt:#f5f7fb;--muted:#98a5b7;--accent:#d54b43}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,sans-serif;height:100%}
@@ -56,10 +57,18 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
   <div class="group"><h2>Piezas S1</h2><div id="parts">—</div></div>
 </aside>
 </div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/"
+  }
+}
+</script>
 <script type="module">
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js";
-import {OrbitControls} from "https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/controls/OrbitControls.js";
-import {GLTFLoader} from "https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/loaders/GLTFLoader.js";
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 const MODEL="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb";
 const view=document.getElementById("view"),status=document.getElementById("status"),parts=document.getElementById("parts");
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(35,1,.01,100),renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
