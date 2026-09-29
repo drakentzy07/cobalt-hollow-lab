@@ -94,6 +94,7 @@ jobs:
           python ../overlays/highfly_entry_es.py
           python ../overlays/highfly_mobile_creator.py
           python ../overlays/highfly_offline_resume_preview.py
+          python ../overlays/highfly_mobile_polish.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -118,6 +119,13 @@ jobs:
           grep -F "recoverHighflyOfflinePreview" src/main.ts
           grep -F "selectHighflyOfflineClass" src/main.ts
           grep -F "offlineNameInput.value = saved?.name ?? '';" src/main.ts
+          grep -F '"start_url": "/cobalt-hollow-lab/"' public/manifest.webmanifest
+          grep -F '"scope": "/cobalt-hollow-lab/"' public/manifest.webmanifest
+          grep -F "HIGHFLY RUN0.8.1" src/styles/shell.css
+          grep -F "direction: ltr !important;" src/styles/shell.css
+          grep -F "position: fixed !important;" src/styles/shell.css
+          grep -F "this.camYaw -= dx * dragSens;" src/game/input.ts
+          grep -F "this.camPitch - this.touchPitchSign * dy * dragSens" src/game/input.ts
           grep -F "handleOfflineSelect();" src/main.ts
 
       - name: Setup Node
