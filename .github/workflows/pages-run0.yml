@@ -24,7 +24,7 @@ jobs:
       - name: Checkout green RUN0.9.3 Phase 0
         uses: actions/checkout@v4
         with:
-          ref: 299426e62fbc2b8cb3534d760e7b7f9ab56a2c3e
+          ref: 08b9f4ed9c79d032f6ed3682fa62da60e0348abd
 
       - name: Checkout frozen ClaudeCraft slice
         uses: actions/checkout@v4
@@ -123,15 +123,6 @@ jobs:
           touch dist/.nojekyll
           du -sh dist
 
-      - name: Publish HIGHFLY Skin Lab
-        working-directory: upstream
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p dist/skin-lab
-          cp ../skinlab/index.html dist/skin-lab/index.html
-          test -s dist/skin-lab/index.html
-
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
@@ -150,4 +141,4 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-# publish-pin: run0.9.3-phase0-mobile-combat 299426e6
+# publish-pin: run0.9.3-phase0-mobile-combat 08b9f4ed
