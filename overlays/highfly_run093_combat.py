@@ -168,6 +168,12 @@ replace_once(
       cyclePage: () => this.cycleMobileActionPage(),""",
     "mobile skill pre-target hook",
 )
+replace_once(
+    hud,
+    "      attackNearest: this.onMobileAttackNearest,",
+    "      attackNearest: () => this.onMobileAttackNearest?.(),",
+    "mobile attack late-bound soft-target callback",
+)
 
 aa = Path("src/sim/combat/auto_attack.ts")
 insert_before_once(
