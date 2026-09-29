@@ -560,7 +560,7 @@ jobs:
           await browser.close();
           NODE
 
-      - name: RUN0.9.3 HIGHFLY combo + soft-target smoke
+      - name: RUN0.9.3 HIGHFLY preview + combo + soft-target smoke
         working-directory: upstream
         shell: bash
         run: |
@@ -575,52 +575,151 @@ jobs:
 
           node --input-type=module <<'NODE'
           import { chromium } from 'playwright';
+          import { dismissEntryOverlays } from './scripts/enter_offline_game.mjs';
 
           const browser = await chromium.launch({ channel: 'chrome', headless: true });
           const context = await browser.newContext({
             viewport: { width: 844, height: 390 },
+            screen: { width: 844, height: 390 },
+            deviceScaleFactor: 3,
             hasTouch: true,
             isMobile: true,
+            userAgent:
+              'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36',
           });
           const page = await context.newPage();
           const url = 'http://127.0.0.1:4175/cobalt-hollow-lab/';
+          const consoleErrors = [];
+          page.on('console', (msg) => {
+            if (msg.type() === 'error') consoleErrors.push(msg.text());
+          });
 
           await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          await page.evaluate(() =>
+            localStorage.setItem('woc.cameraModePrompt.shown', '1'),
+          ).catch(() => {});
           await page.locator('#btn-offline').waitFor({ state: 'attached', timeout: 20000 });
-          for (let attempt = 0; attempt < 60; attempt++) {
-            await page.evaluate(() => document.querySelector('#btn-offline')?.click());
-            if (await page.locator('#offline-select').isVisible().catch(() => false)) break;
-            await page.waitForTimeout(250);
-          }
 
-          await page.locator('#char-name').fill('Run093Warrior');
-          await page.locator('#offline-select .mini-class[data-class="warrior"]').click({ force: true });
+          // Source-faithful hidden Offline hook: DOM click works even when the
+          // legacy automation trigger has no clickable point on a phone layout.
+          await page.evaluate(() => document.querySelector('#btn-offline')?.click());
+          await page
+            .locator('#offline-select .mini-class[data-class="warrior"]')
+            .waitFor({ state: 'visible', timeout: 20000 });
 
-          // Preview contract: a real layout-backed canvas, not a timer-success flag.
+          await page.evaluate(() => {
+            const name = document.querySelector('#char-name');
+            if (name instanceof HTMLInputElement) {
+              name.value = 'Run093Warrior';
+              name.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            document
+              .querySelector('#offline-select .mini-class[data-class="warrior"]')
+              ?.click();
+          });
+
+          // P0 preview contract: prove not only layout but a live WebGL context
+          // with actual opaque pixels from the rendered Hunter whenever the
+          // preview policy retains its drawing buffer.
           await page.waitForFunction(() => {
             const box = document.querySelector('#offline-preview-container');
             const canvas = document.querySelector('#char-preview-canvas');
             if (!(box instanceof HTMLElement) || !(canvas instanceof HTMLCanvasElement)) return false;
             const rect = box.getBoundingClientRect();
-            return canvas.isConnected && rect.width > 0 && rect.height > 0 &&
-              canvas.width > 0 && canvas.height > 0;
-          }, null, { timeout: 20000 });
-
-          await page.locator('#btn-start-offline').click({ force: true });
-          const preflight = page.locator('#mobile-preflight-continue');
-
-          // Mobile preflight is mounted asynchronously after the Start press on
-          // touch layouts. The previous smoke sampled it once too early and then
-          // waited forever for __game. Race the real two states instead.
-          for (let attempt = 0; attempt < 120; attempt++) {
-            if (await page.evaluate(() => Boolean(window.__game?.sim?.player))) break;
-            if (await preflight.isVisible().catch(() => false)) {
-              await preflight.click({ force: true }).catch(() => {});
+            if (
+              !canvas.isConnected ||
+              rect.width <= 0 ||
+              rect.height <= 0 ||
+              canvas.width <= 0 ||
+              canvas.height <= 0
+            )
+              return false;
+            const gl = canvas.getContext('webgl2');
+            if (!gl || gl.isContextLost()) return false;
+            const attrs = gl.getContextAttributes();
+            if (attrs?.preserveDrawingBuffer !== true) return true;
+            const pixels = new Uint8Array(canvas.width * canvas.height * 4);
+            gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+            let opaque = 0;
+            for (let i = 3; i < pixels.length; i += 4) {
+              if (pixels[i] > 16 && ++opaque >= 64) return true;
             }
-            await page.waitForTimeout(250);
+            return false;
+          }, null, { timeout: 30000 });
+
+          const previewState = await page.evaluate(() => {
+            const box = document.querySelector('#offline-preview-container');
+            const canvas = document.querySelector('#char-preview-canvas');
+            if (!(box instanceof HTMLElement) || !(canvas instanceof HTMLCanvasElement)) return null;
+            const gl = canvas.getContext('webgl2');
+            const rect = box.getBoundingClientRect();
+            let opaquePixels = null;
+            if (gl && !gl.isContextLost() && gl.getContextAttributes()?.preserveDrawingBuffer === true) {
+              const pixels = new Uint8Array(canvas.width * canvas.height * 4);
+              gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+              let opaque = 0;
+              for (let i = 3; i < pixels.length; i += 4) if (pixels[i] > 16) opaque++;
+              opaquePixels = opaque;
+            }
+            return {
+              connected: canvas.isConnected,
+              css: [Math.round(rect.width), Math.round(rect.height)],
+              buffer: [canvas.width, canvas.height],
+              contextLost: gl?.isContextLost() ?? null,
+              preserveDrawingBuffer: gl?.getContextAttributes()?.preserveDrawingBuffer ?? null,
+              opaquePixels,
+            };
+          });
+          console.log('RUN093_PREVIEW', JSON.stringify(previewState, null, 2));
+          await page
+            .locator('#offline-preview-container')
+            .screenshot({ path: '../run093-preview-character.png' })
+            .catch(() => {});
+
+          // Follow ClaudeCraft's canonical mobile entry semantics instead of
+          // racing locator visibility: start in-page, wait briefly for the real
+          // phone-only gate, then click its DOM button (a no-op when no gate is
+          // required). prepareWorldEntry() resolves from that exact onclick.
+          await page.evaluate(() => document.querySelector('#btn-start-offline')?.click());
+          await page
+            .locator('#mobile-preflight-continue')
+            .waitFor({ state: 'visible', timeout: 8000 })
+            .catch(() => {});
+          await page.evaluate(() =>
+            document.querySelector('#mobile-preflight-continue')?.click(),
+          );
+
+          const gameBooted = await page
+            .waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 60000 })
+            .then(() => true)
+            .catch(() => false);
+          if (!gameBooted) {
+            const state = await page.evaluate(() => {
+              const preflight = document.querySelector('#mobile-preflight');
+              const visible = (el) =>
+                el instanceof HTMLElement &&
+                getComputedStyle(el).display !== 'none' &&
+                getComputedStyle(el).visibility !== 'hidden';
+              return {
+                bodyClass: document.body.className,
+                preflightVisible: visible(preflight),
+                preflightClass: preflight?.className ?? null,
+                gameType: typeof window.__game,
+                uiPresent: Boolean(document.querySelector('#ui')),
+                startDisplay:
+                  document.querySelector('#start-screen') instanceof HTMLElement
+                    ? getComputedStyle(document.querySelector('#start-screen')).display
+                    : null,
+                bodyText: (document.body.innerText ?? '').slice(0, 5000),
+              };
+            });
+            console.error('RUN093_BOOT_FAIL', JSON.stringify({ state, consoleErrors }, null, 2));
+            await page.screenshot({ path: '../run093-mobile-fail.png', fullPage: true }).catch(() => {});
+            throw new Error('RUN093 mobile world did not boot');
           }
-          await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 60000 });
-          await page.waitForTimeout(2000);
+
+          await dismissEntryOverlays(page);
+          await page.waitForTimeout(700);
 
           await page.evaluate(() => {
             const g = window.__game;
@@ -639,7 +738,9 @@ jobs:
             p.targetId = null;
             p.autoAttack = false;
             p.swingTimer = 0;
-            g.input.camYaw = Math.atan2(wolf.pos.x - p.pos.x, wolf.pos.z - p.pos.z);
+            const facing = Math.atan2(wolf.pos.x - p.pos.x, wolf.pos.z - p.pos.z);
+            p.facing = facing;
+            g.input.camYaw = facing;
           });
 
           const before = await page.evaluate(() => {
@@ -691,6 +792,9 @@ jobs:
             run0-browser-report.json
             run0-browser.png
             run0-preview.log
+            run093-preview.log
+            run093-preview-character.png
+            run093-mobile-fail.png
           if-no-files-found: warn
           retention-days: 7
 
