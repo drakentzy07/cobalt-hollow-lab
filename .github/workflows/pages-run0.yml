@@ -1,4 +1,4 @@
-name: Pages RUN0.9.1 UI polish
+name: Pages RUN0.9.2 HUD comfort
 
 on:
   push:
@@ -21,10 +21,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout green RUN0.9.1 UI polish
+      - name: Checkout green RUN0.9.2 HUD comfort
         uses: actions/checkout@v4
         with:
-          ref: run0.9.1-ui-polish
+          ref: run0.9.2-hud-comfort
 
       - name: Checkout frozen ClaudeCraft slice
         uses: actions/checkout@v4
@@ -68,7 +68,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
 
-      - name: Apply integrated RUN0.9.1 overlays
+      - name: Apply integrated RUN0.9.2 overlays
         working-directory: upstream
         shell: bash
         run: |
@@ -86,6 +86,7 @@ jobs:
           python ../overlays/highfly_advanced_mobility.py
           python ../overlays/highfly_run09_mobile_actions.py
           python ../overlays/highfly_run091_ui_polish.py
+          python ../overlays/highfly_run092_hud_comfort.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -106,7 +107,7 @@ jobs:
         shell: bash
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Build green RUN0.9.1 mobile bundle
+      - name: Build green RUN0.9.2 mobile bundle
         working-directory: upstream
         shell: bash
         env:
@@ -138,4 +139,4 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-# publish-pin: run0.9.1-ui-polish 2e177e55
+# publish-pin: run0.9.2-hud-comfort 14ec4c0f
