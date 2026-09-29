@@ -608,7 +608,17 @@ jobs:
 
           await page.locator('#btn-start-offline').click({ force: true });
           const preflight = page.locator('#mobile-preflight-continue');
-          if (await preflight.count()) await preflight.click({ force: true }).catch(() => {});
+
+          // Mobile preflight is mounted asynchronously after the Start press on
+          // touch layouts. The previous smoke sampled it once too early and then
+          // waited forever for __game. Race the real two states instead.
+          for (let attempt = 0; attempt < 120; attempt++) {
+            if (await page.evaluate(() => Boolean(window.__game?.sim?.player))) break;
+            if (await preflight.isVisible().catch(() => false)) {
+              await preflight.click({ force: true }).catch(() => {});
+            }
+            await page.waitForTimeout(250);
+          }
           await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 60000 });
           await page.waitForTimeout(2000);
 
