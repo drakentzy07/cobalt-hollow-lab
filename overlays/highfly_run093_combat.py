@@ -131,6 +131,7 @@ replace_once(
   onMobileActionIntent: ((action: Exclude<HotbarAction, null>) => void) | null = null;
   private highflyComboStep: 0 | 1 | 2 | 3 = 0;
   private highflyComboExpiresAt = 0;
+  private highflyComboReadyAt = 0;
   onQuestDialogStateChange: ((open: boolean) => void) | null = null;""",
     "HUD HIGHFLY seams",
 )
@@ -143,14 +144,17 @@ replace_once(
   }""",
     """  private activateFixedAttackSlot(): void {
     const now = performance.now() / 1000;
+    if (now < this.highflyComboReadyAt) return;
     if (now > this.highflyComboExpiresAt) this.highflyComboStep = 0;
     const next = ((this.highflyComboStep % 3) + 1) as 1 | 2 | 3;
 
     // HIGHFLY fixed Attack is an action-RPG intent, not a continuous
     // ClaudeCraft auto-attack toggle. Advance only when the strike is accepted.
+    // After the finisher, force a short recovery before a fresh 1-2-3 can start.
     if (this.onHighflyBasicAttack?.(next)) {
-      this.highflyComboStep = next;
+      this.highflyComboStep = next === 3 ? 0 : next;
       this.highflyComboExpiresAt = now + 0.95;
+      this.highflyComboReadyAt = next === 3 ? now + 0.38 : 0;
       this.flashActionSlot(0);
     }
   }""",
@@ -227,7 +231,7 @@ export function highflyBasicAttack(
     ctx.breakGhostWolf(p);
     const shot = rangedShotProfile(ranged, p.weapon);
     rangedSwing(ctx, p, t, { ...ranged, min: shot.min, max: shot.max, speed: shot.speed });
-    p.swingTimer = step === 3 ? 0.46 : 0.3;
+    p.swingTimer = step === 1 ? 0.36 : step === 2 ? 0.4 : 0.58;
     return true;
   }
 
@@ -241,7 +245,7 @@ export function highflyBasicAttack(
     weaponMult: 1,
     autoAttack: false,
   });
-  p.swingTimer = step === 3 ? 0.46 : 0.3;
+  p.swingTimer = step === 1 ? 0.36 : step === 2 ? 0.4 : 0.58;
   return true;
 }
 
