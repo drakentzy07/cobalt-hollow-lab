@@ -24,7 +24,7 @@ jobs:
       - name: Checkout green RUN0.9.3 Phase 0
         uses: actions/checkout@v4
         with:
-          ref: 08b9f4ed9c79d032f6ed3682fa62da60e0348abd
+          ref: 299426e62fbc2b8cb3534d760e7b7f9ab56a2c3e
 
       - name: Checkout frozen ClaudeCraft slice
         uses: actions/checkout@v4
@@ -150,4 +150,4 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-# publish-pin: run0.9.3-phase0-mobile-combat 08b9f4ed
+# publish-pin: run0.9.3-phase0-mobile-combat 299426e6
