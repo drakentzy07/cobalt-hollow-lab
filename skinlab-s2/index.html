@@ -1,42 +1,213 @@
-<!doctype html><html lang='es'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>HIGHFLY S2 Lab</title><link rel='icon' href='data:,'>
-<style>html,body{margin:0;height:100%;background:#0b0f16;color:#eef2f7;font-family:system-ui}#app{height:100%;display:grid;grid-template-columns:1fr 300px}#view{position:relative;min-width:0}.panel{padding:16px;background:#151b26;border-left:1px solid #2b3443;overflow:auto}.row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}button{background:#202a39;color:#fff;border:1px solid #39465a;border-radius:8px;padding:9px 12px;cursor:pointer}button.active{outline:2px solid #b7473e}.status{font-size:12px;color:#aab6c6}.ok{color:#7bd39a}h1{font-size:16px;margin:0 0 8px}h2{font-size:13px;margin:18px 0 8px}.tag{font-size:12px;border:1px solid #39465a;border-radius:999px;padding:5px 8px;color:#c8d2df}.legend{font-size:12px;line-height:1.5;color:#aab6c6}.brand{position:absolute;z-index:4;top:14px;left:16px;font-weight:700;letter-spacing:.08em}.brand small{display:block;color:#aab6c6;font-weight:400;letter-spacing:0;margin-top:3px}.swatch{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}@media(max-width:760px){#app{grid-template-columns:1fr;grid-template-rows:58vh auto}.panel{border-left:0;border-top:1px solid #2b3443}}</style>
-<script type='importmap'>{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/"}}</script></head><body>
-<div id='app'><div id='view'><div class='brand'>HIGHFLY SKIN LAB<small>S2 PREMIUM · REAL MESH KITBASH</small></div></div><aside class='panel'><h1>HF_KITSUNE_RONIN_01 — S2A</h1><div id='status' class='status'>Cargando mallas reales…</div><p class='legend'>Nada de cajas en la ropa: estas variantes usan las mallas skinned y texturas originales del personaje modular.</p><h2>Variantes reales</h2><div class='row'><button data-v='A'>A · Ronin Cloth</button><button data-v='B'>B · Shadow Hunter</button><button data-v='C'>C · Wandering Ronin</button></div><h2>Inspección</h2><div class='row'><button id='front'>Frente</button><button id='side'>3/4</button><button id='back'>Espalda</button></div><div class='row'><button id='spin'>Autorrotar</button><button id='wire'>Wireframe</button></div><h2>Materiales</h2><div class='legend'><span class='swatch' style='background:#24272d'></span>Carbón texturizado<br><span class='swatch' style='background:#6c1717'></span>Rojo profundo<br><span class='swatch' style='background:#e8dfcf'></span>Máscara marfil</div><h2>Animación real</h2><select id='anim' style='width:100%;background:#202a39;color:#fff;border:1px solid #39465a;border-radius:8px;padding:9px'><option value=''>Idle estático</option></select><div class='row'><button id='play'>▶</button><button id='stop'>■</button></div><h2>Estado</h2><div class='tag'>S2A · outfit real + mask fit</div><p id='desc' class='legend'></p></aside></div>
-<script type='module'>
-import * as THREE from 'three';
-import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
-import {MeshoptDecoder} from 'https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/libs/meshopt_decoder.module.js';
-const MODEL='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb';
-const view=document.querySelector('#view'), status=document.querySelector('#status'), desc=document.querySelector('#desc');
-const scene=new THREE.Scene(); const camera=new THREE.PerspectiveCamera(34,1,.01,100); const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true}); renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;view.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xffffff,0x263044,2.4)); const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(4,7,5);scene.add(key); const rim=new THREE.DirectionalLight(0xd9e7ff,1.0);rim.position.set(-4,3,-4);scene.add(rim); const grid=new THREE.GridHelper(10,20,0x556170,0x232b36);scene.add(grid);
-const ctl=new OrbitControls(camera,renderer.domElement);ctl.enableDamping=true;ctl.target.set(0,1.25,0);
-const baseFace=['M_Head','M_Eye_almond','M_Brow_soft','M_Ear_round','M_Mouth_neutral','H2_topknot','E2_band_topknot'];
-const variants={
- A:{label:'Ronin Cloth', pieces:['Armor_mage_Chest','Armor_ranger_ArmL','Armor_ranger_ArmR','Armor_rogue_HandL','Armor_rogue_HandR','Armor_mage_LegL','Armor_mage_LegR','Armor_rogue_FootL','Armor_rogue_FootR'], red:['Armor_ranger_ArmL','Armor_ranger_ArmR'], text:'Túnica Mage como cuerpo principal + brazos Ranger + guantes/botas Rogue. Mantiene texturas reales y una silueta larga tipo viajero.'},
- B:{label:'Shadow Hunter',pieces:['Armor_rogue_Chest','Armor_druid_ArmL','Armor_druid_ArmR','Armor_rogue_HandL','Armor_rogue_HandR','Armor_mage_LegL','Armor_mage_LegR','Armor_ranger_FootL','Armor_ranger_FootR'], red:['Armor_rogue_Chest'],text:'Pecho Rogue ajustado + mangas Druid + faldones Mage. Más agresivo, con textura y volumen reales.'},
- C:{label:'Wandering Ronin',pieces:['Armor_ranger_Chest','Armor_mage_ArmL','Armor_mage_ArmR','Armor_rogue_HandL','Armor_rogue_HandR','Armor_mage_LegL','Armor_mage_LegR','Armor_rogue_FootL','Armor_rogue_FootR','Armor_ranger_Back'],red:['Armor_ranger_Chest'],text:'Torso Ranger y mangas Mage con faldones Mage y capa corta Ranger; lectura de ronin viajero.'}
-};
-let root,allMeshes=[],maskGroup,spinning=false,wire=false,last=performance.now(),mixer=null,clips=[];
-function cloneTexturedMat(m,tint){const c=m.clone(); c.color.set(tint); c.needsUpdate=true;return c}
-function tintObject(o,tint){o.traverse(x=>{if(x.isMesh||x.isSkinnedMesh){if(!x.userData._origMat)x.userData._origMat=x.material; const arr=Array.isArray(x.userData._origMat)?x.userData._origMat:[x.userData._origMat]; const cloned=arr.map(m=>cloneTexturedMat(m,tint)); x.material=Array.isArray(x.userData._origMat)?cloned:cloned[0];}})}
-function restoreObject(o){o.traverse(x=>{if((x.isMesh||x.isSkinnedMesh)&&x.userData._origMat)x.material=x.userData._origMat;});}
-function maskMaterial(color){return new THREE.MeshStandardMaterial({color,roughness:.82,metalness:0,side:THREE.DoubleSide})}
-function polyMask(){
- const g=new THREE.Group(); g.name='HF_Kitsune_Mask_S2'; const ivory=maskMaterial(0xe9dfcc), red=maskMaterial(0x7b1818), black=maskMaterial(0x17191e);
- const pos=[-0.25,0.28,0.18, 0,0.34,0.24, 0.25,0.28,0.18, -0.30,0.06,0.14, 0,0.12,0.30, 0.30,0.06,0.14, -0.18,-0.22,0.11, 0,-0.30,0.18, 0.18,-0.22,0.11];
- const idx=[0,1,4,0,4,3,1,2,5,1,5,4,3,4,6,4,7,6,4,5,8,4,8,7]; const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setIndex(idx);geo.computeVertexNormals();g.add(new THREE.Mesh(geo,ivory));
- function tri(name,pts,mat){const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(pts.flat(),3));gg.setIndex([0,1,2]);gg.computeVertexNormals();const m=new THREE.Mesh(gg,mat);m.name=name;g.add(m)}
- tri('HF_Kitsune_EarL',[[-.24,.29,.18],[-.14,.62,.13],[-.04,.31,.22]],ivory);tri('HF_Kitsune_EarR',[[.24,.29,.18],[.14,.62,.13],[.04,.31,.22]],ivory);tri('HF_Kitsune_EarMarkL',[[-.18,.33,.205],[-.14,.54,.16],[-.08,.34,.23]],red);tri('HF_Kitsune_EarMarkR',[[.18,.33,.205],[.14,.54,.16],[.08,.34,.23]],red);tri('HF_Kitsune_CheekL',[[-.28,.05,.16],[-.06,.07,.315],[-.17,-.13,.16]],red);tri('HF_Kitsune_CheekR',[[.28,.05,.16],[.06,.07,.315],[.17,-.13,.16]],red); const nose=new THREE.Mesh(new THREE.ConeGeometry(.055,.12,4),black);nose.rotation.x=Math.PI/2;nose.position.set(0,-.02,.32);g.add(nose);return g;
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HIGHFLY S2B Premium Lab</title>
+<link rel="icon" href="data:,">
+<style>
+html,body{margin:0;height:100%;background:#090d14;color:#eef2f7;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+#app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 320px}
+#view{position:relative;min-width:0;background:radial-gradient(circle at 50% 34%,#26303e,#101721 52%,#080b11)}
+.panel{padding:16px;background:#141a24;border-left:1px solid #2b3443;overflow:auto}
+.brand{position:absolute;z-index:4;top:14px;left:16px;font-weight:800;letter-spacing:.08em}
+.brand small{display:block;color:#aab6c6;font-weight:400;letter-spacing:0;margin-top:3px}
+h1{font-size:16px;margin:0 0 8px} h2{font-size:13px;margin:18px 0 8px}
+.status,.legend{font-size:12px;line-height:1.55;color:#aab6c6}.ok{color:#7bd39a}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+button,select{background:#202a39;color:#fff;border:1px solid #39465a;border-radius:8px;padding:9px 12px}
+button{cursor:pointer}.active{outline:2px solid #b7473e}
+.tag{display:inline-block;font-size:12px;border:1px solid #46566d;border-radius:999px;padding:6px 9px;color:#d7dfeb}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+code{font-size:11px;color:#cbd6e4}
+@media(max-width:760px){#app{grid-template-columns:1fr;grid-template-rows:58vh auto}.panel{border-left:0;border-top:1px solid #2b3443}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="app">
+  <div id="view"><div class="brand">HIGHFLY SKIN LAB<small>S2B · FITTED MASK + CURATED OUTFIT</small></div></div>
+  <aside class="panel">
+    <h1>HF_KITSUNE_RONIN_01 — S2B</h1>
+    <div id="status" class="status">Cargando S2B…</div>
+    <p class="legend">La máscara frontal ahora se deriva de la propia malla <code>M_Head</code>: conserva el skinning y queda pegada a la cara. El outfit usa sólo piezas skinned/texturizadas reales.</p>
+    <h2>Inspección</h2>
+    <div class="row"><button id="front">Frente</button><button id="side">3/4</button><button id="profile">Perfil</button><button id="back">Espalda</button></div>
+    <div class="row"><button id="spin">Autorrotar</button><button id="wire">Wireframe</button><button id="mask">Ocultar máscara</button></div>
+    <h2>Dirección visual</h2>
+    <div class="legend">
+      <span class="swatch" style="background:#4e4a52"></span>Carbón texturizado<br>
+      <span class="swatch" style="background:#702b2d"></span>Rojo profundo<br>
+      <span class="swatch" style="background:#ece2d1"></span>Marfil kitsune
+    </div>
+    <h2>Set S2B</h2>
+    <div class="legend">Mage robe + wide sleeves + long lower pieces + Mage back + Rogue gloves + Ranger boots + Warrior braid. Menos “mezcla aleatoria”, más silueta única.</div>
+    <h2>Animación real</h2>
+    <select id="anim" style="width:100%"><option value="">Idle estático</option></select>
+    <div class="row"><button id="play">▶</button><button id="stop">■</button></div>
+    <h2>Estado</h2>
+    <div class="tag">S2B · fitted face-mask pass</div>
+    <p class="legend">Objetivo de esta pasada: eliminar el hueco máscara/cara y subir coherencia del outfit antes del modelado final S2C.</p>
+  </aside>
+</div>
+<script type="module">
+import * as THREE from "three";
+import {OrbitControls} from "three/addons/controls/OrbitControls.js";
+import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
+import {KTX2Loader} from "three/addons/loaders/KTX2Loader.js";
+import {MeshoptDecoder} from "https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/libs/meshopt_decoder.module.js";
+
+const MODEL="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb";
+const view=document.querySelector("#view"),status=document.querySelector("#status");
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(34,1,.01,100);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.shadowMap.enabled=true;
+view.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xffffff,0x202b3a,2.25));
+const key=new THREE.DirectionalLight(0xffffff,2.5);key.position.set(4,7,5);scene.add(key);
+const rim=new THREE.DirectionalLight(0xd7e5ff,1.2);rim.position.set(-4,4,-5);scene.add(rim);
+scene.add(new THREE.GridHelper(10,20,0x566272,0x222b36));
+
+const ctl=new OrbitControls(camera,renderer.domElement);
+ctl.enableDamping=true;ctl.target.set(0,1.3,0);
+
+let root,mixer,clips=[],allMeshes=[],maskParts=[],spinning=false,wire=false,last=performance.now();
+const keepBase=["M_Head","M_Ear_round","H2_warriorbraid","E2_band_vikingb"];
+const outfit=[
+  ["Armor_mage_Chest",0x57545c],
+  ["Armor_mage_ArmL",0x55515a],["Armor_mage_ArmR",0x55515a],
+  ["Armor_mage_Back",0x46434b],
+  ["Armor_mage_LegL",0x47444c],["Armor_mage_LegR",0x47444c],
+  ["Armor_rogue_HandL",0x3b393f],["Armor_rogue_HandR",0x3b393f],
+  ["Armor_ranger_FootL",0x4c423e],["Armor_ranger_FootR",0x4c423e]
+];
+
+function cloneTexturedMat(m,tint){
+  const c=m.clone();c.color.set(tint);c.roughness=Math.max(.65,c.roughness??.8);c.needsUpdate=true;return c;
 }
-function applyVariant(id){const cfg=variants[id];allMeshes.forEach(o=>o.visible=false);baseFace.forEach(n=>{const o=root.getObjectByName(n);if(o)o.visible=true});cfg.pieces.forEach(n=>{const o=root.getObjectByName(n);if(o){o.visible=true;restoreObject(o);tintObject(o,cfg.red.includes(n)?0x6a1b1b:0x4a4c50);}});if(maskGroup)maskGroup.visible=true;document.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('active',b.dataset.v===id));desc.textContent=cfg.text;fit();}
-function addMask(){const head=root.getObjectByName('head');if(!head)return;maskGroup=polyMask();maskGroup.position.set(0,.47,.42);maskGroup.scale.set(1.05,1.05,1.05);head.add(maskGroup)}
-function fit(){const b=new THREE.Box3().setFromObject(root),s=new THREE.Vector3(),c=new THREE.Vector3();b.getSize(s);b.getCenter(c);const d=Math.max(s.x,s.y,s.z)||2.6;ctl.target.copy(c);camera.position.set(c.x+d*1.05,c.y+d*.18,c.z+d*1.7);camera.updateProjectionMatrix();ctl.update()}
-const ktx2=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/libs/basis/').detectSupport(renderer);const loader=new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
-loader.load(MODEL,g=>{root=g.scene;scene.add(root);root.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){allMeshes.push(o);o.castShadow=true;o.receiveShadow=true}});clips=g.animations||[];mixer=clips.length?new THREE.AnimationMixer(root):null;const sel=document.querySelector('#anim');clips.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c.name||('Anim '+(i+1));sel.appendChild(o)});addMask();applyVariant('A');status.textContent='S2A cargado · mallas/texturas reales';status.classList.add('ok')},undefined,e=>{console.error(e);status.textContent='ERROR: '+e.message});
-document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>applyVariant(b.dataset.v));function setView(kind){const b=new THREE.Box3().setFromObject(root),c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);const d=Math.max(s.x,s.y,s.z)*1.7;const p=kind==='front'?[c.x,c.y,c.z+d]:kind==='back'?[c.x,c.y,c.z-d]:[c.x+d*.75,c.y+d*.08,c.z+d*.9];camera.position.set(...p);ctl.target.copy(c);ctl.update()}
-document.querySelector('#anim').onchange=e=>{if(!mixer)return;mixer.stopAllAction();const i=Number(e.target.value);if(Number.isInteger(i)&&clips[i])mixer.clipAction(clips[i]).reset().play()};document.querySelector('#play').onclick=()=>{if(mixer)mixer.timeScale=1};document.querySelector('#stop').onclick=()=>{if(mixer){mixer.stopAllAction();mixer.time=0}};document.querySelector('#front').onclick=()=>setView('front');document.querySelector('#back').onclick=()=>setView('back');document.querySelector('#side').onclick=()=>setView('side');document.querySelector('#spin').onclick=()=>spinning=!spinning;document.querySelector('#wire').onclick=()=>{wire=!wire;scene.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){const a=Array.isArray(o.material)?o.material:[o.material];a.forEach(m=>{if(m)m.wireframe=wire})}})};
-function resize(){const r=view.getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(view);resize();function loop(now=performance.now()){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;if(mixer)mixer.update(dt);if(root&&spinning)root.rotation.y+=dt*.5;ctl.update();renderer.render(scene,camera)}loop();
-</script></body></html>
+function tintObject(o,tint){
+  o.traverse(x=>{
+    if(!(x.isMesh||x.isSkinnedMesh))return;
+    if(!x.userData._origMat)x.userData._origMat=x.material;
+    const arr=Array.isArray(x.userData._origMat)?x.userData._origMat:[x.userData._origMat];
+    const cloned=arr.map(m=>cloneTexturedMat(m,tint));
+    x.material=Array.isArray(x.userData._origMat)?cloned:cloned[0];
+  });
+}
+function maskMat(color){
+  const m=new THREE.MeshStandardMaterial({color,roughness:.84,metalness:0,side:THREE.DoubleSide});
+  m.polygonOffset=true;m.polygonOffsetFactor=-2;m.polygonOffsetUnits=-2;
+  return m;
+}
+function makeSubset(src,predicate,material,name,inflate){
+  const g=src.geometry.clone();
+  g.computeBoundingBox();
+  const b=g.boundingBox;
+  const p=g.attributes.position,n=g.attributes.normal;
+  const ids=g.index?Array.from(g.index.array):Array.from({length:p.count},(_,i)=>i);
+  const dx=Math.max(1e-6,b.max.x-b.min.x),dy=Math.max(1e-6,b.max.y-b.min.y),dz=Math.max(1e-6,b.max.z-b.min.z);
+  const chosen=[],used=new Set();
+  for(let i=0;i+2<ids.length;i+=3){
+    const a=ids[i],c=ids[i+1],d=ids[i+2];
+    const x=(p.getX(a)+p.getX(c)+p.getX(d))/3;
+    const y=(p.getY(a)+p.getY(c)+p.getY(d))/3;
+    const z=(p.getZ(a)+p.getZ(c)+p.getZ(d))/3;
+    const nx=(x-b.min.x)/dx,ny=(y-b.min.y)/dy,nz=(z-b.min.z)/dz;
+    if(predicate(nx,ny,nz)){chosen.push(a,c,d);used.add(a);used.add(c);used.add(d);}
+  }
+  if(!chosen.length)return null;
+  g.setIndex(chosen);
+  if(n&&inflate){
+    used.forEach(i=>p.setXYZ(i,p.getX(i)+n.getX(i)*inflate,p.getY(i)+n.getY(i)*inflate,p.getZ(i)+n.getZ(i)*inflate));
+    p.needsUpdate=true;
+  }
+  g.computeBoundingSphere();
+  const m=new THREE.SkinnedMesh(g,material);
+  m.name=name;m.bindMode=src.bindMode;
+  m.bind(src.skeleton,src.bindMatrix);
+  m.position.copy(src.position);m.quaternion.copy(src.quaternion);m.scale.copy(src.scale);
+  m.castShadow=true;m.receiveShadow=true;m.frustumCulled=false;
+  src.parent.add(m);maskParts.push(m);return m;
+}
+function addFittedMask(){
+  const src=root.getObjectByName("M_Head");
+  if(!src||!src.isSkinnedMesh)throw new Error("M_Head skinned mesh no disponible");
+  const g=src.geometry;g.computeBoundingBox();
+  const depth=Math.max(.001,g.boundingBox.max.z-g.boundingBox.min.z);
+  const ivory=maskMat(0xeee4d2),red=maskMat(0x7a2528),ink=maskMat(0x17191f);
+  makeSubset(src,(x,y,z)=>z>.61&&x>.08&&x<.92&&y>.12&&y<.93,ivory,"HF_MASK_FACE",depth*.010);
+  makeSubset(src,(x,y,z)=>z>.68&&x>.42&&x<.58&&y>.67&&y<.88,red,"HF_MASK_FOREHEAD",depth*.017);
+  makeSubset(src,(x,y,z)=>z>.67&&x>.10&&x<.43&&y>.49&&y<.66,red,"HF_MASK_CHEEK_L",depth*.017);
+  makeSubset(src,(x,y,z)=>z>.67&&x>.57&&x<.90&&y>.49&&y<.66,red,"HF_MASK_CHEEK_R",depth*.017);
+  makeSubset(src,(x,y,z)=>z>.70&&x>.15&&x<.43&&y>.55&&y<.68,ink,"HF_MASK_EYE_L",depth*.022);
+  makeSubset(src,(x,y,z)=>z>.70&&x>.57&&x<.85&&y>.55&&y<.68,ink,"HF_MASK_EYE_R",depth*.022);
+  makeSubset(src,(x,y,z)=>z>.72&&x>.44&&x<.56&&y>.35&&y<.49,ink,"HF_MASK_NOSE",depth*.022);
+
+  const head=root.getObjectByName("head");
+  if(head){
+    const earMat=maskMat(0xeee4d2),earRed=maskMat(0x7a2528);
+    function tri(name,pts,mat){
+      const gg=new THREE.BufferGeometry();
+      gg.setAttribute("position",new THREE.Float32BufferAttribute(pts.flat(),3));
+      gg.setIndex([0,1,2]);gg.computeVertexNormals();
+      const mesh=new THREE.Mesh(gg,mat);mesh.name=name;mesh.castShadow=true;head.add(mesh);maskParts.push(mesh);return mesh;
+    }
+    const eL=tri("HF_MASK_EAR_L",[[-.24,.78,.10],[-.13,1.13,.05],[-.03,.80,.13]],earMat);
+    const eR=tri("HF_MASK_EAR_R",[[.24,.78,.10],[.13,1.13,.05],[.03,.80,.13]],earMat);
+    tri("HF_MASK_EAR_MARK_L",[[-.19,.81,.115],[-.13,1.03,.075],[-.07,.82,.135]],earRed);
+    tri("HF_MASK_EAR_MARK_R",[[.19,.81,.115],[.13,1.03,.075],[.07,.82,.135]],earRed);
+  }
+}
+function applyLook(){
+  allMeshes.forEach(o=>o.visible=false);
+  keepBase.forEach(n=>{const o=root.getObjectByName(n);if(o)o.visible=true;});
+  ["M_Eye_almond","M_Brow_soft","M_Mouth_neutral"].forEach(n=>{const o=root.getObjectByName(n);if(o)o.visible=false;});
+  outfit.forEach(([n,t])=>{const o=root.getObjectByName(n);if(o){o.visible=true;tintObject(o,t);}});
+  maskParts.forEach(o=>o.visible=true);
+}
+function fit(){
+  const b=new THREE.Box3().setFromObject(root),s=new THREE.Vector3(),c=new THREE.Vector3();
+  b.getSize(s);b.getCenter(c);const d=Math.max(s.x,s.y,s.z)||2.6;
+  ctl.target.copy(c);camera.position.set(c.x+d*.95,c.y+d*.16,c.z+d*1.55);camera.near=.01;camera.far=100;camera.updateProjectionMatrix();ctl.update();
+}
+function setView(kind){
+  const b=new THREE.Box3().setFromObject(root),s=new THREE.Vector3(),c=new THREE.Vector3();
+  b.getSize(s);b.getCenter(c);const d=Math.max(s.x,s.y,s.z)*1.65;
+  const p=kind==="front"?[c.x,c.y,c.z+d]:kind==="back"?[c.x,c.y,c.z-d]:kind==="profile"?[c.x+d,c.y,c.z]:[c.x+d*.72,c.y+d*.05,c.z+d*.92];
+  camera.position.set(...p);ctl.target.copy(c);ctl.update();
+}
+
+const ktx2=new KTX2Loader().setTranscoderPath("https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/libs/basis/").detectSupport(renderer);
+const loader=new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
+loader.load(MODEL,g=>{
+  root=g.scene;scene.add(root);
+  root.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){allMeshes.push(o);o.castShadow=true;o.receiveShadow=true;}});
+  clips=g.animations||[];mixer=clips.length?new THREE.AnimationMixer(root):null;
+  const sel=document.querySelector("#anim");
+  clips.forEach((c,i)=>{const o=document.createElement("option");o.value=i;o.textContent=c.name||("Anim "+(i+1));sel.appendChild(o);});
+  addFittedMask();applyLook();fit();
+  status.textContent="S2B cargado · máscara ajustada a M_Head + outfit curado";
+  status.classList.add("ok");
+},undefined,e=>{console.error(e);status.textContent="ERROR: "+e.message;});
+
+document.querySelector("#front").onclick=()=>setView("front");
+document.querySelector("#side").onclick=()=>setView("side");
+document.querySelector("#profile").onclick=()=>setView("profile");
+document.querySelector("#back").onclick=()=>setView("back");
+document.querySelector("#spin").onclick=e=>{spinning=!spinning;e.currentTarget.classList.toggle("active",spinning);};
+document.querySelector("#wire").onclick=e=>{wire=!wire;e.currentTarget.classList.toggle("active",wire);scene.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){const a=Array.isArray(o.material)?o.material:[o.material];a.forEach(m=>{if(m)m.wireframe=wire;});}});};
+document.querySelector("#mask").onclick=e=>{const show=!maskParts.some(x=>x.visible===false);maskParts.forEach(x=>x.visible=!show);e.currentTarget.textContent=show?"Mostrar máscara":"Ocultar máscara";};
+document.querySelector("#anim").onchange=e=>{if(!mixer)return;mixer.stopAllAction();const i=Number(e.target.value);if(Number.isInteger(i)&&clips[i])mixer.clipAction(clips[i]).reset().play();};
+document.querySelector("#play").onclick=()=>{if(mixer)mixer.timeScale=1;};
+document.querySelector("#stop").onclick=()=>{if(mixer){mixer.stopAllAction();mixer.time=0;}};
+
+function resize(){const r=view.getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(view);resize();
+function loop(now=performance.now()){requestAnimationFrame(loop);const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;if(mixer)mixer.update(dt);if(root&&spinning)root.rotation.y+=dt*.5;ctl.update();renderer.render(scene,camera);}loop();
+</script>
+</body>
+</html>
