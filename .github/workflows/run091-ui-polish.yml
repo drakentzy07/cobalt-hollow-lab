@@ -97,6 +97,7 @@ jobs:
           python ../overlays/highfly_mobile_polish.py
           python ../overlays/highfly_advanced_mobility.py
           python ../overlays/highfly_run09_mobile_actions.py
+          python ../overlays/highfly_run091_ui_polish.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
