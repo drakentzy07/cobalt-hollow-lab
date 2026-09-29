@@ -841,8 +841,8 @@ jobs:
             );
           }
 
-          // After the authored recovery (0.55s; finisher swing 0.58s), a fresh
-          // step 1 must be accepted.
+          // After the authored HIGHFLY real-time recovery (0.62s), a fresh
+          // step 1 must be accepted regardless of legacy sim swingTimer drift.
           await page.waitForTimeout(650);
           await page.evaluate((id) => {
             const g = window.__game;
