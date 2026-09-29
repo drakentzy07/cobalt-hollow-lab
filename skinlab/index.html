@@ -69,6 +69,8 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { KTX2Loader } from "three/addons/loaders/KTX2Loader.js";
+import { MeshoptDecoder } from "https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/libs/meshopt_decoder.module.js";
 const MODEL="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb";
 const view=document.getElementById("view"),status=document.getElementById("status"),parts=document.getElementById("parts");
 const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(35,1,.01,100),renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
@@ -76,7 +78,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpac
 const ctl=new OrbitControls(camera,renderer.domElement);ctl.enableDamping=true;ctl.target.set(0,1.3,0);
 scene.add(new THREE.HemisphereLight(0xffffff,0x283244,2.0));const sun=new THREE.DirectionalLight(0xffffff,2.3);sun.position.set(4,7,6);scene.add(sun);
 const grid=new THREE.GridHelper(10,20,0x596577,0x26303d);scene.add(grid);
-let root,mixer,clips=[],skeleton,hf=[],meshes=[],clock=new THREE.Clock(),paused=false;
+let root,mixer,clips=[],skeleton,hf=[],meshes=[],paused=false,lastFrame=performance.now();
 const wanted=new Set(["Armor_rogue_ArmL","Armor_rogue_ArmR","Armor_rogue_Back","Armor_rogue_Chest","Armor_rogue_FootL","Armor_rogue_FootR","Armor_rogue_HandL","Armor_rogue_HandR","Armor_rogue_LegL","Armor_rogue_LegR","M_Head","M_Eye_almond","M_Brow_soft","M_Ear_round","M_Mouth_neutral","H2_topknot","E2_band_vikingb"]);
 function material(c){return new THREE.MeshStandardMaterial({color:c,roughness:.9,metalness:0,side:THREE.DoubleSide})}
 const ivory=material(0xeee6d6),red=material(0x65120f),dark=material(0x12141b),trim=material(0x574a38);
@@ -104,7 +106,13 @@ function fit(){
  ctl.target.copy(c);camera.position.set(c.x+d*1.15,c.y+d*.30,c.z+d*1.8);camera.near=.01;camera.far=100;camera.updateProjectionMatrix();ctl.update();
 }
 function fixed(side){const b=new THREE.Box3().setFromObject(root),s=new THREE.Vector3(),c=new THREE.Vector3();b.getSize(s);b.getCenter(c);const d=Math.max(s.x,s.y,s.z)*1.9;const p={front:[c.x,c.y,c.z+d],back:[c.x,c.y,c.z-d],left:[c.x-d,c.y,c.z],right:[c.x+d,c.y,c.z]}[side];camera.position.set(...p);ctl.target.copy(c);ctl.update()}
-new GLTFLoader().load(MODEL,g=>{
+const ktx2=new KTX2Loader()
+  .setTranscoderPath("https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/libs/basis/")
+  .detectSupport(renderer);
+const loader=new GLTFLoader();
+loader.setKTX2Loader(ktx2);
+loader.setMeshoptDecoder(MeshoptDecoder);
+loader.load(MODEL,g=>{
  root=g.scene;scene.add(root);cleanPreview();addS1();clips=g.animations||[];mixer=clips.length?new THREE.AnimationMixer(root):null;
  skeleton=new THREE.SkeletonHelper(root);skeleton.visible=false;scene.add(skeleton);
  const sel=document.getElementById("anim");clips.forEach((c,i)=>{const o=document.createElement("option");o.value=i;o.textContent=c.name||("Anim "+(i+1));sel.appendChild(o)});
@@ -117,7 +125,16 @@ document.getElementById("hfonly").onchange=e=>{meshes.forEach(m=>m.visible=e.tar
 document.getElementById("anim").onchange=e=>{if(!mixer)return;mixer.stopAllAction();const i=Number(e.target.value);if(Number.isInteger(i)&&clips[i])mixer.clipAction(clips[i]).reset().play()};
 document.getElementById("play").onclick=()=>{paused=false;if(mixer)mixer.timeScale=1};document.getElementById("pause").onclick=()=>{paused=!paused;if(mixer)mixer.timeScale=paused?0:1};document.getElementById("stop").onclick=()=>{if(mixer){mixer.stopAllAction();mixer.time=0}};
 function resize(){const r=view.getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(view);resize();
-function loop(){requestAnimationFrame(loop);const dt=Math.min(.05,clock.getDelta());if(mixer)mixer.update(dt);if(root&&document.getElementById("spin").checked)root.rotation.y+=dt*.6;ctl.update();renderer.render(scene,camera)}loop();
+function loop(now=performance.now()){
+  requestAnimationFrame(loop);
+  const dt=Math.min(.05,Math.max(0,(now-lastFrame)/1000));
+  lastFrame=now;
+  if(mixer)mixer.update(dt);
+  if(root&&document.getElementById("spin").checked)root.rotation.y+=dt*.6;
+  ctl.update();
+  renderer.render(scene,camera);
+}
+loop();
 </script>
 </body>
 </html>
