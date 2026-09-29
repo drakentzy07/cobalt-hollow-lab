@@ -133,22 +133,17 @@ replace_once(
     "offline preview uses selected assets",
 )
 
-main_text = main.read_text(encoding="utf-8")
-gate = "  charactersReady()\n    .then(() => {"
-gate_at = main_text.find(gate)
-if gate_at < 0:
-    raise SystemExit("global preview gate missing")
-assign = "        characterPreview = new CharacterPreview(container, canvas, {"
-assign_at = main_text.find(assign, gate_at)
-if assign_at < 0:
-    raise SystemExit("global preview constructor missing")
-close = "        });"
-close_at = main_text.find(close, assign_at)
-if close_at < 0:
-    raise SystemExit("global preview constructor close missing")
-ctor = main_text[assign_at:close_at + len(close)]
-wrapped = "        if (!characterPreview) {\n" + ctor.replace("        characterPreview", "          characterPreview", 1) + "\n        } else if (canvas.parentElement !== container) {\n          characterPreview.setContainer(container);\n        }"
-main.write_text(main_text[:assign_at] + wrapped + main_text[close_at + len(close):], encoding="utf-8")
+replace_once(
+    main,
+    """  charactersReady()
+    .then(() => {""",
+    """  charactersReady()
+    .then(() => {
+      // HIGHFLY selected-class preview may already be alive. The broad
+      // ClaudeCraft boot sweep must not replace its WebGL renderer later.
+      if (characterPreview) return;""",
+    "global preview keeps selected fast preview",
+)
 
 preview_text = preview.read_text(encoding="utf-8")
 old_preview = """    this.currentVisualSig = null;
