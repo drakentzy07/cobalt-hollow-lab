@@ -155,7 +155,10 @@ replace_once(
     if (this.onHighflyBasicAttack?.(next)) {
       this.highflyComboStep = next === 3 ? 0 : next;
       this.highflyComboExpiresAt = now + 0.95;
-      this.highflyComboReadyAt = next === 3 ? now + 0.55 : 0;
+      // One real-time cadence source for action combat:
+      // quick 1 -> 2 -> 3, then a clearly perceptible short finisher recovery.
+      this.highflyComboReadyAt =
+        now + (next === 1 ? 0.30 : next === 2 ? 0.34 : 0.62);
       this.highflyAcceptedBasicAttacks += 1;
       document.body.dataset.highflyBasicAttackCount = String(this.highflyAcceptedBasicAttacks);
       this.flashActionSlot(0);
@@ -217,8 +220,11 @@ export function highflyBasicAttack(
 
   const t = p.targetId !== null ? ctx.entities.get(p.targetId) : null;
   if (!t || t.dead || !ctx.isHostileTo(p, t) || hasEscapeStealth(t)) return false;
-  if (p.swingTimer > 0) return false;
 
+  // HIGHFLY cadence is owned by the action HUD's real-time gate. Do not also
+  // reject on ClaudeCraft's simulation-time swingTimer: under mobile/frame
+  // load those two clocks drift and the first strike after the finisher can be
+  // rejected even though the authored recovery already elapsed.
   if (p.mountKey !== '') forceDismount(ctx, p);
   if (p.sitting) ctx.standUp(p);
   if (p.weaponStowed) drawWeapon(p);
