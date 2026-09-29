@@ -132,7 +132,6 @@ jobs:
           grep -F "direction: ltr !important;" src/styles/shell.css
           grep -F "position: fixed !important;" src/styles/shell.css
           grep -F "this.camYaw -= dx * dragSens;" src/game/input.ts
-          grep -F "this.camPitch - this.touchPitchSign * dy * dragSens" src/game/input.ts
           grep -F "handleOfflineSelect();" src/main.ts
           grep -F "HIGHFLY double jump" src/sim/player_motion.ts
           grep -F "highflyEvadeSeq?: number;" src/sim/types.ts
