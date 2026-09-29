@@ -70,13 +70,35 @@ replace_once(
 )
 replace_once(
     pad,
+    """export interface PadTargetPickDeps {
+  world: PadTargetPickWorld;
+  /** The client's one interact path, told which npc the pad chose. */
+  interactKey(preferNpcId: number | null): void;
+}""",
+    """export interface PadTargetPickDeps {
+  world: PadTargetPickWorld;
+  /** The client's one interact path, told which npc the pad chose. */
+  interactKey(preferNpcId: number | null): void;
+  /** HIGHFLY: camera-forward is the screen-facing signal on free-camera mobile. */
+  softTargetFacing?: () => number;
+}""",
+    "pad camera-facing dependency",
+)
+replace_once(
+    pad,
+    "  const { world, interactKey } = deps;",
+    "  const { world, interactKey, softTargetFacing } = deps;",
+    "pad camera-facing wiring",
+)
+replace_once(
+    pad,
     """      const picked = nearestAutoTarget(world.entities.values(), world.player.pos, (e) =>
         attackable(e as Entity),
       );""",
     """      const picked = bestSoftAutoTarget(
         world.entities.values(),
         world.player.pos,
-        world.player.facing,
+        softTargetFacing?.() ?? world.player.facing,
         (e) => attackable(e as Entity),
       );""",
     "pad soft target call",
@@ -261,6 +283,16 @@ replace_once(
 )
 replace_once(
     main,
+    "  const padTargetPick = createPadTargetPick({ world, interactKey });",
+    """  const padTargetPick = createPadTargetPick({
+    world,
+    interactKey,
+    softTargetFacing: () => input.camYaw,
+  });""",
+    "main camera-facing soft target wiring",
+)
+replace_once(
+    main,
     """  function attackNearest(): void {
     const p = world.player;
     const activePvpOpponents = activePvpOpponentIds(world);
@@ -287,7 +319,7 @@ replace_once(
     const best = bestSoftAutoTarget(
       world.entities.values(),
       p.pos,
-      p.facing,
+      input.camYaw,
       (e) =>
         isAttackableEntity(
           world.entities.get(e.id),
