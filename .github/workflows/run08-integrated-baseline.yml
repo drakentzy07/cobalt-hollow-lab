@@ -93,6 +93,7 @@ jobs:
           python ../overlays/highfly_offline_save.py
           python ../overlays/highfly_entry_es.py
           python ../overlays/highfly_mobile_creator.py
+          python ../overlays/highfly_offline_resume_preview.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -114,6 +115,10 @@ jobs:
           grep -F "let currentLanguage: SupportedLanguage = 'es_ES';" src/ui/i18n.ts
           grep -F "let serverMode: ServerMode = 'offline';" src/main.ts
           grep -F "height: clamp(180px, 42vh, 240px);" src/styles/shell.css
+          grep -F "recoverHighflyOfflinePreview" src/main.ts
+          grep -F "selectHighflyOfflineClass" src/main.ts
+          grep -F "offlineNameInput.value = saved?.name ?? '';" src/main.ts
+          grep -F "handleOfflineSelect();" src/main.ts
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -398,7 +403,7 @@ jobs:
           const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
           const url = 'http://127.0.0.1:4174/cobalt-hollow-lab/';
 
-          async function enterOffline() {
+          async function enterOffline(expectResume = false) {
             await page.locator('#btn-offline').waitFor({ state: 'attached', timeout: 20000 });
             for (let attempt = 0; attempt < 60; attempt++) {
               await page.evaluate(() => document.querySelector('#btn-offline')?.click());
@@ -406,9 +411,19 @@ jobs:
               await page.waitForTimeout(250);
             }
             const name = page.locator('#char-name');
-            await name.fill('CobaltWarrior');
             const warrior = page.locator('#offline-select .mini-class[data-class="warrior"]');
-            await warrior.click({ force: true });
+            if (expectResume) {
+              await page.waitForFunction(() => {
+                const input = document.querySelector('#char-name');
+                const selected = document.querySelector('#offline-select .mini-class.sel');
+                return input instanceof HTMLInputElement &&
+                  input.value === 'CobaltWarrior' &&
+                  selected?.getAttribute('data-class') === 'warrior';
+              }, null, { timeout: 15000 });
+            } else {
+              await name.fill('CobaltWarrior');
+              await warrior.click({ force: true });
+            }
             await page.locator('#btn-start-offline').click({ force: true });
             const preflight = page.locator('#mobile-preflight-continue');
             if (await preflight.count()) await preflight.click({ force: true }).catch(() => {});
@@ -435,7 +450,7 @@ jobs:
 
           await page.waitForTimeout(3500);
           await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
-          await enterOffline();
+          await enterOffline(true);
 
           const restored = await page.evaluate(() => {
             const sim = window.__game.sim;
