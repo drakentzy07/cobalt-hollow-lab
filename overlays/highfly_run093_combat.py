@@ -132,6 +132,7 @@ replace_once(
   private highflyComboStep: 0 | 1 | 2 | 3 = 0;
   private highflyComboExpiresAt = 0;
   private highflyComboReadyAt = 0;
+  private highflyAcceptedBasicAttacks = 0;
   onQuestDialogStateChange: ((open: boolean) => void) | null = null;""",
     "HUD HIGHFLY seams",
 )
@@ -154,7 +155,9 @@ replace_once(
     if (this.onHighflyBasicAttack?.(next)) {
       this.highflyComboStep = next === 3 ? 0 : next;
       this.highflyComboExpiresAt = now + 0.95;
-      this.highflyComboReadyAt = next === 3 ? now + 0.38 : 0;
+      this.highflyComboReadyAt = next === 3 ? now + 0.55 : 0;
+      this.highflyAcceptedBasicAttacks += 1;
+      document.body.dataset.highflyBasicAttackCount = String(this.highflyAcceptedBasicAttacks);
       this.flashActionSlot(0);
     }
   }""",
