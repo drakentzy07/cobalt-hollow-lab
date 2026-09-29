@@ -79,6 +79,9 @@ replace_once(
 css = Path("src/styles/shell.css")
 text = css.read_text(encoding="utf-8")
 anchor = """    body.mobile-touch #offline-select .char-preview-container {
+      /* HIGHFLY RUN0.8: the original 100px landscape stage crushed the
+         character preview on wide phones (S23 Ultra class devices). Keep a
+         real turntable-sized viewport and let the details column scroll. */
       height: clamp(180px, 42vh, 240px);
       min-height: 180px;
       flex-shrink: 0;
