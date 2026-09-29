@@ -26,6 +26,15 @@ jobs:
         with:
           ref: 08b9f4ed9c79d032f6ed3682fa62da60e0348abd
 
+      - name: Checkout isolated Skin Lab S2
+        uses: actions/checkout@v4
+        with:
+          ref: skin-lab-s2-premium
+          path: skinlab-src
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /skinlab-s2/
+
       - name: Checkout frozen ClaudeCraft slice
         uses: actions/checkout@v4
         with:
@@ -122,6 +131,15 @@ jobs:
           python ../overlays/rewrite_pages_static.py
           touch dist/.nojekyll
           du -sh dist
+
+      - name: Publish isolated HIGHFLY Skin Lab S2
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/skin-lab/s2
+          cp ../skinlab-src/skinlab-s2/index.html dist/skin-lab/s2/index.html
+          test -s dist/skin-lab/s2/index.html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
