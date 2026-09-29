@@ -141,7 +141,7 @@ replace_once(
   // sweep on cold mobile before the player opens the creator. The offline
   // creator has its own selected-class dependency gate below, so this avoids
   // competing downloads that delayed the first Hunter preview on real phones.
-  if (serverMode !== 'offline') charactersReady()
+  if (!offlineAvailable) charactersReady()
     .then(() => {
       // HIGHFLY selected-class preview may already be alive. The broad
       // ClaudeCraft boot sweep must not replace its WebGL renderer later.
