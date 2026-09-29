@@ -24,8 +24,12 @@ export interface HighflyOfflineSave {
 
 const DB_NAME = 'highfly-offline';
 const STORE_NAME = 'saves';
-const SLOT_KEY = 'primary';
+const PRIMARY_SLOT_KEY = 'primary';
 const LOCAL_KEY = 'highfly.offline.primary.v1';
+
+function identitySlotKey(playerClass: PlayerClass, name: string): string {
+  return `hunter:${playerClass}:${encodeURIComponent(name.trim().toLowerCase())}`;
+}
 
 function valid(value: unknown): value is HighflyOfflineSave {
   if (!value || typeof value !== 'object') return false;
@@ -77,23 +81,33 @@ function openDb(): Promise<IDBDatabase | null> {
   });
 }
 
-async function readIdb(): Promise<HighflyOfflineSave | null> {
+async function readIdbKey(key: string): Promise<HighflyOfflineSave | null> {
   const db = await openDb();
   if (!db) return null;
   return await new Promise((resolve) => {
+    let settled = false;
+    const finish = (value: HighflyOfflineSave | null) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
     try {
       const tx = db.transaction(STORE_NAME, 'readonly');
-      const request = tx.objectStore(STORE_NAME).get(SLOT_KEY);
-      request.onsuccess = () => resolve(valid(request.result) ? request.result : null);
-      request.onerror = () => resolve(null);
+      const request = tx.objectStore(STORE_NAME).get(key);
+      request.onsuccess = () => finish(valid(request.result) ? request.result : null);
+      request.onerror = () => finish(null);
       tx.oncomplete = () => db.close();
       tx.onerror = () => {
         db.close();
-        resolve(null);
+        finish(null);
+      };
+      tx.onabort = () => {
+        db.close();
+        finish(null);
       };
     } catch {
       db.close();
-      resolve(null);
+      finish(null);
     }
   });
 }
@@ -104,7 +118,11 @@ async function writeIdb(save: HighflyOfflineSave): Promise<void> {
   await new Promise<void>((resolve) => {
     try {
       const tx = db.transaction(STORE_NAME, 'readwrite');
-      tx.objectStore(STORE_NAME).put(save, SLOT_KEY);
+      const store = tx.objectStore(STORE_NAME);
+      // "primary" is only the last-played pointer/snapshot used by the launcher.
+      // The identity slot preserves each tested Hunter independently.
+      store.put(save, PRIMARY_SLOT_KEY);
+      store.put(save, identitySlotKey(save.playerClass, save.name));
       tx.oncomplete = () => {
         db.close();
         resolve();
@@ -124,16 +142,39 @@ async function writeIdb(save: HighflyOfflineSave): Promise<void> {
   });
 }
 
-export async function loadHighflyOfflineSave(): Promise<HighflyOfflineSave | null> {
-  const local = readLocal();
-  const idb = await readIdb();
-  if (!local) return idb;
-  if (!idb) return local;
-  return local.updatedAt >= idb.updatedAt ? local : idb;
+function newest(
+  a: HighflyOfflineSave | null,
+  b: HighflyOfflineSave | null,
+): HighflyOfflineSave | null {
+  if (!a) return b;
+  if (!b) return a;
+  return a.updatedAt >= b.updatedAt ? a : b;
+}
+
+export async function loadHighflyOfflineSave(
+  playerClass?: PlayerClass,
+  name?: string,
+): Promise<HighflyOfflineSave | null> {
+  const primary = newest(readLocal(), await readIdbKey(PRIMARY_SLOT_KEY));
+
+  // With no identity, callers want the most recently played Hunter for launcher
+  // preselection. With an identity, restore ONLY that Hunter's independent slot.
+  if (!playerClass || !name) return primary;
+
+  const exact = await readIdbKey(identitySlotKey(playerClass, name));
+  if (exact) return exact;
+
+  // Backwards-compatible migration for installs created before multislot saves:
+  // the old primary snapshot remains a valid exact save until its next autosave,
+  // at which point writeIdb() also materialises the identity slot.
+  if (primary?.playerClass === playerClass && primary.name === name) return primary;
+  return null;
 }
 
 export function writeHighflyOfflineSave(save: HighflyOfflineSave): void {
-  // Synchronous mirror first: pagehide/visibilitychange cannot wait for IDB.
+  // Keep only the last-played snapshot in localStorage (sync pagehide fallback);
+  // all independent Hunter slots live in IndexedDB so they do not exhaust the
+  // tiny localStorage quota as inventories grow.
   writeLocal(save);
   void writeIdb(save);
 }
@@ -193,11 +234,9 @@ build_old = """  if (world) setActiveWorldContent(world);
 build_new = """  if (world) setActiveWorldContent(world);
 
   // RUN0.6: restore through ClaudeCraft's canonical CharacterState loader.
-  const storedOfflineSave = world ? null : await loadHighflyOfflineSave();
-  const matchingOfflineSave =
-    storedOfflineSave?.playerClass === playerClass && storedOfflineSave.name === name
-      ? storedOfflineSave
-      : null;
+  const storedOfflineSave =
+    world ? null : await loadHighflyOfflineSave(playerClass, name);
+  const matchingOfflineSave = storedOfflineSave;
   const offlineCfg = offlineWorldConfig({
     playerClass,
     name,
