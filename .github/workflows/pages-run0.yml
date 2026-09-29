@@ -160,3 +160,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 # publish-pin: run0.9.3-phase0-mobile-combat b40a9b68
+# skin-lab-s2-pin: 03111be9
