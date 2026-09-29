@@ -140,7 +140,12 @@ jobs:
           grep -F "id=\"mobile-evade\"" index.html
           grep -F "tapMenus: () => true" src/ui/hud/menu/menu_control_controller.ts
           grep -F "this.camPitch + this.touchPitchSign * dy * dragSens" src/game/input.ts
-          grep -F "HIGHFLY RUN0.9" src/styles/hud.mobile.css\n          grep -F "HIGHFLY RUN0.9.1" src/styles/hud.mobile.css\n          grep -F "id=\\"mobile-training\\"" index.html\n          grep -F "id=\\"highfly-training-window\\"" index.html\n          grep -F "this.bindButton(\'mobile-menu-anchor\'" src/game/mobile_controls.ts\n          grep -F "canvas.parentElement !== container" src/main.ts
+          grep -F "HIGHFLY RUN0.9" src/styles/hud.mobile.css
+          grep -F "HIGHFLY RUN0.9.1" src/styles/hud.mobile.css
+          grep -F 'id="mobile-training"' index.html
+          grep -F 'id="highfly-training-window"' index.html
+          grep -F "this.bindButton('mobile-menu-anchor'" src/game/mobile_controls.ts
+          grep -F "canvas.parentElement !== container" src/main.ts
 
       - name: Setup Node
         uses: actions/setup-node@v4
