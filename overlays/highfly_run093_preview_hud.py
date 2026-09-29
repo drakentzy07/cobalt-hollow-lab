@@ -8,7 +8,191 @@ def replace_once(path: Path, old: str, new: str, label: str) -> None:
     path.write_text(text.replace(old, new), encoding="utf-8")
 
 main = Path("src/main.ts")
+assets = Path("src/render/characters/assets.ts")
+preview = Path("src/render/characters/preview.ts")
 css = Path("src/styles/hud.mobile.css")
+
+# ---------------------------------------------------------------------------
+# P0 creator preview — selected-visual readiness.
+#
+# Load only the selected class body, animation donors and visible weapons.
+# This avoids waiting for every eager ClaudeCraft character GLB on cold mobile.
+# ---------------------------------------------------------------------------
+insert_before = """/** Resolve once every boot-time character GLB + skin atlas is cached, retrying"""
+assets_text = assets.read_text(encoding="utf-8")
+if insert_before not in assets_text:
+    raise SystemExit("selected preview readiness insertion point missing")
+preview_ready = r"""
+/** Ensure only the GLBs required to construct one preview visual are resident. */
+export async function previewVisualReady(
+  visualKey: string,
+  weaponItemId: string | null = null,
+  offhandItemId: string | null = null,
+  maxAttempts = 3,
+): Promise<void> {
+  const def = VISUALS[visualKey];
+  if (!def) throw new Error('unknown preview visual key: ' + visualKey);
+
+  const required = new Set<string>();
+  const add = (url: string | null | undefined) => {
+    if (url) required.add(assetUrl(url));
+  };
+  add(def.url);
+  for (const url of def.animUrls ?? []) add(url);
+  for (const att of visibleAttachmentsForGraphics(def)) add(att.url);
+  add(itemWeaponModelUrl(weaponItemId));
+  add(itemOffhandModelUrl(offhandItemId));
+
+  const urls = [...required];
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const missing = urls.filter((url) => !gltfByUrl.has(url));
+    if (missing.length === 0) return;
+    if (attempt > 1) {
+      await new Promise((resolve) => setTimeout(resolve, gltfRetryDelayMs(attempt)));
+    }
+    const results = await Promise.allSettled(missing.map((url) => prepareCharacterUrl(url)));
+    if (attempt === maxAttempts) {
+      const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+      if (failed.length > 0) {
+        throw new Error('selected preview assets failed to load (' + failed.length + '): ' + failed.map((f) => String(f.reason)).join('; '));
+      }
+    }
+  }
+}
+
+"""
+assets.write_text(assets_text.replace(insert_before, preview_ready + insert_before), encoding="utf-8")
+
+replace_once(
+    main,
+    """import {
+  charactersReady,
+  ensureCharacterUrl,
+  modularCacheStats,
+  preloadMechAssets,
+  startStreamedCharacterPreloads,
+} from './render/characters/assets';
+import { skinCount, weaponSkinModelUrl } from './render/characters/manifest';""",
+    """import {
+  charactersReady,
+  ensureCharacterUrl,
+  modularCacheStats,
+  preloadMechAssets,
+  previewVisualReady,
+  startStreamedCharacterPreloads,
+} from './render/characters/assets';
+import {
+  modularVisualKey,
+  skinCount,
+  weaponSkinModelUrl,
+} from './render/characters/manifest';""",
+    "selected preview readiness imports",
+)
+
+replace_once(
+    main,
+    """function previewClassBody(cls: PlayerClass): void {
+  if (!characterPreview) return;
+  const look = modularLookForClass(cls);
+  if (look) characterPreview.setModular(look.app, look.worn, cls);
+  else characterPreview.setClass(cls);
+}""",
+    """let highflyPreviewClassRequest = 0;
+
+async function ensureHighflyPreviewClassReady(cls: PlayerClass): Promise<void> {
+  const classDef = CLASSES[cls];
+  await previewVisualReady(
+    modularVisualKey(cls),
+    classDef.startWeapon ?? null,
+    classDef.startOffhand ?? null,
+    3,
+  );
+}
+
+function previewClassBody(cls: PlayerClass): void {
+  if (!characterPreview) return;
+  const request = ++highflyPreviewClassRequest;
+  void ensureHighflyPreviewClassReady(cls)
+    .then(() => {
+      if (!characterPreview || request !== highflyPreviewClassRequest) return;
+      const look = modularLookForClass(cls);
+      if (look) characterPreview.setModular(look.app, look.worn, cls);
+      else characterPreview.setClass(cls);
+    })
+    .catch((err: unknown) => {
+      console.error('[HIGHFLY preview] selected class assets failed', cls, err);
+    });
+}""",
+    "selected class preview gate",
+)
+
+replace_once(
+    main,
+    "      await charactersReady(5);",
+    "      await ensureHighflyPreviewClassReady(cls);",
+    "offline preview uses selected assets",
+)
+
+replace_once(
+    main,
+    """      if (container && canvas) {
+        characterPreview = new CharacterPreview(container, canvas, {
+          // GFX.constrainedMemory covers every iOS WebKit host (Safari and other iOS
+          // browsers, not just the packaged app) plus the general touch/coarse-pointer
+          // detector, not just NATIVE_APP: the launcher's char-select preview sits in the
+          // same entry-allocation window the boot preload defers/streams for
+          // (assets/preload.ts: "a 12 GB iPhone 17 Pro was killed 1.6s into the LAUNCHER").
+          constrainedMemory: GFX.constrainedMemory,
+        });""",
+    """      if (container && canvas) {
+        if (!characterPreview) {
+          characterPreview = new CharacterPreview(container, canvas, {
+            // GFX.constrainedMemory covers every iOS WebKit host (Safari and other iOS
+            // browsers, not just the packaged app) plus the general touch/coarse-pointer
+            // detector, not just NATIVE_APP: the launcher's char-select preview sits in the
+            // same entry-allocation window the boot preload defers/streams for
+            // (assets/preload.ts: "a 12 GB iPhone 17 Pro was killed 1.6s into the LAUNCHER").
+            constrainedMemory: GFX.constrainedMemory,
+          });
+        } else if (canvas.parentElement !== container) {
+          characterPreview.setContainer(container);
+        }""",
+    "global preview must not recreate fast preview",
+)
+
+preview_text = preview.read_text(encoding="utf-8")
+old_preview = """    this.currentVisualSig = null;
+
+    try {
+      this.currentVisual = new CharacterVisual("""
+new_preview = """    this.currentVisualSig = null;
+    delete this.canvas.dataset.highflyPreviewVisual;
+
+    try {
+      this.currentVisual = new CharacterVisual("""
+if preview_text.count(old_preview) != 1:
+    raise SystemExit("preview visual marker start mismatch")
+preview_text = preview_text.replace(old_preview, new_preview)
+old_ready = """      this.currentVisualSig = nextSig;
+      this.characterGroup.add(this.currentVisual.root);
+      // Re-apply the persisted weapon-skin cosmetic"""
+new_ready = """      this.currentVisualSig = nextSig;
+      this.characterGroup.add(this.currentVisual.root);
+      this.canvas.dataset.highflyPreviewVisual = visualKey;
+      // Re-apply the persisted weapon-skin cosmetic"""
+if preview_text.count(old_ready) != 1:
+    raise SystemExit("preview visual marker ready mismatch")
+preview_text = preview_text.replace(old_ready, new_ready)
+old_fail = """    } catch (err) {
+      console.error(`Failed to load preview character visual for ${visualKey}:`, err);
+    }"""
+new_fail = """    } catch (err) {
+      delete this.canvas.dataset.highflyPreviewVisual;
+      console.error(`Failed to load preview character visual for ${visualKey}:`, err);
+    }"""
+if preview_text.count(old_fail) != 1:
+    raise SystemExit("preview visual marker fail mismatch")
+preview.write_text(preview_text.replace(old_fail, new_fail), encoding="utf-8")
 
 # ---------------------------------------------------------------------------
 # P0 creator preview — deterministic lifecycle, no timer lottery.
