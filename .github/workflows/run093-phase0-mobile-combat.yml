@@ -607,6 +607,7 @@ jobs:
             .locator('#offline-select .mini-class[data-class="warrior"]')
             .waitFor({ state: 'visible', timeout: 20000 });
 
+          const previewStartedAt = Date.now();
           await page.evaluate(() => {
             const name = document.querySelector('#char-name');
             if (name instanceof HTMLInputElement) {
@@ -617,6 +618,18 @@ jobs:
               .querySelector('#offline-select .mini-class[data-class="warrior"]')
               ?.click();
           });
+
+          // The old regression had a live canvas immediately but did not build
+          // the selected Hunter for ~40-60s. The preview now publishes this
+          // marker only after CharacterVisual construction succeeds.
+          await page.waitForFunction(() => {
+            const canvas = document.querySelector('#char-preview-canvas');
+            return (
+              canvas instanceof HTMLCanvasElement &&
+              canvas.dataset.highflyPreviewVisual === 'player_warrior_modular'
+            );
+          }, null, { timeout: 15000 });
+          const previewReadyMs = Date.now() - previewStartedAt;
 
           // P0 preview contract: prove not only layout but a live WebGL context
           // with actual opaque pixels from the rendered Hunter whenever the
@@ -668,8 +681,10 @@ jobs:
               contextLost: gl?.isContextLost() ?? null,
               preserveDrawingBuffer: gl?.getContextAttributes()?.preserveDrawingBuffer ?? null,
               opaquePixels,
+              visualKey: canvas.dataset.highflyPreviewVisual ?? null,
             };
           });
+          previewState.readyMs = previewReadyMs;
           console.log('RUN093_PREVIEW', JSON.stringify(previewState, null, 2));
           await page
             .locator('#offline-preview-container')
