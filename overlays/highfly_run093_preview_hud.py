@@ -137,12 +137,16 @@ replace_once(
     main,
     """  charactersReady()
     .then(() => {""",
-    """  charactersReady()
+    """  // HIGHFLY is offline-first: do not start ClaudeCraft's broad character
+  // sweep on cold mobile before the player opens the creator. The offline
+  // creator has its own selected-class dependency gate below, so this avoids
+  // competing downloads that delayed the first Hunter preview on real phones.
+  if (serverMode !== 'offline') charactersReady()
     .then(() => {
       // HIGHFLY selected-class preview may already be alive. The broad
       // ClaudeCraft boot sweep must not replace its WebGL renderer later.
       if (characterPreview) return;""",
-    "global preview keeps selected fast preview",
+    "offline skips broad global character sweep",
 )
 
 preview_text = preview.read_text(encoding="utf-8")
