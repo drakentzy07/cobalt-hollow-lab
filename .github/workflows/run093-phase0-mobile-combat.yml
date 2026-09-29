@@ -753,6 +753,16 @@ jobs:
             wolf.maxHp = 1_000_000;
             wolf.hp = wolf.maxHp;
             wolf.dead = false;
+            // Make this a deterministic combo fixture, not an AI test.
+            // It remains a hostile forest_wolf for soft-target validation,
+            // but cannot walk away or retaliate during the recovery window.
+            wolf.moveSpeed = 0;
+            wolf.swingTimer = 1_000_000;
+            wolf.aiState = 'idle';
+            wolf.aggroTargetId = null;
+            wolf.threat.clear();
+            wolf.wanderTimer = 9999;
+            wolf.wanderTarget = null;
 
             p.pos.x = wolf.pos.x + 2.2;
             p.pos.z = wolf.pos.z;
@@ -834,6 +844,18 @@ jobs:
           // After the authored recovery (0.55s; finisher swing 0.58s), a fresh
           // step 1 must be accepted.
           await page.waitForTimeout(650);
+          await page.evaluate((id) => {
+            const g = window.__game;
+            const p = g.sim.player;
+            const t = g.sim.entities.get(id);
+            if (!t || t.dead) throw new Error('combo fixture target missing after recovery');
+            p.pos.x = t.pos.x + 2.2;
+            p.pos.z = t.pos.z;
+            p.prevPos = { ...p.pos };
+            p.targetId = id;
+            p.facing = Math.atan2(t.pos.x - p.pos.x, t.pos.z - p.pos.z);
+            g.input.camYaw = p.facing;
+          }, before.id);
           await rawTouchAttack(105);
           await page.waitForTimeout(700);
           const acceptedAfterRecovery = await page.evaluate(() =>
