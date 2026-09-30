@@ -79,14 +79,14 @@ replace_once(
   }
 
   // Bind ONLY the local offline Hunter. Multiplayer/server entities never see
-  // this global profile binding. Movement/INT bridges remain separately gated;
-  // STR/VIT and PER-derived crit are active after a real calibrated gain.
+  // this global profile binding. RUN1-J wires all five Training Core stats only
+  // into real donor-derived outputs after ClaudeCraft finishes its own recalc.
   bindActiveTrainingCombatEntity(sim.player);
   setActiveTrainingBridgeFlags({
     enabled: true,
-    applyMovement: false,
+    applyMovement: true,
     applyPerception: true,
-    applyIntelligence: false,
+    applyIntelligence: true,
   });
   applyActiveTrainingBridgeToEntity(sim.player);
 """,
