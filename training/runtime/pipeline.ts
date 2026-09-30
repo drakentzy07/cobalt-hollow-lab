@@ -58,29 +58,54 @@ function evidenceConfidence(result: SessionTrainingResult): number {
 }
 
 /**
- * RUN1-H automatic comparable evidence is intentionally narrow:
- * heavy strength work can expose e1RM directly. AGI/VIT/PER/INT require explicit
- * comparable tests until HIGHFLY has velocity/cardio/drill/recovery sensors.
+ * RUN1-J automatic evidence:
+ * - STR: comparable heavy e1RM anchors from the authored main rows.
+ * - AGI: power-row e1RM proxy until velocity sensing exists.
+ * - PER: ordered adherence/completion quality.
+ * - INT: recovery + prescription management quality.
+ * VIT remains progress-only until a reliable comparable endurance marker is added.
  */
 export function deriveComparablePerformance(
   result: SessionTrainingResult,
 ): Partial<Record<HighflyCoreStat, number>> {
-  const comparableMainLifts = new Set([
+  const comparableStrengthIds = new Set([
     'back_squat',
     'bench_press',
     'overhead_press',
     'deadlift',
+    'd1_back_squat_top',
+    'd1_back_squat',
+    'd2_bench_top',
+    'd2_bench',
+    'd3_deadlift_top',
+    'd3_deadlift',
+    'd4_military_top',
+    'd4_military',
+    'd5_front_squat_top',
+    'd5_front_squat',
   ]);
   const strengthE1Rm = result.evidence
     .filter(
       (e) =>
         e.observedRole === 'strength' &&
-        comparableMainLifts.has(e.exerciseId) &&
+        comparableStrengthIds.has(e.exerciseId) &&
         validPositive(e.estimated1RmKg),
     )
     .map((e) => e.estimated1RmKg as number);
+
+  const powerE1Rm = result.evidence
+    .filter((e) => e.observedRole === 'power' && validPositive(e.estimated1RmKg))
+    .map((e) => e.estimated1RmKg as number);
+
   return {
     ...(strengthE1Rm.length > 0 ? { STR: Math.max(...strengthE1Rm) } : {}),
+    ...(powerE1Rm.length > 0 ? { AGI: Math.max(...powerE1Rm) } : {}),
+    ...(result.behavioralPerformance.PER > 0
+      ? { PER: result.behavioralPerformance.PER }
+      : {}),
+    ...(result.behavioralPerformance.INT > 0
+      ? { INT: result.behavioralPerformance.INT }
+      : {}),
   };
 }
 
@@ -265,6 +290,11 @@ export function runTrainingSessionPipeline(
       confidence,
       readiness,
       evidenceId,
+      ...(stat === 'PER'
+        ? { absolutePerformanceGate: 90 }
+        : stat === 'INT'
+          ? { absolutePerformanceGate: 85 }
+          : {}),
     });
     profile = adaptation.profile;
 
