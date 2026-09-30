@@ -112,6 +112,7 @@ jobs:
           python ../overlays/highfly_run1j_branding.py
           python ../overlays/highfly_run1j_spanish.py
           python ../overlays/highfly_run1j_j3a_flags.py
+          python ../overlays/highfly_run1j_j3b_native_bridge.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -218,6 +219,7 @@ jobs:
           test -s training/runtime/combat_runtime.ts
           test -s training/runtime/personal_routine.ts
           test -s training/tests/highfly_training_run1i.test.ts
+          test -s training/tests/highfly_training_j3b.test.ts
           test -s overlays/highfly_training_run1i_ui.py
           test -s overlays/highfly_training_persistence_v1.py
           test -s overlays/highfly_training_ui_v1.py
@@ -265,6 +267,11 @@ jobs:
           ! grep -F "World of ClaudeCraft" upstream/src/ui/i18n.locales/es_ES.ts
           grep -F "applyMovement: true" upstream/src/main.ts
           grep -F "applyIntelligence: true" upstream/src/main.ts
+          grep -F "highflyResourceCostMultiplier" upstream/src/sim/types.ts
+          grep -F "HIGHFLY INT: final resolved resource efficiency" upstream/src/sim/combat/ability_resolution.ts
+          grep -F "highflyResourceRecoveryMultiplier" upstream/src/sim/combat/auras.ts
+          grep -F "trainingGain(profile.training.core.AGI.current)" upstream/src/highfly/training/combat_runtime.ts
+          grep -F "baseline.hitBonus + precisionBonus" upstream/src/highfly/training/combat_runtime.ts
           grep -q "CONTINUAR ANTES DE TIEMPO" training/runtime/ui.ts
 
       - name: TypeScript source smoke
@@ -275,7 +282,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
