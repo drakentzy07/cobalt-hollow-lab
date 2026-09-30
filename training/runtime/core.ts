@@ -52,6 +52,23 @@ export interface HighflyTrainingHistoryEntry {
     | 'stat_up';
 }
 
+export type HighflyRmLiftId =
+  | 'back_squat'
+  | 'bench_press'
+  | 'overhead_press'
+  | 'deadlift';
+
+export interface HighflyRmCalibrationEntry {
+  oneRmKg: number;
+  updatedAt: string;
+}
+
+export interface HighflyLoadCalibrationState {
+  tmFactor: number;
+  roundKg: number;
+  lifts: Partial<Record<HighflyRmLiftId, HighflyRmCalibrationEntry>>;
+}
+
 export interface HighflyHunterProgressionState {
   level: number;
   xp: number;
@@ -72,6 +89,8 @@ export interface HighflyHunterProfile {
     performance?: Partial<Record<HighflyCoreStat, HighflyPerformanceAnchor>>;
     /** Optional on legacy saves; bounded audit history for explainability. */
     history?: HighflyTrainingHistoryEntry[];
+    /** Private/offline Hunter load calibration. Never hardcoded from a public routine. */
+    loadCalibration?: HighflyLoadCalibrationState;
   };
   hunter: HighflyHunterProgressionState;
 }
@@ -127,6 +146,11 @@ export function createHighflyHunterProfile(args: {
       },
       performance: {},
       history: [],
+      loadCalibration: {
+        tmFactor: 0.9,
+        roundKg: 2.5,
+        lifts: {},
+      },
     },
     hunter: {
       level,
