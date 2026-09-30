@@ -14,6 +14,13 @@ function result(str: number, agi: number, vit: number): SessionTrainingResult {
     stimulus: { STR: str, AGI: agi, VIT: vit, PER: 0, INT: 0 },
     fatigue: { local: 0, systemic: 0, trend: 0, deloadFlag: false },
     diagnosticTonnageKg: 0,
+    behavioralPerformance: {
+      PER: 0,
+      INT: 0,
+      completion: 0,
+      rest: 0,
+      prescription: 0,
+    },
   };
 }
 
