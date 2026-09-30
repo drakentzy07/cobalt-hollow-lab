@@ -1300,6 +1300,116 @@ jobs:
           await browser.close();
           NODE
 
+      - name: RUN1-J J4 S23 Ultra final release gate
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vite preview --host 127.0.0.1 --port 4177 --base=/cobalt-hollow-lab/ > ../run1j-j4-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4177/cobalt-hollow-lab/ >/dev/null; then break; fi
+            sleep 1
+          done
+
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({ channel: 'chrome', headless: true });
+          const context = await browser.newContext({
+            viewport: { width: 844, height: 390 },
+            screen: { width: 844, height: 390 },
+            deviceScaleFactor: 3,
+            hasTouch: true,
+            isMobile: true,
+            userAgent:
+              'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36',
+          });
+          const page = await context.newPage();
+          const errors = [];
+          page.on('pageerror', (e) => errors.push(String(e)));
+          page.on('console', (msg) => {
+            if (msg.type() === 'error') errors.push(msg.text());
+          });
+
+          const url = 'http://127.0.0.1:4177/cobalt-hollow-lab/';
+          await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+          const entry = await page.evaluate(() => ({
+            title: document.title,
+            bodyText: (document.body.innerText ?? '').slice(0, 8000),
+            fullLogo: document.querySelector('[data-highfly-brand-target="full"]')?.getAttribute('src') ?? null,
+            markLogo: document.querySelector('[data-highfly-brand-target="mark"]')?.getAttribute('src') ?? null,
+          }));
+          if (!entry.title.includes('HIGHFLY')) throw new Error('J4: HIGHFLY title missing');
+          if (entry.bodyText.includes('World of ClaudeCraft')) throw new Error('J4: donor brand leaked on entry');
+          if (entry.bodyText.includes('Discord')) throw new Error('J4: Discord CTA leaked on entry');
+          if (entry.fullLogo !== '/highfly/highfly-logo-full.png') throw new Error('J4: full logo source mismatch');
+          if (entry.markLogo !== '/highfly/highfly-logo-mark.png') throw new Error('J4: mark logo source mismatch');
+
+          await page.locator('#btn-offline').waitFor({ state: 'attached', timeout: 20000 });
+          for (let attempt = 0; attempt < 60; attempt++) {
+            await page.evaluate(() => document.querySelector('#btn-offline')?.click());
+            if (await page.locator('#offline-select').isVisible().catch(() => false)) break;
+            await page.waitForTimeout(250);
+          }
+          await page.locator('#char-name').fill('HighflyJ4');
+          await page.locator('#offline-select .mini-class[data-class="warrior"]').click({ force: true });
+          await page.locator('#btn-start-offline').click({ force: true });
+          await page
+            .locator('#mobile-preflight-continue')
+            .waitFor({ state: 'visible', timeout: 8000 })
+            .catch(() => {});
+          await page.evaluate(() => document.querySelector('#mobile-preflight-continue')?.click());
+          await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 60000 });
+          await page.waitForTimeout(900);
+
+          for (const selector of ['#mobile-action-attack', '#mobile-training', '#mobile-joystick']) {
+            const el = page.locator(selector);
+            await el.waitFor({ state: 'visible', timeout: 15000 });
+          }
+
+          await page.evaluate(() => {
+            const win = document.querySelector('#highfly-training-window');
+            win?.removeAttribute('hidden');
+            window.dispatchEvent(new CustomEvent('highfly:open-training'));
+          });
+          await page.locator('#hf-training-register').waitFor({ state: 'visible', timeout: 10000 });
+
+          const mobile = await page.evaluate(() => {
+            const win = document.querySelector('#highfly-training-window');
+            const hud = document.querySelector('#mobile-hud');
+            if (!(win instanceof HTMLElement)) return null;
+            const r = win.getBoundingClientRect();
+            return {
+              width: r.width,
+              height: r.height,
+              left: r.left,
+              right: r.right,
+              bodyScrollWidth: document.body.scrollWidth,
+              viewportWidth: innerWidth,
+              text: win.textContent ?? '',
+              hudVisible:
+                hud instanceof HTMLElement &&
+                getComputedStyle(hud).display !== 'none' &&
+                getComputedStyle(hud).visibility !== 'hidden',
+            };
+          });
+          console.log('RUN1J_J4_MOBILE', JSON.stringify({ entry, mobile }, null, 2));
+          if (!mobile) throw new Error('J4: Training window missing');
+          if (mobile.width < 820 || mobile.height < 370) throw new Error('J4: Training is not fullscreen on S23 landscape');
+          if (mobile.left < -2 || mobile.right > mobile.viewportWidth + 2) throw new Error('J4: Training overflows horizontally');
+          if (mobile.bodyScrollWidth > mobile.viewportWidth + 2) throw new Error('J4: body horizontal overflow');
+          if (!mobile.text.includes('RUTINA HIGHFLY · 5D')) throw new Error('J4: exact HIGHFLY routine missing');
+          if (mobile.text.includes('READINESS')) throw new Error('J4: removed Readiness resurfaced');
+          if (!mobile.hudVisible) throw new Error('J4: mobile HUD hidden after world boot');
+
+          if (errors.length) throw new Error('J4 page errors: ' + [...new Set(errors)].join(' | '));
+          await page.screenshot({ path: '../run1j-j4-s23.png', fullPage: true }).catch(() => {});
+          await browser.close();
+          NODE
+
       - name: Upload browser diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -1312,6 +1422,8 @@ jobs:
             run093-preview.log
             run093-preview-character.png
             foundation-v1-mobile-fail.png
+            run1j-j4-preview.log
+            run1j-j4-s23.png
           if-no-files-found: warn
           retention-days: 7
 
