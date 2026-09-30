@@ -1,4 +1,4 @@
-name: HIGHFLY TRAINING CORE RUN1-F
+name: HIGHFLY TRAINING CORE RUN1-G
 
 on:
   push:
@@ -106,6 +106,7 @@ jobs:
           python ../overlays/highfly_run093_combat.py
           python ../overlays/highfly_training_core_v1.py
           python ../overlays/highfly_training_persistence_v1.py
+          python ../overlays/highfly_training_ui_v1.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -181,7 +182,7 @@ jobs:
         shell: bash
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Verify Foundation + Training RUN1-F contracts
+      - name: Verify Foundation + Training RUN1-G contracts
         working-directory: .
         shell: bash
         run: |
@@ -206,7 +207,9 @@ jobs:
           test -s training/tests/highfly_training_bridge.test.ts
           test -s training/tests/highfly_training_persistence.test.ts
           test -s training/runtime/profile_store.ts
+          test -s training/runtime/ui.ts
           test -s overlays/highfly_training_persistence_v1.py
+          test -s overlays/highfly_training_ui_v1.py
           test -s training/runtime/engine.ts
           test -s training/runtime/adaptation.ts
           test -s training/runtime/periodization.ts
@@ -225,13 +228,15 @@ jobs:
           grep -q "HIGHFLY_TRAINING_BRIDGE_LAB_TUNING" training/runtime/bridge.ts
           grep -q "setActiveHighflyHunterProfile" training/runtime/profile_store.ts
           grep -q "loadHighflyTrainingProfile" overlays/highfly_training_persistence_v1.py
+          grep -q "installHighflyTrainingUi" training/runtime/ui.ts
+          grep -q "Registrar sesión" training/runtime/ui.ts
 
       - name: TypeScript source smoke
         working-directory: upstream
         shell: bash
         run: pnpm exec tsc --noEmit --incremental false
 
-      - name: Training Core RUN1-F unit tests
+      - name: Training Core RUN1-G unit tests
         working-directory: upstream
         shell: bash
         run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts
@@ -734,7 +739,102 @@ jobs:
           await browser.close();
           NODE
 
-      - name: TRAINING RUN1-F golden preview + combo + soft-target smoke
+      - name: RUN1-G playable Training UI smoke
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vite preview --host 127.0.0.1 --port 4176 --base=/cobalt-hollow-lab/ > ../run1g-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4176/cobalt-hollow-lab/ >/dev/null; then break; fi
+            sleep 1
+          done
+
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({ channel: 'chrome', headless: true });
+          const context = await browser.newContext({
+            viewport: { width: 844, height: 390 },
+            screen: { width: 844, height: 390 },
+            deviceScaleFactor: 3,
+            hasTouch: true,
+            isMobile: true,
+          });
+          const page = await context.newPage();
+          const url = 'http://127.0.0.1:4176/cobalt-hollow-lab/';
+
+          await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          await page.locator('#btn-offline').waitFor({ state: 'attached', timeout: 20000 });
+          for (let attempt = 0; attempt < 60; attempt++) {
+            await page.evaluate(() => document.querySelector('#btn-offline')?.click());
+            if (await page.locator('#offline-select').isVisible().catch(() => false)) break;
+            await page.waitForTimeout(250);
+          }
+
+          await page.locator('#char-name').fill('TrainingHunter');
+          await page.locator('#offline-select .mini-class[data-class="warrior"]').click({ force: true });
+          await page.locator('#btn-start-offline').click({ force: true });
+          const preflight = page.locator('#mobile-preflight-continue');
+          if (await preflight.count()) await preflight.click({ force: true }).catch(() => {});
+          await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 60000 });
+          await page.waitForTimeout(1200);
+
+          await page.evaluate(() => {
+            const win = document.querySelector('#highfly-training-window');
+            win?.removeAttribute('hidden');
+            window.dispatchEvent(new CustomEvent('highfly:open-training'));
+          });
+
+          await page.locator('#hf-training-register').waitFor({ state: 'visible', timeout: 10000 });
+
+          const dayCount = await page.locator('[data-hf-training-day]').count();
+          const coreCount = await page.locator('.hf-core-card').count();
+          if (dayCount !== 5 || coreCount !== 5) {
+            throw new Error(`RUN1-G expected 5 days + 5 Core cards, got days=${dayCount} core=${coreCount}`);
+          }
+
+          await page.evaluate(() => {
+            const rows = [...document.querySelectorAll('.hf-exercise')];
+            rows.forEach((row, index) => {
+              const set = (field, value) => {
+                const input = row.querySelector(`[data-field="${field}"]`);
+                if (input instanceof HTMLInputElement) {
+                  input.value = String(value);
+                  input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+              };
+              set('sets', index === 0 ? 1 : 0);
+              set('reps', index === 0 ? 5 : 8);
+              set('kg', index === 0 ? 85 : 0);
+              set('rm', index === 0 ? 100 : 0);
+              set('rest', index === 0 ? 180 : 90);
+              set('quality', 100);
+            });
+          });
+
+          await page.locator('#hf-training-register').click({ force: true });
+          const report = await page.evaluate(() => {
+            const resultText = document.querySelector('#hf-training-result')?.textContent ?? '';
+            const values = [...document.querySelectorAll('.hf-training-result__grid b')]
+              .map((node) => Number(node.textContent ?? '0'));
+            return { resultText, values };
+          });
+
+          console.log('RUN1G_TRAINING_UI', JSON.stringify(report, null, 2));
+          if (!report.resultText.includes('1 sets')) {
+            throw new Error('RUN1-G session did not produce one evidence set');
+          }
+          if (!(report.values[0] > 0)) {
+            throw new Error('RUN1-G STR stimulus did not become positive for heavy squat evidence');
+          }
+
+          await browser.close();
+          NODE
+
+      - name: TRAINING RUN1-G golden preview + combo + soft-target smoke
         working-directory: upstream
         shell: bash
         run: |
