@@ -1,4 +1,4 @@
-name: HIGHFLY TRAINING CORE RUN1-E
+name: HIGHFLY TRAINING CORE RUN1-F
 
 on:
   push:
@@ -105,6 +105,7 @@ jobs:
           python ../overlays/highfly_run093_preview_hud.py
           python ../overlays/highfly_run093_combat.py
           python ../overlays/highfly_training_core_v1.py
+          python ../overlays/highfly_training_persistence_v1.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -180,7 +181,7 @@ jobs:
         shell: bash
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Verify Foundation + Training RUN1-E contracts
+      - name: Verify Foundation + Training RUN1-F contracts
         working-directory: .
         shell: bash
         run: |
@@ -203,6 +204,9 @@ jobs:
           test -s training/tests/highfly_training_adaptation.test.ts
           test -s training/tests/highfly_training_periodization.test.ts
           test -s training/tests/highfly_training_bridge.test.ts
+          test -s training/tests/highfly_training_persistence.test.ts
+          test -s training/runtime/profile_store.ts
+          test -s overlays/highfly_training_persistence_v1.py
           test -s training/runtime/engine.ts
           test -s training/runtime/adaptation.ts
           test -s training/runtime/periodization.ts
@@ -219,16 +223,18 @@ jobs:
           grep -q "summarizeTrainingWeek" training/runtime/periodization.ts
           grep -q "applyTrainingBridge" training/runtime/bridge.ts
           grep -q "HIGHFLY_TRAINING_BRIDGE_LAB_TUNING" training/runtime/bridge.ts
+          grep -q "setActiveHighflyHunterProfile" training/runtime/profile_store.ts
+          grep -q "loadHighflyTrainingProfile" overlays/highfly_training_persistence_v1.py
 
       - name: TypeScript source smoke
         working-directory: upstream
         shell: bash
         run: pnpm exec tsc --noEmit --incremental false
 
-      - name: Training Core RUN1-E unit tests
+      - name: Training Core RUN1-F unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -470,7 +476,7 @@ jobs:
           await browser.close();
           NODE
 
-      - name: RUN0.6 persistence reload smoke
+      - name: RUN1-F character + Training persistence reload smoke
         working-directory: upstream
         shell: bash
         run: |
@@ -561,6 +567,96 @@ jobs:
             process.exitCode = 3;
           }
 
+          // RUN1-F: mutate the dedicated Training slot, reload, and prove that
+          // Training Core survives independently from CharacterState.
+          const injectedTraining = await page.evaluate(async () => {
+            const db = await new Promise((resolve, reject) => {
+              const request = indexedDB.open('highfly-offline', 1);
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => reject(request.error);
+            });
+            const key = 'training:' + encodeURIComponent('CobaltWarrior'.trim().toLowerCase());
+            const slot = await new Promise((resolve, reject) => {
+              const tx = db.transaction('saves', 'readonly');
+              const request = tx.objectStore('saves').get(key);
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => reject(request.error);
+            });
+            if (!slot?.profile?.training?.core?.STR) {
+              db.close();
+              throw new Error('RUN1-F training slot was not persisted');
+            }
+            slot.profile.training.core.STR = {
+              current: 42,
+              peak: 47,
+              progress: 7,
+              confidence: 0.91,
+              readiness: 0.72,
+              calibrated: true,
+            };
+            slot.updatedAt = Date.now() + 60000;
+            await new Promise((resolve, reject) => {
+              const tx = db.transaction('saves', 'readwrite');
+              tx.objectStore('saves').put(slot, key);
+              tx.oncomplete = () => resolve();
+              tx.onerror = () => reject(tx.error);
+              tx.onabort = () => reject(tx.error);
+            });
+            db.close();
+            return {
+              current: 42,
+              peak: 47,
+              progress: 7,
+              confidence: 0.91,
+              readiness: 0.72,
+            };
+          });
+
+          await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
+          await enterOffline({ expectResume: true });
+          await page.waitForTimeout(3500);
+
+          const restoredTraining = await page.evaluate(async () => {
+            const db = await new Promise((resolve, reject) => {
+              const request = indexedDB.open('highfly-offline', 1);
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => reject(request.error);
+            });
+            const primary = await new Promise((resolve, reject) => {
+              const tx = db.transaction('saves', 'readonly');
+              const request = tx.objectStore('saves').get('primary');
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => reject(request.error);
+            });
+            db.close();
+            const str = primary?.trainingProfile?.training?.core?.STR;
+            return str
+              ? {
+                  current: str.current,
+                  peak: str.peak,
+                  progress: str.progress,
+                  confidence: str.confidence,
+                  readiness: str.readiness,
+                  classId: primary.trainingProfile?.hunter?.classId ?? null,
+                }
+              : null;
+          });
+          console.log(
+            'RUN1F_TRAINING_RELOAD',
+            JSON.stringify({ injectedTraining, restoredTraining }, null, 2),
+          );
+          if (
+            !restoredTraining ||
+            restoredTraining.current !== injectedTraining.current ||
+            restoredTraining.peak !== injectedTraining.peak ||
+            restoredTraining.progress !== injectedTraining.progress ||
+            Math.abs(restoredTraining.confidence - injectedTraining.confidence) > 0.0001 ||
+            Math.abs(restoredTraining.readiness - injectedTraining.readiness) > 0.0001
+          ) {
+            console.error('RUN1F_TRAINING_RELOAD_FAIL', { injectedTraining, restoredTraining });
+            process.exitCode = 6;
+          }
+
           // Regression for Lucas' real-device report: playing another class with
           // the SAME name must never overwrite the previous class' progress.
           await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -572,6 +668,35 @@ jobs:
             return { level: sim.player.level, xp: sim.xp };
           });
           await page.waitForTimeout(3500);
+
+          const mageTraining = await page.evaluate(async () => {
+            const db = await new Promise((resolve, reject) => {
+              const request = indexedDB.open('highfly-offline', 1);
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => reject(request.error);
+            });
+            const primary = await new Promise((resolve, reject) => {
+              const tx = db.transaction('saves', 'readonly');
+              const request = tx.objectStore('saves').get('primary');
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => reject(request.error);
+            });
+            db.close();
+            return {
+              current: primary?.trainingProfile?.training?.core?.STR?.current ?? null,
+              peak: primary?.trainingProfile?.training?.core?.STR?.peak ?? null,
+              classId: primary?.trainingProfile?.hunter?.classId ?? null,
+            };
+          });
+          console.log('RUN1F_TRAINING_CLASS_SWITCH', mageTraining);
+          if (
+            mageTraining.current !== 42 ||
+            mageTraining.peak !== 47 ||
+            mageTraining.classId !== 'mage'
+          ) {
+            console.error('RUN1F_TRAINING_CLASS_SWITCH_FAIL', mageTraining);
+            process.exitCode = 7;
+          }
 
           await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
           await enterOffline({ cls: 'mage', hunterName: 'CobaltWarrior', expectResume: true });
@@ -609,7 +734,7 @@ jobs:
           await browser.close();
           NODE
 
-      - name: TRAINING RUN1-E golden preview + combo + soft-target smoke
+      - name: TRAINING RUN1-F golden preview + combo + soft-target smoke
         working-directory: upstream
         shell: bash
         run: |
