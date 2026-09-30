@@ -196,17 +196,19 @@ function intensityFit(role: ObservedTrainingRole, intensity: number | null): num
 }
 
 function targetRestSeconds(role: ObservedTrainingRole): number {
+  // RUN1-J follows the approved HIGHFLY recovery bands used by the exact sheet:
+  // Fuerza 3:00 · Potencia 2:30 · Hipertrofia 1:30 · accesorios 1:15.
   switch (role) {
     case 'strength':
       return 180;
     case 'power':
-      return 120;
+      return 150;
     case 'hypertrophy':
       return 90;
     case 'accessory':
-      return 60;
+      return 75;
     case 'recovery':
-      return 45;
+      return 60;
   }
 }
 
