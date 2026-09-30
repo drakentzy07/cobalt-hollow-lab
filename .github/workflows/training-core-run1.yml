@@ -819,6 +819,35 @@ jobs:
           const pageErrors = [];
           page.on('pageerror', (error) => pageErrors.push(String(error)));
 
+          const stacking = await page.evaluate(() => {
+            const win = document.querySelector('#highfly-training-window');
+            const button = document.querySelector('#hf-training-register');
+            const backdrop = document.querySelector('#mobile-window-backdrop');
+            if (!(win instanceof HTMLElement) || !(button instanceof HTMLElement)) return null;
+            const rect = button.getBoundingClientRect();
+            const top = document.elementFromPoint(
+              rect.left + rect.width / 2,
+              rect.top + rect.height / 2,
+            );
+            return {
+              bodyLevel: win.parentElement === document.body,
+              windowZ: Number(getComputedStyle(win).zIndex || 0),
+              backdropZ:
+                backdrop instanceof HTMLElement ? Number(getComputedStyle(backdrop).zIndex || 0) : 0,
+              topId: top instanceof HTMLElement ? top.id : null,
+              buttonHit: top === button || (top instanceof Node && button.contains(top)),
+            };
+          });
+          console.log('RUN1G_TRAINING_STACKING', stacking);
+          if (
+            !stacking ||
+            !stacking.bodyLevel ||
+            stacking.windowZ <= stacking.backdropZ ||
+            !stacking.buttonHit
+          ) {
+            throw new Error('RUN1-G Training modal is not above the mobile backdrop');
+          }
+
           await page.locator('#hf-training-register').tap();
           await page.waitForFunction(
             () => Boolean(document.querySelector('.hf-training-result__grid')),
