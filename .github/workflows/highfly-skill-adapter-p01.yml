@@ -31,6 +31,7 @@ jobs:
           sparse-checkout: |
             /src/
             /tests/
+            /electron/
             /scripts/
             /server/
             /headless/
@@ -72,6 +73,7 @@ jobs:
           git apply ../overlays/cobalt-offline-gate.patch
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1; p.write_text(s.replace(old,new))"
           python ../overlays/apply_highfly_skill_adapter.py
+          python ../overlays/apply_highfly_skill_adapter_fix1.py
           git diff --check
           echo "=== HIGHFLY DIFF ==="
           git diff --stat
