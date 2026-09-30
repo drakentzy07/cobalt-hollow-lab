@@ -1,15 +1,21 @@
 import { bindTouchTap } from '../../ui/touch_tap';
-import { evaluateTrainingSession, type ExerciseDefinition, type SessionRecord } from './engine';
+import { type ExerciseDefinition, type SessionRecord } from './engine';
 import {
   HF_REFERENCE_5D_SUPREME_V1,
   HF_REFERENCE_5D_SUPREME_V1_ID,
   type ReferenceExercise,
 } from './reference_routine';
-import { getActiveHighflyHunterProfile } from './profile_store';
+import {
+  getActiveHighflyHunterProfile,
+  setActiveHighflyHunterProfile,
+} from './profile_store';
+import { runTrainingSessionPipeline } from './pipeline';
+import { refreshActiveTrainingCombatBridge } from './combat_runtime';
 
 let installed = false;
 let selectedDay = 1;
-let lastResult: ReturnType<typeof evaluateTrainingSession> | null = null;
+let lastResult: ReturnType<typeof runTrainingSessionPipeline>['sessionResult'] | null = null;
+let lastOutcomes: ReturnType<typeof runTrainingSessionPipeline>['outcomes'] = [];
 
 function numberValue(root: ParentNode, selector: string, fallback: number): number {
   const input = root.querySelector(selector);
@@ -145,6 +151,19 @@ function resultHtml(): string {
     `;
   }
   const s = lastResult.stimulus;
+  const outcomes = lastOutcomes.length
+    ? `<div class="hf-training-outcomes">${lastOutcomes
+        .map(
+          (o) => `
+            <div class="hf-training-outcome">
+              <b>${o.stat}</b>
+              <span>${o.outcome.replaceAll('_', ' ')}</span>
+              <small>${escapeHtml(o.reason)}</small>
+            </div>
+          `,
+        )
+        .join('')}</div>`
+    : '';
   return `
     <div class="hf-training-result__grid">
       <div><span>STR</span><b>${s.STR.toFixed(2)}</b></div>
@@ -159,6 +178,7 @@ function resultHtml(): string {
       <span>Fatiga local: <b>${lastResult.fatigue.local.toFixed(2)}</b></span>
       <span>Fatiga sistémica: <b>${lastResult.fatigue.systemic.toFixed(2)}</b></span>
     </div>
+    ${outcomes}
   `;
 }
 
@@ -213,7 +233,7 @@ function render(): void {
     <section>
       <div class="hf-section-title">
         <h4>Resultado de sesión</h4>
-        <span>RUN1-G · todavía no consolida Stat Up</span>
+        <span>RUN1-H · Performance Gate + persistencia + Bridge activos</span>
       </div>
       <div id="hf-training-result" class="hf-training-result">${resultHtml()}</div>
     </section>
@@ -224,6 +244,7 @@ function render(): void {
       event.preventDefault();
       selectedDay = Number(button.dataset.hfTrainingDay) || 1;
       lastResult = null;
+      lastOutcomes = [];
       render();
     });
   });
@@ -293,9 +314,14 @@ function registerSession(): void {
   const week = Math.max(1, Math.min(4, weekRaw));
   const readiness = Math.max(0, Math.min(1, numberValue(mount, '#hf-training-readiness', 85) / 100));
 
-  lastResult = evaluateTrainingSession(
-    {
-      sessionId: `ui-${Date.now()}`,
+  const profile = getActiveHighflyHunterProfile();
+  if (!profile) return;
+
+  const sessionId = `ui-${Date.now()}`;
+  const pipeline = runTrainingSessionPipeline({
+    profile,
+    session: {
+      sessionId,
       routineId: HF_REFERENCE_5D_SUPREME_V1_ID,
       block: 'reference',
       week,
@@ -306,10 +332,30 @@ function registerSession(): void {
       sets,
     },
     definitions,
-  );
+  });
+
+  setActiveHighflyHunterProfile(pipeline.profile);
+  refreshActiveTrainingCombatBridge();
+  lastResult = pipeline.sessionResult;
+  lastOutcomes = pipeline.outcomes;
 
   const result = mount.querySelector('#hf-training-result');
   if (result instanceof HTMLElement) result.innerHTML = resultHtml();
+  const coreGrid = mount.querySelector('.hf-core-grid');
+  if (coreGrid instanceof HTMLElement) coreGrid.innerHTML = coreCards();
+
+  window.dispatchEvent(
+    new CustomEvent('highfly:training-session-committed', {
+      detail: {
+        sessionId,
+        outcomes: pipeline.outcomes.map((outcome) => ({
+          stat: outcome.stat,
+          outcome: outcome.outcome,
+          statDelta: outcome.statDelta,
+        })),
+      },
+    }),
+  );
 }
 
 export function installHighflyTrainingUi(): void {
