@@ -1,16 +1,16 @@
-name: HIGHFLY TRAINING CORE RUN1-I
+name: HIGHFLY TRAINING CORE RUN1-J
 
 on:
   push:
     branches:
-      - highfly-training-run1i-ux
+      - highfly-training-run1j
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: highfly-training-run1i-ux
+  group: highfly-training-run1j
   cancel-in-progress: true
 
 jobs:
@@ -245,9 +245,9 @@ jobs:
           grep -q "refreshActiveTrainingCombatBridge" training/runtime/combat_runtime.ts
           grep -q "applyActiveTrainingBridgeToEntity" overlays/highfly_training_e2e_v1.py
           grep -q "HF_HIGHFLY_PERSONAL_5D_V1" training/runtime/personal_routine.ts
-          grep -q "HIGHFLY_12_WEEK_MACROCYCLE" training/runtime/personal_routine.ts
-          grep -q "CALIBRACIÓN DE FUERZA" training/runtime/ui.ts
-          grep -q "CORTAR DESCANSO · DEBUFF" training/runtime/ui.ts
+          grep -q "HIGHFLY_4_WEEK_CYCLE" training/runtime/personal_routine.ts
+          grep -q "CICLO ADAPTATIVO" training/runtime/ui.ts
+          grep -q "CONTINUAR ANTES DE TIEMPO" training/runtime/ui.ts
 
       - name: TypeScript source smoke
         working-directory: upstream
@@ -757,12 +757,12 @@ jobs:
           await browser.close();
           NODE
 
-      - name: RUN1-I Training System UX + routine authority smoke
+      - name: RUN1-J exact routine + sequential Training System smoke
         working-directory: upstream
         shell: bash
         run: |
           set -euo pipefail
-          pnpm exec vite preview --host 127.0.0.1 --port 4176 --base=/cobalt-hollow-lab/ > ../run1i-preview.log 2>&1 &
+          pnpm exec vite preview --host 127.0.0.1 --port 4176 --base=/cobalt-hollow-lab/ > ../run1j-preview.log 2>&1 &
           PREVIEW_PID=$!
           trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do
@@ -793,16 +793,12 @@ jobs:
               if (await page.locator('#offline-select').isVisible().catch(() => false)) break;
               await page.waitForTimeout(250);
             }
-            await page.locator('#char-name').fill('TrainingHunterI');
-            await page
-              .locator('#offline-select .mini-class[data-class="warrior"]')
-              .click({ force: true });
+            await page.locator('#char-name').fill('TrainingHunterJ');
+            await page.locator('#offline-select .mini-class[data-class="warrior"]').click({ force: true });
             await page.locator('#btn-start-offline').click({ force: true });
             const preflight = page.locator('#mobile-preflight-continue');
             if (await preflight.count()) await preflight.click({ force: true }).catch(() => {});
-            await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, {
-              timeout: 60000,
-            });
+            await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 60000 });
             await page.waitForTimeout(700);
           }
 
@@ -812,9 +808,20 @@ jobs:
               win?.removeAttribute('hidden');
               window.dispatchEvent(new CustomEvent('highfly:open-training'));
             });
-            await page
-              .locator('#hf-training-register')
-              .waitFor({ state: 'visible', timeout: 10000 });
+            await page.locator('#hf-training-register').waitFor({ state: 'visible', timeout: 10000 });
+          }
+
+          async function completeExercise(id, sets) {
+            const button = page.locator('[data-hf-set-complete="' + id + '"]');
+            for (let index = 0; index < sets; index++) {
+              await button.scrollIntoViewIfNeeded();
+              await button.tap();
+              if (index < sets - 1) {
+                await page.locator('#hf-rest-dock').waitFor({ state: 'visible', timeout: 3000 });
+                await page.waitForTimeout(80);
+                await page.locator('#hf-rest-skip').tap();
+              }
+            }
           }
 
           await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -825,112 +832,80 @@ jobs:
             const win = document.querySelector('#highfly-training-window');
             if (!(win instanceof HTMLElement)) return null;
             const rect = win.getBoundingClientRect();
-            const style = getComputedStyle(win);
             return {
               text: win.textContent ?? '',
               width: rect.width,
               height: rect.height,
-              viewport: [innerWidth, innerHeight],
               parentBody: win.parentElement === document.body,
-              z: Number(style.zIndex || 0),
             };
           });
-          console.log('RUN1I_SHELL', shell);
+          console.log('RUN1J_SHELL', shell);
           if (
             !shell ||
             !shell.parentBody ||
             shell.width < 820 ||
             shell.height < 370 ||
             !shell.text.includes('RUTINA HIGHFLY · 5D') ||
-            !shell.text.includes('CALIBRACIÓN DE FUERZA')
+            !shell.text.includes('CICLO ADAPTATIVO') ||
+            shell.text.includes('READINESS')
           ) {
-            throw new Error('RUN1-I fullscreen Training System contract failed');
+            throw new Error('RUN1-J fullscreen/no-readiness contract failed');
           }
 
-          const rmValues = {
-            back_squat: 100,
-            bench_press: 80,
-            overhead_press: 55,
-            deadlift: 120,
-          };
-          for (const [id, value] of Object.entries(rmValues)) {
-            await page.locator(`[data-hf-rm="${id}"]`).fill(String(value));
-          }
-
-          const darkInput = await page
-            .locator('[data-hf-rm="back_squat"]')
-            .evaluate((node) => {
-              const c = getComputedStyle(node).backgroundColor.match(/\d+/g)?.map(Number) ?? [];
-              return c.slice(0, 3);
-            });
-          console.log('RUN1I_INPUT_RGB', darkInput);
-          if (darkInput.length < 3 || darkInput.some((v) => v > 100)) {
-            throw new Error('RUN1-I RM input still looks like a white legacy form');
-          }
-
-          await page.locator('#hf-calibration-save').tap();
-          await page.waitForFunction(
-            () =>
-              (document.querySelector('#highfly-training-window')?.textContent ?? '').includes(
-                '67.5 kg × 5',
-              ),
-            null,
-            { timeout: 5000 },
-          );
-
-          const squatAuthority = await page.evaluate(() => {
-            const row = document.querySelector('.hf-exercise[data-exercise-id="back_squat"]');
-            return {
-              text: row?.textContent ?? '',
-              freeLoadInputs: row?.querySelectorAll('[data-hf-accessory-load]').length ?? -1,
-            };
-          });
-          console.log('RUN1I_SQUAT_AUTHORITY', squatAuthority);
+          const exact = await page.evaluate(() => ({
+            clean: document.querySelector('.hf-exercise[data-exercise-id="d1_hang_power_clean"]')?.textContent ?? '',
+            squatTop: document.querySelector('.hf-exercise[data-exercise-id="d1_back_squat_top"]')?.textContent ?? '',
+            squatTopDisabled: document.querySelector('[data-hf-set-complete="d1_back_squat_top"]')?.hasAttribute('disabled') ?? false,
+          }));
+          console.log('RUN1J_EXACT', exact);
           if (
-            !squatAuthority.text.includes('67.5 kg × 5') ||
-            !squatAuthority.text.includes('62.5 kg × 4×5') ||
-            squatAuthority.freeLoadInputs !== 0
+            !exact.clean.includes('50 kg · 4×3') ||
+            !exact.squatTop.includes('86 kg · 1×6') ||
+            !exact.squatTopDisabled
           ) {
-            throw new Error('RUN1-I main lift is not locked to RM/TM prescription');
+            throw new Error('RUN1-J exact sheet or sequential lock contract failed');
           }
 
-          const dbLoad = page.locator('[data-hf-accessory-load="db_row"]');
-          await dbLoad.fill('30');
-          await dbLoad.dispatchEvent('change');
-          if ((await dbLoad.inputValue()) !== '30') {
-            throw new Error('RUN1-I editable dumbbell load did not accept user kg');
+          // Blank spreadsheet weights remain user-entered accessories.
+          for (const [id, value] of [['d1_lateral_raise', '10'], ['d1_facepull', '20']]) {
+            const input = page.locator('[data-hf-accessory-load="' + id + '"]');
+            await input.fill(value);
+            await input.dispatchEvent('change');
           }
 
-          const restButton = page.locator('[data-hf-rest-start="back_squat"]');
-          await restButton.tap();
-          await page.locator('#hf-rest-dock').waitFor({ state: 'visible', timeout: 3000 });
-          const restClock = await page.locator('#hf-rest-clock').textContent();
-          console.log('RUN1I_REST_START', restClock);
-          if (!restClock || !restClock.startsWith('2:5')) {
-            throw new Error('RUN1-I strength countdown did not start from 3:00');
+          await completeExercise('d1_hang_power_clean', 4);
+          if (await page.locator('[data-hf-set-complete="d1_back_squat_top"]').isDisabled()) {
+            throw new Error('RUN1-J next exercise did not unlock after previous completion');
           }
-          await page.waitForTimeout(1000);
-          await page.locator('#hf-rest-skip').tap();
+          await completeExercise('d1_back_squat_top', 1);
+          await completeExercise('d1_back_squat', 3);
+          await completeExercise('d1_zercher_squat', 3);
+          await completeExercise('d1_hamstrings', 3);
+          await completeExercise('d1_lateral_raise', 3);
+          await completeExercise('d1_facepull', 3);
 
-          await page.locator('#hf-training-register').scrollIntoViewIfNeeded();
-          await page.locator('#hf-training-register').tap();
+          const register = page.locator('#hf-training-register');
+          if (await register.isDisabled()) {
+            throw new Error('RUN1-J full sequential session did not enable registration');
+          }
+          await register.tap();
           await page.waitForFunction(
-            () => Boolean(document.querySelector('.hf-training-result__grid')),
+            () => (document.querySelector('#hf-training-result')?.textContent ?? '').includes('INT sesión'),
             null,
             { timeout: 5000 },
           );
 
           const report = await page.evaluate(() => ({
             text: document.querySelector('#hf-training-result')?.textContent ?? '',
-            core: document.querySelector('.hf-core-grid')?.textContent ?? '',
+            cycle: document.querySelector('.hf-calibration')?.textContent ?? '',
           }));
-          console.log('RUN1I_RESULT', JSON.stringify(report, null, 2));
-          const restMatch = report.text.match(/Descanso\s*(\d+)%/);
-          if (!restMatch || Number(restMatch[1]) >= 100) {
-            throw new Error('RUN1-I early rest did not produce the expected rest debuff');
+          console.log('RUN1J_RESULT', JSON.stringify(report, null, 2));
+          const intMatch = report.text.match(/INT sesión\s*(\d+)%/);
+          if (!intMatch || Number(intMatch[1]) >= 85) {
+            throw new Error('RUN1-J early real rests did not reduce INT management score');
           }
 
-          await page.waitForTimeout(3200);
+          await page.waitForTimeout(2500);
           const persisted = await page.evaluate(async () => {
             const db = await new Promise((resolve, reject) => {
               const request = indexedDB.open('highfly-offline', 1);
@@ -939,54 +914,38 @@ jobs:
             });
             const value = await new Promise((resolve, reject) => {
               const tx = db.transaction('saves', 'readonly');
-              const request = tx
-                .objectStore('saves')
-                .get('training:' + encodeURIComponent('TrainingHunterI'.toLowerCase()));
+              const request = tx.objectStore('saves').get(
+                'training:' + encodeURIComponent('TrainingHunterJ'.toLowerCase()),
+              );
               request.onsuccess = () => resolve(request.result);
               request.onerror = () => reject(request.error);
             });
             db.close();
             return value?.profile?.training
               ? {
-                  squat: value.profile.training.loadCalibration?.lifts?.back_squat?.oneRmKg ?? null,
-                  bench: value.profile.training.loadCalibration?.lifts?.bench_press?.oneRmKg ?? null,
-                  dbRow: value.profile.training.accessoryLoads?.db_row?.kg ?? null,
+                  lateral: value.profile.training.accessoryLoads?.d1_lateral_raise?.kg ?? null,
+                  facepull: value.profile.training.accessoryLoads?.d1_facepull?.kg ?? null,
+                  sessions: value.profile.training.cycleProgression?.completedSessions ?? [],
                 }
               : null;
           });
-          console.log('RUN1I_PERSISTED', persisted);
-          if (!persisted || persisted.squat !== 100 || persisted.bench !== 80 || persisted.dbRow !== 30) {
-            throw new Error('RUN1-I RM/accessory calibration did not persist');
-          }
-
-          await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
-          await enterHunter();
-          await openTraining();
-          await page.locator('#hf-calibration-toggle').tap();
-          const afterReload = {
-            squat: await page.locator('[data-hf-rm="back_squat"]').inputValue(),
-            dbRow: await page.locator('[data-hf-accessory-load="db_row"]').inputValue(),
-            text: await page
-              .locator('.hf-exercise[data-exercise-id="back_squat"]')
-              .textContent(),
-          };
-          console.log('RUN1I_RELOAD', afterReload);
+          console.log('RUN1J_PERSISTED', persisted);
           if (
-            afterReload.squat !== '100' ||
-            afterReload.dbRow !== '30' ||
-            !afterReload.text?.includes('67.5 kg × 5')
+            !persisted ||
+            persisted.lateral !== 10 ||
+            persisted.facepull !== 20 ||
+            !persisted.sessions.includes('1:1')
           ) {
-            throw new Error('RUN1-I persisted System prescription did not survive reload');
+            throw new Error('RUN1-J accessory/cycle persistence failed');
           }
 
           if (pageErrors.length > 0) {
-            throw new Error('RUN1-I page error: ' + pageErrors.join(' | '));
+            throw new Error('RUN1-J page error: ' + pageErrors.join(' | '));
           }
-
           await browser.close();
           NODE
 
-      - name: TRAINING RUN1-I golden preview + combo + soft-target smoke
+      - name: TRAINING RUN1-J foundation regression: preview + combo + soft-target
         working-directory: upstream
         shell: bash
         run: |
