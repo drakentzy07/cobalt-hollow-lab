@@ -1,0 +1,128 @@
+name: HIGHFLY skill adapter P01
+
+on:
+  push:
+    branches:
+      - highfly/skill-adapter-p01
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-skill-adapter-p01
+  cancel-in-progress: true
+
+jobs:
+  adapter-p01:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout HIGHFLY overlay
+        uses: actions/checkout@v4
+
+      - name: Checkout frozen ClaudeCraft
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /tests/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+
+      - name: Verify frozen foundation
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+
+      - name: Apply RUN0 foundation and HIGHFLY adapter
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply ../overlays/pages-media-base.patch
+          git apply ../overlays/cobalt-offline-gate.patch
+          python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1; p.write_text(s.replace(old,new))"
+          python ../overlays/apply_highfly_skill_adapter.py
+          git diff --check
+          echo "=== HIGHFLY DIFF ==="
+          git diff --stat
+          git diff -- src/sim/combat/equipment_requirement.ts src/sim/combat/casting_lifecycle.ts src/ui/hud/action_bar/ground_aim_controller.ts src/highfly/presentation_adapter.ts src/sim/content/classes.ts
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Enable pinned pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+
+      - name: Install dependencies
+        working-directory: upstream
+        shell: bash
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: HIGHFLY focused tests
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run             tests/highfly_skill_adapter.test.ts             tests/action_bar_secondary_requirements.test.ts             tests/ground_aim_hud.test.ts             tests/ground_target_cast.test.ts             tests/heroic_leap.test.ts
+
+      - name: TypeScript source check
+        working-directory: upstream
+        shell: bash
+        run: pnpm exec tsc --noEmit --incremental false
+
+      - name: Official bundle build
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          pnpm run build:bundle
+          node scripts/build_media_manifest.mjs prune
+          du -sh dist
+
+      - name: Upload HIGHFLY diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-skill-adapter-p01
+          path: |
+            upstream/dist
+          if-no-files-found: warn
+          retention-days: 7
