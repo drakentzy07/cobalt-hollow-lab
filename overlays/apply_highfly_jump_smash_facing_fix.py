@@ -65,14 +65,18 @@ addition = """  it('faces the resolved travel direction and applies landing dama
       sim.addEntity(mob);
       return mob;
     };
-    const inside = spawn(sim.nextId++, aim.x + 5.5, aim.z);
-    const outside = spawn(sim.nextId++, aim.x + 6.5, aim.z);
-    const insideHp = inside.hp;
-    const outsideHp = outside.hp;
-
     sim.castAbility(ID, p.id, aim);
     expect(p.leap).toBeTruthy();
     expect(p.facing).toBeCloseTo(Math.PI / 2, 5);
+
+    // Spawn around the RESOLVED landing, not the raw aim point: the swept leap
+    // is allowed to clamp against terrain/colliders, and AoE authority belongs
+    // to the actual touchdown position.
+    const landing = { ...p.leap!.to };
+    const inside = spawn(sim.nextId++, landing.x + 5.5, landing.z);
+    const outside = spawn(sim.nextId++, landing.x + 6.5, landing.z);
+    const insideHp = inside.hp;
+    const outsideHp = outside.hp;
 
     for (let i = 0; i < 40 && p.leap; i++) sim.tick();
 
