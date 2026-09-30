@@ -67,7 +67,13 @@ describe('HIGHFLY Production Pack 01 freeze gate', () => {
     expect(hunter?.rootAll).toBe(true);
     expect(mage).toMatchObject({ total: 50, duration: 6, interval: 1 });
     expect(priest).toBeTruthy();
-    expect(ABILITIES.moonseed.actionReplacement?.abilityId).toBe('moonlash');
+    const moonReplacement = ABILITIES.moonseed.actionReplacement;
+    const moonRules = Array.isArray(moonReplacement)
+      ? moonReplacement
+      : moonReplacement
+        ? [moonReplacement]
+        : [];
+    expect(moonRules.some((rule) => rule.abilityId === 'moonlash')).toBe(true);
     expect(
       ABILITIES.hf_jump_smash_01.effects.some(
         (e) => e.type === 'repositionToAim' && e.landingAoe?.radius === 6,
