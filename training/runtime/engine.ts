@@ -37,10 +37,18 @@ export interface SessionRecord {
   block: string;
   week: number;
   day: number;
+  /** Legacy field kept for save/test compatibility. RUN1-J treats it as neutral. */
   readiness: number;
   isDeload: boolean;
   completed: boolean;
   sets: readonly SetRecord[];
+  plannedSets?: number;
+  completedSets?: number;
+  plannedExercises?: number;
+  completedExercises?: number;
+  sequentialCompletion?: boolean;
+  /** 0..1: followed the system-prescribed load/reps instead of free-form changes. */
+  prescriptionCompliance?: number;
 }
 
 export interface ExerciseEvidence {
@@ -73,6 +81,15 @@ export interface SessionTrainingResult {
   stimulus: StimulusVector;
   fatigue: FatigueState;
   diagnosticTonnageKg: number;
+  behavioralPerformance: {
+    /** 0..100 adherence + ordered completion score used by PER. */
+    PER: number;
+    /** 0..100 recovery/load-management score used by INT. */
+    INT: number;
+    completion: number;
+    rest: number;
+    prescription: number;
+  };
 }
 
 const ZERO_STIMULUS: StimulusVector = { STR: 0, AGI: 0, VIT: 0, PER: 0, INT: 0 };
@@ -215,9 +232,10 @@ function restCompliance(role: ObservedTrainingRole, restSec: number): number {
   return clamp(safeNonNegative(restSec) / target, 0.55, 1);
 }
 
-function recoveryModifier(readiness: number): number {
-  // Readiness affects productive adaptation, but never turns a session negative.
-  return 0.65 + 0.35 * clamp(readiness, 0, 1);
+function recoveryModifier(_readiness: number): number {
+  // RUN1-J: subjective "how do I feel?" readiness was removed from scoring.
+  // Keep a neutral multiplier so older SessionRecord payloads remain compatible.
+  return 1;
 }
 
 function saturate(value: number, cap: number): number {
@@ -316,6 +334,13 @@ export function evaluateTrainingSession(
       stimulus: raw,
       fatigue: { local: 0, systemic: 0, trend: 0, deloadFlag: session.isDeload },
       diagnosticTonnageKg: 0,
+      behavioralPerformance: {
+        PER: 0,
+        INT: 0,
+        completion: 0,
+        rest: 0,
+        prescription: 0,
+      },
     };
   }
 
@@ -335,12 +360,36 @@ export function evaluateTrainingSession(
     systemicFatigue += scored.fatigue.systemic;
   }
 
+  const plannedSets = Math.max(1, Math.trunc(session.plannedSets ?? session.sets.length));
+  const completedSets = Math.max(
+    0,
+    Math.min(plannedSets, Math.trunc(session.completedSets ?? session.sets.length)),
+  );
+  const completion = clamp(completedSets / plannedSets, 0, 1);
+  const sequential = session.sequentialCompletion === false ? 0.75 : 1;
+  const prescription = clamp(session.prescriptionCompliance ?? 1, 0, 1);
+  const rest =
+    evidence.length > 0
+      ? clamp(
+          evidence.reduce((sum, item) => sum + item.restCompliance, 0) / evidence.length,
+          0,
+          1,
+        )
+      : 0;
+
+  // PER = constancia + precisión para completar el plan en el orden indicado.
+  // INT = gestión del entrenamiento: prescripción correcta + recuperación real.
+  const perPerformance = 100 * completion * sequential;
+  const intPerformance = 100 * completion * (0.7 * rest + 0.3 * prescription);
+  raw.PER = 1.8 * completion * sequential;
+  raw.INT = 1.8 * completion * (0.7 * rest + 0.3 * prescription);
+
   const stimulus: StimulusVector = {
     STR: saturate(raw.STR, SESSION_CAP.STR),
     AGI: saturate(raw.AGI, SESSION_CAP.AGI),
     VIT: saturate(raw.VIT, SESSION_CAP.VIT),
-    PER: 0,
-    INT: 0,
+    PER: saturate(raw.PER, SESSION_CAP.PER),
+    INT: saturate(raw.INT, SESSION_CAP.INT),
   };
 
   return {
@@ -353,5 +402,12 @@ export function evaluateTrainingSession(
       deloadFlag: session.isDeload,
     },
     diagnosticTonnageKg,
+    behavioralPerformance: {
+      PER: perPerformance,
+      INT: intPerformance,
+      completion,
+      rest,
+      prescription,
+    },
   };
 }
