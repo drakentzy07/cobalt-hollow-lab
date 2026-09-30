@@ -1,4 +1,4 @@
-name: HIGHFLY TRAINING CORE RUN1-D
+name: HIGHFLY TRAINING CORE RUN1-E
 
 on:
   push:
@@ -180,7 +180,7 @@ jobs:
         shell: bash
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Verify Foundation + Training RUN1-D contracts
+      - name: Verify Foundation + Training RUN1-E contracts
         working-directory: .
         shell: bash
         run: |
@@ -202,9 +202,11 @@ jobs:
           test -s training/tests/highfly_training_engine.test.ts
           test -s training/tests/highfly_training_adaptation.test.ts
           test -s training/tests/highfly_training_periodization.test.ts
+          test -s training/tests/highfly_training_bridge.test.ts
           test -s training/runtime/engine.ts
           test -s training/runtime/adaptation.ts
           test -s training/runtime/periodization.ts
+          test -s training/runtime/bridge.ts
           test -s overlays/highfly_training_core_v1.py
           grep -q "HIGHFLY_CORE_STATS" training/runtime/core.ts
           grep -q "training-performance-gate" training/runtime/core.ts
@@ -215,16 +217,18 @@ jobs:
           grep -q "performanceGateRatioForCurrent" training/runtime/adaptation.ts
           grep -q "ROUTINE_ENVELOPE_MAX" training/runtime/periodization.ts
           grep -q "summarizeTrainingWeek" training/runtime/periodization.ts
+          grep -q "applyTrainingBridge" training/runtime/bridge.ts
+          grep -q "HIGHFLY_TRAINING_BRIDGE_LAB_TUNING" training/runtime/bridge.ts
 
       - name: TypeScript source smoke
         working-directory: upstream
         shell: bash
         run: pnpm exec tsc --noEmit --incremental false
 
-      - name: Training Core RUN1-D unit tests
+      - name: Training Core RUN1-E unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -605,7 +609,7 @@ jobs:
           await browser.close();
           NODE
 
-      - name: TRAINING RUN1-D golden preview + combo + soft-target smoke
+      - name: TRAINING RUN1-E golden preview + combo + soft-target smoke
         working-directory: upstream
         shell: bash
         run: |
