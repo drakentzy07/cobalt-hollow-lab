@@ -7,6 +7,7 @@ on:
       - highfly/validation-pack01-run0a
       - highfly/production-pack01-run0a
       - highfly/production-pack01-run0b
+      - highfly/production-pack01-run0c
   workflow_dispatch:
 
 permissions:
@@ -82,6 +83,7 @@ jobs:
           python ../overlays/apply_highfly_jump_smash_facing_fix.py
           python ../overlays/apply_highfly_production_pack01.py
           python ../overlays/apply_highfly_production_pack01_run0b.py
+          python ../overlays/apply_highfly_production_pack01_run0c.py
           git diff --check
           echo "=== HIGHFLY DIFF ==="
           git diff --stat
@@ -113,6 +115,7 @@ jobs:
             tests/highfly_validation_pack01.test.ts \
             tests/highfly_production_pack01.test.ts \
             tests/highfly_production_pack01_run0b.test.ts \
+            tests/highfly_production_pack01_run0c.test.ts \
             tests/highfly_vertical_slice_contract.test.ts \
             tests/highfly_jump_smash_full.test.ts \
             tests/action_bar_secondary_requirements.test.ts \
