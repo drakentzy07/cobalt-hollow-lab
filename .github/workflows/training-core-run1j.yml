@@ -1,0 +1,255 @@
+name: HIGHFLY TRAINING RUN1-J
+
+on:
+  push:
+    branches:
+      - highfly-training-run1j-supreme
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-training-run1j-supreme
+  cancel-in-progress: true
+
+jobs:
+  run1j:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout HIGHFLY lab
+        uses: actions/checkout@v4
+
+      - name: Checkout frozen ClaudeCraft donor
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /tests/global_setup.ts
+            /tests/svelte_testing_setup.ts
+            /tests/jsdom_local_storage_setup.ts
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+
+      - name: Verify frozen donor
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          echo "FROZEN_DONOR_OK=1"
+
+      - name: Apply GREEN foundation + RUN1-J overlays
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply ../overlays/pages-media-base.patch
+          git apply ../overlays/cobalt-offline-gate.patch
+          python ../overlays/highfly_mobile_360.py
+          python ../overlays/highfly_mobile_analog.py
+          python ../overlays/verify_highfly_8way.py
+          python ../overlays/highfly_offline_save.py
+          python ../overlays/highfly_entry_es.py
+          python ../overlays/highfly_mobile_creator.py
+          python ../overlays/highfly_offline_resume_preview.py
+          python ../overlays/highfly_mobile_polish.py
+          python ../overlays/highfly_advanced_mobility.py
+          python ../overlays/highfly_run09_mobile_actions.py
+          python ../overlays/highfly_run091_ui_polish.py
+          python ../overlays/highfly_run092_hud_comfort.py
+          python ../overlays/highfly_run093_preview_hud.py
+          python ../overlays/highfly_run093_combat.py
+          python ../overlays/highfly_training_core_v1.py
+          python ../overlays/highfly_training_persistence_v1.py
+          python ../overlays/highfly_training_ui_v1.py
+          python ../overlays/highfly_training_e2e_v1.py
+          python ../overlays/highfly_training_run1i_ui.py
+          python ../overlays/highfly_branding_run1j.py
+          python ../overlays/rewrite_source_public_paths.py
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("vite.config.ts")
+          s = p.read_text(encoding="utf-8")
+          old = "  base: '/',"
+          new = "  base: env(['VITE_COBALT_BASE']) ?? '/',"
+          if old not in s:
+              raise SystemExit("unexpected vite base")
+          p.write_text(s.replace(old, new, 1), encoding="utf-8")
+          PY
+          git diff --check
+
+      - name: Verify RUN1-J contracts before compile
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s public/ui/highfly/highfly-logo-full.webp
+          test -s public/ui/highfly/highfly-mark.webp
+          grep -F "HF_HIGHFLY_PERSONAL_5D_V2_ID" src/highfly/training/personal_routine.ts
+          grep -F "HIGHFLY_4_WEEK_BLOCK" src/highfly/training/personal_routine.ts
+          grep -F "COMPLETÁ EL EJERCICIO ANTERIOR" src/highfly/training/ui.ts
+          grep -F "REGISTRAR SESIÓN COMPLETA" src/highfly/training/ui.ts
+          grep -F "CORTAR AHORA" src/highfly/training/ui.ts
+          grep -F "applyMovement: true" src/main.ts
+          grep -F "applyPerception: true" src/main.ts
+          grep -F "applyIntelligence: true" src/main.ts
+          grep -F "/ui/highfly/highfly-logo-full.webp" index.html
+          ! grep -F "World of ClaudeCraft" index.html
+          ! grep -F "World of ClaudeCraft" public/manifest.webmanifest
+          grep -F '"name": "HIGHFLY"' public/manifest.webmanifest
+          grep -F "let currentLanguage: SupportedLanguage = 'es_ES';" src/ui/i18n.ts
+          grep -F "let serverMode: ServerMode = 'offline';" src/main.ts
+          echo "RUN1J_CONTRACTS_OK=1"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Enable pinned pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+
+      - name: Install dependencies
+        working-directory: upstream
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: TypeScript source smoke
+        working-directory: upstream
+        run: pnpm exec tsc --noEmit --incremental false
+
+      - name: Training RUN1-J tests
+        working-directory: upstream
+        run: |
+          pnpm exec vitest run \
+            tests/highfly_training_core.test.ts \
+            tests/highfly_training_engine.test.ts \
+            tests/highfly_training_adaptation.test.ts \
+            tests/highfly_training_periodization.test.ts \
+            tests/highfly_training_bridge.test.ts \
+            tests/highfly_training_persistence.test.ts \
+            tests/highfly_training_e2e.test.ts \
+            tests/highfly_training_run1j.test.ts
+
+      - name: Official donor bundle build
+        working-directory: upstream
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          pnpm run build:bundle
+          node scripts/build_media_manifest.mjs prune
+          python ../overlays/rewrite_pages_static.py
+          test -s dist/ui/highfly/highfly-logo-full.webp
+          test -s dist/ui/highfly/highfly-mark.webp
+          ! grep -R -F "World of ClaudeCraft" dist/index.html dist/manifest.webmanifest
+          echo "RUN1J_BUILD_OK=1"
+
+      - name: Branding browser smoke
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vite preview --host 127.0.0.1 --port 4177 --base=/cobalt-hollow-lab/ > ../run1j-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4177/cobalt-hollow-lab/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright';
+
+          const browser = await chromium.launch({ channel: 'chrome', headless: true });
+          const context = await browser.newContext({
+            viewport: { width: 844, height: 390 },
+            screen: { width: 844, height: 390 },
+            deviceScaleFactor: 3,
+            hasTouch: true,
+            isMobile: true,
+            userAgent:
+              'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36',
+          });
+          const page = await context.newPage();
+          const errors = [];
+          page.on('pageerror', (error) => errors.push(String(error)));
+          await page.goto('http://127.0.0.1:4177/cobalt-hollow-lab/', {
+            waitUntil: 'domcontentloaded',
+            timeout: 30000,
+          });
+          await page.waitForTimeout(2500);
+
+          const state = await page.evaluate(() => {
+            const logo = document.querySelector('#intro-logo');
+            const bodyText = document.body.innerText ?? '';
+            const hiddenDiscord = [...document.querySelectorAll('#mm-discord, #community-hud, .uf-discord')]
+              .every((el) => getComputedStyle(el).display === 'none');
+            return {
+              lang: document.documentElement.lang,
+              logoSrc: logo instanceof HTMLImageElement ? logo.getAttribute('src') : null,
+              hasHighfly: bodyText.includes('HIGHFLY') || (logo instanceof HTMLImageElement && logo.src.includes('highfly')),
+              hasClaudeCraft: bodyText.includes('World of ClaudeCraft'),
+              hiddenDiscord,
+            };
+          });
+          console.log('RUN1J_BRAND_STATE', JSON.stringify(state, null, 2));
+          if (!state.logoSrc?.includes('/ui/highfly/highfly-logo-full.webp')) {
+            throw new Error('HIGHFLY intro logo is not active');
+          }
+          if (state.hasClaudeCraft) throw new Error('visible donor brand remains on start screen');
+          if (!state.hiddenDiscord) throw new Error('donor community/Discord controls remain visible');
+          if (errors.length) throw new Error('page errors: ' + errors.join(' | '));
+
+          await page.screenshot({ path: '../run1j-brand-mobile.png', fullPage: true });
+          await browser.close();
+          NODE
+
+      - name: Upload RUN1-J diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-run1j-diagnostics
+          path: |
+            run1j-preview.log
+            run1j-brand-mobile.png
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload RUN1-J Web build
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-run1j-web
+          path: upstream/dist
+          retention-days: 7
