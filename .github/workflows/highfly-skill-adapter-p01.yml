@@ -75,6 +75,7 @@ jobs:
           python ../overlays/apply_highfly_skill_adapter.py
           python ../overlays/apply_highfly_skill_adapter_fix1.py
           python ../overlays/apply_highfly_vertical_slice_tests.py
+          python ../overlays/apply_highfly_jump_smash_full.py
           git diff --check
           echo "=== HIGHFLY DIFF ==="
           git diff --stat
@@ -104,6 +105,7 @@ jobs:
           pnpm exec vitest run \
             tests/highfly_skill_adapter.test.ts \
             tests/highfly_vertical_slice_contract.test.ts \
+            tests/highfly_jump_smash_full.test.ts \
             tests/action_bar_secondary_requirements.test.ts \
             tests/ground_aim_hud.test.ts \
             tests/ground_target_cast.test.ts \
