@@ -110,6 +110,7 @@ jobs:
           python ../overlays/highfly_training_e2e_v1.py
           python ../overlays/highfly_training_run1i_ui.py
           python ../overlays/highfly_run1j_branding.py
+          python ../overlays/highfly_run1j_spanish.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -257,6 +258,10 @@ jobs:
           test -s upstream/public/highfly/highfly-logo-mark.png
           grep -F 'src="/highfly/highfly-logo-full.png"' upstream/index.html
           grep -F 'src="/highfly/highfly-logo-mark.png"' upstream/index.html
+          grep -F "'seo.title': 'HIGHFLY — Entrena · Asciende · Conquista'" upstream/src/ui/i18n.locales/es_ES.ts
+          grep -F "'loading.world': 'Iniciando HIGHFLY...'" upstream/src/ui/i18n.locales/es_ES.ts
+          grep -F "'auth.enterWorld': 'Entrar a HIGHFLY'" upstream/src/ui/i18n.locales/es_ES.ts
+          ! grep -F "World of ClaudeCraft" upstream/src/ui/i18n.locales/es_ES.ts
           grep -q "CONTINUAR ANTES DE TIEMPO" training/runtime/ui.ts
 
       - name: TypeScript source smoke
