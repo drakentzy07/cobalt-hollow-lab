@@ -101,8 +101,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          pnpm exec vitest run             tests/highfly_skill_adapter.test.ts             tests/action_bar_secondary_requirements.test.ts             tests/ground_aim_hud.test.ts             tests/ground_target_cast.test.ts             tests/heroic_leap.test.ts \
-            tests/hotbar.test.ts
+          pnpm exec vitest run \
+            tests/highfly_skill_adapter.test.ts \
+            tests/highfly_vertical_slice_contract.test.ts \
+            tests/action_bar_secondary_requirements.test.ts \
+            tests/ground_aim_hud.test.ts \
+            tests/ground_target_cast.test.ts \
+            tests/heroic_leap.test.ts \
+            tests/hotbar.test.ts \
+            tests/cross_hotbar_cast_dispatch.test.ts \
+            tests/mobile_action_page_view.test.ts \
+            tests/action_bar_layout_persistence_game.test.ts
 
       - name: TypeScript source check
         working-directory: upstream
