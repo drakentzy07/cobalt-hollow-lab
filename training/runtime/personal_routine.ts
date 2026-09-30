@@ -686,7 +686,7 @@ export const HIGHFLY_PERSONAL_5D_ROUTINE: readonly HighflyRoutineDay[] = [
 
 export function roundHighflyLoadKg(
   value: number,
-  increment = HIGHFLY_LOAD_ROUND_KG,
+  increment: number = HIGHFLY_LOAD_ROUND_KG,
 ): number {
   if (!Number.isFinite(value) || value <= 0) return 0;
   return Math.round(value / increment) * increment;
