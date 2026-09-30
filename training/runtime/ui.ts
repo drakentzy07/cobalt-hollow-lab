@@ -1,3 +1,4 @@
+import { bindTouchTap } from '../../ui/touch_tap';
 import { evaluateTrainingSession, type ExerciseDefinition, type SessionRecord } from './engine';
 import {
   HF_REFERENCE_5D_SUPREME_V1,
@@ -219,7 +220,8 @@ function render(): void {
   `;
 
   mount.querySelectorAll<HTMLElement>('[data-hf-training-day]').forEach((button) => {
-    button.addEventListener('click', () => {
+    bindTouchTap(button, (event) => {
+      event.preventDefault();
       selectedDay = Number(button.dataset.hfTrainingDay) || 1;
       lastResult = null;
       render();
@@ -234,7 +236,13 @@ function render(): void {
     });
   }
 
-  mount.querySelector('#hf-training-register')?.addEventListener('click', registerSession);
+  const register = mount.querySelector<HTMLElement>('#hf-training-register');
+  if (register) {
+    bindTouchTap(register, (event) => {
+      event.preventDefault();
+      registerSession();
+    });
+  }
 }
 
 function registerSession(): void {
@@ -312,7 +320,11 @@ export function installHighflyTrainingUi(): void {
     render();
   });
 
-  document.querySelector('#highfly-training-close')?.addEventListener('click', () => {
-    document.querySelector('#highfly-training-window')?.setAttribute('hidden', '');
-  });
+  const close = document.querySelector<HTMLElement>('#highfly-training-close');
+  if (close) {
+    bindTouchTap(close, (event) => {
+      event.preventDefault();
+      document.querySelector('#highfly-training-window')?.setAttribute('hidden', '');
+    });
+  }
 }
