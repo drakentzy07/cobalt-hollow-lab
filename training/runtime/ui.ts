@@ -1,23 +1,21 @@
 import { bindTouchTap } from '../../ui/touch_tap';
 import type { ExerciseDefinition, SessionRecord } from './engine';
-import type {
-  HighflyHunterProfile,
-  HighflyRmLiftId,
-} from './core';
+import type { HighflyHunterProfile, HighflyRmLiftId } from './core';
 import {
-  HIGHFLY_12_WEEK_MACROCYCLE,
+  HIGHFLY_4_WEEK_BLOCK,
   HIGHFLY_PERSONAL_5D_ROUTINE,
-  HF_HIGHFLY_PERSONAL_5D_V1_ID,
+  HF_HIGHFLY_PERSONAL_5D_V2_ID,
   HIGHFLY_LOAD_ROUND_KG,
   HIGHFLY_TM_FACTOR,
-  derivedLoadRangeKg,
+  flattenSetPlans,
   isEditableAccessory,
-  macrocycleWeek,
-  mainPrescription,
+  planLoadKg,
+  plannedSetCount,
+  prescriptionForWeek,
   restClockLabel,
-  roundHighflyLoadKg,
   trainingMaxKg,
   type HighflyRoutineExercise,
+  type HighflySetPlan,
 } from './personal_routine';
 import {
   getActiveHighflyHunterProfile,
@@ -29,9 +27,12 @@ import { refreshActiveTrainingCombatBridge } from './combat_runtime';
 let installed = false;
 let selectedDay = 1;
 let selectedWeek = 1;
+let readinessPct = 100;
 let calibrationOpen = false;
 let lastResult: ReturnType<typeof runTrainingSessionPipeline>['sessionResult'] | null = null;
 let lastOutcomes: ReturnType<typeof runTrainingSessionPipeline>['outcomes'] = [];
+
+const completedSets = new Map<string, number>();
 const restRecords = new Map<string, number[]>();
 
 interface ActiveRestTimer {
@@ -41,25 +42,24 @@ interface ActiveRestTimer {
   startedAt: number;
   timerId: number;
 }
-
 let activeRest: ActiveRestTimer | null = null;
 
 const RM_FIELDS: readonly {
   id: HighflyRmLiftId;
   label: string;
+  defaultRm: number;
 }[] = [
-  { id: 'back_squat', label: 'Sentadilla' },
-  { id: 'bench_press', label: 'Press banca' },
-  { id: 'overhead_press', label: 'Press militar' },
-  { id: 'deadlift', label: 'Peso muerto' },
+  { id: 'hang_power_clean', label: 'Hang Power Clean', defaultRm: 80 },
+  { id: 'back_squat', label: 'Sentadilla', defaultRm: 120 },
+  { id: 'push_press', label: 'Push Press', defaultRm: 70 },
+  { id: 'bench_press', label: 'Banco Plano', defaultRm: 75 },
+  { id: 'deadlift_rack_pull', label: 'Peso Muerto / Rack Pull', defaultRm: 115 },
+  { id: 'pendlay_row', label: 'Remo Pendlay', defaultRm: 75 },
+  { id: 'overhead_press', label: 'Press Militar', defaultRm: 60 },
+  { id: 'incline_barbell', label: 'Banco Inclinado con Barra', defaultRm: 75 },
+  { id: 'front_squat', label: 'Sentadilla Frontal', defaultRm: 75 },
+  { id: 'zercher_good_morning', label: 'Buenos días Zercher', defaultRm: 75 },
 ] as const;
-
-function numberValue(root: ParentNode, selector: string, fallback: number): number {
-  const input = root.querySelector(selector);
-  if (!(input instanceof HTMLInputElement)) return fallback;
-  const value = Number(input.value);
-  return Number.isFinite(value) ? value : fallback;
-}
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => {
@@ -82,19 +82,50 @@ function calibratedOneRm(
   profile: HighflyHunterProfile | null,
   lift: HighflyRmLiftId | undefined,
 ): number | null {
-  if (!profile || !lift) return null;
-  const value = profile.training.loadCalibration?.lifts?.[lift]?.oneRmKg;
-  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null;
+  if (!lift) return null;
+  const stored = profile?.training.loadCalibration?.lifts?.[lift]?.oneRmKg;
+  if (typeof stored === 'number' && Number.isFinite(stored) && stored > 0) return stored;
+  return RM_FIELDS.find((field) => field.id === lift)?.defaultRm ?? null;
 }
 
 function calibrationComplete(profile: HighflyHunterProfile | null): boolean {
   return RM_FIELDS.every(({ id }) => calibratedOneRm(profile, id) !== null);
 }
 
+function readinessLabel(value: number): string {
+  if (value >= 100) return 'ÓPTIMA';
+  if (value >= 90) return 'BUENA';
+  if (value >= 80) return 'NORMAL';
+  if (value >= 70) return 'CARGADO';
+  return 'MUY CARGADO';
+}
+
+function readinessModifier(value: number): number {
+  return 0.65 + 0.35 * Math.max(0, Math.min(1, value / 100));
+}
+
+function intentLabel(intent: HighflyRoutineExercise['intent']): string {
+  switch (intent) {
+    case 'strength': return 'FUERZA';
+    case 'power': return 'POTENCIA';
+    case 'hypertrophy': return 'HIPERTROFIA';
+    case 'accessory': return 'ACCESORIO';
+    case 'recovery': return 'RECUPERACIÓN';
+  }
+}
+
+function authorityLabel(exercise: HighflyRoutineExercise): string {
+  switch (exercise.authority) {
+    case 'percent_tm': return 'SISTEMA · % TM';
+    case 'fixed_locked': return 'SISTEMA · FIJO';
+    case 'editable_accessory': return 'CARGA EDITABLE';
+  }
+}
+
 function coreCards(): string {
   const profile = profileOrNull();
   if (!profile) {
-    return '<div class="hf-training-empty">Entrá con tu Hunter para ver el Training Core.</div>';
+    return '<div class="hf-training-empty">Entrá con tu Hunter para ver el Núcleo Hunter.</div>';
   }
   return (['STR', 'AGI', 'VIT', 'PER', 'INT'] as const)
     .map((stat) => {
@@ -109,10 +140,10 @@ function coreCards(): string {
           </div>
           <div class="hf-core-current">${state.current.toFixed(1)}</div>
           <div class="hf-core-meta">
-            <span>Peak <b>${state.peak.toFixed(1)}</b></span>
-            <span>Progress <b>${state.progress.toFixed(1)}</b></span>
+            <span>Pico <b>${state.peak.toFixed(1)}</b></span>
+            <span>Progreso <b>${state.progress.toFixed(1)}</b></span>
             <span>Conf. <b>${Math.round(state.confidence * 100)}%</b></span>
-            <span>Ready <b>${Math.round(state.readiness * 100)}%</b></span>
+            <span>Preparación <b>${Math.round(state.readiness * 100)}%</b></span>
           </div>
         </article>
       `;
@@ -121,9 +152,9 @@ function coreCards(): string {
 }
 
 function weekOptions(): string {
-  return HIGHFLY_12_WEEK_MACROCYCLE.map(
+  return HIGHFLY_4_WEEK_BLOCK.map(
     (week) =>
-      `<option value="${week.week}" ${week.week === selectedWeek ? 'selected' : ''}>S${week.week} · ${week.block}</option>`,
+      `<option value="${week.week}" ${week.week === selectedWeek ? 'selected' : ''}>S${week.week} · ${week.phase}</option>`,
   ).join('');
 }
 
@@ -142,18 +173,51 @@ function dayTabs(): string {
   ).join('');
 }
 
-function plannedSetCount(exercise: HighflyRoutineExercise): number {
-  if (exercise.authority !== 'tm_main' || !exercise.rmLift) return exercise.defaultSets;
-  const profile = profileOrNull();
-  const rm = calibratedOneRm(profile, exercise.rmLift);
-  if (!rm) return 0;
-  const p = mainPrescription(exercise.rmLift, rm, selectedWeek);
-  if (p.topReps === 'TEST') return 0;
-  return 1 + p.backoffSets;
+function currentDay() {
+  return HIGHFLY_PERSONAL_5D_ROUTINE.find((candidate) => candidate.day === selectedDay) ?? null;
 }
 
-function requiredRestCount(exercise: HighflyRoutineExercise): number {
-  return Math.max(0, plannedSetCount(exercise) - 1);
+function setCount(exercise: HighflyRoutineExercise): number {
+  return plannedSetCount(exercise, selectedWeek);
+}
+
+function completedSetCount(exercise: HighflyRoutineExercise): number {
+  return Math.min(setCount(exercise), completedSets.get(exercise.exerciseId) ?? 0);
+}
+
+function exerciseComplete(exercise: HighflyRoutineExercise): boolean {
+  return completedSetCount(exercise) >= setCount(exercise);
+}
+
+function exerciseUnlocked(exercise: HighflyRoutineExercise): boolean {
+  const day = currentDay();
+  if (!day) return false;
+  const index = day.exercises.findIndex((candidate) => candidate.exerciseId === exercise.exerciseId);
+  if (index <= 0) return index === 0;
+  return day.exercises.slice(0, index).every(exerciseComplete);
+}
+
+function dayComplete(): boolean {
+  const day = currentDay();
+  return !!day && day.exercises.every(exerciseComplete);
+}
+
+function accessoryKg(exercise: HighflyRoutineExercise): number {
+  const stored = profileOrNull()?.training.accessoryLoads?.[exercise.exerciseId]?.kg;
+  if (typeof stored === 'number' && Number.isFinite(stored) && stored > 0) return stored;
+  const suggested = prescriptionForWeek(exercise, selectedWeek).work.suggestedKg;
+  return typeof suggested === 'number' && suggested > 0 ? suggested : 0;
+}
+
+function formatPlan(plan: HighflySetPlan, exercise: HighflyRoutineExercise): string {
+  const rm = calibratedOneRm(profileOrNull(), exercise.rmLift);
+  const kg =
+    exercise.authority === 'editable_accessory'
+      ? accessoryKg(exercise)
+      : planLoadKg(plan, rm);
+  const load = kg > 0 ? ` · ${kg} kg` : '';
+  const pct = typeof plan.percentTm === 'number' ? ` @${Math.round(plan.percentTm * 100)}%` : '';
+  return `${plan.sets}×${plan.reps}${pct}${load}`;
 }
 
 function loadPlan(exercise: HighflyRoutineExercise): {
@@ -163,131 +227,82 @@ function loadPlan(exercise: HighflyRoutineExercise): {
   systemLoadKg: number;
   rmReferenceKg?: number;
 } {
-  const profile = profileOrNull();
+  const prescription = prescriptionForWeek(exercise, selectedWeek);
 
-  if (exercise.authority === 'tm_main' && exercise.rmLift) {
-    const rm = calibratedOneRm(profile, exercise.rmLift);
+  if (exercise.authority === 'percent_tm' && exercise.rmLift) {
+    const rm = calibratedOneRm(profileOrNull(), exercise.rmLift);
     if (!rm) {
       return {
         ready: false,
         primary: 'RM REQUERIDO',
-        secondary: 'Cargalo en CALIBRACIÓN',
+        secondary: 'Revisalo en Calibración de Fuerza',
         systemLoadKg: 0,
       };
     }
-    const p = mainPrescription(exercise.rmLift, rm, selectedWeek);
-    const tm = trainingMaxKg(rm);
-    if (p.topReps === 'TEST') {
-      return {
-        ready: true,
-        primary: 'TEST DE RM',
-        secondary: 'Actualizá el nuevo RM al terminar',
-        systemLoadKg: 0,
-        rmReferenceKg: tm,
-      };
-    }
-    const top = p.topKg ?? 0;
-    const backoff =
-      p.backoffKg && p.backoffSets > 0
-        ? ` · ${p.backoffKg} kg × ${p.backoffSets}×${p.backoffReps}`
-        : '';
+    const workKg = planLoadKg(prescription.work, rm);
+    const primary = prescription.top
+      ? `TOP ${formatPlan(prescription.top, exercise)} · TRABAJO ${formatPlan(prescription.work, exercise)}`
+      : formatPlan(prescription.work, exercise);
     return {
       ready: true,
-      primary: `${top} kg × ${p.topReps}${backoff}`,
-      secondary: `TM ${tm} kg · ${Math.round((p.topPercent ?? 0) * 100)}% top`,
-      systemLoadKg: top,
-      rmReferenceKg: tm,
-    };
-  }
-
-  if (exercise.authority === 'derived_percent' && exercise.rmLift && exercise.derivedPercentRange) {
-    const rm = calibratedOneRm(profile, exercise.rmLift);
-    if (!rm) {
-      return {
-        ready: false,
-        primary: 'RM BASE REQUERIDO',
-        secondary: 'La carga se deriva automáticamente',
-        systemLoadKg: 0,
-      };
-    }
-    const [low, high] = derivedLoadRangeKg(rm, exercise.derivedPercentRange);
-    const midpoint = roundHighflyLoadKg((low + high) / 2);
-    return {
-      ready: true,
-      primary: `${low}–${high} kg`,
-      secondary: `Objetivo sistema · ${Math.round(exercise.derivedPercentRange[0] * 100)}–${Math.round(exercise.derivedPercentRange[1] * 100)}% TM`,
-      systemLoadKg: midpoint,
+      primary,
+      secondary: `RM ${rm} kg · TM ${trainingMaxKg(rm)} kg`,
+      systemLoadKg: workKg,
       rmReferenceKg: trainingMaxKg(rm),
     };
   }
 
-  if (exercise.authority === 'editable_accessory') {
-    const kg = profile?.training.accessoryLoads?.[exercise.exerciseId]?.kg ?? 0;
+  if (exercise.authority === 'fixed_locked') {
+    const kg = planLoadKg(prescription.work);
     return {
       ready: kg > 0,
-      primary: kg > 0 ? `${kg} kg registrados` : 'CARGA PENDIENTE',
-      secondary: 'Mancuerna / máquina · editable',
-      systemLoadKg: Math.max(0, kg),
+      primary: formatPlan(prescription.work, exercise),
+      secondary: 'Carga exacta de tu rutina · bloqueada',
+      systemLoadKg: kg,
     };
   }
 
-  if (exercise.authority === 'bodyweight_locked') {
-    return {
-      ready: true,
-      primary: 'PESO CORPORAL',
-      secondary: 'Carga bloqueada por el sistema',
-      systemLoadKg: 0,
-    };
-  }
-
+  const kg = accessoryKg(exercise);
   return {
-    ready: true,
-    primary: 'CARGA GUIADA',
-    secondary: 'No editable · sin e1RM comparable automático',
-    systemLoadKg: 0,
+    ready: kg > 0,
+    primary: kg > 0 ? `${prescription.work.sets}×${prescription.work.reps} · ${kg} kg` : `${prescription.work.sets}×${prescription.work.reps} · PESO PENDIENTE`,
+    secondary: prescription.work.suggestedKg
+      ? `Rutina base: ${prescription.work.suggestedKg} kg · editable`
+      : 'Mancuerna / máquina · ingresá el peso usado',
+    systemLoadKg: Math.max(0, kg),
   };
 }
 
 function calibrationPanel(): string {
   const profile = profileOrNull();
-  const complete = calibrationComplete(profile);
-  const fields = RM_FIELDS.map(({ id, label }) => {
-    const rm = calibratedOneRm(profile, id);
-    const tm = rm ? trainingMaxKg(rm) : null;
+  const fields = RM_FIELDS.map(({ id, label, defaultRm }) => {
+    const stored = profile?.training.loadCalibration?.lifts?.[id]?.oneRmKg;
+    const rm = typeof stored === 'number' && stored > 0 ? stored : defaultRm;
+    const tm = trainingMaxKg(rm);
     return `
       <label class="hf-rm-field">
-        <span>${label}</span>
+        <span>${escapeHtml(label)}</span>
         <div class="hf-rm-input-wrap">
-          <input
-            data-hf-rm="${id}"
-            type="number"
-            inputmode="decimal"
-            min="1"
-            step="0.5"
-            placeholder="1RM kg"
-            value="${rm ?? ''}"
-          >
-          <small>${tm ? `TM ${tm} kg` : 'TM = 90% del RM'}</small>
+          <input data-hf-rm="${id}" type="number" inputmode="decimal" min="1" step="0.5" value="${rm}">
+          <small>RM ${rm} kg · TM 90% = ${tm} kg</small>
         </div>
       </label>
     `;
   }).join('');
 
   return `
-    <section class="hf-calibration ${calibrationOpen || !complete ? 'is-open' : ''}">
+    <section class="hf-calibration ${calibrationOpen ? 'is-open' : ''}">
       <button type="button" id="hf-calibration-toggle" class="hf-system-line">
         <span>CALIBRACIÓN DE FUERZA</span>
-        <b>${complete ? 'LISTA' : 'REQUERIDA'}</b>
+        <b>${calibrationComplete(profile) ? 'LISTA' : 'REQUERIDA'}</b>
       </button>
       <div class="hf-calibration-body">
         <p>
-          Cargás tu RM una sola vez. HIGHFLY calcula el <b>Training Max 90%</b>,
-          la semana del macrociclo y los kilos de los básicos. Esos kilos no se editan durante la sesión.
+          Estos RM salen de <b>tu rutina adjunta</b>. HIGHFLY usa TM = 90% y reproduce
+          exactamente las cuatro semanas. Podés recalibrarlos cuando cambie tu RM.
         </p>
         <div class="hf-rm-grid">${fields}</div>
-        <button type="button" id="hf-calibration-save" class="hf-primary-action">
-          GUARDAR CALIBRACIÓN
-        </button>
+        <button type="button" id="hf-calibration-save" class="hf-primary-action">GUARDAR CALIBRACIÓN</button>
         <div id="hf-calibration-status" class="hf-inline-status"></div>
       </div>
     </section>
@@ -295,39 +310,44 @@ function calibrationPanel(): string {
 }
 
 function exerciseRows(): string {
-  const day = HIGHFLY_PERSONAL_5D_ROUTINE.find((candidate) => candidate.day === selectedDay);
+  const day = currentDay();
   if (!day) return '';
-  const profile = profileOrNull();
 
   return day.exercises
-    .map((exercise) => {
+    .map((exercise, index) => {
       const load = loadPlan(exercise);
-      const restDone = restRecords.get(exercise.exerciseId)?.length ?? 0;
-      const restNeeded = requiredRestCount(exercise);
-      const editable = isEditableAccessory(exercise);
-      const kg = profile?.training.accessoryLoads?.[exercise.exerciseId]?.kg ?? 0;
+      const total = setCount(exercise);
+      const done = completedSetCount(exercise);
+      const unlocked = exerciseUnlocked(exercise);
+      const complete = done >= total;
       const active = activeRest?.exerciseId === exercise.exerciseId;
+      const blockedByPrevious = !unlocked;
+      const canCompleteSet = unlocked && load.ready && !complete && !activeRest;
+      const editable = isEditableAccessory(exercise);
+      const kg = accessoryKg(exercise);
+      const restDone = restRecords.get(exercise.exerciseId)?.length ?? 0;
+      const restNeeded = Math.max(0, total - 1);
 
       return `
-        <article class="hf-exercise ${load.ready ? '' : 'is-blocked'}" data-exercise-id="${exercise.exerciseId}">
+        <article class="hf-exercise ${complete ? 'is-complete' : ''} ${blockedByPrevious || !load.ready ? 'is-sequence-locked' : ''}" data-exercise-id="${exercise.exerciseId}">
           <div class="hf-exercise__head">
             <div>
-              <span class="hf-exercise-code">D${selectedDay} // ${exercise.intent.toUpperCase()}</span>
-              <strong>${escapeHtml(exercise.label)}</strong>
-              <small>${escapeHtml(exercise.prescription)} · ${escapeHtml(exercise.target)}</small>
+              <span class="hf-exercise-code">D${selectedDay} // ${intentLabel(exercise.intent)}</span>
+              <strong>${index + 1}. ${escapeHtml(exercise.label)}</strong>
+              <small>${escapeHtml(exercise.notes ?? 'Rutina HIGHFLY exacta')}</small>
             </div>
-            <span class="hf-intent">${exercise.authority.replaceAll('_', ' ').toUpperCase()}</span>
+            <span class="hf-intent">${authorityLabel(exercise)}</span>
           </div>
 
           <div class="hf-exercise-system">
             <div class="hf-prescription">
-              <span>CARGA</span>
+              <span>PRESCRIPCIÓN</span>
               <b>${escapeHtml(load.primary)}</b>
               <small>${escapeHtml(load.secondary)}</small>
             </div>
             <div class="hf-prescription">
-              <span>DESCANSO</span>
-              <b>${restClockLabel(exercise.restSec)}</b>
+              <span>PROGRESO</span>
+              <b>SET ${done}/${total}</b>
               <small>${restDone}/${restNeeded} descansos registrados</small>
             </div>
             ${
@@ -342,29 +362,36 @@ function exerciseRows(): string {
                       step="0.5"
                       value="${kg || ''}"
                       placeholder="kg"
+                      ${!unlocked || complete ? 'disabled' : ''}
                     >
                   </label>`
-                : `<div class="hf-lock-chip"><span>🔒</span><b>CARGA BLOQUEADA</b></div>`
+                : `<div class="hf-lock-chip"><span>🔒</span><b>CARGA DEL SISTEMA</b></div>`
             }
           </div>
 
           <div class="hf-rest-actions">
             <button
               type="button"
-              data-hf-rest-start="${exercise.exerciseId}"
-              ${restNeeded === 0 || restDone >= restNeeded || active ? 'disabled' : ''}
+              data-hf-set-complete="${exercise.exerciseId}"
+              ${canCompleteSet ? '' : 'disabled'}
             >
               ${
-                restNeeded === 0
-                  ? 'SIN DESCANSO PENDIENTE'
-                  : restDone >= restNeeded
-                    ? 'DESCANSOS COMPLETOS'
-                    : active
-                      ? 'DESCANSO EN CURSO'
-                      : `SET COMPLETADO · INICIAR ${restClockLabel(exercise.restSec)}`
+                complete
+                  ? '✓ EJERCICIO COMPLETADO'
+                  : blockedByPrevious
+                    ? '🔒 COMPLETÁ EL EJERCICIO ANTERIOR'
+                    : !load.ready
+                      ? 'CARGA PENDIENTE'
+                      : active
+                        ? 'RECUPERACIÓN EN CURSO'
+                        : `COMPLETAR SET ${done + 1}/${total}`
               }
             </button>
-            <small>Si cortás el contador antes, el tiempo real entra al score y aplica debuff.</small>
+            <small>
+              ${complete
+                ? 'Secuencia completada.'
+                : 'Cada set habilita su descanso. El siguiente ejercicio permanece bloqueado hasta terminar éste.'}
+            </small>
           </div>
         </article>
       `;
@@ -376,23 +403,32 @@ function restDockHtml(): string {
   return `
     <aside id="hf-rest-dock" class="hf-rest-dock" hidden>
       <div>
-        <span>RECUPERACIÓN</span>
+        <span>[ SISTEMA // RECUPERACIÓN ]</span>
         <strong id="hf-rest-label">—</strong>
+        <small id="hf-rest-message">Recuperación óptima en curso</small>
       </div>
       <div class="hf-rest-clock" id="hf-rest-clock">00:00</div>
       <div class="hf-rest-progress"><i id="hf-rest-progress-bar"></i></div>
-      <button type="button" id="hf-rest-skip">CORTAR DESCANSO · DEBUFF</button>
+      <button type="button" id="hf-rest-skip">CORTAR DESCANSO</button>
     </aside>
   `;
 }
 
+function outcomeLabel(value: string): string {
+  switch (value) {
+    case 'calibrated': return 'CALIBRADO';
+    case 'progress_only': return 'PROGRESO';
+    case 'awaiting_performance': return 'ESPERANDO PRUEBA';
+    case 'awaiting_confidence': return 'ESPERANDO CONFIANZA';
+    case 'maintenance': return 'MANTENIMIENTO';
+    case 'stat_up': return 'STAT UP';
+    default: return value.toUpperCase();
+  }
+}
+
 function resultHtml(): string {
   if (!lastResult) {
-    return `
-      <div class="hf-training-empty">
-        El sistema convierte tu sesión real en <b>Evidence → Stimulus → Progress → Performance Gate</b>.
-      </div>
-    `;
+    return '<div class="hf-training-empty">Completá la sesión real para convertirla en Evidencia → Estímulo → Progreso → Stat Up.</div>';
   }
   const s = lastResult.stimulus;
   const restAverage =
@@ -406,8 +442,8 @@ function resultHtml(): string {
           (o) => `
             <div class="hf-training-outcome">
               <b>${o.stat}</b>
-              <span>${o.outcome.replaceAll('_', ' ')}</span>
-              <small>${escapeHtml(o.reason)}</small>
+              <span>${outcomeLabel(o.outcome)}</span>
+              <small>Estímulo ${o.stimulus.toFixed(2)}${o.statDelta ? ' · +1 consolidado' : ''}</small>
             </div>
           `,
         )
@@ -423,7 +459,7 @@ function resultHtml(): string {
       <div><span>INT</span><b>${s.INT.toFixed(2)}</b></div>
     </div>
     <div class="hf-training-result__meta">
-      <span>Evidence <b>${lastResult.evidence.length}</b></span>
+      <span>Evidencia <b>${lastResult.evidence.length}</b></span>
       <span>Tonelaje <b>${lastResult.diagnosticTonnageKg.toFixed(1)} kg</b></span>
       <span>Descanso <b>${Math.round(restAverage * 100)}%</b></span>
       <span>Fatiga sist. <b>${lastResult.fatigue.systemic.toFixed(2)}</b></span>
@@ -436,17 +472,15 @@ function render(): void {
   const mount = document.querySelector('#highfly-training-window .highfly-training-shell');
   if (!(mount instanceof HTMLElement)) return;
 
-  const plan = macrocycleWeek(selectedWeek);
-  const profile = profileOrNull();
-  const complete = calibrationComplete(profile);
-  if (!complete) calibrationOpen = true;
+  const phase = HIGHFLY_4_WEEK_BLOCK[selectedWeek - 1];
+  const prepMod = Math.round(readinessModifier(readinessPct) * 100);
 
   mount.innerHTML = `
     <section class="hf-training-header">
       <div>
-        <span class="hf-eyebrow">[ HIGHFLY // TRAINING SYSTEM ]</span>
-        <h3>RUTINA HIGHFLY · 5D</h3>
-        <p>${HF_HIGHFLY_PERSONAL_5D_V1_ID} · Macrociclo 12 semanas</p>
+        <span class="hf-eyebrow">[ HIGHFLY // SISTEMA DE ENTRENAMIENTO ]</span>
+        <h3>RUTINA HIGHFLY · 5 DÍAS</h3>
+        <p>${HF_HIGHFLY_PERSONAL_5D_V2_ID} · Bloque exacto 3+1 · 4 semanas</p>
       </div>
       <div class="hf-training-controls">
         <label>
@@ -454,24 +488,25 @@ function render(): void {
           <select id="hf-training-week">${weekOptions()}</select>
         </label>
         <label class="hf-readiness-control">
-          <span>READINESS <output id="hf-training-readiness-value">85%</output></span>
-          <input id="hf-training-readiness" type="range" min="0" max="100" step="1" value="85">
+          <span>PREPARACIÓN <output id="hf-training-readiness-value">${readinessPct}% · ${readinessLabel(readinessPct)}</output></span>
+          <input id="hf-training-readiness" type="range" min="60" max="100" step="10" value="${readinessPct}">
+          <small>No cambia tus kilos · estímulo calculado ${prepMod}%</small>
         </label>
       </div>
     </section>
 
     <section class="hf-cycle-status">
-      <div><span>BLOQUE</span><b>${plan.block.toUpperCase()}</b></div>
-      <div><span>OBJETIVO</span><b>${escapeHtml(plan.objective)}</b></div>
-      <div><span>ACCESORIOS</span><b>${escapeHtml(plan.accessoryVolume)}</b></div>
-      <div><span>CALIBRACIÓN</span><b>${complete ? 'LISTA' : 'PENDIENTE'}</b></div>
+      <div><span>BLOQUE</span><b>SEMANA ${phase.week}</b></div>
+      <div><span>FASE</span><b>${phase.phase.toUpperCase()}</b></div>
+      <div><span>RUTINA</span><b>EXACTA · ADJUNTA</b></div>
+      <div><span>SECUENCIA</span><b>${dayComplete() ? 'COMPLETA' : 'ACTIVA'}</b></div>
     </section>
 
     ${calibrationPanel()}
 
     <section>
       <div class="hf-section-title">
-        <h4>HUNTER CORE</h4>
+        <h4>NÚCLEO HUNTER</h4>
         <span>STR / AGI / VIT / PER / INT sólo suben por entrenamiento real</span>
       </div>
       <div class="hf-core-grid">${coreCards()}</div>
@@ -480,24 +515,22 @@ function render(): void {
     <section>
       <div class="hf-section-title">
         <h4>SESIÓN</h4>
-        <span>Las cargas %RM y los descansos los gobierna el sistema</span>
+        <span>Ejercicios secuenciales · carga y descanso gobernados por el Sistema</span>
       </div>
       <div class="hf-training-days">${dayTabs()}</div>
       <div class="hf-exercise-list">${exerciseRows()}</div>
       <div class="hf-training-actions">
-        <button type="button" id="hf-training-register" class="hf-primary-action">
-          REGISTRAR SESIÓN
+        <button type="button" id="hf-training-register" class="hf-primary-action" ${dayComplete() ? '' : 'disabled'}>
+          ${dayComplete() ? 'REGISTRAR SESIÓN COMPLETA' : 'COMPLETÁ TODOS LOS EJERCICIOS'}
         </button>
-        <small>
-          Sólo se editan cargas de mancuernas/máquinas. Los básicos se calculan desde tu RM y el macrociclo.
-        </small>
+        <small>HIGHFLY sólo registra sets realmente completados. Nunca completa una sesión por vos.</small>
       </div>
     </section>
 
     <section>
       <div class="hf-section-title">
         <h4>RESULTADO DEL SISTEMA</h4>
-        <span>Evidence · Stimulus · Fatigue · Performance Gate</span>
+        <span>Evidencia · Estímulo · Fatiga · Performance Gate</span>
       </div>
       <div id="hf-training-result" class="hf-training-result">${resultHtml()}</div>
     </section>
@@ -509,15 +542,20 @@ function render(): void {
   if (activeRest) paintRestDock();
 }
 
+function resetSessionProgress(): void {
+  cancelActiveRest();
+  completedSets.clear();
+  restRecords.clear();
+  lastResult = null;
+  lastOutcomes = [];
+}
+
 function bindRenderedUi(mount: HTMLElement): void {
   mount.querySelectorAll<HTMLElement>('[data-hf-training-day]').forEach((button) => {
     bindTouchTap(button, (event) => {
       event.preventDefault();
-      cancelActiveRest();
       selectedDay = Number(button.dataset.hfTrainingDay) || 1;
-      restRecords.clear();
-      lastResult = null;
-      lastOutcomes = [];
+      resetSessionProgress();
       render();
     });
   });
@@ -525,20 +563,17 @@ function bindRenderedUi(mount: HTMLElement): void {
   const week = mount.querySelector('#hf-training-week');
   if (week instanceof HTMLSelectElement) {
     week.addEventListener('change', () => {
-      cancelActiveRest();
-      selectedWeek = Math.max(1, Math.min(12, Number(week.value) || 1));
-      restRecords.clear();
-      lastResult = null;
-      lastOutcomes = [];
+      selectedWeek = Math.max(1, Math.min(4, Number(week.value) || 1));
+      resetSessionProgress();
       render();
     });
   }
 
   const readiness = mount.querySelector('#hf-training-readiness');
-  const readinessValue = mount.querySelector('#hf-training-readiness-value');
-  if (readiness instanceof HTMLInputElement && readinessValue instanceof HTMLOutputElement) {
+  if (readiness instanceof HTMLInputElement) {
     readiness.addEventListener('input', () => {
-      readinessValue.value = `${readiness.value}%`;
+      readinessPct = Math.max(60, Math.min(100, Number(readiness.value) || 100));
+      render();
     });
   }
 
@@ -564,16 +599,16 @@ function bindRenderedUi(mount: HTMLElement): void {
       const exerciseId = input.dataset.hfAccessoryLoad;
       if (!exerciseId) return;
       saveAccessoryLoad(exerciseId, Math.max(0, Number(input.value) || 0));
+      render();
     });
   });
 
-  mount.querySelectorAll<HTMLElement>('[data-hf-rest-start]').forEach((button) => {
+  mount.querySelectorAll<HTMLElement>('[data-hf-set-complete]').forEach((button) => {
     bindTouchTap(button, (event) => {
       event.preventDefault();
-      const exerciseId = button.dataset.hfRestStart;
-      const day = HIGHFLY_PERSONAL_5D_ROUTINE.find((candidate) => candidate.day === selectedDay);
-      const exercise = day?.exercises.find((candidate) => candidate.exerciseId === exerciseId);
-      if (exercise) startRest(exercise);
+      const exerciseId = button.dataset.hfSetComplete;
+      const exercise = currentDay()?.exercises.find((candidate) => candidate.exerciseId === exerciseId);
+      if (exercise) completeSet(exercise);
     });
   });
 
@@ -594,20 +629,22 @@ function bindRenderedUi(mount: HTMLElement): void {
   }
 }
 
+function numericInput(root: ParentNode, selector: string, fallback: number): number {
+  const input = root.querySelector(selector);
+  if (!(input instanceof HTMLInputElement)) return fallback;
+  const value = Number(input.value);
+  return Number.isFinite(value) ? value : fallback;
+}
+
 function saveCalibration(mount: HTMLElement): void {
   const profile = profileOrNull();
   if (!profile) return;
-
   const now = new Date().toISOString();
   const lifts = { ...(profile.training.loadCalibration?.lifts ?? {}) };
-  let validCount = 0;
 
-  for (const { id } of RM_FIELDS) {
-    const value = Math.max(0, numberValue(mount, `[data-hf-rm="${id}"]`, 0));
-    if (value > 0) {
-      lifts[id] = { oneRmKg: value, updatedAt: now };
-      validCount++;
-    }
+  for (const { id, defaultRm } of RM_FIELDS) {
+    const value = Math.max(0, numericInput(mount, `[data-hf-rm="${id}"]`, defaultRm));
+    if (value > 0) lifts[id] = { oneRmKg: value, updatedAt: now };
   }
 
   setActiveHighflyHunterProfile({
@@ -621,8 +658,8 @@ function saveCalibration(mount: HTMLElement): void {
       },
     },
   });
-
-  calibrationOpen = validCount < RM_FIELDS.length;
+  calibrationOpen = false;
+  resetSessionProgress();
   render();
 }
 
@@ -635,20 +672,32 @@ function saveAccessoryLoad(exerciseId: string, kg: number): void {
       ...profile.training,
       accessoryLoads: {
         ...(profile.training.accessoryLoads ?? {}),
-        [exerciseId]: {
-          kg,
-          updatedAt: new Date().toISOString(),
-        },
+        [exerciseId]: { kg, updatedAt: new Date().toISOString() },
       },
     },
   });
 }
 
+function completeSet(exercise: HighflyRoutineExercise): void {
+  if (activeRest || !exerciseUnlocked(exercise)) return;
+  const load = loadPlan(exercise);
+  if (!load.ready) return;
+  const total = setCount(exercise);
+  const done = completedSetCount(exercise);
+  if (done >= total) return;
+
+  const next = done + 1;
+  completedSets.set(exercise.exerciseId, next);
+
+  if (next < total) {
+    startRest(exercise);
+  } else {
+    render();
+  }
+}
+
 function startRest(exercise: HighflyRoutineExercise): void {
   if (activeRest) return;
-  const done = restRecords.get(exercise.exerciseId)?.length ?? 0;
-  if (done >= requiredRestCount(exercise)) return;
-
   const timerId = window.setInterval(() => {
     if (!activeRest) return;
     const elapsed = (Date.now() - activeRest.startedAt) / 1000;
@@ -666,6 +715,7 @@ function startRest(exercise: HighflyRoutineExercise): void {
     startedAt: Date.now(),
     timerId,
   };
+  render();
   paintRestDock();
 }
 
@@ -678,12 +728,23 @@ function paintRestDock(): void {
   const elapsed = Math.max(0, (Date.now() - activeRest.startedAt) / 1000);
   const remaining = Math.max(0, activeRest.targetSec - elapsed);
   const progress = Math.min(1, elapsed / activeRest.targetSec);
+  const compliance = Math.max(0.55, Math.min(1, elapsed / activeRest.targetSec));
+  const penalty = Math.round((1 - compliance) * 100);
 
   const label = dock.querySelector('#hf-rest-label');
   const clock = dock.querySelector('#hf-rest-clock');
+  const message = dock.querySelector('#hf-rest-message');
+  const skip = dock.querySelector<HTMLButtonElement>('#hf-rest-skip');
   const bar = dock.querySelector<HTMLElement>('#hf-rest-progress-bar');
+
   if (label) label.textContent = activeRest.label;
   if (clock) clock.textContent = restClockLabel(Math.ceil(remaining));
+  if (message) {
+    message.textContent = penalty > 0
+      ? `Si cortás ahora: -${penalty}% de estímulo en el próximo set`
+      : 'Recuperación óptima alcanzada';
+  }
+  if (skip) skip.textContent = penalty > 0 ? `CORTAR AHORA · -${penalty}%` : 'CONTINUAR';
   if (bar) bar.style.width = `${Math.round(progress * 100)}%`;
 }
 
@@ -708,104 +769,59 @@ function cancelActiveRest(): void {
 
 function restForSet(exercise: HighflyRoutineExercise, setIndex: number): number {
   if (setIndex === 0) return exercise.restSec;
-  const records = restRecords.get(exercise.exerciseId) ?? [];
-  return Math.max(0, records[setIndex - 1] ?? 0);
+  return Math.max(0, restRecords.get(exercise.exerciseId)?.[setIndex - 1] ?? 0);
+}
+
+function setLoadForExercise(exercise: HighflyRoutineExercise, plan: HighflySetPlan): number {
+  if (exercise.authority === 'editable_accessory') return accessoryKg(exercise);
+  return planLoadKg(plan, calibratedOneRm(profileOrNull(), exercise.rmLift));
 }
 
 function registerSession(): void {
-  const mount = document.querySelector('#highfly-training-window .highfly-training-shell');
-  if (!(mount instanceof HTMLElement)) return;
-
-  cancelActiveRest();
-
-  const day = HIGHFLY_PERSONAL_5D_ROUTINE.find((candidate) => candidate.day === selectedDay);
+  const day = currentDay();
   const profile = profileOrNull();
-  if (!day || !profile) return;
+  if (!day || !profile || !dayComplete() || activeRest) return;
 
   const definitions = new Map<string, ExerciseDefinition>();
   const sets: SessionRecord['sets'][number][] = [];
 
   for (const exercise of day.exercises) {
-    const plan = loadPlan(exercise);
-
-    if (exercise.authority === 'tm_main' && exercise.rmLift) {
-      const rm = calibratedOneRm(profile, exercise.rmLift);
-      if (!rm) continue;
-      const prescription = mainPrescription(exercise.rmLift, rm, selectedWeek);
-      if (prescription.topReps === 'TEST' || prescription.topKg === null) continue;
-      const tm = trainingMaxKg(rm);
-      definitions.set(exercise.exerciseId, {
-        exerciseId: exercise.exerciseId,
-        pattern: exercise.pattern,
-        role: exercise.intent,
-        loadMode: 'external_kg',
-        rmReferenceKg: tm,
-      });
-      sets.push({
-        setId: `${exercise.exerciseId}-top`,
-        exerciseId: exercise.exerciseId,
-        reps: prescription.topReps,
-        loadKg: prescription.topKg,
-        restSec: restForSet(exercise, 0),
-        intent: exercise.intent,
-        quality: 1,
-      });
-      for (let index = 0; index < prescription.backoffSets; index++) {
-        sets.push({
-          setId: `${exercise.exerciseId}-backoff-${index + 1}`,
-          exerciseId: exercise.exerciseId,
-          reps: prescription.backoffReps,
-          loadKg: prescription.backoffKg ?? 0,
-          restSec: restForSet(exercise, index + 1),
-          intent: exercise.intent,
-          quality: 1,
-        });
-      }
-      continue;
-    }
-
-    if (exercise.authority === 'editable_accessory' && plan.systemLoadKg <= 0) {
-      continue;
-    }
+    const plans = flattenSetPlans(exercise, selectedWeek);
+    const load = loadPlan(exercise);
+    if (!load.ready) return;
 
     definitions.set(exercise.exerciseId, {
       exerciseId: exercise.exerciseId,
       pattern: exercise.pattern,
       role: exercise.intent,
-      loadMode: plan.systemLoadKg > 0 ? 'external_kg' : 'bodyweight',
-      rmReferenceKg: plan.rmReferenceKg,
+      loadMode: load.systemLoadKg > 0 ? 'external_kg' : 'bodyweight',
+      rmReferenceKg: load.rmReferenceKg,
     });
 
-    for (let index = 0; index < exercise.defaultSets; index++) {
+    plans.forEach((plan, index) => {
       sets.push({
         setId: `${exercise.exerciseId}-${index + 1}`,
         exerciseId: exercise.exerciseId,
-        reps: exercise.defaultReps,
-        loadKg: plan.systemLoadKg,
+        reps: plan.reps,
+        loadKg: setLoadForExercise(exercise, plan),
         restSec: restForSet(exercise, index),
         intent: exercise.intent,
         quality: 1,
       });
-    }
+    });
   }
 
-  const readiness = Math.max(
-    0,
-    Math.min(1, numberValue(mount, '#hf-training-readiness', 85) / 100),
-  );
-  const cycle = macrocycleWeek(selectedWeek);
   const sessionId = `ui-${Date.now()}`;
-
   const pipeline = runTrainingSessionPipeline({
     profile,
     session: {
       sessionId,
-      routineId: HF_HIGHFLY_PERSONAL_5D_V1_ID,
-      block: cycle.block,
+      routineId: HF_HIGHFLY_PERSONAL_5D_V2_ID,
+      block: selectedWeek === 4 ? 'Descarga' : 'Carga',
       week: selectedWeek,
       day: selectedDay,
-      readiness,
-      isDeload: cycle.block === 'Descarga',
+      readiness: readinessPct / 100,
+      isDeload: selectedWeek === 4,
       completed: true,
       sets,
     },
@@ -816,11 +832,6 @@ function registerSession(): void {
   refreshActiveTrainingCombatBridge();
   lastResult = pipeline.sessionResult;
   lastOutcomes = pipeline.outcomes;
-
-  const result = mount.querySelector('#hf-training-result');
-  if (result instanceof HTMLElement) result.innerHTML = resultHtml();
-  const coreGrid = mount.querySelector('.hf-core-grid');
-  if (coreGrid instanceof HTMLElement) coreGrid.innerHTML = coreCards();
 
   window.dispatchEvent(
     new CustomEvent('highfly:training-session-committed', {
@@ -834,6 +845,7 @@ function registerSession(): void {
       },
     }),
   );
+  render();
 }
 
 export function installHighflyTrainingUi(): void {
@@ -846,9 +858,6 @@ export function installHighflyTrainingUi(): void {
       document.body.appendChild(trainingWindow);
     }
 
-    // ClaudeCraft's movable-window manager writes geometry inline. Training is
-    // intentionally a system screen on mobile, so enforce its viewport shell at
-    // the same runtime level instead of relying on CSS to out-rank inline values.
     const forceSystemViewport = () => {
       if (!document.body.classList.contains('mobile-touch')) return;
       trainingWindow.style.setProperty('position', 'fixed', 'important');
@@ -869,20 +878,9 @@ export function installHighflyTrainingUi(): void {
   }
 
   window.addEventListener('highfly:open-training', () => {
-    if (trainingWindow && document.body.classList.contains('mobile-touch')) {
-      trainingWindow.style.setProperty('width', 'calc(100vw - 12px)', 'important');
-      trainingWindow.style.setProperty('height', 'calc(100vh - 12px)', 'important');
-    }
-    calibrationOpen = !calibrationComplete(profileOrNull());
+    resetSessionProgress();
     render();
   });
 
-  const close = document.querySelector<HTMLElement>('#highfly-training-close');
-  if (close) {
-    bindTouchTap(close, (event) => {
-      event.preventDefault();
-      cancelActiveRest();
-      document.querySelector('#highfly-training-window')?.setAttribute('hidden', '');
-    });
-  }
+  render();
 }
