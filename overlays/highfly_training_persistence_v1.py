@@ -186,7 +186,18 @@ replace_once(
           profile: save.trainingProfile,
           updatedAt: save.updatedAt,
         };
-        store.put(trainingSlot, trainingSlotKey(save.name));
+        const key = trainingSlotKey(save.name);
+        const existingRequest = store.get(key);
+        existingRequest.onsuccess = () => {
+          const existing = validTrainingSlot(existingRequest.result)
+            ? existingRequest.result
+            : null;
+          // Async autosave/pagehide writes can race. Never let an older
+          // in-memory snapshot overwrite a newer Training profile.
+          if (!existing || trainingSlot.updatedAt >= existing.updatedAt) {
+            store.put(trainingSlot, key);
+          }
+        };
       }
 """,
     "training idb write",
