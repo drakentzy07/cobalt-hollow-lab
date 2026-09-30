@@ -82,6 +82,17 @@ export interface HighflyHunterProgressionState {
   subclassId: string | null;
 }
 
+export interface HighflyCycleProgressionState {
+  /** 1-based cycle number currently being trained. */
+  currentCycle: number;
+  /** Successful cycles increase working loads; repeated cycles do not. */
+  successfulCycles: number;
+  repeatedCycles: number;
+  lastDecision: 'advance' | 'repeat' | null;
+  /** Unique week/day keys completed in the current 4-week block. */
+  completedSessions: string[];
+}
+
 export interface HighflyHunterProfile {
   schemaVersion: typeof HIGHFLY_TRAINING_SCHEMA_VERSION;
   scoringVersion: typeof HIGHFLY_TRAINING_SCORING_VERSION;
@@ -98,6 +109,8 @@ export interface HighflyHunterProfile {
     loadCalibration?: HighflyLoadCalibrationState;
     /** Remembered dumbbell/machine accessory loads. Private to the offline Hunter save. */
     accessoryLoads?: Record<string, HighflyAccessoryLoadEntry>;
+    /** RUN1-J adaptive 4-week cycle state. Optional for legacy saves. */
+    cycleProgression?: HighflyCycleProgressionState;
   };
   hunter: HighflyHunterProgressionState;
 }
@@ -159,6 +172,13 @@ export function createHighflyHunterProfile(args: {
         lifts: {},
       },
       accessoryLoads: {},
+      cycleProgression: {
+        currentCycle: 1,
+        successfulCycles: 0,
+        repeatedCycles: 0,
+        lastDecision: null,
+        completedSessions: [],
+      },
     },
     hunter: {
       level,
