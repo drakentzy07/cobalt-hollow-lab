@@ -370,4 +370,37 @@ describe('HIGHFLY Production Pack 01 RUN0B - real EVO mechanics', () => {
 });
 """)
 
+# ---------------------------------------------------------------------------
+# Update previous-stage assertions after promotion. These tests still protect
+# the original contracts, but they must assert the evolved state instead of
+# expecting RUN0A's temporary "pending adaptation" markers or a literal
+# single-id Doctrine branch.
+# ---------------------------------------------------------------------------
+rep(
+    "tests/highfly_validation_pack01.test.ts",
+    """    expect(source).toContain("abilityId === 'power_word_shield'");
+    expect(source).toContain('placeDoctrineLink');""",
+    """    expect(source).toContain('DOCTRINE_SHIELD_ABILITY_IDS.has(abilityId)');
+    expect(source).toContain("'power_word_shield'");
+    expect(source).toContain('placeDoctrineLink');""",
+)
+
+rep(
+    "tests/highfly_production_pack01.test.ts",
+    """  it('marks Hunter, Mage and Priest for same-runtime EVO adaptation, not duplicate systems', () => {
+    const next = HIGHFLY_PRODUCTION_PACK_01.filter((f) => f.state === 'EVO_ADAPT_NEXT');
+    expect(next.map((f) => f.classId).sort()).toEqual(['hunter', 'mage', 'priest']);
+    expect(next.every((f) => f.evolutionAbilityId === null)).toBe(true);
+  });""",
+    """  it('promotes Hunter, Mage and Priest through same-runtime EVO adaptations', () => {
+    const promoted = HIGHFLY_PRODUCTION_PACK_01.filter((f) =>
+      ['hunter', 'mage', 'priest'].includes(f.classId),
+    );
+    expect(promoted.every((f) => f.state === 'PRODUCTION_READY')).toBe(true);
+    expect(promoted.map((f) => f.evolutionAbilityId).sort()).toEqual(
+      ['hf_hunter_prison_01', 'hf_living_covenant_01', 'hf_phoenix_lance_01'].sort(),
+    );
+  });""",
+)
+
 print("HIGHFLY_PRODUCTION_PACK01_RUN0B=1")
