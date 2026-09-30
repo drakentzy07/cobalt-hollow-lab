@@ -841,11 +841,38 @@ export function installHighflyTrainingUi(): void {
   installed = true;
 
   const trainingWindow = document.querySelector<HTMLElement>('#highfly-training-window');
-  if (trainingWindow && trainingWindow.parentElement !== document.body) {
-    document.body.appendChild(trainingWindow);
+  if (trainingWindow) {
+    if (trainingWindow.parentElement !== document.body) {
+      document.body.appendChild(trainingWindow);
+    }
+
+    // ClaudeCraft's movable-window manager writes geometry inline. Training is
+    // intentionally a system screen on mobile, so enforce its viewport shell at
+    // the same runtime level instead of relying on CSS to out-rank inline values.
+    const forceSystemViewport = () => {
+      if (!document.body.classList.contains('mobile-touch')) return;
+      trainingWindow.style.setProperty('position', 'fixed', 'important');
+      trainingWindow.style.setProperty('left', '6px', 'important');
+      trainingWindow.style.setProperty('top', '6px', 'important');
+      trainingWindow.style.setProperty('right', '6px', 'important');
+      trainingWindow.style.setProperty('bottom', '6px', 'important');
+      trainingWindow.style.setProperty('width', 'calc(100vw - 12px)', 'important');
+      trainingWindow.style.setProperty('height', 'calc(100vh - 12px)', 'important');
+      trainingWindow.style.setProperty('max-width', 'none', 'important');
+      trainingWindow.style.setProperty('max-height', 'none', 'important');
+      trainingWindow.style.setProperty('transform', 'none', 'important');
+      trainingWindow.style.setProperty('z-index', '95', 'important');
+    };
+
+    forceSystemViewport();
+    window.addEventListener('resize', forceSystemViewport);
   }
 
   window.addEventListener('highfly:open-training', () => {
+    if (trainingWindow && document.body.classList.contains('mobile-touch')) {
+      trainingWindow.style.setProperty('width', 'calc(100vw - 12px)', 'important');
+      trainingWindow.style.setProperty('height', 'calc(100vh - 12px)', 'important');
+    }
     calibrationOpen = !calibrationComplete(profileOrNull());
     render();
   });
