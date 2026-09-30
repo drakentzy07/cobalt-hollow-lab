@@ -24,6 +24,14 @@ tests_dir = UPSTREAM / "tests"
 tests_dir.mkdir(parents=True, exist_ok=True)
 copied_tests = []
 for test_file in sorted(tests_src_dir.glob("highfly_training_*.test.ts")):
+    # RUN1-J replaces the old 12-week provisional routine authority with the
+    # exact attached 4-week sheet. Keep the historical test in the lab, but do
+    # not inject its obsolete V1 imports into the frozen upstream TypeScript build.
+    if (
+        test_file.name == "highfly_training_run1i.test.ts"
+        and "HF_HIGHFLY_PERSONAL_5D_V2_ID" in (src_dir / "personal_routine.ts").read_text(encoding="utf-8")
+    ):
+        continue
     shutil.copy2(test_file, tests_dir / test_file.name)
     copied_tests.append(tests_dir / test_file.name)
 if not copied_tests:
