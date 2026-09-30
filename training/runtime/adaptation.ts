@@ -22,6 +22,11 @@ export interface AdaptationInput {
   readiness: number;
   /** Stable audit/evidence identifier. */
   evidenceId: string;
+  /**
+   * Optional absolute gate for behavioral stats. PER/INT use sustained
+   * compliance/management quality instead of demanding endless % improvement.
+   */
+  absolutePerformanceGate?: number;
 }
 
 export type AdaptationStatus =
@@ -158,6 +163,73 @@ export function evaluateAdaptation(
       performanceImprovementRatio: performanceImprovement,
       statDelta: 0,
       reason: 'Enough Progress exists, but evidence Confidence is below the consolidation threshold.',
+    };
+  }
+
+  if (input.absolutePerformanceGate !== undefined) {
+    const currentPerformance = input.currentPerformanceIndex;
+    if (
+      currentPerformance === null ||
+      !Number.isFinite(currentPerformance) ||
+      currentPerformance <= 0
+    ) {
+      return {
+        profile: telemetryProfile,
+        status: 'awaiting_performance',
+        stat: input.stat,
+        progressBefore,
+        progressAfter: accumulatedProgress,
+        progressCost,
+        performanceGateRatio,
+        performanceImprovementRatio: null,
+        statDelta: 0,
+        reason: 'Enough Progress exists, but no valid behavioral performance sample is available.',
+      };
+    }
+
+    if (currentPerformance < input.absolutePerformanceGate) {
+      return {
+        profile: telemetryProfile,
+        status: 'maintenance',
+        stat: input.stat,
+        progressBefore,
+        progressAfter: accumulatedProgress,
+        progressCost,
+        performanceGateRatio,
+        performanceImprovementRatio: performanceImprovement,
+        statDelta: 0,
+        reason: `Behavioral gate not cleared: ${currentPerformance.toFixed(1)} < ${input.absolutePerformanceGate.toFixed(1)}.`,
+      };
+    }
+
+    const remainder = Math.max(0, accumulatedProgress - progressCost);
+    telemetryProfile = commitTrainingCoreStat(
+      telemetryProfile,
+      input.stat,
+      previousState.current + 1,
+      {
+        source: 'training-performance-gate',
+        scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
+        evidenceId: input.evidenceId,
+      },
+      {
+        progress: remainder,
+        confidence,
+        readiness,
+      },
+    );
+
+    return {
+      profile: telemetryProfile,
+      status: 'stat_up',
+      stat: input.stat,
+      progressBefore,
+      progressAfter: remainder,
+      progressCost,
+      performanceGateRatio,
+      performanceImprovementRatio: performanceImprovement,
+      statDelta: 1,
+      reason: `Progress cost and behavioral gate ${input.absolutePerformanceGate.toFixed(1)} were satisfied.`,
     };
   }
 
