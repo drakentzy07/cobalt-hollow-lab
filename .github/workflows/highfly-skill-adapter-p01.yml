@@ -153,7 +153,8 @@ jobs:
             fi
             sleep 1
           done
-          node ../overlays/highfly_jump_smash_browser_smoke.mjs
+          cp ../overlays/highfly_jump_smash_browser_smoke.mjs ./highfly_jump_smash_browser_smoke.mjs
+          node ./highfly_jump_smash_browser_smoke.mjs
 
       - name: Upload HIGHFLY diagnostics
         if: always()
