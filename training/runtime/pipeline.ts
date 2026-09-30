@@ -65,8 +65,19 @@ function evidenceConfidence(result: SessionTrainingResult): number {
 export function deriveComparablePerformance(
   result: SessionTrainingResult,
 ): Partial<Record<HighflyCoreStat, number>> {
+  const comparableMainLifts = new Set([
+    'back_squat',
+    'bench_press',
+    'overhead_press',
+    'deadlift',
+  ]);
   const strengthE1Rm = result.evidence
-    .filter((e) => e.observedRole === 'strength' && validPositive(e.estimated1RmKg))
+    .filter(
+      (e) =>
+        e.observedRole === 'strength' &&
+        comparableMainLifts.has(e.exerciseId) &&
+        validPositive(e.estimated1RmKg),
+    )
     .map((e) => e.estimated1RmKg as number);
   return {
     ...(strengthE1Rm.length > 0 ? { STR: Math.max(...strengthE1Rm) } : {}),
