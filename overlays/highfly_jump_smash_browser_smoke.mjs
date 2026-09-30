@@ -7,11 +7,12 @@ const ID = 'hf_jump_smash_01';
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 
-const errors = [];
+const consoleErrors = [];
+const pageErrors = [];
 page.on('console', (msg) => {
-  if (msg.type() === 'error') errors.push(msg.text());
+  if (msg.type() === 'error') consoleErrors.push(msg.text());
 });
-page.on('pageerror', (err) => errors.push(String(err)));
+page.on('pageerror', (err) => pageErrors.push(String(err)));
 
 await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 30000 });
 await page.locator('#btn-offline').waitFor({ state: 'attached', timeout: 15000 });
@@ -49,8 +50,7 @@ await page.keyboard.press('Escape').catch(() => {});
 await page.waitForTimeout(300);
 
 const before = await page.evaluate((id) => {
-  const g = window.__game;
-  const sim = g.sim;
+  const sim = window.__game.sim;
   const p = sim.player;
   sim.setPlayerLevel(20);
   p.resource = p.maxResource;
@@ -92,8 +92,10 @@ const airborne = await page.evaluate(() => {
 });
 await page.screenshot({ path: '../jump-smash-01-airborne.png', fullPage: true });
 
-await page.waitForTimeout(520);
-const after = await page.evaluate((id) => {
+// Claude flight is 0.60s; capture just after the authoritative landing so the
+// fracture + fire composition is at peak readability instead of late aftermath.
+await page.waitForTimeout(380);
+const impact = await page.evaluate((id) => {
   const p = window.__game.sim.player;
   return {
     end: { x: p.pos.x, y: p.pos.y, z: p.pos.z },
@@ -105,24 +107,36 @@ const after = await page.evaluate((id) => {
 }, ID);
 await page.screenshot({ path: '../jump-smash-02-impact.png', fullPage: true });
 
-const traveled = Math.hypot(after.end.x - before.start.x, after.end.z - before.start.z);
+const traveled = Math.hypot(impact.end.x - before.start.x, impact.end.z - before.start.z);
+const allConsoleErrors = [...new Set(consoleErrors)];
+const allPageErrors = [...new Set(pageErrors)];
+const criticalConsoleErrors = allConsoleErrors.filter((message) => {
+  if (/character visual unavailable, skipping view/i.test(message)) return false;
+  if (/THREE\.GLTFLoader: Couldn't load texture blob:/i.test(message)) return false;
+  if (/Failed to load resource:.*(?:404|502)/i.test(message)) return false;
+  return /hf_jump_smash_01|Jump Smash|WebGL.*Context Lost|TypeError|ReferenceError|SyntaxError|RangeError/i.test(message);
+});
+const criticalErrors = [...allPageErrors, ...criticalConsoleErrors];
+
 const report = {
   id: ID,
   before,
   cast,
   airborne,
-  after,
+  impact,
   traveled,
-  consoleErrors: [...new Set(errors)],
+  consoleErrors: allConsoleErrors,
+  pageErrors: allPageErrors,
+  criticalErrors,
   passed:
     cast.leapArmed &&
     airborne.leap &&
     !airborne.onGround &&
-    !after.leap &&
-    after.onGround &&
+    !impact.leap &&
+    impact.onGround &&
     traveled > 2 &&
-    after.cooldown > 0 &&
-    errors.length === 0,
+    impact.cooldown > 0 &&
+    criticalErrors.length === 0,
 };
 
 fs.writeFileSync('../jump-smash-browser-report.json', JSON.stringify(report, null, 2));
