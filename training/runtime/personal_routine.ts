@@ -2,40 +2,27 @@ import type { MovementPattern, TrainingIntent } from './reference_routine';
 
 export const HF_HIGHFLY_PERSONAL_5D_V1_ID = 'HF_HIGHFLY_PERSONAL_5D_V1' as const;
 export const HIGHFLY_TM_FACTOR = 0.9 as const;
-export const HIGHFLY_LOAD_ROUND_KG = 2.5 as const;
+/** RUN1-J follows the kilograms written in the supplied HIGHFLY sheet. */
+export const HIGHFLY_LOAD_ROUND_KG = 1 as const;
 
-export type HighflyRmLift =
-  | 'back_squat'
-  | 'bench_press'
-  | 'overhead_press'
-  | 'deadlift';
-
+export type HighflyCycleWeek = 1 | 2 | 3 | 4;
 export type HighflyLoadAuthority =
-  | 'tm_main'
-  | 'derived_percent'
-  | 'guided_locked'
-  | 'editable_accessory'
-  | 'bodyweight_locked';
+  | 'system_percent'
+  | 'system_fixed'
+  | 'editable_accessory';
 
-export interface HighflyLiftCalibration {
-  oneRmKg: number;
-  updatedAt: string;
+export interface HighflyCycleWeekDefinition {
+  week: HighflyCycleWeek;
+  block: 'Carga' | 'Descarga';
+  objective: string;
 }
 
-export type HighflyLoadCalibration = Partial<
-  Record<HighflyRmLift, HighflyLiftCalibration>
->;
-
-export interface HighflyMacrocycleWeek {
-  week: number;
-  block: 'Base' | 'Fuerza' | 'Descarga' | 'Peak' | 'Test';
-  objective: string;
-  topReps: number | 'TEST';
-  backoffPercent: number | null;
-  backoffSets: number;
-  backoffReps: number;
-  topPercent: Record<HighflyRmLift, number | null>;
-  accessoryVolume: string;
+export interface HighflyWeekPrescription {
+  sets: number;
+  reps: number;
+  percent?: number;
+  /** Exact first-cycle kilograms from the supplied HIGHFLY routine. */
+  loadKg?: number;
 }
 
 export interface HighflyRoutineExercise {
@@ -43,235 +30,725 @@ export interface HighflyRoutineExercise {
   label: string;
   pattern: MovementPattern;
   intent: TrainingIntent;
-  prescription: string;
-  target: string;
   authority: HighflyLoadAuthority;
-  rmLift?: HighflyRmLift;
-  /** For derived_percent only. Kept as a range when the source is a range. */
-  derivedPercentRange?: readonly [number, number];
-  defaultSets: number;
-  defaultReps: number;
-  repRange?: readonly [number, number];
   restSec: number;
-  optional?: boolean;
+  weekly: Readonly<Record<HighflyCycleWeek, HighflyWeekPrescription | null>>;
+  /** 100% RM printed in the supplied sheet, when present. */
+  referenceRmKg?: number;
+  /** 90% working RM / Training Max printed in the supplied sheet, when present. */
+  referenceTrainingMaxKg?: number;
+  /** Increase applied after a successful four-week cycle. */
+  cycleIncrementKg?: number;
+  target?: string;
 }
 
 export interface HighflyRoutineDay {
   day: 1 | 2 | 3 | 4 | 5;
-  name: 'Pierna A' | 'Torso A' | 'Combinado' | 'Torso B' | 'Posterior';
+  name:
+    | 'Pierna + Hombro (Estabilidad)'
+    | 'Pecho + Hombro'
+    | 'Front + Potencia'
+    | 'Hombros (Fuerza + Completo)'
+    | 'Posterior + Fuerza';
   exercises: readonly HighflyRoutineExercise[];
 }
 
-const same = (value: number): Record<HighflyRmLift, number> => ({
-  back_squat: value,
-  bench_press: value,
-  overhead_press: value,
-  deadlift: value,
-});
-
-export const HIGHFLY_12_WEEK_MACROCYCLE: readonly HighflyMacrocycleWeek[] = [
-  { week: 1, block: 'Base', objective: 'Volumen + técnica', topReps: 5, backoffPercent: .70, backoffSets: 4, backoffReps: 5, topPercent: same(.75), accessoryVolume: 'Normal' },
-  { week: 2, block: 'Base', objective: 'Volumen + técnica', topReps: 4, backoffPercent: .75, backoffSets: 4, backoffReps: 4, topPercent: same(.80), accessoryVolume: 'Normal' },
-  { week: 3, block: 'Base', objective: 'Volumen + técnica', topReps: 3, backoffPercent: .80, backoffSets: 4, backoffReps: 3, topPercent: same(.85), accessoryVolume: 'Normal' },
-  { week: 4, block: 'Descarga', objective: 'Deload', topReps: 5, backoffPercent: .65, backoffSets: 3, backoffReps: 5, topPercent: same(.70), accessoryVolume: 'Bajo' },
-  { week: 5, block: 'Fuerza', objective: 'Inicio intensificación', topReps: 3, backoffPercent: .80, backoffSets: 3, backoffReps: 5, topPercent: same(.85), accessoryVolume: 'Moderado' },
-  { week: 6, block: 'Fuerza', objective: 'Fuerza media', topReps: 2, backoffPercent: .825, backoffSets: 3, backoffReps: 4, topPercent: same(.90), accessoryVolume: 'Moderado' },
-  {
-    week: 7,
-    block: 'Fuerza',
-    objective: 'Pico bloque fuerza',
-    topReps: 1,
-    backoffPercent: .85,
-    backoffSets: 3,
-    backoffReps: 3,
-    topPercent: {
-      back_squat: .95,
-      bench_press: .90,
-      overhead_press: .90,
-      deadlift: .95,
-    },
-    accessoryVolume: 'Bajo-moderado',
-  },
-  { week: 8, block: 'Descarga', objective: 'Deload', topReps: 5, backoffPercent: .65, backoffSets: 2, backoffReps: 5, topPercent: same(.70), accessoryVolume: 'Bajo' },
-  {
-    week: 9,
-    block: 'Peak',
-    objective: 'Alta intensidad',
-    topReps: 2,
-    backoffPercent: .80,
-    backoffSets: 2,
-    backoffReps: 3,
-    topPercent: {
-      back_squat: .90,
-      bench_press: .88,
-      overhead_press: .88,
-      deadlift: .90,
-    },
-    accessoryVolume: 'Bajo',
-  },
-  {
-    week: 10,
-    block: 'Peak',
-    objective: 'Muy alta intensidad',
-    topReps: 1,
-    backoffPercent: .825,
-    backoffSets: 2,
-    backoffReps: 2,
-    topPercent: {
-      back_squat: .93,
-      bench_press: .90,
-      overhead_press: .90,
-      deadlift: .93,
-    },
-    accessoryVolume: 'Muy bajo',
-  },
-  {
-    week: 11,
-    block: 'Peak',
-    objective: 'Pico neural',
-    topReps: 1,
-    backoffPercent: null,
-    backoffSets: 0,
-    backoffReps: 0,
-    topPercent: {
-      back_squat: .96,
-      bench_press: .92,
-      overhead_press: .90,
-      deadlift: .96,
-    },
-    accessoryVolume: 'Mínimo',
-  },
-  {
-    week: 12,
-    block: 'Test',
-    objective: 'Test de RM',
-    topReps: 'TEST',
-    backoffPercent: null,
-    backoffSets: 0,
-    backoffReps: 0,
-    topPercent: {
-      back_squat: null,
-      bench_press: null,
-      overhead_press: null,
-      deadlift: null,
-    },
-    accessoryVolume: 'Mínimo',
-  },
+export const HIGHFLY_4_WEEK_CYCLE: readonly HighflyCycleWeekDefinition[] = [
+  { week: 1, block: 'Carga', objective: 'Base del ciclo' },
+  { week: 2, block: 'Carga', objective: 'Progresión' },
+  { week: 3, block: 'Carga', objective: 'Pico del ciclo' },
+  { week: 4, block: 'Descarga', objective: 'Descarga y consolidación' },
 ] as const;
+
+const p = (
+  sets: number,
+  reps: number,
+  loadKg?: number,
+  percent?: number,
+): HighflyWeekPrescription => ({
+  sets,
+  reps,
+  ...(loadKg === undefined ? {} : { loadKg }),
+  ...(percent === undefined ? {} : { percent }),
+});
 
 export const HIGHFLY_PERSONAL_5D_ROUTINE: readonly HighflyRoutineDay[] = [
   {
     day: 1,
-    name: 'Pierna A',
+    name: 'Pierna + Hombro (Estabilidad)',
     exercises: [
-      { exerciseId: 'back_squat', label: 'Sentadilla', pattern: 'squat', intent: 'strength', prescription: 'Top + back-off', target: 'Fuerza principal', authority: 'tm_main', rmLift: 'back_squat', defaultSets: 5, defaultReps: 5, restSec: 180 },
-      { exerciseId: 'hip_thrust', label: 'Hip thrust', pattern: 'hinge', intent: 'hypertrophy', prescription: '3×8', target: 'RPE 7–8 · glúteo/posterior', authority: 'guided_locked', defaultSets: 3, defaultReps: 8, restSec: 90 },
-      { exerciseId: 'split_squat', label: 'Split squat / Búlgara', pattern: 'unilateral', intent: 'hypertrophy', prescription: '3×8', target: 'RPE 7–8 · unilateral', authority: 'guided_locked', defaultSets: 3, defaultReps: 8, restSec: 90 },
-      { exerciseId: 'db_row', label: 'Remo mancuerna', pattern: 'horizontal_pull', intent: 'hypertrophy', prescription: '3×8–10', target: 'Pesado controlado', authority: 'editable_accessory', defaultSets: 3, defaultReps: 8, repRange: [8, 10], restSec: 90 },
-      { exerciseId: 'lateral_raise', label: 'Elevaciones laterales', pattern: 'isolation', intent: 'accessory', prescription: '3×15–20', target: 'Casi al fallo técnico', authority: 'editable_accessory', defaultSets: 3, defaultReps: 15, repRange: [15, 20], restSec: 75 },
+      {
+        exerciseId: 'd1_hang_power_clean',
+        label: 'Hang Power Clean',
+        pattern: 'hinge',
+        intent: 'power',
+        authority: 'system_percent',
+        restSec: 150,
+        referenceTrainingMaxKg: 72,
+        referenceRmKg: 80,
+        cycleIncrementKg: 2.5,
+        target: 'Explosivo · técnica limpia',
+        weekly: {
+          1: p(4, 3, 50, .70),
+          2: p(4, 3, 54, .75),
+          3: p(4, 2, 58, .80),
+          4: p(3, 3, 47, .65),
+        },
+      },
+      {
+        exerciseId: 'd1_back_squat_top',
+        label: 'Sentadilla Top Set',
+        pattern: 'squat',
+        intent: 'strength',
+        authority: 'system_percent',
+        restSec: 180,
+        referenceTrainingMaxKg: 108,
+        referenceRmKg: 120,
+        cycleIncrementKg: 5,
+        target: 'Top set de fuerza',
+        weekly: {
+          1: p(1, 6, 86, .80),
+          2: p(1, 4, 92, .85),
+          3: p(1, 2, 97, .90),
+          4: null,
+        },
+      },
+      {
+        exerciseId: 'd1_back_squat',
+        label: 'Sentadilla',
+        pattern: 'squat',
+        intent: 'strength',
+        authority: 'system_percent',
+        restSec: 180,
+        referenceTrainingMaxKg: 108,
+        referenceRmKg: 120,
+        cycleIncrementKg: 5,
+        target: 'Back-off de fuerza',
+        weekly: {
+          1: p(3, 6, 76, .70),
+          2: p(3, 4, 81, .75),
+          3: p(3, 2, 86, .80),
+          4: p(3, 5, 76, .70),
+        },
+      },
+      {
+        exerciseId: 'd1_zercher_squat',
+        label: 'Zercher Sentadilla',
+        pattern: 'squat',
+        intent: 'strength',
+        authority: 'system_fixed',
+        restSec: 180,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(3, 8, 60),
+          2: p(3, 6, 65),
+          3: p(3, 4, 70),
+          4: p(3, 5, 60),
+        },
+      },
+      {
+        exerciseId: 'd1_hamstrings',
+        label: 'Isquios',
+        pattern: 'isolation',
+        intent: 'hypertrophy',
+        authority: 'editable_accessory',
+        restSec: 90,
+        weekly: {
+          1: p(3, 15, 40),
+          2: p(3, 12),
+          3: p(3, 10),
+          4: p(2, 15, 40),
+        },
+      },
+      {
+        exerciseId: 'd1_lateral_raise',
+        label: 'Elevaciones laterales',
+        pattern: 'isolation',
+        intent: 'accessory',
+        authority: 'editable_accessory',
+        restSec: 75,
+        weekly: {
+          1: p(3, 20),
+          2: p(3, 15),
+          3: p(3, 12),
+          4: p(2, 15),
+        },
+      },
+      {
+        exerciseId: 'd1_facepull',
+        label: 'Facepull',
+        pattern: 'isolation',
+        intent: 'accessory',
+        authority: 'editable_accessory',
+        restSec: 75,
+        weekly: {
+          1: p(3, 20),
+          2: p(3, 18),
+          3: p(3, 15),
+          4: p(2, 20),
+        },
+      },
     ],
   },
   {
     day: 2,
-    name: 'Torso A',
+    name: 'Pecho + Hombro',
     exercises: [
-      { exerciseId: 'bench_press', label: 'Press banca', pattern: 'horizontal_push', intent: 'strength', prescription: 'Top + back-off', target: 'Fuerza principal', authority: 'tm_main', rmLift: 'bench_press', defaultSets: 5, defaultReps: 5, restSec: 180 },
-      { exerciseId: 'pendlay_row', label: 'Remo Pendlay', pattern: 'horizontal_pull', intent: 'strength', prescription: '4×5–6', target: 'Progresivo · espalda fuerte', authority: 'guided_locked', defaultSets: 4, defaultReps: 5, repRange: [5, 6], restSec: 180 },
-      { exerciseId: 'pulldown_pullup', label: 'Jalón / dominadas', pattern: 'vertical_pull', intent: 'hypertrophy', prescription: '3×8–12', target: 'Controlado · dorsal', authority: 'editable_accessory', defaultSets: 3, defaultReps: 8, repRange: [8, 12], restSec: 90 },
-      { exerciseId: 'incline_press', label: 'Press inclinado', pattern: 'horizontal_push', intent: 'hypertrophy', prescription: '3×8–10', target: 'RPE 8 · pecho/hombro', authority: 'guided_locked', defaultSets: 3, defaultReps: 8, repRange: [8, 10], restSec: 90 },
-      { exerciseId: 'rear_or_lateral', label: 'Lateral o posterior', pattern: 'isolation', intent: 'accessory', prescription: '3×15–20', target: 'Bombeo · opcional', authority: 'editable_accessory', defaultSets: 3, defaultReps: 15, repRange: [15, 20], restSec: 75, optional: true },
+      {
+        exerciseId: 'd2_push_press',
+        label: 'Push Press',
+        pattern: 'vertical_push',
+        intent: 'power',
+        authority: 'system_percent',
+        restSec: 150,
+        referenceTrainingMaxKg: 63,
+        referenceRmKg: 70,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(5, 2, 47, .75),
+          2: p(5, 2, 50, .80),
+          3: p(4, 2, 54, .85),
+          4: p(3, 2, 41, .65),
+        },
+      },
+      {
+        exerciseId: 'd2_bench_top',
+        label: 'Banco Plano Top Set',
+        pattern: 'horizontal_push',
+        intent: 'strength',
+        authority: 'system_percent',
+        restSec: 180,
+        referenceTrainingMaxKg: 67.5,
+        referenceRmKg: 75,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(1, 6, 54, .80),
+          2: p(1, 4, 57, .85),
+          3: p(1, 2, 61, .90),
+          4: null,
+        },
+      },
+      {
+        exerciseId: 'd2_bench',
+        label: 'Banco Plano',
+        pattern: 'horizontal_push',
+        intent: 'strength',
+        authority: 'system_percent',
+        restSec: 180,
+        referenceTrainingMaxKg: 67.5,
+        referenceRmKg: 75,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(3, 6, 47, .70),
+          2: p(3, 4, 51, .75),
+          3: p(3, 2, 54, .80),
+          4: p(3, 5, 47, .70),
+        },
+      },
+      {
+        exerciseId: 'd2_incline_db',
+        label: 'Banco Inclinado Mancuernas',
+        pattern: 'horizontal_push',
+        intent: 'hypertrophy',
+        authority: 'editable_accessory',
+        restSec: 90,
+        weekly: {
+          1: p(4, 10),
+          2: p(4, 8),
+          3: p(4, 6),
+          4: p(3, 10),
+        },
+      },
+      {
+        exerciseId: 'd2_db_row',
+        label: 'Remo con Mancuernas',
+        pattern: 'horizontal_pull',
+        intent: 'hypertrophy',
+        authority: 'system_fixed',
+        restSec: 90,
+        referenceTrainingMaxKg: 58.5,
+        referenceRmKg: 65,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(4, 10, 40),
+          2: p(4, 8, 45),
+          3: p(4, 6, 50),
+          4: p(3, 10, 43),
+        },
+      },
+      {
+        exerciseId: 'd2_military_db',
+        label: 'Press Militar Mancuernas',
+        pattern: 'vertical_push',
+        intent: 'hypertrophy',
+        authority: 'editable_accessory',
+        restSec: 90,
+        weekly: {
+          1: p(3, 12),
+          2: p(3, 10),
+          3: p(3, 8),
+          4: p(2, 12),
+        },
+      },
+      {
+        exerciseId: 'd2_gironda_row',
+        label: 'Remo Gironda',
+        pattern: 'horizontal_pull',
+        intent: 'hypertrophy',
+        authority: 'editable_accessory',
+        restSec: 90,
+        weekly: {
+          1: p(3, 10),
+          2: p(3, 8),
+          3: p(3, 6),
+          4: p(2, 10),
+        },
+      },
+      {
+        exerciseId: 'd2_arms',
+        label: 'Tríceps + bíceps',
+        pattern: 'isolation',
+        intent: 'accessory',
+        authority: 'editable_accessory',
+        restSec: 75,
+        weekly: {
+          1: p(3, 15),
+          2: p(3, 12),
+          3: p(3, 10),
+          4: p(2, 15),
+        },
+      },
     ],
   },
   {
     day: 3,
-    name: 'Combinado',
+    name: 'Front + Potencia',
     exercises: [
-      { exerciseId: 'hang_power_clean', label: 'Hang power clean', pattern: 'hinge', intent: 'power', prescription: '5×2–3', target: 'Técnico, explosivo · no al fallo', authority: 'guided_locked', defaultSets: 5, defaultReps: 2, repRange: [2, 3], restSec: 150 },
-      { exerciseId: 'front_squat', label: 'Front squat', pattern: 'squat', intent: 'strength', prescription: '4×4–6', target: '75–85% técnico', authority: 'derived_percent', rmLift: 'back_squat', derivedPercentRange: [.75, .85], defaultSets: 4, defaultReps: 4, repRange: [4, 6], restSec: 180 },
-      { exerciseId: 'zercher_or_good_morning', label: 'Zercher o buenos días', pattern: 'hinge', intent: 'strength', prescription: '3×6', target: 'Controlado · core/posterior', authority: 'guided_locked', defaultSets: 3, defaultReps: 6, restSec: 180 },
-      { exerciseId: 'leg_curl', label: 'Curl femoral', pattern: 'isolation', intent: 'hypertrophy', prescription: '3×10', target: 'RPE 8 · isquios', authority: 'editable_accessory', defaultSets: 3, defaultReps: 10, restSec: 90 },
-      { exerciseId: 'one_arm_row', label: 'Remo unilateral', pattern: 'horizontal_pull', intent: 'hypertrophy', prescription: '3×8–10', target: 'Controlado · espalda', authority: 'editable_accessory', defaultSets: 3, defaultReps: 8, repRange: [8, 10], restSec: 90 },
+      {
+        exerciseId: 'd3_hang_power_clean',
+        label: 'Hang Power Clean',
+        pattern: 'hinge',
+        intent: 'power',
+        authority: 'system_percent',
+        restSec: 150,
+        referenceTrainingMaxKg: 72,
+        referenceRmKg: 80,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(4, 3, 43, .60),
+          2: p(4, 3, 47, .65),
+          3: p(4, 3, 50, .70),
+          4: p(3, 3, 43, .60),
+        },
+      },
+      {
+        exerciseId: 'd3_deadlift_top',
+        label: 'Peso Muerto / Rack Pull Top Set',
+        pattern: 'hinge',
+        intent: 'strength',
+        authority: 'system_percent',
+        restSec: 180,
+        referenceTrainingMaxKg: 103.5,
+        referenceRmKg: 115,
+        cycleIncrementKg: 5,
+        weekly: {
+          1: p(1, 3, 88, .85),
+          2: p(1, 2, 93, .90),
+          3: p(1, 1, 98, .95),
+          4: null,
+        },
+      },
+      {
+        exerciseId: 'd3_deadlift',
+        label: 'Peso Muerto / Rack Pull',
+        pattern: 'hinge',
+        intent: 'strength',
+        authority: 'system_percent',
+        restSec: 180,
+        referenceTrainingMaxKg: 103.5,
+        referenceRmKg: 115,
+        cycleIncrementKg: 5,
+        weekly: {
+          1: p(3, 5, 78, .75),
+          2: p(3, 4, 83, .80),
+          3: p(3, 3, 88, .85),
+          4: p(3, 5, 72, .70),
+        },
+      },
+      {
+        exerciseId: 'd3_pendlay',
+        label: 'Remo Pendlay',
+        pattern: 'horizontal_pull',
+        intent: 'strength',
+        authority: 'system_percent',
+        restSec: 180,
+        referenceTrainingMaxKg: 67.5,
+        referenceRmKg: 75,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(3, 8, 41, .60),
+          2: p(3, 6, 44, .65),
+          3: p(3, 4, 47, .70),
+          4: p(2, 8, 41, .60),
+        },
+      },
+      {
+        exerciseId: 'd3_leg_press',
+        label: 'Prensa',
+        pattern: 'squat',
+        intent: 'hypertrophy',
+        authority: 'editable_accessory',
+        restSec: 90,
+        weekly: {
+          1: p(3, 15),
+          2: p(3, 12),
+          3: p(3, 10),
+          4: p(2, 15),
+        },
+      },
+      {
+        exerciseId: 'd3_quads',
+        label: 'Cuádriceps',
+        pattern: 'isolation',
+        intent: 'accessory',
+        authority: 'editable_accessory',
+        restSec: 75,
+        weekly: {
+          1: p(3, 25),
+          2: p(3, 20),
+          3: p(3, 15),
+          4: p(2, 25),
+        },
+      },
+      {
+        exerciseId: 'd3_hamstrings',
+        label: 'Isquios',
+        pattern: 'isolation',
+        intent: 'hypertrophy',
+        authority: 'editable_accessory',
+        restSec: 90,
+        weekly: {
+          1: p(3, 15),
+          2: p(3, 12),
+          3: p(3, 10),
+          4: p(2, 15),
+        },
+      },
     ],
   },
   {
     day: 4,
-    name: 'Torso B',
+    name: 'Hombros (Fuerza + Completo)',
     exercises: [
-      { exerciseId: 'overhead_press', label: 'Press militar', pattern: 'vertical_push', intent: 'strength', prescription: 'Top + back-off', target: 'Fuerza principal', authority: 'tm_main', rmLift: 'overhead_press', defaultSets: 5, defaultReps: 5, restSec: 180 },
-      { exerciseId: 'cable_row', label: 'Remo máquina / cable', pattern: 'horizontal_pull', intent: 'hypertrophy', prescription: '4×8–10', target: 'Controlado · espalda media', authority: 'editable_accessory', defaultSets: 4, defaultReps: 8, repRange: [8, 10], restSec: 90 },
-      { exerciseId: 'lat_pulldown', label: 'Jalón', pattern: 'vertical_pull', intent: 'hypertrophy', prescription: '3×10–12', target: 'Controlado · dorsal', authority: 'editable_accessory', defaultSets: 3, defaultReps: 10, repRange: [10, 12], restSec: 90 },
-      { exerciseId: 'lateral_raise_b', label: 'Elevaciones laterales', pattern: 'isolation', intent: 'accessory', prescription: '4×15–20', target: 'Bombeo · deltoide medio', authority: 'editable_accessory', defaultSets: 4, defaultReps: 15, repRange: [15, 20], restSec: 75 },
-      { exerciseId: 'rear_delt', label: 'Posterior hombro', pattern: 'isolation', intent: 'accessory', prescription: '3×15–20', target: 'Bombeo · salud hombro', authority: 'editable_accessory', defaultSets: 3, defaultReps: 15, repRange: [15, 20], restSec: 75 },
+      {
+        exerciseId: 'd4_push_press',
+        label: 'Push Press',
+        pattern: 'vertical_push',
+        intent: 'power',
+        authority: 'system_percent',
+        restSec: 150,
+        referenceTrainingMaxKg: 63,
+        referenceRmKg: 70,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(4, 3, 44, .70),
+          2: p(4, 3, 47, .75),
+          3: p(4, 2, 50, .80),
+          4: p(3, 3, 41, .65),
+        },
+      },
+      {
+        exerciseId: 'd4_military_top',
+        label: 'Press Militar Top Set',
+        pattern: 'vertical_push',
+        intent: 'strength',
+        authority: 'system_percent',
+        restSec: 180,
+        referenceTrainingMaxKg: 54,
+        referenceRmKg: 60,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(1, 6, 43, .80),
+          2: p(1, 4, 46, .85),
+          3: p(1, 2, 49, .90),
+          4: null,
+        },
+      },
+      {
+        exerciseId: 'd4_military',
+        label: 'Press Militar',
+        pattern: 'vertical_push',
+        intent: 'strength',
+        authority: 'system_percent',
+        restSec: 180,
+        referenceTrainingMaxKg: 54,
+        referenceRmKg: 60,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(3, 6, 38, .70),
+          2: p(3, 4, 41, .75),
+          3: p(3, 2, 43, .80),
+          4: p(3, 5, 38, .70),
+        },
+      },
+      {
+        exerciseId: 'd4_incline_barbell',
+        label: 'Banco Inclinado con Barra',
+        pattern: 'horizontal_push',
+        intent: 'strength',
+        authority: 'system_percent',
+        restSec: 180,
+        referenceTrainingMaxKg: 67.5,
+        referenceRmKg: 75,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(4, 8, 41, .60),
+          2: p(4, 6, 44, .65),
+          3: p(4, 4, 47, .70),
+          4: p(3, 8, 41, .60),
+        },
+      },
+      {
+        exerciseId: 'd4_lat_pulldown',
+        label: 'Jalón al pecho',
+        pattern: 'vertical_pull',
+        intent: 'hypertrophy',
+        authority: 'editable_accessory',
+        restSec: 90,
+        weekly: {
+          1: p(3, 10),
+          2: p(3, 8),
+          3: p(3, 6),
+          4: p(2, 10),
+        },
+      },
+      {
+        exerciseId: 'd4_military_machine',
+        label: 'Press Militar Máquina',
+        pattern: 'vertical_push',
+        intent: 'hypertrophy',
+        authority: 'editable_accessory',
+        restSec: 90,
+        weekly: {
+          1: p(3, 15),
+          2: p(3, 12),
+          3: p(3, 10),
+          4: p(2, 15),
+        },
+      },
+      {
+        exerciseId: 'd4_gironda_row',
+        label: 'Remo Gironda',
+        pattern: 'horizontal_pull',
+        intent: 'hypertrophy',
+        authority: 'editable_accessory',
+        restSec: 90,
+        weekly: {
+          1: p(3, 12),
+          2: p(3, 10),
+          3: p(3, 8),
+          4: p(2, 12),
+        },
+      },
+      {
+        exerciseId: 'd4_arms',
+        label: 'Tríceps + bíceps',
+        pattern: 'isolation',
+        intent: 'accessory',
+        authority: 'editable_accessory',
+        restSec: 75,
+        weekly: {
+          1: p(3, 15),
+          2: p(3, 12),
+          3: p(3, 10),
+          4: p(2, 15),
+        },
+      },
     ],
   },
   {
     day: 5,
-    name: 'Posterior',
+    name: 'Posterior + Fuerza',
     exercises: [
-      { exerciseId: 'deadlift', label: 'Peso muerto', pattern: 'hinge', intent: 'strength', prescription: 'Top + back-off', target: 'Fuerza principal', authority: 'tm_main', rmLift: 'deadlift', defaultSets: 5, defaultReps: 5, restSec: 180 },
-      { exerciseId: 'speed_squat', label: 'Sentadilla velocidad / técnica', pattern: 'squat', intent: 'power', prescription: '6×2', target: '60–70% de sentadilla · explosiva', authority: 'derived_percent', rmLift: 'back_squat', derivedPercentRange: [.60, .70], defaultSets: 6, defaultReps: 2, restSec: 150, optional: true },
-      { exerciseId: 'rdl', label: 'RDL', pattern: 'hinge', intent: 'hypertrophy', prescription: '3×6–8', target: 'RPE 7–8 · bisagra', authority: 'guided_locked', defaultSets: 3, defaultReps: 6, repRange: [6, 8], restSec: 90 },
-      { exerciseId: 'leg_press', label: 'Prensa', pattern: 'squat', intent: 'hypertrophy', prescription: '3×10', target: 'RPE 8 · cuádriceps', authority: 'editable_accessory', defaultSets: 3, defaultReps: 10, restSec: 90 },
-      { exerciseId: 'core_stability', label: 'Core', pattern: 'carry_core', intent: 'accessory', prescription: '3×12–15', target: 'Controlado · estabilidad', authority: 'bodyweight_locked', defaultSets: 3, defaultReps: 12, repRange: [12, 15], restSec: 60 },
+      {
+        exerciseId: 'd5_hang_power_clean',
+        label: 'Hang Power Clean',
+        pattern: 'hinge',
+        intent: 'power',
+        authority: 'system_percent',
+        restSec: 150,
+        referenceTrainingMaxKg: 72,
+        referenceRmKg: 80,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(5, 2, 54, .75),
+          2: p(5, 2, 58, .80),
+          3: p(4, 2, 61, .85),
+          4: p(3, 2, 47, .65),
+        },
+      },
+      {
+        exerciseId: 'd5_front_squat_top',
+        label: 'Sentadilla Frontal Top Set',
+        pattern: 'squat',
+        intent: 'strength',
+        authority: 'system_percent',
+        restSec: 180,
+        referenceTrainingMaxKg: 67.5,
+        referenceRmKg: 75,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(1, 6, 54, .80),
+          2: p(1, 4, 57, .85),
+          3: p(1, 2, 61, .90),
+          4: null,
+        },
+      },
+      {
+        exerciseId: 'd5_front_squat',
+        label: 'Sentadilla Frontal',
+        pattern: 'squat',
+        intent: 'strength',
+        authority: 'system_percent',
+        restSec: 180,
+        referenceTrainingMaxKg: 67.5,
+        referenceRmKg: 75,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(3, 6, 47, .70),
+          2: p(3, 4, 51, .75),
+          3: p(3, 2, 54, .80),
+          4: p(3, 5, 47, .70),
+        },
+      },
+      {
+        exerciseId: 'd5_zercher_good_morning',
+        label: 'Buenos días Zercher',
+        pattern: 'hinge',
+        intent: 'strength',
+        authority: 'system_percent',
+        restSec: 180,
+        referenceTrainingMaxKg: 67.5,
+        referenceRmKg: 75,
+        cycleIncrementKg: 2.5,
+        weekly: {
+          1: p(3, 8, 41, .60),
+          2: p(3, 6, 44, .65),
+          3: p(3, 4, 47, .70),
+          4: p(2, 8, 41, .60),
+        },
+      },
+      {
+        exerciseId: 'd5_bulgarian',
+        label: 'Búlgara',
+        pattern: 'unilateral',
+        intent: 'hypertrophy',
+        authority: 'editable_accessory',
+        restSec: 90,
+        weekly: {
+          1: p(3, 8),
+          2: p(3, 6),
+          3: p(3, 4),
+          4: p(2, 8),
+        },
+      },
+      {
+        exerciseId: 'd5_front_raise',
+        label: 'Elevaciones Frontales',
+        pattern: 'isolation',
+        intent: 'accessory',
+        authority: 'editable_accessory',
+        restSec: 75,
+        weekly: {
+          1: p(3, 20),
+          2: p(3, 15),
+          3: p(3, 12),
+          4: p(2, 15),
+        },
+      },
+      {
+        exerciseId: 'd5_facepull',
+        label: 'Facepull',
+        pattern: 'isolation',
+        intent: 'accessory',
+        authority: 'editable_accessory',
+        restSec: 75,
+        weekly: {
+          1: p(2, 20),
+          2: p(2, 20),
+          3: p(2, 20),
+          4: p(2, 20),
+        },
+      },
     ],
   },
 ] as const;
 
-export function roundHighflyLoadKg(value: number, increment = HIGHFLY_LOAD_ROUND_KG): number {
+export function roundHighflyLoadKg(
+  value: number,
+  increment = HIGHFLY_LOAD_ROUND_KG,
+): number {
   if (!Number.isFinite(value) || value <= 0) return 0;
   return Math.round(value / increment) * increment;
 }
 
 export function trainingMaxKg(oneRmKg: number): number {
-  return roundHighflyLoadKg(oneRmKg * HIGHFLY_TM_FACTOR);
+  return roundHighflyLoadKg(oneRmKg * HIGHFLY_TM_FACTOR, 0.5);
 }
 
-export function macrocycleWeek(week: number): HighflyMacrocycleWeek {
-  const normalized = Math.max(1, Math.min(12, Math.trunc(week)));
-  return HIGHFLY_12_WEEK_MACROCYCLE[normalized - 1];
+export function macrocycleWeek(week: number): HighflyCycleWeekDefinition {
+  const normalized = Math.max(1, Math.min(4, Math.trunc(week))) as HighflyCycleWeek;
+  return HIGHFLY_4_WEEK_CYCLE[normalized - 1];
 }
 
-export interface HighflyMainPrescription {
-  kind: 'main';
-  topPercent: number | null;
-  topKg: number | null;
-  topReps: number | 'TEST';
-  backoffPercent: number | null;
-  backoffKg: number | null;
-  backoffSets: number;
-  backoffReps: number;
-}
-
-export function mainPrescription(
-  lift: HighflyRmLift,
-  oneRmKg: number,
+export function prescriptionForWeek(
+  exercise: HighflyRoutineExercise,
   week: number,
-): HighflyMainPrescription {
-  const plan = macrocycleWeek(week);
-  const tm = trainingMaxKg(oneRmKg);
-  const topPercent = plan.topPercent[lift];
-  return {
-    kind: 'main',
-    topPercent,
-    topKg: topPercent === null ? null : roundHighflyLoadKg(tm * topPercent),
-    topReps: plan.topReps,
-    backoffPercent: plan.backoffPercent,
-    backoffKg:
-      plan.backoffPercent === null ? null : roundHighflyLoadKg(tm * plan.backoffPercent),
-    backoffSets: plan.backoffSets,
-    backoffReps: plan.backoffReps,
-  };
+): HighflyWeekPrescription | null {
+  const normalized = Math.max(1, Math.min(4, Math.trunc(week))) as HighflyCycleWeek;
+  return exercise.weekly[normalized];
 }
 
-export function derivedLoadRangeKg(
-  oneRmKg: number,
-  percentRange: readonly [number, number],
-): readonly [number, number] {
-  const tm = trainingMaxKg(oneRmKg);
-  return [
-    roundHighflyLoadKg(tm * percentRange[0]),
-    roundHighflyLoadKg(tm * percentRange[1]),
-  ] as const;
+export function progressedTrainingMaxKg(
+  exercise: HighflyRoutineExercise,
+  successfulCycles: number,
+): number | null {
+  if (!exercise.referenceTrainingMaxKg) return null;
+  const increment = Math.max(0, exercise.cycleIncrementKg ?? 0);
+  return exercise.referenceTrainingMaxKg + Math.max(0, Math.trunc(successfulCycles)) * increment;
+}
+
+/**
+ * Cycle 0 returns the exact kilograms in the supplied routine. Later successful
+ * cycles increase the working TM a little and recompute percentage-driven rows.
+ * A repeated cycle passes the same successfulCycles value, therefore loads stay identical.
+ */
+export function plannedLoadKg(
+  exercise: HighflyRoutineExercise,
+  week: number,
+  successfulCycles = 0,
+): number {
+  const prescription = prescriptionForWeek(exercise, week);
+  if (!prescription) return 0;
+
+  if (
+    exercise.authority === 'system_percent' &&
+    prescription.percent !== undefined &&
+    exercise.referenceTrainingMaxKg
+  ) {
+    const tm = progressedTrainingMaxKg(exercise, successfulCycles) ?? exercise.referenceTrainingMaxKg;
+    return roundHighflyLoadKg(tm * prescription.percent);
+  }
+
+  if (prescription.loadKg !== undefined) {
+    const increment = Math.max(0, exercise.cycleIncrementKg ?? 0);
+    return roundHighflyLoadKg(
+      prescription.loadKg + Math.max(0, Math.trunc(successfulCycles)) * increment,
+      increment > 0 ? 0.5 : 1,
+    );
+  }
+
+  return 0;
 }
 
 export function isEditableAccessory(exercise: HighflyRoutineExercise): boolean {
