@@ -945,7 +945,7 @@ jobs:
           await browser.close();
           NODE
 
-      - name: TRAINING RUN1-J foundation regression: preview + combo + soft-target
+      - name: TRAINING RUN1-J foundation regression - preview + combo + soft-target
         working-directory: upstream
         shell: bash
         run: |
