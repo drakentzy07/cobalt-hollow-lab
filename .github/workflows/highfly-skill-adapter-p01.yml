@@ -156,6 +156,20 @@ jobs:
           cp ../overlays/highfly_jump_smash_browser_smoke.mjs ./highfly_jump_smash_browser_smoke.mjs
           node ./highfly_jump_smash_browser_smoke.mjs
 
+      - name: Upload Jump Smash visual proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jump-smash-visual-proof
+          path: |
+            jump-smash-browser-report.json
+            jump-smash-00-ready.png
+            jump-smash-01-airborne.png
+            jump-smash-02-impact.png
+            jump-smash-preview.log
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Upload HIGHFLY diagnostics
         if: always()
         uses: actions/upload-artifact@v4
