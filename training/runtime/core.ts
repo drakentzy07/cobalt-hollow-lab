@@ -28,6 +28,30 @@ export interface HighflyResolveState {
   returnConsistency: number;
 }
 
+export interface HighflyPerformanceAnchor {
+  /** Comparable performance baseline held until the next consolidated Stat Up. */
+  baseline: number;
+  /** Most recent valid comparable performance sample. */
+  latest: number;
+  evidenceId: string;
+  updatedAt: string;
+}
+
+export interface HighflyTrainingHistoryEntry {
+  sessionId: string;
+  recordedAt: string;
+  stat: HighflyCoreStat;
+  stimulus: number;
+  performanceIndex: number | null;
+  outcome:
+    | 'calibrated'
+    | 'progress_only'
+    | 'awaiting_performance'
+    | 'awaiting_confidence'
+    | 'maintenance'
+    | 'stat_up';
+}
+
 export interface HighflyHunterProgressionState {
   level: number;
   xp: number;
@@ -44,6 +68,10 @@ export interface HighflyHunterProfile {
   training: {
     core: HighflyCoreStatsState;
     resolve: HighflyResolveState;
+    /** Optional on legacy saves; RUN1-H lazily initializes when absent. */
+    performance?: Partial<Record<HighflyCoreStat, HighflyPerformanceAnchor>>;
+    /** Optional on legacy saves; bounded audit history for explainability. */
+    history?: HighflyTrainingHistoryEntry[];
   };
   hunter: HighflyHunterProgressionState;
 }
@@ -97,6 +125,8 @@ export function createHighflyHunterProfile(args: {
         adherence180d: 0,
         returnConsistency: 0,
       },
+      performance: {},
+      history: [],
     },
     hunter: {
       level,
