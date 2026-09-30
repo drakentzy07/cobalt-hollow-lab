@@ -9,6 +9,7 @@ on:
       - highfly/production-pack01-run0b
       - highfly/production-pack01-run0c
       - highfly/production-pack01-run0d
+      - highfly/production-pack01-run0e-visualqa
   workflow_dispatch:
 
 permissions:
@@ -171,6 +172,38 @@ jobs:
           cp ../overlays/highfly_jump_smash_browser_smoke.mjs ./highfly_jump_smash_browser_smoke.mjs
           node ./highfly_jump_smash_browser_smoke.mjs
 
+      - name: Pack 01 visual QA gallery
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vite preview --host 127.0.0.1 --port 4174 --base=/cobalt-hollow-lab/ > ../pack01-visualqa-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4174/cobalt-hollow-lab/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          cp ../overlays/highfly_pack01_visual_qa.mjs ./highfly_pack01_visual_qa.mjs
+          sed -i "s#127.0.0.1:4173#127.0.0.1:4174#g" ./highfly_pack01_visual_qa.mjs
+          node ./highfly_pack01_visual_qa.mjs
+
+      - name: Upload Pack 01 visual QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-pack01-visual-qa
+          path: |
+            pack01-visual-lab.html
+            pack01-visualqa-report.json
+            pack01-*-00-ready.png
+            pack01-*-01-skill.png
+            pack01-visualqa-preview.log
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Upload Jump Smash visual proof
         if: always()
         uses: actions/upload-artifact@v4
@@ -182,6 +215,11 @@ jobs:
             jump-smash-01-airborne.png
             jump-smash-02-impact.png
             jump-smash-preview.log
+            pack01-visual-lab.html
+            pack01-visualqa-report.json
+            pack01-*-00-ready.png
+            pack01-*-01-skill.png
+            pack01-visualqa-preview.log
           if-no-files-found: warn
           retention-days: 7
 
