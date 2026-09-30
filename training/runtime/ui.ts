@@ -316,6 +316,15 @@ export function installHighflyTrainingUi(): void {
   if (installed) return;
   installed = true;
 
+  // Match ClaudeCraft's body-level mobile modal architecture (e.g. More).
+  // The mobile backdrop sits above the normal HUD/#ui stacking contexts; a
+  // Training window left in its original placeholder parent can be visible but
+  // untappable. Reparent once so its z-index competes at the body level.
+  const trainingWindow = document.querySelector<HTMLElement>('#highfly-training-window');
+  if (trainingWindow && trainingWindow.parentElement !== document.body) {
+    document.body.appendChild(trainingWindow);
+  }
+
   window.addEventListener('highfly:open-training', () => {
     render();
   });
