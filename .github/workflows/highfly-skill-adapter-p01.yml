@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: highfly-skill-adapter-p01
@@ -156,6 +158,14 @@ jobs:
           cp ../overlays/highfly_jump_smash_browser_smoke.mjs ./highfly_jump_smash_browser_smoke.mjs
           node ./highfly_jump_smash_browser_smoke.mjs
 
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: upstream/dist
+
       - name: Upload Jump Smash visual proof
         if: always()
         uses: actions/upload-artifact@v4
@@ -184,3 +194,15 @@ jobs:
             jump-smash-preview.log
           if-no-files-found: warn
           retention-days: 7
+
+
+  deploy-preview:
+    needs: adapter-p01
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy Jump Smash FULL preview
+        id: deployment
+        uses: actions/deploy-pages@v4
