@@ -57,11 +57,12 @@ addition = """  it('faces the resolved travel direction and applies landing dama
 
     const aim = { x: p.pos.x + 8, z: p.pos.z };
     const spawn = (id: number, x: number, z: number): Entity => {
-      const mob = createMob(id, MOBS.forest_wolf, 1, sim.groundPos(x, z));
+      const mob = createMob(id, MOBS.training_dummy, 20, sim.groundPos(x, z));
       mob.maxHp = 50000;
       mob.hp = 50000;
       mob.hostile = true;
-      mob.aiState = 'idle';
+      mob.weapon.min = 0;
+      mob.weapon.max = 0;
       sim.addEntity(mob);
       return mob;
     };
@@ -73,8 +74,15 @@ addition = """  it('faces the resolved travel direction and applies landing dama
     // is allowed to clamp against terrain/colliders, and AoE authority belongs
     // to the actual touchdown position.
     const landing = { ...p.leap!.to };
-    const inside = spawn(sim.nextId++, landing.x + 5.5, landing.z);
-    const outside = spawn(sim.nextId++, landing.x + 6.5, landing.z);
+    const travelX = landing.x - p.leap!.from.x;
+    const travelZ = landing.z - p.leap!.from.z;
+    const travelLen = Math.hypot(travelX, travelZ);
+    const ux = travelLen > 1e-6 ? travelX / travelLen : 1;
+    const uz = travelLen > 1e-6 ? travelZ / travelLen : 0;
+    // Place both dummies on the already swept/clear travel corridor. This avoids
+    // making the AoE assertion depend on unrelated world props or hostile AI.
+    const inside = spawn(sim.nextId++, landing.x - ux * 5.5, landing.z - uz * 5.5);
+    const outside = spawn(sim.nextId++, landing.x - ux * 6.5, landing.z - uz * 6.5);
     const insideHp = inside.hp;
     const outsideHp = outside.hp;
 
