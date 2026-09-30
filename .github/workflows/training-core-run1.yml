@@ -1,4 +1,4 @@
-name: HIGHFLY TRAINING CORE RUN1-G
+name: HIGHFLY TRAINING CORE RUN1-H
 
 on:
   push:
@@ -107,6 +107,7 @@ jobs:
           python ../overlays/highfly_training_core_v1.py
           python ../overlays/highfly_training_persistence_v1.py
           python ../overlays/highfly_training_ui_v1.py
+          python ../overlays/highfly_training_e2e_v1.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -182,7 +183,7 @@ jobs:
         shell: bash
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Verify Foundation + Training RUN1-G contracts
+      - name: Verify Foundation + Training RUN1-H contracts
         working-directory: .
         shell: bash
         run: |
@@ -206,10 +207,14 @@ jobs:
           test -s training/tests/highfly_training_periodization.test.ts
           test -s training/tests/highfly_training_bridge.test.ts
           test -s training/tests/highfly_training_persistence.test.ts
+          test -s training/tests/highfly_training_e2e.test.ts
           test -s training/runtime/profile_store.ts
           test -s training/runtime/ui.ts
+          test -s training/runtime/pipeline.ts
+          test -s training/runtime/combat_runtime.ts
           test -s overlays/highfly_training_persistence_v1.py
           test -s overlays/highfly_training_ui_v1.py
+          test -s overlays/highfly_training_e2e_v1.py
           test -s training/runtime/engine.ts
           test -s training/runtime/adaptation.ts
           test -s training/runtime/periodization.ts
@@ -231,16 +236,20 @@ jobs:
           grep -q "installHighflyTrainingUi" training/runtime/ui.ts
           grep -q "bindTouchTap" training/runtime/ui.ts
           grep -q "Registrar sesión" training/runtime/ui.ts
+          grep -q "runTrainingSessionPipeline" training/runtime/pipeline.ts
+          grep -q "HIGHFLY_INITIAL_CALIBRATED_CORE_BASELINE" training/runtime/pipeline.ts
+          grep -q "refreshActiveTrainingCombatBridge" training/runtime/combat_runtime.ts
+          grep -q "applyActiveTrainingBridgeToEntity" overlays/highfly_training_e2e_v1.py
 
       - name: TypeScript source smoke
         working-directory: upstream
         shell: bash
         run: pnpm exec tsc --noEmit --incremental false
 
-      - name: Training Core RUN1-G unit tests
+      - name: Training Core RUN1-H unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -740,7 +749,7 @@ jobs:
           await browser.close();
           NODE
 
-      - name: RUN1-G playable Training UI smoke
+      - name: RUN1-H playable Training end-to-end smoke
         working-directory: upstream
         shell: bash
         run: |
@@ -794,7 +803,7 @@ jobs:
           const dayCount = await page.locator('[data-hf-training-day]').count();
           const coreCount = await page.locator('.hf-core-card').count();
           if (dayCount !== 5 || coreCount !== 5) {
-            throw new Error(`RUN1-G expected 5 days + 5 Core cards, got days=${dayCount} core=${coreCount}`);
+            throw new Error(`RUN1-H expected 5 days + 5 Core cards, got days=${dayCount} core=${coreCount}`);
           }
 
           await page.evaluate(() => {
@@ -854,14 +863,14 @@ jobs:
               buttonHit: top === button || (top instanceof Node && button.contains(top)),
             };
           });
-          console.log('RUN1G_TRAINING_STACKING', stacking);
+          console.log('RUN1H_TRAINING_STACKING', stacking);
           if (
             !stacking ||
             !stacking.bodyLevel ||
             stacking.windowZ <= stacking.backdropZ ||
             !stacking.buttonHit
           ) {
-            throw new Error('RUN1-G Training modal is not above the mobile backdrop');
+            throw new Error('RUN1-H Training modal is not above the mobile backdrop');
           }
 
           await page.locator('#hf-training-register').tap();
@@ -877,21 +886,21 @@ jobs:
             return { resultText, values };
           });
 
-          console.log('RUN1G_TRAINING_UI', JSON.stringify({ ...report, pageErrors }, null, 2));
+          console.log('RUN1H_TRAINING_UI', JSON.stringify({ ...report, pageErrors }, null, 2));
           if (pageErrors.length > 0) {
-            throw new Error('RUN1-G page error: ' + pageErrors.join(' | '));
+            throw new Error('RUN1-H page error: ' + pageErrors.join(' | '));
           }
           if (!report.resultText.includes('1 sets')) {
-            throw new Error('RUN1-G session did not produce one evidence set');
+            throw new Error('RUN1-H session did not produce one evidence set');
           }
           if (!(report.values[0] > 0)) {
-            throw new Error('RUN1-G STR stimulus did not become positive for heavy squat evidence');
+            throw new Error('RUN1-H STR stimulus did not become positive for heavy squat evidence');
           }
 
           await browser.close();
           NODE
 
-      - name: TRAINING RUN1-G golden preview + combo + soft-target smoke
+      - name: TRAINING RUN1-H golden preview + combo + soft-target smoke
         working-directory: upstream
         shell: bash
         run: |
