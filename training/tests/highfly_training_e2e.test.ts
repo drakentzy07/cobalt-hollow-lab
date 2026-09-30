@@ -68,7 +68,10 @@ describe('HIGHFLY Training RUN1-H end-to-end', () => {
     );
     expect(first.outcomes.find((o) => o.stat === 'STR')?.outcome).toBe('calibrated');
     expect(first.profile.training.performance?.STR?.baseline).toBeGreaterThan(0);
-    expect(first.profile.training.history?.at(-1)?.outcome).toBe('calibrated');
+    const firstStrHistory = [...(first.profile.training.history ?? [])]
+      .reverse()
+      .find((entry) => entry.stat === 'STR');
+    expect(firstStrHistory?.outcome).toBe('calibrated');
   });
 
   it('consolidates a comparable improvement, persists it, and changes local combat AP', () => {
@@ -110,7 +113,10 @@ describe('HIGHFLY Training RUN1-H end-to-end', () => {
     expect(restored.training.performance.STR.baseline).toBe(
       improved.profile.training.performance?.STR?.baseline,
     );
-    expect(restored.training.history.at(-1).outcome).toBe('stat_up');
+    const restoredStrHistory = [...restored.training.history]
+      .reverse()
+      .find((entry) => entry.stat === 'STR');
+    expect(restoredStrHistory?.outcome).toBe('stat_up');
 
     setActiveHighflyHunterProfile(improved.profile);
     const entity = {
