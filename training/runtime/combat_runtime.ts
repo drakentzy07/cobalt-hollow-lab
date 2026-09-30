@@ -7,17 +7,18 @@ import { getActiveHighflyHunterProfile } from './profile_store';
 export interface HighflyBridgeEntity {
   id: number;
   attackPower: number;
-  rangedPower: number;
-  spellPower: number;
-  healPower: number;
+  /** Optional only for backwards-compatible LAB mocks; real Claude entities provide these. */
+  rangedPower?: number;
+  spellPower?: number;
+  healPower?: number;
   maxHp: number;
   hp: number;
-  maxResource: number;
-  resource: number;
-  resourceType: string | null;
+  maxResource?: number;
+  resource?: number;
+  resourceType?: string | null;
   critChance: number;
-  hitBonus: number;
-  dodgeChance: number;
+  hitBonus?: number;
+  dodgeChance?: number;
   moveSpeed: number;
   dead: boolean;
 }
@@ -105,10 +106,11 @@ function applyFromBaseline(
     entity.hp = entity.dead
       ? 0
       : Math.max(1, Math.min(entity.maxHp, Math.round(entity.maxHp * hpFraction)));
-    if (entity.maxResource > 0) {
+    if ((entity.maxResource ?? 0) > 0) {
+      const maxResource = entity.maxResource ?? 0;
       entity.resource = Math.max(
         0,
-        Math.min(entity.maxResource, Math.round(entity.maxResource * resourceFraction)),
+        Math.min(maxResource, Math.round(maxResource * resourceFraction)),
       );
     }
     return;
@@ -188,10 +190,11 @@ function applyFromBaseline(
     ? 0
     : Math.max(1, Math.min(entity.maxHp, Math.round(entity.maxHp * hpFraction)));
 
-  if (entity.maxResource > 0) {
+  if ((entity.maxResource ?? 0) > 0) {
+    const maxResource = entity.maxResource ?? 0;
     entity.resource = Math.max(
       0,
-      Math.min(entity.maxResource, Math.round(entity.maxResource * resourceFraction)),
+      Math.min(maxResource, Math.round(maxResource * resourceFraction)),
     );
   }
 }
@@ -205,18 +208,20 @@ export function applyActiveTrainingBridgeToEntity(entity: HighflyBridgeEntity): 
   activeEntity = entity;
 
   const hpFraction = entity.maxHp > 0 ? entity.hp / entity.maxHp : 1;
-  const resourceFraction = entity.maxResource > 0 ? entity.resource / entity.maxResource : 0;
+  const maxResource = entity.maxResource ?? 0;
+  const resource = entity.resource ?? 0;
+  const resourceFraction = maxResource > 0 ? resource / maxResource : 0;
   lastClaudeBaseline = {
     attackPower: entity.attackPower,
-    rangedPower: entity.rangedPower,
-    spellPower: entity.spellPower,
-    healPower: entity.healPower,
+    rangedPower: entity.rangedPower ?? 0,
+    spellPower: entity.spellPower ?? 0,
+    healPower: entity.healPower ?? 0,
     maxHp: entity.maxHp,
-    maxResource: entity.maxResource,
-    resourceType: entity.resourceType,
+    maxResource,
+    resourceType: entity.resourceType ?? null,
     critChance: entity.critChance,
-    hitBonus: entity.hitBonus,
-    dodgeChance: entity.dodgeChance,
+    hitBonus: entity.hitBonus ?? 0,
+    dodgeChance: entity.dodgeChance ?? 0.05,
     moveSpeed: entity.moveSpeed,
   };
   applyFromBaseline(entity, lastClaudeBaseline, hpFraction, resourceFraction);
@@ -229,7 +234,8 @@ export function applyActiveTrainingBridgeToEntity(entity: HighflyBridgeEntity): 
 export function refreshActiveTrainingCombatBridge(): void {
   if (!activeEntity || !lastClaudeBaseline) return;
   const hpFraction = activeEntity.maxHp > 0 ? activeEntity.hp / activeEntity.maxHp : 1;
+  const maxResource = activeEntity.maxResource ?? 0;
   const resourceFraction =
-    activeEntity.maxResource > 0 ? activeEntity.resource / activeEntity.maxResource : 0;
+    maxResource > 0 ? (activeEntity.resource ?? 0) / maxResource : 0;
   applyFromBaseline(activeEntity, lastClaudeBaseline, hpFraction, resourceFraction);
 }
