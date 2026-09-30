@@ -973,6 +973,6 @@ describe('HIGHFLY Validation Pack 01 cross-class contract', () => {
     expect(source).toContain('resolveActionReplacement');
   });
 });
-""", encoding='utf-8')
+""")
 
 print('HIGHFLY_VALIDATION_PACK01_CONTRACT=1')
