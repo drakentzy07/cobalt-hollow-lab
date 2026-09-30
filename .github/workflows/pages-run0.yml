@@ -1,4 +1,4 @@
-name: Pages RUN0.9.3 Phase 0 mobile combat
+name: Pages HIGHFLY Training V1 Green
 
 on:
   push:
@@ -21,10 +21,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout green RUN0.9.3 Phase 0
+      - name: Checkout green HIGHFLY Training V1
         uses: actions/checkout@v4
         with:
-          ref: b40a9b68d1bac946976878d788cf21771cc8c0d3
+          ref: 24f4ebd0bbde0c38ab852f034cbb239afd001fe3
 
       - name: Checkout isolated Skin Lab S2
         uses: actions/checkout@v4
@@ -77,7 +77,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
 
-      - name: Apply integrated RUN0.9.3 overlays
+      - name: Apply integrated HIGHFLY Training V1 overlays
         working-directory: upstream
         shell: bash
         run: |
@@ -98,6 +98,10 @@ jobs:
           python ../overlays/highfly_run092_hud_comfort.py
           python ../overlays/highfly_run093_preview_hud.py
           python ../overlays/highfly_run093_combat.py
+          python ../overlays/highfly_training_core_v1.py
+          python ../overlays/highfly_training_persistence_v1.py
+          python ../overlays/highfly_training_ui_v1.py
+          python ../overlays/highfly_training_e2e_v1.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -118,7 +122,7 @@ jobs:
         shell: bash
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Build green RUN0.9.3 mobile bundle
+      - name: Build green HIGHFLY Training V1 bundle
         working-directory: upstream
         shell: bash
         env:
@@ -159,5 +163,5 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-# publish-pin: run0.9.3-phase0-mobile-combat b40a9b68
+# publish-pin: highfly-training-v1 24f4ebd0
 # skin-lab-s2-pin: dbeb7bcb
