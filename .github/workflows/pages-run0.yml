@@ -1,4 +1,4 @@
-name: Pages HIGHFLY Training V1 Green
+name: Pages HIGHFLY Training RUN1-I Green
 
 on:
   push:
@@ -21,10 +21,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout green HIGHFLY Training V1
+      - name: Checkout green HIGHFLY Training RUN1-I
         uses: actions/checkout@v4
         with:
-          ref: 24f4ebd0bbde0c38ab852f034cbb239afd001fe3
+          ref: f572bd236dc9777a421d844e271f5f8bc5c9e41d
 
       - name: Checkout isolated Skin Lab S2
         uses: actions/checkout@v4
@@ -77,7 +77,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
 
-      - name: Apply integrated HIGHFLY Training V1 overlays
+      - name: Apply integrated HIGHFLY Training RUN1-I overlays
         working-directory: upstream
         shell: bash
         run: |
@@ -102,6 +102,7 @@ jobs:
           python ../overlays/highfly_training_persistence_v1.py
           python ../overlays/highfly_training_ui_v1.py
           python ../overlays/highfly_training_e2e_v1.py
+          python ../overlays/highfly_training_run1i_ui.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -122,7 +123,7 @@ jobs:
         shell: bash
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Build green HIGHFLY Training V1 bundle
+      - name: Build green HIGHFLY Training RUN1-I bundle
         working-directory: upstream
         shell: bash
         env:
@@ -163,5 +164,5 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-# publish-pin: highfly-training-v1 24f4ebd0
+# publish-pin: highfly-training-run1i f572bd23
 # skin-lab-s2-pin: dbeb7bcb
