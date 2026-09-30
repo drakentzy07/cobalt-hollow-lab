@@ -69,6 +69,11 @@ export interface HighflyLoadCalibrationState {
   lifts: Partial<Record<HighflyRmLiftId, HighflyRmCalibrationEntry>>;
 }
 
+export interface HighflyAccessoryLoadEntry {
+  kg: number;
+  updatedAt: string;
+}
+
 export interface HighflyHunterProgressionState {
   level: number;
   xp: number;
@@ -91,6 +96,8 @@ export interface HighflyHunterProfile {
     history?: HighflyTrainingHistoryEntry[];
     /** Private/offline Hunter load calibration. Never hardcoded from a public routine. */
     loadCalibration?: HighflyLoadCalibrationState;
+    /** Remembered dumbbell/machine accessory loads. Private to the offline Hunter save. */
+    accessoryLoads?: Record<string, HighflyAccessoryLoadEntry>;
   };
   hunter: HighflyHunterProgressionState;
 }
@@ -151,6 +158,7 @@ export function createHighflyHunterProfile(args: {
         roundKg: 2.5,
         lifts: {},
       },
+      accessoryLoads: {},
     },
     hunter: {
       level,
