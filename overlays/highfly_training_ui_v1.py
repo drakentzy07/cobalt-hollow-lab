@@ -49,6 +49,12 @@ css_append = r"""
 /* ==========================================================================
    HIGHFLY TRAINING RUN1-G — playable Training Core window
    ========================================================================== */
+body.mobile-touch #highfly-training-window {
+  /* Body-level modal must sit above ClaudeCraft's #mobile-window-backdrop (85)
+     and the raised #ui layer (90), while staying below the More tray (100). */
+  z-index: 95;
+}
+
 #highfly-training-window .highfly-training-shell {
   display: grid;
   gap: 18px;
