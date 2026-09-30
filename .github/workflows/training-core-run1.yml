@@ -111,6 +111,7 @@ jobs:
           python ../overlays/highfly_training_run1i_ui.py
           python ../overlays/highfly_run1j_branding.py
           python ../overlays/highfly_run1j_spanish.py
+          python ../overlays/highfly_run1j_j4_brandfix.py
           python ../overlays/highfly_run1j_j3a_flags.py
           python ../overlays/highfly_run1j_j3b_native_bridge.py
           python ../overlays/rewrite_source_public_paths.py
@@ -259,6 +260,15 @@ jobs:
           test -s branding/highfly-logo-mark.png
           test -s upstream/public/highfly/highfly-logo-full.png
           test -s upstream/public/highfly/highfly-logo-mark.png
+          python - <<'PY'
+          from pathlib import Path
+          sig = b"\\x89PNG\\r\\n\\x1a\\n"
+          for name in ("highfly-logo-full.png", "highfly-logo-mark.png"):
+              data = (Path("upstream/public/highfly") / name).read_bytes()
+              assert data.startswith(sig), f"{name} is not a valid PNG"
+              assert len(data) > 10000, f"{name} is unexpectedly tiny"
+          print("HIGHFLY_J4_VALID_PNGS_OK=1")
+          PY
           grep -F 'src="/highfly/highfly-logo-full.png"' upstream/index.html
           grep -F 'src="/highfly/highfly-logo-mark.png"' upstream/index.html
           grep -F "'seo.title': 'HIGHFLY — Entrena · Asciende · Conquista'" upstream/src/ui/i18n.locales/es_ES.ts
