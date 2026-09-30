@@ -161,7 +161,7 @@ export function createHighflyHunterProfile(args: {
       history: [],
       loadCalibration: {
         tmFactor: 0.9,
-        roundKg: 2.5,
+        roundKg: 1,
         lifts: {},
       },
       accessoryLoads: {},
