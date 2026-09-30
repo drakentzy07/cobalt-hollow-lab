@@ -229,6 +229,7 @@ jobs:
           grep -q "setActiveHighflyHunterProfile" training/runtime/profile_store.ts
           grep -q "loadHighflyTrainingProfile" overlays/highfly_training_persistence_v1.py
           grep -q "installHighflyTrainingUi" training/runtime/ui.ts
+          grep -q "bindTouchTap" training/runtime/ui.ts
           grep -q "Registrar sesión" training/runtime/ui.ts
 
       - name: TypeScript source smoke
@@ -815,7 +816,15 @@ jobs:
             });
           });
 
-          await page.locator('#hf-training-register').click({ force: true });
+          const pageErrors = [];
+          page.on('pageerror', (error) => pageErrors.push(String(error)));
+
+          await page.locator('#hf-training-register').tap();
+          await page.waitForFunction(
+            () => Boolean(document.querySelector('.hf-training-result__grid')),
+            null,
+            { timeout: 5000 },
+          );
           const report = await page.evaluate(() => {
             const resultText = document.querySelector('#hf-training-result')?.textContent ?? '';
             const values = [...document.querySelectorAll('.hf-training-result__grid b')]
@@ -823,7 +832,10 @@ jobs:
             return { resultText, values };
           });
 
-          console.log('RUN1G_TRAINING_UI', JSON.stringify(report, null, 2));
+          console.log('RUN1G_TRAINING_UI', JSON.stringify({ ...report, pageErrors }, null, 2));
+          if (pageErrors.length > 0) {
+            throw new Error('RUN1-G page error: ' + pageErrors.join(' | '));
+          }
           if (!report.resultText.includes('1 sets')) {
             throw new Error('RUN1-G session did not produce one evidence set');
           }
