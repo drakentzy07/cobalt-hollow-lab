@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: run0.9.3-phase0-mobile-combat
+  group: highfly-training-core-run1
   cancel-in-progress: true
 
 jobs:
