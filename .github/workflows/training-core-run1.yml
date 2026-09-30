@@ -109,6 +109,7 @@ jobs:
           python ../overlays/highfly_training_ui_v1.py
           python ../overlays/highfly_training_e2e_v1.py
           python ../overlays/highfly_training_run1i_ui.py
+          python ../overlays/highfly_run1j_branding.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -247,6 +248,9 @@ jobs:
           grep -q "HF_HIGHFLY_PERSONAL_5D_V1" training/runtime/personal_routine.ts
           grep -q "HIGHFLY_4_WEEK_CYCLE" training/runtime/personal_routine.ts
           grep -q "CICLO ADAPTATIVO" training/runtime/ui.ts
+          grep -F 'HIGHFLY — Entrena · Asciende · Conquista' index.html
+          grep -F 'data-highfly-brand-target="full"' index.html
+          grep -F '#mm-discord' src/styles/shell.css
           grep -q "CONTINUAR ANTES DE TIEMPO" training/runtime/ui.ts
 
       - name: TypeScript source smoke
