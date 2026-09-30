@@ -1,0 +1,166 @@
+name: HIGHFLY Jump Smash FULL Pages Preview
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/highfly-jump-smash-pages.yml
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: highfly-jump-smash-pages
+  cancel-in-progress: true
+
+jobs:
+  build-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout HIGHFLY FULL overlay
+        uses: actions/checkout@v6
+        with:
+          ref: highfly/skill-adapter-p01
+          path: overlay
+
+      - name: Checkout frozen ClaudeCraft
+        uses: actions/checkout@v6
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /tests/
+            /electron/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+
+      - name: Verify frozen foundation
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+
+      - name: Apply RUN0 + HIGHFLY Jump Smash FULL
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply ../overlay/overlays/pages-media-base.patch
+          git apply ../overlay/overlays/cobalt-offline-gate.patch
+          python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1; p.write_text(s.replace(old,new))"
+          python ../overlay/overlays/apply_highfly_skill_adapter.py
+          python ../overlay/overlays/apply_highfly_skill_adapter_fix1.py
+          python ../overlay/overlays/apply_highfly_vertical_slice_tests.py
+          python ../overlay/overlays/apply_highfly_jump_smash_full.py
+          git diff --check
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Enable pinned pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+
+      - name: Install dependencies
+        working-directory: upstream
+        shell: bash
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: HIGHFLY focused tests
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run             tests/highfly_skill_adapter.test.ts             tests/highfly_vertical_slice_contract.test.ts             tests/highfly_jump_smash_full.test.ts             tests/action_bar_secondary_requirements.test.ts             tests/ground_aim_hud.test.ts             tests/ground_target_cast.test.ts             tests/heroic_leap.test.ts             tests/hotbar.test.ts             tests/cross_hotbar_cast_dispatch.test.ts             tests/mobile_action_page_view.test.ts             tests/action_bar_layout_persistence_game.test.ts
+
+      - name: TypeScript source check
+        working-directory: upstream
+        shell: bash
+        run: pnpm exec tsc --noEmit --incremental false
+
+      - name: Build Pages bundle
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          pnpm run build:bundle
+          node scripts/build_media_manifest.mjs prune
+          python ../overlay/overlays/rewrite_pages_static.py
+          touch dist/.nojekyll
+          du -sh dist
+
+      - name: Jump Smash browser smoke
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vite preview --host 127.0.0.1 --port 4173 --base=/cobalt-hollow-lab/ > ../jump-smash-pages-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          cp ../overlay/overlays/highfly_jump_smash_browser_smoke.mjs ./highfly_jump_smash_browser_smoke.mjs
+          node ./highfly_jump_smash_browser_smoke.mjs
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: upstream/dist
+
+  deploy:
+    needs: build-preview
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Jump Smash FULL preview
+        id: deployment
+        uses: actions/deploy-pages@v4
