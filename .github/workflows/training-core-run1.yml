@@ -248,9 +248,9 @@ jobs:
           grep -q "HF_HIGHFLY_PERSONAL_5D_V1" training/runtime/personal_routine.ts
           grep -q "HIGHFLY_4_WEEK_CYCLE" training/runtime/personal_routine.ts
           grep -q "CICLO ADAPTATIVO" training/runtime/ui.ts
-          grep -F 'HIGHFLY — Entrena · Asciende · Conquista' index.html
-          grep -F 'data-highfly-brand-target="full"' index.html
-          grep -F '#mm-discord' src/styles/shell.css
+          grep -F 'HIGHFLY — Entrena · Asciende · Conquista' upstream/index.html
+          grep -F 'data-highfly-brand-target="full"' upstream/index.html
+          grep -F '#mm-discord' upstream/src/styles/shell.css
           grep -q "CONTINUAR ANTES DE TIEMPO" training/runtime/ui.ts
 
       - name: TypeScript source smoke
