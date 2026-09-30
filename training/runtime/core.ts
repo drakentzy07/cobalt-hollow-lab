@@ -53,10 +53,16 @@ export interface HighflyTrainingHistoryEntry {
 }
 
 export type HighflyRmLiftId =
+  | 'hang_power_clean'
   | 'back_squat'
+  | 'push_press'
   | 'bench_press'
+  | 'deadlift_rack_pull'
+  | 'pendlay_row'
   | 'overhead_press'
-  | 'deadlift';
+  | 'incline_barbell'
+  | 'front_squat'
+  | 'zercher_good_morning';
 
 export interface HighflyRmCalibrationEntry {
   oneRmKg: number;
