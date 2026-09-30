@@ -210,7 +210,7 @@ replace_once(
     """  } else if (p.resourceType === 'rage' && !p.inCombat) {
     p.resource = Math.max(0, p.resource - 2);
   }
-  // Eating STACKS with natural regen
+  // Eating STACKS with natural regen (issue #1608), matching how drinking
 """,
     """  } else if (p.resourceType === 'rage' && !p.inCombat) {
     p.resource = Math.max(0, p.resource - 2);
@@ -221,7 +221,7 @@ replace_once(
     const bonus = Math.round(naturalGain * (highflyRecovery - 1));
     p.resource = Math.min(p.maxResource, p.resource + bonus);
   }
-  // Eating STACKS with natural regen
+  // Eating STACKS with natural regen (issue #1608), matching how drinking
 """,
     "INT natural resource recovery",
 )
