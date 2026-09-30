@@ -122,9 +122,15 @@ describe('HIGHFLY Training RUN1-H end-to-end', () => {
     const entity = {
       id: 1003,
       attackPower: 100,
+      rangedPower: 0,
       maxHp: 1000,
       hp: 800,
       critChance: 0.05,
+      dodgeChance: 0.05,
+      hitBonus: 0,
+      critDmgPhysBonus: 0,
+      critDmgSpellBonus: 0,
+      critDmgHealBonus: 0,
       moveSpeed: 7,
       dead: false,
     };
