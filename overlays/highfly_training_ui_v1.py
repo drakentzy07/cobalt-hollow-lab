@@ -50,9 +50,11 @@ css_append = r"""
    HIGHFLY TRAINING RUN1-G — playable Training Core window
    ========================================================================== */
 body.mobile-touch #highfly-training-window {
-  /* Body-level modal must sit above ClaudeCraft's #mobile-window-backdrop (85)
-     and the raised #ui layer (90), while staying below the More tray (100). */
-  z-index: 95;
+  /* ClaudeCraft's managed-window runtime writes a desktop z-index inline
+     (typically 51). Mobile modal sheets such as Bags/Talents intentionally
+     override that inline band with !important. Training reuses that exact
+     mobile-sheet rule: above backdrop 85 / raised #ui 90, below More 100. */
+  z-index: 95 !important;
 }
 
 #highfly-training-window .highfly-training-shell {
