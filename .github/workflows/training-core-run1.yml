@@ -239,7 +239,7 @@ jobs:
           grep -q "loadHighflyTrainingProfile" overlays/highfly_training_persistence_v1.py
           grep -q "installHighflyTrainingUi" training/runtime/ui.ts
           grep -q "bindTouchTap" training/runtime/ui.ts
-          grep -q "Registrar sesión" training/runtime/ui.ts
+          grep -q "REGISTRAR SESIÓN" training/runtime/ui.ts
           grep -q "runTrainingSessionPipeline" training/runtime/pipeline.ts
           grep -q "HIGHFLY_INITIAL_CALIBRATED_CORE_BASELINE" training/runtime/pipeline.ts
           grep -q "refreshActiveTrainingCombatBridge" training/runtime/combat_runtime.ts
