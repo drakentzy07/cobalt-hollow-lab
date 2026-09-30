@@ -1226,24 +1226,44 @@ jobs:
           await page.waitForTimeout(430);
           await rawTouchAttack(102);
           await page.waitForTimeout(470);
-          await rawTouchAttack(103);
 
-          const acceptedAfterThree = await page.evaluate(() =>
-            Number(document.body.dataset.highflyBasicAttackCount ?? '0')
-          );
+          // Fire the finisher and the forbidden fourth tap inside ONE browser
+          // task. Separate page.evaluate round-trips can exceed the authored
+          // 0.62s recovery under a loaded Actions runner and create a false red.
+          const finisherGate = await page.evaluate(() => {
+            const el = document.getElementById('mobile-action-attack');
+            if (!(el instanceof HTMLElement)) throw new Error('attack button missing');
+            const fire = (id) => {
+              const opts = {
+                bubbles: true,
+                cancelable: true,
+                pointerType: 'touch',
+                pointerId: id,
+                isPrimary: true,
+                clientX: 8,
+                clientY: 8,
+              };
+              el.dispatchEvent(new PointerEvent('pointerdown', opts));
+              el.dispatchEvent(new PointerEvent('pointerup', opts));
+            };
+            fire(103);
+            const acceptedAfterThree = Number(
+              document.body.dataset.highflyBasicAttackCount ?? '0',
+            );
+            fire(104);
+            const acceptedAfterBlockedFourth = Number(
+              document.body.dataset.highflyBasicAttackCount ?? '0',
+            );
+            return { acceptedAfterThree, acceptedAfterBlockedFourth };
+          });
+          const { acceptedAfterThree, acceptedAfterBlockedFourth } = finisherGate;
+
           if (acceptedAfterThree !== acceptedBefore + 3) {
             throw new Error(
               'HIGHFLY combo did not accept exactly three opening strikes: ' +
               JSON.stringify({ acceptedBefore, acceptedAfterThree })
             );
           }
-
-          // Same JS task sequence: this is genuinely immediate and must be
-          // rejected by the post-finisher recovery gate.
-          await rawTouchAttack(104);
-          const acceptedAfterBlockedFourth = await page.evaluate(() =>
-            Number(document.body.dataset.highflyBasicAttackCount ?? '0')
-          );
           if (acceptedAfterBlockedFourth !== acceptedAfterThree) {
             throw new Error(
               'HIGHFLY combo accepted an immediate fourth hit after finisher: ' +
