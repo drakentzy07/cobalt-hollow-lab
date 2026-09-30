@@ -754,7 +754,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          pnpm exec vite preview --host 127.0.0.1 --port 4176 --base=/cobalt-hollow-lab/ > ../run1g-preview.log 2>&1 &
+          pnpm exec vite preview --host 127.0.0.1 --port 4176 --base=/cobalt-hollow-lab/ > ../run1h-preview.log 2>&1 &
           PREVIEW_PID=$!
           trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do
@@ -873,28 +873,187 @@ jobs:
             throw new Error('RUN1-H Training modal is not above the mobile backdrop');
           }
 
+          await page.evaluate(() => {
+            window.__hfRun1HEvents = [];
+            window.addEventListener('highfly:training-session-committed', (event) => {
+              window.__hfRun1HEvents.push(event.detail);
+            });
+          });
+
+          const apBefore = await page.evaluate(() => window.__game.sim.player.attackPower);
+
+          // Real accelerated CI fixture: 4 productive baseline sessions build
+          // Progress naturally. Calibration starts at neutral Core=10 (G(10)=0),
+          // so these sessions cannot grant a combat bonus by calibration alone.
+          await page.evaluate(() => {
+            const rows = [...document.querySelectorAll('.hf-exercise')];
+            rows.forEach((row, index) => {
+              const set = (field, value) => {
+                const input = row.querySelector(`[data-field="${field}"]`);
+                if (input instanceof HTMLInputElement) {
+                  input.value = String(value);
+                  input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+              };
+              set('sets', index === 0 ? 12 : 0);
+              set('reps', index === 0 ? 5 : 8);
+              set('kg', index === 0 ? 85 : 0);
+              set('rm', index === 0 ? 100 : 0);
+              set('rest', index === 0 ? 180 : 90);
+              set('quality', 100);
+            });
+          });
+
+          for (let i = 0; i < 4; i++) {
+            await page.locator('#hf-training-register').tap();
+            await page.waitForFunction(
+              (count) => (window.__hfRun1HEvents?.length ?? 0) >= count,
+              i + 1,
+              { timeout: 5000 },
+            );
+            await page.waitForTimeout(120);
+          }
+
+          const afterBaseline = await page.evaluate(() => ({
+            ap: window.__game.sim.player.attackPower,
+            events: window.__hfRun1HEvents,
+            text: document.querySelector('#hf-training-result')?.textContent ?? '',
+          }));
+          if (Math.abs(afterBaseline.ap - apBefore) > 0.0001) {
+            throw new Error(
+              `RUN1-H neutral calibration changed AP: before=${apBefore} after=${afterBaseline.ap}`,
+            );
+          }
+
+          // Fifth session demonstrates a real comparable improvement. No direct
+          // stat injection: only the performed load changes from 85 -> 90 kg.
+          await page.evaluate(() => {
+            const first = document.querySelector('.hf-exercise');
+            const kg = first?.querySelector('[data-field="kg"]');
+            if (kg instanceof HTMLInputElement) {
+              kg.value = '90';
+              kg.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          });
           await page.locator('#hf-training-register').tap();
           await page.waitForFunction(
-            () => Boolean(document.querySelector('.hf-training-result__grid')),
+            () => (window.__hfRun1HEvents?.length ?? 0) >= 5,
             null,
             { timeout: 5000 },
           );
+          await page.waitForTimeout(200);
+
           const report = await page.evaluate(() => {
             const resultText = document.querySelector('#hf-training-result')?.textContent ?? '';
             const values = [...document.querySelectorAll('.hf-training-result__grid b')]
               .map((node) => Number(node.textContent ?? '0'));
-            return { resultText, values };
+            const events = window.__hfRun1HEvents ?? [];
+            const apAfter = window.__game.sim.player.attackPower;
+            return { resultText, values, events, apAfter };
           });
 
-          console.log('RUN1H_TRAINING_UI', JSON.stringify({ ...report, pageErrors }, null, 2));
+          console.log(
+            'RUN1H_TRAINING_UI',
+            JSON.stringify({ apBefore, afterBaseline, ...report, pageErrors }, null, 2),
+          );
           if (pageErrors.length > 0) {
             throw new Error('RUN1-H page error: ' + pageErrors.join(' | '));
           }
-          if (!report.resultText.includes('1 sets')) {
-            throw new Error('RUN1-H session did not produce one evidence set');
+          if (!report.resultText.includes('12 sets')) {
+            throw new Error('RUN1-H session did not produce twelve evidence sets');
           }
           if (!(report.values[0] > 0)) {
             throw new Error('RUN1-H STR stimulus did not become positive for heavy squat evidence');
+          }
+          const finalEvent = report.events.at(-1);
+          const finalStr = finalEvent?.outcomes?.find((o) => o.stat === 'STR');
+          if (finalStr?.outcome !== 'stat_up' || finalStr?.statDelta !== 1) {
+            throw new Error(
+              'RUN1-H comparable improvement did not consolidate STR Stat Up: ' +
+                JSON.stringify(finalEvent),
+            );
+          }
+          if (!(report.apAfter > apBefore)) {
+            throw new Error(
+              `RUN1-H TrainingBridge did not increase live AP: before=${apBefore} after=${report.apAfter}`,
+            );
+          }
+
+          // Autosave is 2.5 s. Verify the same persistent Training profile now
+          // contains Current=11, Peak=11, the comparable anchor and audit history.
+          await page.waitForTimeout(3200);
+          const persisted = await page.evaluate(async () => {
+            const db = await new Promise((resolve, reject) => {
+              const request = indexedDB.open('highfly-offline', 1);
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => reject(request.error);
+            });
+            const read = (key) =>
+              new Promise((resolve, reject) => {
+                const tx = db.transaction('saves', 'readonly');
+                const request = tx.objectStore('saves').get(key);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+              });
+            const primary = await read('primary');
+            const training = await read(
+              'training:' + encodeURIComponent('TrainingHunter'.trim().toLowerCase()),
+            );
+            db.close();
+            const profile = training?.profile ?? primary?.trainingProfile ?? null;
+            return profile
+              ? {
+                  current: profile.training?.core?.STR?.current ?? null,
+                  peak: profile.training?.core?.STR?.peak ?? null,
+                  baseline: profile.training?.performance?.STR?.baseline ?? null,
+                  history: profile.training?.history?.length ?? 0,
+                }
+              : null;
+          });
+          console.log('RUN1H_TRAINING_PERSISTED', persisted);
+          if (
+            !persisted ||
+            persisted.current !== 11 ||
+            persisted.peak !== 11 ||
+            !(persisted.baseline > 0) ||
+            persisted.history < 5
+          ) {
+            throw new Error('RUN1-H Training profile did not persist end-to-end');
+          }
+
+          // Reload the same Hunter and prove both Training and its combat effect
+          // survive a real browser restart of the world.
+          await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
+          await page.locator('#btn-offline').waitFor({ state: 'attached', timeout: 20000 });
+          for (let attempt = 0; attempt < 60; attempt++) {
+            await page.evaluate(() => document.querySelector('#btn-offline')?.click());
+            if (await page.locator('#offline-select').isVisible().catch(() => false)) break;
+            await page.waitForTimeout(250);
+          }
+          await page.locator('#char-name').fill('TrainingHunter');
+          await page
+            .locator('#offline-select .mini-class[data-class="warrior"]')
+            .click({ force: true });
+          await page.locator('#btn-start-offline').click({ force: true });
+          const preflightReload = page.locator('#mobile-preflight-continue');
+          if (await preflightReload.count()) {
+            await preflightReload.click({ force: true }).catch(() => {});
+          }
+          await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, {
+            timeout: 60000,
+          });
+          await page.waitForTimeout(500);
+
+          const afterReload = await page.evaluate(() => ({
+            ap: window.__game.sim.player.attackPower,
+            hp: window.__game.sim.player.hp,
+            maxHp: window.__game.sim.player.maxHp,
+          }));
+          console.log('RUN1H_TRAINING_RELOAD_BRIDGE', afterReload);
+          if (!(afterReload.ap > apBefore)) {
+            throw new Error(
+              `RUN1-H persisted TrainingBridge missing after reload: base=${apBefore} reload=${afterReload.ap}`,
+            );
           }
 
           await browser.close();
