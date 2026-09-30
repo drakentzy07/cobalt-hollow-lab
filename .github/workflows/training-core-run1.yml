@@ -824,17 +824,33 @@ jobs:
             const button = document.querySelector('#hf-training-register');
             const backdrop = document.querySelector('#mobile-window-backdrop');
             if (!(win instanceof HTMLElement) || !(button instanceof HTMLElement)) return null;
+
+            // The Training shell is intentionally scrollable on S23 landscape.
+            // Bring the action into the visible hit-test area before probing it,
+            // matching what a real tap/Playwright does for an off-fold control.
+            button.scrollIntoView({ block: 'center', inline: 'nearest' });
+
             const rect = button.getBoundingClientRect();
-            const top = document.elementFromPoint(
-              rect.left + rect.width / 2,
-              rect.top + rect.height / 2,
-            );
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            const top =
+              x >= 0 && y >= 0 && x < window.innerWidth && y < window.innerHeight
+                ? document.elementFromPoint(x, y)
+                : null;
             return {
               bodyLevel: win.parentElement === document.body,
               windowZ: Number(getComputedStyle(win).zIndex || 0),
               backdropZ:
                 backdrop instanceof HTMLElement ? Number(getComputedStyle(backdrop).zIndex || 0) : 0,
+              rect: {
+                left: rect.left,
+                top: rect.top,
+                right: rect.right,
+                bottom: rect.bottom,
+              },
+              viewport: { width: window.innerWidth, height: window.innerHeight },
               topId: top instanceof HTMLElement ? top.id : null,
+              topTag: top instanceof HTMLElement ? top.tagName : null,
               buttonHit: top === button || (top instanceof Node && button.contains(top)),
             };
           });
