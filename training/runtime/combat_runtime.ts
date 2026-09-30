@@ -94,7 +94,7 @@ function applyFromBaseline(
     flags,
   });
 
-  entity.attackPower = Math.max(0, Math.round(result.combat.physicalAP));
+  entity.attackPower = Math.max(0, result.combat.physicalAP);
   entity.maxHp = Math.max(1, Math.round(result.combat.maxHP));
   entity.critChance = Math.max(0, Math.min(1, result.combat.critChance));
   if (flags.applyMovement) entity.moveSpeed = Math.max(0, result.combat.moveSpeed);
