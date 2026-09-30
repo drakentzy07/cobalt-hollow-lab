@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HIGHFLY S2C Samurai Armor Lab</title>
+<link rel="icon" href="data:,">
+<style>
+html,body{margin:0;height:100%;background:#090d14;color:#eef2f7;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+#app{height:100%;display:grid;grid-template-columns:minmax(0,1fr) 340px}
+#view{position:relative;min-width:0;background:radial-gradient(circle at 50% 32%,#2a313d,#111821 52%,#080b11)}
+.panel{padding:16px;background:#141a24;border-left:1px solid #2b3443;overflow:auto}
+.brand{position:absolute;z-index:4;top:14px;left:16px;font-weight:800;letter-spacing:.08em}
+.brand small{display:block;color:#aab6c6;font-weight:400;letter-spacing:0;margin-top:3px}
+h1{font-size:16px;margin:0 0 8px} h2{font-size:13px;margin:18px 0 8px}
+.status,.legend{font-size:12px;line-height:1.55;color:#aab6c6}.ok{color:#7bd39a}.warn{color:#e8c47a}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+button,select{background:#202a39;color:#fff;border:1px solid #39465a;border-radius:8px;padding:9px 12px}
+button{cursor:pointer}.active{outline:2px solid #b7473e}
+.tag{display:inline-block;font-size:12px;border:1px solid #46566d;border-radius:999px;padding:6px 9px;color:#d7dfeb}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+code{font-size:11px;color:#cbd6e4}
+.badge{display:inline-block;padding:3px 7px;border-radius:999px;background:#263142;color:#d6dfec;font-size:11px;margin:2px}
+@media(max-width:760px){#app{grid-template-columns:1fr;grid-template-rows:58vh auto}.panel{border-left:0;border-top:1px solid #2b3443}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="app">
+  <div id="view"><div class="brand">HIGHFLY SKIN LAB<small>S2C · REAL 3D SAMURAI ARMOR ON CLAUDECRAFT HUNTER</small></div></div>
+  <aside class="panel">
+    <h1>HF_KITSUNE_RONIN_01 — S2C</h1>
+    <div id="status" class="status">Cargando Hunter real + armadura S2C…</div>
+    <p class="legend">Esta pasada ya no es una imagen ni un mockup: el visor carga el <code>warrior_modular.glb</code> real y construye una armadura 3D low-poly modular anclada a sus huesos.</p>
+    <div><span class="badge">HUNTER REAL</span><span class="badge">RIG CLAUDECRAFT</span><span class="badge">ARMOR 3D</span></div>
+    <h2>Inspección</h2>
+    <div class="row"><button id="front">Frente</button><button id="side">3/4</button><button id="profile">Perfil</button><button id="back">Espalda</button></div>
+    <div class="row"><button id="spin">Autorrotar</button><button id="wire">Wireframe</button><button id="armor">Ocultar armadura</button></div>
+    <h2>Dirección visual</h2>
+    <div class="legend">
+      <span class="swatch" style="background:#292a30"></span>Carbón<br>
+      <span class="swatch" style="background:#7c2028"></span>Rojo profundo<br>
+      <span class="swatch" style="background:#eadfc8"></span>Marfil<br>
+      <span class="swatch" style="background:#a88752"></span>Oro envejecido
+    </div>
+    <h2>Piezas 3D S2C</h2>
+    <div class="legend">Kabuto + menpō volumétrico + dō frontal/espalda + sode laminado + kote + cinturón/obi + kusazuri segmentado + haidate + suneate + capa corta + saya/katana.</div>
+    <h2>Animación real</h2>
+    <select id="anim" style="width:100%"><option value="">Idle estático</option></select>
+    <div class="row"><button id="play">▶</button><button id="stop">■</button></div>
+    <h2>Estado</h2>
+    <div class="tag">S2C · armor attached to native bones</div>
+    <p id="bones" class="legend"></p>
+    <p class="legend"><a href="./s2b.html" style="color:#aab6c6">Volver a S2B</a></p>
+  </aside>
+</div>
+<script type="module">
+import * as THREE from "three";
+import {OrbitControls} from "three/addons/controls/OrbitControls.js";
+import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
+import {KTX2Loader} from "three/addons/loaders/KTX2Loader.js";
+import {MeshoptDecoder} from "https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/libs/meshopt_decoder.module.js";
+
+const MODEL="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb";
+const view=document.querySelector("#view"),status=document.querySelector("#status"),bonesEl=document.querySelector("#bones");
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(34,1,.01,100);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.shadowMap.enabled=true;
+view.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xffffff,0x1d2531,2.35));
+const key=new THREE.DirectionalLight(0xffffff,2.7);key.position.set(4,7,5);key.castShadow=true;scene.add(key);
+const rim=new THREE.DirectionalLight(0xd9e8ff,1.15);rim.position.set(-4,4,-5);scene.add(rim);
+scene.add(new THREE.GridHelper(10,20,0x566272,0x222b36));
+const ctl=new OrbitControls(camera,renderer.domElement);ctl.enableDamping=true;ctl.target.set(0,1.2,0);
+
+let root,mixer,clips=[],sourceMeshes=[],armorParts=[],spinning=false,wire=false,last=performance.now();
+const PAL={coal:0x292a30,coal2:0x3b3a40,red:0x7c2028,red2:0x9b3438,ivory:0xeadfc8,gold:0xa88752,ink:0x12151a};
+
+function mat(color,metal=.08,rough=.78){
+  return new THREE.MeshStandardMaterial({color,metalness:metal,roughness:rough,flatShading:true,side:THREE.DoubleSide});
+}
+const M={coal:mat(PAL.coal,.12,.76),coal2:mat(PAL.coal2,.10,.78),red:mat(PAL.red,.02,.88),red2:mat(PAL.red2,.02,.86),ivory:mat(PAL.ivory,0,.84),gold:mat(PAL.gold,.34,.62),ink:mat(PAL.ink,0,.9)};
+
+function normName(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");}
+function node(name){
+  const exact=root.getObjectByName(name);if(exact)return exact;
+  const n=normName(name);let hit=null;
+  root.traverse(o=>{if(!hit&&normName(o.name)===n)hit=o;});
+  return hit;
+}
+function worldPos(o){const v=new THREE.Vector3();o.getWorldPosition(v);return v;}
+function attachPreserve(parent,obj){scene.add(obj);scene.updateMatrixWorld(true);parent.attach(obj);return obj;}
+function register(o){o.traverse(x=>{if(x.isMesh){x.castShadow=true;x.receiveShadow=true;armorParts.push(x);}});return o;}
+
+function trapezoidGeometry(topW,bottomW,h,d,slant=0){
+  const yt=h/2,yb=-h/2,zf=d/2,zb=-d/2;
+  const xT=topW/2,xB=bottomW/2;
+  const v=[
+    -xT+slant,yt,zf, xT+slant,yt,zf, xB,yb,zf, -xB,yb,zf,
+    -xT+slant,yt,zb, xT+slant,yt,zb, xB,yb,zb, -xB,yb,zb
+  ];
+  const idx=[0,1,2,0,2,3, 5,4,7,5,7,6, 4,0,3,4,3,7, 1,5,6,1,6,2, 4,5,1,4,1,0, 3,2,6,3,6,7];
+  const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(v,3));g.setIndex(idx);g.computeVertexNormals();return g;
+}
+function plate(top,bottom,h,d,material){
+  return new THREE.Mesh(trapezoidGeometry(top,bottom,h,d),material);
+}
+function diamond(w,h,d,material){
+  const shape=new THREE.Shape();shape.moveTo(0,h/2);shape.lineTo(w/2,0);shape.lineTo(0,-h/2);shape.lineTo(-w/2,0);shape.closePath();
+  const g=new THREE.ExtrudeGeometry(shape,{depth:d,bevelEnabled:false});g.translate(0,0,-d/2);
+  return new THREE.Mesh(g,material);
+}
+function clothShape(points,depth,material){
+  const s=new THREE.Shape();s.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)s.lineTo(points[i][0],points[i][1]);s.closePath();
+  const g=new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:false});g.translate(0,0,-depth/2);
+  return new THREE.Mesh(g,material);
+}
+function segmentShell(startBone,endBone,rTop,rBottom,portion,material,flatten=.82){
+  if(!startBone||!endBone)return null;
+  const a=worldPos(startBone),b=worldPos(endBone),dir=b.clone().sub(a),len=dir.length()*portion;
+  if(len<.03)return null;
+  const mid=a.clone().lerp(b,.48);
+  const mesh=new THREE.Mesh(new THREE.CylinderGeometry(rTop,rBottom,len,7,1,false),material);
+  mesh.scale.z=flatten;
+  mesh.position.copy(mid);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+  attachPreserve(startBone,mesh);register(mesh);return mesh;
+}
+function cloneTint(name,color){
+  const o=root.getObjectByName(name);if(!o)return;
+  o.visible=true;
+  o.traverse(x=>{
+    if(!(x.isMesh||x.isSkinnedMesh))return;
+    const arr=Array.isArray(x.material)?x.material:[x.material];
+    const cc=arr.map(m=>{const c=m.clone();c.color.set(color);c.roughness=Math.max(.72,c.roughness??.8);return c;});
+    x.material=Array.isArray(x.material)?cc:cc[0];
+  });
+}
+function setupUnderlayer(){
+  sourceMeshes.forEach(o=>o.visible=false);
+  ["M_Head","M_Ear_round","H2_warriorbraid","E2_band_vikingb"].forEach(n=>{const o=root.getObjectByName(n);if(o)o.visible=true;});
+  cloneTint("Armor_rogue_Chest",0x313139);
+  cloneTint("Armor_ranger_ArmL",0x34333a);cloneTint("Armor_ranger_ArmR",0x34333a);
+  cloneTint("Armor_rogue_HandL",0x24262c);cloneTint("Armor_rogue_HandR",0x24262c);
+  cloneTint("Armor_mage_LegL",0x2f2e34);cloneTint("Armor_mage_LegR",0x2f2e34);
+  cloneTint("Armor_ranger_FootL",0x383238);cloneTint("Armor_ranger_FootR",0x383238);
+  ["M_Eye_almond","M_Brow_soft","M_Mouth_neutral"].forEach(n=>{const o=root.getObjectByName(n);if(o)o.visible=false;});
+}
+
+function buildKabuto(head){
+  const p=worldPos(head),g=new THREE.Group();g.position.copy(p).add(new THREE.Vector3(0,.08,0));
+  const bowl=new THREE.Mesh(new THREE.CylinderGeometry(.145,.19,.18,8,1,false),M.coal);bowl.scale.z=.9;g.add(bowl);
+  const brim=new THREE.Mesh(new THREE.CylinderGeometry(.23,.23,.035,8,1,false),M.gold);brim.scale.z=.82;brim.position.y=-.075;g.add(brim);
+  const front=new THREE.Mesh(new THREE.CylinderGeometry(.20,.20,.03,8,1,false,0,Math.PI),M.coal2);front.rotation.x=Math.PI/2;front.position.set(0,-.075,.075);g.add(front);
+  const crest=diamond(.115,.15,.035,M.gold);crest.position.set(0,.015,.185);g.add(crest);
+  const inset=diamond(.058,.078,.04,M.coal);inset.position.set(0,.015,.205);g.add(inset);
+  const earGeo=(side)=>{
+    const s=new THREE.Shape();s.moveTo(-.055,0);s.lineTo(0,.30);s.lineTo(.055,0);s.closePath();
+    const e=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:.055,bevelEnabled:true,bevelThickness:.008,bevelSize:.006,bevelSegments:1}),M.gold);
+    e.geometry.translate(0,0,-.0275);e.position.set(side*.12,.05,0);e.rotation.z=side*.08;g.add(e);
+    const inner=e.clone();inner.material=M.red;inner.scale.set(.62,.72,.72);inner.position.z=.035;g.add(inner);
+  };earGeo(-1);earGeo(1);
+  for(const side of [-1,1]){
+    const tass=new THREE.Mesh(new THREE.CylinderGeometry(.018,.028,.17,6),M.red2);tass.position.set(side*.205,-.15,.02);g.add(tass);
+  }
+  attachPreserve(head,g);register(g);
+}
+function buildMenpo(head){
+  const p=worldPos(head),g=new THREE.Group();g.position.copy(p).add(new THREE.Vector3(0,-.015,.155));
+  const s=new THREE.Shape();
+  s.moveTo(-.135,.11);s.lineTo(-.115,.205);s.lineTo(-.055,.245);s.lineTo(0,.225);s.lineTo(.055,.245);s.lineTo(.115,.205);s.lineTo(.135,.11);s.lineTo(.105,-.095);s.lineTo(0,-.155);s.lineTo(-.105,-.095);s.closePath();
+  const shell=new THREE.Mesh(new THREE.ExtrudeGeometry(s,{depth:.045,bevelEnabled:true,bevelThickness:.009,bevelSize:.007,bevelSegments:1}),M.ivory);
+  shell.geometry.translate(0,0,-.022);g.add(shell);
+  const nose=new THREE.Mesh(new THREE.ConeGeometry(.038,.10,4),M.ivory);nose.rotation.x=Math.PI/2;nose.position.set(0,.035,.065);g.add(nose);
+  for(const side of [-1,1]){
+    const eye=clothShape([[0,.02],[.075,.035],[.10,0],[.025,-.018]],.012,M.ink);eye.scale.x=side;eye.position.set(side*.02,.07,.05);g.add(eye);
+    const mark=clothShape([[0,.025],[.075,.065],[.105,.035],[.03,-.008]],.010,M.red);mark.scale.x=side;mark.position.set(side*.012,.145,.055);g.add(mark);
+    const cheek=clothShape([[0,.018],[.085,.045],[.102,.012],[.028,-.012]],.010,M.red);cheek.scale.x=side;cheek.position.set(side*.02,-.005,.058);g.add(cheek);
+  }
+  const jaw=plate(.16,.11,.075,.055,M.gold);jaw.position.set(0,-.135,.018);g.add(jaw);
+  attachPreserve(head,g);register(g);
+}
+function buildTorso(chest){
+  const p=worldPos(chest),g=new THREE.Group();g.position.copy(p).add(new THREE.Vector3(0,-.015,.09));
+  const upper=plate(.48,.43,.18,.105,M.coal2);upper.position.set(0,.06,.07);g.add(upper);
+  const lower=plate(.43,.36,.17,.10,M.coal);lower.position.set(0,-.105,.06);g.add(lower);
+  const ridge=plate(.42,.36,.045,.125,M.gold);ridge.position.set(0,-.015,.115);g.add(ridge);
+  for(const side of [-1,1]){
+    const rib=plate(.08,.055,.26,.125,M.gold);rib.position.set(side*.205,-.025,.08);rib.rotation.z=side*.12;g.add(rib);
+    const knot=new THREE.Mesh(new THREE.TorusGeometry(.035,.012,5,8),M.red2);knot.position.set(side*.17,.10,.145);g.add(knot);
+  }
+  const crest=diamond(.11,.13,.025,M.gold);crest.position.set(0,.035,.145);g.add(crest);
+  const back=plate(.43,.37,.30,.07,M.coal);back.position.set(0,-.035,-.13);back.rotation.y=Math.PI;g.add(back);
+  attachPreserve(chest,g);register(g);
+}
+function buildShoulder(bone,side){
+  if(!bone)return;
+  const p=worldPos(bone),g=new THREE.Group();g.position.copy(p).add(new THREE.Vector3(side*.055,.015,.015));
+  for(let i=0;i<4;i++){
+    const w=.29-i*.018,h=.075,d=.135;
+    const m=plate(w,w*.91,h,d,i===0?M.gold:M.coal2);m.position.set(side*.05,-i*.055,.02);m.rotation.z=side*(.11+i*.025);g.add(m);
+    if(i>0){const lace=new THREE.Mesh(new THREE.BoxGeometry(.024,.018,.145),M.red);lace.position.set(side*.015,-i*.055,.025);g.add(lace);}
+  }
+  attachPreserve(bone,g);register(g);
+}
+function buildWaist(hips){
+  const p=worldPos(hips),g=new THREE.Group();g.position.copy(p).add(new THREE.Vector3(0,.02,0));
+  const belt=new THREE.Mesh(new THREE.TorusGeometry(.245,.027,6,16),M.red2);belt.rotation.x=Math.PI/2;belt.scale.z=.76;belt.position.y=.02;g.add(belt);
+  const knot=new THREE.Mesh(new THREE.TorusKnotGeometry(.045,.013,24,5,2,3),M.red2);knot.scale.set(1.15,.9,.7);knot.position.set(0,-.015,.20);g.add(knot);
+  const xs=[-.24,-.12,0,.12,.24];
+  xs.forEach((x,i)=>{
+    const panel=plate(.135,.105,.27,.05,i===2?M.coal2:M.coal);panel.position.set(x,-.17,.13-Math.abs(x)*.12);panel.rotation.y=-x*.55;g.add(panel);
+    const lip=plate(.135,.128,.035,.06,M.gold);lip.position.set(x,-.04,.145-Math.abs(x)*.12);lip.rotation.y=-x*.55;g.add(lip);
+    for(let r=0;r<3;r++){const lace=new THREE.Mesh(new THREE.BoxGeometry(.025,.017,.06),M.red);lace.position.set(x,-.105-r*.055,.17-Math.abs(x)*.12);lace.rotation.y=-x*.55;g.add(lace);}
+  });
+  const cloth=clothShape([[-.17,.02],[.17,.02],[.15,-.32],[.04,-.27],[0,-.35],[-.06,-.26],[-.15,-.31]],.018,M.red);
+  cloth.position.set(0,-.05,-.18);cloth.rotation.y=Math.PI;g.add(cloth);
+  attachPreserve(hips,g);register(g);
+}
+function buildCape(chest){
+  const p=worldPos(chest),g=new THREE.Group();g.position.copy(p).add(new THREE.Vector3(0,.05,-.18));
+  const cape=clothShape([[-.22,.15],[.22,.15],[.20,-.18],[.14,-.38],[.055,-.31],[0,-.47],[-.07,-.34],[-.15,-.42],[-.21,-.20]],.018,M.red);
+  cape.rotation.y=Math.PI;g.add(cape);
+  const sigil=diamond(.10,.16,.012,M.ivory);sigil.position.set(0,-.08,-.018);sigil.rotation.y=Math.PI;g.add(sigil);
+  attachPreserve(chest,g);register(g);
+}
+function buildKatana(hips){
+  const p=worldPos(hips),g=new THREE.Group();g.position.copy(p).add(new THREE.Vector3(-.28,-.02,-.035));g.rotation.z=.55;
+  const saya=new THREE.Mesh(new THREE.CylinderGeometry(.025,.032,.70,7),M.ink);saya.position.y=-.22;g.add(saya);
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.045,7),M.gold);cap.position.y=.15;g.add(cap);
+  const grip=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.20,8),M.red2);grip.position.y=.27;g.add(grip);
+  const guard=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,.018,8),M.gold);guard.position.y=.17;g.add(guard);
+  attachPreserve(hips,g);register(g);
+}
+function buildArmor(){
+  const b={
+    head:node("head"),chest:node("chest"),hips:node("hips"),
+    uaL:node("upperarm.l"),uaR:node("upperarm.r"),laL:node("lowerarm.l"),laR:node("lowerarm.r"),
+    handL:node("hand.l"),handR:node("hand.r"),
+    ulL:node("upperleg.l"),ulR:node("upperleg.r"),llL:node("lowerleg.l"),llR:node("lowerleg.r"),
+    footL:node("foot.l"),footR:node("foot.r")
+  };
+  const missing=Object.entries(b).filter(([,v])=>!v).map(([k])=>k);
+  if(b.head){buildKabuto(b.head);buildMenpo(b.head);}
+  if(b.chest){buildTorso(b.chest);buildCape(b.chest);}
+  buildShoulder(b.uaL,1);buildShoulder(b.uaR,-1);
+  segmentShell(b.laL,b.handL,.065,.082,.72,M.coal2,.78);segmentShell(b.laR,b.handR,.065,.082,.72,M.coal2,.78);
+  segmentShell(b.ulL,b.llL,.075,.09,.48,M.coal,.76);segmentShell(b.ulR,b.llR,.075,.09,.48,M.coal,.76);
+  segmentShell(b.llL,b.footL,.07,.095,.72,M.coal2,.78);segmentShell(b.llR,b.footR,.07,.095,.72,M.coal2,.78);
+  if(b.hips){buildWaist(b.hips);buildKatana(b.hips);}
+  bonesEl.textContent=missing.length?"Huesos faltantes/fallback: "+missing.join(", "):"Rig OK: head, chest, hips, brazos y piernas encontrados.";
+  bonesEl.className="legend "+(missing.length?"warn":"ok");
+}
+function setArmorVisible(v){armorParts.forEach(x=>x.visible=v);}
+function fit(){
+  const b=new THREE.Box3().setFromObject(root),s=new THREE.Vector3(),c=new THREE.Vector3();b.getSize(s);b.getCenter(c);
+  const d=Math.max(s.x,s.y,s.z)||2.4;ctl.target.copy(c);camera.position.set(c.x+d*.9,c.y+d*.15,c.z+d*1.55);camera.updateProjectionMatrix();ctl.update();
+}
+function setView(kind){
+  const b=new THREE.Box3().setFromObject(root),s=new THREE.Vector3(),c=new THREE.Vector3();b.getSize(s);b.getCenter(c);const d=Math.max(s.x,s.y,s.z)*1.55;
+  const p=kind==="front"?[c.x,c.y,c.z+d]:kind==="back"?[c.x,c.y,c.z-d]:kind==="profile"?[c.x+d,c.y,c.z]:[c.x+d*.72,c.y+d*.04,c.z+d*.92];
+  camera.position.set(...p);ctl.target.copy(c);ctl.update();
+}
+const ktx2=new KTX2Loader().setTranscoderPath("https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/libs/basis/").detectSupport(renderer);
+const loader=new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder);
+loader.load(MODEL,g=>{
+  root=g.scene;scene.add(root);root.updateMatrixWorld(true);
+  root.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){sourceMeshes.push(o);o.castShadow=true;o.receiveShadow=true;}});
+  clips=g.animations||[];mixer=clips.length?new THREE.AnimationMixer(root):null;
+  const sel=document.querySelector("#anim");clips.forEach((c,i)=>{const o=document.createElement("option");o.value=i;o.textContent=c.name||("Anim "+(i+1));sel.appendChild(o);});
+  setupUnderlayer();root.updateMatrixWorld(true);buildArmor();root.updateMatrixWorld(true);fit();
+  status.textContent="S2C cargado · Hunter ClaudeCraft real + armadura samurái 3D";
+  status.classList.add("ok");
+},undefined,e=>{console.error(e);status.textContent="ERROR: "+e.message;status.classList.add("warn");});
+
+document.querySelector("#front").onclick=()=>setView("front");
+document.querySelector("#side").onclick=()=>setView("side");
+document.querySelector("#profile").onclick=()=>setView("profile");
+document.querySelector("#back").onclick=()=>setView("back");
+document.querySelector("#spin").onclick=e=>{spinning=!spinning;e.currentTarget.classList.toggle("active",spinning);};
+document.querySelector("#wire").onclick=e=>{wire=!wire;e.currentTarget.classList.toggle("active",wire);[...sourceMeshes,...armorParts].forEach(o=>{if(!(o.isMesh||o.isSkinnedMesh))return;const a=Array.isArray(o.material)?o.material:[o.material];a.forEach(m=>{if(m)m.wireframe=wire;});});};
+document.querySelector("#armor").onclick=e=>{const show=armorParts.some(x=>x.visible);setArmorVisible(!show);e.currentTarget.textContent=show?"Mostrar armadura":"Ocultar armadura";};
+document.querySelector("#anim").onchange=e=>{if(!mixer)return;mixer.stopAllAction();const i=Number(e.target.value);if(Number.isInteger(i)&&clips[i])mixer.clipAction(clips[i]).reset().play();};
+document.querySelector("#play").onclick=()=>{if(mixer)mixer.timeScale=1;};
+document.querySelector("#stop").onclick=()=>{if(mixer){mixer.stopAllAction();mixer.time=0;}};
+function resize(){const r=view.getBoundingClientRect();renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);camera.aspect=r.width/Math.max(1,r.height);camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(view);resize();
+function loop(now=performance.now()){requestAnimationFrame(loop);const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;if(mixer)mixer.update(dt);if(root&&spinning)root.rotation.y+=dt*.5;ctl.update();renderer.render(scene,camera);}loop();
+</script>
+</body>
+</html>
