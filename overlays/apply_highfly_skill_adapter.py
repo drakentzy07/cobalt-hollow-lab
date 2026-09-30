@@ -823,3 +823,156 @@ describe('HIGHFLY Prototype 01 - Salto Demoledor', () => {
 """)
 
 print('HIGHFLY adapter overlay applied')
+
+# HIGHFLY VALIDATION PACK 01 — executable cross-class contract
+
+
+# HIGHFLY VALIDATION PACK 01 — executable cross-class contract
+write('src/highfly/validation_pack01.ts', """export type HighflyValidationStatus =
+  | 'CUSTOM_VERTICAL_SLICE'
+  | 'DONOR_RUNTIME_VERIFIED';
+
+export interface HighflyValidationFamily {
+  familyId: string;
+  classId: 'warrior' | 'hunter' | 'mage' | 'priest' | 'druid';
+  baseName: string;
+  evolutionName: string;
+  donorAbilityId: string;
+  validationAbilityId: string;
+  status: HighflyValidationStatus;
+  seams: readonly string[];
+}
+
+export const HIGHFLY_VALIDATION_PACK_01: readonly HighflyValidationFamily[] = [
+  {
+    familyId: 'warrior_heroic_leap',
+    classId: 'warrior',
+    baseName: 'Salto Heroico',
+    evolutionName: 'Salto Demoledor',
+    donorAbilityId: 'heroic_leap',
+    validationAbilityId: 'hf_jump_smash_01',
+    status: 'CUSTOM_VERTICAL_SLICE',
+    seams: ['position-aim', 'movement', 'landing-authority', 'aoe', 'presentation-adapter'],
+  },
+  {
+    familyId: 'hunter_frostjaw',
+    classId: 'hunter',
+    baseName: 'Trampa Colmillo Helado',
+    evolutionName: 'Prisión del Cazador',
+    donorAbilityId: 'frostjaw_trap',
+    validationAbilityId: 'frostjaw_trap',
+    status: 'DONOR_RUNTIME_VERIFIED',
+    seams: ['trap-entity', 'arm-time', 'root', 'slow', 'trigger-lifecycle'],
+  },
+  {
+    familyId: 'mage_pyrelance',
+    classId: 'mage',
+    baseName: 'Lanza Pírica',
+    evolutionName: 'Lanza del Fénix',
+    donorAbilityId: 'pyroblast',
+    validationAbilityId: 'pyroblast',
+    status: 'DONOR_RUNTIME_VERIFIED',
+    seams: ['projectile', 'direct-damage', 'dot', 'hot-streak-spender'],
+  },
+  {
+    familyId: 'priest_psalm',
+    classId: 'priest',
+    baseName: 'Salmo Protector',
+    evolutionName: 'Pacto Viviente',
+    donorAbilityId: 'power_word_shield',
+    validationAbilityId: 'power_word_shield',
+    status: 'DONOR_RUNTIME_VERIFIED',
+    seams: ['friendly-target', 'absorb', 'doctrine-link', 'damage-to-heal'],
+  },
+  {
+    familyId: 'druid_moonseed',
+    classId: 'druid',
+    baseName: 'Semilla Lunar',
+    evolutionName: 'Oleada Lunar',
+    donorAbilityId: 'moonseed',
+    validationAbilityId: 'moonseed',
+    status: 'DONOR_RUNTIME_VERIFIED',
+    seams: ['persistent-slot-id', 'aura-bank', 'runtime-replacement', 'shared-hotbar'],
+  },
+] as const;
+""")
+
+write('tests/highfly_validation_pack01.test.ts', r"""import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { HIGHFLY_VALIDATION_PACK_01 } from '../src/highfly/validation_pack01';
+import { ABILITIES } from '../src/sim/data';
+
+describe('HIGHFLY Validation Pack 01 cross-class contract', () => {
+  it('covers exactly five different classes and keeps implementation authority in Claude runtime', () => {
+    expect(HIGHFLY_VALIDATION_PACK_01).toHaveLength(5);
+    expect(new Set(HIGHFLY_VALIDATION_PACK_01.map((f) => f.classId)).size).toBe(5);
+    expect(HIGHFLY_VALIDATION_PACK_01.every((f) => ABILITIES[f.validationAbilityId])).toBe(true);
+  });
+
+  it('Warrior validates mobile position aim -> swept movement -> authoritative landing AoE', () => {
+    const def = ABILITIES.hf_jump_smash_01;
+    expect(def.targetMode).toBe('position');
+    expect(def.aimProfile).toEqual({ shape: 'CIRCLE', radius: 6 });
+    expect(def.effects.some((e) => e.type === 'repositionToAim' && e.landingAoe?.radius === 6)).toBe(true);
+  });
+
+  it('Hunter validates a real armed trap lifecycle with root and outer slow', () => {
+    const def = ABILITIES.frostjaw_trap;
+    const trap = def.effects.find((e) => e.type === 'frostjawTrap');
+    expect(trap).toMatchObject({
+      type: 'frostjawTrap',
+      radius: 4,
+      armTime: 0.75,
+      rootDuration: 3,
+      slowMult: 0.5,
+      slowDuration: 4,
+    });
+    const source = readFileSync(join(process.cwd(), 'src/sim/combat/hunter_trap.ts'), 'utf8');
+    expect(source).toContain('tickHunterTrap');
+    expect(source).toContain('segmentTouchesAnnulus');
+    expect(source).toContain('rootInstead');
+  });
+
+  it('Mage validates heavy projectile + DoT and the existing Hot Streak spender seam', () => {
+    const def = ABILITIES.pyroblast;
+    expect(def.projectileFx).toBe('heavyBolt');
+    expect(def.effects.some((e) => e.type === 'directDamage')).toBe(true);
+    expect(def.effects.some((e) => e.type === 'dot')).toBe(true);
+    const source = readFileSync(join(process.cwd(), 'src/sim/combat/fire_mage.ts'), 'utf8');
+    expect(source).toContain("HOT_STREAK_SPENDERS");
+    expect(source).toContain("'pyroblast'");
+  });
+
+  it('Priest validates shield -> Doctrine link without creating a parallel healing path', () => {
+    const def = ABILITIES.power_word_shield;
+    expect(def.targetType).toBe('friendly');
+    expect(def.effects.some((e) => e.type === 'absorb')).toBe(true);
+    const source = readFileSync(
+      join(process.cwd(), 'src/sim/combat/priest/doctrine.ts'),
+      'utf8',
+    );
+    expect(source).toContain("abilityId === 'power_word_shield'");
+    expect(source).toContain('placeDoctrineLink');
+  });
+
+  it('Druid validates one persistent hotbar id transforming at the Moontide threshold', () => {
+    const def = ABILITIES.moonseed;
+    expect(def.actionReplacement).toMatchObject({
+      abilityId: 'moonlash',
+      auraKind: 'moontide',
+      minStacks: 3,
+      actorAuraKind: 'form_moonkin',
+    });
+    expect(ABILITIES.moonlash).toBeTruthy();
+    const source = readFileSync(
+      join(process.cwd(), 'src/sim/combat/action_replacement.ts'),
+      'utf8',
+    );
+    expect(source).toContain('The learned base id remains authoritative');
+    expect(source).toContain('resolveActionReplacement');
+  });
+});
+""", encoding='utf-8')
+
+print('HIGHFLY_VALIDATION_PACK01_CONTRACT=1')
