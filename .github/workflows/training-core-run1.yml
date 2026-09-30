@@ -251,6 +251,12 @@ jobs:
           grep -F 'HIGHFLY — Entrena · Asciende · Conquista' upstream/index.html
           grep -F 'data-highfly-brand-target="full"' upstream/index.html
           grep -F '#mm-discord' upstream/src/styles/shell.css
+          test -s branding/highfly-logo-full.png
+          test -s branding/highfly-logo-mark.png
+          test -s upstream/public/highfly/highfly-logo-full.png
+          test -s upstream/public/highfly/highfly-logo-mark.png
+          grep -F 'src="/highfly/highfly-logo-full.png"' upstream/index.html
+          grep -F 'src="/highfly/highfly-logo-mark.png"' upstream/index.html
           grep -q "CONTINUAR ANTES DE TIEMPO" training/runtime/ui.ts
 
       - name: TypeScript source smoke
