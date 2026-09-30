@@ -13,6 +13,7 @@ import {
   applyActiveTrainingBridgeToEntity,
   clearActiveTrainingCombatBinding,
   bindActiveTrainingCombatEntity,
+  refreshActiveTrainingCombatBridge,
   setActiveTrainingBridgeFlags,
 } from '../src/highfly/training/combat_runtime';
 import {
@@ -157,7 +158,10 @@ describe('HIGHFLY Training RUN1-J five-stat donor bridge', () => {
     expect(entity.resource / entity.maxResource).toBeCloseTo(0.6, 2);
 
     const after = { ...entity };
-    applyActiveTrainingBridgeToEntity(entity);
+    // Session/profile changes use refresh, which must always re-apply from the
+    // last donor baseline rather than compounding a previous HIGHFLY bonus.
+    refreshActiveTrainingCombatBridge();
+    refreshActiveTrainingCombatBridge();
     expect(entity.attackPower).toBeCloseTo(after.attackPower, 10);
     expect(entity.maxHp).toBe(after.maxHp);
     expect(entity.spellPower).toBeCloseTo(after.spellPower, 10);
