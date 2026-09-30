@@ -132,6 +132,29 @@ jobs:
           node scripts/build_media_manifest.mjs prune
           du -sh dist
 
+      - name: Rewrite static public URLs for project preview
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python ../overlays/rewrite_pages_static.py
+
+      - name: Jump Smash browser smoke
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vite preview --host 127.0.0.1 --port 4173 --base=/cobalt-hollow-lab/ > ../jump-smash-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/ >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          node ../overlays/highfly_jump_smash_browser_smoke.mjs
+
       - name: Upload HIGHFLY diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -139,5 +162,10 @@ jobs:
           name: highfly-skill-adapter-p01
           path: |
             upstream/dist
+            jump-smash-browser-report.json
+            jump-smash-00-ready.png
+            jump-smash-01-airborne.png
+            jump-smash-02-impact.png
+            jump-smash-preview.log
           if-no-files-found: warn
           retention-days: 7
