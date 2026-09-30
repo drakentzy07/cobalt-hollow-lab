@@ -76,6 +76,7 @@ jobs:
           python ../overlays/apply_highfly_skill_adapter_fix1.py
           python ../overlays/apply_highfly_vertical_slice_tests.py
           python ../overlays/apply_highfly_jump_smash_full.py
+          python ../overlays/apply_highfly_jump_smash_facing_fix.py
           git diff --check
           echo "=== HIGHFLY DIFF ==="
           git diff --stat
