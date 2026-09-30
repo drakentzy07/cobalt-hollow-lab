@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HIGHFLY S2C Samurai Armor Lab</title>
+<title>HIGHFLY S2D Armor Pass</title>
 <link rel="icon" href="data:,">
 <style>
 html,body{margin:0;height:100%;background:#090d14;color:#eef2f7;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
@@ -27,15 +27,15 @@ code{font-size:11px;color:#cbd6e4}
 </head>
 <body>
 <div id="app">
-  <div id="view"><div class="brand">HIGHFLY SKIN LAB<small>S2C · REAL 3D SAMURAI ARMOR ON CLAUDECRAFT HUNTER</small></div></div>
+  <div id="view"><div class="brand">HIGHFLY SKIN LAB<small>S2D · ARMOR-FIRST PASS · MASK OPTIONAL</small></div></div>
   <aside class="panel">
-    <h1>HF_KITSUNE_RONIN_01 — S2C</h1>
-    <div id="status" class="status">Cargando Hunter real + armadura S2C…</div>
-    <p class="legend">Esta pasada ya no es una imagen ni un mockup: el visor carga el <code>warrior_modular.glb</code> real y construye una armadura 3D low-poly modular anclada a sus huesos.</p>
+    <h1>HF_KITSUNE_RONIN_01 — S2D</h1>
+    <div id="status" class="status">Cargando Hunter real + armadura S2D…</div>
+    <p class="legend">S2D prioriza la armadura sobre el Hunter real: cara visible por defecto, kabuto independiente y menpō opcional. Seguimos cargando el <code>warrior_modular.glb</code> real y la armadura 3D queda anclada a su rig.</p>
     <div><span class="badge">HUNTER REAL</span><span class="badge">RIG CLAUDECRAFT</span><span class="badge">ARMOR 3D</span></div>
     <h2>Inspección</h2>
     <div class="row"><button id="front">Frente</button><button id="side">3/4</button><button id="profile">Perfil</button><button id="back">Espalda</button></div>
-    <div class="row"><button id="spin">Autorrotar</button><button id="wire">Wireframe</button><button id="armor">Ocultar armadura</button></div>
+    <div class="row"><button id="spin">Autorrotar</button><button id="wire">Wireframe</button><button id="armor">Ocultar armadura</button></div><div class="row"><button id="helmet">Ocultar kabuto</button><button id="mask">Mostrar máscara</button></div>
     <h2>Dirección visual</h2>
     <div class="legend">
       <span class="swatch" style="background:#292a30"></span>Carbón<br>
@@ -43,15 +43,15 @@ code{font-size:11px;color:#cbd6e4}
       <span class="swatch" style="background:#eadfc8"></span>Marfil<br>
       <span class="swatch" style="background:#a88752"></span>Oro envejecido
     </div>
-    <h2>Piezas 3D S2C</h2>
-    <div class="legend">Kabuto + menpō volumétrico + dō frontal/espalda + sode laminado + kote + cinturón/obi + kusazuri segmentado + haidate + suneate + capa corta + saya/katana.</div>
+    <h2>Piezas 3D S2D</h2>
+    <div class="legend">Dō frontal/espalda + sode laminado + kote + cinturón/obi + kusazuri segmentado + haidate + suneate + capa corta + saya/katana. Kabuto y menpō ahora se inspeccionan por separado; el menpō arranca apagado.</div>
     <h2>Animación real</h2>
     <select id="anim" style="width:100%"><option value="">Idle estático</option></select>
     <div class="row"><button id="play">▶</button><button id="stop">■</button></div>
     <h2>Estado</h2>
-    <div class="tag">S2C · armor attached to native bones</div>
+    <div class="tag">S2D · armor first · optional mask</div>
     <p id="bones" class="legend"></p>
-    <p class="legend"><a href="./s2b.html" style="color:#aab6c6">Volver a S2B</a></p>
+    <p class="legend"><a href="./s2c.html" style="color:#aab6c6">Ver S2C anterior</a> · <a href="./s2b.html" style="color:#aab6c6">S2B</a></p>
   </aside>
 </div>
 <script type="module">
@@ -74,7 +74,7 @@ const rim=new THREE.DirectionalLight(0xd9e8ff,1.15);rim.position.set(-4,4,-5);sc
 scene.add(new THREE.GridHelper(10,20,0x566272,0x222b36));
 const ctl=new OrbitControls(camera,renderer.domElement);ctl.enableDamping=true;ctl.target.set(0,1.2,0);
 
-let root,mixer,clips=[],sourceMeshes=[],armorParts=[],spinning=false,wire=false,last=performance.now();
+let root,mixer,clips=[],sourceMeshes=[],armorParts=[],helmetParts=[],maskParts=[],spinning=false,wire=false,last=performance.now();
 const PAL={coal:0x292a30,coal2:0x3b3a40,red:0x7c2028,red2:0x9b3438,ivory:0xeadfc8,gold:0xa88752,ink:0x12151a};
 
 function mat(color,metal=.08,rough=.78){
@@ -91,7 +91,7 @@ function node(name){
 }
 function worldPos(o){const v=new THREE.Vector3();o.getWorldPosition(v);return v;}
 function attachPreserve(parent,obj){scene.add(obj);scene.updateMatrixWorld(true);parent.attach(obj);return obj;}
-function register(o){o.traverse(x=>{if(x.isMesh){x.castShadow=true;x.receiveShadow=true;armorParts.push(x);}});return o;}
+function register(o,bucket=armorParts){o.traverse(x=>{if(x.isMesh){x.castShadow=true;x.receiveShadow=true;bucket.push(x);}});return o;}
 
 function trapezoidGeometry(topW,bottomW,h,d,slant=0){
   const yt=h/2,yb=-h/2,zf=d/2,zb=-d/2;
@@ -139,13 +139,13 @@ function cloneTint(name,color){
 }
 function setupUnderlayer(){
   sourceMeshes.forEach(o=>o.visible=false);
-  ["M_Head","M_Ear_round","H2_warriorbraid","E2_band_vikingb"].forEach(n=>{const o=root.getObjectByName(n);if(o)o.visible=true;});
+  ["M_Head","M_Ear_round","M_Eye_almond","M_Brow_soft","M_Mouth_neutral","H2_warriorbraid","E2_band_vikingb"].forEach(n=>{const o=root.getObjectByName(n);if(o)o.visible=true;});
   cloneTint("Armor_rogue_Chest",0x313139);
   cloneTint("Armor_ranger_ArmL",0x34333a);cloneTint("Armor_ranger_ArmR",0x34333a);
   cloneTint("Armor_rogue_HandL",0x24262c);cloneTint("Armor_rogue_HandR",0x24262c);
   cloneTint("Armor_mage_LegL",0x2f2e34);cloneTint("Armor_mage_LegR",0x2f2e34);
   cloneTint("Armor_ranger_FootL",0x383238);cloneTint("Armor_ranger_FootR",0x383238);
-  ["M_Eye_almond","M_Brow_soft","M_Mouth_neutral"].forEach(n=>{const o=root.getObjectByName(n);if(o)o.visible=false;});
+  ["M_Eye_almond","M_Brow_soft","M_Mouth_neutral"].forEach(n=>{const o=root.getObjectByName(n);if(o)o.visible=true;});
 }
 
 function buildKabuto(head){
@@ -164,7 +164,7 @@ function buildKabuto(head){
   for(const side of [-1,1]){
     const tass=new THREE.Mesh(new THREE.CylinderGeometry(.018,.028,.17,6),M.red2);tass.position.set(side*.205,-.15,.02);g.add(tass);
   }
-  attachPreserve(head,g);register(g);
+  attachPreserve(head,g);register(g,helmetParts);
 }
 function buildMenpo(head){
   const p=worldPos(head),g=new THREE.Group();g.position.copy(p).add(new THREE.Vector3(0,-.015,.155));
@@ -179,7 +179,7 @@ function buildMenpo(head){
     const cheek=clothShape([[0,.018],[.085,.045],[.102,.012],[.028,-.012]],.010,M.red);cheek.scale.x=side;cheek.position.set(side*.02,-.005,.058);g.add(cheek);
   }
   const jaw=plate(.16,.11,.075,.055,M.gold);jaw.position.set(0,-.135,.018);g.add(jaw);
-  attachPreserve(head,g);register(g);
+  attachPreserve(head,g);register(g,maskParts);
 }
 function buildTorso(chest){
   const p=worldPos(chest),g=new THREE.Group();g.position.copy(p).add(new THREE.Vector3(0,-.015,.09));
@@ -253,6 +253,9 @@ function buildArmor(){
   bonesEl.className="legend "+(missing.length?"warn":"ok");
 }
 function setArmorVisible(v){armorParts.forEach(x=>x.visible=v);}
+function setHelmetVisible(v){helmetParts.forEach(x=>x.visible=v);}
+function setFaceVisible(v){["M_Eye_almond","M_Brow_soft","M_Mouth_neutral"].forEach(n=>{const o=root.getObjectByName(n);if(o)o.visible=v;});}
+function setMaskVisible(v){maskParts.forEach(x=>x.visible=v);setFaceVisible(!v);}
 function fit(){
   const b=new THREE.Box3().setFromObject(root),s=new THREE.Vector3(),c=new THREE.Vector3();b.getSize(s);b.getCenter(c);
   const d=Math.max(s.x,s.y,s.z)||2.4;ctl.target.copy(c);camera.position.set(c.x+d*.9,c.y+d*.15,c.z+d*1.55);camera.updateProjectionMatrix();ctl.update();
@@ -269,8 +272,8 @@ loader.load(MODEL,g=>{
   root.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){sourceMeshes.push(o);o.castShadow=true;o.receiveShadow=true;}});
   clips=g.animations||[];mixer=clips.length?new THREE.AnimationMixer(root):null;
   const sel=document.querySelector("#anim");clips.forEach((c,i)=>{const o=document.createElement("option");o.value=i;o.textContent=c.name||("Anim "+(i+1));sel.appendChild(o);});
-  setupUnderlayer();root.updateMatrixWorld(true);buildArmor();root.updateMatrixWorld(true);fit();
-  status.textContent="S2C cargado · Hunter ClaudeCraft real + armadura samurái 3D";
+  setupUnderlayer();root.updateMatrixWorld(true);buildArmor();setMaskVisible(false);setHelmetVisible(true);root.updateMatrixWorld(true);fit();
+  status.textContent="S2D cargado · armadura samurái 3D sobre Hunter real · máscara opcional";
   status.classList.add("ok");
 },undefined,e=>{console.error(e);status.textContent="ERROR: "+e.message;status.classList.add("warn");});
 
@@ -279,8 +282,10 @@ document.querySelector("#side").onclick=()=>setView("side");
 document.querySelector("#profile").onclick=()=>setView("profile");
 document.querySelector("#back").onclick=()=>setView("back");
 document.querySelector("#spin").onclick=e=>{spinning=!spinning;e.currentTarget.classList.toggle("active",spinning);};
-document.querySelector("#wire").onclick=e=>{wire=!wire;e.currentTarget.classList.toggle("active",wire);[...sourceMeshes,...armorParts].forEach(o=>{if(!(o.isMesh||o.isSkinnedMesh))return;const a=Array.isArray(o.material)?o.material:[o.material];a.forEach(m=>{if(m)m.wireframe=wire;});});};
+document.querySelector("#wire").onclick=e=>{wire=!wire;e.currentTarget.classList.toggle("active",wire);[...sourceMeshes,...armorParts,...helmetParts,...maskParts].forEach(o=>{if(!(o.isMesh||o.isSkinnedMesh))return;const a=Array.isArray(o.material)?o.material:[o.material];a.forEach(m=>{if(m)m.wireframe=wire;});});};
 document.querySelector("#armor").onclick=e=>{const show=armorParts.some(x=>x.visible);setArmorVisible(!show);e.currentTarget.textContent=show?"Mostrar armadura":"Ocultar armadura";};
+document.querySelector("#helmet").onclick=e=>{const show=helmetParts.some(x=>x.visible);setHelmetVisible(!show);e.currentTarget.textContent=show?"Mostrar kabuto":"Ocultar kabuto";e.currentTarget.classList.toggle("active",!show);};
+document.querySelector("#mask").onclick=e=>{const show=maskParts.some(x=>x.visible);setMaskVisible(!show);e.currentTarget.textContent=show?"Mostrar máscara":"Ocultar máscara";e.currentTarget.classList.toggle("active",!show);};
 document.querySelector("#anim").onchange=e=>{if(!mixer)return;mixer.stopAllAction();const i=Number(e.target.value);if(Number.isInteger(i)&&clips[i])mixer.clipAction(clips[i]).reset().play();};
 document.querySelector("#play").onclick=()=>{if(mixer)mixer.timeScale=1;};
 document.querySelector("#stop").onclick=()=>{if(mixer){mixer.stopAllAction();mixer.time=0;}};
