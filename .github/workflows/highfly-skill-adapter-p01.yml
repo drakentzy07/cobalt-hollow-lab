@@ -1,9 +1,10 @@
-name: HIGHFLY skill adapter P01
+name: HIGHFLY validation pack 01
 
 on:
   push:
     branches:
       - highfly/skill-adapter-p01
+      - highfly/validation-pack01-run0a
   workflow_dispatch:
 
 permissions:
@@ -105,6 +106,7 @@ jobs:
           set -euo pipefail
           pnpm exec vitest run \
             tests/highfly_skill_adapter.test.ts \
+            tests/highfly_validation_pack01.test.ts \
             tests/highfly_vertical_slice_contract.test.ts \
             tests/highfly_jump_smash_full.test.ts \
             tests/action_bar_secondary_requirements.test.ts \
