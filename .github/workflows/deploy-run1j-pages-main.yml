@@ -24,7 +24,7 @@ jobs:
       - name: Checkout exact GREEN HIGHFLY overlay
         uses: actions/checkout@v4
         with:
-          ref: 673c6994c7170033e4271ac080f74bb1d5f0da50
+          ref: ef2c3cbda084dc16b92063c372fa700f702e6682
 
       - name: Checkout frozen ClaudeCraft code slice
         uses: actions/checkout@v4
@@ -101,6 +101,7 @@ jobs:
           python ../overlays/highfly_run1j_j4_brandfix.py
           python ../overlays/highfly_run1j_j3a_flags.py
           python ../overlays/highfly_run1j_j3b_native_bridge.py
+          python ../overlays/highfly_run1j_real_device_fix.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
