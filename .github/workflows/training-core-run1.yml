@@ -305,7 +305,15 @@ jobs:
           VITE_COBALT_BASE: "/cobalt-hollow-lab/"
         run: |
           set -euo pipefail
-          pnpm run build:bundle
+          # ClaudeCraft's pregen regenerates the SFX manifest with server-root
+          # /audio/* URLs. Re-apply the HIGHFLY Pages base AFTER pregen and
+          # BEFORE Vite bundles those generated literals.
+          node scripts/build_bundle_pregen.mjs
+          python ../overlays/rewrite_source_public_paths.py
+          grep -F "/cobalt-hollow-lab/audio/sfx/runtime-pack.json" src/game/sfx_manifest.generated.ts
+          pnpm exec vite build
+          node scripts/check_backdrop_survival.mjs
+          node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune
           echo "=== official bundle ==="
           du -sh dist
@@ -1385,7 +1393,13 @@ jobs:
           });
           const page = await context.newPage();
           const errors = [];
+          const badResponses = [];
           page.on('pageerror', (e) => errors.push(String(e)));
+          page.on('response', (response) => {
+            if (response.status() >= 400) {
+              badResponses.push({ status: response.status(), url: response.url() });
+            }
+          });
           page.on('console', (msg) => {
             if (msg.type() !== 'error') return;
             const sourceUrl = msg.location()?.url ?? '';
@@ -1397,7 +1411,7 @@ jobs:
                 'Failed to load resource: the server responded with a status of 502',
               )
             ) return;
-            errors.push(msg.text());
+            errors.push(sourceUrl ? `${msg.text()} @ ${sourceUrl}` : msg.text());
           });
 
           const url = 'http://127.0.0.1:4177/cobalt-hollow-lab/';
@@ -1521,7 +1535,10 @@ jobs:
                 getComputedStyle(hud).visibility !== 'hidden',
             };
           });
-          console.log('RUN1J_J4_MOBILE', JSON.stringify({ entry, mobile }, null, 2));
+          console.log(
+            'RUN1J_J4_MOBILE',
+            JSON.stringify({ entry, mobile, badResponses }, null, 2),
+          );
           if (!mobile) throw new Error('J4: Training window missing');
           if (mobile.width < 820 || mobile.height < 370) throw new Error('J4: Training is not fullscreen on S23 landscape');
           if (mobile.left < -2 || mobile.right > mobile.viewportWidth + 2) throw new Error('J4: Training overflows horizontally');
