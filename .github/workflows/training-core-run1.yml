@@ -262,7 +262,7 @@ jobs:
           test -s upstream/public/highfly/highfly-logo-mark.png
           python - <<'PY'
           from pathlib import Path
-          sig = b"\\x89PNG\\r\\n\\x1a\\n"
+          sig = bytes.fromhex("89504e470d0a1a0a")
           for name in ("highfly-logo-full.png", "highfly-logo-mark.png"):
               data = (Path("upstream/public/highfly") / name).read_bytes()
               assert data.startswith(sig), f"{name} is not a valid PNG"
