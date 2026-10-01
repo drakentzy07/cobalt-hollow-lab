@@ -266,7 +266,10 @@ jobs:
           for name in ("highfly-logo-full.png", "highfly-logo-mark.png"):
               data = (Path("upstream/public/highfly") / name).read_bytes()
               assert data.startswith(sig), f"{name} is not a valid PNG"
-              assert len(data) > 10000, f"{name} is unexpectedly tiny"
+              assert data[12:16] == b"IHDR", f"{name} is missing PNG IHDR"
+              width = int.from_bytes(data[16:20], "big")
+              height = int.from_bytes(data[20:24], "big")
+              assert width >= 64 and height >= 64, f"{name} dimensions are too small: {width}x{height}"
           print("HIGHFLY_J4_VALID_PNGS_OK=1")
           PY
           grep -F 'src="/highfly/highfly-logo-full.png"' upstream/index.html
