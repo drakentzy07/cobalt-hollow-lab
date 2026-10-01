@@ -1487,7 +1487,7 @@ jobs:
           await dismissEntryOverlays(page);
           await page.waitForTimeout(900);
 
-          for (const selector of ['#mobile-action-attack', '#mobile-joystick', '#mobile-menu-anchor']) {
+          for (const selector of ['#mobile-action-attack', '#mobile-move-joystick', '#mobile-menu-anchor']) {
             const el = page.locator(selector);
             await el.waitFor({ state: 'visible', timeout: 15000 });
           }
@@ -1504,7 +1504,7 @@ jobs:
 
           const mobile = await page.evaluate(() => {
             const win = document.querySelector('#highfly-training-window');
-            const hud = document.querySelector('#mobile-hud');
+            const hud = document.querySelector('#mobile-controls');
             if (!(win instanceof HTMLElement)) return null;
             const r = win.getBoundingClientRect();
             return {
