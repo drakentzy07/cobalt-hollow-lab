@@ -117,6 +117,7 @@ jobs:
           python ../overlays/highfly_run1j_j3a_flags.py
           python ../overlays/highfly_run1j_j3b_native_bridge.py
           python ../overlays/highfly_run1j_real_device_fix.py
+          python ../overlays/highfly_run1j_foundation_close.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -275,8 +276,26 @@ jobs:
               assert width >= 64 and height >= 64, f"{name} dimensions are too small: {width}x{height}"
           print("HIGHFLY_J4_VALID_PNGS_OK=1")
           PY
-          grep -F 'src="/cobalt-hollow-lab/highfly/highfly-logo-full.png"' upstream/index.html
-          grep -F 'src="/cobalt-hollow-lab/highfly/highfly-logo-mark.png"' upstream/index.html
+          test -s branding/highfly-logo-full.webp
+          test -s upstream/public/highfly/highfly-logo-full.webp
+          test "$(wc -c < branding/highfly-logo-full.webp)" -gt 50000
+          test "$(wc -c < upstream/public/highfly/highfly-logo-full.webp)" -gt 50000
+          python - <<'PY'
+          from pathlib import Path
+          for path in (
+              Path("branding/highfly-logo-full.webp"),
+              Path("upstream/public/highfly/highfly-logo-full.webp"),
+          ):
+              data = path.read_bytes()
+              assert data[:4] == b"RIFF" and data[8:12] == b"WEBP", f"{path} is not a valid WebP"
+          print("HIGHFLY_FOUNDATION_PREMIUM_WEBP_OK=1")
+          PY
+          grep -F 'src="/cobalt-hollow-lab/highfly/highfly-logo-full.webp"' upstream/index.html
+          grep -F 'class="highfly-entry-logo"' upstream/index.html
+          grep -F "COMPLETAR SESIÓN" upstream/src/highfly/training/ui.ts
+          grep -F 'data-highfly-all-terminal=' upstream/src/highfly/training/ui.ts
+          grep -F '#mobile-meters' upstream/src/styles/shell.css
+          grep -F '#reliquary-window' upstream/src/styles/shell.css
           grep -F "'seo.title': 'HIGHFLY — Entrena · Asciende · Conquista'" upstream/src/ui/i18n.locales/es_ES.ts
           grep -F "'loading.world': 'Iniciando HIGHFLY...'" upstream/src/ui/i18n.locales/es_ES.ts
           grep -F "'auth.enterWorld': 'Entrar a HIGHFLY'" upstream/src/ui/i18n.locales/es_ES.ts
@@ -1472,40 +1491,61 @@ jobs:
           const url = 'http://127.0.0.1:4177/cobalt-hollow-lab/';
           await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
           await page.waitForFunction(() => {
-            const images = [
-              document.querySelector('[data-highfly-brand-target="full"]'),
-              document.querySelector('[data-highfly-brand-target="mark"]'),
-            ];
-            return images.every(
-              (image) =>
-                image instanceof HTMLImageElement &&
-                image.complete &&
-                image.naturalWidth > 0,
+            const image = document.querySelector('.highfly-entry-logo');
+            return (
+              image instanceof HTMLImageElement &&
+              image.complete &&
+              image.naturalWidth >= 300 &&
+              image.naturalHeight >= 300
             );
           }, null, { timeout: 10000 });
 
-          const entry = await page.evaluate(() => ({
-            title: document.title,
-            bodyText: (document.body.innerText ?? '').slice(0, 8000),
-            fullLogo: document.querySelector('[data-highfly-brand-target="full"]')?.getAttribute('src') ?? null,
-            markLogo: document.querySelector('[data-highfly-brand-target="mark"]')?.getAttribute('src') ?? null,
-            donorGatewayLogo:
-              getComputedStyle(
-                document.querySelector('#mode-select') ?? document.body,
-                '::after',
-              ).backgroundImage,
-          }));
+          const entry = await page.evaluate(() => {
+            const card = document.querySelector('#mode-select');
+            const hero = document.querySelector('#homepage-views-container');
+            const logo = document.querySelector('.highfly-entry-logo');
+            const header = document.querySelector('.homepage-header');
+            const cardRect = card instanceof HTMLElement ? card.getBoundingClientRect() : null;
+            const heroRect = hero instanceof HTMLElement ? hero.getBoundingClientRect() : null;
+            return {
+              title: document.title,
+              bodyText: (document.body.innerText ?? '').slice(0, 8000),
+              fullLogo: logo instanceof HTMLImageElement ? logo.getAttribute('src') : null,
+              fullLogoNatural: logo instanceof HTMLImageElement
+                ? [logo.naturalWidth, logo.naturalHeight]
+                : null,
+              donorGatewayLogo:
+                getComputedStyle(card ?? document.body, '::after').backgroundImage,
+              donorGatewayContent:
+                getComputedStyle(card ?? document.body, '::after').content,
+              headerDisplay:
+                header instanceof HTMLElement ? getComputedStyle(header).display : null,
+              cardRect: cardRect
+                ? { width: cardRect.width, height: cardRect.height, left: cardRect.left, top: cardRect.top }
+                : null,
+              heroRect: heroRect
+                ? { width: heroRect.width, height: heroRect.height, left: heroRect.left, top: heroRect.top }
+                : null,
+              viewport: [innerWidth, innerHeight],
+            };
+          });
           if (!entry.title.includes('HIGHFLY')) throw new Error('J4: HIGHFLY title missing');
           if (entry.bodyText.includes('World of ClaudeCraft')) throw new Error('J4: donor brand leaked on entry');
           if (entry.bodyText.includes('Discord')) throw new Error('J4: Discord CTA leaked on entry');
-          if (!entry.fullLogo?.endsWith('/highfly/highfly-logo-full.png')) {
-            throw new Error('J4: full logo source mismatch: ' + entry.fullLogo);
+          if (!entry.fullLogo?.endsWith('/highfly/highfly-logo-full.webp')) {
+            throw new Error('J4: premium full logo source mismatch: ' + entry.fullLogo);
           }
-          if (!entry.markLogo?.endsWith('/highfly/highfly-logo-mark.png')) {
-            throw new Error('J4: mark logo source mismatch: ' + entry.markLogo);
+          if (!entry.fullLogoNatural || entry.fullLogoNatural[0] < 300 || entry.fullLogoNatural[1] < 300) {
+            throw new Error('J4: premium full logo loaded too small: ' + JSON.stringify(entry.fullLogoNatural));
           }
           if (entry.donorGatewayLogo.includes('worldofclaudecraft-logo')) {
             throw new Error('J4: donor gateway logo survived: ' + entry.donorGatewayLogo);
+          }
+          if (!entry.heroRect || entry.heroRect.width < 840 || entry.heroRect.height < 385) {
+            throw new Error('J4: entry is not fullscreen on S23: ' + JSON.stringify(entry));
+          }
+          if (entry.headerDisplay !== 'none') {
+            throw new Error('J4: website header still steals mobile entry space: ' + entry.headerDisplay);
           }
 
           // Reuse the exact mobile entry path that already passed the RUN0.9.3
@@ -1531,11 +1571,37 @@ jobs:
           });
           await page.waitForFunction(() => {
             const canvas = document.querySelector('#char-preview-canvas');
+            if (!(canvas instanceof HTMLCanvasElement)) return false;
+            const style = getComputedStyle(canvas);
+            const rect = canvas.getBoundingClientRect();
             return (
-              canvas instanceof HTMLCanvasElement &&
-              canvas.dataset.highflyPreviewVisual === 'player_warrior_modular'
+              canvas.dataset.highflyPreviewVisual === 'player_warrior_modular' &&
+              style.display !== 'none' &&
+              style.visibility !== 'hidden' &&
+              Number(style.opacity || '1') > 0 &&
+              rect.width >= 300 &&
+              rect.height >= 180 &&
+              rect.bottom > 0 &&
+              rect.top < innerHeight
             );
           }, null, { timeout: 20000 });
+
+          const previewSurface = await page.evaluate(() => {
+            const canvas = document.querySelector('#char-preview-canvas');
+            const container = document.querySelector('#offline-preview-container');
+            if (!(canvas instanceof HTMLCanvasElement) || !(container instanceof HTMLElement)) return null;
+            const canvasRect = canvas.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            return {
+              visual: canvas.dataset.highflyPreviewVisual ?? null,
+              canvas: { width: canvasRect.width, height: canvasRect.height },
+              container: { width: containerRect.width, height: containerRect.height },
+              buffer: [canvas.width, canvas.height],
+            };
+          });
+          if (!previewSurface || previewSurface.canvas.width < 300 || previewSurface.canvas.height < 180) {
+            throw new Error('J4: creator preview has no real visible surface: ' + JSON.stringify(previewSurface));
+          }
 
           await page.evaluate(() => document.querySelector('#btn-start-offline')?.click());
           await page
@@ -1629,6 +1695,67 @@ jobs:
           if (!mobile.text.includes('RUTINA HIGHFLY · 5D')) throw new Error('J4: exact HIGHFLY routine missing');
           if (mobile.text.includes('READINESS')) throw new Error('J4: removed Readiness resurfaced');
           if (!mobile.hudVisible) throw new Error('J4: mobile HUD hidden after world boot');
+
+          const mobileShell = await page.evaluate(() => {
+            const hiddenIds = ['mobile-meters', 'mobile-wiki', 'mobile-steam-wishlist', 'mobile-donate'];
+            const hidden = Object.fromEntries(
+              hiddenIds.map((id) => {
+                const el = document.getElementById(id);
+                return [id, el instanceof HTMLElement ? getComputedStyle(el).display : 'missing'];
+              }),
+            );
+            const windowOverflow = Object.fromEntries(
+              ['talents-window', 'reliquary-window'].map((id) => {
+                const el = document.getElementById(id);
+                return [id, el instanceof HTMLElement ? getComputedStyle(el).overflowY : 'missing'];
+              }),
+            );
+            return { hidden, windowOverflow };
+          });
+          for (const [id, display] of Object.entries(mobileShell.hidden)) {
+            if (display !== 'none') throw new Error('J4: removed mobile menu item visible: ' + id + '=' + display);
+          }
+          for (const [id, overflow] of Object.entries(mobileShell.windowOverflow)) {
+            if (!['auto', 'scroll'].includes(overflow)) {
+              throw new Error('J4: mobile window is not scrollable: ' + id + '=' + overflow);
+            }
+          }
+
+          // Close the day AS PERFORMED: record one real set, then finish the
+          // session without completing/skipping the rest. This reproduces the
+          // real-device bug report and proves only actual work is committed.
+          await page.evaluate(() => {
+            const el = document.querySelector('[data-hf-set-complete]:not([disabled])');
+            if (!(el instanceof HTMLElement)) throw new Error('no active Training set button');
+            const opts = {
+              bubbles: true, cancelable: true, pointerType: 'touch',
+              pointerId: 901, isPrimary: true, clientX: 8, clientY: 8,
+            };
+            el.dispatchEvent(new PointerEvent('pointerdown', opts));
+            el.dispatchEvent(new PointerEvent('pointerup', opts));
+          });
+          await page.waitForTimeout(150);
+          await page.evaluate(() => {
+            const el = document.querySelector('#hf-training-register');
+            if (!(el instanceof HTMLElement)) throw new Error('Training register button missing');
+            const opts = {
+              bubbles: true, cancelable: true, pointerType: 'touch',
+              pointerId: 902, isPrimary: true, clientX: 8, clientY: 8,
+            };
+            el.dispatchEvent(new PointerEvent('pointerdown', opts));
+            el.dispatchEvent(new PointerEvent('pointerup', opts));
+          });
+          await page.waitForFunction(() =>
+            (document.querySelector('#hf-training-register')?.textContent ?? '')
+              .includes('SESIÓN YA REGISTRADA'),
+            null,
+            { timeout: 10000 },
+          );
+          const closedDayText =
+            (await page.locator('#highfly-training-window').textContent()) ?? '';
+          if (!closedDayText.includes('1/20')) {
+            throw new Error('J4: completing partial session did not close the training day');
+          }
 
           const staticBadResponses = badResponses.filter(
             (response) =>
