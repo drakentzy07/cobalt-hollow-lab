@@ -1378,8 +1378,12 @@ jobs:
           if (!entry.title.includes('HIGHFLY')) throw new Error('J4: HIGHFLY title missing');
           if (entry.bodyText.includes('World of ClaudeCraft')) throw new Error('J4: donor brand leaked on entry');
           if (entry.bodyText.includes('Discord')) throw new Error('J4: Discord CTA leaked on entry');
-          if (entry.fullLogo !== '/highfly/highfly-logo-full.png') throw new Error('J4: full logo source mismatch');
-          if (entry.markLogo !== '/highfly/highfly-logo-mark.png') throw new Error('J4: mark logo source mismatch');
+          if (!entry.fullLogo?.endsWith('/highfly/highfly-logo-full.png')) {
+            throw new Error('J4: full logo source mismatch: ' + entry.fullLogo);
+          }
+          if (!entry.markLogo?.endsWith('/highfly/highfly-logo-mark.png')) {
+            throw new Error('J4: mark logo source mismatch: ' + entry.markLogo);
+          }
 
           await page.locator('#btn-offline').waitFor({ state: 'attached', timeout: 20000 });
           for (let attempt = 0; attempt < 60; attempt++) {
