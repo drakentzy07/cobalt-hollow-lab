@@ -1387,7 +1387,12 @@ jobs:
           const errors = [];
           page.on('pageerror', (e) => errors.push(String(e)));
           page.on('console', (msg) => {
-            if (msg.type() === 'error') errors.push(msg.text());
+            if (msg.type() !== 'error') return;
+            const sourceUrl = msg.location()?.url ?? '';
+            // HIGHFLY is offline-first: donor-only backend probes under /api/
+            // are intentionally absent from the static preview.
+            if (sourceUrl.includes('/api/')) return;
+            errors.push(msg.text());
           });
 
           const url = 'http://127.0.0.1:4177/cobalt-hollow-lab/';
@@ -1423,7 +1428,7 @@ jobs:
           await page.evaluate(() => {
             const name = document.querySelector('#char-name');
             if (name instanceof HTMLInputElement) {
-              name.value = 'HighflyJ4';
+              name.value = 'HighflyFinal';
               name.dispatchEvent(new Event('input', { bubbles: true }));
             }
             document
