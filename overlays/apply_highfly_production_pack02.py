@@ -23,11 +23,7 @@ def rep(path: str, old: str, new: str) -> None:
 # No mutation/unique mechanics are introduced here.
 # ---------------------------------------------------------------------------
 
-# Spanish HIGHFLY base names.
-rep("src/sim/content/paladin_core_abilities.ts", "    name: 'Holy Ground',\n", "    name: 'Tierra Consagrada',\n")
-rep("src/sim/content/classes.ts", '    name: "Lurker\'s Strike",\n', "    name: 'Emboscada',\n")
-rep("src/sim/content/classes.ts", "    name: 'Faultwake',\n", "    name: 'Despertar de la Falla',\n")
-rep("src/sim/content/classes.ts", "    name: 'Reaping Command',\n", "    name: 'Mandato de Siega',\n")
+# Donor base ids/names remain frozen; HIGHFLY Spanish labels live in the manifest/UI.
 
 # Register hidden EVO endpoints in the real class kits.
 rep(
