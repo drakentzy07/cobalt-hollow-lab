@@ -1,0 +1,139 @@
+name: HIGHFLY Production Pack 02
+
+on:
+  push:
+    branches:
+      - highfly/production-pack02-run0a
+      - highfly/production-pack02-run0b
+      - highfly/production-pack02-run0c
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-production-pack02
+  cancel-in-progress: true
+
+jobs:
+  pack02:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout HIGHFLY overlay
+        uses: actions/checkout@v4
+
+      - name: Checkout frozen ClaudeCraft
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /tests/
+            /electron/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+
+      - name: Verify frozen foundation
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+
+      - name: Apply frozen Pack 01 then Pack 02
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply ../overlays/pages-media-base.patch
+          git apply ../overlays/cobalt-offline-gate.patch
+          python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1; p.write_text(s.replace(old,new))"
+          python ../overlays/apply_highfly_skill_adapter.py
+          python ../overlays/apply_highfly_skill_adapter_fix1.py
+          python ../overlays/apply_highfly_vertical_slice_tests.py
+          python ../overlays/apply_highfly_jump_smash_full.py
+          python ../overlays/apply_highfly_jump_smash_facing_fix.py
+          python ../overlays/apply_highfly_production_pack01.py
+          python ../overlays/apply_highfly_production_pack01_run0b.py
+          python ../overlays/apply_highfly_production_pack01_run0c.py
+          python ../overlays/apply_highfly_production_pack01_run0d.py
+          python ../overlays/apply_highfly_production_pack02.py
+          git diff --check
+          echo "=== PACK 02 DIFF ==="
+          git diff --stat
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Enable pinned pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+
+      - name: Install dependencies
+        working-directory: upstream
+        shell: bash
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Pack 01 regression + Pack 02 tests
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run             tests/highfly_skill_adapter.test.ts             tests/highfly_validation_pack01.test.ts             tests/highfly_production_pack01.test.ts             tests/highfly_production_pack01_run0b.test.ts             tests/highfly_production_pack01_run0c.test.ts             tests/highfly_production_pack01_freeze.test.ts             tests/highfly_production_pack02.test.ts             tests/highfly_production_pack02_freeze.test.ts             tests/highfly_vertical_slice_contract.test.ts             tests/highfly_jump_smash_full.test.ts             tests/ground_aim_hud.test.ts             tests/ground_target_cast.test.ts             tests/heroic_leap.test.ts             tests/necromancy.test.ts             tests/v042_rogue_stealth.test.ts             tests/paladin_core_abilities.test.ts             tests/shaman_thundercall_rework.test.ts             tests/mobile_action_page_view.test.ts
+
+      - name: TypeScript source check
+        working-directory: upstream
+        shell: bash
+        run: pnpm exec tsc --noEmit --incremental false
+
+      - name: Official bundle build
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          pnpm run build:bundle
+          node scripts/build_media_manifest.mjs prune
+          du -sh dist
+
+      - name: Upload Pack 02 diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-production-pack02
+          path: |
+            upstream/dist
+          if-no-files-found: warn
+          retention-days: 7
