@@ -387,24 +387,47 @@ jobs:
               throw new Error('offline-select did not open after hydration retry window');
             }
 
-            const name = page.locator('#char-name');
-            if (await name.count()) await name.fill('CobaltWarrior');
+            await page.evaluate(() =>
+              localStorage.setItem('woc.cameraModePrompt.shown', '1'),
+            ).catch(() => {});
 
             const warrior = page.locator('#offline-select .mini-class[data-class="warrior"]');
             await warrior.waitFor({ state: 'visible', timeout: 15000 });
-            await warrior.click({ force: true });
-            await page.locator('#btn-start-offline').click({ force: true });
+            await page.evaluate(() => {
+              const name = document.querySelector('#char-name');
+              if (name instanceof HTMLInputElement) {
+                name.value = 'CobaltWarrior';
+                name.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+              document
+                .querySelector('#offline-select .mini-class[data-class="warrior"]')
+                ?.click();
+            });
 
-            const preflight = page.locator('#mobile-preflight-continue');
-            if (await preflight.count()) {
-              await preflight.click({ force: true }).catch(() => {});
-            }
+            // Do not race world entry against the selected Hunter preview/prewarm.
+            // This was the source of intermittent aborted GLBs and false gameBooted=false.
+            await page.waitForFunction(() => {
+              const canvas = document.querySelector('#char-preview-canvas');
+              return (
+                canvas instanceof HTMLCanvasElement &&
+                canvas.dataset.highflyPreviewVisual === 'player_warrior_modular'
+              );
+            }, null, { timeout: 20000 });
+
+            await page.evaluate(() => document.querySelector('#btn-start-offline')?.click());
+            await page
+              .locator('#mobile-preflight-continue')
+              .waitFor({ state: 'visible', timeout: 6000 })
+              .catch(() => {});
+            await page.evaluate(() =>
+              document.querySelector('#mobile-preflight-continue')?.click(),
+            );
 
             gameBooted = await page
-              .waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 60000 })
+              .waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 90000 })
               .then(() => true)
               .catch(() => false);
-            await page.waitForTimeout(4000);
+            await page.waitForTimeout(2500);
 
             if (gameBooted) {
               // Clear first-run overlays so keyboard input reaches the game, matching
