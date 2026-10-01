@@ -32,4 +32,15 @@ locale_text = locale.read_text(encoding="utf-8")
 locale_text = locale_text.replace("World of ClaudeCraft", "HIGHFLY").replace("Discord", "Comunidad")
 locale.write_text(locale_text, encoding="utf-8")
 
+# Runtime i18n renders the base UI catalog before/alongside locale overrides.
+# Scrub only the exact donor product-name literal from UI source files so no
+# visible entry/footer/onboarding surface can re-inject it after index.html was patched.
+for ui_source in Path("src/ui").rglob("*.ts"):
+    ui_text = ui_source.read_text(encoding="utf-8")
+    if "World of ClaudeCraft" in ui_text:
+        ui_source.write_text(
+            ui_text.replace("World of ClaudeCraft", "HIGHFLY"),
+            encoding="utf-8",
+        )
+
 print("HIGHFLY_RUN1J_J4_BRANDFIX_APPLIED=1")
