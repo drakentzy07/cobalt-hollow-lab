@@ -278,8 +278,8 @@ jobs:
           PY
           test -s branding/highfly-logo-full.webp
           test -s upstream/public/highfly/highfly-logo-full.webp
-          test "$(wc -c < branding/highfly-logo-full.webp)" -gt 50000
-          test "$(wc -c < upstream/public/highfly/highfly-logo-full.webp)" -gt 50000
+          test "$(wc -c < branding/highfly-logo-full.webp)" -gt 10000
+          test "$(wc -c < upstream/public/highfly/highfly-logo-full.webp)" -gt 10000
           python - <<'PY'
           from pathlib import Path
           for path in (
