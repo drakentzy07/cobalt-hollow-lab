@@ -118,6 +118,7 @@ jobs:
           python ../overlays/highfly_run1j_j3b_native_bridge.py
           python ../overlays/highfly_run1j_real_device_fix.py
           python ../overlays/highfly_run1j_foundation_close.py
+          python ../overlays/highfly_run1j_final_polish.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -290,8 +291,32 @@ jobs:
               assert data[:4] == b"RIFF" and data[8:12] == b"WEBP", f"{path} is not a valid WebP"
           print("HIGHFLY_FOUNDATION_PREMIUM_WEBP_OK=1")
           PY
-          grep -F 'src="/cobalt-hollow-lab/highfly/highfly-logo-full.webp"' upstream/index.html
+          test -s branding/highfly-logo-official.webp
+          test -s upstream/public/highfly/highfly-logo-official.webp
+          test "$(wc -c < branding/highfly-logo-official.webp)" -gt 50000
+          test "$(wc -c < upstream/public/highfly/highfly-logo-official.webp)" -gt 50000
+          python - <<'PY'
+          from pathlib import Path
+          for path in (
+              Path("branding/highfly-logo-official.webp"),
+              Path("upstream/public/highfly/highfly-logo-official.webp"),
+          ):
+              data = path.read_bytes()
+              assert data[:4] == b"RIFF" and data[8:12] == b"WEBP", f"{path} is not a valid WebP"
+          print("HIGHFLY_FINAL_OFFICIAL_LOGO_OK=1")
+          PY
+          grep -F 'src="/cobalt-hollow-lab/highfly/highfly-logo-official.webp"' upstream/index.html
+          grep -F 'class="ls-logo" src="/cobalt-hollow-lab/highfly/highfly-logo-official.webp"' upstream/index.html
           grep -F 'class="highfly-entry-logo"' upstream/index.html
+          grep -F 'id="highfly-chat-close"' upstream/index.html
+          grep -F 'id="highfly-chat-send"' upstream/index.html
+          grep -F 'HIGHFLY_FINAL_CHAT_CONTROLS' upstream/src/main.ts
+          grep -F 'RESULTADO DE ESTA SESIÓN' upstream/src/highfly/training/ui.ts
+          grep -F 'HUNTER CORE · ESTADO CONSOLIDADO' upstream/src/highfly/training/ui.ts
+          grep -F 'BASE ESTABLECIDA' upstream/src/highfly/training/ui.ts
+          grep -F 'body.start-screen-open .homepage-footer' upstream/src/styles/shell.website.css
+          grep -F '#loot-explorer-window' upstream/src/styles/shell.css
+          grep -F '#highfly-chat-send' upstream/src/styles/shell.css
           grep -F "COMPLETAR SESIÓN" upstream/src/highfly/training/ui.ts
           grep -F 'data-highfly-all-terminal=' upstream/src/highfly/training/ui.ts
           grep -F '#mobile-meters' upstream/src/styles/shell.css
@@ -1532,7 +1557,7 @@ jobs:
           if (!entry.title.includes('HIGHFLY')) throw new Error('J4: HIGHFLY title missing');
           if (entry.bodyText.includes('World of ClaudeCraft')) throw new Error('J4: donor brand leaked on entry');
           if (entry.bodyText.includes('Discord')) throw new Error('J4: Discord CTA leaked on entry');
-          if (!entry.fullLogo?.endsWith('/highfly/highfly-logo-full.webp')) {
+          if (!entry.fullLogo?.endsWith('/highfly/highfly-logo-official.webp')) {
             throw new Error('J4: premium full logo source mismatch: ' + entry.fullLogo);
           }
           if (!entry.fullLogoNatural || entry.fullLogoNatural[0] < 300 || entry.fullLogoNatural[1] < 300) {
