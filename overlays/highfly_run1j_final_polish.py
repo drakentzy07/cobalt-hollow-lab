@@ -2,10 +2,10 @@ from pathlib import Path
 
 # HIGHFLY FINAL FOUNDATION POLISH — real-device pass after RUN #93
 
-brand_source = Path("../branding/highfly-logo-official.webp")
-brand_public = Path("public/highfly/highfly-logo-official.webp")
-if not brand_source.exists() or brand_source.stat().st_size < 50000:
-    raise SystemExit("official HIGHFLY artwork missing or suspiciously small")
+brand_source = Path("../branding/highfly-logo-full.webp")
+brand_public = Path("public/highfly/highfly-logo-full.webp")
+if not brand_source.exists() or brand_source.stat().st_size < 10000:
+    raise SystemExit("validated HIGHFLY full artwork missing or suspiciously small")
 brand_public.parent.mkdir(parents=True, exist_ok=True)
 brand_public.write_bytes(brand_source.read_bytes())
 
@@ -17,7 +17,7 @@ for html_path in (Path("index.html"), Path("play.html")):
         "/highfly/highfly-logo-mark.png",
         "/worldofclaudecraft-logo.png",
     ):
-        html = html.replace(old, "/highfly/highfly-logo-official.webp")
+        html = html.replace(old, "/highfly/highfly-logo-full.webp")
 
     if 'id="highfly-chat-close"' not in html:
         anchor = '<button type="button" id="mobile-chat-reply"'
