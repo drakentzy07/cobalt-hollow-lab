@@ -341,7 +341,7 @@ jobs:
           grep -F "staleDonorLevel20" upstream/src/main.ts
           grep -F "SALTAR EJERCICIO" upstream/src/highfly/training/ui.ts
           grep -F "canActOnExercise" upstream/src/highfly/training/ui.ts
-          grep -F 'content: "HIGHFLY"' upstream/src/styles/shell.website.css
+          grep -F 'HIGHFLY RUN1-J VISUAL RELEASE — S23 entry surface' upstream/src/styles/shell.website.css
           ! grep -F 'url("/worldofclaudecraft-logo.png")' upstream/src/styles/shell.website.css
           grep -q "CONTINUAR ANTES DE TIEMPO" training/runtime/ui.ts
 
