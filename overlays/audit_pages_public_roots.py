@@ -3,9 +3,13 @@ from pathlib import Path
 BASE = "/cobalt-hollow-lab"
 DIST = Path("dist")
 TEXT_EXTS = {".html", ".js", ".css", ".json", ".webmanifest", ".xml", ".txt"}
+# Only direct public roots belong here. Hashed media roots
+# (models/textures/env/vfx) are intentionally kept as logical URLs in some
+# dynamic template strings and are rebased by src/render/assets/media.ts via
+# import.meta.env.BASE_URL at runtime.
 PUBLIC_ROOTS = (
-    "audio", "basis", "claudium", "env", "fonts", "guide-stills",
-    "map_art", "map_bg", "models", "textures", "ui", "vfx",
+    "audio", "basis", "claudium", "fonts", "guide-stills",
+    "map_art", "map_bg", "ui",
 )
 PATTERNS = (
     '"{path}',

@@ -326,6 +326,7 @@ jobs:
           set -euo pipefail
           python ../overlays/rewrite_pages_static.py
           python ../overlays/audit_pages_public_roots.py
+          grep -F "import.meta.env.BASE_URL.replace(/\\/$/, '')" src/render/assets/media.ts
 
       - name: Browser smoke against built shell
         working-directory: upstream
