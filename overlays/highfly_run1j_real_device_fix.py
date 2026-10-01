@@ -387,7 +387,7 @@ replace_once(
   const trainingHasRealProgress =
     !!storedTrainingProfile &&
     (
-      storedTrainingProfile.training.cycleProgression.completedSessions.length > 0 ||
+      (storedTrainingProfile.training.cycleProgression?.completedSessions.length ?? 0) > 0 ||
       Object.values(storedTrainingProfile.training.core).some(
         (stat) => stat.current > 0 || stat.peak > 0 || stat.progress > 0,
       )
