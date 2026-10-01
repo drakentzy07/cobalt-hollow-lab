@@ -88,6 +88,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git apply --check ../overlays/pages-media-base.patch
+          git apply --check ../overlays/cobalt-offline-gate.patch
           git apply ../overlays/pages-media-base.patch
           git apply ../overlays/cobalt-offline-gate.patch
           python ../overlays/highfly_mobile_360.py
@@ -272,8 +274,8 @@ jobs:
               assert width >= 64 and height >= 64, f"{name} dimensions are too small: {width}x{height}"
           print("HIGHFLY_J4_VALID_PNGS_OK=1")
           PY
-          grep -F 'src="/highfly/highfly-logo-full.png"' upstream/index.html
-          grep -F 'src="/highfly/highfly-logo-mark.png"' upstream/index.html
+          grep -F 'src="/cobalt-hollow-lab/highfly/highfly-logo-full.png"' upstream/index.html
+          grep -F 'src="/cobalt-hollow-lab/highfly/highfly-logo-mark.png"' upstream/index.html
           grep -F "'seo.title': 'HIGHFLY — Entrena · Asciende · Conquista'" upstream/src/ui/i18n.locales/es_ES.ts
           grep -F "'loading.world': 'Iniciando HIGHFLY...'" upstream/src/ui/i18n.locales/es_ES.ts
           grep -F "'auth.enterWorld': 'Entrar a HIGHFLY'" upstream/src/ui/i18n.locales/es_ES.ts
@@ -327,6 +329,8 @@ jobs:
           python ../overlays/rewrite_pages_static.py
           python ../overlays/audit_pages_public_roots.py
           grep -F "import.meta.env.BASE_URL.replace(/\\/$/, '')" src/render/assets/media.ts
+          grep -F 'return base && raw.startsWith' src/render/assets/media.ts
+          grep -F '!raw.startsWith(`${base}/`)' src/render/assets/media.ts
 
       - name: Browser smoke against built shell
         working-directory: upstream
@@ -545,8 +549,15 @@ jobs:
               : null;
           }).catch(() => null);
 
-          const ui404s = [...new Map(bad.map((x) => [x.url, x])).values()].filter(
-            (x) => x.kind === 'http' && x.status === 404 && x.url.includes('/ui/'),
+          const uniqueBad = [...new Map(bad.map((x) => [x.url, x])).values()];
+          const static404s = uniqueBad.filter(
+            (x) =>
+              x.kind === 'http' &&
+              x.status === 404 &&
+              !x.url.includes('/api/'),
+          );
+          const doubleBaseRequests = uniqueBad.filter((x) =>
+            x.url.includes('/cobalt-hollow-lab/cobalt-hollow-lab/'),
           );
           const report = {
             url: page.url(),
@@ -555,7 +566,8 @@ jobs:
             gameBooted,
             gameState,
             gameplay,
-            ui404s,
+            static404s,
+            doubleBaseRequests,
             bodyText: (await page.locator('body').innerText().catch(() => '')).slice(0, 5000),
             navigationError,
             offlineEntryError,
@@ -566,7 +578,7 @@ jobs:
           await page.screenshot({ path: '../run0-browser.png', fullPage: true }).catch(() => {});
           console.log('RUN0_BROWSER_REPORT');
           console.log(JSON.stringify(report, null, 2));
-          if (!gameBooted || ui404s.length > 0) process.exitCode = 2;
+          if (!gameBooted || static404s.length > 0 || doubleBaseRequests.length > 0) process.exitCode = 2;
           await browser.close();
           NODE
 
@@ -1418,6 +1430,18 @@ jobs:
 
           const url = 'http://127.0.0.1:4177/cobalt-hollow-lab/';
           await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          await page.waitForFunction(() => {
+            const images = [
+              document.querySelector('[data-highfly-brand-target="full"]'),
+              document.querySelector('[data-highfly-brand-target="mark"]'),
+            ];
+            return images.every(
+              (image) =>
+                image instanceof HTMLImageElement &&
+                image.complete &&
+                image.naturalWidth > 0,
+            );
+          }, null, { timeout: 10000 });
 
           const entry = await page.evaluate(() => ({
             title: document.title,
@@ -1549,6 +1573,20 @@ jobs:
           if (mobile.text.includes('READINESS')) throw new Error('J4: removed Readiness resurfaced');
           if (!mobile.hudVisible) throw new Error('J4: mobile HUD hidden after world boot');
 
+          const staticBadResponses = badResponses.filter(
+            (response) =>
+              response.status === 404 &&
+              !response.url.includes('/api/'),
+          );
+          const doubleBaseResponses = badResponses.filter((response) =>
+            response.url.includes('/cobalt-hollow-lab/cobalt-hollow-lab/'),
+          );
+          if (staticBadResponses.length) {
+            throw new Error('J4 static 404s: ' + JSON.stringify(staticBadResponses));
+          }
+          if (doubleBaseResponses.length) {
+            throw new Error('J4 double project base: ' + JSON.stringify(doubleBaseResponses));
+          }
           const unexpectedErrors = [...new Set(errors)].filter(
             (msg) => !msg.includes('character visual unavailable, skipping view'),
           );

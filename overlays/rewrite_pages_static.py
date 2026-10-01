@@ -1,67 +1,20 @@
-from hashlib import sha256
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 BASE = "/cobalt-hollow-lab"
 DIST = Path("dist")
 PUBLIC = Path("public")
 
 TEXT_EXTS = {".html", ".js", ".css", ".json", ".webmanifest", ".xml", ".txt"}
-PREFIXES = ["ui", "audio", "basis", "textures", "fonts", "claudium", "guide-stills", "map_art", "map_bg"]
-MEDIA_ROOTS = ("models", "textures", "env", "vfx")
-MEDIA_EXTS = {".glb", ".fbx", ".hdr", ".jpg", ".jpeg", ".png", ".webp", ".ktx2"}
-HASH_LEN = 12
+# These roots are served directly from public/. Hashed media roots
+# (models/textures/env/vfx) MUST stay logical and are resolved by assetUrl().
+PREFIXES = ["ui", "audio", "basis", "fonts", "claudium", "guide-stills", "highfly", "map_art", "map_bg"]
 
 root_files = sorted(p.name for p in PUBLIC.iterdir() if p.is_file()) if PUBLIC.exists() else []
 
 
-def media_map() -> dict[str, str]:
-    mapping: dict[str, str] = {}
-    for root_name in MEDIA_ROOTS:
-        root = PUBLIC / root_name
-        if not root.exists():
-            continue
-        for path in root.rglob("*"):
-            if not path.is_file() or path.suffix.lower() not in MEDIA_EXTS:
-                continue
-            logical = path.relative_to(PUBLIC).as_posix()
-            parsed = PurePosixPath(logical)
-            digest = sha256(path.read_bytes()).hexdigest()[:HASH_LEN]
-            hashed_name = f"{parsed.stem}.{digest}{parsed.suffix}"
-            hashed_rel = (PurePosixPath("media") / parsed.parent / hashed_name).as_posix()
-            mapping[logical] = f"{BASE}/{hashed_rel}"
-    return mapping
-
-
-MEDIA_MAP = media_map()
-
-
-def rewrite_exact_media(text: str) -> tuple[str, int]:
-    total = 0
-    # Some ClaudeCraft code paths still reference public media directly instead
-    # of going through assetUrl(). Production prune removes those originals, so
-    # translate literal references to the exact hashed copy emitted in dist/media.
-    for logical, target in MEDIA_MAP.items():
-        source = f"/{logical}"
-        replacements = [
-            (f'"{source}', f'"{target}'),
-            (f"'{source}", f"'{target}"),
-            (f'`{source}', f'`{target}'),
-            (f"url({source}", f"url({target}"),
-            (f'url("{source}', f'url("{target}'),
-            (f"url('{source}", f"url('{target}"),
-        ]
-        for old, new in replacements:
-            count = text.count(old)
-            if count:
-                text = text.replace(old, new)
-                total += count
-    return text, total
-
-
 def rewrite_text(text: str) -> tuple[str, int]:
-    text, total = rewrite_exact_media(text)
+    total = 0
 
-    # Non-media public files still live at their original path under dist.
     for prefix in PREFIXES:
         replacements = [
             (f'"/{prefix}/', f'"{BASE}/{prefix}/'),
@@ -91,6 +44,7 @@ def rewrite_text(text: str) -> tuple[str, int]:
             if count:
                 text = text.replace(old, new)
                 total += count
+
     return text, total
 
 
@@ -109,7 +63,4 @@ for path in DIST.rglob("*"):
         files_changed += 1
         replacements += count
 
-print(
-    f"Pages static URL rewrite: {replacements} replacements in {files_changed} files; "
-    f"{len(MEDIA_MAP)} hashed media assets indexed"
-)
+print(f"Pages static URL rewrite: {replacements} replacements in {files_changed} files")

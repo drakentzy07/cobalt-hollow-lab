@@ -10,6 +10,5 @@ index 2f6de2d..0000000 100644
 -  return MEDIA_ASSETS[logical] ?? `/${logical}`;
 +  const raw = import.meta.env.DEV ? `/${logical}` : (MEDIA_ASSETS[logical] ?? `/${logical}`);
 +  const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-+  if (!base || !raw.startsWith('/') || raw === base || raw.startsWith(`${base}/`)) return raw;
-+  return `${base}${raw}`;
++  return base && raw.startsWith('/') && !raw.startsWith(`${base}/`) ? `${base}${raw}` : raw;
  }
