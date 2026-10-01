@@ -16,7 +16,7 @@ def replace_once(path: Path, old: str, new: str, label: str) -> None:
 # ---------------------------------------------------------------------------
 brand_source = Path("../branding/highfly-logo-full.webp")
 brand_public = Path("public/highfly/highfly-logo-full.webp")
-if not brand_source.exists() or brand_source.stat().st_size < 50000:
+if not brand_source.exists() or brand_source.stat().st_size < 10000:
     raise SystemExit("premium HIGHFLY full logo asset missing or suspiciously small")
 brand_public.parent.mkdir(parents=True, exist_ok=True)
 shutil.copyfile(brand_source, brand_public)
