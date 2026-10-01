@@ -19,14 +19,14 @@ for html_path in (Path("index.html"), Path("play.html")):
     ):
         html = html.replace(old, "/highfly/highfly-logo-full.webp")
 
-    if 'id="highfly-chat-close"' not in html:
+    if html_path.name == "play.html" and 'id="highfly-chat-close"' not in html:
         anchor = '<button type="button" id="mobile-chat-reply"'
         idx = html.find(anchor)
         if idx < 0:
-            raise SystemExit(f"mobile chat reply anchor missing in {html_path}")
+            raise SystemExit("mobile chat reply anchor missing in play.html")
         end = html.find("</button>", idx)
         if end < 0:
-            raise SystemExit(f"mobile chat reply close tag missing in {html_path}")
+            raise SystemExit("mobile chat reply close tag missing in play.html")
         end += len("</button>")
         controls = '''
       <button type="button" id="highfly-chat-close" class="highfly-chat-control" aria-label="Cerrar chat">×</button>
