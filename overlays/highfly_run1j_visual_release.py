@@ -44,6 +44,11 @@ for html_path in (Path("index.html"), Path("play.html")):
 
 website_css = Path("src/styles/shell.website.css")
 website_text = website_css.read_text(encoding="utf-8")
+# Remove every remaining visible donor-logo URL, including dormant desktop rules.
+website_text = website_text.replace(
+    'url("/worldofclaudecraft-logo.png")',
+    'url("/highfly/highfly-logo-full.webp")',
+)
 website_text += r'''
 
 /* ========================================================================
