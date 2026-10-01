@@ -313,8 +313,8 @@ jobs:
           grep -F 'src="/cobalt-hollow-lab/highfly/highfly-logo-full.webp"' upstream/index.html
           grep -F 'class="ls-logo" src="/cobalt-hollow-lab/highfly/highfly-logo-full.webp"' upstream/index.html
           grep -F 'class="highfly-entry-logo"' upstream/index.html
-          grep -F 'id="highfly-chat-close"' upstream/index.html
-          grep -F 'id="highfly-chat-send"' upstream/index.html
+          grep -F 'id="highfly-chat-close"' upstream/play.html
+          grep -F 'id="highfly-chat-send"' upstream/play.html
           grep -F 'HIGHFLY_FINAL_CHAT_CONTROLS' upstream/src/main.ts
           grep -F 'RESULTADO DE ESTA SESIÓN' upstream/src/highfly/training/ui.ts
           grep -F 'HUNTER CORE · ESTADO CONSOLIDADO' upstream/src/highfly/training/ui.ts
