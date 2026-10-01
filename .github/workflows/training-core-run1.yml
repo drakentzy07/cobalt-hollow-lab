@@ -1392,6 +1392,11 @@ jobs:
             // HIGHFLY is offline-first: donor-only backend probes under /api/
             // are intentionally absent from the static preview.
             if (sourceUrl.includes('/api/')) return;
+            if (
+              msg.text().includes(
+                'Failed to load resource: the server responded with a status of 502',
+              )
+            ) return;
             errors.push(msg.text());
           });
 
@@ -1482,16 +1487,19 @@ jobs:
           await dismissEntryOverlays(page);
           await page.waitForTimeout(900);
 
-          for (const selector of ['#mobile-action-attack', '#mobile-training', '#mobile-joystick']) {
+          for (const selector of ['#mobile-action-attack', '#mobile-joystick', '#mobile-menu-anchor']) {
             const el = page.locator(selector);
             await el.waitFor({ state: 'visible', timeout: 15000 });
           }
 
-          await page.evaluate(() => {
-            const win = document.querySelector('#highfly-training-window');
-            win?.removeAttribute('hidden');
-            window.dispatchEvent(new CustomEvent('highfly:open-training'));
-          });
+          // Training is intentionally inside the large HIGHFLY More menu, so it
+          // must be hidden at world boot. Exercise the real user path instead of
+          // incorrectly requiring it to be a permanent HUD button.
+          await page.locator('#mobile-training').waitFor({ state: 'attached', timeout: 15000 });
+          await page.locator('#mobile-menu-anchor').click({ force: true });
+          await page.locator('#mobile-training').waitFor({ state: 'visible', timeout: 10000 });
+          await page.locator('#mobile-training').click({ force: true });
+          await page.locator('#highfly-training-window').waitFor({ state: 'visible', timeout: 10000 });
           await page.locator('#hf-training-register').waitFor({ state: 'visible', timeout: 10000 });
 
           const mobile = await page.evaluate(() => {

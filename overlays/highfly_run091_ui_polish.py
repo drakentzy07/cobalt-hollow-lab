@@ -169,6 +169,9 @@ replace_once(
 """,
     """    this.bindButton('mobile-bar-editor', () => this.callbacks.onBarEditor());
     this.bindButton('mobile-training', () => {
+      // Training lives in HIGHFLY's real More grid: close that modal first,
+      // then open the fullscreen Training System.
+      this.closeMoreModal();
       window.dispatchEvent(new CustomEvent('highfly:open-training'));
       document.getElementById('highfly-training-window')?.removeAttribute('hidden');
     });
