@@ -45,7 +45,7 @@ def rewrite_exact_media(text: str) -> tuple[str, int]:
         replacements = [
             (f'"{source}', f'"{target}'),
             (f"'{source}", f"'{target}"),
-            (f'\`{source}', f'\`{target}'),
+            (f'`{source}', f'`{target}'),
             (f"url({source}", f"url({target}"),
             (f'url("{source}', f'url("{target}'),
             (f"url('{source}", f"url('{target}"),
@@ -66,7 +66,7 @@ def rewrite_text(text: str) -> tuple[str, int]:
         replacements = [
             (f'"/{prefix}/', f'"{BASE}/{prefix}/'),
             (f"'/{prefix}/", f"'{BASE}/{prefix}/"),
-            (f'\`/{prefix}/', f'\`{BASE}/{prefix}/'),
+            (f'`/{prefix}/', f'`{BASE}/{prefix}/'),
             (f"url(/{prefix}/", f"url({BASE}/{prefix}/"),
             (f'url("/{prefix}/', f'url("{BASE}/{prefix}/'),
             (f"url('/{prefix}/", f"url('{BASE}/{prefix}/"),
@@ -81,7 +81,7 @@ def rewrite_text(text: str) -> tuple[str, int]:
         replacements = [
             (f'"/{name}', f'"{BASE}/{name}'),
             (f"'/{name}", f"'{BASE}/{name}"),
-            (f'\`/{name}', f'\`{BASE}/{name}'),
+            (f'`/{name}', f'`{BASE}/{name}'),
             (f"url(/{name}", f"url({BASE}/{name}"),
             (f'url("/{name}', f'url("{BASE}/{name}'),
             (f"url('/{name}", f"url('{BASE}/{name}"),
