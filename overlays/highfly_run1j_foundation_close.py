@@ -392,13 +392,7 @@ if ui_text.count(old_guard) != 1:
     raise SystemExit(f"Training register guard final form mismatch: {ui_text.count(old_guard)}")
 ui_text = ui_text.replace(old_guard, new_guard)
 
-old_collection = '''  const state = cycleState(profile);
-  const definitions = new Map<string, ExerciseDefinition>();
-  const sets: SessionRecord['sets'][number][] = [];
-  let plannedSets = 0;
-
-  for (const exercise of exercises) {
-    const prescription = prescriptionForWeek(exercise, selectedWeek);
+old_partial_order = '''    const prescription = prescriptionForWeek(exercise, selectedWeek);
     if (!prescription) continue;
     const load = loadPlan(exercise);
     if (!load.ready) return;
@@ -412,42 +406,23 @@ old_collection = '''  const state = cycleState(profile);
     });
 
     plannedSets += prescription.sets;
-    for (let index = 0; index < prescription.sets; index++) {
-      sets.push({
-        setId: \`${exercise.exerciseId}-${index + 1}\`,
-        exerciseId: exercise.exerciseId,
-        reps: prescription.reps,
-        loadKg: load.systemLoadKg,
-        restSec: restForSet(exercise, index),
-        intent: exercise.intent,
-        quality: 1,
-      });
-    }
-  }
+    const actualSets = Math.min(
+      prescription.sets,
+      completedSets.get(exercise.exerciseId) ?? 0,
+    );
 '''
 
-new_collection = '''  const state = cycleState(profile);
-  const definitions = new Map<string, ExerciseDefinition>();
-  const sets: SessionRecord['sets'][number][] = [];
-  let plannedSets = 0;
-  let completedExerciseCount = 0;
-
-  for (const exercise of exercises) {
-    const prescription = prescriptionForWeek(exercise, selectedWeek);
+new_partial_order = '''    const prescription = prescriptionForWeek(exercise, selectedWeek);
     if (!prescription) continue;
 
+    // Keep the complete plan as denominator, but ignore untouched work before
+    // validating exercise-specific load input.
     plannedSets += prescription.sets;
-    const done = Math.max(
-      0,
-      Math.min(
-        prescription.sets,
-        completedSets.get(exercise.exerciseId) ?? 0,
-      ),
+    const actualSets = Math.min(
+      prescription.sets,
+      completedSets.get(exercise.exerciseId) ?? 0,
     );
-
-    // A closed day records ONLY work actually performed. Pending/skipped
-    // exercises remain part of the plan denominator but never create evidence.
-    if (done <= 0) continue;
+    if (actualSets <= 0) continue;
 
     const load = loadPlan(exercise);
     if (!load.ready) continue;
@@ -459,54 +434,13 @@ new_collection = '''  const state = cycleState(profile);
       loadMode: load.systemLoadKg > 0 ? 'external_kg' : 'bodyweight',
       rmReferenceKg: load.rmReferenceKg,
     });
-
-    if (done >= prescription.sets) completedExerciseCount += 1;
-
-    for (let index = 0; index < done; index++) {
-      sets.push({
-        setId: \`${exercise.exerciseId}-${index + 1}\`,
-        exerciseId: exercise.exerciseId,
-        reps: prescription.reps,
-        loadKg: load.systemLoadKg,
-        restSec: restForSet(exercise, index),
-        intent: exercise.intent,
-        quality: 1,
-      });
-    }
-  }
 '''
 
-if ui_text.count(old_collection) != 1:
+if ui_text.count(old_partial_order) != 1:
     raise SystemExit(
-        f"Training partial-session collection mismatch: {ui_text.count(old_collection)}"
+        f"Training partial-session order mismatch: {ui_text.count(old_partial_order)}"
     )
-ui_text = ui_text.replace(old_collection, new_collection)
-
-old_metrics = '''      completed: true,
-      sets,
-      plannedSets,
-      completedSets: plannedSets,
-      plannedExercises: exercises.length,
-      completedExercises: exercises.length,
-      sequentialCompletion: true,
-      prescriptionCompliance: 1,
-'''
-
-new_metrics = '''      completed: true,
-      sets,
-      plannedSets,
-      completedSets: sets.length,
-      plannedExercises: exercises.length,
-      completedExercises: completedExerciseCount,
-      sequentialCompletion: true,
-      prescriptionCompliance: 1,
-'''
-
-if ui_text.count(old_metrics) != 1:
-    raise SystemExit(
-        f"Training partial-session metrics mismatch: {ui_text.count(old_metrics)}"
-    )
-ui_text = ui_text.replace(old_metrics, new_metrics)
+ui_text = ui_text.replace(old_partial_order, new_partial_order)
 
 ui.write_text(ui_text, encoding="utf-8")
 
