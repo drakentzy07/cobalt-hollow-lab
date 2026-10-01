@@ -325,6 +325,7 @@ jobs:
         run: |
           set -euo pipefail
           python ../overlays/rewrite_pages_static.py
+          python ../overlays/audit_pages_public_roots.py
 
       - name: Browser smoke against built shell
         working-directory: upstream

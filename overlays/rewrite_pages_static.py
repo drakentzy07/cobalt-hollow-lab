@@ -6,7 +6,7 @@ DIST = Path("dist")
 PUBLIC = Path("public")
 
 TEXT_EXTS = {".html", ".js", ".css", ".json", ".webmanifest", ".xml", ".txt"}
-PREFIXES = ["ui", "audio", "basis", "textures", "fonts"]
+PREFIXES = ["ui", "audio", "basis", "textures", "fonts", "claudium", "guide-stills", "map_art", "map_bg"]
 MEDIA_ROOTS = ("models", "textures", "env", "vfx")
 MEDIA_EXTS = {".glb", ".fbx", ".hdr", ".jpg", ".jpeg", ".png", ".webp", ".ktx2"}
 HASH_LEN = 12

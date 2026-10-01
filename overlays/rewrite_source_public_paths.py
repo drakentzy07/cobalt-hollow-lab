@@ -4,7 +4,7 @@ BASE = "/cobalt-hollow-lab"
 ROOTS = [Path("src")]
 ROOT_FILES = [Path("index.html"), Path("play.html"), Path("admin.html"), Path("guide.html"), Path("editor.html")]
 TEXT_EXTS = {".ts", ".tsx", ".js", ".mjs", ".css", ".html"}
-PREFIXES = ("ui", "audio", "basis", "fonts")
+PREFIXES = ("ui", "audio", "basis", "fonts", "claudium", "guide-stills", "map_art", "map_bg")
 
 changed_files = 0
 replacements = 0
