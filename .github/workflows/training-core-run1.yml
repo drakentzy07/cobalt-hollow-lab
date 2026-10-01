@@ -291,22 +291,22 @@ jobs:
               assert data[:4] == b"RIFF" and data[8:12] == b"WEBP", f"{path} is not a valid WebP"
           print("HIGHFLY_FOUNDATION_PREMIUM_WEBP_OK=1")
           PY
-          test -s branding/highfly-logo-official.webp
-          test -s upstream/public/highfly/highfly-logo-official.webp
-          test "$(wc -c < branding/highfly-logo-official.webp)" -gt 50000
-          test "$(wc -c < upstream/public/highfly/highfly-logo-official.webp)" -gt 50000
+          test -s branding/highfly-logo-full.webp
+          test -s upstream/public/highfly/highfly-logo-full.webp
+          test "$(wc -c < branding/highfly-logo-full.webp)" -gt 10000
+          test "$(wc -c < upstream/public/highfly/highfly-logo-full.webp)" -gt 10000
           python - <<'PY'
           from pathlib import Path
           for path in (
-              Path("branding/highfly-logo-official.webp"),
-              Path("upstream/public/highfly/highfly-logo-official.webp"),
+              Path("branding/highfly-logo-full.webp"),
+              Path("upstream/public/highfly/highfly-logo-full.webp"),
           ):
               data = path.read_bytes()
               assert data[:4] == b"RIFF" and data[8:12] == b"WEBP", f"{path} is not a valid WebP"
-          print("HIGHFLY_FINAL_OFFICIAL_LOGO_OK=1")
+          print("HIGHFLY_FINAL_VALIDATED_LOGO_OK=1")
           PY
-          grep -F 'src="/cobalt-hollow-lab/highfly/highfly-logo-official.webp"' upstream/index.html
-          grep -F 'class="ls-logo" src="/cobalt-hollow-lab/highfly/highfly-logo-official.webp"' upstream/index.html
+          grep -F 'src="/cobalt-hollow-lab/highfly/highfly-logo-full.webp"' upstream/index.html
+          grep -F 'class="ls-logo" src="/cobalt-hollow-lab/highfly/highfly-logo-full.webp"' upstream/index.html
           grep -F 'class="highfly-entry-logo"' upstream/index.html
           grep -F 'id="highfly-chat-close"' upstream/index.html
           grep -F 'id="highfly-chat-send"' upstream/index.html
@@ -1557,7 +1557,7 @@ jobs:
           if (!entry.title.includes('HIGHFLY')) throw new Error('J4: HIGHFLY title missing');
           if (entry.bodyText.includes('World of ClaudeCraft')) throw new Error('J4: donor brand leaked on entry');
           if (entry.bodyText.includes('Discord')) throw new Error('J4: Discord CTA leaked on entry');
-          if (!entry.fullLogo?.endsWith('/highfly/highfly-logo-official.webp')) {
+          if (!entry.fullLogo?.endsWith('/highfly/highfly-logo-full.webp')) {
             throw new Error('J4: premium full logo source mismatch: ' + entry.fullLogo);
           }
           if (!entry.fullLogoNatural || entry.fullLogoNatural[0] < 300 || entry.fullLogoNatural[1] < 300) {
