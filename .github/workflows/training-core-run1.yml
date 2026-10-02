@@ -708,8 +708,16 @@ jobs:
               { timeout: 30000 },
             );
             await page.locator('#btn-start-offline').click({ force: true });
-            const preflight = page.locator('#mobile-preflight-continue');
-            if (await preflight.count()) await preflight.click({ force: true }).catch(() => {});
+            // Follow the same proven preflight path as the browser smoke.
+            // The control exists in the DOM before it is actually actionable,
+            // so counting + force-clicking can race the transition.
+            await page
+              .locator('#mobile-preflight-continue')
+              .waitFor({ state: 'visible', timeout: 6000 })
+              .catch(() => {});
+            await page.evaluate(() =>
+              document.querySelector('#mobile-preflight-continue')?.click(),
+            );
             await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, {
               timeout: 90000,
             });
