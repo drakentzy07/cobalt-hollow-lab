@@ -664,6 +664,7 @@ jobs:
             cls = 'warrior',
             hunterName = 'CobaltWarrior',
             expectResume = false,
+            requirePreview = false,
           } = {}) {
             await page.locator('#btn-offline').waitFor({ state: 'attached', timeout: 20000 });
             for (let attempt = 0; attempt < 60; attempt++) {
@@ -700,24 +701,31 @@ jobs:
                 { hunterName, cls },
               );
             }
-            // Match the proven browser-smoke entry path: the selected Hunter
-            // must finish its class preview/prewarm before world entry. Clicking
-            // Start while CharacterPreview is still swapping GLBs can lose the
-            // entry transition and leave the test waiting on a game that never booted.
-            await page.waitForFunction(
-              ({ cls }) => {
-                const canvas = document.querySelector('#char-preview-canvas');
+            // Only the first cold entry needs the preview/prewarm barrier.
+            // Later save/class reloads were already proven GREEN in #93 without
+            // requiring a visual marker; forcing it for every class can stall
+            // multislot validation on a preview-only condition.
+            if (requirePreview) {
+              await page.waitForFunction(
+                ({ cls }) => {
+                  const canvas = document.querySelector('#char-preview-canvas');
+                  const start = document.querySelector('#btn-start-offline');
+                  return (
+                    canvas instanceof HTMLCanvasElement &&
+                    canvas.dataset.highflyPreviewVisual === `player_${cls}_modular` &&
+                    start instanceof HTMLButtonElement &&
+                    !start.disabled
+                  );
+                },
+                { cls },
+                { timeout: 30000 },
+              );
+            } else {
+              await page.waitForFunction(() => {
                 const start = document.querySelector('#btn-start-offline');
-                return (
-                  canvas instanceof HTMLCanvasElement &&
-                  canvas.dataset.highflyPreviewVisual === `player_${cls}_modular` &&
-                  start instanceof HTMLButtonElement &&
-                  !start.disabled
-                );
-              },
-              { cls },
-              { timeout: 30000 },
-            );
+                return start instanceof HTMLButtonElement && !start.disabled;
+              }, null, { timeout: 15000 });
+            }
             await page.evaluate(() => document.querySelector('#btn-start-offline')?.click());
             // Follow the same proven preflight path as the browser smoke.
             // The control exists in the DOM before it is actually actionable,
@@ -739,7 +747,7 @@ jobs:
           await page.evaluate(() =>
             localStorage.setItem('woc.cameraModePrompt.shown', '1'),
           ).catch(() => {});
-          await enterOffline();
+          await enterOffline({ requirePreview: true });
 
           const expected = await page.evaluate(() => {
             const sim = window.__game.sim;
