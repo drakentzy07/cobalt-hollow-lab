@@ -96,6 +96,13 @@ new = """  const recoverHighflyOfflinePreview = async (cls: PlayerClass): Promis
     }
   };
 
+  // Guard the async primary-Hunter restore against real user interaction.
+  // A slow IndexedDB read must never overwrite a class/name the player already chose.
+  let highflyOfflineSelectionRevision = 0;
+  offlineNameInput.addEventListener('input', () => {
+    highflyOfflineSelectionRevision += 1;
+  });
+
   const selectHighflyOfflineClass = (cls: PlayerClass): void => {
     const card = document.querySelector(
       `#offline-select .mini-class[data-class="${cls}"]`,
@@ -119,7 +126,11 @@ new = """  const recoverHighflyOfflinePreview = async (cls: PlayerClass): Promis
 
     // Restore the primary Hunter's identity before the player presses Enter
     // World. The actual RPG snapshot is restored by startOffline().
+    const restoreRevision = highflyOfflineSelectionRevision;
     void loadHighflyOfflineSave().then((saved) => {
+      // If the player typed a name or picked a class while IndexedDB was
+      // resolving, their explicit choice wins over the stale primary snapshot.
+      if (highflyOfflineSelectionRevision !== restoreRevision) return;
       const cls = saved?.playerClass ?? 'warrior';
       offlineNameInput.value = saved?.name ?? '';
       selectHighflyOfflineClass(cls);
@@ -127,5 +138,21 @@ new = """  const recoverHighflyOfflinePreview = async (cls: PlayerClass): Promis
   };
 """
 replace_once(main, old, new, "offline resume and preview recovery")
+
+# The upstream offline class-chip handler runs later in main.ts. Mark any manual
+# class activation so a pending async primary restore cannot overwrite it.
+replace_once(
+    main,
+    """  // offline class chips
+  document.querySelectorAll('#offline-select .mini-class').forEach((card) => {
+    const handleClassSelect = () => {
+""",
+    """  // offline class chips
+  document.querySelectorAll('#offline-select .mini-class').forEach((card) => {
+    const handleClassSelect = () => {
+      highflyOfflineSelectionRevision += 1;
+""",
+    "offline manual selection wins pending restore",
+)
 
 print("HIGHFLY_OFFLINE_RESUME_PREVIEW_APPLIED=1")

@@ -116,6 +116,11 @@ jobs:
           python ../overlays/highfly_run1j_j4_brandfix.py
           python ../overlays/highfly_run1j_j3a_flags.py
           python ../overlays/highfly_run1j_j3b_native_bridge.py
+          python ../overlays/highfly_run1j_real_device_fix.py
+          python ../overlays/highfly_run1j_foundation_close.py
+          python ../overlays/highfly_run1j_final_polish.py
+          python ../overlays/highfly_run1j_visual_release.py
+          python ../overlays/highfly_run115_visuals.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -174,6 +179,10 @@ jobs:
           grep -F "highflyBasicAttack" src/sim/combat/auto_attack.ts
           grep -F "highflyComboExpiresAt = now + 0.95" src/ui/hud.ts
           grep -F "highfly_basic_3: 'Warrior_Reaping_Arc'" src/render/characters/manifest.ts
+          grep -F "HIGHFLY RUN1-J VISUAL RELEASE" src/styles/shell.website.css
+          grep -F "HIGHFLY RUN1-J VISUAL RELEASE" src/styles/shell.css
+          grep -F "MUNDO LOCAL · PROGRESO PERSISTENTE" index.html
+          grep -F ">ENTRAR AL MUNDO</span>" index.html
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -274,8 +283,60 @@ jobs:
               assert width >= 64 and height >= 64, f"{name} dimensions are too small: {width}x{height}"
           print("HIGHFLY_J4_VALID_PNGS_OK=1")
           PY
-          grep -F 'src="/cobalt-hollow-lab/highfly/highfly-logo-full.png"' upstream/index.html
-          grep -F 'src="/cobalt-hollow-lab/highfly/highfly-logo-mark.png"' upstream/index.html
+          test -s upstream/public/highfly/highfly-splash.avif
+          test -s upstream/public/highfly/highfly-entry.avif
+          test -s upstream/public/highfly/highfly-loading.avif
+          test "$(wc -c < upstream/public/highfly/highfly-splash.avif)" -gt 20000
+          test "$(wc -c < upstream/public/highfly/highfly-entry.avif)" -gt 20000
+          test "$(wc -c < upstream/public/highfly/highfly-loading.avif)" -gt 20000
+          grep -F 'highfly-entry.avif' upstream/src/styles/shell.website.css
+          grep -F 'highfly-loading.avif' upstream/src/styles/shell.css
+          grep -F 'highfly-splash.avif' upstream/index.html
+          grep -F 'highfly-splash.avif' upstream/play.html
+          test -s branding/highfly-logo-full.webp
+          test -s upstream/public/highfly/highfly-logo-full.webp
+          test "$(wc -c < branding/highfly-logo-full.webp)" -gt 10000
+          test "$(wc -c < upstream/public/highfly/highfly-logo-full.webp)" -gt 10000
+          python - <<'PY'
+          from pathlib import Path
+          for path in (
+              Path("branding/highfly-logo-full.webp"),
+              Path("upstream/public/highfly/highfly-logo-full.webp"),
+          ):
+              data = path.read_bytes()
+              assert data[:4] == b"RIFF" and data[8:12] == b"WEBP", f"{path} is not a valid WebP"
+          print("HIGHFLY_FOUNDATION_PREMIUM_WEBP_OK=1")
+          PY
+          test -s branding/highfly-logo-full.webp
+          test -s upstream/public/highfly/highfly-logo-full.webp
+          test "$(wc -c < branding/highfly-logo-full.webp)" -gt 10000
+          test "$(wc -c < upstream/public/highfly/highfly-logo-full.webp)" -gt 10000
+          python - <<'PY'
+          from pathlib import Path
+          for path in (
+              Path("branding/highfly-logo-full.webp"),
+              Path("upstream/public/highfly/highfly-logo-full.webp"),
+          ):
+              data = path.read_bytes()
+              assert data[:4] == b"RIFF" and data[8:12] == b"WEBP", f"{path} is not a valid WebP"
+          print("HIGHFLY_FINAL_VALIDATED_LOGO_OK=1")
+          PY
+          grep -F 'src="/cobalt-hollow-lab/highfly/highfly-logo-full.webp"' upstream/index.html
+          grep -F 'class="ls-logo" src="/cobalt-hollow-lab/highfly/highfly-logo-full.webp"' upstream/index.html
+          grep -F 'class="highfly-entry-logo"' upstream/index.html
+          grep -F 'id="highfly-chat-close"' upstream/play.html
+          grep -F 'id="highfly-chat-send"' upstream/play.html
+          grep -F 'HIGHFLY_FINAL_CHAT_CONTROLS' upstream/src/main.ts
+          grep -F 'RESULTADO DE ESTA SESIÓN' upstream/src/highfly/training/ui.ts
+          grep -F 'HUNTER CORE · ESTADO CONSOLIDADO' upstream/src/highfly/training/ui.ts
+          grep -F 'BASE ESTABLECIDA' upstream/src/highfly/training/ui.ts
+          grep -F 'body.start-screen-open .homepage-footer' upstream/src/styles/shell.website.css
+          grep -F '#loot-explorer-window' upstream/src/styles/shell.css
+          grep -F '#highfly-chat-send' upstream/src/styles/shell.css
+          grep -F "COMPLETAR SESIÓN" upstream/src/highfly/training/ui.ts
+          grep -F 'data-highfly-all-terminal=' upstream/src/highfly/training/ui.ts
+          grep -F '#mobile-meters' upstream/src/styles/shell.css
+          grep -F '#reliquary-window' upstream/src/styles/shell.css
           grep -F "'seo.title': 'HIGHFLY — Entrena · Asciende · Conquista'" upstream/src/ui/i18n.locales/es_ES.ts
           grep -F "'loading.world': 'Iniciando HIGHFLY...'" upstream/src/ui/i18n.locales/es_ES.ts
           grep -F "'auth.enterWorld': 'Entrar a HIGHFLY'" upstream/src/ui/i18n.locales/es_ES.ts
@@ -287,6 +348,12 @@ jobs:
           grep -F "highflyResourceRecoveryMultiplier" upstream/src/sim/combat/auras.ts
           grep -F "trainingGain(profile.training.core.AGI.current)" upstream/src/highfly/training/combat_runtime.ts
           grep -F "baseline.hitBonus + precisionBonus" upstream/src/highfly/training/combat_runtime.ts
+          grep -F "HIGHFLY_RUN1J_REAL_DEVICE_FIX_APPLIED=1" <(python -c "print('HIGHFLY_RUN1J_REAL_DEVICE_FIX_APPLIED=1')")
+          grep -F "staleDonorLevel20" upstream/src/main.ts
+          grep -F "SALTAR EJERCICIO" upstream/src/highfly/training/ui.ts
+          grep -F "canActOnExercise" upstream/src/highfly/training/ui.ts
+          grep -F 'HIGHFLY RUN1-J VISUAL RELEASE — S23 entry surface' upstream/src/styles/shell.website.css
+          ! grep -F 'url("/worldofclaudecraft-logo.png")' upstream/src/styles/shell.website.css
           grep -q "CONTINUAR ANTES DE TIEMPO" training/runtime/ui.ts
 
       - name: TypeScript source smoke
@@ -608,6 +675,7 @@ jobs:
             cls = 'warrior',
             hunterName = 'CobaltWarrior',
             expectResume = false,
+            requirePreview = false,
           } = {}) {
             await page.locator('#btn-offline').waitFor({ state: 'attached', timeout: 20000 });
             for (let attempt = 0; attempt < 60; attempt++) {
@@ -630,20 +698,96 @@ jobs:
                 { timeout: 15000 },
               );
             } else {
-              await name.fill(hunterName);
-              await card.click({ force: true });
+              await page.evaluate(
+                ({ hunterName, cls }) => {
+                  const input = document.querySelector('#char-name');
+                  if (input instanceof HTMLInputElement) {
+                    input.value = hunterName;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                  }
+                  document
+                    .querySelector(`#offline-select .mini-class[data-class="${cls}"]`)
+                    ?.click();
+                },
+                { hunterName, cls },
+              );
             }
-            await page.locator('#btn-start-offline').click({ force: true });
-            const preflight = page.locator('#mobile-preflight-continue');
-            if (await preflight.count()) await preflight.click({ force: true }).catch(() => {});
+            // Only the first cold entry needs the preview/prewarm barrier.
+            // Later save/class reloads were already proven GREEN in #93 without
+            // requiring a visual marker; forcing it for every class can stall
+            // multislot validation on a preview-only condition.
+            if (requirePreview) {
+              await page.waitForFunction(
+                ({ cls }) => {
+                  const canvas = document.querySelector('#char-preview-canvas');
+                  const start = document.querySelector('#btn-start-offline');
+                  return (
+                    canvas instanceof HTMLCanvasElement &&
+                    canvas.dataset.highflyPreviewVisual === `player_${cls}_modular` &&
+                    start instanceof HTMLButtonElement &&
+                    !start.disabled
+                  );
+                },
+                { cls },
+                { timeout: 30000 },
+              );
+            } else {
+              await page.waitForFunction(() => {
+                const start = document.querySelector('#btn-start-offline');
+                return start instanceof HTMLButtonElement && !start.disabled;
+              }, null, { timeout: 15000 });
+            }
+            await page.evaluate(() => document.querySelector('#btn-start-offline')?.click());
+            console.log('RUN1F_ENTRY_START_CLICKED', { cls, hunterName, expectResume, requirePreview });
+
+            // Entry may either boot directly or pause on the mobile preflight.
+            // Do not use a short fixed preflight window: on cold CI the control
+            // can become visible after several seconds while the world is warming.
+            const entryGate = await page.waitForFunction(() => {
+              if (window.__game?.sim?.player) return 'booted';
+
+              const loading = document.querySelector('#loading-screen');
+              if (
+                loading instanceof HTMLElement &&
+                loading.classList.contains('visible')
+              ) {
+                return 'loading';
+              }
+
+              const button = document.querySelector('#mobile-preflight-continue');
+              if (!(button instanceof HTMLElement)) return false;
+              const style = getComputedStyle(button);
+              const rect = button.getBoundingClientRect();
+              return (
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                Number(style.opacity || '1') > 0 &&
+                rect.width > 0 &&
+                rect.height > 0
+              ) ? 'preflight' : false;
+            }, null, { timeout: 30000 });
+            const entryGateState = await entryGate.jsonValue();
+            console.log('RUN1F_ENTRY_GATE', { cls, state: entryGateState });
+
+            if (entryGateState === 'preflight') {
+              await page.evaluate(() =>
+                document.querySelector('#mobile-preflight-continue')?.click(),
+              );
+              console.log('RUN1F_PREFLIGHT_CONFIRMED', { cls });
+            }
+
             await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, {
-              timeout: 60000,
+              timeout: 90000,
             });
+            console.log('RUN1F_WORLD_BOOTED', { cls });
             await page.waitForTimeout(2500);
           }
 
           await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-          await enterOffline();
+          await page.evaluate(() =>
+            localStorage.setItem('woc.cameraModePrompt.shown', '1'),
+          ).catch(() => {});
+          await enterOffline({ requirePreview: true });
 
           const expected = await page.evaluate(() => {
             const sim = window.__game.sim;
@@ -876,13 +1020,88 @@ jobs:
               if (await page.locator('#offline-select').isVisible().catch(() => false)) break;
               await page.waitForTimeout(250);
             }
-            await page.locator('#char-name').fill('TrainingHunterJ');
-            await page.locator('#offline-select .mini-class[data-class="warrior"]').click({ force: true });
-            await page.locator('#btn-start-offline').click({ force: true });
-            const preflight = page.locator('#mobile-preflight-continue');
-            if (await preflight.count()) await preflight.click({ force: true }).catch(() => {});
-            await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 60000 });
-            await page.waitForTimeout(700);
+
+            await page.evaluate(() =>
+              localStorage.setItem('woc.cameraModePrompt.shown', '1'),
+            ).catch(() => {});
+
+            await page.evaluate(() => {
+              const input = document.querySelector('#char-name');
+              if (input instanceof HTMLInputElement) {
+                input.value = 'TrainingHunterJ';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+              document
+                .querySelector('#offline-select .mini-class[data-class="warrior"]')
+                ?.click();
+            });
+
+            await page.waitForFunction(() => {
+              const canvas = document.querySelector('#char-preview-canvas');
+              const start = document.querySelector('#btn-start-offline');
+              return (
+                canvas instanceof HTMLCanvasElement &&
+                canvas.dataset.highflyPreviewVisual === 'player_warrior_modular' &&
+                start instanceof HTMLButtonElement &&
+                !start.disabled
+              );
+            }, null, { timeout: 30000 });
+
+            await page.evaluate(() => document.querySelector('#btn-start-offline')?.click());
+
+            const entryGate = await page.waitForFunction(() => {
+              if (window.__game?.sim?.player) return 'booted';
+
+              const loading = document.querySelector('#loading-screen');
+              if (
+                loading instanceof HTMLElement &&
+                loading.classList.contains('visible')
+              ) {
+                return 'loading';
+              }
+
+              const button = document.querySelector('#mobile-preflight-continue');
+              if (!(button instanceof HTMLElement)) return false;
+              const style = getComputedStyle(button);
+              const rect = button.getBoundingClientRect();
+              return (
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                Number(style.opacity || '1') > 0 &&
+                rect.width > 0 &&
+                rect.height > 0
+              ) ? 'preflight' : false;
+            }, null, { timeout: 30000 });
+            const entryGateState = await entryGate.jsonValue();
+            console.log('RUN1J_ENTRY_GATE', entryGateState);
+
+            if (entryGateState === 'preflight') {
+              await page.evaluate(() =>
+                document.querySelector('#mobile-preflight-continue')?.click(),
+              );
+            }
+
+            await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, {
+              timeout: 90000,
+            });
+
+            // sim.player exists before ClaudeCraft's first-frame settle cover
+            // necessarily finishes. Real touch input is intentionally blocked
+            // until the loading curtain is gone, so the Training smoke must wait
+            // for that same user-visible readiness state.
+            await page.waitForFunction(() => {
+              const loading = document.querySelector('#loading-screen');
+              if (!(loading instanceof HTMLElement)) return true;
+              const style = getComputedStyle(loading);
+              return (
+                !loading.classList.contains('visible') ||
+                style.display === 'none' ||
+                style.visibility === 'hidden' ||
+                style.pointerEvents === 'none'
+              );
+            }, null, { timeout: 90000 });
+            console.log('RUN1J_LOADING_CLEARED');
+            await page.waitForTimeout(300);
           }
 
           async function openTraining() {
@@ -947,6 +1166,40 @@ jobs:
             !exact.squatTopDisabled
           ) {
             throw new Error('RUN1-J exact sheet or sequential lock contract failed');
+          }
+
+          // Real-device regression: touch dispatches must never bypass a disabled
+          // next exercise. The only alternate progression path is explicit skip.
+          const bypass = await page.evaluate(() => {
+            const locked = document.querySelector(
+              '[data-hf-set-complete="d1_back_squat_top"]',
+            );
+            if (!(locked instanceof HTMLElement)) return null;
+            const before = locked.hasAttribute('disabled');
+            const opts = {
+              bubbles: true,
+              cancelable: true,
+              pointerType: 'touch',
+              pointerId: 991,
+              isPrimary: true,
+              clientX: 8,
+              clientY: 8,
+            };
+            locked.dispatchEvent(new PointerEvent('pointerdown', opts));
+            locked.dispatchEvent(new PointerEvent('pointerup', opts));
+            return {
+              before,
+              after: locked.hasAttribute('disabled'),
+            };
+          });
+          if (!bypass?.before || !bypass.after) {
+            throw new Error('RUN1-J touch bypassed strict exercise sequence');
+          }
+          const explicitSkip = page.locator(
+            '[data-hf-exercise-skip="d1_hang_power_clean"]',
+          );
+          if (!(await explicitSkip.isEnabled())) {
+            throw new Error('RUN1-J explicit skip control missing on active exercise');
           }
 
           // Blank spreadsheet weights remain user-entered accessories.
@@ -1431,33 +1684,136 @@ jobs:
           const url = 'http://127.0.0.1:4177/cobalt-hollow-lab/';
           await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
           await page.waitForFunction(() => {
-            const images = [
-              document.querySelector('[data-highfly-brand-target="full"]'),
-              document.querySelector('[data-highfly-brand-target="mark"]'),
-            ];
-            return images.every(
-              (image) =>
-                image instanceof HTMLImageElement &&
-                image.complete &&
-                image.naturalWidth > 0,
+            const image = document.querySelector('.highfly-entry-logo');
+            return (
+              image instanceof HTMLImageElement &&
+              image.complete &&
+              image.naturalWidth >= 300 &&
+              image.naturalHeight >= 300
             );
           }, null, { timeout: 10000 });
 
-          const entry = await page.evaluate(() => ({
-            title: document.title,
-            bodyText: (document.body.innerText ?? '').slice(0, 8000),
-            fullLogo: document.querySelector('[data-highfly-brand-target="full"]')?.getAttribute('src') ?? null,
-            markLogo: document.querySelector('[data-highfly-brand-target="mark"]')?.getAttribute('src') ?? null,
-          }));
+          const entry = await page.evaluate(() => {
+            const card = document.querySelector('#mode-select');
+            const hero = document.querySelector('#homepage-views-container');
+            const logo = document.querySelector('.highfly-entry-logo');
+            const header = document.querySelector('.homepage-header');
+            const cardRect = card instanceof HTMLElement ? card.getBoundingClientRect() : null;
+            const heroRect = hero instanceof HTMLElement ? hero.getBoundingClientRect() : null;
+            return {
+              title: document.title,
+              bodyText: (document.body.innerText ?? '').slice(0, 8000),
+              fullLogo: logo instanceof HTMLImageElement ? logo.getAttribute('src') : null,
+              fullLogoNatural: logo instanceof HTMLImageElement
+                ? [logo.naturalWidth, logo.naturalHeight]
+                : null,
+              donorGatewayLogo:
+                getComputedStyle(card ?? document.body, '::after').backgroundImage,
+              donorGatewayContent:
+                getComputedStyle(card ?? document.body, '::after').content,
+              headerDisplay:
+                header instanceof HTMLElement ? getComputedStyle(header).display : null,
+              cardRect: cardRect
+                ? { width: cardRect.width, height: cardRect.height, left: cardRect.left, top: cardRect.top }
+                : null,
+              heroRect: heroRect
+                ? { width: heroRect.width, height: heroRect.height, left: heroRect.left, top: heroRect.top }
+                : null,
+              viewport: [innerWidth, innerHeight],
+            };
+          });
           if (!entry.title.includes('HIGHFLY')) throw new Error('J4: HIGHFLY title missing');
           if (entry.bodyText.includes('World of ClaudeCraft')) throw new Error('J4: donor brand leaked on entry');
           if (entry.bodyText.includes('Discord')) throw new Error('J4: Discord CTA leaked on entry');
-          if (!entry.fullLogo?.endsWith('/highfly/highfly-logo-full.png')) {
-            throw new Error('J4: full logo source mismatch: ' + entry.fullLogo);
+          if (!entry.fullLogo?.endsWith('/highfly/highfly-logo-full.webp')) {
+            throw new Error('J4: premium full logo source mismatch: ' + entry.fullLogo);
           }
-          if (!entry.markLogo?.endsWith('/highfly/highfly-logo-mark.png')) {
-            throw new Error('J4: mark logo source mismatch: ' + entry.markLogo);
+          if (!entry.fullLogoNatural || entry.fullLogoNatural[0] < 300 || entry.fullLogoNatural[1] < 300) {
+            throw new Error('J4: premium full logo loaded too small: ' + JSON.stringify(entry.fullLogoNatural));
           }
+          if (entry.donorGatewayLogo.includes('worldofclaudecraft-logo')) {
+            throw new Error('J4: donor gateway logo survived: ' + entry.donorGatewayLogo);
+          }
+          if (!entry.heroRect || entry.heroRect.width < 840 || entry.heroRect.height < 385) {
+            throw new Error('J4: entry is not fullscreen on S23: ' + JSON.stringify(entry));
+          }
+          if (entry.headerDisplay !== 'none') {
+            throw new Error('J4: website header still steals mobile entry space: ' + entry.headerDisplay);
+          }
+
+          const visualEntry = await page.evaluate(() => {
+            const card = document.querySelector('#mode-select');
+            const logo = document.querySelector('.highfly-entry-logo');
+            const start = document.querySelector('#start-screen');
+            const text = document.body.innerText ?? '';
+            const forbidden = [
+              'Añadir a la lista de deseados',
+              'Proyecto de código abierto',
+              'Donar',
+              'v0.44',
+              'Wishlist on Steam',
+            ].filter((marker) => text.includes(marker));
+            const cardRect = card instanceof HTMLElement ? card.getBoundingClientRect() : null;
+            const logoRect = logo instanceof HTMLElement ? logo.getBoundingClientRect() : null;
+            const before = card ? getComputedStyle(card, '::before') : null;
+            return {
+              forbidden,
+              viewport: [innerWidth, innerHeight],
+              rootScroll: [document.documentElement.scrollWidth, document.documentElement.scrollHeight],
+              startScroll:
+                start instanceof HTMLElement ? [start.scrollWidth, start.scrollHeight] : null,
+              cardRect: cardRect
+                ? { left: cardRect.left, top: cardRect.top, right: cardRect.right, bottom: cardRect.bottom, width: cardRect.width, height: cardRect.height }
+                : null,
+              logoRect: logoRect
+                ? { left: logoRect.left, top: logoRect.top, right: logoRect.right, bottom: logoRect.bottom, width: logoRect.width, height: logoRect.height }
+                : null,
+              portalContent: before?.content ?? null,
+              portalBorderImage: before?.borderImageSource ?? null,
+            };
+          });
+          console.log('RUN1J_VISUAL_ENTRY', JSON.stringify(visualEntry, null, 2));
+          if (visualEntry.forbidden.length) {
+            throw new Error('J4: donor/marketing content still visible on entry: ' + visualEntry.forbidden.join(', '));
+          }
+          if (
+            visualEntry.rootScroll[0] > visualEntry.viewport[0] + 2 ||
+            visualEntry.rootScroll[1] > visualEntry.viewport[1] + 2 ||
+            (visualEntry.startScroll &&
+              (visualEntry.startScroll[0] > visualEntry.viewport[0] + 2 ||
+               visualEntry.startScroll[1] > visualEntry.viewport[1] + 2))
+          ) {
+            throw new Error('J4: entry viewport scroll overflow: ' + JSON.stringify(visualEntry));
+          }
+          if (
+            visualEntry.portalContent !== 'none' &&
+            visualEntry.portalContent !== 'normal' &&
+            visualEntry.portalContent !== '""'
+          ) {
+            throw new Error('J4: donor portal pseudo survived: ' + JSON.stringify(visualEntry));
+          }
+          if (visualEntry.portalBorderImage && visualEntry.portalBorderImage !== 'none') {
+            throw new Error('J4: donor portal border-image survived: ' + visualEntry.portalBorderImage);
+          }
+          if (
+            !visualEntry.cardRect ||
+            visualEntry.cardRect.left < -2 ||
+            visualEntry.cardRect.top < -2 ||
+            visualEntry.cardRect.right > visualEntry.viewport[0] + 2 ||
+            visualEntry.cardRect.bottom > visualEntry.viewport[1] + 2
+          ) {
+            throw new Error('J4: HIGHFLY entry card outside viewport: ' + JSON.stringify(visualEntry));
+          }
+          if (
+            !visualEntry.logoRect ||
+            visualEntry.logoRect.width < 140 ||
+            visualEntry.logoRect.width > 260 ||
+            visualEntry.logoRect.height < 100 ||
+            visualEntry.logoRect.bottom > visualEntry.viewport[1]
+          ) {
+            throw new Error('J4: HIGHFLY entry logo scale/layout invalid: ' + JSON.stringify(visualEntry));
+          }
+          await page.screenshot({ path: '../run1j-j4-entry.png', fullPage: true });
 
           // Reuse the exact mobile entry path that already passed the RUN0.9.3
           // foundation regression above. Starting before the selected preview
@@ -1482,11 +1838,37 @@ jobs:
           });
           await page.waitForFunction(() => {
             const canvas = document.querySelector('#char-preview-canvas');
+            if (!(canvas instanceof HTMLCanvasElement)) return false;
+            const style = getComputedStyle(canvas);
+            const rect = canvas.getBoundingClientRect();
             return (
-              canvas instanceof HTMLCanvasElement &&
-              canvas.dataset.highflyPreviewVisual === 'player_warrior_modular'
+              canvas.dataset.highflyPreviewVisual === 'player_warrior_modular' &&
+              style.display !== 'none' &&
+              style.visibility !== 'hidden' &&
+              Number(style.opacity || '1') > 0 &&
+              rect.width >= 300 &&
+              rect.height >= 180 &&
+              rect.bottom > 0 &&
+              rect.top < innerHeight
             );
           }, null, { timeout: 20000 });
+
+          const previewSurface = await page.evaluate(() => {
+            const canvas = document.querySelector('#char-preview-canvas');
+            const container = document.querySelector('#offline-preview-container');
+            if (!(canvas instanceof HTMLCanvasElement) || !(container instanceof HTMLElement)) return null;
+            const canvasRect = canvas.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            return {
+              visual: canvas.dataset.highflyPreviewVisual ?? null,
+              canvas: { width: canvasRect.width, height: canvasRect.height },
+              container: { width: containerRect.width, height: containerRect.height },
+              buffer: [canvas.width, canvas.height],
+            };
+          });
+          if (!previewSurface || previewSurface.canvas.width < 300 || previewSurface.canvas.height < 180) {
+            throw new Error('J4: creator preview has no real visible surface: ' + JSON.stringify(previewSurface));
+          }
 
           await page.evaluate(() => document.querySelector('#btn-start-offline')?.click());
           await page
@@ -1496,6 +1878,60 @@ jobs:
           await page.evaluate(() =>
             document.querySelector('#mobile-preflight-continue')?.click(),
           );
+
+          const loadingVisible = await page
+            .locator('#loading-screen.visible')
+            .waitFor({ state: 'visible', timeout: 20000 })
+            .then(() => true)
+            .catch(() => false);
+          if (!loadingVisible) {
+            throw new Error('J4: real world-loading surface was never visible');
+          }
+          const loadingVisual = await page.evaluate(() => {
+            const screen = document.querySelector('#loading-screen');
+            const logo = document.querySelector('#loading-screen .ls-logo');
+            const progress = document.querySelector('#loading-screen .ls-progress');
+            if (!(screen instanceof HTMLElement) || !(logo instanceof HTMLImageElement)) return null;
+            const sr = screen.getBoundingClientRect();
+            const lr = logo.getBoundingClientRect();
+            const pr = progress instanceof HTMLElement ? progress.getBoundingClientRect() : null;
+            return {
+              src: logo.getAttribute('src'),
+              natural: [logo.naturalWidth, logo.naturalHeight],
+              screen: { left: sr.left, top: sr.top, right: sr.right, bottom: sr.bottom, width: sr.width, height: sr.height },
+              logo: { left: lr.left, top: lr.top, right: lr.right, bottom: lr.bottom, width: lr.width, height: lr.height },
+              progress: pr ? { left: pr.left, top: pr.top, right: pr.right, bottom: pr.bottom, width: pr.width, height: pr.height } : null,
+              text: screen.innerText ?? '',
+              rootScroll: [document.documentElement.scrollWidth, document.documentElement.scrollHeight],
+              viewport: [innerWidth, innerHeight],
+            };
+          });
+          console.log('RUN1J_VISUAL_LOADING', JSON.stringify(loadingVisual, null, 2));
+          if (!loadingVisual) throw new Error('J4: loading surface missing');
+          if (!loadingVisual.src?.endsWith('/highfly/highfly-logo-full.webp')) {
+            throw new Error('J4: loading HIGHFLY logo source mismatch: ' + loadingVisual.src);
+          }
+          if (!loadingVisual.natural || loadingVisual.natural[0] < 300 || loadingVisual.natural[1] < 300) {
+            throw new Error('J4: loading HIGHFLY logo asset too small: ' + JSON.stringify(loadingVisual.natural));
+          }
+          if (
+            loadingVisual.logo.width < 120 ||
+            loadingVisual.logo.width > 230 ||
+            loadingVisual.logo.top < -2 ||
+            loadingVisual.logo.bottom > loadingVisual.viewport[1] + 2
+          ) {
+            throw new Error('J4: loading logo composition invalid: ' + JSON.stringify(loadingVisual));
+          }
+          if (
+            loadingVisual.rootScroll[0] > loadingVisual.viewport[0] + 2 ||
+            loadingVisual.rootScroll[1] > loadingVisual.viewport[1] + 2
+          ) {
+            throw new Error('J4: loading viewport overflow: ' + JSON.stringify(loadingVisual));
+          }
+          if (/World of ClaudeCraft|Wishlist|Donar|Proyecto de código abierto/i.test(loadingVisual.text)) {
+            throw new Error('J4: donor content visible during loading: ' + loadingVisual.text);
+          }
+          await page.screenshot({ path: '../run1j-j4-loading.png', fullPage: true });
 
           const j4Booted = await page
             .waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 90000 })
@@ -1526,6 +1962,14 @@ jobs:
           }
           await dismissEntryOverlays(page);
           await page.waitForTimeout(900);
+          const initialLevel = await page.evaluate(
+            () => window.__game?.sim?.player?.level ?? null,
+          );
+          if (initialLevel !== 1) {
+            throw new Error(
+              'J4: fresh HIGHFLY Hunter must start at level 1, got ' + initialLevel,
+            );
+          }
 
           for (const selector of ['#mobile-action-attack', '#mobile-move-joystick', '#mobile-menu-anchor']) {
             const el = page.locator(selector);
@@ -1573,6 +2017,67 @@ jobs:
           if (mobile.text.includes('READINESS')) throw new Error('J4: removed Readiness resurfaced');
           if (!mobile.hudVisible) throw new Error('J4: mobile HUD hidden after world boot');
 
+          const mobileShell = await page.evaluate(() => {
+            const hiddenIds = ['mobile-meters', 'mobile-wiki', 'mobile-steam-wishlist', 'mobile-donate'];
+            const hidden = Object.fromEntries(
+              hiddenIds.map((id) => {
+                const el = document.getElementById(id);
+                return [id, el instanceof HTMLElement ? getComputedStyle(el).display : 'missing'];
+              }),
+            );
+            const windowOverflow = Object.fromEntries(
+              ['talents-window', 'reliquary-window'].map((id) => {
+                const el = document.getElementById(id);
+                return [id, el instanceof HTMLElement ? getComputedStyle(el).overflowY : 'missing'];
+              }),
+            );
+            return { hidden, windowOverflow };
+          });
+          for (const [id, display] of Object.entries(mobileShell.hidden)) {
+            if (display !== 'none') throw new Error('J4: removed mobile menu item visible: ' + id + '=' + display);
+          }
+          for (const [id, overflow] of Object.entries(mobileShell.windowOverflow)) {
+            if (!['auto', 'scroll'].includes(overflow)) {
+              throw new Error('J4: mobile window is not scrollable: ' + id + '=' + overflow);
+            }
+          }
+
+          // Close the day AS PERFORMED: record one real set, then finish the
+          // session without completing/skipping the rest. This reproduces the
+          // real-device bug report and proves only actual work is committed.
+          await page.evaluate(() => {
+            const el = document.querySelector('[data-hf-set-complete]:not([disabled])');
+            if (!(el instanceof HTMLElement)) throw new Error('no active Training set button');
+            const opts = {
+              bubbles: true, cancelable: true, pointerType: 'touch',
+              pointerId: 901, isPrimary: true, clientX: 8, clientY: 8,
+            };
+            el.dispatchEvent(new PointerEvent('pointerdown', opts));
+            el.dispatchEvent(new PointerEvent('pointerup', opts));
+          });
+          await page.waitForTimeout(150);
+          await page.evaluate(() => {
+            const el = document.querySelector('#hf-training-register');
+            if (!(el instanceof HTMLElement)) throw new Error('Training register button missing');
+            const opts = {
+              bubbles: true, cancelable: true, pointerType: 'touch',
+              pointerId: 902, isPrimary: true, clientX: 8, clientY: 8,
+            };
+            el.dispatchEvent(new PointerEvent('pointerdown', opts));
+            el.dispatchEvent(new PointerEvent('pointerup', opts));
+          });
+          await page.waitForFunction(() =>
+            (document.querySelector('#hf-training-register')?.textContent ?? '')
+              .includes('SESIÓN YA REGISTRADA'),
+            null,
+            { timeout: 10000 },
+          );
+          const closedDayText =
+            (await page.locator('#highfly-training-window').textContent()) ?? '';
+          if (!closedDayText.includes('1/20')) {
+            throw new Error('J4: completing partial session did not close the training day');
+          }
+
           const staticBadResponses = badResponses.filter(
             (response) =>
               response.status === 404 &&
@@ -1610,9 +2115,11 @@ jobs:
             run093-preview-character.png
             foundation-v1-mobile-fail.png
             run1j-j4-preview.log
+            run1j-j4-entry.png
+            run1j-j4-loading.png
             run1j-j4-s23.png
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 1
 
       - name: Inspect RUN0 output
         shell: bash
