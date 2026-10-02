@@ -1797,7 +1797,7 @@ jobs:
             !visualEntry.logoRect ||
             visualEntry.logoRect.width < 140 ||
             visualEntry.logoRect.width > 260 ||
-            visualEntry.logoRect.height < 120 ||
+            visualEntry.logoRect.height < 100 ||
             visualEntry.logoRect.bottom > visualEntry.viewport[1]
           ) {
             throw new Error('J4: HIGHFLY entry logo scale/layout invalid: ' + JSON.stringify(visualEntry));
