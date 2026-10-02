@@ -686,8 +686,19 @@ jobs:
                 { timeout: 15000 },
               );
             } else {
-              await name.fill(hunterName);
-              await card.click({ force: true });
+              await page.evaluate(
+                ({ hunterName, cls }) => {
+                  const input = document.querySelector('#char-name');
+                  if (input instanceof HTMLInputElement) {
+                    input.value = hunterName;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                  }
+                  document
+                    .querySelector(`#offline-select .mini-class[data-class="${cls}"]`)
+                    ?.click();
+                },
+                { hunterName, cls },
+              );
             }
             // Match the proven browser-smoke entry path: the selected Hunter
             // must finish its class preview/prewarm before world entry. Clicking
@@ -707,7 +718,7 @@ jobs:
               { cls },
               { timeout: 30000 },
             );
-            await page.locator('#btn-start-offline').click({ force: true });
+            await page.evaluate(() => document.querySelector('#btn-start-offline')?.click());
             // Follow the same proven preflight path as the browser smoke.
             // The control exists in the DOM before it is actually actionable,
             // so counting + force-clicking can race the transition.
@@ -725,6 +736,9 @@ jobs:
           }
 
           await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          await page.evaluate(() =>
+            localStorage.setItem('woc.cameraModePrompt.shown', '1'),
+          ).catch(() => {});
           await enterOffline();
 
           const expected = await page.evaluate(() => {
