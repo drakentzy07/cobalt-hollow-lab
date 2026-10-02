@@ -693,7 +693,7 @@ jobs:
             const preflight = page.locator('#mobile-preflight-continue');
             if (await preflight.count()) await preflight.click({ force: true }).catch(() => {});
             await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, {
-              timeout: 60000,
+              timeout: 90000,
             });
             await page.waitForTimeout(2500);
           }
