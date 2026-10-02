@@ -120,6 +120,7 @@ jobs:
           python ../overlays/highfly_run1j_foundation_close.py
           python ../overlays/highfly_run1j_final_polish.py
           python ../overlays/highfly_run1j_visual_release.py
+          python ../overlays/highfly_run115_visuals.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -282,6 +283,16 @@ jobs:
               assert width >= 64 and height >= 64, f"{name} dimensions are too small: {width}x{height}"
           print("HIGHFLY_J4_VALID_PNGS_OK=1")
           PY
+          test -s upstream/public/highfly/highfly-splash.avif
+          test -s upstream/public/highfly/highfly-entry.avif
+          test -s upstream/public/highfly/highfly-loading.avif
+          test "$(wc -c < upstream/public/highfly/highfly-splash.avif)" -gt 20000
+          test "$(wc -c < upstream/public/highfly/highfly-entry.avif)" -gt 20000
+          test "$(wc -c < upstream/public/highfly/highfly-loading.avif)" -gt 20000
+          grep -F 'highfly-entry.avif' upstream/src/styles/shell.website.css
+          grep -F 'highfly-loading.avif' upstream/src/styles/shell.css
+          grep -F 'highfly-splash.avif' upstream/index.html
+          grep -F 'highfly-splash.avif' upstream/play.html
           test -s branding/highfly-logo-full.webp
           test -s upstream/public/highfly/highfly-logo-full.webp
           test "$(wc -c < branding/highfly-logo-full.webp)" -gt 10000
