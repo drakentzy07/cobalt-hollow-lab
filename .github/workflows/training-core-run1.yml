@@ -727,19 +727,39 @@ jobs:
               }, null, { timeout: 15000 });
             }
             await page.evaluate(() => document.querySelector('#btn-start-offline')?.click());
-            // Follow the same proven preflight path as the browser smoke.
-            // The control exists in the DOM before it is actually actionable,
-            // so counting + force-clicking can race the transition.
-            await page
-              .locator('#mobile-preflight-continue')
-              .waitFor({ state: 'visible', timeout: 6000 })
-              .catch(() => {});
-            await page.evaluate(() =>
-              document.querySelector('#mobile-preflight-continue')?.click(),
-            );
+            console.log('RUN1F_ENTRY_START_CLICKED', { cls, hunterName, expectResume, requirePreview });
+
+            // Entry may either boot directly or pause on the mobile preflight.
+            // Do not use a short fixed preflight window: on cold CI the control
+            // can become visible after several seconds while the world is warming.
+            const entryGate = await page.waitForFunction(() => {
+              if (window.__game?.sim?.player) return 'booted';
+              const button = document.querySelector('#mobile-preflight-continue');
+              if (!(button instanceof HTMLElement)) return false;
+              const style = getComputedStyle(button);
+              const rect = button.getBoundingClientRect();
+              return (
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                Number(style.opacity || '1') > 0 &&
+                rect.width > 0 &&
+                rect.height > 0
+              ) ? 'preflight' : false;
+            }, null, { timeout: 30000 });
+            const entryGateState = await entryGate.jsonValue();
+            console.log('RUN1F_ENTRY_GATE', { cls, state: entryGateState });
+
+            if (entryGateState === 'preflight') {
+              await page.evaluate(() =>
+                document.querySelector('#mobile-preflight-continue')?.click(),
+              );
+              console.log('RUN1F_PREFLIGHT_CONFIRMED', { cls });
+            }
+
             await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, {
               timeout: 90000,
             });
+            console.log('RUN1F_WORLD_BOOTED', { cls });
             await page.waitForTimeout(2500);
           }
 
