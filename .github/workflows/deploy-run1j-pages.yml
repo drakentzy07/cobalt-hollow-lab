@@ -154,7 +154,7 @@ jobs:
 
   deploy:
     environment:
-      name: github-pages
+      name: highfly-pages-preview
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
