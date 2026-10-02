@@ -1000,12 +1000,61 @@ jobs:
               if (await page.locator('#offline-select').isVisible().catch(() => false)) break;
               await page.waitForTimeout(250);
             }
-            await page.locator('#char-name').fill('TrainingHunterJ');
-            await page.locator('#offline-select .mini-class[data-class="warrior"]').click({ force: true });
-            await page.locator('#btn-start-offline').click({ force: true });
-            const preflight = page.locator('#mobile-preflight-continue');
-            if (await preflight.count()) await preflight.click({ force: true }).catch(() => {});
-            await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, { timeout: 60000 });
+
+            await page.evaluate(() =>
+              localStorage.setItem('woc.cameraModePrompt.shown', '1'),
+            ).catch(() => {});
+
+            await page.evaluate(() => {
+              const input = document.querySelector('#char-name');
+              if (input instanceof HTMLInputElement) {
+                input.value = 'TrainingHunterJ';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+              document
+                .querySelector('#offline-select .mini-class[data-class="warrior"]')
+                ?.click();
+            });
+
+            await page.waitForFunction(() => {
+              const canvas = document.querySelector('#char-preview-canvas');
+              const start = document.querySelector('#btn-start-offline');
+              return (
+                canvas instanceof HTMLCanvasElement &&
+                canvas.dataset.highflyPreviewVisual === 'player_warrior_modular' &&
+                start instanceof HTMLButtonElement &&
+                !start.disabled
+              );
+            }, null, { timeout: 30000 });
+
+            await page.evaluate(() => document.querySelector('#btn-start-offline')?.click());
+
+            const entryGate = await page.waitForFunction(() => {
+              if (window.__game?.sim?.player) return 'booted';
+              const button = document.querySelector('#mobile-preflight-continue');
+              if (!(button instanceof HTMLElement)) return false;
+              const style = getComputedStyle(button);
+              const rect = button.getBoundingClientRect();
+              return (
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                Number(style.opacity || '1') > 0 &&
+                rect.width > 0 &&
+                rect.height > 0
+              ) ? 'preflight' : false;
+            }, null, { timeout: 30000 });
+            const entryGateState = await entryGate.jsonValue();
+            console.log('RUN1J_ENTRY_GATE', entryGateState);
+
+            if (entryGateState === 'preflight') {
+              await page.evaluate(() =>
+                document.querySelector('#mobile-preflight-continue')?.click(),
+              );
+            }
+
+            await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, {
+              timeout: 90000,
+            });
             await page.waitForTimeout(700);
           }
 
