@@ -734,6 +734,15 @@ jobs:
             // can become visible after several seconds while the world is warming.
             const entryGate = await page.waitForFunction(() => {
               if (window.__game?.sim?.player) return 'booted';
+
+              const loading = document.querySelector('#loading-screen');
+              if (
+                loading instanceof HTMLElement &&
+                loading.classList.contains('visible')
+              ) {
+                return 'loading';
+              }
+
               const button = document.querySelector('#mobile-preflight-continue');
               if (!(button instanceof HTMLElement)) return false;
               const style = getComputedStyle(button);
@@ -1031,6 +1040,15 @@ jobs:
 
             const entryGate = await page.waitForFunction(() => {
               if (window.__game?.sim?.player) return 'booted';
+
+              const loading = document.querySelector('#loading-screen');
+              if (
+                loading instanceof HTMLElement &&
+                loading.classList.contains('visible')
+              ) {
+                return 'loading';
+              }
+
               const button = document.querySelector('#mobile-preflight-continue');
               if (!(button instanceof HTMLElement)) return false;
               const style = getComputedStyle(button);
