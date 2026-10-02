@@ -163,10 +163,18 @@ shell_text += r'''
 
 /* HIGHFLY FINAL FOUNDATION POLISH — LOADING + MOBILE WINDOWS */
 #loading-screen {
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+#loading-screen.visible {
+  display: flex;
+  pointer-events: auto;
+}
+#loading-screen:not(.visible) {
+  display: none !important;
+  pointer-events: none !important;
 }
 #loading-screen .ls-logo {
   display: block !important;
