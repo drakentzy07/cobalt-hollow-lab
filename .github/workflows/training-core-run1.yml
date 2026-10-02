@@ -689,6 +689,24 @@ jobs:
               await name.fill(hunterName);
               await card.click({ force: true });
             }
+            // Match the proven browser-smoke entry path: the selected Hunter
+            // must finish its class preview/prewarm before world entry. Clicking
+            // Start while CharacterPreview is still swapping GLBs can lose the
+            // entry transition and leave the test waiting on a game that never booted.
+            await page.waitForFunction(
+              ({ cls }) => {
+                const canvas = document.querySelector('#char-preview-canvas');
+                const start = document.querySelector('#btn-start-offline');
+                return (
+                  canvas instanceof HTMLCanvasElement &&
+                  canvas.dataset.highflyPreviewVisual === `player_${cls}_modular` &&
+                  start instanceof HTMLButtonElement &&
+                  !start.disabled
+                );
+              },
+              { cls },
+              { timeout: 30000 },
+            );
             await page.locator('#btn-start-offline').click({ force: true });
             const preflight = page.locator('#mobile-preflight-continue');
             if (await preflight.count()) await preflight.click({ force: true }).catch(() => {});
