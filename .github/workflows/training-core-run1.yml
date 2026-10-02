@@ -1055,7 +1055,24 @@ jobs:
             await page.waitForFunction(() => Boolean(window.__game?.sim?.player), null, {
               timeout: 90000,
             });
-            await page.waitForTimeout(700);
+
+            // sim.player exists before ClaudeCraft's first-frame settle cover
+            // necessarily finishes. Real touch input is intentionally blocked
+            // until the loading curtain is gone, so the Training smoke must wait
+            // for that same user-visible readiness state.
+            await page.waitForFunction(() => {
+              const loading = document.querySelector('#loading-screen');
+              if (!(loading instanceof HTMLElement)) return true;
+              const style = getComputedStyle(loading);
+              return (
+                !loading.classList.contains('visible') ||
+                style.display === 'none' ||
+                style.visibility === 'hidden' ||
+                style.pointerEvents === 'none'
+              );
+            }, null, { timeout: 90000 });
+            console.log('RUN1J_LOADING_CLEARED');
+            await page.waitForTimeout(300);
           }
 
           async function openTraining() {
@@ -2073,7 +2090,7 @@ jobs:
             run1j-j4-loading.png
             run1j-j4-s23.png
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 1
 
       - name: Inspect RUN0 output
         shell: bash
