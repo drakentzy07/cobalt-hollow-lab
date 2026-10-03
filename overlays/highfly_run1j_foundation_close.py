@@ -336,9 +336,9 @@ old_button = '''        <button
           type="button"
           id="hf-training-register"
           class="hf-primary-action"
-          ${!allExercisesComplete() || sessionDone ? 'disabled' : ''}
+          ${!allExercisesComplete() || sessionDone || !selectedSessionTrainable() ? 'disabled' : ''}
         >
-          ${sessionDone ? 'SESIÓN YA REGISTRADA ✓' : allExercisesComplete() ? 'REGISTRAR SESIÓN COMPLETA' : 'COMPLETÁ LA SESIÓN PARA REGISTRAR'}
+          ${sessionDone ? 'SESIÓN YA REGISTRADA ✓' : selectedWeek !== state.activeWeek ? 'SEMANA SOLO VISTA · NO HABILITADA' : allExercisesComplete() ? 'REGISTRAR SESIÓN COMPLETA' : 'COMPLETÁ LA SESIÓN PARA REGISTRAR'}
         </button>
         <small>
           No existe Readiness manual: el sistema usa lo que realmente completaste, el orden y los descansos medidos.
@@ -348,9 +348,9 @@ new_button = '''        <button
           id="hf-training-register"
           class="hf-primary-action"
           data-highfly-all-terminal="${allExercisesComplete() ? '1' : '0'}"
-          ${sessionDone ? 'disabled' : ''}
+          ${sessionDone || !selectedSessionTrainable() ? 'disabled' : ''}
         >
-          ${sessionDone ? 'SESIÓN YA REGISTRADA ✓' : 'COMPLETAR SESIÓN'}
+          ${sessionDone ? 'SESIÓN YA REGISTRADA ✓' : selectedWeek !== state.activeWeek ? 'SEMANA SOLO VISTA · NO HABILITADA' : 'COMPLETAR SESIÓN'}
         </button>
         <small>
           Cierra el día tal como está: sólo registra sets realmente completados.
@@ -364,14 +364,14 @@ old_bind = '''  const register = mount.querySelector<HTMLElement>('#hf-training-
   if (register) {
     bindTouchTap(register, (event) => {
       event.preventDefault();
-      if (allExercisesComplete() && !sessionAlreadyRegistered()) registerSession();
+      if (allExercisesComplete() && selectedSessionTrainable()) registerSession();
     });
   }'''
 new_bind = '''  const register = mount.querySelector<HTMLElement>('#hf-training-register');
   if (register) {
     bindTouchTap(register, (event) => {
       event.preventDefault();
-      if (!sessionAlreadyRegistered()) registerSession();
+      if (selectedSessionTrainable()) registerSession();
     });
   }'''
 if ui_text.count(old_bind) != 1:
@@ -381,12 +381,22 @@ ui_text = ui_text.replace(old_bind, new_bind)
 old_guard = '''function registerSession(): void {
   const profile = profileOrNull();
   const exercises = activeDayExercises();
-  if (!profile || exercises.length === 0 || !allExercisesComplete()) return;
+  if (
+    !profile ||
+    exercises.length === 0 ||
+    !allExercisesComplete() ||
+    !selectedSessionTrainable()
+  ) return;
 '''
 new_guard = '''function registerSession(): void {
   const profile = profileOrNull();
   const exercises = activeDayExercises();
-  if (!profile || exercises.length === 0 || sessionAlreadyRegistered()) return;
+  if (
+    !profile ||
+    exercises.length === 0 ||
+    sessionAlreadyRegistered() ||
+    !selectedSessionTrainable()
+  ) return;
 '''
 if ui_text.count(old_guard) != 1:
     raise SystemExit(f"Training register guard final form mismatch: {ui_text.count(old_guard)}")
