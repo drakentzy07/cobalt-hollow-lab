@@ -208,7 +208,7 @@ describe('HIGHFLY Training RUN1-H end-to-end', () => {
       result.sessionResult.stimulus.VIT,
       2,
     );
-    expect(result.profile.training.core.VIT.progress).toBeGreaterThan(0);
+    expect(result.profile.training.core.VIT.progress).toBe(0);
     expect(result.profile.training.performance?.VIT?.baseline).toBeGreaterThan(0);
     expect(result.outcomes.find((o) => o.stat === 'VIT')?.outcome).toBe(
       'calibrated',
