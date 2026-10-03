@@ -42,14 +42,18 @@ body.start-screen-open #start-screen {
   background: #050714 !important;
 }
 
+body.mobile-touch.start-screen-open #start-screen-backdrop,
 body.start-screen-open #start-screen-backdrop {
   position: fixed !important;
   inset: 0 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
   background:
     linear-gradient(180deg, rgba(3,4,13,.10), rgba(3,4,13,.16) 48%, rgba(2,3,10,.42)),
     url("/highfly/highfly-entry.avif") center / cover no-repeat !important;
 }
 
+body.mobile-touch.start-screen-open #start-screen-backdrop > *,
 body.start-screen-open #start-screen-backdrop > * {
   display: none !important;
 }
@@ -70,6 +74,7 @@ body.start-screen-open :is(
   display: none !important;
 }
 
+body.mobile-touch.start-screen-open #mode-select,
 body.start-screen-open #mode-select {
   border: 0 !important;
   background: transparent !important;
@@ -78,6 +83,8 @@ body.start-screen-open #mode-select {
   backdrop-filter: none !important;
 }
 
+body.mobile-touch.start-screen-open #mode-select::before,
+body.mobile-touch.start-screen-open #mode-select::after,
 body.start-screen-open #mode-select::before,
 body.start-screen-open #mode-select::after {
   content: none !important;
@@ -87,16 +94,19 @@ body.start-screen-open #mode-select::after {
   background: none !important;
 }
 
+body.mobile-touch.start-screen-open .highfly-entry-logo,
 body.start-screen-open .highfly-entry-logo {
   opacity: 0 !important;
   filter: none !important;
 }
 
+body.mobile-touch.start-screen-open .highfly-entry-subtitle,
 body.start-screen-open .highfly-entry-subtitle {
   color: rgba(255,245,223,.94) !important;
   text-shadow: 0 2px 8px rgba(0,0,0,.90) !important;
 }
 
+body.mobile-touch.start-screen-open #btn-play,
 body.start-screen-open #btn-play {
   border-color: rgba(255,220,143,.96) !important;
   background: linear-gradient(180deg, rgba(67,22,97,.92), rgba(23,10,49,.96)) !important;
@@ -126,6 +136,7 @@ shell_text += r"""
   filter: none !important;
 }
 
+body.mobile-touch #loading-screen,
 #loading-screen {
   background:
     linear-gradient(180deg, rgba(2,3,11,.06), rgba(3,4,14,.12) 55%, rgba(2,3,10,.58)),
@@ -134,18 +145,23 @@ shell_text += r"""
   gap: 10px !important;
 }
 
+body.mobile-touch #loading-screen .ls-logo,
 #loading-screen .ls-logo {
   opacity: 0 !important;
   filter: none !important;
   pointer-events: none !important;
 }
 
+body.mobile-touch #loading-screen .ls-progress,
 #loading-screen .ls-progress {
   margin-top: auto !important;
   margin-bottom: max(28px, env(safe-area-inset-bottom)) !important;
   width: min(700px, 78vw) !important;
 }
 
+body.mobile-touch #loading-screen #ls-status,
+body.mobile-touch #loading-screen #ls-tip,
+body.mobile-touch #loading-screen #ls-slow-hint,
 #loading-screen #ls-status,
 #loading-screen #ls-tip,
 #loading-screen #ls-slow-hint {
@@ -153,6 +169,7 @@ shell_text += r"""
 }
 
 @media (orientation: landscape) and (max-height: 430px) {
+  body.mobile-touch #loading-screen .ls-progress,
   #loading-screen .ls-progress {
     margin-bottom: max(14px, env(safe-area-inset-bottom)) !important;
     width: min(620px, 76vw) !important;
