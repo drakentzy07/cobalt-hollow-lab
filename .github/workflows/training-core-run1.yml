@@ -1203,6 +1203,24 @@ jobs:
             throw new Error('RUN1-J fullscreen/no-readiness contract failed');
           }
 
+          // RUN127: system-percent work is intentionally blocked until a real
+          // 2-6 rep Epley calibration exists. Prove the batch RM path first.
+          await page.locator('#hf-rm-age').fill('30');
+          await page.locator('#hf-rm-bodyweight').fill('80');
+          await page.locator('[data-hf-rm-load="hang_power_clean"]').fill('80');
+          await page.locator('[data-hf-rm-reps="hang_power_clean"]').selectOption('5');
+          await page.locator('[data-hf-rm-load="back_squat"]').fill('96');
+          await page.locator('[data-hf-rm-reps="back_squat"]').selectOption('5');
+          await page.locator('#hf-rm-submit-all').tap();
+          await page.waitForFunction(() => {
+            const text = document.querySelector('#highfly-training-window')?.textContent ?? '';
+            return (
+              text.includes('Hang Power Clean') &&
+              text.includes('Sentadilla') &&
+              text.includes('RM calibradas')
+            );
+          }, null, { timeout: 5000 });
+
           const exact = await page.evaluate(() => ({
             clean: document.querySelector('.hf-exercise[data-exercise-id="d1_hang_power_clean"]')?.textContent ?? '',
             squatTop: document.querySelector('.hf-exercise[data-exercise-id="d1_back_squat_top"]')?.textContent ?? '',
@@ -1214,7 +1232,7 @@ jobs:
             !exact.squatTop.includes('86 kg · 1×6') ||
             !exact.squatTopDisabled
           ) {
-            throw new Error('RUN1-J exact sheet or sequential lock contract failed');
+            throw new Error('RUN127: calibrated RM sheet or sequential lock contract failed');
           }
 
           // Real-device regression: touch dispatches must never bypass a disabled
