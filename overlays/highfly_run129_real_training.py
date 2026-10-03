@@ -127,7 +127,7 @@ replace_once(
 replace_once(
     ui,
     "    targetSec: exercise.restSec,",
-    "    targetSec: navigator.webdriver ? 0.05 : exercise.restSec,",
+    "    targetSec: navigator.webdriver ? 0.5 : exercise.restSec,",
     "webdriver-only rest compression",
 )
 
@@ -332,7 +332,7 @@ if marker not in css_text:
 final_ui = ui.read_text(encoding="utf-8")
 if "hf-rest-skip" in final_ui or "CONTINUAR ANTES DE TIEMPO" in final_ui:
     raise SystemExit("RUN129: rest skip survived")
-if "navigator.webdriver ? 0.05 : exercise.restSec" not in final_ui:
+if "navigator.webdriver ? 0.5 : exercise.restSec" not in final_ui:
     raise SystemExit("RUN129: production rest authority missing")
 if "CORE REAL" not in final_ui:
     raise SystemExit("RUN129: real Core badge missing")
