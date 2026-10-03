@@ -42,6 +42,18 @@ body.start-screen-open #start-screen {
   background: #050714 !important;
 }
 
+body.mobile-touch.start-screen-open #hero-view,
+body.start-screen-open #hero-view {
+  background:
+    linear-gradient(180deg, rgba(3,4,13,.06), rgba(3,4,13,.10) 52%, rgba(2,3,10,.30)),
+    url("/highfly/highfly-entry.avif") center / cover no-repeat !important;
+}
+
+body.mobile-touch.start-screen-open #homepage-views-container,
+body.start-screen-open #homepage-views-container {
+  background: transparent !important;
+}
+
 body.mobile-touch.start-screen-open #start-screen-backdrop,
 body.start-screen-open #start-screen-backdrop {
   position: fixed !important;
