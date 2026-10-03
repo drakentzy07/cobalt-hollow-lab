@@ -264,7 +264,7 @@ jobs:
           grep -q "bindTouchTap" training/runtime/ui.ts
           grep -q "REGISTRAR SESIÓN" training/runtime/ui.ts
           grep -q "runTrainingSessionPipeline" training/runtime/pipeline.ts
-          grep -q "HIGHFLY_INITIAL_CALIBRATED_CORE_BASELINE" training/runtime/pipeline.ts
+          grep -F "HIGHFLY_INITIAL_CALIBRATED_CORE_BASELINE = 0" training/runtime/pipeline.ts
           grep -q "refreshActiveTrainingCombatBridge" training/runtime/combat_runtime.ts
           grep -q "applyActiveTrainingBridgeToEntity" overlays/highfly_training_e2e_v1.py
           grep -q "HF_HIGHFLY_PERSONAL_5D_V1" training/runtime/personal_routine.ts
@@ -335,7 +335,7 @@ jobs:
           grep -F 'HIGHFLY_FINAL_CHAT_CONTROLS' upstream/src/main.ts
           grep -F 'RESULTADO DE ESTA SESIÓN' upstream/src/highfly/training/ui.ts
           grep -F 'HUNTER CORE · ESTADO CONSOLIDADO' upstream/src/highfly/training/ui.ts
-          grep -F 'BASE ESTABLECIDA' upstream/src/highfly/training/ui.ts
+          ! grep -F 'BASE ESTABLECIDA' upstream/src/highfly/training/ui.ts
           grep -F 'body.start-screen-open .homepage-footer' upstream/src/styles/shell.website.css
           grep -F '#loot-explorer-window' upstream/src/styles/shell.css
           grep -F '#highfly-chat-send' upstream/src/styles/shell.css
@@ -1218,15 +1218,61 @@ jobs:
           await page.locator('[data-hf-rm-reps="hang_power_clean"]').selectOption('5');
           await page.locator('[data-hf-rm-load="back_squat"]').fill('96');
           await page.locator('[data-hf-rm-reps="back_squat"]').selectOption('5');
-          await page.locator('#hf-rm-submit-all').tap();
-          await page.waitForFunction(() => {
-            const text = document.querySelector('#highfly-training-window')?.textContent ?? '';
-            return (
-              text.includes('Hang Power Clean') &&
-              text.includes('Sentadilla') &&
-              text.includes('RM calibradas')
+          // RUN132: exercise the actual HIGHFLY touch binding, then assert the
+          // authoritative calibrated e1RM cards instead of transient message copy.
+          await page.locator('#hf-rm-submit-all').scrollIntoViewIfNeeded();
+          await page.evaluate(() => {
+            const el = document.querySelector('#hf-rm-submit-all');
+            if (!(el instanceof HTMLElement)) {
+              throw new Error('RUN1-J RM batch button missing');
+            }
+            const opts = {
+              bubbles: true,
+              cancelable: true,
+              pointerType: 'touch',
+              pointerId: 930,
+              isPrimary: true,
+              clientX: 8,
+              clientY: 8,
+            };
+            el.dispatchEvent(new PointerEvent('pointerdown', opts));
+            el.dispatchEvent(new PointerEvent('pointerup', opts));
+          });
+          try {
+            await page.waitForFunction(() => {
+              const squat =
+                document
+                  .querySelector('[data-hf-rm-load="back_squat"]')
+                  ?.closest('.hf-rm-card')?.textContent ?? '';
+              const clean =
+                document
+                  .querySelector('[data-hf-rm-load="hang_power_clean"]')
+                  ?.closest('.hf-rm-card')?.textContent ?? '';
+              return (
+                squat.includes('VERIFICADA') &&
+                squat.includes('112.0 kg e1RM efectiva') &&
+                clean.includes('VERIFICADA') &&
+                clean.includes('93.3 kg e1RM efectiva')
+              );
+            }, null, { timeout: 10000 });
+          } catch {
+            const diag = await page.evaluate(() => ({
+              message:
+                document.querySelector('.hf-rm-message')?.textContent ?? '',
+              squat:
+                document
+                  .querySelector('[data-hf-rm-load="back_squat"]')
+                  ?.closest('.hf-rm-card')?.textContent ?? '',
+              clean:
+                document
+                  .querySelector('[data-hf-rm-load="hang_power_clean"]')
+                  ?.closest('.hf-rm-card')?.textContent ?? '',
+            }));
+            throw new Error(
+              'RUN1-J RM touch calibration contract failed: ' +
+                JSON.stringify(diag),
             );
-          }, null, { timeout: 5000 });
+          }
 
           const exact = await page.evaluate(() => ({
             clean: document.querySelector('.hf-exercise[data-exercise-id="d1_hang_power_clean"]')?.textContent ?? '',
@@ -2139,13 +2185,34 @@ jobs:
           await page.locator('#hf-rm-bodyweight').fill('80');
           await page.locator('[data-hf-rm-load="hang_power_clean"]').fill('80');
           await page.locator('[data-hf-rm-reps="hang_power_clean"]').selectOption('5');
-          await page.locator('#hf-rm-submit-all').click({ force: true });
-          await page.waitForFunction(() =>
-            (document.querySelector('#highfly-training-window')?.textContent ?? '')
-              .includes('RM calibradas'),
-            null,
-            { timeout: 5000 },
-          );
+          await page.locator('#hf-rm-submit-all').scrollIntoViewIfNeeded();
+          await page.evaluate(() => {
+            const el = document.querySelector('#hf-rm-submit-all');
+            if (!(el instanceof HTMLElement)) {
+              throw new Error('J4: RM batch button missing');
+            }
+            const opts = {
+              bubbles: true,
+              cancelable: true,
+              pointerType: 'touch',
+              pointerId: 931,
+              isPrimary: true,
+              clientX: 8,
+              clientY: 8,
+            };
+            el.dispatchEvent(new PointerEvent('pointerdown', opts));
+            el.dispatchEvent(new PointerEvent('pointerup', opts));
+          });
+          await page.waitForFunction(() => {
+            const clean =
+              document
+                .querySelector('[data-hf-rm-load="hang_power_clean"]')
+                ?.closest('.hf-rm-card')?.textContent ?? '';
+            return (
+              clean.includes('VERIFICADA') &&
+              clean.includes('93.3 kg e1RM efectiva')
+            );
+          }, null, { timeout: 10000 });
 
           // Close the day AS PERFORMED: record one real set, then finish the
           // session without completing/skipping the rest. This reproduces the
