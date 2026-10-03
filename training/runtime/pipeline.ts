@@ -61,9 +61,9 @@ function evidenceConfidence(result: SessionTrainingResult): number {
  * RUN1-J automatic evidence:
  * - STR: comparable heavy e1RM anchors from the authored main rows.
  * - AGI: power-row e1RM proxy until velocity sensing exists.
+ * - VIT: 7+ rep endurance quality under comparable moderate-intensity work.
  * - PER: ordered adherence/completion quality.
  * - INT: recovery + prescription management quality.
- * VIT remains progress-only until a reliable comparable endurance marker is added.
  */
 export function deriveComparablePerformance(
   result: SessionTrainingResult,
@@ -97,9 +97,27 @@ export function deriveComparablePerformance(
     .filter((e) => e.observedRole === 'power' && validPositive(e.estimated1RmKg))
     .map((e) => e.estimated1RmKg as number);
 
+  const enduranceEvidence = result.evidence.filter(
+    (e) =>
+      e.reps >= 7 &&
+      (e.relativeIntensity === null ||
+        (e.relativeIntensity >= 0.35 && e.relativeIntensity <= 0.7)),
+  );
+  const vitPerformance =
+    enduranceEvidence.length > 0
+      ? 100 *
+        result.behavioralPerformance.completion *
+        (enduranceEvidence.reduce(
+          (sum, e) => sum + e.executionQuality * (0.6 + 0.4 * e.restCompliance),
+          0,
+        ) /
+          enduranceEvidence.length)
+      : 0;
+
   return {
     ...(strengthE1Rm.length > 0 ? { STR: Math.max(...strengthE1Rm) } : {}),
     ...(powerE1Rm.length > 0 ? { AGI: Math.max(...powerE1Rm) } : {}),
+    ...(vitPerformance > 0 ? { VIT: vitPerformance } : {}),
     ...(result.behavioralPerformance.PER > 0
       ? { PER: result.behavioralPerformance.PER }
       : {}),
@@ -290,11 +308,13 @@ export function runTrainingSessionPipeline(
       confidence,
       readiness,
       evidenceId,
-      ...(stat === 'PER'
-        ? { absolutePerformanceGate: 90 }
-        : stat === 'INT'
-          ? { absolutePerformanceGate: 85 }
-          : {}),
+      ...(stat === 'VIT'
+        ? { absolutePerformanceGate: 75 }
+        : stat === 'PER'
+          ? { absolutePerformanceGate: 90 }
+          : stat === 'INT'
+            ? { absolutePerformanceGate: 85 }
+            : {}),
     });
     profile = adaptation.profile;
 

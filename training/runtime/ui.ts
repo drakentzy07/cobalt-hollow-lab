@@ -26,6 +26,15 @@ import {
   evaluationDaysRemaining,
   submitRmCalibration,
 } from './rm_calibration';
+import { progressCostForCurrent } from './adaptation';
+import {
+  canTrainCycleSession,
+  cycleSessionKey,
+  cycleWeekComplete,
+  normalizeCycleProgression,
+  restartCurrentCycle,
+  unlockNextCycleWeek,
+} from './cycle_control';
 
 let installed = false;
 let selectedDay = 1;
@@ -33,6 +42,10 @@ let selectedWeek = 1;
 let lastResult: ReturnType<typeof runTrainingSessionPipeline>['sessionResult'] | null = null;
 let lastOutcomes: ReturnType<typeof runTrainingSessionPipeline>['outcomes'] = [];
 let rmCalibrationMessage = '';
+let cycleResetArmed = false;
+let cycleResetMessage = '';
+const rmDrafts = new Map<HighflyRmLiftId, { load: string; reps: number }>();
+let rmAthleteDraft: { sex?: HighflySex; age?: string; bodyweight?: string } = {};
 const restRecords = new Map<string, number[]>();
 const completedSets = new Map<string, number>();
 
@@ -64,15 +77,11 @@ function profileOrNull(): HighflyHunterProfile | null {
 }
 
 function cycleState(profile: HighflyHunterProfile | null) {
-  return (
-    profile?.training.cycleProgression ?? {
-      currentCycle: 1,
-      successfulCycles: 0,
-      repeatedCycles: 0,
-      lastDecision: null,
-      completedSessions: [],
-    }
-  );
+  return normalizeCycleProgression(profile);
+}
+
+function selectedSessionTrainable(): boolean {
+  return canTrainCycleSession(cycleState(profileOrNull()), selectedWeek, selectedDay);
 }
 
 function coreCards(): string {
@@ -94,7 +103,8 @@ function coreCards(): string {
           <div class="hf-core-current">${state.current.toFixed(1)}</div>
           <div class="hf-core-meta">
             <span>Máximo <b>${state.peak.toFixed(1)}</b></span>
-            <span>Progreso <b>${state.progress.toFixed(1)}</b></span>
+            <span>Progreso <b>${state.progress.toFixed(1)} / ${progressCostForCurrent(state.current).toFixed(1)}</b></span>
+            <span>Puerta <b>${Math.min(100, Math.round((state.progress / progressCostForCurrent(state.current)) * 100))}%</b></span>
             <span>Confianza <b>${Math.round(state.confidence * 100)}%</b></span>
           </div>
         </article>
@@ -104,24 +114,31 @@ function coreCards(): string {
 }
 
 function weekOptions(): string {
-  return HIGHFLY_4_WEEK_CYCLE.map(
-    (week) =>
-      `<option value="${week.week}" ${week.week === selectedWeek ? 'selected' : ''}>S${week.week} · ${week.block}</option>`,
-  ).join('');
+  const state = cycleState(profileOrNull());
+  return HIGHFLY_4_WEEK_CYCLE.map((week) => {
+    const label =
+      week.week === state.activeWeek
+        ? `S${week.week} · ${week.block} · ACTIVA`
+        : week.week < state.activeWeek
+          ? `S${week.week} · ${week.block} · COMPLETADA`
+          : `S${week.week} · ${week.block} · SOLO VISTA`;
+    return `<option value="${week.week}" ${week.week === selectedWeek ? 'selected' : ''}>${label}</option>`;
+  }).join('');
 }
 
 function dayTabs(): string {
   const state = cycleState(profileOrNull());
   return HIGHFLY_PERSONAL_5D_ROUTINE.map((day) => {
-    const key = `${selectedWeek}:${day.day}`;
+    const key = cycleSessionKey(selectedWeek, day.day);
     const done = state.completedSessions.includes(key);
+    const viewOnly = selectedWeek !== state.activeWeek;
     return `
       <button
         type="button"
-        class="hf-training-day ${day.day === selectedDay ? 'is-selected' : ''} ${done ? 'is-complete' : ''}"
+        class="hf-training-day ${day.day === selectedDay ? 'is-selected' : ''} ${done ? 'is-complete' : ''} ${viewOnly ? 'is-view-only' : ''}"
         data-hf-training-day="${day.day}"
       >
-        <span>DÍA ${day.day}${done ? ' · ✓' : ''}</span>
+        <span>DÍA ${day.day}${done ? ' · ✓' : viewOnly ? ' · SOLO VISTA' : ''}</span>
         <b>${escapeHtml(day.name)}</b>
       </button>
     `;
@@ -170,6 +187,17 @@ function loadPlan(exercise: HighflyRoutineExercise): {
   const liftId = rmLiftForExercise(exercise.exerciseId);
   const rmEntry = liftId ? profile?.training.loadCalibration?.lifts?.[liftId] : undefined;
   const calibratedOneRmKg = rmEntry?.oneRmKg;
+
+  if (exercise.authority === 'system_percent' && liftId && !rmEntry) {
+    return {
+      ready: false,
+      primary: 'CALIBRÁ TU e1RM',
+      secondary: HIGHFLY_RM_LIFT_LABELS[liftId] + ' · 2–6 reps para calcular la carga',
+      systemLoadKg: 0,
+      editable: false,
+    };
+  }
+
   const systemKg = plannedLoadKg(
     exercise,
     selectedWeek,
@@ -219,12 +247,13 @@ function rmCalibrationPanel(): string {
   if (!profile) return '';
   const calibration = profile.training.loadCalibration;
   const athlete = calibration?.athlete;
-  const sex = athlete?.sex ?? 'male';
-  const age = athlete?.ageYears ?? '';
-  const bodyweight = athlete?.bodyweightKg ?? '';
+  const sex = rmAthleteDraft.sex ?? athlete?.sex ?? 'male';
+  const age = rmAthleteDraft.age ?? (athlete?.ageYears?.toString() ?? '');
+  const bodyweight = rmAthleteDraft.bodyweight ?? (athlete?.bodyweightKg?.toString() ?? '');
 
   const rows = HIGHFLY_RM_LIFT_ORDER.map((lift) => {
     const entry = calibration?.lifts?.[lift];
+    const draft = rmDrafts.get(lift) ?? { load: '', reps: 5 };
     const days = entry ? evaluationDaysRemaining(entry) : 0;
     const status = !entry
       ? 'SIN CALIBRAR'
@@ -243,8 +272,8 @@ function rmCalibrationPanel(): string {
       '<div class="hf-rm-card__head"><strong>' + escapeHtml(HIGHFLY_RM_LIFT_LABELS[lift]) + '</strong><span>' + status + '</span></div>',
       '<div class="hf-rm-authority"><b>' + authority + '</b><small>' + raw + '</small></div>',
       '<div class="hf-rm-inputs">',
-      '<label><span>PESO</span><input data-hf-rm-load="' + lift + '" type="number" inputmode="decimal" min="0" step="0.5" placeholder="kg"></label>',
-      '<label><span>REPS</span><select data-hf-rm-reps="' + lift + '"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option></select></label>',
+      '<label><span>PESO</span><input data-hf-rm-load="' + lift + '" type="number" inputmode="decimal" min="0" step="0.5" value="' + escapeHtml(draft.load) + '" placeholder="kg"></label>',
+      '<label><span>REPS</span><select data-hf-rm-reps="' + lift + '"><option value="2" ' + (draft.reps === 2 ? 'selected' : '') + '>2</option><option value="3" ' + (draft.reps === 3 ? 'selected' : '') + '>3</option><option value="4" ' + (draft.reps === 4 ? 'selected' : '') + '>4</option><option value="5" ' + (draft.reps === 5 ? 'selected' : '') + '>5</option><option value="6" ' + (draft.reps === 6 ? 'selected' : '') + '>6</option></select></label>',
       '<button type="button" data-hf-rm-submit="' + lift + '">' + (entry?.status === 'evaluation' ? 'REGISTRAR EVIDENCIA' : entry ? 'ACTUALIZAR' : 'CALIBRAR') + '</button>',
       '</div></article>',
     ].join('');
@@ -257,36 +286,39 @@ function rmCalibrationPanel(): string {
     '<p>Cargás una serie real de 2 a 6 repeticiones. HIGHFLY calcula el e1RM: nunca escribís un máximo manual. Sexo, edad y peso corporal sólo sirven para detectar valores extraordinarios; no regalan ni quitan Core Stats.</p>',
     '<div class="hf-athlete-calibration">',
     '<label><span>SEXO</span><select id="hf-rm-sex"><option value="male" ' + (sex === 'male' ? 'selected' : '') + '>Masculino</option><option value="female" ' + (sex === 'female' ? 'selected' : '') + '>Femenino</option></select></label>',
-    '<label><span>EDAD</span><input id="hf-rm-age" type="number" inputmode="numeric" min="14" max="100" value="' + age + '" placeholder="años"></label>',
-    '<label><span>PESO CORPORAL</span><input id="hf-rm-bodyweight" type="number" inputmode="decimal" min="30" max="350" step="0.1" value="' + bodyweight + '" placeholder="kg"></label>',
+    '<label><span>EDAD</span><input id="hf-rm-age" type="number" inputmode="numeric" min="14" max="100" value="' + escapeHtml(age) + '" placeholder="años"></label>',
+    '<label><span>PESO CORPORAL</span><input id="hf-rm-bodyweight" type="number" inputmode="decimal" min="30" max="350" step="0.1" value="' + escapeHtml(bodyweight) + '" placeholder="kg"></label>',
     '</div>',
     '<small class="hf-rm-rule">Marca extraordinaria = 7 días en evaluación. Mientras tanto se congela una autoridad moderada; una segunda evidencia compatible libera el valor completo.</small>',
     rmCalibrationMessage ? '<div class="hf-rm-message">' + escapeHtml(rmCalibrationMessage) + '</div>' : '',
     '<div class="hf-rm-grid">' + rows + '</div>',
+    '<button type="button" id="hf-rm-submit-all" class="hf-primary-action">CALIBRAR TODOS LOS CARGADOS</button>',
     '</div></section>',
   ].join('');
 }
 
 function cyclePanel(): string {
   const state = cycleState(profileOrNull());
+  const weekComplete = cycleWeekComplete(state, state.activeWeek);
+  const canUnlock = weekComplete && state.activeWeek < 4;
   const decision =
     state.lastDecision === 'advance'
       ? 'ÚLTIMO CICLO: SUPERADO · CARGAS AUMENTADAS'
       : state.lastDecision === 'repeat'
         ? 'ÚLTIMO CICLO: REPETIR · MISMAS CARGAS'
-        : 'PRIMER CICLO EN CURSO';
+        : 'CICLO EN CURSO';
 
   return `
     <section class="hf-calibration is-open">
       <div class="hf-system-line">
         <span>CICLO ADAPTATIVO</span>
-        <b>CICLO ${state.currentCycle}</b>
+        <b>CICLO ${state.currentCycle} · SEMANA ACTIVA S${state.activeWeek}</b>
       </div>
       <div class="hf-calibration-body">
         <p>
           HIGHFLY usa bloques de <b>4 semanas</b>: 3 de carga + 1 de descarga.
-          Si el bloque sale bien, el próximo aumenta un poco las cargas.
-          Si no, se repite con los mismos kilos.
+          Cada día sólo puede registrarse una vez. Las semanas futuras pueden verse,
+          pero no ejecutarse hasta que habilites la siguiente.
         </p>
         <div class="hf-cycle-status">
           <div><span>CICLOS SUPERADOS</span><b>${state.successfulCycles}</b></div>
@@ -294,6 +326,20 @@ function cyclePanel(): string {
           <div><span>SESIONES DEL BLOQUE</span><b>${state.completedSessions.length}/20</b></div>
           <div><span>ESTADO</span><b>${decision}</b></div>
         </div>
+        ${canUnlock ? `<button type="button" id="hf-enable-next-week" class="hf-primary-action">HABILITAR SEMANA ${state.activeWeek + 1}</button>` : ''}
+        <button type="button" id="hf-cycle-reset-arm" class="hf-secondary-action">REINICIAR CICLO</button>
+        ${cycleResetArmed ? `
+          <div class="hf-cycle-reset-confirm">
+            <b>[ SISTEMA // REINICIO DE CICLO ]</b>
+            <p>¿REALMENTE DESEÁS COMENZAR DE NUEVO EL CICLO PROPUESTO POR EL SISTEMA HIGHFLY?</p>
+            <label><span>MOTIVO OBLIGATORIO</span><input id="hf-cycle-reset-reason" type="text" maxlength="160" placeholder="Ej.: viaje, enfermedad, interrupción del bloque"></label>
+            ${cycleResetMessage ? `<small>${escapeHtml(cycleResetMessage)}</small>` : ''}
+            <div>
+              <button type="button" id="hf-cycle-reset-cancel">CANCELAR</button>
+              <button type="button" id="hf-cycle-reset-confirm">CONFIRMAR REINICIO</button>
+            </div>
+          </div>
+        ` : ''}
       </div>
     </section>
   `;
@@ -313,20 +359,23 @@ function exerciseRows(): string {
       const doneSets = completedSets.get(exercise.exerciseId) ?? 0;
       const totalSets = prescription.sets;
       const finished = doneSets >= totalSets;
+      const lockedSession = !selectedSessionTrainable();
       const lockedBySequence = firstIncomplete >= 0 && index > firstIncomplete;
-      const active = !finished && !lockedBySequence;
+      const active = !lockedSession && !finished && !lockedBySequence;
       const restDone = restRecords.get(exercise.exerciseId)?.length ?? 0;
       const restNeeded = requiredRestCount(exercise);
       const resting = activeRest?.exerciseId === exercise.exerciseId;
 
       let actionText = 'BLOQUEADO · COMPLETÁ EL EJERCICIO ANTERIOR';
-      if (finished) actionText = 'EJERCICIO COMPLETADO ✓';
+      if (sessionAlreadyRegistered()) actionText = 'DÍA REGISTRADO · SESIÓN CERRADA ✓';
+      else if (selectedWeek !== cycleState(profileOrNull()).activeWeek) actionText = 'SOLO VISTA · SEMANA NO HABILITADA';
+      else if (finished) actionText = 'EJERCICIO COMPLETADO ✓';
       else if (!load.ready) actionText = 'INGRESÁ LA CARGA PARA CONTINUAR';
       else if (resting) actionText = 'RECUPERACIÓN EN CURSO';
       else if (active) actionText = `COMPLETAR SET ${doneSets + 1}/${totalSets}`;
 
       return `
-        <article class="hf-exercise ${lockedBySequence || !load.ready ? 'is-blocked' : ''} ${finished ? 'is-complete' : ''}" data-exercise-id="${exercise.exerciseId}">
+        <article class="hf-exercise ${lockedSession || lockedBySequence || !load.ready ? 'is-blocked' : ''} ${finished || sessionAlreadyRegistered() ? 'is-complete' : ''}" data-exercise-id="${exercise.exerciseId}">
           <div class="hf-exercise__head">
             <div>
               <span class="hf-exercise-code">D${selectedDay} // ${exercise.intent.toUpperCase()}</span>
@@ -359,6 +408,7 @@ function exerciseRows(): string {
                       step="0.5"
                       value="${savedAccessoryKg(exercise.exerciseId) || ''}"
                       placeholder="kg"
+                      ${lockedSession ? 'disabled' : ''}
                     >
                   </label>`
                 : `<div class="hf-lock-chip"><span>🔒</span><b>PLAN HIGHFLY</b></div>`
@@ -398,6 +448,37 @@ function restDockHtml(): string {
   `;
 }
 
+function localizedOutcomeReason(reason: string): string {
+  if (reason.startsWith('Productive Progress accumulated')) {
+    return 'Progreso productivo acumulado; la Puerta de Rendimiento se evalúa cuando se alcanza el coste requerido.';
+  }
+  if (reason.startsWith('Enough Progress exists, but evidence Confidence')) {
+    return 'Hay Progreso suficiente, pero la confianza de la evidencia todavía no alcanza el umbral.';
+  }
+  if (reason.startsWith('Enough Progress exists, but no valid behavioral performance sample')) {
+    return 'Hay Progreso suficiente, pero falta una muestra válida de rendimiento.';
+  }
+  if (reason.startsWith('Behavioral gate not cleared')) {
+    return 'La Puerta de Rendimiento todavía no fue superada en esta sesión.';
+  }
+  if (reason.startsWith('Enough Progress exists, but no comparable performance pair')) {
+    return 'Hay Progreso suficiente, pero falta una comparación válida de rendimiento.';
+  }
+  if (reason.startsWith('Training maintained capacity')) {
+    return 'El entrenamiento mantuvo la capacidad, pero todavía no superó la Puerta de Rendimiento.';
+  }
+  if (reason.startsWith('Progress cost and behavioral gate')) {
+    return 'Progreso y Puerta de Rendimiento superados.';
+  }
+  if (reason.startsWith('Progress cost and comparable Performance Gate')) {
+    return 'Progreso y mejora comparable confirmados.';
+  }
+  if (reason.startsWith('Comparable baseline seeded')) {
+    return 'Se estableció una nueva referencia comparable para este Core Stat.';
+  }
+  return reason;
+}
+
 function resultHtml(): string {
   if (!lastResult) {
     return `
@@ -417,7 +498,7 @@ function resultHtml(): string {
             <div class="hf-training-outcome">
               <b>${o.stat}</b>
               <span>${o.outcome.replaceAll('_', ' ')}</span>
-              <small>${escapeHtml(o.reason)}</small>
+              <small>${escapeHtml(localizedOutcomeReason(o.reason))}</small>
             </div>
           `,
         )
@@ -455,7 +536,7 @@ function allExercisesComplete(): boolean {
 }
 
 function sessionAlreadyRegistered(): boolean {
-  return cycleState(profileOrNull()).completedSessions.includes(`${selectedWeek}:${selectedDay}`);
+  return cycleState(profileOrNull()).completedSessions.includes(cycleSessionKey(selectedWeek, selectedDay));
 }
 
 function render(): void {
@@ -512,9 +593,9 @@ function render(): void {
           type="button"
           id="hf-training-register"
           class="hf-primary-action"
-          ${!allExercisesComplete() || sessionDone ? 'disabled' : ''}
+          ${!allExercisesComplete() || sessionDone || !selectedSessionTrainable() ? 'disabled' : ''}
         >
-          ${sessionDone ? 'SESIÓN YA REGISTRADA ✓' : allExercisesComplete() ? 'REGISTRAR SESIÓN COMPLETA' : 'COMPLETÁ LA SESIÓN PARA REGISTRAR'}
+          ${sessionDone ? 'SESIÓN YA REGISTRADA ✓' : selectedWeek !== state.activeWeek ? 'SEMANA SOLO VISTA · NO HABILITADA' : allExercisesComplete() ? 'REGISTRAR SESIÓN COMPLETA' : 'COMPLETÁ LA SESIÓN PARA REGISTRAR'}
         </button>
         <small>
           No existe Readiness manual: el sistema usa lo que realmente completaste, el orden y los descansos medidos.
@@ -545,6 +626,36 @@ function resetVisibleSession(): void {
   lastOutcomes = [];
 }
 
+function syncRmDraftsFromDom(mount: HTMLElement): void {
+  const sexEl = mount.querySelector<HTMLSelectElement>('#hf-rm-sex');
+  const ageEl = mount.querySelector<HTMLInputElement>('#hf-rm-age');
+  const bodyweightEl = mount.querySelector<HTMLInputElement>('#hf-rm-bodyweight');
+  if (sexEl) rmAthleteDraft.sex = sexEl.value as HighflySex;
+  if (ageEl) rmAthleteDraft.age = ageEl.value;
+  if (bodyweightEl) rmAthleteDraft.bodyweight = bodyweightEl.value;
+
+  for (const lift of HIGHFLY_RM_LIFT_ORDER) {
+    const loadEl = mount.querySelector<HTMLInputElement>('[data-hf-rm-load="' + lift + '"]');
+    const repsEl = mount.querySelector<HTMLSelectElement>('[data-hf-rm-reps="' + lift + '"]');
+    if (!loadEl || !repsEl) continue;
+    rmDrafts.set(lift, { load: loadEl.value, reps: Number(repsEl.value) || 5 });
+  }
+}
+
+function calibrateRmLift(
+  profile: HighflyHunterProfile,
+  lift: HighflyRmLiftId,
+): ReturnType<typeof submitRmCalibration> {
+  const draft = rmDrafts.get(lift) ?? { load: '', reps: 5 };
+  return submitRmCalibration(profile, lift, {
+    sex: rmAthleteDraft.sex ?? 'male',
+    ageYears: Number(rmAthleteDraft.age),
+    bodyweightKg: Number(rmAthleteDraft.bodyweight),
+    loadKg: Number(draft.load),
+    reps: draft.reps,
+  });
+}
+
 function bindRenderedUi(mount: HTMLElement): void {
   mount.querySelectorAll<HTMLElement>('[data-hf-training-day]').forEach((button) => {
     bindTouchTap(button, (event) => {
@@ -564,26 +675,23 @@ function bindRenderedUi(mount: HTMLElement): void {
     });
   }
 
+  const rmDraftInputs = mount.querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+    '#hf-rm-sex, #hf-rm-age, #hf-rm-bodyweight, [data-hf-rm-load], [data-hf-rm-reps]',
+  );
+  rmDraftInputs.forEach((input) => {
+    input.addEventListener('input', () => syncRmDraftsFromDom(mount));
+    input.addEventListener('change', () => syncRmDraftsFromDom(mount));
+  });
+
   mount.querySelectorAll<HTMLElement>('[data-hf-rm-submit]').forEach((button) => {
     bindTouchTap(button, (event) => {
       event.preventDefault();
       const profile = profileOrNull();
       const lift = button.dataset.hfRmSubmit as HighflyRmLiftId | undefined;
-      const sexEl = mount.querySelector<HTMLSelectElement>('#hf-rm-sex');
-      const ageEl = mount.querySelector<HTMLInputElement>('#hf-rm-age');
-      const bodyweightEl = mount.querySelector<HTMLInputElement>('#hf-rm-bodyweight');
-      if (!profile || !lift || !sexEl || !ageEl || !bodyweightEl) return;
-      const loadEl = mount.querySelector<HTMLInputElement>('[data-hf-rm-load="' + lift + '"]');
-      const repsEl = mount.querySelector<HTMLSelectElement>('[data-hf-rm-reps="' + lift + '"]');
-      if (!loadEl || !repsEl) return;
+      if (!profile || !lift) return;
+      syncRmDraftsFromDom(mount);
       try {
-        const result = submitRmCalibration(profile, lift, {
-          sex: sexEl.value as HighflySex,
-          ageYears: Number(ageEl.value),
-          bodyweightKg: Number(bodyweightEl.value),
-          loadKg: Number(loadEl.value),
-          reps: Number(repsEl.value),
-        });
+        const result = calibrateRmLift(profile, lift);
         setActiveHighflyHunterProfile(result.profile);
         rmCalibrationMessage = HIGHFLY_RM_LIFT_LABELS[lift] + ' · ' + result.reason;
         render();
@@ -594,8 +702,103 @@ function bindRenderedUi(mount: HTMLElement): void {
     });
   });
 
+  const calibrateAll = mount.querySelector<HTMLElement>('#hf-rm-submit-all');
+  if (calibrateAll) {
+    bindTouchTap(calibrateAll, (event) => {
+      event.preventDefault();
+      syncRmDraftsFromDom(mount);
+      let profile = profileOrNull();
+      if (!profile) return;
+      let calibrated = 0;
+      const messages: string[] = [];
+      try {
+        for (const lift of HIGHFLY_RM_LIFT_ORDER) {
+          const draft = rmDrafts.get(lift);
+          if (!draft || !(Number(draft.load) > 0)) continue;
+          const result = calibrateRmLift(profile, lift);
+          profile = result.profile;
+          calibrated += 1;
+          messages.push(HIGHFLY_RM_LIFT_LABELS[lift] + ': ' + result.status);
+        }
+        if (calibrated === 0) {
+          throw new Error('HIGHFLY RM: cargá al menos un peso antes de calibrar.');
+        }
+        setActiveHighflyHunterProfile(profile);
+        rmCalibrationMessage = calibrated + ' RM calibradas · ' + messages.join(' · ');
+        render();
+      } catch (err) {
+        rmCalibrationMessage = err instanceof Error ? err.message : String(err);
+        render();
+      }
+    });
+  }
+
+  const enableNextWeek = mount.querySelector<HTMLElement>('#hf-enable-next-week');
+  if (enableNextWeek) {
+    bindTouchTap(enableNextWeek, (event) => {
+      event.preventDefault();
+      const profile = profileOrNull();
+      if (!profile) return;
+      try {
+        const next = unlockNextCycleWeek(profile);
+        setActiveHighflyHunterProfile(next);
+        selectedWeek = cycleState(next).activeWeek;
+        selectedDay = 1;
+        resetVisibleSession();
+        render();
+      } catch (err) {
+        cycleResetMessage = err instanceof Error ? err.message : String(err);
+        render();
+      }
+    });
+  }
+
+  const resetArm = mount.querySelector<HTMLElement>('#hf-cycle-reset-arm');
+  if (resetArm) {
+    bindTouchTap(resetArm, (event) => {
+      event.preventDefault();
+      cycleResetArmed = true;
+      cycleResetMessage = '';
+      render();
+    });
+  }
+
+  const resetCancel = mount.querySelector<HTMLElement>('#hf-cycle-reset-cancel');
+  if (resetCancel) {
+    bindTouchTap(resetCancel, (event) => {
+      event.preventDefault();
+      cycleResetArmed = false;
+      cycleResetMessage = '';
+      render();
+    });
+  }
+
+  const resetConfirm = mount.querySelector<HTMLElement>('#hf-cycle-reset-confirm');
+  if (resetConfirm) {
+    bindTouchTap(resetConfirm, (event) => {
+      event.preventDefault();
+      const profile = profileOrNull();
+      const reason = mount.querySelector<HTMLInputElement>('#hf-cycle-reset-reason')?.value ?? '';
+      if (!profile) return;
+      try {
+        const next = restartCurrentCycle(profile, reason);
+        setActiveHighflyHunterProfile(next);
+        selectedWeek = 1;
+        selectedDay = 1;
+        cycleResetArmed = false;
+        cycleResetMessage = '';
+        resetVisibleSession();
+        render();
+      } catch (err) {
+        cycleResetMessage = err instanceof Error ? err.message : String(err);
+        render();
+      }
+    });
+  }
+
   mount.querySelectorAll<HTMLInputElement>('[data-hf-accessory-load]').forEach((input) => {
     input.addEventListener('change', () => {
+      if (!selectedSessionTrainable()) return;
       const exerciseId = input.dataset.hfAccessoryLoad;
       if (!exerciseId) return;
       saveAccessoryLoad(exerciseId, Math.max(0, Number(input.value) || 0));
@@ -626,7 +829,7 @@ function bindRenderedUi(mount: HTMLElement): void {
   if (register) {
     bindTouchTap(register, (event) => {
       event.preventDefault();
-      if (allExercisesComplete() && !sessionAlreadyRegistered()) registerSession();
+      if (allExercisesComplete() && selectedSessionTrainable()) registerSession();
     });
   }
 }
@@ -650,7 +853,7 @@ function saveAccessoryLoad(exerciseId: string, kg: number): void {
 }
 
 function completeSet(exercise: HighflyRoutineExercise): void {
-  if (activeRest) return;
+  if (activeRest || !selectedSessionTrainable()) return;
   const total = plannedSetCount(exercise);
   const done = completedSets.get(exercise.exerciseId) ?? 0;
   if (done >= total) return;
@@ -778,7 +981,9 @@ function withCycleSession(
       average(int) >= 85;
 
     next = {
+      ...previous,
       currentCycle: previous.currentCycle + 1,
+      activeWeek: 1,
       successfulCycles: previous.successfulCycles + (success ? 1 : 0),
       repeatedCycles: previous.repeatedCycles + (success ? 0 : 1),
       lastDecision: success ? ('advance' as const) : ('repeat' as const),
@@ -798,7 +1003,12 @@ function withCycleSession(
 function registerSession(): void {
   const profile = profileOrNull();
   const exercises = activeDayExercises();
-  if (!profile || exercises.length === 0 || !allExercisesComplete()) return;
+  if (
+    !profile ||
+    exercises.length === 0 ||
+    !allExercisesComplete() ||
+    !selectedSessionTrainable()
+  ) return;
 
   cancelActiveRest();
 
@@ -914,17 +1124,8 @@ export function installHighflyTrainingUi(): void {
     window.addEventListener('resize', forceSystemViewport);
   }
 
-  // Desktop microbar is rebuilt after this installer can run. Delegate from
-  // document so the Training entry works regardless of HUD mount order.
-  document.addEventListener('click', (event) => {
-    const target = event.target;
-    if (!(target instanceof Element) || !target.closest('#mm-training')) return;
-    event.preventDefault();
-    trainingWindow?.removeAttribute('hidden');
-    window.dispatchEvent(new CustomEvent('highfly:open-training'));
-  });
-
   window.addEventListener('highfly:open-training', () => {
+    trainingWindow?.removeAttribute('hidden');
     if (trainingWindow && document.body.classList.contains('mobile-touch')) {
       trainingWindow.style.setProperty('width', 'calc(100vw - 12px)', 'important');
       trainingWindow.style.setProperty('height', 'calc(100vh - 12px)', 'important');

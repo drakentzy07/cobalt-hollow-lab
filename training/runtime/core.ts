@@ -115,15 +115,27 @@ export interface HighflyHunterProgressionState {
   subclassId: string | null;
 }
 
+export interface HighflyCycleResetEntry {
+  cycle: number;
+  resetAt: string;
+  reason: string;
+  completedSessions: string[];
+  activeWeek: 1 | 2 | 3 | 4;
+}
+
 export interface HighflyCycleProgressionState {
   /** 1-based cycle number currently being trained. */
   currentCycle: number;
+  /** Week that currently has Training authority. Other weeks are view-only. */
+  activeWeek?: 1 | 2 | 3 | 4;
   /** Successful cycles increase working loads; repeated cycles do not. */
   successfulCycles: number;
   repeatedCycles: number;
   lastDecision: 'advance' | 'repeat' | null;
   /** Unique week/day keys completed in the current 4-week block. */
   completedSessions: string[];
+  /** Manual cycle restarts are audited but never erase Core/RM history. */
+  resetHistory?: HighflyCycleResetEntry[];
 }
 
 export interface HighflyHunterProfile {
@@ -207,10 +219,12 @@ export function createHighflyHunterProfile(args: {
       accessoryLoads: {},
       cycleProgression: {
         currentCycle: 1,
+        activeWeek: 1,
         successfulCycles: 0,
         repeatedCycles: 0,
         lastDecision: null,
         completedSessions: [],
+        resetHistory: [],
       },
     },
     hunter: {

@@ -125,6 +125,7 @@ jobs:
           python ../overlays/highfly_run115_visuals.py
           python ../overlays/highfly_run119_foundation_authority.py
           python ../overlays/highfly_run120_closure.py
+          python ../overlays/highfly_run122_training_lock.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -368,6 +369,13 @@ jobs:
           grep -F "<string name=\"app_name\">HIGHFLY</string>" upstream/android/app/src/main/res/values/strings.xml
           test -s upstream/public/highfly/highfly-logo-official.webp
           grep -F "HIGHFLY RUN120 — calibration + creator closure" upstream/src/styles/shell.css
+          grep -F "HIGHFLY RUN122 — Training authority / one-shot sessions" upstream/src/styles/shell.css
+          grep -F "CALIBRAR TODOS LOS CARGADOS" upstream/src/highfly/training/ui.ts
+          grep -F "SEMANA SOLO VISTA · NO HABILITADA" upstream/src/highfly/training/ui.ts
+          grep -F "restartCurrentCycle" upstream/src/highfly/training/cycle_control.ts
+          grep -F "launch-transparent.svg?v=122" upstream/public/manifest.webmanifest
+          grep -F "$('#mm-training')?.addEventListener('click'" upstream/src/ui/hud.ts
+          grep -F "Remo con Mancuernas" upstream/src/highfly/training/personal_routine.ts
 
       - name: TypeScript source smoke
         working-directory: upstream
@@ -377,7 +385,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -540,23 +548,24 @@ jobs:
               await page.keyboard.press('Escape').catch(() => {});
               await page.waitForTimeout(300);
 
+              const desktopTraining = page.locator('#mm-training');
+              await desktopTraining.waitFor({ state: 'visible', timeout: 10000 });
+              await desktopTraining.click();
+              await page.waitForTimeout(150);
               const trainingGate = await page.evaluate(() => {
-                const button = document.querySelector('#mm-training');
-                if (!(button instanceof HTMLElement)) {
-                  return { button: false, open: false, calibration: false };
-                }
-                button.click();
                 const win = document.querySelector('#highfly-training-window');
                 return {
-                  button: true,
                   open: win instanceof HTMLElement && !win.hasAttribute('hidden'),
                   calibration:
                     win instanceof HTMLElement &&
                     (win.textContent ?? '').includes('CALIBRACIÓN DE FUERZA'),
+                  bulkRm:
+                    win instanceof HTMLElement &&
+                    (win.textContent ?? '').includes('CALIBRAR TODOS LOS CARGADOS'),
                 };
               });
-              if (!trainingGate.button || !trainingGate.open || !trainingGate.calibration) {
-                throw new Error('RUN120: desktop Training entry did not open the calibrated Training UI: ' + JSON.stringify(trainingGate));
+              if (!trainingGate.open || !trainingGate.calibration || !trainingGate.bulkRm) {
+                throw new Error('RUN122: REAL desktop click did not open Training: ' + JSON.stringify(trainingGate));
               }
               await page.evaluate(() =>
                 document.querySelector('#highfly-training-close')?.dispatchEvent(
