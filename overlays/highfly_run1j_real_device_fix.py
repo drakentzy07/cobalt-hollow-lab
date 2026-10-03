@@ -71,29 +71,31 @@ replace_once(
     """      const finished = doneSets >= totalSets;
       const lockedSession = !selectedSessionTrainable();
       const lockedBySequence = firstIncomplete >= 0 && index > firstIncomplete;
-      const active = !lockedSession && !finished && !skipped && !lockedBySequence;
+      const active = !lockedSession && !finished && !lockedBySequence;
 """,
     """      const skipped = skippedExercises.has(exercise.exerciseId);
       const finished = doneSets >= totalSets;
+      const lockedSession = !selectedSessionTrainable();
       const lockedBySequence = firstIncomplete >= 0 && index > firstIncomplete;
-      const active = !finished && !skipped && !lockedBySequence;
+      const active = !lockedSession && !finished && !skipped && !lockedBySequence;
 """,
     "training row state",
 )
 
 replace_once(
     ui,
-    """      let actionText = 'BLOQUEADO · COMPLETÁ O SALTÁ EL EJERCICIO ANTERIOR';
+    """      let actionText = 'BLOQUEADO · COMPLETÁ EL EJERCICIO ANTERIOR';
       if (sessionAlreadyRegistered()) actionText = 'DÍA REGISTRADO · SESIÓN CERRADA ✓';
       else if (selectedWeek !== cycleState(profileOrNull()).activeWeek) actionText = 'SOLO VISTA · SEMANA NO HABILITADA';
-      else if (skipped) actionText = 'EJERCICIO SALTADO';
       else if (finished) actionText = 'EJERCICIO COMPLETADO ✓';
       else if (!load.ready) actionText = 'INGRESÁ LA CARGA PARA CONTINUAR';
       else if (resting) actionText = 'RECUPERACIÓN EN CURSO';
       else if (active) actionText = `COMPLETAR SET ${doneSets + 1}/${totalSets}`;
 """,
     """      let actionText = 'BLOQUEADO · COMPLETÁ O SALTÁ EL EJERCICIO ANTERIOR';
-      if (skipped) actionText = 'EJERCICIO SALTADO';
+      if (sessionAlreadyRegistered()) actionText = 'DÍA REGISTRADO · SESIÓN CERRADA ✓';
+      else if (selectedWeek !== cycleState(profileOrNull()).activeWeek) actionText = 'SOLO VISTA · SEMANA NO HABILITADA';
+      else if (skipped) actionText = 'EJERCICIO SALTADO';
       else if (finished) actionText = 'EJERCICIO COMPLETADO ✓';
       else if (!load.ready) actionText = 'INGRESÁ LA CARGA PARA CONTINUAR';
       else if (resting) actionText = 'RECUPERACIÓN EN CURSO';
@@ -104,9 +106,9 @@ replace_once(
 
 replace_once(
     ui,
-    """        <article class="hf-exercise ${lockedSession || lockedBySequence || !load.ready ? 'is-blocked' : ''} ${finished || sessionAlreadyRegistered() ? 'is-complete' : ''} ${skipped ? 'is-skipped' : ''}" data-exercise-id="${exercise.exerciseId}">
+    """        <article class="hf-exercise ${lockedSession || lockedBySequence || !load.ready ? 'is-blocked' : ''} ${finished || sessionAlreadyRegistered() ? 'is-complete' : ''}" data-exercise-id="${exercise.exerciseId}">
 """,
-    """        <article class="hf-exercise ${lockedBySequence || !load.ready ? 'is-blocked' : ''} ${finished ? 'is-complete' : ''} ${skipped ? 'is-skipped' : ''}" data-exercise-id="${exercise.exerciseId}">
+    """        <article class="hf-exercise ${lockedSession || lockedBySequence || !load.ready ? 'is-blocked' : ''} ${finished || sessionAlreadyRegistered() ? 'is-complete' : ''} ${skipped ? 'is-skipped' : ''}" data-exercise-id="${exercise.exerciseId}">
 """,
     "training row classes",
 )
@@ -242,7 +244,7 @@ replace_once(
 replace_once(
     ui,
     """function completeSet(exercise: HighflyRoutineExercise): void {
-  if (!canActOnExercise(exercise)) return;
+  if (activeRest || !selectedSessionTrainable()) return;
   const total = plannedSetCount(exercise);
 """,
     """function completeSet(exercise: HighflyRoutineExercise): void {
