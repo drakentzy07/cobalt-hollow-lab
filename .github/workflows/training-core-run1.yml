@@ -385,7 +385,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -1228,8 +1228,8 @@ jobs:
           }));
           console.log('RUN1J_EXACT', exact);
           if (
-            !exact.clean.includes('50 kg · 4×3') ||
-            !exact.squatTop.includes('86 kg · 1×6') ||
+            !exact.clean.includes('59 kg · 4×3') ||
+            !exact.squatTop.includes('81 kg · 1×6') ||
             !exact.squatTopDisabled
           ) {
             throw new Error('RUN127: calibrated RM sheet or sequential lock contract failed');
@@ -2125,6 +2125,21 @@ jobs:
             }
           }
 
+          // RUN128: current Training authority requires a real 2-6 rep
+          // calibration before system-percent work can execute. Use the same
+          // mobile UI path a player uses, then close the day AS PERFORMED.
+          await page.locator('#hf-rm-age').fill('30');
+          await page.locator('#hf-rm-bodyweight').fill('80');
+          await page.locator('[data-hf-rm-load="hang_power_clean"]').fill('80');
+          await page.locator('[data-hf-rm-reps="hang_power_clean"]').selectOption('5');
+          await page.locator('#hf-rm-submit-all').click({ force: true });
+          await page.waitForFunction(() =>
+            (document.querySelector('#highfly-training-window')?.textContent ?? '')
+              .includes('RM calibradas'),
+            null,
+            { timeout: 5000 },
+          );
+
           // Close the day AS PERFORMED: record one real set, then finish the
           // session without completing/skipping the rest. This reproduces the
           // real-device bug report and proves only actual work is committed.
@@ -2159,6 +2174,46 @@ jobs:
             (await page.locator('#highfly-training-window').textContent()) ?? '';
           if (!closedDayText.includes('1/20')) {
             throw new Error('J4: completing partial session did not close the training day');
+          }
+          const lockedDay = await page.evaluate(() => {
+            const register = document.querySelector('#hf-training-register');
+            const firstSet = document.querySelector('[data-hf-set-complete="d1_hang_power_clean"]');
+            return {
+              registerDisabled:
+                register instanceof HTMLButtonElement && register.disabled,
+              firstSetDisabled:
+                firstSet instanceof HTMLButtonElement && firstSet.disabled,
+              text: register?.textContent ?? '',
+            };
+          });
+          if (
+            !lockedDay.registerDisabled ||
+            !lockedDay.firstSetDisabled ||
+            !lockedDay.text.includes('SESIÓN YA REGISTRADA')
+          ) {
+            throw new Error('J4: completed day remained executable: ' + JSON.stringify(lockedDay));
+          }
+
+          // Future weeks are inspectable but have zero execution authority.
+          await page.locator('#hf-training-week').selectOption('2');
+          await page.waitForTimeout(100);
+          const futureWeek = await page.evaluate(() => {
+            const register = document.querySelector('#hf-training-register');
+            const anyEnabledSet = [...document.querySelectorAll('[data-hf-set-complete]')]
+              .some((el) => el instanceof HTMLButtonElement && !el.disabled);
+            return {
+              registerDisabled:
+                register instanceof HTMLButtonElement && register.disabled,
+              anyEnabledSet,
+              text: document.querySelector('#highfly-training-window')?.textContent ?? '',
+            };
+          });
+          if (
+            !futureWeek.registerDisabled ||
+            futureWeek.anyEnabledSet ||
+            !futureWeek.text.includes('SOLO VISTA')
+          ) {
+            throw new Error('J4: future Training week gained execution authority: ' + JSON.stringify(futureWeek));
           }
 
           const staticBadResponses = badResponses.filter(
