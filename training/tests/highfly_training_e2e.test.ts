@@ -156,7 +156,7 @@ describe('HIGHFLY Training RUN1-H end-to-end', () => {
     expect(entity.attackPower).toBe(afterFirstRefresh);
   });
 
-  it('keeps non-comparable VIT stimulus pending instead of inventing a Stat Up', () => {
+  it('calibrates VIT from valid 7+ rep endurance evidence without inventing a free Stat Up', () => {
     const profile = createHighflyHunterProfile({
       profileId: 'vit-pending',
       createdAt: '2026-09-30T00:00:00.000Z',
@@ -195,11 +195,12 @@ describe('HIGHFLY Training RUN1-H end-to-end', () => {
       recordedAt: '2026-09-30T03:00:00.000Z',
     });
 
-    expect(result.profile.training.core.VIT.calibrated).toBe(false);
-    expect(result.profile.training.core.VIT.current).toBe(0);
+    expect(result.profile.training.core.VIT.calibrated).toBe(true);
+    expect(result.profile.training.core.VIT.current).toBe(10);
     expect(result.profile.training.core.VIT.progress).toBeGreaterThan(0);
+    expect(result.profile.training.performance?.VIT?.baseline).toBeGreaterThan(0);
     expect(result.outcomes.find((o) => o.stat === 'VIT')?.outcome).toBe(
-      'awaiting_performance',
+      'calibrated',
     );
   });
 });
