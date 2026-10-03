@@ -24,7 +24,7 @@ jobs:
       - name: Checkout exact GREEN HIGHFLY overlay
         uses: actions/checkout@v4
         with:
-          ref: e4e2a1db2eae5769e97b46477804b4100ed5a010
+          ref: 7912a25edc9d37603a0a90fd007c50e402e6b500
 
       - name: Checkout frozen ClaudeCraft code slice
         uses: actions/checkout@v4
