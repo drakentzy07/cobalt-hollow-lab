@@ -1,6 +1,6 @@
 import { bindTouchTap } from '../../ui/touch_tap';
 import type { ExerciseDefinition, SessionRecord } from './engine';
-import type { HighflyHunterProfile } from './core';
+import type { HighflyHunterProfile, HighflyRmLiftId, HighflySex } from './core';
 import {
   HIGHFLY_4_WEEK_CYCLE,
   HIGHFLY_PERSONAL_5D_ROUTINE,
@@ -10,6 +10,7 @@ import {
   plannedLoadKg,
   prescriptionForWeek,
   progressedTrainingMaxKg,
+  rmLiftForExercise,
   restClockLabel,
   type HighflyRoutineExercise,
 } from './personal_routine';
@@ -19,12 +20,19 @@ import {
 } from './profile_store';
 import { runTrainingSessionPipeline } from './pipeline';
 import { refreshActiveTrainingCombatBridge } from './combat_runtime';
+import {
+  HIGHFLY_RM_LIFT_LABELS,
+  HIGHFLY_RM_LIFT_ORDER,
+  evaluationDaysRemaining,
+  submitRmCalibration,
+} from './rm_calibration';
 
 let installed = false;
 let selectedDay = 1;
 let selectedWeek = 1;
 let lastResult: ReturnType<typeof runTrainingSessionPipeline>['sessionResult'] | null = null;
 let lastOutcomes: ReturnType<typeof runTrainingSessionPipeline>['outcomes'] = [];
+let rmCalibrationMessage = '';
 const restRecords = new Map<string, number[]>();
 const completedSets = new Map<string, number>();
 
@@ -157,8 +165,17 @@ function loadPlan(exercise: HighflyRoutineExercise): {
     };
   }
 
-  const state = cycleState(profileOrNull());
-  const systemKg = plannedLoadKg(exercise, selectedWeek, state.successfulCycles);
+  const profile = profileOrNull();
+  const state = cycleState(profile);
+  const liftId = rmLiftForExercise(exercise.exerciseId);
+  const rmEntry = liftId ? profile?.training.loadCalibration?.lifts?.[liftId] : undefined;
+  const calibratedOneRmKg = rmEntry?.oneRmKg;
+  const systemKg = plannedLoadKg(
+    exercise,
+    selectedWeek,
+    state.successfulCycles,
+    calibratedOneRmKg,
+  );
   const editable =
     isEditableAccessory(exercise) &&
     prescription.loadKg === undefined &&
@@ -166,7 +183,7 @@ function loadPlan(exercise: HighflyRoutineExercise): {
   const accessoryKg = editable ? savedAccessoryKg(exercise.exerciseId) : 0;
   const finalKg = editable ? accessoryKg : systemKg;
   const rmReferenceKg =
-    progressedTrainingMaxKg(exercise, state.successfulCycles) ?? undefined;
+    progressedTrainingMaxKg(exercise, state.successfulCycles, calibratedOneRmKg) ?? undefined;
 
   if (editable) {
     return {
@@ -187,7 +204,7 @@ function loadPlan(exercise: HighflyRoutineExercise): {
     ready: true,
     primary: finalKg > 0 ? `${finalKg} kg · ${prescription.sets}×${prescription.reps}` : `${prescription.sets}×${prescription.reps}`,
     secondary: rmReferenceKg
-      ? `TM ${rmReferenceKg} kg${percent}`
+      ? `TM ${rmReferenceKg} kg${percent}${rmEntry ? (rmEntry.status === 'evaluation' ? ' · RM EN EVALUACIÓN' : ' · RM VERIFICADA') : ' · REFERENCIA INICIAL'}`
       : exercise.authority === 'system_fixed'
         ? 'Carga exacta de la rutina HIGHFLY'
         : 'Prescripción exacta de la rutina HIGHFLY',
@@ -195,6 +212,59 @@ function loadPlan(exercise: HighflyRoutineExercise): {
     editable: false,
     rmReferenceKg,
   };
+}
+
+function rmCalibrationPanel(): string {
+  const profile = profileOrNull();
+  if (!profile) return '';
+  const calibration = profile.training.loadCalibration;
+  const athlete = calibration?.athlete;
+  const sex = athlete?.sex ?? 'male';
+  const age = athlete?.ageYears ?? '';
+  const bodyweight = athlete?.bodyweightKg ?? '';
+
+  const rows = HIGHFLY_RM_LIFT_ORDER.map((lift) => {
+    const entry = calibration?.lifts?.[lift];
+    const days = entry ? evaluationDaysRemaining(entry) : 0;
+    const status = !entry
+      ? 'SIN CALIBRAR'
+      : entry.status === 'evaluation'
+        ? 'EVALUACIÓN · ' + days + 'D'
+        : 'VERIFICADA';
+    const authority = entry
+      ? entry.oneRmKg.toFixed(1) + ' kg e1RM efectiva'
+      : '2–6 reps · fórmula Epley';
+    const raw = entry?.estimatedOneRmKg
+      ? 'Última estimación ' + entry.estimatedOneRmKg.toFixed(1) + ' kg'
+      : 'Nunca ingresás un 1RM manual';
+
+    return [
+      '<article class="hf-rm-card ' + (entry?.status === 'evaluation' ? 'is-evaluation' : '') + '">',
+      '<div class="hf-rm-card__head"><strong>' + escapeHtml(HIGHFLY_RM_LIFT_LABELS[lift]) + '</strong><span>' + status + '</span></div>',
+      '<div class="hf-rm-authority"><b>' + authority + '</b><small>' + raw + '</small></div>',
+      '<div class="hf-rm-inputs">',
+      '<label><span>PESO</span><input data-hf-rm-load="' + lift + '" type="number" inputmode="decimal" min="0" step="0.5" placeholder="kg"></label>',
+      '<label><span>REPS</span><select data-hf-rm-reps="' + lift + '"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option></select></label>',
+      '<button type="button" data-hf-rm-submit="' + lift + '">' + (entry?.status === 'evaluation' ? 'REGISTRAR EVIDENCIA' : entry ? 'ACTUALIZAR' : 'CALIBRAR') + '</button>',
+      '</div></article>',
+    ].join('');
+  }).join('');
+
+  return [
+    '<section class="hf-calibration is-open hf-rm-calibration">',
+    '<div class="hf-system-line"><span>CALIBRACIÓN DE FUERZA</span><b>e1RM · EPLEY · 2–6 REPS</b></div>',
+    '<div class="hf-calibration-body">',
+    '<p>Cargás una serie real de 2 a 6 repeticiones. HIGHFLY calcula el e1RM: nunca escribís un máximo manual. Sexo, edad y peso corporal sólo sirven para detectar valores extraordinarios; no regalan ni quitan Core Stats.</p>',
+    '<div class="hf-athlete-calibration">',
+    '<label><span>SEXO</span><select id="hf-rm-sex"><option value="male" ' + (sex === 'male' ? 'selected' : '') + '>Masculino</option><option value="female" ' + (sex === 'female' ? 'selected' : '') + '>Femenino</option></select></label>',
+    '<label><span>EDAD</span><input id="hf-rm-age" type="number" inputmode="numeric" min="14" max="100" value="' + age + '" placeholder="años"></label>',
+    '<label><span>PESO CORPORAL</span><input id="hf-rm-bodyweight" type="number" inputmode="decimal" min="30" max="350" step="0.1" value="' + bodyweight + '" placeholder="kg"></label>',
+    '</div>',
+    '<small class="hf-rm-rule">Marca extraordinaria = 7 días en evaluación. Mientras tanto se congela una autoridad moderada; una segunda evidencia compatible libera el valor completo.</small>',
+    rmCalibrationMessage ? '<div class="hf-rm-message">' + escapeHtml(rmCalibrationMessage) + '</div>' : '',
+    '<div class="hf-rm-grid">' + rows + '</div>',
+    '</div></section>',
+  ].join('');
 }
 
 function cyclePanel(): string {
@@ -418,6 +488,8 @@ function render(): void {
       <div><span>INT</span><b>GESTIÓN + RECUPERACIÓN</b></div>
     </section>
 
+    ${rmCalibrationPanel()}
+
     ${cyclePanel()}
 
     <section>
@@ -491,6 +563,36 @@ function bindRenderedUi(mount: HTMLElement): void {
       render();
     });
   }
+
+  mount.querySelectorAll<HTMLElement>('[data-hf-rm-submit]').forEach((button) => {
+    bindTouchTap(button, (event) => {
+      event.preventDefault();
+      const profile = profileOrNull();
+      const lift = button.dataset.hfRmSubmit as HighflyRmLiftId | undefined;
+      const sexEl = mount.querySelector<HTMLSelectElement>('#hf-rm-sex');
+      const ageEl = mount.querySelector<HTMLInputElement>('#hf-rm-age');
+      const bodyweightEl = mount.querySelector<HTMLInputElement>('#hf-rm-bodyweight');
+      if (!profile || !lift || !sexEl || !ageEl || !bodyweightEl) return;
+      const loadEl = mount.querySelector<HTMLInputElement>('[data-hf-rm-load="' + lift + '"]');
+      const repsEl = mount.querySelector<HTMLSelectElement>('[data-hf-rm-reps="' + lift + '"]');
+      if (!loadEl || !repsEl) return;
+      try {
+        const result = submitRmCalibration(profile, lift, {
+          sex: sexEl.value as HighflySex,
+          ageYears: Number(ageEl.value),
+          bodyweightKg: Number(bodyweightEl.value),
+          loadKg: Number(loadEl.value),
+          reps: Number(repsEl.value),
+        });
+        setActiveHighflyHunterProfile(result.profile);
+        rmCalibrationMessage = HIGHFLY_RM_LIFT_LABELS[lift] + ' · ' + result.reason;
+        render();
+      } catch (err) {
+        rmCalibrationMessage = err instanceof Error ? err.message : String(err);
+        render();
+      }
+    });
+  });
 
   mount.querySelectorAll<HTMLInputElement>('[data-hf-accessory-load]').forEach((input) => {
     input.addEventListener('change', () => {
@@ -812,14 +914,15 @@ export function installHighflyTrainingUi(): void {
     window.addEventListener('resize', forceSystemViewport);
   }
 
-  const desktopTraining = document.querySelector<HTMLElement>('#mm-training');
-  if (desktopTraining) {
-    bindTouchTap(desktopTraining, (event) => {
-      event.preventDefault();
-      trainingWindow?.removeAttribute('hidden');
-      window.dispatchEvent(new CustomEvent('highfly:open-training'));
-    });
-  }
+  // Desktop microbar is rebuilt after this installer can run. Delegate from
+  // document so the Training entry works regardless of HUD mount order.
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element) || !target.closest('#mm-training')) return;
+    event.preventDefault();
+    trainingWindow?.removeAttribute('hidden');
+    window.dispatchEvent(new CustomEvent('highfly:open-training'));
+  });
 
   window.addEventListener('highfly:open-training', () => {
     if (trainingWindow && document.body.classList.contains('mobile-touch')) {

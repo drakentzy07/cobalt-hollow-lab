@@ -54,18 +54,51 @@ export interface HighflyTrainingHistoryEntry {
 
 export type HighflyRmLiftId =
   | 'back_squat'
+  | 'front_squat'
   | 'bench_press'
+  | 'barbell_row'
   | 'overhead_press'
-  | 'deadlift';
+  | 'deadlift'
+  | 'hang_power_clean';
+
+export type HighflySex = 'male' | 'female';
+
+export interface HighflyAthleteCalibrationProfile {
+  /**
+   * Context for plausibility / anti-cheat only. Sex and age never grant or
+   * subtract Core Stats: actual training evidence remains authoritative.
+   */
+  sex: HighflySex;
+  ageYears: number;
+  bodyweightKg: number;
+  updatedAt: string;
+}
+
+export interface HighflyRmCalibrationSample {
+  loadKg: number;
+  reps: number;
+  estimatedOneRmKg: number;
+  recordedAt: string;
+}
 
 export interface HighflyRmCalibrationEntry {
+  /** Effective e1RM authority used by HIGHFLY load planning. */
   oneRmKg: number;
+  /** Raw Epley result from the latest 2-6 rep evidence. */
+  estimatedOneRmKg?: number;
+  /** Last fully verified e1RM; 0 when an extraordinary first mark is still pending. */
+  verifiedOneRmKg?: number;
+  relativeToBodyweight?: number;
+  status?: 'verified' | 'evaluation';
+  evaluationUntil?: string;
+  samples?: HighflyRmCalibrationSample[];
   updatedAt: string;
 }
 
 export interface HighflyLoadCalibrationState {
   tmFactor: number;
   roundKg: number;
+  athlete?: HighflyAthleteCalibrationProfile;
   lifts: Partial<Record<HighflyRmLiftId, HighflyRmCalibrationEntry>>;
 }
 

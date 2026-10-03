@@ -1,3 +1,4 @@
+import type { HighflyRmLiftId } from './core';
 import type { MovementPattern, TrainingIntent } from './reference_routine';
 
 export const HF_HIGHFLY_PERSONAL_5D_V1_ID = 'HF_HIGHFLY_PERSONAL_5D_V1' as const;
@@ -709,13 +710,29 @@ export function prescriptionForWeek(
   return exercise.weekly[normalized];
 }
 
+export function rmLiftForExercise(exerciseId: string): HighflyRmLiftId | null {
+  if (exerciseId.includes('back_squat')) return 'back_squat';
+  if (exerciseId.includes('front_squat')) return 'front_squat';
+  if (exerciseId.includes('bench')) return 'bench_press';
+  if (exerciseId.includes('military')) return 'overhead_press';
+  if (exerciseId.includes('deadlift')) return 'deadlift';
+  if (exerciseId.includes('hang_power_clean')) return 'hang_power_clean';
+  if (exerciseId.includes('pendlay') || exerciseId.includes('barbell_row')) return 'barbell_row';
+  return null;
+}
+
 export function progressedTrainingMaxKg(
   exercise: HighflyRoutineExercise,
   successfulCycles: number,
+  calibratedOneRmKg?: number,
 ): number | null {
-  if (!exercise.referenceTrainingMaxKg) return null;
+  const baseTrainingMax =
+    calibratedOneRmKg && calibratedOneRmKg > 0
+      ? trainingMaxKg(calibratedOneRmKg)
+      : exercise.referenceTrainingMaxKg;
+  if (!baseTrainingMax) return null;
   const increment = Math.max(0, exercise.cycleIncrementKg ?? 0);
-  return exercise.referenceTrainingMaxKg + Math.max(0, Math.trunc(successfulCycles)) * increment;
+  return baseTrainingMax + Math.max(0, Math.trunc(successfulCycles)) * increment;
 }
 
 /**
@@ -727,6 +744,7 @@ export function plannedLoadKg(
   exercise: HighflyRoutineExercise,
   week: number,
   successfulCycles = 0,
+  calibratedOneRmKg?: number,
 ): number {
   const prescription = prescriptionForWeek(exercise, week);
   if (!prescription) return 0;
@@ -734,9 +752,12 @@ export function plannedLoadKg(
   if (
     exercise.authority === 'system_percent' &&
     prescription.percent !== undefined &&
-    exercise.referenceTrainingMaxKg
+    (exercise.referenceTrainingMaxKg || (calibratedOneRmKg ?? 0) > 0)
   ) {
-    const tm = progressedTrainingMaxKg(exercise, successfulCycles) ?? exercise.referenceTrainingMaxKg;
+    const tm =
+      progressedTrainingMaxKg(exercise, successfulCycles, calibratedOneRmKg) ??
+      exercise.referenceTrainingMaxKg ??
+      0;
     return roundHighflyLoadKg(tm * prescription.percent);
   }
 

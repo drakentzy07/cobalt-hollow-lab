@@ -122,6 +122,7 @@ jobs:
           python ../overlays/highfly_run1j_visual_release.py
           python ../overlays/highfly_run115_visuals.py
           python ../overlays/highfly_run119_foundation_authority.py
+          python ../overlays/highfly_run120_closure.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -356,6 +357,15 @@ jobs:
           grep -F 'HIGHFLY RUN1-J VISUAL RELEASE — S23 entry surface' upstream/src/styles/shell.website.css
           ! grep -F 'url("/worldofclaudecraft-logo.png")' upstream/src/styles/shell.website.css
           grep -q "CONTINUAR ANTES DE TIEMPO" training/runtime/ui.ts
+          grep -F "CALIBRACIÓN DE FUERZA" upstream/src/highfly/training/ui.ts
+          grep -F "HIGHFLY_RM_MIN_REPS = 2" upstream/src/highfly/training/rm_calibration.ts
+          grep -F "HIGHFLY_RM_MAX_REPS = 6" upstream/src/highfly/training/rm_calibration.ts
+          grep -F "highflyRun120EnsureOfflinePreview" upstream/src/main.ts
+          grep -F "MENÚ → BOLSAS" upstream/src/ui/bootcamp.ts
+          grep -F "windowSplashScreenAnimatedIcon" upstream/android/app/src/main/res/values/styles.xml
+          grep -F "<string name=\"app_name\">HIGHFLY</string>" upstream/android/app/src/main/res/values/strings.xml
+          test -s upstream/public/highfly/highfly-logo-official.webp
+          grep -F "HIGHFLY RUN120 — calibration + creator closure" upstream/src/styles/shell.css
 
       - name: TypeScript source smoke
         working-directory: upstream
@@ -365,7 +375,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -492,7 +502,10 @@ jobs:
               const canvas = document.querySelector('#char-preview-canvas');
               return (
                 canvas instanceof HTMLCanvasElement &&
-                canvas.dataset.highflyPreviewVisual === 'player_warrior_modular'
+                canvas.dataset.highflyPreviewVisual === 'player_warrior_modular' &&
+                Number(canvas.dataset.highflyPreviewFrame ?? '0') > 0 &&
+                canvas.width > 10 &&
+                canvas.height > 10
               );
             }, null, { timeout: 20000 });
 
@@ -524,6 +537,30 @@ jobs:
               }).catch(() => {});
               await page.keyboard.press('Escape').catch(() => {});
               await page.waitForTimeout(300);
+
+              const trainingGate = await page.evaluate(() => {
+                const button = document.querySelector('#mm-training');
+                if (!(button instanceof HTMLElement)) {
+                  return { button: false, open: false, calibration: false };
+                }
+                button.click();
+                const win = document.querySelector('#highfly-training-window');
+                return {
+                  button: true,
+                  open: win instanceof HTMLElement && !win.hasAttribute('hidden'),
+                  calibration:
+                    win instanceof HTMLElement &&
+                    (win.textContent ?? '').includes('CALIBRACIÓN DE FUERZA'),
+                };
+              });
+              if (!trainingGate.button || !trainingGate.open || !trainingGate.calibration) {
+                throw new Error('RUN120: desktop Training entry did not open the calibrated Training UI: ' + JSON.stringify(trainingGate));
+              }
+              await page.evaluate(() =>
+                document.querySelector('#highfly-training-close')?.dispatchEvent(
+                  new MouseEvent('click', { bubbles: true }),
+                ),
+              );
 
               const before = await page.evaluate(() => {
                 const p = window.__game.sim.player;
