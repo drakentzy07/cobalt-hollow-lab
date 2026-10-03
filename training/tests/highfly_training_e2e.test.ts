@@ -4,6 +4,7 @@ import {
   runTrainingSessionPipeline,
 } from '../src/highfly/training/pipeline';
 import { progressCostForCurrent } from '../src/highfly/training/adaptation';
+import { trainingGain } from '../src/highfly/training/bridge';
 import { createHighflyHunterProfile } from '../src/highfly/training/core';
 import type { ExerciseDefinition, SessionRecord } from '../src/highfly/training/engine';
 import {
@@ -50,7 +51,7 @@ function session(id: string, loadKg: number): SessionRecord {
 }
 
 describe('HIGHFLY Training RUN1-H end-to-end', () => {
-  it('calibrates from first comparable evidence without granting a bridge bonus', () => {
+  it('starts at zero and activates the bridge on the first real comparable calibration', () => {
     const profile = createHighflyHunterProfile({
       profileId: 'e2e',
       createdAt: '2026-09-30T00:00:00.000Z',
@@ -72,6 +73,7 @@ describe('HIGHFLY Training RUN1-H end-to-end', () => {
       .reverse()
       .find((entry) => entry.stat === 'STR');
     expect(firstStrHistory?.outcome).toBe('calibrated');
+    expect(trainingGain(first.profile.training.core.STR.current)).toBeGreaterThan(0);
   });
 
   it('consolidates a comparable improvement, persists it, and changes local combat AP', () => {

@@ -301,8 +301,8 @@ helpers = r'''function trainingOutcomeLabel(outcome: string): string {
 
 function trainingOutcomeReason(reason: string): string {
   const known: Record<string, string> = {
-    'Initial comparable evidence established the neutral Core baseline; calibration itself grants no Training Bridge bonus.':
-      'La primera evidencia comparable estableció la base neutral del Core; calibrar no otorga por sí solo una bonificación de Training Bridge.',
+    'Initial real training established the Core baseline and activated the Training Bridge.':
+      'El primer entrenamiento real estableció la base del Core y activó el poder interior del Hunter.',
     'Stimulus recorded, but initial calibration needs a valid comparable performance sample.':
       'Se registró estímulo, pero la calibración inicial todavía necesita una muestra válida de rendimiento comparable.',
     'Comparable baseline seeded for an already-calibrated legacy profile.':

@@ -812,6 +812,15 @@ export function installHighflyTrainingUi(): void {
     window.addEventListener('resize', forceSystemViewport);
   }
 
+  const desktopTraining = document.querySelector<HTMLElement>('#mm-training');
+  if (desktopTraining) {
+    bindTouchTap(desktopTraining, (event) => {
+      event.preventDefault();
+      trainingWindow?.removeAttribute('hidden');
+      window.dispatchEvent(new CustomEvent('highfly:open-training'));
+    });
+  }
+
   window.addEventListener('highfly:open-training', () => {
     if (trainingWindow && document.body.classList.contains('mobile-touch')) {
       trainingWindow.style.setProperty('width', 'calc(100vw - 12px)', 'important');

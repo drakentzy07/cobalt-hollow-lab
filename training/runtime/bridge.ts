@@ -1,6 +1,6 @@
 import type { HighflyCoreStatsState } from './core';
 
-export const HIGHFLY_TRAINING_BRIDGE_VERSION = 'run1-e-lab-v1' as const;
+export const HIGHFLY_TRAINING_BRIDGE_VERSION = 'run1-k-zero-origin-v1' as const;
 
 export interface TrainingBridgeFeatureFlags {
   enabled: boolean;
@@ -103,14 +103,17 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 /**
- * v0.7 open-scale bridge basis:
- * G(s)=ln(1 + max(0,s-10)/50)
+ * HIGHFLY zero-origin bridge basis:
+ * G(s)=ln(1 + max(0,s)/25)
  *
- * Core Stats have no hard cap. Only sensitive derived outputs may be capped.
+ * A Hunter with no real Training evidence stays at exactly zero bonus. The first
+ * valid calibration (current=10 in RUN1-J) now activates a meaningful derived
+ * boost instead of being a hidden neutral point. Core Stats still have no hard
+ * cap; only sensitive derived outputs may be capped.
  */
 export function trainingGain(stat: number): number {
   const s = Math.max(0, safe(stat));
-  return Math.log(1 + Math.max(0, s - 10) / 50);
+  return Math.log1p(s / 25);
 }
 
 function current(core: HighflyCoreStatsState, stat: keyof HighflyCoreStatsState): number {

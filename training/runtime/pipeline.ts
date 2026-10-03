@@ -234,7 +234,7 @@ export function runTrainingSessionPipeline(
         outcome: 'calibrated',
         statDelta: 0,
         reason:
-          'Initial comparable evidence established the neutral Core baseline; calibration itself grants no Training Bridge bonus.',
+          'Initial real training established the Core baseline and activated the Training Bridge.',
       };
       profile = appendHistory(profile, {
         sessionId: input.session.sessionId,

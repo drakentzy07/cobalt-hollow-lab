@@ -57,9 +57,10 @@ describe('HIGHFLY TrainingBridge RUN1-E', () => {
     expect(result.audit.enabled).toBe(false);
   });
 
-  it('uses the approved open-scale logarithmic gain with no Core Stat hard cap', () => {
-    expect(trainingGain(10)).toBe(0);
-    expect(trainingGain(20)).toBeGreaterThan(0);
+  it('uses a zero-origin logarithmic gain: no training means zero, first calibration means power', () => {
+    expect(trainingGain(0)).toBe(0);
+    expect(trainingGain(10)).toBeGreaterThan(0);
+    expect(trainingGain(20)).toBeGreaterThan(trainingGain(10));
     expect(trainingGain(1000)).toBeGreaterThan(trainingGain(100));
   });
 
