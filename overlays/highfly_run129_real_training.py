@@ -152,7 +152,7 @@ replace_once(
 )
 replace_once(
     ui,
-    "STR / AGI / VIT / PER / INT sólo suben por entrenamiento real",
+    "Los valores 10.0 son la base calibrada; el resultado de sesión se muestra por separado.",
     "El primer valor nace de tu sesión real; después mejora sólo con adaptación y rendimiento confirmado",
     "Core section copy",
 )
@@ -163,6 +163,33 @@ replace_once(
     '<button type="button" id="hf-cycle-reset-arm" class="hf-secondary-action">REINICIAR CICLO</button>',
     '<button type="button" id="hf-cycle-reset-arm" class="hf-secondary-action" ${activeRest ? \'disabled\' : \'\'}>REINICIAR CICLO</button>',
     "cycle reset rest lock",
+)
+
+# Closing the Training window must never cancel recovery and become a hidden skip.
+replace_once(
+    ui,
+    """  const close = document.querySelector<HTMLElement>('#highfly-training-close');
+  if (close) {
+    bindTouchTap(close, (event) => {
+      event.preventDefault();
+      cancelActiveRest();
+      document.querySelector('#highfly-training-window')?.setAttribute('hidden', '');
+    });
+  }
+""",
+    """  const close = document.querySelector<HTMLElement>('#highfly-training-close');
+  if (close) {
+    bindTouchTap(close, (event) => {
+      event.preventDefault();
+      if (activeRest) {
+        paintRestDock();
+        return;
+      }
+      document.querySelector('#highfly-training-window')?.setAttribute('hidden', '');
+    });
+  }
+""",
+    "close cannot bypass mandatory rest",
 )
 
 # ---------------------------------------------------------------------------
@@ -309,6 +336,10 @@ if "navigator.webdriver ? 0.05 : exercise.restSec" not in final_ui:
     raise SystemExit("RUN129: production rest authority missing")
 if "CORE REAL" not in final_ui:
     raise SystemExit("RUN129: real Core badge missing")
+if "Los valores 10.0 son la base calibrada" in final_ui:
+    raise SystemExit("RUN129: obsolete fixed-10 copy survived")
+if "if (activeRest) {" not in final_ui or "paintRestDock();" not in final_ui:
+    raise SystemExit("RUN129: close-window recovery guard missing")
 if "run1-b" not in Path("src/highfly/training/core.ts").read_text(encoding="utf-8"):
     raise SystemExit("RUN129: scoring version did not advance")
 print("HIGHFLY_RUN129_REAL_TRAINING_APPLIED=1")
