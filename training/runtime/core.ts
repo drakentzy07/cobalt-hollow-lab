@@ -1,5 +1,5 @@
 export const HIGHFLY_TRAINING_SCHEMA_VERSION = 1 as const;
-export const HIGHFLY_TRAINING_SCORING_VERSION = 'run1-a' as const;
+export const HIGHFLY_TRAINING_SCORING_VERSION = 'run1-b' as const;
 
 export const HIGHFLY_CORE_STATS = ['STR', 'AGI', 'VIT', 'PER', 'INT'] as const;
 export type HighflyCoreStat = (typeof HIGHFLY_CORE_STATS)[number];

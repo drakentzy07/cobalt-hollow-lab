@@ -14,8 +14,13 @@ import {
   type SessionTrainingResult,
 } from './engine';
 import { evaluateAdaptation, type AdaptationStatus } from './adaptation';
+import {
+  adaptationStimulusForCurrent,
+  applySessionCapacityAuthority,
+} from './session_core';
 
-export const HIGHFLY_INITIAL_CALIBRATED_CORE_BASELINE = 10 as const;
+/** Deprecated compatibility export: RUN1-B has no fixed first-Core baseline. */
+export const HIGHFLY_INITIAL_CALIBRATED_CORE_BASELINE = 0 as const;
 export const HIGHFLY_TRAINING_HISTORY_LIMIT = 200 as const;
 
 export interface TrainingSessionPipelineInput {
@@ -179,7 +184,8 @@ function outcomeFromAdaptation(status: AdaptationStatus): HighflyTrainingHistory
 export function runTrainingSessionPipeline(
   input: TrainingSessionPipelineInput,
 ): TrainingSessionPipelineResult {
-  const sessionResult = evaluateTrainingSession(input.session, input.definitions);
+  const rawSessionResult = evaluateTrainingSession(input.session, input.definitions);
+  const sessionResult = applySessionCapacityAuthority(input.profile, rawSessionResult);
   const autoSamples = deriveComparablePerformance(sessionResult);
   const samples = { ...autoSamples, ...(input.performanceSamples ?? {}) };
   const confidence = evidenceConfidence(sessionResult);
@@ -224,17 +230,21 @@ export function runTrainingSessionPipeline(
         continue;
       }
 
+      const initialCurrent = Math.round(stimulus * 100) / 100;
+      if (initialCurrent <= 0) continue;
       profile = commitTrainingCoreStat(
         profile,
         stat,
-        HIGHFLY_INITIAL_CALIBRATED_CORE_BASELINE,
+        initialCurrent,
         {
           source: 'training-performance-gate',
           scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
           evidenceId,
         },
         {
-          progress: state.progress + stimulus,
+          // The first valid session IS the baseline; do not double-count it as
+          // pending adaptation toward the next Stat Up.
+          progress: 0,
           confidence,
           readiness,
         },
@@ -252,7 +262,7 @@ export function runTrainingSessionPipeline(
         outcome: 'calibrated',
         statDelta: 0,
         reason:
-          'Initial real training established the Core baseline and activated the Training Bridge.',
+          'Primera sesión válida: el Core se estableció con el rendimiento real de esa sesión, sin base fija.',
       };
       profile = appendHistory(profile, {
         sessionId: input.session.sessionId,
@@ -302,7 +312,7 @@ export function runTrainingSessionPipeline(
 
     const adaptation = evaluateAdaptation(profile, {
       stat,
-      productiveStimulus: stimulus,
+      productiveStimulus: adaptationStimulusForCurrent(state.current, stimulus),
       previousPerformanceIndex: anchor?.baseline ?? null,
       currentPerformanceIndex: validPositive(sample) ? sample : null,
       confidence,

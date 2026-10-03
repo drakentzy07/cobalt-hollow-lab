@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  HIGHFLY_INITIAL_CALIBRATED_CORE_BASELINE,
-  runTrainingSessionPipeline,
-} from '../src/highfly/training/pipeline';
+import { runTrainingSessionPipeline } from '../src/highfly/training/pipeline';
 import { progressCostForCurrent } from '../src/highfly/training/adaptation';
 import { trainingGain } from '../src/highfly/training/bridge';
 import { createHighflyHunterProfile } from '../src/highfly/training/core';
@@ -64,9 +61,11 @@ describe('HIGHFLY Training RUN1-H end-to-end', () => {
     });
 
     expect(first.profile.training.core.STR.calibrated).toBe(true);
-    expect(first.profile.training.core.STR.current).toBe(
-      HIGHFLY_INITIAL_CALIBRATED_CORE_BASELINE,
+    expect(first.profile.training.core.STR.current).toBeCloseTo(
+      first.sessionResult.stimulus.STR,
+      2,
     );
+    expect(first.profile.training.core.STR.current).not.toBe(10);
     expect(first.outcomes.find((o) => o.stat === 'STR')?.outcome).toBe('calibrated');
     expect(first.profile.training.performance?.STR?.baseline).toBeGreaterThan(0);
     const firstStrHistory = [...(first.profile.training.history ?? [])]
@@ -104,14 +103,23 @@ describe('HIGHFLY Training RUN1-H end-to-end', () => {
     const strOutcome = improved.outcomes.find((o) => o.stat === 'STR');
     expect(strOutcome?.outcome).toBe('stat_up');
     expect(strOutcome?.statDelta).toBe(1);
-    expect(improved.profile.training.core.STR.current).toBe(11);
-    expect(improved.profile.training.core.STR.peak).toBe(11);
+    expect(improved.profile.training.core.STR.current).toBeCloseTo(
+      baseline.profile.training.core.STR.current + 1,
+      2,
+    );
+    expect(improved.profile.training.core.STR.peak).toBeCloseTo(
+      baseline.profile.training.core.STR.current + 1,
+      2,
+    );
     expect(improved.profile.training.performance?.STR?.baseline).toBeGreaterThan(
       baseline.profile.training.performance?.STR?.baseline ?? 0,
     );
 
     const restored = JSON.parse(JSON.stringify(improved.profile));
-    expect(restored.training.core.STR.current).toBe(11);
+    expect(restored.training.core.STR.current).toBeCloseTo(
+      improved.profile.training.core.STR.current,
+      2,
+    );
     expect(restored.training.performance.STR.baseline).toBe(
       improved.profile.training.performance?.STR?.baseline,
     );
@@ -196,7 +204,10 @@ describe('HIGHFLY Training RUN1-H end-to-end', () => {
     });
 
     expect(result.profile.training.core.VIT.calibrated).toBe(true);
-    expect(result.profile.training.core.VIT.current).toBe(10);
+    expect(result.profile.training.core.VIT.current).toBeCloseTo(
+      result.sessionResult.stimulus.VIT,
+      2,
+    );
     expect(result.profile.training.core.VIT.progress).toBeGreaterThan(0);
     expect(result.profile.training.performance?.VIT?.baseline).toBeGreaterThan(0);
     expect(result.outcomes.find((o) => o.stat === 'VIT')?.outcome).toBe(

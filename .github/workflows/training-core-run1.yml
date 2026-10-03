@@ -126,6 +126,7 @@ jobs:
           python ../overlays/highfly_run119_foundation_authority.py
           python ../overlays/highfly_run120_closure.py
           python ../overlays/highfly_run122_training_lock.py
+          python ../overlays/highfly_run129_real_training.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -376,6 +377,13 @@ jobs:
           grep -F "launch-transparent.svg?v=122" upstream/public/manifest.webmanifest
           grep -F "$('#mm-training')?.addEventListener('click'" upstream/src/ui/hud.ts
           grep -F "Remo con Mancuernas" upstream/src/highfly/training/personal_routine.ts
+          grep -F "HIGHFLY_TRAINING_SCORING_VERSION = 'run1-b'" upstream/src/highfly/training/core.ts
+          grep -F "Primera sesión válida: el Core se estableció con el rendimiento real" upstream/src/highfly/training/pipeline.ts
+          grep -F "CORE REAL" upstream/src/highfly/training/ui.ts
+          grep -F "DESCANSO OBLIGATORIO" upstream/src/highfly/training/ui.ts
+          ! grep -F "hf-rest-skip" upstream/src/highfly/training/ui.ts
+          ! grep -F "CONTINUAR ANTES DE TIEMPO" upstream/src/highfly/training/ui.ts
+          grep -F "HIGHFLY RUN129 — premium mandatory recovery" upstream/src/styles/shell.css
 
       - name: TypeScript source smoke
         working-directory: upstream
@@ -385,7 +393,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -1169,8 +1177,7 @@ jobs:
               await button.tap();
               if (index < sets - 1) {
                 await page.locator('#hf-rest-dock').waitFor({ state: 'visible', timeout: 3000 });
-                await page.waitForTimeout(80);
-                await page.locator('#hf-rest-skip').tap();
+                await page.locator('#hf-rest-dock').waitFor({ state: 'hidden', timeout: 3000 });
               }
             }
           }
@@ -2153,7 +2160,8 @@ jobs:
             el.dispatchEvent(new PointerEvent('pointerdown', opts));
             el.dispatchEvent(new PointerEvent('pointerup', opts));
           });
-          await page.waitForTimeout(150);
+          await page.locator('#hf-rest-dock').waitFor({ state: 'visible', timeout: 3000 });
+          await page.locator('#hf-rest-dock').waitFor({ state: 'hidden', timeout: 3000 });
           await page.evaluate(() => {
             const el = document.querySelector('#hf-training-register');
             if (!(el instanceof HTMLElement)) throw new Error('Training register button missing');
