@@ -127,28 +127,41 @@ function legacyStatUps(profile: HighflyHunterProfile, stat: HighflyCoreStat): nu
 export function migrateLegacyFixedCoreBaseline(
   profile: HighflyHunterProfile,
 ): HighflyHunterProfile {
-  const legacy = profile as HighflyHunterProfile & {
-    schemaVersion: number;
-    scoringVersion: string;
+  // Persisted saves may predate the current literal schema/scoring types.
+  // Read version tags as raw persisted metadata while keeping the runtime
+  // profile shape typed as HighflyHunterProfile for all actual Core access.
+  const persistedVersion = profile as unknown as {
+    schemaVersion?: unknown;
+    scoringVersion?: unknown;
+    awakening?: { version?: unknown };
   };
+  const legacySchemaVersion =
+    typeof persistedVersion.schemaVersion === 'number'
+      ? persistedVersion.schemaVersion
+      : 0;
+  const legacyScoringVersion =
+    typeof persistedVersion.scoringVersion === 'string'
+      ? persistedVersion.scoringVersion
+      : '';
+
   if (
-    legacy.schemaVersion === HIGHFLY_TRAINING_SCHEMA_VERSION &&
-    legacy.scoringVersion === HIGHFLY_TRAINING_SCORING_VERSION &&
-    legacy.awakening?.version === 1
+    legacySchemaVersion === HIGHFLY_TRAINING_SCHEMA_VERSION &&
+    legacyScoringVersion === HIGHFLY_TRAINING_SCORING_VERSION &&
+    persistedVersion.awakening?.version === 1
   ) {
     return profile;
   }
 
   let working = profile;
-  if (legacy.scoringVersion === 'run1-a') {
-    const nextCore = { ...legacy.training.core } as HighflyCoreStatsState;
+  if (legacyScoringVersion === 'run1-a') {
+    const nextCore = { ...profile.training.core } as HighflyCoreStatsState;
     for (const stat of HIGHFLY_CORE_STATS) {
-      const state = legacy.training.core[stat] as any;
-      const first = legacyCalibratedHistory(legacy, stat);
+      const state = profile.training.core[stat] as any;
+      const first = legacyCalibratedHistory(profile, stat);
       if (!state?.calibrated || !first || !(first.stimulus > 0)) continue;
       const reconstructed =
-        round2(first.stimulus * sessionCapacityFactor(legacy, stat)) +
-        legacyStatUps(legacy, stat);
+        round2(first.stimulus * sessionCapacityFactor(profile, stat)) +
+        legacyStatUps(profile, stat);
       nextCore[stat] = {
         ...state,
         current: reconstructed,
@@ -158,8 +171,8 @@ export function migrateLegacyFixedCoreBaseline(
       } as any;
     }
     working = {
-      ...legacy,
-      training: { ...legacy.training, core: nextCore },
+      ...profile,
+      training: { ...profile.training, core: nextCore },
     } as HighflyHunterProfile;
   }
 
