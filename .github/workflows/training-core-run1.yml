@@ -1311,6 +1311,49 @@ jobs:
               throw new Error('RUN1-J RM batch button missing');
             }
             const diag = { down: 0, up: 0, click: 0 };
+            const stops = [];
+            const originalStop = Event.prototype.stopPropagation;
+            const originalImmediate = Event.prototype.stopImmediatePropagation;
+            Event.prototype.stopPropagation = function () {
+              if (this.type === 'pointerdown') {
+                const current = this.currentTarget;
+                stops.push({
+                  kind: 'stopPropagation',
+                  current:
+                    current === window ? 'window' :
+                    current === document ? 'document' :
+                    current instanceof Element
+                      ? current.tagName + '#' + (current.id || '') + '.' + [...current.classList].join('.')
+                      : String(current),
+                  target:
+                    this.target instanceof Element
+                      ? this.target.tagName + '#' + (this.target.id || '') + '.' + [...this.target.classList].join('.')
+                      : String(this.target),
+                  stack: new Error('RUN144 stopPropagation').stack ?? '',
+                });
+              }
+              return originalStop.call(this);
+            };
+            Event.prototype.stopImmediatePropagation = function () {
+              if (this.type === 'pointerdown') {
+                const current = this.currentTarget;
+                stops.push({
+                  kind: 'stopImmediatePropagation',
+                  current:
+                    current === window ? 'window' :
+                    current === document ? 'document' :
+                    current instanceof Element
+                      ? current.tagName + '#' + (current.id || '') + '.' + [...current.classList].join('.')
+                      : String(current),
+                  target:
+                    this.target instanceof Element
+                      ? this.target.tagName + '#' + (this.target.id || '') + '.' + [...this.target.classList].join('.')
+                      : String(this.target),
+                  stack: new Error('RUN144 stopImmediatePropagation').stack ?? '',
+                });
+              }
+              return originalImmediate.call(this);
+            };
             el.addEventListener('pointerdown', () => { diag.down += 1; }, { capture: true, once: true });
             el.addEventListener('pointerup', () => { diag.up += 1; }, { capture: true, once: true });
             el.addEventListener('click', () => { diag.click += 1; }, { capture: true, once: true });
@@ -1348,21 +1391,24 @@ jobs:
                     ?.closest('.hf-rm-card')?.textContent ?? '',
               };
             }
+            Event.prototype.stopPropagation = originalStop;
+            Event.prototype.stopImmediatePropagation = originalImmediate;
             return {
               diag,
+              stops,
               messageAfterTouch,
               squatAfterTouch,
               cleanAfterTouch,
               afterClick,
             };
           });
-          console.log('RUN143_RM_TOUCH_DIAG', JSON.stringify(rmTouchDiag, null, 2));
+          console.log('RUN144_RM_TOUCH_DIAG', JSON.stringify(rmTouchDiag, null, 2));
           if (
             !rmTouchDiag.squatAfterTouch.includes('VERIFICADA') ||
             !rmTouchDiag.cleanAfterTouch.includes('VERIFICADA')
           ) {
             throw new Error(
-              'RUN143 RM touch diagnostic failed before fallback click: ' +
+              'RUN144 RM touch diagnostic failed before fallback click: ' +
                 JSON.stringify(rmTouchDiag),
             );
           }
