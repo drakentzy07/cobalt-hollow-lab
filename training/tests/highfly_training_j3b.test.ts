@@ -20,13 +20,19 @@ function fullTrainingProfile() {
   let profile = createHighflyHunterProfile({
     profileId: 'j3b-native',
     createdAt: '2026-09-30T00:00:00.000Z',
+    classId: 'warrior',
   });
   for (const stat of ['STR', 'AGI', 'VIT', 'PER', 'INT'] as const) {
-    profile = commitTrainingCoreStat(profile, stat, 60, {
+    profile = commitTrainingCoreStat(
+      profile,
+      stat,
+      profile.training.core[stat].current + 60,
+      {
       source: 'training-performance-gate',
       scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
       evidenceId: 'j3b-' + stat,
-    });
+      },
+    );
   }
   return profile;
 }
