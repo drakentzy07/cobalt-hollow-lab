@@ -1305,11 +1305,15 @@ jobs:
           // RUN132: exercise the actual HIGHFLY touch binding, then assert the
           // authoritative calibrated e1RM cards instead of transient message copy.
           await page.locator('#hf-rm-submit-all').scrollIntoViewIfNeeded();
-          await page.evaluate(() => {
+          const rmTouchDiag = await page.evaluate(async () => {
             const el = document.querySelector('#hf-rm-submit-all');
             if (!(el instanceof HTMLElement)) {
               throw new Error('RUN1-J RM batch button missing');
             }
+            const diag = { down: 0, up: 0, click: 0 };
+            el.addEventListener('pointerdown', () => { diag.down += 1; }, { capture: true, once: true });
+            el.addEventListener('pointerup', () => { diag.up += 1; }, { capture: true, once: true });
+            el.addEventListener('click', () => { diag.click += 1; }, { capture: true, once: true });
             const opts = {
               bubbles: true,
               cancelable: true,
@@ -1321,7 +1325,47 @@ jobs:
             };
             el.dispatchEvent(new PointerEvent('pointerdown', opts));
             el.dispatchEvent(new PointerEvent('pointerup', opts));
+            await new Promise((resolve) => setTimeout(resolve, 50));
+            const messageAfterTouch =
+              document.querySelector('.hf-rm-message')?.textContent ?? '';
+            const squatAfterTouch =
+              document.querySelector('[data-hf-rm-load="back_squat"]')
+                ?.closest('.hf-rm-card')?.textContent ?? '';
+            const cleanAfterTouch =
+              document.querySelector('[data-hf-rm-load="hang_power_clean"]')
+                ?.closest('.hf-rm-card')?.textContent ?? '';
+            let afterClick = null;
+            if (!squatAfterTouch.includes('VERIFICADA') || !cleanAfterTouch.includes('VERIFICADA')) {
+              el.click();
+              await new Promise((resolve) => setTimeout(resolve, 50));
+              afterClick = {
+                message: document.querySelector('.hf-rm-message')?.textContent ?? '',
+                squat:
+                  document.querySelector('[data-hf-rm-load="back_squat"]')
+                    ?.closest('.hf-rm-card')?.textContent ?? '',
+                clean:
+                  document.querySelector('[data-hf-rm-load="hang_power_clean"]')
+                    ?.closest('.hf-rm-card')?.textContent ?? '',
+              };
+            }
+            return {
+              diag,
+              messageAfterTouch,
+              squatAfterTouch,
+              cleanAfterTouch,
+              afterClick,
+            };
           });
+          console.log('RUN143_RM_TOUCH_DIAG', JSON.stringify(rmTouchDiag, null, 2));
+          if (
+            !rmTouchDiag.squatAfterTouch.includes('VERIFICADA') ||
+            !rmTouchDiag.cleanAfterTouch.includes('VERIFICADA')
+          ) {
+            throw new Error(
+              'RUN143 RM touch diagnostic failed before fallback click: ' +
+                JSON.stringify(rmTouchDiag),
+            );
+          }
           try {
             await page.waitForFunction(() => {
               const squat =
