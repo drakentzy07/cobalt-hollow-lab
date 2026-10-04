@@ -40,6 +40,11 @@ jobs:
             /patches/
             /private/
             /public/
+            /android/
+            /capacitor.config.ts
+            /tests/global_setup.ts
+            /tests/svelte_testing_setup.ts
+            /tests/jsdom_local_storage_setup.ts
             /package.json
             /pnpm-lock.yaml
             /vite.config.ts
