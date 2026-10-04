@@ -114,12 +114,14 @@ jobs:
           python ../overlays/highfly_run137_training_intelligence.py
           python ../overlays/highfly_run146_pages_boot.py
           python ../overlays/highfly_run147_pages_training_launcher.py
+          python ../overlays/highfly_run148_pages_desktop_training_visible.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
           grep -F "HIGHFLY_TRAINING_SCORING_VERSION = 'run2-awakening-v1'" src/highfly/training/core.ts
           grep -F "target?.closest?.('#highfly-training-window')" src/main.ts
           grep -F "graphicsRebuildPaused || highflyTrainingFocusActive" src/main.ts
+          grep -F "trainingWindow.style.setProperty('display', 'block', 'important')" src/highfly/training/ui.ts
 
       - name: Setup Node
         uses: actions/setup-node@v4
