@@ -348,7 +348,10 @@ jobs:
           grep -F 'DESPERTAR ACTIVO' upstream/src/highfly/training/ui.ts
           grep -F 'state.awakeningBase.toFixed(2)' upstream/src/highfly/training/ui.ts
           grep -F 'state.trainingGrowth.toFixed(2)' upstream/src/highfly/training/ui.ts
-          ! grep -F 'BASE ESTABLECIDA' upstream/src/highfly/training/ui.ts
+          if grep -Fq "\${state.calibrated ? 'BASE ESTABLECIDA' : 'EN CALIBRACIÓN'}" upstream/src/highfly/training/ui.ts; then
+            echo "Obsolete zero-origin Core badge survived RUN138" >&2
+            exit 1
+          fi
           grep -F 'body.start-screen-open .homepage-footer' upstream/src/styles/shell.website.css
           grep -F '#loot-explorer-window' upstream/src/styles/shell.css
           grep -F '#highfly-chat-send' upstream/src/styles/shell.css
@@ -365,7 +368,7 @@ jobs:
           grep -F "highflyResourceCostMultiplier" upstream/src/sim/types.ts
           grep -F "HIGHFLY INT: final resolved resource efficiency" upstream/src/sim/combat/ability_resolution.ts
           grep -F "highflyResourceRecoveryMultiplier" upstream/src/sim/combat/auras.ts
-          grep -F "trainingGain(profile.training.core.AGI.current)" upstream/src/highfly/training/combat_runtime.ts
+          grep -F "trainingGain(profile.training.core.AGI.trainingGrowth)" upstream/src/highfly/training/combat_runtime.ts
           grep -F "baseline.hitBonus + precisionBonus" upstream/src/highfly/training/combat_runtime.ts
           grep -F "HIGHFLY_RUN1J_REAL_DEVICE_FIX_APPLIED=1" <(python -c "print('HIGHFLY_RUN1J_REAL_DEVICE_FIX_APPLIED=1')")
           grep -F "staleDonorLevel20" upstream/src/main.ts
@@ -390,9 +393,9 @@ jobs:
           grep -F "launch-transparent.svg?v=122" upstream/public/manifest.webmanifest
           grep -F "$('#mm-training')?.addEventListener('click'" upstream/src/ui/hud.ts
           grep -F "Remo con Mancuernas" upstream/src/highfly/training/personal_routine.ts
-          grep -F "HIGHFLY_TRAINING_SCORING_VERSION = 'run1-b'" upstream/src/highfly/training/core.ts
-          grep -F "Primera sesión válida: el Core se estableció con el rendimiento real" upstream/src/highfly/training/pipeline.ts
-          grep -F "CORE REAL" upstream/src/highfly/training/ui.ts
+          grep -F "HIGHFLY_TRAINING_SCORING_VERSION = 'run2-awakening-v1'" upstream/src/highfly/training/core.ts
+          grep -F "Primera sesión válida: conserva el Despertar y agrega crecimiento decimal ganado por entrenamiento real." upstream/src/highfly/training/pipeline.ts
+          grep -F "CORE + TRAINING" upstream/src/highfly/training/ui.ts
           grep -F "DESCANSO OBLIGATORIO" upstream/src/highfly/training/ui.ts
           ! grep -F "hf-rest-skip" upstream/src/highfly/training/ui.ts
           ! grep -F "CONTINUAR ANTES DE TIEMPO" upstream/src/highfly/training/ui.ts
