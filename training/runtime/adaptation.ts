@@ -6,26 +6,16 @@ import {
   type HighflyHunterProfile,
 } from './core';
 
-export const HIGHFLY_ADAPTATION_VERSION = 'run1-c-lab-v1' as const;
+export const HIGHFLY_ADAPTATION_VERSION = 'run2-awakening-fractional-v1' as const;
 
 export interface AdaptationInput {
   stat: HighflyCoreStat;
-  /** Productive stimulus accumulated for this stat during the evaluated block. */
   productiveStimulus: number;
-  /** Previous comparable performance anchor for this stat/movement family. */
   previousPerformanceIndex: number | null;
-  /** Current comparable performance anchor measured under similar conditions. */
   currentPerformanceIndex: number | null;
-  /** 0..1 evidence trust for this evaluation window. */
   confidence: number;
-  /** 0..1 short-term readiness after the block/deload. */
   readiness: number;
-  /** Stable audit/evidence identifier. */
   evidenceId: string;
-  /**
-   * Optional absolute gate for behavioral stats. PER/INT use sustained
-   * compliance/management quality instead of demanding endless % improvement.
-   */
   absolutePerformanceGate?: number;
 }
 
@@ -45,30 +35,27 @@ export interface AdaptationResult {
   progressCost: number;
   performanceGateRatio: number;
   performanceImprovementRatio: number | null;
-  statDelta: 0 | 1;
+  /** Decimal Core growth; never forced to an integer. */
+  statDelta: number;
   reason: string;
 }
 
-/**
- * Versioned LAB candidate. This is a game/training scoring curve, not a
- * physiological law. It intentionally becomes more expensive as Current rises.
- */
 export function progressCostForCurrent(current: number): number {
   const safe = Math.max(0, current);
   return 12 + safe * 0.8 + safe * safe * 0.018;
 }
 
-/**
- * Versioned LAB candidate for comparable block-to-block evidence.
- * Beginners require a clearer change; advanced profiles can consolidate a
- * smaller relative improvement because meaningful gains become slower.
- */
 export function performanceGateRatioForCurrent(current: number): number {
   const safe = Math.max(0, current);
   if (safe < 20) return 1.02;
   if (safe < 40) return 1.015;
   if (safe < 60) return 1.01;
   return 1.005;
+}
+
+export function consolidationDeltaForCurrent(current: number): number {
+  const cost = progressCostForCurrent(current);
+  return Math.max(0.1, Math.min(0.75, 15 / cost));
 }
 
 export function performanceImprovementRatio(
@@ -82,9 +69,7 @@ export function performanceImprovementRatio(
     !Number.isFinite(current) ||
     previous <= 0 ||
     current <= 0
-  ) {
-    return null;
-  }
+  ) return null;
   return current / previous;
 }
 
@@ -93,17 +78,6 @@ function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
-/**
- * RUN1-C adaptation contract:
- *
- * - Stimulus can build Progress.
- * - Progress alone NEVER grants a Stat Up.
- * - A Stat Up requires enough Progress + comparable performance improvement +
- *   sufficient Confidence.
- * - One evaluation can consolidate at most +1 Current.
- * - Repeating the same performance keeps Progress pending (maintenance).
- * - Peak is preserved by commitTrainingCoreStat().
- */
 export function evaluateAdaptation(
   profile: HighflyHunterProfile,
   input: AdaptationInput,
@@ -119,7 +93,10 @@ export function evaluateAdaptation(
   }
 
   const progressBefore = previousState.progress;
-  const addedProgress = Math.max(0, Number.isFinite(input.productiveStimulus) ? input.productiveStimulus : 0);
+  const addedProgress = Math.max(
+    0,
+    Number.isFinite(input.productiveStimulus) ? input.productiveStimulus : 0,
+  );
   const accumulatedProgress = progressBefore + addedProgress;
   const confidence = clamp01(input.confidence);
   const readiness = clamp01(input.readiness);
@@ -136,16 +113,20 @@ export function evaluateAdaptation(
     readiness,
   });
 
+  const common = {
+    stat: input.stat,
+    progressBefore,
+    progressCost,
+    performanceGateRatio,
+    performanceImprovementRatio: performanceImprovement,
+  };
+
   if (accumulatedProgress < progressCost) {
     return {
       profile: telemetryProfile,
       status: 'progress_only',
-      stat: input.stat,
-      progressBefore,
+      ...common,
       progressAfter: accumulatedProgress,
-      progressCost,
-      performanceGateRatio,
-      performanceImprovementRatio: performanceImprovement,
       statDelta: 0,
       reason: 'Productive Progress accumulated; Performance Gate is not evaluated until cost is met.',
     };
@@ -155,12 +136,8 @@ export function evaluateAdaptation(
     return {
       profile: telemetryProfile,
       status: 'awaiting_confidence',
-      stat: input.stat,
-      progressBefore,
+      ...common,
       progressAfter: accumulatedProgress,
-      progressCost,
-      performanceGateRatio,
-      performanceImprovementRatio: performanceImprovement,
       statDelta: 0,
       reason: 'Enough Progress exists, but evidence Confidence is below the consolidation threshold.',
     };
@@ -176,60 +153,44 @@ export function evaluateAdaptation(
       return {
         profile: telemetryProfile,
         status: 'awaiting_performance',
-        stat: input.stat,
-        progressBefore,
+        ...common,
         progressAfter: accumulatedProgress,
-        progressCost,
-        performanceGateRatio,
         performanceImprovementRatio: null,
         statDelta: 0,
         reason: 'Enough Progress exists, but no valid behavioral performance sample is available.',
       };
     }
-
     if (currentPerformance < input.absolutePerformanceGate) {
       return {
         profile: telemetryProfile,
         status: 'maintenance',
-        stat: input.stat,
-        progressBefore,
+        ...common,
         progressAfter: accumulatedProgress,
-        progressCost,
-        performanceGateRatio,
-        performanceImprovementRatio: performanceImprovement,
         statDelta: 0,
         reason: `Behavioral gate not cleared: ${currentPerformance.toFixed(1)} < ${input.absolutePerformanceGate.toFixed(1)}.`,
       };
     }
 
     const remainder = Math.max(0, accumulatedProgress - progressCost);
+    const delta = consolidationDeltaForCurrent(previousState.current);
     telemetryProfile = commitTrainingCoreStat(
       telemetryProfile,
       input.stat,
-      previousState.current + 1,
+      previousState.current + delta,
       {
         source: 'training-performance-gate',
         scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
         evidenceId: input.evidenceId,
       },
-      {
-        progress: remainder,
-        confidence,
-        readiness,
-      },
+      { progress: remainder, confidence, readiness },
     );
-
     return {
       profile: telemetryProfile,
       status: 'stat_up',
-      stat: input.stat,
-      progressBefore,
+      ...common,
       progressAfter: remainder,
-      progressCost,
-      performanceGateRatio,
-      performanceImprovementRatio: performanceImprovement,
-      statDelta: 1,
-      reason: `Progress cost and behavioral gate ${input.absolutePerformanceGate.toFixed(1)} were satisfied.`,
+      statDelta: delta,
+      reason: `Progress cost and behavioral gate ${input.absolutePerformanceGate.toFixed(1)} were satisfied; decimal Training Growth consolidated.`,
     };
   }
 
@@ -237,11 +198,8 @@ export function evaluateAdaptation(
     return {
       profile: telemetryProfile,
       status: 'awaiting_performance',
-      stat: input.stat,
-      progressBefore,
+      ...common,
       progressAfter: accumulatedProgress,
-      progressCost,
-      performanceGateRatio,
       performanceImprovementRatio: null,
       statDelta: 0,
       reason: 'Enough Progress exists, but no comparable performance pair is available.',
@@ -252,44 +210,32 @@ export function evaluateAdaptation(
     return {
       profile: telemetryProfile,
       status: 'maintenance',
-      stat: input.stat,
-      progressBefore,
+      ...common,
       progressAfter: accumulatedProgress,
-      progressCost,
-      performanceGateRatio,
-      performanceImprovementRatio: performanceImprovement,
       statDelta: 0,
       reason: 'Training maintained capacity, but comparable performance did not clear the Stat Up gate.',
     };
   }
 
   const remainder = Math.max(0, accumulatedProgress - progressCost);
+  const delta = consolidationDeltaForCurrent(previousState.current);
   telemetryProfile = commitTrainingCoreStat(
     telemetryProfile,
     input.stat,
-    previousState.current + 1,
+    previousState.current + delta,
     {
       source: 'training-performance-gate',
       scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
       evidenceId: input.evidenceId,
     },
-    {
-      progress: remainder,
-      confidence,
-      readiness,
-    },
+    { progress: remainder, confidence, readiness },
   );
-
   return {
     profile: telemetryProfile,
     status: 'stat_up',
-    stat: input.stat,
-    progressBefore,
+    ...common,
     progressAfter: remainder,
-    progressCost,
-    performanceGateRatio,
-    performanceImprovementRatio: performanceImprovement,
-    statDelta: 1,
-    reason: 'Progress cost and comparable Performance Gate were both satisfied.',
+    statDelta: delta,
+    reason: 'Progress cost and comparable Performance Gate were both satisfied; decimal Training Growth consolidated.',
   };
 }

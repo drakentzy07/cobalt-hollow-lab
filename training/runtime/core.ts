@@ -1,21 +1,73 @@
-export const HIGHFLY_TRAINING_SCHEMA_VERSION = 1 as const;
-export const HIGHFLY_TRAINING_SCORING_VERSION = 'run1-b' as const;
+export const HIGHFLY_TRAINING_SCHEMA_VERSION = 2 as const;
+export const HIGHFLY_TRAINING_SCORING_VERSION = 'run2-awakening-v1' as const;
 
 export const HIGHFLY_CORE_STATS = ['STR', 'AGI', 'VIT', 'PER', 'INT'] as const;
 export type HighflyCoreStat = (typeof HIGHFLY_CORE_STATS)[number];
+export type HighflyCoreVector = Record<HighflyCoreStat, number>;
+
+export const HIGHFLY_AWAKENING_STATS_VERSION = 1 as const;
+export const HIGHFLY_AWAKENING_BUDGET = 50 as const;
+export const HIGHFLY_AWAKENING_CLASSES = [
+  'warrior',
+  'mage',
+  'rogue',
+  'paladin',
+  'hunter',
+  'priest',
+  'shaman',
+  'warlock',
+  'druid',
+] as const;
+export type HighflyAwakeningClassId = (typeof HIGHFLY_AWAKENING_CLASSES)[number];
+
+/**
+ * Awakening v1 reuses ClaudeCraft's class identity, normalized to an equal
+ * 50-point HIGHFLY budget. Claude STA maps to VIT and SPI maps to PER.
+ * These are versioned birth aptitudes, not Training rewards.
+ */
+export const HIGHFLY_AWAKENING_BASES: Readonly<
+  Record<HighflyAwakeningClassId, Readonly<HighflyCoreVector>>
+> = {
+  warrior: { STR: 13.37, AGI: 11.63, VIT: 12.79, PER: 6.40, INT: 5.81 },
+  mage:    { STR: 6.10,  AGI: 7.32,  VIT: 8.54,  PER: 13.41, INT: 14.63 },
+  rogue:   { STR: 10.37, AGI: 15.24, VIT: 10.37, PER: 7.32,  INT: 6.70 },
+  paladin: { STR: 12.50, AGI: 9.66,  VIT: 12.50, PER: 7.95,  INT: 7.39 },
+  hunter:  { STR: 8.24,  AGI: 14.71, VIT: 11.18, PER: 8.24,  INT: 7.63 },
+  priest:  { STR: 6.25,  AGI: 6.88,  VIT: 8.12,  PER: 15.00, INT: 13.75 },
+  shaman:  { STR: 10.00, AGI: 8.89,  VIT: 11.11, PER: 10.00, INT: 10.00 },
+  warlock: { STR: 6.88,  AGI: 7.50,  VIT: 9.38,  PER: 13.12, INT: 13.12 },
+  druid:   { STR: 8.72,  AGI: 8.72,  VIT: 9.88,  PER: 11.63, INT: 11.05 },
+} as const;
+
+const ZERO_CORE_VECTOR: HighflyCoreVector = {
+  STR: 0, AGI: 0, VIT: 0, PER: 0, INT: 0,
+};
+
+export interface HighflyAwakeningState {
+  version: typeof HIGHFLY_AWAKENING_STATS_VERSION;
+  initialized: boolean;
+  classId: HighflyAwakeningClassId | null;
+  initializedAt: string | null;
+  budget: number;
+  base: HighflyCoreVector;
+}
 
 export interface HighflyCoreStatState {
-  /** Consolidated training capability. Never granted by level, gear or class. */
+  /** Final internal Hunter Stat = awakeningBase + trainingGrowth. */
   current: number;
-  /** Historical best consolidated value. Never decreases. */
+  /** Historical best final value. Core never decreases; readiness carries fatigue. */
   peak: number;
+  /** Immutable class aptitude written once by Awakening. */
+  awakeningBase: number;
+  /** Only real Training may increase this value after Awakening. */
+  trainingGrowth: number;
   /** Pending adaptation evidence toward a future Performance Gate. */
   progress: number;
   /** 0..1 trust in the underlying evidence. */
   confidence: number;
-  /** 0..1 short-term readiness. It may vary without changing current/peak. */
+  /** 0..1 short-term readiness. It may vary without changing Core. */
   readiness: number;
-  /** False until the Training calibration flow establishes a real baseline. */
+  /** False until Training establishes a comparable performance anchor. */
   calibrated: boolean;
 }
 
@@ -29,9 +81,7 @@ export interface HighflyResolveState {
 }
 
 export interface HighflyPerformanceAnchor {
-  /** Comparable performance baseline held until the next consolidated Stat Up. */
   baseline: number;
-  /** Most recent valid comparable performance sample. */
   latest: number;
   evidenceId: string;
   updatedAt: string;
@@ -64,10 +114,6 @@ export type HighflyRmLiftId =
 export type HighflySex = 'male' | 'female';
 
 export interface HighflyAthleteCalibrationProfile {
-  /**
-   * Context for plausibility / anti-cheat only. Sex and age never grant or
-   * subtract Core Stats: actual training evidence remains authoritative.
-   */
   sex: HighflySex;
   ageYears: number;
   bodyweightKg: number;
@@ -82,11 +128,8 @@ export interface HighflyRmCalibrationSample {
 }
 
 export interface HighflyRmCalibrationEntry {
-  /** Effective e1RM authority used by HIGHFLY load planning. */
   oneRmKg: number;
-  /** Raw Epley result from the latest 2-6 rep evidence. */
   estimatedOneRmKg?: number;
-  /** Last fully verified e1RM; 0 when an extraordinary first mark is still pending. */
   verifiedOneRmKg?: number;
   relativeToBodyweight?: number;
   status?: 'verified' | 'evaluation';
@@ -117,20 +160,14 @@ export interface HighflyAccessoryLoadAttempt {
 }
 
 export interface HighflyAccessoryLoadEntry {
-  /** Last load the Hunter actually selected for this exercise. */
   kg: number;
   updatedAt: string;
-  /** Learned equipment context: same kg is not assumed equivalent across machines. */
   equipmentKind?: HighflyAccessoryEquipmentKind;
-  /** Smallest useful jump available on this dumbbell/machine/cable station. */
   progressionStepKg?: number;
-  /** HIGHFLY's next-session proposal; never silently overwrites the chosen kg. */
   nextSuggestedKg?: number;
-  /** Explicit athlete feedback that the current load should be repeated. */
   repeatRequested?: boolean;
   lastSets?: number;
   lastReps?: number;
-  /** Bounded local history used to adapt future proposals. */
   history?: HighflyAccessoryLoadAttempt[];
 }
 
@@ -151,17 +188,12 @@ export interface HighflyCycleResetEntry {
 }
 
 export interface HighflyCycleProgressionState {
-  /** 1-based cycle number currently being trained. */
   currentCycle: number;
-  /** Week that currently has Training authority. Other weeks are view-only. */
   activeWeek?: 1 | 2 | 3 | 4;
-  /** Successful cycles increase working loads; repeated cycles do not. */
   successfulCycles: number;
   repeatedCycles: number;
   lastDecision: 'advance' | 'repeat' | null;
-  /** Unique week/day keys completed in the current 4-week block. */
   completedSessions: string[];
-  /** Manual cycle restarts are audited but never erase Core/RM history. */
   resetHistory?: HighflyCycleResetEntry[];
 }
 
@@ -170,18 +202,14 @@ export interface HighflyHunterProfile {
   scoringVersion: typeof HIGHFLY_TRAINING_SCORING_VERSION;
   profileId: string;
   createdAt: string;
+  awakening: HighflyAwakeningState;
   training: {
     core: HighflyCoreStatsState;
     resolve: HighflyResolveState;
-    /** Optional on legacy saves; RUN1-H lazily initializes when absent. */
     performance?: Partial<Record<HighflyCoreStat, HighflyPerformanceAnchor>>;
-    /** Optional on legacy saves; bounded audit history for explainability. */
     history?: HighflyTrainingHistoryEntry[];
-    /** Private/offline Hunter load calibration. Never hardcoded from a public routine. */
     loadCalibration?: HighflyLoadCalibrationState;
-    /** Remembered dumbbell/machine accessory loads. Private to the offline Hunter save. */
     accessoryLoads?: Record<string, HighflyAccessoryLoadEntry>;
-    /** RUN1-J adaptive 4-week cycle state. Optional for legacy saves. */
     cycleProgression?: HighflyCycleProgressionState;
   };
   hunter: HighflyHunterProgressionState;
@@ -198,14 +226,79 @@ function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
-function blankCoreStat(): HighflyCoreStatState {
+function finiteNonNegative(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0;
+}
+
+export function isAwakeningClassId(value: unknown): value is HighflyAwakeningClassId {
+  return typeof value === 'string' &&
+    (HIGHFLY_AWAKENING_CLASSES as readonly string[]).includes(value);
+}
+
+function blankCoreStat(awakeningBase = 0, trainingGrowth = 0): HighflyCoreStatState {
+  const current = awakeningBase + trainingGrowth;
   return {
-    current: 0,
-    peak: 0,
+    current,
+    peak: current,
+    awakeningBase,
+    trainingGrowth,
     progress: 0,
     confidence: 0,
     readiness: 1,
     calibrated: false,
+  };
+}
+
+function emptyAwakening(): HighflyAwakeningState {
+  return {
+    version: HIGHFLY_AWAKENING_STATS_VERSION,
+    initialized: false,
+    classId: null,
+    initializedAt: null,
+    budget: 0,
+    base: { ...ZERO_CORE_VECTOR },
+  };
+}
+
+export function initializeAwakeningStats(
+  profile: HighflyHunterProfile,
+  classId: HighflyAwakeningClassId,
+  initializedAt = profile.createdAt,
+): HighflyHunterProfile {
+  if (profile.awakening?.initialized) return profile;
+  const base = HIGHFLY_AWAKENING_BASES[classId];
+  const nextCore = {} as HighflyCoreStatsState;
+  for (const stat of HIGHFLY_CORE_STATS) {
+    const previous = profile.training.core[stat];
+    const trainingGrowth = finiteNonNegative(
+      (previous as HighflyCoreStatState | undefined)?.trainingGrowth ?? previous?.current,
+    );
+    const legacyPeakGrowth = finiteNonNegative(previous?.peak);
+    const current = base[stat] + trainingGrowth;
+    nextCore[stat] = {
+      ...previous,
+      current,
+      peak: base[stat] + Math.max(trainingGrowth, legacyPeakGrowth),
+      awakeningBase: base[stat],
+      trainingGrowth,
+      progress: finiteNonNegative(previous?.progress),
+      confidence: clamp01(previous?.confidence ?? 0),
+      readiness: clamp01(previous?.readiness ?? 1),
+      calibrated: previous?.calibrated ?? false,
+    };
+  }
+  return {
+    ...profile,
+    schemaVersion: HIGHFLY_TRAINING_SCHEMA_VERSION,
+    awakening: {
+      version: HIGHFLY_AWAKENING_STATS_VERSION,
+      initialized: true,
+      classId,
+      initializedAt,
+      budget: HIGHFLY_AWAKENING_BUDGET,
+      base: { ...base },
+    },
+    training: { ...profile.training, core: nextCore },
   };
 }
 
@@ -217,11 +310,12 @@ export function createHighflyHunterProfile(args: {
 }): HighflyHunterProfile {
   const createdAt = args.createdAt ?? new Date().toISOString();
   const level = Math.max(1, Math.trunc(args.level ?? 1));
-  return {
+  let profile: HighflyHunterProfile = {
     schemaVersion: HIGHFLY_TRAINING_SCHEMA_VERSION,
     scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
     profileId: args.profileId,
     createdAt,
+    awakening: emptyAwakening(),
     training: {
       core: {
         STR: blankCoreStat(),
@@ -238,11 +332,7 @@ export function createHighflyHunterProfile(args: {
       },
       performance: {},
       history: [],
-      loadCalibration: {
-        tmFactor: 0.9,
-        roundKg: 2.5,
-        lifts: {},
-      },
+      loadCalibration: { tmFactor: 0.9, roundKg: 2.5, lifts: {} },
       accessoryLoads: {},
       cycleProgression: {
         currentCycle: 1,
@@ -262,6 +352,70 @@ export function createHighflyHunterProfile(args: {
       subclassId: null,
     },
   };
+  if (isAwakeningClassId(args.classId)) {
+    profile = initializeAwakeningStats(profile, args.classId, createdAt);
+  }
+  return profile;
+}
+
+/**
+ * Schema-1 saves stored only a final Training number because the old model
+ * started at zero. In schema 2 that exact earned value becomes trainingGrowth;
+ * the class Awakening base is then added once. This migration is idempotent.
+ */
+export function migrateAwakeningStats(profile: HighflyHunterProfile): HighflyHunterProfile {
+  const legacy = profile as HighflyHunterProfile & {
+    schemaVersion: number;
+    awakening?: HighflyAwakeningState;
+  };
+  const completeV2 =
+    legacy.schemaVersion === HIGHFLY_TRAINING_SCHEMA_VERSION &&
+    legacy.awakening?.version === HIGHFLY_AWAKENING_STATS_VERSION &&
+    HIGHFLY_CORE_STATS.every((stat) => {
+      const state = legacy.training.core[stat] as Partial<HighflyCoreStatState>;
+      return Number.isFinite(state.awakeningBase) && Number.isFinite(state.trainingGrowth);
+    });
+  if (completeV2) return profile;
+
+  const classId = isAwakeningClassId(legacy.hunter?.classId)
+    ? legacy.hunter.classId
+    : null;
+  const base = classId ? HIGHFLY_AWAKENING_BASES[classId] : ZERO_CORE_VECTOR;
+  const nextCore = {} as HighflyCoreStatsState;
+
+  for (const stat of HIGHFLY_CORE_STATS) {
+    const previous = legacy.training.core[stat] as Partial<HighflyCoreStatState>;
+    const legacyCurrent = finiteNonNegative(previous.current);
+    const legacyPeak = Math.max(legacyCurrent, finiteNonNegative(previous.peak));
+    const trainingGrowth = finiteNonNegative(previous.trainingGrowth ?? legacyCurrent);
+    const peakGrowth = Math.max(trainingGrowth, legacyPeak);
+    nextCore[stat] = {
+      current: base[stat] + trainingGrowth,
+      peak: base[stat] + peakGrowth,
+      awakeningBase: base[stat],
+      trainingGrowth,
+      progress: finiteNonNegative(previous.progress),
+      confidence: clamp01(previous.confidence ?? 0),
+      readiness: clamp01(previous.readiness ?? 1),
+      calibrated: previous.calibrated ?? false,
+    };
+  }
+
+  return {
+    ...profile,
+    schemaVersion: HIGHFLY_TRAINING_SCHEMA_VERSION,
+    awakening: classId
+      ? {
+          version: HIGHFLY_AWAKENING_STATS_VERSION,
+          initialized: true,
+          classId,
+          initializedAt: profile.createdAt,
+          budget: HIGHFLY_AWAKENING_BUDGET,
+          base: { ...base },
+        }
+      : emptyAwakening(),
+    training: { ...profile.training, core: nextCore },
+  };
 }
 
 export function coreSnapshot(profile: HighflyHunterProfile): string {
@@ -269,34 +423,38 @@ export function coreSnapshot(profile: HighflyHunterProfile): string {
 }
 
 /**
- * World/RPG progression is intentionally isolated from Training Core.
- * Level/class/subclass changes must never mutate STR/AGI/VIT/PER/INT.
+ * Level/rank/subclass never mutate Core. Selecting a class may initialize the
+ * Awakening exactly once; later class changes (LAB/debug) never re-roll it.
  */
 export function applyHunterProgression(
   profile: HighflyHunterProfile,
   patch: Partial<HighflyHunterProgressionState>,
 ): HighflyHunterProfile {
   const before = coreSnapshot(profile);
-  const next: HighflyHunterProfile = {
+  let next: HighflyHunterProfile = {
     ...profile,
     hunter: {
       ...profile.hunter,
       ...patch,
-      level:
-        patch.level === undefined
-          ? profile.hunter.level
-          : Math.max(1, Math.trunc(patch.level)),
+      level: patch.level === undefined
+        ? profile.hunter.level
+        : Math.max(1, Math.trunc(patch.level)),
     },
   };
+  const requestedClass = next.hunter.classId;
+  if (!profile.awakening.initialized && isAwakeningClassId(requestedClass)) {
+    return initializeAwakeningStats(next, requestedClass);
+  }
   if (coreSnapshot(next) !== before) {
-    throw new Error('HIGHFLY invariant violated: Hunter progression mutated Training Core');
+    throw new Error('HIGHFLY invariant violated: Hunter progression mutated Core');
   }
   return next;
 }
 
 /**
- * Only the Training adaptation layer may commit a consolidated Core Stat value.
- * The engine that issues this proof is implemented in later RUN1 stages.
+ * Only Training may increase final Core after Awakening. Decimals are stored as
+ * JS numbers without integer rounding. Temporary fatigue belongs in readiness,
+ * never by reducing Core.
  */
 export function commitTrainingCoreStat(
   profile: HighflyHunterProfile,
@@ -318,15 +476,27 @@ export function commitTrainingCoreStat(
   if (!proof.evidenceId.trim()) {
     throw new Error('HIGHFLY Training evidenceId is required');
   }
+  if (!profile.awakening.initialized) {
+    throw new Error('HIGHFLY Hunter must complete Awakening before Training can modify Core');
+  }
   if (!Number.isFinite(nextCurrent) || nextCurrent < 0) {
     throw new Error('HIGHFLY Core Stat must be finite and non-negative');
   }
 
   const previous = profile.training.core[stat];
-  const current = nextCurrent;
+  if (nextCurrent + 1e-9 < previous.current) {
+    throw new Error('HIGHFLY Core Stats cannot decrease; use readiness for temporary fatigue');
+  }
+  const trainingGrowth = nextCurrent - previous.awakeningBase;
+  if (trainingGrowth + 1e-9 < previous.trainingGrowth) {
+    throw new Error('HIGHFLY Training Growth cannot decrease');
+  }
+
   const nextState: HighflyCoreStatState = {
-    current,
-    peak: Math.max(previous.peak, current),
+    ...previous,
+    current: nextCurrent,
+    peak: Math.max(previous.peak, nextCurrent),
+    trainingGrowth,
     progress: Math.max(0, opts?.progress ?? previous.progress),
     confidence: clamp01(opts?.confidence ?? previous.confidence),
     readiness: clamp01(opts?.readiness ?? previous.readiness),
@@ -337,10 +507,7 @@ export function commitTrainingCoreStat(
     ...profile,
     training: {
       ...profile.training,
-      core: {
-        ...profile.training.core,
-        [stat]: nextState,
-      },
+      core: { ...profile.training.core, [stat]: nextState },
     },
   };
 }

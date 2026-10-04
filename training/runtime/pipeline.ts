@@ -17,9 +17,10 @@ import { evaluateAdaptation, type AdaptationStatus } from './adaptation';
 import {
   adaptationStimulusForCurrent,
   applySessionCapacityAuthority,
+  initialTrainingGrowthDelta,
 } from './session_core';
 
-/** Deprecated compatibility export: RUN1-B has no fixed first-Core baseline. */
+/** Legacy compatibility only. The real initial Core now comes from Awakening-by-class. */
 export const HIGHFLY_INITIAL_CALIBRATED_CORE_BASELINE = 0 as const;
 export const HIGHFLY_TRAINING_HISTORY_LIMIT = 200 as const;
 
@@ -37,7 +38,8 @@ export interface TrainingStatPipelineOutcome {
   stimulus: number;
   performanceIndex: number | null;
   outcome: HighflyTrainingHistoryEntry['outcome'];
-  statDelta: 0 | 1;
+  /** Decimal Core growth earned by this session/gate. */
+  statDelta: number;
   reason: string;
 }
 
@@ -230,20 +232,21 @@ export function runTrainingSessionPipeline(
         continue;
       }
 
-      const initialCurrent = Math.round(stimulus * 100) / 100;
-      if (initialCurrent <= 0) continue;
+      const initialDelta = initialTrainingGrowthDelta(state.current, stimulus);
+      if (initialDelta <= 0) continue;
       profile = commitTrainingCoreStat(
         profile,
         stat,
-        initialCurrent,
+        state.current + initialDelta,
         {
           source: 'training-performance-gate',
           scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
           evidenceId,
         },
         {
-          // The first valid session IS the baseline; do not double-count it as
-          // pending adaptation toward the next Stat Up.
+          // The first valid session establishes the comparable performance
+          // anchor and earns one real decimal Training increment. It is not
+          // double-counted as pending adaptation toward the next gate.
           progress: 0,
           confidence,
           readiness,
@@ -260,9 +263,9 @@ export function runTrainingSessionPipeline(
         stimulus,
         performanceIndex: sample,
         outcome: 'calibrated',
-        statDelta: 0,
+        statDelta: initialDelta,
         reason:
-          'Primera sesión válida: el Core se estableció con el rendimiento real de esa sesión, sin base fija.',
+          'Primera sesión válida: conserva el Despertar y agrega crecimiento decimal ganado por entrenamiento real.',
       };
       profile = appendHistory(profile, {
         sessionId: input.session.sessionId,

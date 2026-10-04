@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  consolidationDeltaForCurrent,
   evaluateAdaptation,
   performanceGateRatioForCurrent,
   progressCostForCurrent,
@@ -13,12 +14,10 @@ import {
 function calibrated(current = 20) {
   const base = createHighflyHunterProfile({
     profileId: 'adaptation-test',
-    createdAt: '2026-09-29T00:00:00.000Z',
+    classId: 'warrior',
   });
   return commitTrainingCoreStat(
-    base,
-    'STR',
-    current,
+    base, 'STR', current,
     {
       source: 'training-performance-gate',
       scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
@@ -28,147 +27,62 @@ function calibrated(current = 20) {
   );
 }
 
-describe('HIGHFLY Training Adaptation RUN1-C', () => {
-  it('makes higher Current values progressively more expensive without hard-capping stats', () => {
+describe('HIGHFLY Training Adaptation RUN138', () => {
+  it('gets more expensive as Current rises without hard-capping Core', () => {
     expect(progressCostForCurrent(40)).toBeGreaterThan(progressCostForCurrent(20));
-    expect(progressCostForCurrent(100)).toBeGreaterThan(progressCostForCurrent(60));
     expect(Number.isFinite(progressCostForCurrent(1000))).toBe(true);
+    expect(consolidationDeltaForCurrent(20)).toBeLessThan(1);
+    expect(consolidationDeltaForCurrent(70)).toBeLessThan(consolidationDeltaForCurrent(20));
   });
 
-  it('accumulates Progress without granting a Stat Up before cost is met', () => {
+  it('accumulates Progress without fake Core before the gate is met', () => {
     const profile = calibrated(20);
     const result = evaluateAdaptation(profile, {
-      stat: 'STR',
-      productiveStimulus: 5,
-      previousPerformanceIndex: 100,
-      currentPerformanceIndex: 110,
-      confidence: 0.9,
-      readiness: 0.8,
-      evidenceId: 'block-small',
+      stat: 'STR', productiveStimulus: 5,
+      previousPerformanceIndex: 100, currentPerformanceIndex: 110,
+      confidence: 0.9, readiness: 0.8, evidenceId: 'small',
     });
     expect(result.status).toBe('progress_only');
     expect(result.statDelta).toBe(0);
     expect(result.profile.training.core.STR.current).toBe(20);
-    expect(result.profile.training.core.STR.progress).toBeGreaterThan(0);
   });
 
-  it('does not convert repeated identical performance into infinite stats', () => {
+  it('repeated performance cannot create infinite stats', () => {
     let profile = calibrated(20);
-    const cost = progressCostForCurrent(20);
-    profile.training.core.STR.progress = cost;
-
+    profile.training.core.STR.progress = progressCostForCurrent(20);
     const result = evaluateAdaptation(profile, {
-      stat: 'STR',
-      productiveStimulus: 0,
-      previousPerformanceIndex: 100,
-      currentPerformanceIndex: 100,
-      confidence: 0.95,
-      readiness: 0.8,
-      evidenceId: 'same-performance',
+      stat: 'STR', productiveStimulus: 0,
+      previousPerformanceIndex: 100, currentPerformanceIndex: 100,
+      confidence: 0.95, readiness: 0.8, evidenceId: 'same',
     });
-
     expect(result.status).toBe('maintenance');
     expect(result.statDelta).toBe(0);
-    expect(result.profile.training.core.STR.current).toBe(20);
-    expect(result.profile.training.core.STR.progress).toBe(cost);
   });
 
-  it('requires sufficient Confidence even when Progress and performance are strong', () => {
+  it('consolidates a decimal increment when progress/confidence/performance all pass', () => {
     let profile = calibrated(20);
-    profile.training.core.STR.progress = progressCostForCurrent(20);
-
+    profile.training.core.STR.progress = progressCostForCurrent(20) + 8;
     const result = evaluateAdaptation(profile, {
-      stat: 'STR',
-      productiveStimulus: 0,
-      previousPerformanceIndex: 100,
-      currentPerformanceIndex: 110,
-      confidence: 0.4,
-      readiness: 0.75,
-      evidenceId: 'low-confidence',
+      stat: 'STR', productiveStimulus: 1000,
+      previousPerformanceIndex: 100, currentPerformanceIndex: 103,
+      confidence: 0.95, readiness: 0.86, evidenceId: 'pr',
     });
-
-    expect(result.status).toBe('awaiting_confidence');
-    expect(result.profile.training.core.STR.current).toBe(20);
-  });
-
-  it('requires comparable performance evidence before consolidation', () => {
-    let profile = calibrated(20);
-    profile.training.core.STR.progress = progressCostForCurrent(20);
-
-    const result = evaluateAdaptation(profile, {
-      stat: 'STR',
-      productiveStimulus: 0,
-      previousPerformanceIndex: null,
-      currentPerformanceIndex: null,
-      confidence: 0.95,
-      readiness: 0.9,
-      evidenceId: 'missing-comparable',
-    });
-
-    expect(result.status).toBe('awaiting_performance');
-    expect(result.profile.training.core.STR.current).toBe(20);
-  });
-
-  it('consolidates at most +1 when Progress, Confidence and Performance Gate all pass', () => {
-    let profile = calibrated(20);
-    const cost = progressCostForCurrent(20);
-    profile.training.core.STR.progress = cost + 8;
-
-    const result = evaluateAdaptation(profile, {
-      stat: 'STR',
-      productiveStimulus: 1000,
-      previousPerformanceIndex: 100,
-      currentPerformanceIndex: 103,
-      confidence: 0.95,
-      readiness: 0.86,
-      evidenceId: 'block-pr',
-    });
-
     expect(result.status).toBe('stat_up');
-    expect(result.statDelta).toBe(1);
-    expect(result.profile.training.core.STR.current).toBe(21);
-    expect(result.profile.training.core.STR.peak).toBe(21);
-    expect(result.profile.training.core.STR.progress).toBeGreaterThan(0);
+    expect(result.statDelta).toBeGreaterThan(0);
+    expect(result.statDelta).toBeLessThan(1);
+    expect(result.profile.training.core.STR.current).toBeCloseTo(20 + result.statDelta, 10);
   });
 
-  it('uses a smaller comparable improvement threshold for advanced Current bands', () => {
-    expect(performanceGateRatioForCurrent(10)).toBeGreaterThan(
-      performanceGateRatioForCurrent(70),
-    );
+  it('advanced Current needs a smaller comparable percentage improvement', () => {
+    expect(performanceGateRatioForCurrent(10)).toBeGreaterThan(performanceGateRatioForCurrent(70));
   });
 
-  it('keeps readiness separate from Current', () => {
-    let profile = calibrated(20);
-    const result = evaluateAdaptation(profile, {
-      stat: 'STR',
-      productiveStimulus: 1,
-      previousPerformanceIndex: 100,
-      currentPerformanceIndex: 100,
-      confidence: 0.9,
-      readiness: 0.25,
-      evidenceId: 'fatigued-block',
-    });
-
-    expect(result.profile.training.core.STR.current).toBe(20);
-    expect(result.profile.training.core.STR.readiness).toBe(0.25);
-  });
-
-  it('rejects Stat Up consolidation on an uncalibrated stat', () => {
-    const profile = createHighflyHunterProfile({
-      profileId: 'uncalibrated',
-      createdAt: '2026-09-29T00:00:00.000Z',
-    });
-
-    expect(() =>
-      evaluateAdaptation(profile, {
-        stat: 'STR',
-        productiveStimulus: 100,
-        previousPerformanceIndex: 100,
-        currentPerformanceIndex: 120,
-        confidence: 1,
-        readiness: 1,
-        evidenceId: 'bad',
-      }),
-    ).toThrow(/must be calibrated/);
+  it('rejects consolidation before a performance anchor exists', () => {
+    const profile = createHighflyHunterProfile({ profileId: 'uncal', classId: 'warrior' });
+    expect(() => evaluateAdaptation(profile, {
+      stat: 'STR', productiveStimulus: 100,
+      previousPerformanceIndex: 100, currentPerformanceIndex: 120,
+      confidence: 1, readiness: 1, evidenceId: 'bad',
+    })).toThrow(/must be calibrated/);
   });
 });

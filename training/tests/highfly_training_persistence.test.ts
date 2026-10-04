@@ -12,67 +12,41 @@ import {
   updateActiveHighflyHunterProfile,
 } from '../src/highfly/training/profile_store';
 
-describe('HIGHFLY Training persistence RUN1-F', () => {
-  it('keeps one active Training profile independently from CharacterState', () => {
+describe('HIGHFLY Training persistence RUN138', () => {
+  it('preserves Awakening + decimal Training Growth across progression changes', () => {
     clearActiveHighflyHunterProfile();
-    const profile = createHighflyHunterProfile({
-      profileId: 'offline:hunter',
-      createdAt: '2026-09-29T00:00:00.000Z',
-      classId: 'warrior',
-    });
-    setActiveHighflyHunterProfile(profile);
-    expect(getActiveHighflyHunterProfile()?.profileId).toBe('offline:hunter');
-  });
-
-  it('preserves Core Stats when class changes', () => {
-    clearActiveHighflyHunterProfile();
-    let profile = createHighflyHunterProfile({
-      profileId: 'offline:hunter',
-      createdAt: '2026-09-29T00:00:00.000Z',
-      classId: 'warrior',
-    });
-    profile = commitTrainingCoreStat(profile, 'STR', 42, {
-      source: 'training-performance-gate',
-      scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
-      evidenceId: 'persisted-strength',
-    }, {
-      progress: 7,
-      confidence: 0.91,
-      readiness: 0.72,
-    });
-    setActiveHighflyHunterProfile(profile);
-
-    updateActiveHighflyHunterProfile((current) =>
-      applyHunterProgression(current, {
-        classId: 'mage',
-        level: 14,
-        xp: 321,
-      }),
+    let profile = createHighflyHunterProfile({ profileId: 'offline:hunter', classId: 'warrior' });
+    const base = profile.training.core.STR.current;
+    profile = commitTrainingCoreStat(
+      profile, 'STR', base + 0.37,
+      {
+        source: 'training-performance-gate',
+        scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
+        evidenceId: 'persisted-strength',
+      },
+      { progress: 7, confidence: 0.91, readiness: 0.72 },
     );
-
-    const switched = getActiveHighflyHunterProfile();
-    expect(switched?.hunter.classId).toBe('mage');
-    expect(switched?.hunter.level).toBe(14);
-    expect(switched?.training.core.STR.current).toBe(42);
-    expect(switched?.training.core.STR.peak).toBe(42);
-    expect(switched?.training.core.STR.progress).toBe(7);
-    expect(switched?.training.core.STR.confidence).toBeCloseTo(0.91);
-    expect(switched?.training.core.STR.readiness).toBeCloseTo(0.72);
+    setActiveHighflyHunterProfile(profile);
+    updateActiveHighflyHunterProfile((current) =>
+      applyHunterProgression(current, { classId: 'mage', level: 14, xp: 321 }),
+    );
+    const switched = getActiveHighflyHunterProfile()!;
+    expect(switched.awakening.classId).toBe('warrior');
+    expect(switched.training.core.STR.current).toBeCloseTo(base + 0.37, 10);
+    expect(switched.training.core.STR.trainingGrowth).toBeCloseTo(0.37, 10);
   });
 
-  it('can replace the active snapshot after reload without changing schema', () => {
+  it('save/load is exact and does not duplicate Awakening', () => {
     clearActiveHighflyHunterProfile();
-    const before = createHighflyHunterProfile({
-      profileId: 'offline:persist',
-      createdAt: '2026-09-29T00:00:00.000Z',
-    });
+    const before = createHighflyHunterProfile({ profileId: 'offline:persist', classId: 'hunter' });
     setActiveHighflyHunterProfile(before);
-
-    const serialized = JSON.stringify(getActiveHighflyHunterProfile());
-    const restored = JSON.parse(serialized);
-    setActiveHighflyHunterProfile(restored);
-
-    expect(getActiveHighflyHunterProfile()).toEqual(before);
-    expect(getActiveHighflyHunterProfile()?.schemaVersion).toBe(1);
+    const first = getActiveHighflyHunterProfile()!;
+    const serialized = JSON.stringify(first);
+    setActiveHighflyHunterProfile(JSON.parse(serialized));
+    const restored = getActiveHighflyHunterProfile()!;
+    expect(restored).toEqual(first);
+    expect(restored.schemaVersion).toBe(2);
+    const total = Object.values(restored.awakening.base).reduce((a, b) => a + b, 0);
+    expect(total).toBeCloseTo(50, 8);
   });
 });

@@ -1,7 +1,10 @@
 import {
   HIGHFLY_CORE_STATS,
+  HIGHFLY_TRAINING_SCHEMA_VERSION,
   HIGHFLY_TRAINING_SCORING_VERSION,
+  migrateAwakeningStats,
   type HighflyCoreStat,
+  type HighflyCoreStatsState,
   type HighflyHunterProfile,
   type HighflyRmLiftId,
 } from './core';
@@ -40,24 +43,17 @@ function mean(values: readonly number[]): number | null {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
-/**
- * RM does not grant Core by itself. It only gives physical authority to work
- * that was actually completed. Sex/age remain plausibility context only;
- * bodyweight is used solely to normalize relative physical capacity.
- */
 export function sessionCapacityFactor(
   profile: HighflyHunterProfile,
   stat: HighflyCoreStat,
 ): number {
   if (stat === 'PER' || stat === 'INT') return 1;
-
   const strength = mean(
     STRENGTH_LIFTS
       .map((lift) => effectiveRelativeRm(profile, lift))
       .filter((value): value is number => value !== null),
   );
   const power = effectiveRelativeRm(profile, 'hang_power_clean');
-
   if (stat === 'STR') {
     if (strength === null) return 1;
     return clamp(0.4 + 0.8 * Math.sqrt(strength), 0.8, 1.75);
@@ -73,10 +69,6 @@ export function sessionCapacityFactor(
   return 1;
 }
 
-/**
- * The session card and first Core baseline are the same earned values.
- * No fixed 10 exists in RUN1-B.
- */
 export function applySessionCapacityAuthority(
   profile: HighflyHunterProfile,
   result: SessionTrainingResult,
@@ -90,17 +82,25 @@ export function applySessionCapacityAuthority(
   return { ...result, stimulus };
 }
 
-/**
- * Productive work still needs time to consolidate. Higher Core values reduce
- * how much of a session becomes pending adaptation, so experienced Hunters do
- * not improve at the same rate as beginners.
- */
 export function adaptationStimulusForCurrent(
   current: number,
   earnedSessionScore: number,
 ): number {
   const factor = clamp(1 / (1 + Math.max(0, current) / 20), 0.35, 1);
   return round2(Math.max(0, earnedSessionScore) * factor);
+}
+
+/**
+ * The first valid real session preserves the Awakening and earns a small,
+ * visible decimal increment. The divisor is a versioned game tuning constant,
+ * not a physiological claim.
+ */
+export function initialTrainingGrowthDelta(
+  current: number,
+  earnedSessionScore: number,
+): number {
+  const productive = adaptationStimulusForCurrent(current, earnedSessionScore);
+  return clamp(productive / 6, 0, 0.75);
 }
 
 function legacyCalibratedHistory(
@@ -119,46 +119,53 @@ function legacyStatUps(profile: HighflyHunterProfile, stat: HighflyCoreStat): nu
 }
 
 /**
- * RUN1-A used a fixed 10 for first calibration. Reconstruct those saves from
- * their own recorded first-session stimulus, preserving RM, history, cycle,
- * pending progress and real Stat Ups.
+ * Migration order matters:
+ * 1) RUN1-A fixed-10 profiles are first reconstructed from their own evidence.
+ * 2) Every schema-1 earned Current becomes Training Growth.
+ * 3) The class Awakening base is added ONCE by migrateAwakeningStats().
  */
 export function migrateLegacyFixedCoreBaseline(
   profile: HighflyHunterProfile,
 ): HighflyHunterProfile {
-  if (profile.scoringVersion === HIGHFLY_TRAINING_SCORING_VERSION) return profile;
-
-  const nextCore = { ...profile.training.core };
-  let changed = false;
-
-  for (const stat of HIGHFLY_CORE_STATS) {
-    const state = profile.training.core[stat];
-    const first = legacyCalibratedHistory(profile, stat);
-    if (!state.calibrated || !first || !(first.stimulus > 0)) continue;
-
-    const reconstructed =
-      round2(first.stimulus * sessionCapacityFactor(profile, stat)) +
-      legacyStatUps(profile, stat);
-
-    nextCore[stat] = {
-      ...state,
-      current: round2(reconstructed),
-      peak: round2(Math.max(reconstructed, 0)),
-      // Keep pending adaptation already earned after the first session.
-      progress: Math.max(0, state.progress),
-      calibrated: true,
-    };
-    changed = true;
+  const legacy = profile as HighflyHunterProfile & {
+    schemaVersion: number;
+    scoringVersion: string;
+  };
+  if (
+    legacy.schemaVersion === HIGHFLY_TRAINING_SCHEMA_VERSION &&
+    legacy.scoringVersion === HIGHFLY_TRAINING_SCORING_VERSION &&
+    legacy.awakening?.version === 1
+  ) {
+    return profile;
   }
 
-  return {
-    ...profile,
+  let working = profile;
+  if (legacy.scoringVersion === 'run1-a') {
+    const nextCore = { ...legacy.training.core } as HighflyCoreStatsState;
+    for (const stat of HIGHFLY_CORE_STATS) {
+      const state = legacy.training.core[stat] as any;
+      const first = legacyCalibratedHistory(legacy, stat);
+      if (!state?.calibrated || !first || !(first.stimulus > 0)) continue;
+      const reconstructed =
+        round2(first.stimulus * sessionCapacityFactor(legacy, stat)) +
+        legacyStatUps(legacy, stat);
+      nextCore[stat] = {
+        ...state,
+        current: reconstructed,
+        peak: Math.max(reconstructed, 0),
+        progress: Math.max(0, state.progress ?? 0),
+        calibrated: true,
+      } as any;
+    }
+    working = {
+      ...legacy,
+      training: { ...legacy.training, core: nextCore },
+    } as HighflyHunterProfile;
+  }
+
+  working = {
+    ...working,
     scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
-    training: changed
-      ? {
-          ...profile.training,
-          core: nextCore,
-        }
-      : profile.training,
   };
+  return migrateAwakeningStats(working);
 }
