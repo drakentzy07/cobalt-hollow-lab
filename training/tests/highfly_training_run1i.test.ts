@@ -95,7 +95,10 @@ describe('HIGHFLY Training RUN1-J routine authority', () => {
   });
 
   it('derives PER and INT from completed ordered work and real rest, not subjective readiness', () => {
-    const profile = createHighflyHunterProfile({ profileId: 'run1j' });
+    const profile = createHighflyHunterProfile({
+      profileId: 'run1j',
+      classId: 'warrior',
+    });
     const definition = {
       exerciseId: 'd1_back_squat',
       pattern: 'squat' as const,
