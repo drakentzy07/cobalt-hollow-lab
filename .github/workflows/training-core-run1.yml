@@ -1174,10 +1174,31 @@ jobs:
             const button = page.locator('[data-hf-set-complete="' + id + '"]');
             for (let index = 0; index < sets; index++) {
               await button.scrollIntoViewIfNeeded();
-              await button.tap();
+              let restObserved = null;
               if (index < sets - 1) {
-                await page.locator('#hf-rest-dock').waitFor({ state: 'visible', timeout: 3000 });
-                await page.locator('#hf-rest-dock').waitFor({ state: 'hidden', timeout: 3000 });
+                restObserved = page.evaluate(() => new Promise((resolve) => {
+                  const dock = document.querySelector('#hf-rest-dock');
+                  if (!(dock instanceof HTMLElement)) return resolve(false);
+                  if (!dock.hidden) return resolve(true);
+                  const observer = new MutationObserver(() => {
+                    if (!dock.hidden) {
+                      observer.disconnect();
+                      resolve(true);
+                    }
+                  });
+                  observer.observe(dock, { attributes: true, attributeFilter: ['hidden'] });
+                  window.setTimeout(() => {
+                    observer.disconnect();
+                    resolve(false);
+                  }, 3000);
+                }));
+              }
+              await button.tap();
+              if (restObserved) {
+                if (!(await restObserved)) {
+                  throw new Error('RUN1-J mandatory rest never became visible after completing set');
+                }
+                await page.locator('#hf-rest-dock').waitFor({ state: 'hidden', timeout: 5000 });
               }
             }
           }
@@ -2217,6 +2238,22 @@ jobs:
           // Close the day AS PERFORMED: record one real set, then finish the
           // session without completing/skipping the rest. This reproduces the
           // real-device bug report and proves only actual work is committed.
+          const j4RestObserved = page.evaluate(() => new Promise((resolve) => {
+            const dock = document.querySelector('#hf-rest-dock');
+            if (!(dock instanceof HTMLElement)) return resolve(false);
+            if (!dock.hidden) return resolve(true);
+            const observer = new MutationObserver(() => {
+              if (!dock.hidden) {
+                observer.disconnect();
+                resolve(true);
+              }
+            });
+            observer.observe(dock, { attributes: true, attributeFilter: ['hidden'] });
+            window.setTimeout(() => {
+              observer.disconnect();
+              resolve(false);
+            }, 3000);
+          }));
           await page.evaluate(() => {
             const el = document.querySelector('[data-hf-set-complete]:not([disabled])');
             if (!(el instanceof HTMLElement)) throw new Error('no active Training set button');
@@ -2227,8 +2264,10 @@ jobs:
             el.dispatchEvent(new PointerEvent('pointerdown', opts));
             el.dispatchEvent(new PointerEvent('pointerup', opts));
           });
-          await page.locator('#hf-rest-dock').waitFor({ state: 'visible', timeout: 3000 });
-          await page.locator('#hf-rest-dock').waitFor({ state: 'hidden', timeout: 3000 });
+          if (!(await j4RestObserved)) {
+            throw new Error('J4 mandatory rest never became visible after touch set completion');
+          }
+          await page.locator('#hf-rest-dock').waitFor({ state: 'hidden', timeout: 5000 });
           await page.evaluate(() => {
             const el = document.querySelector('#hf-training-register');
             if (!(el instanceof HTMLElement)) throw new Error('Training register button missing');
