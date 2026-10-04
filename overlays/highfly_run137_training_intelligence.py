@@ -424,6 +424,27 @@ replace_once(
     "Training focus frame gate",
 )
 
+replace_once(
+    main,
+    """  const skipIntro = (e: Event): void => {
+    // Swallow gameplay input while the intro runs; only the skip gestures act.
+    e.stopPropagation();
+""",
+    """  const skipIntro = (e: Event): void => {
+    // HIGHFLY Training is a foreground system UI. Training Focus intentionally
+    // freezes the world/intro, so the intro capture guard must not swallow
+    // Training's own touch pointerdown events while it is open.
+    const target = e.target as Element | null;
+    if (
+      e.type === 'pointerdown' &&
+      target?.closest?.('#highfly-training-window')
+    ) return;
+    // Swallow gameplay input while the intro runs; only the skip gestures act.
+    e.stopPropagation();
+""",
+    "Training touch bypasses frozen spawn intro",
+)
+
 css_text = css.read_text(encoding="utf-8")
 css_text += r"""
 

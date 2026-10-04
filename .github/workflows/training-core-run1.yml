@@ -344,6 +344,7 @@ jobs:
           grep -F 'ESTÍMULO DE ESTA SESIÓN' upstream/src/highfly/training/ui.ts
           grep -F 'NO LOGRÉ OBJETIVO · REPETIR' upstream/src/highfly/training/ui.ts
           grep -F 'graphicsRebuildPaused || highflyTrainingFocusActive' upstream/src/main.ts
+          grep -F "target?.closest?.('#highfly-training-window')" upstream/src/main.ts
           grep -F 'HUNTER CORE · ESTADO CONSOLIDADO' upstream/src/highfly/training/ui.ts
           grep -F 'DESPERTAR ACTIVO' upstream/src/highfly/training/ui.ts
           grep -F 'state.awakeningBase.toFixed(2)' upstream/src/highfly/training/ui.ts
@@ -1305,58 +1306,11 @@ jobs:
           // RUN132: exercise the actual HIGHFLY touch binding, then assert the
           // authoritative calibrated e1RM cards instead of transient message copy.
           await page.locator('#hf-rm-submit-all').scrollIntoViewIfNeeded();
-          const rmTouchDiag = await page.evaluate(async () => {
+          await page.evaluate(() => {
             const el = document.querySelector('#hf-rm-submit-all');
             if (!(el instanceof HTMLElement)) {
               throw new Error('RUN1-J RM batch button missing');
             }
-            const diag = { down: 0, up: 0, click: 0 };
-            const stops = [];
-            const originalStop = Event.prototype.stopPropagation;
-            const originalImmediate = Event.prototype.stopImmediatePropagation;
-            Event.prototype.stopPropagation = function () {
-              if (this.type === 'pointerdown') {
-                const current = this.currentTarget;
-                stops.push({
-                  kind: 'stopPropagation',
-                  current:
-                    current === window ? 'window' :
-                    current === document ? 'document' :
-                    current instanceof Element
-                      ? current.tagName + '#' + (current.id || '') + '.' + [...current.classList].join('.')
-                      : String(current),
-                  target:
-                    this.target instanceof Element
-                      ? this.target.tagName + '#' + (this.target.id || '') + '.' + [...this.target.classList].join('.')
-                      : String(this.target),
-                  stack: new Error('RUN144 stopPropagation').stack ?? '',
-                });
-              }
-              return originalStop.call(this);
-            };
-            Event.prototype.stopImmediatePropagation = function () {
-              if (this.type === 'pointerdown') {
-                const current = this.currentTarget;
-                stops.push({
-                  kind: 'stopImmediatePropagation',
-                  current:
-                    current === window ? 'window' :
-                    current === document ? 'document' :
-                    current instanceof Element
-                      ? current.tagName + '#' + (current.id || '') + '.' + [...current.classList].join('.')
-                      : String(current),
-                  target:
-                    this.target instanceof Element
-                      ? this.target.tagName + '#' + (this.target.id || '') + '.' + [...this.target.classList].join('.')
-                      : String(this.target),
-                  stack: new Error('RUN144 stopImmediatePropagation').stack ?? '',
-                });
-              }
-              return originalImmediate.call(this);
-            };
-            el.addEventListener('pointerdown', () => { diag.down += 1; }, { capture: true, once: true });
-            el.addEventListener('pointerup', () => { diag.up += 1; }, { capture: true, once: true });
-            el.addEventListener('click', () => { diag.click += 1; }, { capture: true, once: true });
             const opts = {
               bubbles: true,
               cancelable: true,
@@ -1368,50 +1322,7 @@ jobs:
             };
             el.dispatchEvent(new PointerEvent('pointerdown', opts));
             el.dispatchEvent(new PointerEvent('pointerup', opts));
-            await new Promise((resolve) => setTimeout(resolve, 50));
-            const messageAfterTouch =
-              document.querySelector('.hf-rm-message')?.textContent ?? '';
-            const squatAfterTouch =
-              document.querySelector('[data-hf-rm-load="back_squat"]')
-                ?.closest('.hf-rm-card')?.textContent ?? '';
-            const cleanAfterTouch =
-              document.querySelector('[data-hf-rm-load="hang_power_clean"]')
-                ?.closest('.hf-rm-card')?.textContent ?? '';
-            let afterClick = null;
-            if (!squatAfterTouch.includes('VERIFICADA') || !cleanAfterTouch.includes('VERIFICADA')) {
-              el.click();
-              await new Promise((resolve) => setTimeout(resolve, 50));
-              afterClick = {
-                message: document.querySelector('.hf-rm-message')?.textContent ?? '',
-                squat:
-                  document.querySelector('[data-hf-rm-load="back_squat"]')
-                    ?.closest('.hf-rm-card')?.textContent ?? '',
-                clean:
-                  document.querySelector('[data-hf-rm-load="hang_power_clean"]')
-                    ?.closest('.hf-rm-card')?.textContent ?? '',
-              };
-            }
-            Event.prototype.stopPropagation = originalStop;
-            Event.prototype.stopImmediatePropagation = originalImmediate;
-            return {
-              diag,
-              stops,
-              messageAfterTouch,
-              squatAfterTouch,
-              cleanAfterTouch,
-              afterClick,
-            };
           });
-          console.log('RUN144_RM_TOUCH_DIAG', JSON.stringify(rmTouchDiag, null, 2));
-          if (
-            !rmTouchDiag.squatAfterTouch.includes('VERIFICADA') ||
-            !rmTouchDiag.cleanAfterTouch.includes('VERIFICADA')
-          ) {
-            throw new Error(
-              'RUN144 RM touch diagnostic failed before fallback click: ' +
-                JSON.stringify(rmTouchDiag),
-            );
-          }
           try {
             await page.waitForFunction(() => {
               const squat =
