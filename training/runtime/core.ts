@@ -102,9 +102,36 @@ export interface HighflyLoadCalibrationState {
   lifts: Partial<Record<HighflyRmLiftId, HighflyRmCalibrationEntry>>;
 }
 
+export type HighflyAccessoryEquipmentKind =
+  | 'dumbbell'
+  | 'machine'
+  | 'cable'
+  | 'other';
+
+export interface HighflyAccessoryLoadAttempt {
+  recordedAt: string;
+  kg: number;
+  sets: number;
+  reps: number;
+  outcome: 'completed' | 'repeat';
+}
+
 export interface HighflyAccessoryLoadEntry {
+  /** Last load the Hunter actually selected for this exercise. */
   kg: number;
   updatedAt: string;
+  /** Learned equipment context: same kg is not assumed equivalent across machines. */
+  equipmentKind?: HighflyAccessoryEquipmentKind;
+  /** Smallest useful jump available on this dumbbell/machine/cable station. */
+  progressionStepKg?: number;
+  /** HIGHFLY's next-session proposal; never silently overwrites the chosen kg. */
+  nextSuggestedKg?: number;
+  /** Explicit athlete feedback that the current load should be repeated. */
+  repeatRequested?: boolean;
+  lastSets?: number;
+  lastReps?: number;
+  /** Bounded local history used to adapt future proposals. */
+  history?: HighflyAccessoryLoadAttempt[];
 }
 
 export interface HighflyHunterProgressionState {

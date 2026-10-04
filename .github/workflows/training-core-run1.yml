@@ -127,6 +127,7 @@ jobs:
           python ../overlays/highfly_run120_closure.py
           python ../overlays/highfly_run122_training_lock.py
           python ../overlays/highfly_run129_real_training.py
+          python ../overlays/highfly_run137_training_intelligence.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -235,6 +236,9 @@ jobs:
           test -s training/runtime/ui.ts
           test -s training/runtime/pipeline.ts
           test -s training/runtime/combat_runtime.ts
+          test -s training/runtime/accessory_adaptation.ts
+          test -s training/tests/highfly_training_accessory_adaptation.test.ts
+          test -s overlays/highfly_run137_training_intelligence.py
           test -s training/runtime/personal_routine.ts
           test -s training/tests/highfly_training_run1i.test.ts
           test -s training/tests/highfly_training_j3b.test.ts
@@ -333,7 +337,9 @@ jobs:
           grep -F 'id="highfly-chat-close"' upstream/play.html
           grep -F 'id="highfly-chat-send"' upstream/play.html
           grep -F 'HIGHFLY_FINAL_CHAT_CONTROLS' upstream/src/main.ts
-          grep -F 'RESULTADO DE ESTA SESIÓN' upstream/src/highfly/training/ui.ts
+          grep -F 'ESTÍMULO DE ESTA SESIÓN' upstream/src/highfly/training/ui.ts
+          grep -F 'NO LOGRÉ OBJETIVO · REPETIR' upstream/src/highfly/training/ui.ts
+          grep -F 'graphicsRebuildPaused || highflyTrainingFocusActive' upstream/src/main.ts
           grep -F 'HUNTER CORE · ESTADO CONSOLIDADO' upstream/src/highfly/training/ui.ts
           ! grep -F 'BASE ESTABLECIDA' upstream/src/highfly/training/ui.ts
           grep -F 'body.start-screen-open .homepage-footer' upstream/src/styles/shell.website.css
@@ -393,7 +399,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -1229,6 +1235,30 @@ jobs:
           await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
           await enterHunter();
           await openTraining();
+
+          const focusFreeze = await page.evaluate(async () => {
+            const sim = window.__game?.sim;
+            if (!sim?.player) return null;
+            const before = {
+              tick: sim.tickCount,
+              attackPower: sim.player.attackPower,
+              focus: document.body.classList.contains('highfly-training-focus'),
+            };
+            await new Promise((resolve) => window.setTimeout(resolve, 800));
+            return {
+              ...before,
+              tickAfter: sim.tickCount,
+              attackPowerAfter: sim.player.attackPower,
+            };
+          });
+          console.log('RUN137_FOCUS_FREEZE', focusFreeze);
+          if (
+            !focusFreeze?.focus ||
+            focusFreeze.tickAfter !== focusFreeze.tick ||
+            focusFreeze.attackPowerAfter !== focusFreeze.attackPower
+          ) {
+            throw new Error('RUN137: Training Focus did not freeze world/AP: ' + JSON.stringify(focusFreeze));
+          }
 
           const shell = await page.evaluate(() => {
             const win = document.querySelector('#highfly-training-window');
