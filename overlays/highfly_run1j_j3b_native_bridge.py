@@ -115,7 +115,7 @@ replace_once(
   if (baseline.rangedPower > 0) entity.rangedPower = Math.max(0, result.combat.power);
   entity.maxHp = Math.max(1, Math.round(result.combat.maxHP));
 
-  const gAGI = trainingGain(profile.training.core.AGI.current);
+  const gAGI = trainingGain(profile.training.core.AGI.trainingGrowth);
   const agiCritBonus = Math.min(0.03, 0.02 * gAGI);
   const agiDodgeBonus = Math.min(0.04, 0.025 * gAGI);
   entity.critChance = Math.max(0, Math.min(1, result.combat.critChance + agiCritBonus));

@@ -84,7 +84,7 @@ function validTrainingProfile(value: unknown): value is HighflyHunterProfile {
     hunter?: unknown;
   };
   return (
-    v.schemaVersion === 1 &&
+    (v.schemaVersion === 1 || v.schemaVersion === 2) &&
     typeof v.scoringVersion === 'string' &&
     typeof v.profileId === 'string' &&
     !!v.training &&

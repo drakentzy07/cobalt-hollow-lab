@@ -252,6 +252,10 @@ jobs:
           test -s training/runtime/bridge.ts
           test -s overlays/highfly_training_core_v1.py
           grep -q "HIGHFLY_CORE_STATS" training/runtime/core.ts
+          grep -q "HIGHFLY_AWAKENING_BASES" training/runtime/core.ts
+          grep -q "HIGHFLY_AWAKENING_BUDGET = 50" training/runtime/core.ts
+          grep -q "trainingGrowth" training/runtime/core.ts
+          grep -q "run2-awakening-v1" training/runtime/core.ts
           grep -q "training-performance-gate" training/runtime/core.ts
           grep -q "HF_REFERENCE_5D_SUPREME_V1" training/runtime/reference_routine.ts
           grep -q "evaluateTrainingSession" training/runtime/engine.ts
@@ -341,6 +345,9 @@ jobs:
           grep -F 'NO LOGRÉ OBJETIVO · REPETIR' upstream/src/highfly/training/ui.ts
           grep -F 'graphicsRebuildPaused || highflyTrainingFocusActive' upstream/src/main.ts
           grep -F 'HUNTER CORE · ESTADO CONSOLIDADO' upstream/src/highfly/training/ui.ts
+          grep -F 'DESPERTAR ACTIVO' upstream/src/highfly/training/ui.ts
+          grep -F 'state.awakeningBase.toFixed(2)' upstream/src/highfly/training/ui.ts
+          grep -F 'state.trainingGrowth.toFixed(2)' upstream/src/highfly/training/ui.ts
           ! grep -F 'BASE ESTABLECIDA' upstream/src/highfly/training/ui.ts
           grep -F 'body.start-screen-open .homepage-footer' upstream/src/styles/shell.website.css
           grep -F '#loot-explorer-window' upstream/src/styles/shell.css
@@ -399,7 +406,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream

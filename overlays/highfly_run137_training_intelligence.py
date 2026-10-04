@@ -83,10 +83,7 @@ replace_once(
 
 replace_once(
     ui,
-    """      const resting = activeRest?.exerciseId === exercise.exerciseId;
-
-      let actionText = 'BLOQUEADO · COMPLETÁ EL EJERCICIO ANTERIOR';
-""",
+    "      const resting = activeRest?.exerciseId === exercise.exerciseId;\n",
     """      const resting = activeRest?.exerciseId === exercise.exerciseId;
       const accessory = load.editable ? savedAccessoryEntry(exercise.exerciseId) : undefined;
       const accessoryKind =
@@ -94,8 +91,6 @@ replace_once(
       const accessoryStep =
         accessory?.progressionStepKg ?? defaultAccessoryStepKg(accessoryKind);
       const accessorySuggestion = accessory?.nextSuggestedKg ?? 0;
-
-      let actionText = 'BLOQUEADO · COMPLETÁ EL EJERCICIO ANTERIOR';
 """,
     "accessory card state",
 )

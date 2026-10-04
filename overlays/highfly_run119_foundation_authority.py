@@ -83,8 +83,8 @@ method_replacement = '''  /** HIGHFLY Core Stats: only real Training may change 
     ] as const;
     return rows
       .map((row) => {
-        const value = formatNumber(row.value, { maximumFractionDigits: 0 });
-        const desc = 'Core HIGHFLY: sólo aumenta mediante entrenamiento real.';
+        const value = formatNumber(row.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const desc = 'Stat HIGHFLY: Despertar de clase + crecimiento exclusivo por entrenamiento real.';
         return '<span class="stat-cell ui-stat-row ui-card highfly-core-stat" data-highfly-core="' +
           row.id + '" tabindex="0" title="' + desc + '">' + esc(row.label) +
           ' <b>' + value + '</b><span class="visually-hidden">' + desc + '</span></span>';

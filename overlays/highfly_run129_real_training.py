@@ -135,8 +135,8 @@ replace_once(
 replace_once(
     ui,
     "${state.calibrated ? 'BASE ESTABLECIDA' : 'EN CALIBRACIÓN'}",
-    "${state.calibrated ? 'CORE REAL' : 'EN CALIBRACIÓN'}",
-    "real Core badge",
+    "${profile.awakening.initialized ? (state.calibrated ? 'CORE + TRAINING' : 'DESPERTAR ACTIVO') : 'SIN DESPERTAR'}",
+    "Awakening Core badge",
 )
 replace_once(
     ui,
@@ -153,7 +153,7 @@ replace_once(
 replace_once(
     ui,
     "Los valores 10.0 son la base calibrada; el resultado de sesión se muestra por separado.",
-    "El primer valor nace de tu sesión real; después mejora sólo con adaptación y rendimiento confirmado",
+    "El Core nace del DESPERTAR de clase y después sólo aumenta mediante entrenamiento real",
     "Core section copy",
 )
 
@@ -328,18 +328,32 @@ if marker not in css_text:
 """
     css.write_text(css_text, encoding="utf-8")
 
+# Awakening + Training are distinct and decimals stay visible.
+replace_once(
+    ui,
+    '<div class="hf-core-current">${state.current.toFixed(1)}</div>',
+    '<div class="hf-core-current">${state.current.toFixed(2)}</div><div class="hf-core-origin">DESPERTAR <b>${state.awakeningBase.toFixed(2)}</b> + TRAINING <b>+${state.trainingGrowth.toFixed(2)}</b></div>',
+    "Awakening decimal Core display",
+)
+replace_once(
+    ui,
+    '<span>Máximo <b>${state.peak.toFixed(1)}</b></span>',
+    '<span>Máximo <b>${state.peak.toFixed(2)}</b></span>',
+    "decimal Core peak",
+)
+
 # Hard closure sentinels.
 final_ui = ui.read_text(encoding="utf-8")
 if "hf-rest-skip" in final_ui or "CONTINUAR ANTES DE TIEMPO" in final_ui:
     raise SystemExit("RUN129: rest skip survived")
 if "navigator.webdriver ? 0.5 : exercise.restSec" not in final_ui:
     raise SystemExit("RUN129: production rest authority missing")
-if "CORE REAL" not in final_ui:
-    raise SystemExit("RUN129: real Core badge missing")
+if "DESPERTAR ACTIVO" not in final_ui or "CORE + TRAINING" not in final_ui:
+    raise SystemExit("RUN129: Awakening Core badge missing")
 if "Los valores 10.0 son la base calibrada" in final_ui:
     raise SystemExit("RUN129: obsolete fixed-10 copy survived")
 if "if (activeRest) {" not in final_ui or "paintRestDock();" not in final_ui:
     raise SystemExit("RUN129: close-window recovery guard missing")
-if "run1-b" not in Path("src/highfly/training/core.ts").read_text(encoding="utf-8"):
-    raise SystemExit("RUN129: scoring version did not advance")
+if "run2-awakening-v1" not in Path("src/highfly/training/core.ts").read_text(encoding="utf-8"):
+    raise SystemExit("RUN129: Awakening scoring version missing")
 print("HIGHFLY_RUN129_REAL_TRAINING_APPLIED=1")
