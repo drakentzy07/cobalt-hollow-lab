@@ -333,6 +333,53 @@ append = r"""
   color: #9ef5ca;
 }
 
+#highfly-training-window .hf-tp-wallet {
+  color: #9ef5ca !important;
+  font-weight: 850;
+  letter-spacing: .05em;
+}
+
+#highfly-training-window .hf-core-source {
+  display: grid;
+  gap: 2px;
+  margin: 7px 0 8px;
+  padding: 7px;
+  border-radius: 6px;
+  background: rgba(86, 224, 255, .035);
+  color: rgba(218, 239, 250, .60);
+  font-size: 9px;
+}
+
+#highfly-training-window .hf-core-source span {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#highfly-training-window .hf-core-source b {
+  color: #dff9ff;
+}
+
+#highfly-training-window .hf-core-allocate {
+  width: 100%;
+  min-height: 32px;
+  margin-top: 8px;
+  border: 1px solid rgba(81, 236, 169, .30);
+  border-radius: 6px;
+  background: rgba(32, 103, 74, .24);
+  color: #b8ffda;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .05em;
+}
+
+#highfly-training-window .hf-core-allocate:disabled {
+  opacity: .38;
+  border-color: rgba(255,255,255,.09);
+  background: rgba(255,255,255,.025);
+  color: rgba(218,239,250,.55);
+}
+
 #highfly-training-window .hf-training-days {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
