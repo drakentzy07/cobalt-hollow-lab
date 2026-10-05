@@ -74,7 +74,7 @@ describe('HIGHFLY RUN138 Awakening + real session Core', () => {
     expect(migrateLegacyFixedCoreBaseline(migrated)).toEqual(migrated);
   });
 
-  it('first valid session preserves Awakening and adds decimal Training Growth', () => {
+  it('first valid session preserves Core and earns decimal unallocated Training Points', () => {
     const profile = withSquatRm(160);
     const before = profile.training.core.STR.current;
     const result = runTrainingSessionPipeline({
@@ -91,9 +91,12 @@ describe('HIGHFLY RUN138 Awakening + real session Core', () => {
       recordedAt: '2026-10-03T00:00:00.000Z',
     });
     const state = result.profile.training.core.STR;
-    expect(state.current).toBeGreaterThan(before);
-    expect(state.trainingGrowth).toBeGreaterThan(0);
-    expect(state.trainingGrowth).toBeLessThan(1);
+    expect(state.current).toBeCloseTo(before, 10);
+    expect(state.trainingGrowth).toBe(0);
+    expect(state.trainingAllocated).toBe(0);
+    expect(state.calibrated).toBe(true);
+    expect(result.profile.training.points.available).toBeGreaterThan(0);
+    expect(result.profile.training.points.available).toBeLessThan(1);
     expect(state.progress).toBe(0);
   });
 });
