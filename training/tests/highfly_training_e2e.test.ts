@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { runTrainingSessionPipeline } from '../src/highfly/training/pipeline';
 import { progressCostForCurrent } from '../src/highfly/training/adaptation';
 import { trainingGain } from '../src/highfly/training/bridge';
-import { createHighflyHunterProfile } from '../src/highfly/training/core';
+import {
+  allocateTrainingPoints,
+  createHighflyHunterProfile,
+} from '../src/highfly/training/core';
 import type { ExerciseDefinition, SessionRecord } from '../src/highfly/training/engine';
 import {
   applyActiveTrainingBridgeToEntity,
@@ -28,7 +31,7 @@ function session(id: string, loadKg: number): SessionRecord {
 }
 
 describe('HIGHFLY Training RUN138 end-to-end', () => {
-  it('starts awakened and first real session adds decimal growth', () => {
+  it('starts awakened and first real session earns decimal TP without auto-allocation', () => {
     const profile = createHighflyHunterProfile({ profileId: 'e2e', classId: 'warrior' });
     const before = profile.training.core.STR.current;
     const first = runTrainingSessionPipeline({
@@ -36,13 +39,14 @@ describe('HIGHFLY Training RUN138 end-to-end', () => {
       definitions: new Map([[squat.exerciseId, squat]]),
       recordedAt: '2026-09-30T01:00:00.000Z',
     });
-    expect(first.profile.training.core.STR.current).toBeGreaterThan(before);
-    expect(first.profile.training.core.STR.trainingGrowth).toBeGreaterThan(0);
+    expect(first.profile.training.core.STR.current).toBeCloseTo(before, 10);
+    expect(first.profile.training.core.STR.trainingGrowth).toBe(0);
+    expect(first.profile.training.points.available).toBeGreaterThan(0);
     expect(first.outcomes.find((o) => o.stat === 'STR')?.outcome).toBe('calibrated');
-    expect(trainingGain(first.profile.training.core.STR.trainingGrowth)).toBeGreaterThan(0);
+    expect(trainingGain(first.profile.training.core.STR.trainingGrowth)).toBe(0);
   });
 
-  it('consolidates a decimal improvement, persists it, and changes local combat AP', () => {
+  it('earns TP, persists it, allocates manually, and only then changes local combat AP', () => {
     clearActiveHighflyHunterProfile();
     const initial = createHighflyHunterProfile({ profileId: 'e2e', classId: 'warrior' });
     const baseline = runTrainingSessionPipeline({
@@ -63,9 +67,21 @@ describe('HIGHFLY Training RUN138 end-to-end', () => {
 
     const restored = JSON.parse(JSON.stringify(improved.profile));
     expect(restored.training.core.STR.current).toBeCloseTo(improved.profile.training.core.STR.current, 10);
-    expect(restored.training.core.STR.trainingGrowth).toBeCloseTo(improved.profile.training.core.STR.trainingGrowth, 10);
+    expect(restored.training.core.STR.trainingGrowth).toBe(0);
+    expect(restored.training.points.available).toBeCloseTo(
+      improved.profile.training.points.available,
+      10,
+    );
 
-    setActiveHighflyHunterProfile(improved.profile);
+    const allocated = allocateTrainingPoints(
+      improved.profile,
+      'STR',
+      improved.profile.training.points.available,
+    );
+    expect(allocated.training.points.available).toBeCloseTo(0, 10);
+    expect(allocated.training.core.STR.trainingGrowth).toBeGreaterThan(0);
+
+    setActiveHighflyHunterProfile(allocated);
     const entity = {
       id: 1003, attackPower: 100, rangedPower: 0, maxHp: 1000, hp: 800,
       critChance: 0.05, dodgeChance: 0.05, hitBonus: 0,
