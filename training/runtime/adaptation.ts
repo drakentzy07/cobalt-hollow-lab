@@ -1,6 +1,6 @@
 import {
   HIGHFLY_TRAINING_SCORING_VERSION,
-  commitTrainingCoreStat,
+  earnTrainingPoints,
   updateTrainingTelemetry,
   type HighflyCoreStat,
   type HighflyHunterProfile,
@@ -35,7 +35,7 @@ export interface AdaptationResult {
   progressCost: number;
   performanceGateRatio: number;
   performanceImprovementRatio: number | null;
-  /** Decimal Core growth; never forced to an integer. */
+  /** Deprecated alias: decimal Training Point reward earned by this gate. */
   statDelta: number;
   reason: string;
 }
@@ -173,16 +173,19 @@ export function evaluateAdaptation(
 
     const remainder = Math.max(0, accumulatedProgress - progressCost);
     const delta = consolidationDeltaForCurrent(previousState.current);
-    telemetryProfile = commitTrainingCoreStat(
+    telemetryProfile = updateTrainingTelemetry(telemetryProfile, input.stat, {
+      progress: remainder,
+      confidence,
+      readiness,
+    });
+    telemetryProfile = earnTrainingPoints(
       telemetryProfile,
-      input.stat,
-      previousState.current + delta,
+      delta,
       {
         source: 'training-performance-gate',
         scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
         evidenceId: input.evidenceId,
       },
-      { progress: remainder, confidence, readiness },
     );
     return {
       profile: telemetryProfile,
@@ -190,7 +193,7 @@ export function evaluateAdaptation(
       ...common,
       progressAfter: remainder,
       statDelta: delta,
-      reason: `Progress cost and behavioral gate ${input.absolutePerformanceGate.toFixed(1)} were satisfied; decimal Training Growth consolidated.`,
+      reason: `Progress cost and behavioral gate ${input.absolutePerformanceGate.toFixed(1)} were satisfied; decimal Training Points earned.`,
     };
   }
 
@@ -219,16 +222,19 @@ export function evaluateAdaptation(
 
   const remainder = Math.max(0, accumulatedProgress - progressCost);
   const delta = consolidationDeltaForCurrent(previousState.current);
-  telemetryProfile = commitTrainingCoreStat(
+  telemetryProfile = updateTrainingTelemetry(telemetryProfile, input.stat, {
+    progress: remainder,
+    confidence,
+    readiness,
+  });
+  telemetryProfile = earnTrainingPoints(
     telemetryProfile,
-    input.stat,
-    previousState.current + delta,
+    delta,
     {
       source: 'training-performance-gate',
       scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
       evidenceId: input.evidenceId,
     },
-    { progress: remainder, confidence, readiness },
   );
   return {
     profile: telemetryProfile,
@@ -236,6 +242,6 @@ export function evaluateAdaptation(
     ...common,
     progressAfter: remainder,
     statDelta: delta,
-    reason: 'Progress cost and comparable Performance Gate were both satisfied; decimal Training Growth consolidated.',
+    reason: 'Progress cost and comparable Performance Gate were both satisfied; decimal Training Points earned.',
   };
 }
