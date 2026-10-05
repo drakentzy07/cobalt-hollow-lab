@@ -1,6 +1,12 @@
 import { bindTouchTap } from '../../ui/touch_tap';
 import type { ExerciseDefinition, SessionRecord } from './engine';
-import type { HighflyHunterProfile, HighflyRmLiftId, HighflySex } from './core';
+import {
+  allocateTrainingPoints,
+  type HighflyCoreStat,
+  type HighflyHunterProfile,
+  type HighflyRmLiftId,
+  type HighflySex,
+} from './core';
 import {
   HIGHFLY_4_WEEK_CYCLE,
   HIGHFLY_PERSONAL_5D_ROUTINE,
@@ -89,6 +95,8 @@ function coreCards(): string {
   if (!profile) {
     return '<div class="hf-training-empty">Entrá con tu Hunter para ver el Training Core.</div>';
   }
+  const available = profile.training.points.available;
+  const step = Math.min(0.1, available);
   return (['STR', 'AGI', 'VIT', 'PER', 'INT'] as const)
     .map((stat) => {
       const state = profile.training.core[stat];
@@ -101,12 +109,26 @@ function coreCards(): string {
             </span>
           </div>
           <div class="hf-core-current">${state.current.toFixed(1)}</div>
+          <div class="hf-core-source">
+            <span>DESPERTAR <b>${state.awakeningBase.toFixed(2)}</b></span>
+            <span>NIVEL <b>+${state.naturalLevelGrowth.toFixed(2)}</b></span>
+            <span>TRAINING <b>+${state.trainingAllocated.toFixed(2)}</b></span>
+          </div>
           <div class="hf-core-meta">
             <span>Máximo <b>${state.peak.toFixed(1)}</b></span>
             <span>Progreso <b>${state.progress.toFixed(1)} / ${progressCostForCurrent(state.current).toFixed(1)}</b></span>
             <span>Puerta <b>${Math.min(100, Math.round((state.progress / progressCostForCurrent(state.current)) * 100))}%</b></span>
             <span>Confianza <b>${Math.round(state.confidence * 100)}%</b></span>
           </div>
+          <button
+            type="button"
+            class="hf-core-allocate"
+            data-hf-tp-allocate="${stat}"
+            data-hf-tp-amount="${step}"
+            ${step <= 0 ? 'disabled' : ''}
+          >
+            ${step > 0 ? `ASIGNAR +${step.toFixed(2)} TP` : 'SIN TP DISPONIBLES'}
+          </button>
         </article>
       `;
     })
@@ -519,6 +541,7 @@ function resultHtml(): string {
       <span>PER sesión <b>${Math.round(behavior.PER)}%</b></span>
       <span>INT sesión <b>${Math.round(behavior.INT)}%</b></span>
       <span>Descanso real <b>${Math.round(behavior.rest * 100)}%</b></span>
+      <span>TP ganados <b>${lastOutcomes.reduce((sum, outcome) => sum + outcome.trainingPointsEarned, 0).toFixed(2)}</b></span>
     </div>
     ${outcomes}
   `;
@@ -576,7 +599,7 @@ function render(): void {
     <section>
       <div class="hf-section-title">
         <h4>HUNTER CORE</h4>
-        <span>STR / AGI / VIT / PER / INT sólo suben por entrenamiento real</span>
+        <span class="hf-tp-wallet">TP DISPONIBLES <b>${(profileOrNull()?.training.points.available ?? 0).toFixed(2)}</b> · GANADOS <b>${(profileOrNull()?.training.points.earned ?? 0).toFixed(2)}</b></span>
       </div>
       <div class="hf-core-grid">${coreCards()}</div>
     </section>
@@ -657,6 +680,24 @@ function calibrateRmLift(
 }
 
 function bindRenderedUi(mount: HTMLElement): void {
+  mount.querySelectorAll<HTMLElement>('[data-hf-tp-allocate]').forEach((button) => {
+    bindTouchTap(button, (event) => {
+      event.preventDefault();
+      const profile = profileOrNull();
+      const stat = button.dataset.hfTpAllocate as HighflyCoreStat | undefined;
+      const amount = Number(button.dataset.hfTpAmount);
+      if (!profile || !stat || !(amount > 0)) return;
+      try {
+        const allocated = allocateTrainingPoints(profile, stat, amount);
+        setActiveHighflyHunterProfile(allocated);
+        refreshActiveTrainingCombatBridge();
+        render();
+      } catch {
+        render();
+      }
+    });
+  });
+
   mount.querySelectorAll<HTMLElement>('[data-hf-training-day]').forEach((button) => {
     bindTouchTap(button, (event) => {
       event.preventDefault();
@@ -1086,6 +1127,7 @@ function registerSession(): void {
         outcomes: pipeline.outcomes.map((outcome) => ({
           stat: outcome.stat,
           outcome: outcome.outcome,
+          trainingPointsEarned: outcome.trainingPointsEarned,
           statDelta: outcome.statDelta,
         })),
       },
