@@ -332,8 +332,8 @@ if marker not in css_text:
 replace_once(
     ui,
     '<div class="hf-core-current">${state.current.toFixed(1)}</div>',
-    '<div class="hf-core-current">${state.current.toFixed(2)}</div><div class="hf-core-origin">DESPERTAR <b>${state.awakeningBase.toFixed(2)}</b> + TRAINING <b>+${state.trainingGrowth.toFixed(2)}</b></div>',
-    "Awakening decimal Core display",
+    '<div class="hf-core-current">${state.current.toFixed(2)}</div>',
+    "PF-3 decimal Core display",
 )
 replace_once(
     ui,
