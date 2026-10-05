@@ -521,7 +521,7 @@ export function migrateAwakeningStats(profile: HighflyHunterProfile): HighflyHun
         earned: HIGHFLY_CORE_STATS.reduce((sum, stat) => sum + allocated[stat], 0),
         available: 0,
         allocated,
-        freeResetUsed: (profile.training as Partial<typeof profile.training>).points?.freeResetUsed ?? false,
+        freeResetUsed: (profile.training as { points?: HighflyTrainingPointWallet }).points?.freeResetUsed ?? false,
       },
     },
   };
