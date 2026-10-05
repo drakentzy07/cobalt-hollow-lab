@@ -7,7 +7,6 @@ import {
   HIGHFLY_TRAINING_SCORING_VERSION,
   applyHunterProgression,
   commitTrainingCoreStat,
-  coreSnapshot,
   createHighflyHunterProfile,
 } from '../src/highfly/training/core';
 
