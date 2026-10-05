@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - highfly-training-run1j
+      - highfly-progression-foundation-1-99
   workflow_dispatch:
 
 permissions:
