@@ -26,6 +26,8 @@ describe('HIGHFLY Awakening Stats RUN138', () => {
         const state = profile.training.core[stat];
         expect(state.current).toBe(HIGHFLY_AWAKENING_BASES[classId][stat]);
         expect(state.awakeningBase).toBe(HIGHFLY_AWAKENING_BASES[classId][stat]);
+        expect(state.naturalLevelGrowth).toBe(0);
+        expect(state.trainingAllocated).toBe(0);
         expect(state.trainingGrowth).toBe(0);
       }
     }
@@ -65,8 +67,11 @@ describe('HIGHFLY Awakening Stats RUN138', () => {
         evidenceId: 'real-session',
       },
     );
+    expect(trained.training.core.STR.trainingAllocated).toBeCloseTo(0.35, 10);
     expect(trained.training.core.STR.trainingGrowth).toBeCloseTo(0.35, 10);
     expect(trained.training.core.STR.current).toBeCloseTo(before + 0.35, 10);
+    expect(trained.training.points.earned).toBeCloseTo(0.35, 10);
+    expect(trained.training.points.allocated.STR).toBeCloseTo(0.35, 10);
   });
 
   it('forbids Core decreases; fatigue belongs in readiness instead', () => {
