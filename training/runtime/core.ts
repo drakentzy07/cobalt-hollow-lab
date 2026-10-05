@@ -1,5 +1,5 @@
 export const HIGHFLY_TRAINING_SCHEMA_VERSION = 3 as const;
-export const HIGHFLY_PROGRESSION_SCHEMA_VERSION = 2 as const;
+export const HIGHFLY_PROGRESSION_SCHEMA_VERSION = 3 as const;
 export const HIGHFLY_TRAINING_SCORING_VERSION = 'run2-awakening-v1' as const;
 
 export const HIGHFLY_CORE_STATS = ['STR', 'AGI', 'VIT', 'PER', 'INT'] as const;
@@ -265,6 +265,21 @@ export interface TrainingAuthorityProof {
   evidenceId: string;
 }
 
+function assertTrainingAuthority(profile: HighflyHunterProfile, proof: TrainingAuthorityProof): void {
+  if (proof.source !== 'training-performance-gate') {
+    throw new Error('HIGHFLY Training rewards may only be committed by Training Core');
+  }
+  if (proof.scoringVersion !== HIGHFLY_TRAINING_SCORING_VERSION) {
+    throw new Error('HIGHFLY Training scoring version mismatch');
+  }
+  if (!proof.evidenceId.trim()) {
+    throw new Error('HIGHFLY Training evidenceId is required');
+  }
+  if (!profile.awakening.initialized) {
+    throw new Error('HIGHFLY Hunter must complete Awakening before Training can reward TP');
+  }
+}
+
 function clamp01(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(1, value));
@@ -345,6 +360,89 @@ export function assertTrainingPointConservation(wallet: HighflyTrainingPointWall
       `HIGHFLY Training Point conservation violated: earned=${earned}, available=${available}, allocated=${allocated}`,
     );
   }
+}
+
+export function earnTrainingPoints(
+  profile: HighflyHunterProfile,
+  amount: number,
+  proof: TrainingAuthorityProof,
+): HighflyHunterProfile {
+  assertTrainingAuthority(profile, proof);
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw new Error('HIGHFLY Training Point reward must be finite and non-negative');
+  }
+  if (amount === 0) return profile;
+
+  const previous = profile.training.points ?? emptyTrainingPointWallet();
+  const next: HighflyTrainingPointWallet = {
+    ...previous,
+    earned: finiteNonNegative(previous.earned) + amount,
+    available: finiteNonNegative(previous.available) + amount,
+    allocated: { ...previous.allocated },
+  };
+  assertTrainingPointConservation(next);
+  return {
+    ...profile,
+    training: {
+      ...profile.training,
+      points: next,
+    },
+  };
+}
+
+export function allocateTrainingPoints(
+  profile: HighflyHunterProfile,
+  stat: HighflyCoreStat,
+  amount: number,
+): HighflyHunterProfile {
+  if (!profile.awakening.initialized) {
+    throw new Error('HIGHFLY Hunter must complete Awakening before allocating Training Points');
+  }
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error('HIGHFLY Training Point allocation must be finite and greater than zero');
+  }
+
+  const previousWallet = profile.training.points ?? emptyTrainingPointWallet();
+  const available = finiteNonNegative(previousWallet.available);
+  if (amount > available + 1e-8) {
+    throw new Error('HIGHFLY Training Point allocation exceeds available balance');
+  }
+
+  const previousState = profile.training.core[stat];
+  const nextTrainingAllocated = previousState.trainingAllocated + amount;
+  const nextCurrent =
+    previousState.awakeningBase +
+    previousState.naturalLevelGrowth +
+    nextTrainingAllocated;
+
+  const nextAllocated = {
+    ...previousWallet.allocated,
+    [stat]: finiteNonNegative(previousWallet.allocated[stat]) + amount,
+  };
+  const nextWallet: HighflyTrainingPointWallet = {
+    ...previousWallet,
+    available: Math.max(0, available - amount),
+    allocated: nextAllocated,
+  };
+  assertTrainingPointConservation(nextWallet);
+
+  return {
+    ...profile,
+    training: {
+      ...profile.training,
+      points: nextWallet,
+      core: {
+        ...profile.training.core,
+        [stat]: {
+          ...previousState,
+          current: nextCurrent,
+          peak: Math.max(previousState.peak, nextCurrent),
+          trainingAllocated: nextTrainingAllocated,
+          trainingGrowth: nextTrainingAllocated,
+        },
+      },
+    },
+  };
 }
 
 function emptyAwakening(): HighflyAwakeningState {
@@ -656,18 +754,7 @@ export function commitTrainingCoreStat(
     readiness?: number;
   },
 ): HighflyHunterProfile {
-  if (proof.source !== 'training-performance-gate') {
-    throw new Error('HIGHFLY Core Stats may only be committed by Training Core');
-  }
-  if (proof.scoringVersion !== HIGHFLY_TRAINING_SCORING_VERSION) {
-    throw new Error('HIGHFLY Training scoring version mismatch');
-  }
-  if (!proof.evidenceId.trim()) {
-    throw new Error('HIGHFLY Training evidenceId is required');
-  }
-  if (!profile.awakening.initialized) {
-    throw new Error('HIGHFLY Hunter must complete Awakening before Training can modify Core');
-  }
+  assertTrainingAuthority(profile, proof);
   if (!Number.isFinite(nextCurrent) || nextCurrent < 0) {
     throw new Error('HIGHFLY Core Stat must be finite and non-negative');
   }
@@ -720,7 +807,7 @@ export function commitTrainingCoreStat(
 export function updateTrainingTelemetry(
   profile: HighflyHunterProfile,
   stat: HighflyCoreStat,
-  patch: Partial<Pick<HighflyCoreStatState, 'progress' | 'confidence' | 'readiness'>>,
+  patch: Partial<Pick<HighflyCoreStatState, 'progress' | 'confidence' | 'readiness' | 'calibrated'>>,
 ): HighflyHunterProfile {
   const previous = profile.training.core[stat];
   return {
@@ -734,6 +821,7 @@ export function updateTrainingTelemetry(
           progress: Math.max(0, patch.progress ?? previous.progress),
           confidence: clamp01(patch.confidence ?? previous.confidence),
           readiness: clamp01(patch.readiness ?? previous.readiness),
+          calibrated: patch.calibrated ?? previous.calibrated,
         },
       },
     },
