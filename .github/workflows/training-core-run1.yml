@@ -911,14 +911,39 @@ jobs:
               db.close();
               throw new Error('RUN1-F training slot was not persisted');
             }
+            const str = slot.profile.training.core.STR;
+            if (
+              !Number.isFinite(str.awakeningBase) ||
+              !Number.isFinite(str.naturalLevelGrowth) ||
+              !Number.isFinite(str.trainingAllocated) ||
+              !slot.profile.training.points?.allocated
+            ) {
+              db.close();
+              throw new Error('RUN1-F PF-2 Core schema was not persisted');
+            }
+            const delta = 0.4;
+            const trainingAllocated = str.trainingAllocated + delta;
+            const current =
+              str.awakeningBase +
+              str.naturalLevelGrowth +
+              trainingAllocated;
+            const peak = Math.max(str.peak ?? current, current);
             slot.profile.training.core.STR = {
-              current: 42,
-              peak: 47,
+              ...str,
+              current,
+              peak,
+              trainingAllocated,
+              trainingGrowth: trainingAllocated,
               progress: 7,
               confidence: 0.91,
               readiness: 0.72,
               calibrated: true,
             };
+            slot.profile.training.points.allocated.STR = trainingAllocated;
+            slot.profile.training.points.earned =
+              slot.profile.training.points.available +
+              Object.values(slot.profile.training.points.allocated)
+                .reduce((sum, value) => sum + Number(value || 0), 0);
             slot.updatedAt = Date.now() + 60000;
             await new Promise((resolve, reject) => {
               const tx = db.transaction('saves', 'readwrite');
@@ -929,8 +954,8 @@ jobs:
             });
             db.close();
             return {
-              current: 42,
-              peak: 47,
+              current,
+              peak,
               progress: 7,
               confidence: 0.91,
               readiness: 0.72,
