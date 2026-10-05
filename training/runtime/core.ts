@@ -359,12 +359,24 @@ export function initializeAwakeningStats(
     training: {
       ...profile.training,
       core: nextCore,
-      points: {
-        earned: HIGHFLY_CORE_STATS.reduce((sum, stat) => sum + allocated[stat], 0),
-        available: 0,
-        allocated,
-        freeResetUsed: profile.training.points?.freeResetUsed ?? false,
-      },
+      points: (() => {
+        const existing = profile.training.points;
+        const allocated = { ...ZERO_CORE_VECTOR };
+        for (const stat of HIGHFLY_CORE_STATS) {
+          allocated[stat] = nextCore[stat].trainingAllocated;
+        }
+        const available = finiteNonNegative(existing?.available);
+        const points: HighflyTrainingPointWallet = {
+          earned:
+            available +
+            HIGHFLY_CORE_STATS.reduce((sum, stat) => sum + allocated[stat], 0),
+          available,
+          allocated,
+          freeResetUsed: existing?.freeResetUsed ?? false,
+        };
+        assertTrainingPointConservation(points);
+        return points;
+      })(),
     },
   };
 }
@@ -502,7 +514,16 @@ export function migrateAwakeningStats(profile: HighflyHunterProfile): HighflyHun
           base: { ...base },
         }
       : emptyAwakening(),
-    training: { ...profile.training, core: nextCore },
+    training: {
+      ...profile.training,
+      core: nextCore,
+      points: {
+        earned: HIGHFLY_CORE_STATS.reduce((sum, stat) => sum + allocated[stat], 0),
+        available: 0,
+        allocated,
+        freeResetUsed: (profile.training as Partial<typeof profile.training>).points?.freeResetUsed ?? false,
+      },
+    },
   };
 }
 
