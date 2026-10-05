@@ -445,6 +445,63 @@ export function allocateTrainingPoints(
   };
 }
 
+/**
+ * PF-4: the Hunter gets exactly one free full Training allocation reset.
+ * Only wallet-backed Training allocation moves. Awakening, Natural Level Growth,
+ * level/rank/spec, Training evidence/history and historical Core peaks are preserved.
+ *
+ * Later paid resets must come through an authoritative rare-item consumption path;
+ * this function intentionally does not provide a generic bypass for that future gate.
+ */
+export function useFreeTrainingReset(
+  profile: HighflyHunterProfile,
+): HighflyHunterProfile {
+  if (!profile.awakening.initialized) {
+    throw new Error('HIGHFLY Hunter must complete Awakening before resetting Training allocation');
+  }
+
+  const previousWallet = profile.training.points ?? emptyTrainingPointWallet();
+  assertTrainingPointConservation(previousWallet);
+  if (previousWallet.freeResetUsed) {
+    throw new Error('HIGHFLY free Training reset has already been used');
+  }
+
+  const allocatedTotal = walletAllocatedTotal(previousWallet);
+  if (allocatedTotal <= 1e-8) {
+    throw new Error('HIGHFLY free Training reset requires at least one allocated Training Point');
+  }
+
+  const nextCore = {} as HighflyCoreStatsState;
+  for (const stat of HIGHFLY_CORE_STATS) {
+    const previous = profile.training.core[stat];
+    const current = previous.awakeningBase + previous.naturalLevelGrowth;
+    nextCore[stat] = {
+      ...previous,
+      current,
+      peak: Math.max(previous.peak, current),
+      trainingAllocated: 0,
+      trainingGrowth: 0,
+    };
+  }
+
+  const nextWallet: HighflyTrainingPointWallet = {
+    ...previousWallet,
+    available: finiteNonNegative(previousWallet.earned),
+    allocated: { ...ZERO_CORE_VECTOR },
+    freeResetUsed: true,
+  };
+  assertTrainingPointConservation(nextWallet);
+
+  return {
+    ...profile,
+    training: {
+      ...profile.training,
+      core: nextCore,
+      points: nextWallet,
+    },
+  };
+}
+
 function emptyAwakening(): HighflyAwakeningState {
   return {
     version: HIGHFLY_AWAKENING_STATS_VERSION,
