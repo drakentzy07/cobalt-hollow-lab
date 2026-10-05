@@ -483,7 +483,9 @@ export function migrateAwakeningStats(profile: HighflyHunterProfile): HighflyHun
     const trainingAllocated = finiteNonNegative(
       previous.trainingAllocated ??
         previous.trainingGrowth ??
-        Math.max(0, legacyCurrent - base[stat] - naturalLevelGrowth),
+        (legacy.schemaVersion < 2
+          ? legacyCurrent
+          : Math.max(0, legacyCurrent - base[stat] - naturalLevelGrowth)),
     );
     allocated[stat] = trainingAllocated;
     const current = base[stat] + naturalLevelGrowth + trainingAllocated;
