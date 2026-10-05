@@ -1,5 +1,5 @@
 export const HIGHFLY_TRAINING_SCHEMA_VERSION = 3 as const;
-export const HIGHFLY_PROGRESSION_SCHEMA_VERSION = 1 as const;
+export const HIGHFLY_PROGRESSION_SCHEMA_VERSION = 2 as const;
 export const HIGHFLY_TRAINING_SCORING_VERSION = 'run2-awakening-v1' as const;
 
 export const HIGHFLY_CORE_STATS = ['STR', 'AGI', 'VIT', 'PER', 'INT'] as const;
@@ -20,6 +20,29 @@ export const HIGHFLY_AWAKENING_CLASSES = [
   'druid',
 ] as const;
 export type HighflyAwakeningClassId = (typeof HIGHFLY_AWAKENING_CLASSES)[number];
+
+export const HIGHFLY_NORMAL_MAX_LEVEL = 99 as const;
+/** LV2..99 grants one normalized natural Core point per level: 98 total. */
+export const HIGHFLY_NATURAL_GROWTH_BUDGET = 98 as const;
+
+/**
+ * ClaudeCraft v0.44.0 donor statsPerLevel remapped to HIGHFLY:
+ * STA -> VIT, SPI -> PER, INT -> INT.
+ * Raw totals differ by class in Claude; HIGHFLY uses only these ratios.
+ */
+export const HIGHFLY_NATURAL_GROWTH_WEIGHTS: Readonly<
+  Record<HighflyAwakeningClassId, Readonly<HighflyCoreVector>>
+> = {
+  warrior: { STR: 2, AGI: 1, VIT: 2, PER: 0, INT: 0 },
+  mage:    { STR: 0, AGI: 0, VIT: 2, PER: 2, INT: 3 },
+  rogue:   { STR: 1, AGI: 3, VIT: 2, PER: 0, INT: 0 },
+  paladin: { STR: 2, AGI: 1, VIT: 2, PER: 1, INT: 1 },
+  hunter:  { STR: 1, AGI: 3, VIT: 2, PER: 1, INT: 1 },
+  priest:  { STR: 0, AGI: 0, VIT: 2, PER: 3, INT: 2 },
+  shaman:  { STR: 1, AGI: 1, VIT: 2, PER: 2, INT: 2 },
+  warlock: { STR: 0, AGI: 0, VIT: 2, PER: 2, INT: 3 },
+  druid:   { STR: 1, AGI: 1, VIT: 2, PER: 2, INT: 2 },
+} as const;
 
 /**
  * Awakening v1 reuses ClaudeCraft's class identity, normalized to an equal
@@ -256,6 +279,30 @@ export function isAwakeningClassId(value: unknown): value is HighflyAwakeningCla
     (HIGHFLY_AWAKENING_CLASSES as readonly string[]).includes(value);
 }
 
+export function clampHighflyNormalLevel(value: unknown): number {
+  const numeric = typeof value === 'number' && Number.isFinite(value) ? value : 1;
+  return Math.max(1, Math.min(HIGHFLY_NORMAL_MAX_LEVEL, Math.trunc(numeric)));
+}
+
+export function naturalLevelGrowthFor(
+  classId: HighflyAwakeningClassId,
+  level: number,
+): HighflyCoreVector {
+  const normalizedLevel = clampHighflyNormalLevel(level);
+  const totalGrowth =
+    HIGHFLY_NATURAL_GROWTH_BUDGET *
+    ((normalizedLevel - 1) / (HIGHFLY_NORMAL_MAX_LEVEL - 1));
+  const weights = HIGHFLY_NATURAL_GROWTH_WEIGHTS[classId];
+  const weightTotal = HIGHFLY_CORE_STATS.reduce((sum, stat) => sum + weights[stat], 0);
+  if (weightTotal <= 0) return { ...ZERO_CORE_VECTOR };
+  return Object.fromEntries(
+    HIGHFLY_CORE_STATS.map((stat) => [
+      stat,
+      totalGrowth * (weights[stat] / weightTotal),
+    ]),
+  ) as HighflyCoreVector;
+}
+
 function blankCoreStat(
   awakeningBase = 0,
   naturalLevelGrowth = 0,
@@ -318,12 +365,11 @@ export function initializeAwakeningStats(
 ): HighflyHunterProfile {
   if (profile.awakening?.initialized) return profile;
   const base = HIGHFLY_AWAKENING_BASES[classId];
+  const naturalGrowth = naturalLevelGrowthFor(classId, profile.hunter.level);
   const nextCore = {} as HighflyCoreStatsState;
   for (const stat of HIGHFLY_CORE_STATS) {
     const previous = profile.training.core[stat];
-    const naturalLevelGrowth = finiteNonNegative(
-      (previous as Partial<HighflyCoreStatState> | undefined)?.naturalLevelGrowth,
-    );
+    const naturalLevelGrowth = naturalGrowth[stat];
     const trainingAllocated = finiteNonNegative(
       (previous as Partial<HighflyCoreStatState> | undefined)?.trainingAllocated ??
         previous?.trainingGrowth ??
@@ -388,7 +434,7 @@ export function createHighflyHunterProfile(args: {
   classId?: string | null;
 }): HighflyHunterProfile {
   const createdAt = args.createdAt ?? new Date().toISOString();
-  const level = Math.max(1, Math.trunc(args.level ?? 1));
+  const level = clampHighflyNormalLevel(args.level ?? 1);
   let profile: HighflyHunterProfile = {
     schemaVersion: HIGHFLY_TRAINING_SCHEMA_VERSION,
     scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
@@ -533,15 +579,47 @@ export function coreSnapshot(profile: HighflyHunterProfile): string {
   return JSON.stringify(profile.training.core);
 }
 
+export function applyNaturalLevelGrowth(
+  profile: HighflyHunterProfile,
+  level = profile.hunter.level,
+): HighflyHunterProfile {
+  if (!profile.awakening.initialized || !profile.awakening.classId) return profile;
+  const normalizedLevel = clampHighflyNormalLevel(level);
+  const growth = naturalLevelGrowthFor(profile.awakening.classId, normalizedLevel);
+  const nextCore = {} as HighflyCoreStatsState;
+
+  for (const stat of HIGHFLY_CORE_STATS) {
+    const previous = profile.training.core[stat];
+    const naturalLevelGrowth = growth[stat];
+    const current =
+      previous.awakeningBase +
+      naturalLevelGrowth +
+      previous.trainingAllocated;
+    nextCore[stat] = {
+      ...previous,
+      current,
+      peak: Math.max(previous.peak, current),
+      naturalLevelGrowth,
+      trainingGrowth: previous.trainingAllocated,
+    };
+  }
+
+  return {
+    ...profile,
+    hunter: { ...profile.hunter, level: normalizedLevel },
+    training: { ...profile.training, core: nextCore },
+  };
+}
+
 /**
- * Level/rank/subclass never mutate Core. Selecting a class may initialize the
- * Awakening exactly once; later class changes (LAB/debug) never re-roll it.
+ * PF-2: real level owns only Natural Level Growth. Rank/spec/debug class changes
+ * never re-roll Awakening and never move Training allocation. Natural affinity
+ * always follows the immutable Awakening class.
  */
 export function applyHunterProgression(
   profile: HighflyHunterProfile,
   patch: Partial<HighflyHunterProgressionState>,
 ): HighflyHunterProfile {
-  const before = coreSnapshot(profile);
   let next: HighflyHunterProfile = {
     ...profile,
     hunter: {
@@ -549,15 +627,15 @@ export function applyHunterProgression(
       ...patch,
       level: patch.level === undefined
         ? profile.hunter.level
-        : Math.max(1, Math.trunc(patch.level)),
+        : clampHighflyNormalLevel(patch.level),
     },
   };
   const requestedClass = next.hunter.classId;
   if (!profile.awakening.initialized && isAwakeningClassId(requestedClass)) {
     return initializeAwakeningStats(next, requestedClass);
   }
-  if (coreSnapshot(next) !== before) {
-    throw new Error('HIGHFLY invariant violated: Hunter progression mutated Core');
+  if (profile.awakening.initialized) {
+    next = applyNaturalLevelGrowth(next, next.hunter.level);
   }
   return next;
 }
