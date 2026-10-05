@@ -14,7 +14,7 @@ replace_once(
     save,
     "import type { PlayerClass } from '../sim/types';\n",
     "import type { PlayerClass } from '../sim/types';\n"
-    "import type { HighflyHunterProfile } from '../highfly/training/core';\n",
+    "import { HIGHFLY_TRAINING_SCHEMA_VERSION, type HighflyHunterProfile } from '../highfly/training/core';\n",
     "training profile type import",
 )
 
@@ -84,7 +84,9 @@ function validTrainingProfile(value: unknown): value is HighflyHunterProfile {
     hunter?: unknown;
   };
   return (
-    (v.schemaVersion === 1 || v.schemaVersion === 2) &&
+    (v.schemaVersion === 1 ||
+      v.schemaVersion === 2 ||
+      v.schemaVersion === HIGHFLY_TRAINING_SCHEMA_VERSION) &&
     typeof v.scoringVersion === 'string' &&
     typeof v.profileId === 'string' &&
     !!v.training &&
