@@ -33,8 +33,15 @@ describe('HIGHFLY Training persistence RUN138', () => {
     );
     const switched = getActiveHighflyHunterProfile()!;
     expect(switched.awakening.classId).toBe('warrior');
-    expect(switched.training.core.STR.current).toBeCloseTo(base + 0.37, 10);
     expect(switched.training.core.STR.trainingGrowth).toBeCloseTo(0.37, 10);
+    expect(switched.training.core.STR.trainingAllocated).toBeCloseTo(0.37, 10);
+    expect(switched.training.core.STR.naturalLevelGrowth).toBeCloseTo(5.2, 10);
+    expect(switched.training.core.STR.current).toBeCloseTo(
+      switched.training.core.STR.awakeningBase +
+        switched.training.core.STR.naturalLevelGrowth +
+        0.37,
+      10,
+    );
   });
 
   it('save/load is exact and does not duplicate Awakening', () => {
