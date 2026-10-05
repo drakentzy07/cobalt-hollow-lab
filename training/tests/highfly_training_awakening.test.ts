@@ -37,10 +37,10 @@ describe('HIGHFLY Awakening Stats RUN138', () => {
     expect(HIGHFLY_AWAKENING_BASES.priest.PER).toBeGreaterThan(HIGHFLY_AWAKENING_BASES.priest.STR);
   });
 
-  it('initializes Awakening exactly once and level/class/subclass cannot re-roll Core', () => {
+  it('initializes Awakening once; later level grows its original class affinity without re-roll', () => {
     const blank = createHighflyHunterProfile({ profileId: 'late-awaken' });
     const awakened = applyHunterProgression(blank, { classId: 'hunter' });
-    const before = coreSnapshot(awakened);
+    const beforeBase = JSON.stringify(awakened.awakening.base);
     const later = applyHunterProgression(awakened, {
       classId: 'mage',
       level: 50,
@@ -48,7 +48,14 @@ describe('HIGHFLY Awakening Stats RUN138', () => {
       xp: 999999,
     });
     expect(later.awakening.classId).toBe('hunter');
-    expect(coreSnapshot(later)).toBe(before);
+    expect(JSON.stringify(later.awakening.base)).toBe(beforeBase);
+    const naturalTotal = HIGHFLY_CORE_STATS.reduce(
+      (sum, stat) => sum + later.training.core[stat].naturalLevelGrowth,
+      0,
+    );
+    expect(naturalTotal).toBeCloseTo(49, 10);
+    expect(later.training.core.AGI.naturalLevelGrowth)
+      .toBeGreaterThan(later.training.core.INT.naturalLevelGrowth);
   });
 
   it('preserves decimal Training Growth without integer rounding', () => {
