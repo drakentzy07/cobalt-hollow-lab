@@ -1,7 +1,7 @@
 import {
   HIGHFLY_CORE_STATS,
   HIGHFLY_TRAINING_SCORING_VERSION,
-  commitTrainingCoreStat,
+  earnTrainingPoints,
   updateTrainingTelemetry,
   type HighflyCoreStat,
   type HighflyHunterProfile,
@@ -38,7 +38,9 @@ export interface TrainingStatPipelineOutcome {
   stimulus: number;
   performanceIndex: number | null;
   outcome: HighflyTrainingHistoryEntry['outcome'];
-  /** Decimal Core growth earned by this session/gate. */
+  /** Decimal TP reward earned by this session/gate. */
+  trainingPointsEarned: number;
+  /** Deprecated alias retained for old telemetry consumers. */
   statDelta: number;
   reason: string;
 }
@@ -217,6 +219,7 @@ export function runTrainingSessionPipeline(
           stimulus,
           performanceIndex: null,
           outcome: 'awaiting_performance',
+          trainingPointsEarned: 0,
           statDelta: 0,
           reason: 'Stimulus recorded, but initial calibration needs a valid comparable performance sample.',
         };
@@ -234,22 +237,21 @@ export function runTrainingSessionPipeline(
 
       const initialDelta = initialTrainingGrowthDelta(state.current, stimulus);
       if (initialDelta <= 0) continue;
-      profile = commitTrainingCoreStat(
+      profile = updateTrainingTelemetry(profile, stat, {
+        // The first valid session establishes the comparable performance
+        // anchor and earns TP, but no Core changes until the player allocates it.
+        progress: 0,
+        confidence,
+        readiness,
+        calibrated: true,
+      });
+      profile = earnTrainingPoints(
         profile,
-        stat,
-        state.current + initialDelta,
+        initialDelta,
         {
           source: 'training-performance-gate',
           scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
           evidenceId,
-        },
-        {
-          // The first valid session establishes the comparable performance
-          // anchor and earns one real decimal Training increment. It is not
-          // double-counted as pending adaptation toward the next gate.
-          progress: 0,
-          confidence,
-          readiness,
         },
       );
       profile = setPerformanceAnchor(profile, stat, {
@@ -263,9 +265,10 @@ export function runTrainingSessionPipeline(
         stimulus,
         performanceIndex: sample,
         outcome: 'calibrated',
+        trainingPointsEarned: initialDelta,
         statDelta: initialDelta,
         reason:
-          'Primera sesión válida: conserva el Despertar y agrega crecimiento decimal ganado por entrenamiento real.',
+          'Primera sesión válida: conserva el Core y acredita Training Points para asignación manual.',
       };
       profile = appendHistory(profile, {
         sessionId: input.session.sessionId,
@@ -345,6 +348,7 @@ export function runTrainingSessionPipeline(
       stimulus,
       performanceIndex: validPositive(sample) ? sample : null,
       outcome: outcomeFromAdaptation(adaptation.status),
+      trainingPointsEarned: adaptation.statDelta,
       statDelta: adaptation.statDelta,
       reason: adaptation.reason,
     };
