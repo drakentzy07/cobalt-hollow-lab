@@ -70,7 +70,8 @@ describe('HIGHFLY Training Adaptation RUN138', () => {
     expect(result.status).toBe('stat_up');
     expect(result.statDelta).toBeGreaterThan(0);
     expect(result.statDelta).toBeLessThan(1);
-    expect(result.profile.training.core.STR.current).toBeCloseTo(20 + result.statDelta, 10);
+    expect(result.profile.training.core.STR.current).toBeCloseTo(20, 10);
+    expect(result.profile.training.points.available).toBeCloseTo(result.statDelta, 10);
   });
 
   it('advanced Current needs a smaller comparable percentage improvement', () => {
