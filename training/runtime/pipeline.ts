@@ -301,6 +301,7 @@ export function runTrainingSessionPipeline(
         stimulus,
         performanceIndex: sample,
         outcome: 'progress_only',
+        trainingPointsEarned: 0,
         statDelta: 0,
         reason: 'Comparable baseline seeded for an already-calibrated legacy profile.',
       };
