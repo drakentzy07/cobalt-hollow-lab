@@ -96,7 +96,7 @@ function coreCards(): string {
     return '<div class="hf-training-empty">Entrá con tu Hunter para ver el Training Core.</div>';
   }
   const available = profile.training.points.available;
-  const step = Math.min(0.1, available);
+  const step = available > 1e-8 ? Math.min(0.1, available) : 0;
   return (['STR', 'AGI', 'VIT', 'PER', 'INT'] as const)
     .map((stat) => {
       const state = profile.training.core[stat];
@@ -519,7 +519,7 @@ function resultHtml(): string {
           (o) => `
             <div class="hf-training-outcome">
               <b>${o.stat}</b>
-              <span>${o.outcome.replaceAll('_', ' ')}</span>
+              <span>${o.outcome === 'stat_up' ? 'TP GANADOS' : o.outcome.replaceAll('_', ' ')}</span>
               <small>${escapeHtml(localizedOutcomeReason(o.reason))}</small>
             </div>
           `,
