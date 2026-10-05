@@ -956,6 +956,7 @@ jobs:
             return {
               current,
               peak,
+              trainingAllocated,
               progress: 7,
               confidence: 0.91,
               readiness: 0.72,
@@ -987,6 +988,11 @@ jobs:
                   progress: str.progress,
                   confidence: str.confidence,
                   readiness: str.readiness,
+                  trainingAllocated: str.trainingAllocated,
+                  walletAllocated:
+                    primary.trainingProfile?.training?.points?.allocated?.STR ?? null,
+                  awakeningClassId:
+                    primary.trainingProfile?.awakening?.classId ?? null,
                   classId: primary.trainingProfile?.hunter?.classId ?? null,
                 }
               : null;
@@ -1001,7 +1007,10 @@ jobs:
             restoredTraining.peak !== injectedTraining.peak ||
             restoredTraining.progress !== injectedTraining.progress ||
             Math.abs(restoredTraining.confidence - injectedTraining.confidence) > 0.0001 ||
-            Math.abs(restoredTraining.readiness - injectedTraining.readiness) > 0.0001
+            Math.abs(restoredTraining.readiness - injectedTraining.readiness) > 0.0001 ||
+            Math.abs(restoredTraining.trainingAllocated - injectedTraining.trainingAllocated) > 0.0001 ||
+            Math.abs(restoredTraining.walletAllocated - injectedTraining.trainingAllocated) > 0.0001 ||
+            restoredTraining.awakeningClassId !== 'warrior'
           ) {
             console.error('RUN1F_TRAINING_RELOAD_FAIL', { injectedTraining, restoredTraining });
             process.exitCode = 6;
@@ -1032,19 +1041,45 @@ jobs:
               request.onerror = () => reject(request.error);
             });
             db.close();
+            const profile = primary?.trainingProfile ?? null;
+            const str = profile?.training?.core?.STR ?? null;
             return {
-              current: primary?.trainingProfile?.training?.core?.STR?.current ?? null,
-              peak: primary?.trainingProfile?.training?.core?.STR?.peak ?? null,
-              classId: primary?.trainingProfile?.hunter?.classId ?? null,
+              current: str?.current ?? null,
+              peak: str?.peak ?? null,
+              awakeningBase: str?.awakeningBase ?? null,
+              naturalLevelGrowth: str?.naturalLevelGrowth ?? null,
+              trainingAllocated: str?.trainingAllocated ?? null,
+              walletAllocated: profile?.training?.points?.allocated?.STR ?? null,
+              awakeningClassId: profile?.awakening?.classId ?? null,
+              classId: profile?.hunter?.classId ?? null,
             };
           });
           console.log('RUN1F_TRAINING_CLASS_SWITCH', mageTraining);
+          const mageCoreConsistent =
+            mageTraining.current !== null &&
+            mageTraining.awakeningBase !== null &&
+            mageTraining.naturalLevelGrowth !== null &&
+            mageTraining.trainingAllocated !== null &&
+            Math.abs(
+              mageTraining.current -
+                (
+                  mageTraining.awakeningBase +
+                  mageTraining.naturalLevelGrowth +
+                  mageTraining.trainingAllocated
+                )
+            ) <= 0.0001;
           if (
-            mageTraining.current !== 42 ||
-            mageTraining.peak !== 47 ||
+            !mageCoreConsistent ||
+            Math.abs(mageTraining.trainingAllocated - injectedTraining.trainingAllocated) > 0.0001 ||
+            Math.abs(mageTraining.walletAllocated - injectedTraining.trainingAllocated) > 0.0001 ||
+            mageTraining.peak < injectedTraining.peak ||
+            mageTraining.awakeningClassId !== 'warrior' ||
             mageTraining.classId !== 'mage'
           ) {
-            console.error('RUN1F_TRAINING_CLASS_SWITCH_FAIL', mageTraining);
+            console.error('RUN1F_TRAINING_CLASS_SWITCH_FAIL', {
+              injectedTraining,
+              mageTraining,
+            });
             process.exitCode = 7;
           }
 
