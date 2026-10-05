@@ -242,7 +242,8 @@ jobs:
           test -s overlays/highfly_run137_training_intelligence.py
           test -s training/runtime/personal_routine.ts
           test -s training/tests/highfly_training_run1i.test.ts
-          test -s training/tests/highfly_training_j3b.test.ts\n          test -s training/tests/highfly_training_pf4_respec.test.ts
+          test -s training/tests/highfly_training_j3b.test.ts
+          test -s training/tests/highfly_training_pf4_respec.test.ts
           test -s overlays/highfly_training_run1i_ui.py
           test -s overlays/highfly_training_persistence_v1.py
           test -s overlays/highfly_training_ui_v1.py
@@ -396,6 +397,7 @@ jobs:
           grep -F "$('#mm-training')?.addEventListener('click'" upstream/src/ui/hud.ts
           grep -F "Remo con Mancuernas" upstream/src/highfly/training/personal_routine.ts
           grep -F "HIGHFLY_TRAINING_SCORING_VERSION = 'run2-awakening-v1'" upstream/src/highfly/training/core.ts
+          grep -F "export function useFreeTrainingReset" upstream/src/highfly/training/core.ts
           grep -F "Primera sesión válida: conserva el Core y acredita Training Points para asignación manual." upstream/src/highfly/training/pipeline.ts
           grep -F "CORE + TRAINING" upstream/src/highfly/training/ui.ts
           grep -F "DESCANSO OBLIGATORIO" upstream/src/highfly/training/ui.ts
