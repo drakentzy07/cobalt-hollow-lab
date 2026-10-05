@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   HIGHFLY_CORE_STATS,
+  HIGHFLY_NATURAL_GROWTH_BUDGET,
   HIGHFLY_TRAINING_SCORING_VERSION,
   applyHunterProgression,
   commitTrainingCoreStat,
@@ -13,7 +14,7 @@ import {
 } from '../src/highfly/training/reference_routine';
 
 describe('HIGHFLY Training Core RUN138', () => {
-  it('starts with class Awakening Stats, not zero, while Training Growth is zero', () => {
+  it('starts with Awakening + level-derived natural Core while Training Growth is zero', () => {
     const profile = createHighflyHunterProfile({
       profileId: 'test-hunter',
       createdAt: '2026-09-29T00:00:00.000Z',
@@ -21,12 +22,20 @@ describe('HIGHFLY Training Core RUN138', () => {
       classId: 'warrior',
     });
     expect(profile.hunter.level).toBe(25);
+    const naturalTotal = HIGHFLY_CORE_STATS.reduce(
+      (sum, stat) => sum + profile.training.core[stat].naturalLevelGrowth,
+      0,
+    );
+    expect(naturalTotal).toBeCloseTo(24, 10);
     for (const stat of HIGHFLY_CORE_STATS) {
-      expect(profile.training.core[stat].current).toBeGreaterThan(0);
-      expect(profile.training.core[stat].naturalLevelGrowth).toBe(0);
-      expect(profile.training.core[stat].trainingAllocated).toBe(0);
-      expect(profile.training.core[stat].trainingGrowth).toBe(0);
-      expect(profile.training.core[stat].calibrated).toBe(false);
+      const state = profile.training.core[stat];
+      expect(state.current).toBeCloseTo(
+        state.awakeningBase + state.naturalLevelGrowth,
+        10,
+      );
+      expect(state.trainingAllocated).toBe(0);
+      expect(state.trainingGrowth).toBe(0);
+      expect(state.calibrated).toBe(false);
     }
     expect(profile.training.points.earned).toBe(0);
     expect(profile.training.points.available).toBe(0);
@@ -34,14 +43,22 @@ describe('HIGHFLY Training Core RUN138', () => {
     expect(profile.training.points.freeResetUsed).toBe(false);
   });
 
-  it('level, rank and later class/debug progression cannot mutate awakened Core', () => {
+  it('level changes only natural Core; debug class/rank/spec never re-roll Awakening or Training', () => {
     const profile = createHighflyHunterProfile({ profileId: 'ownership', classId: 'rogue' });
-    const before = coreSnapshot(profile);
     const leveled = applyHunterProgression(profile, {
       level: 26, xp: 9999, classId: 'mage', subclassId: 'shadow_dancer', rank: 'D',
     });
-    expect(coreSnapshot(leveled)).toBe(before);
     expect(leveled.awakening.classId).toBe('rogue');
+    const naturalTotal = HIGHFLY_CORE_STATS.reduce(
+      (sum, stat) => sum + leveled.training.core[stat].naturalLevelGrowth,
+      0,
+    );
+    expect(naturalTotal).toBeCloseTo(25, 10);
+    expect(leveled.training.core.AGI.naturalLevelGrowth)
+      .toBeGreaterThan(leveled.training.core.STR.naturalLevelGrowth);
+    expect(leveled.training.points.earned).toBe(0);
+    expect(leveled.training.points.available).toBe(0);
+    expect(HIGHFLY_NATURAL_GROWTH_BUDGET).toBe(98);
   });
 
   it('only Training authority may add decimal growth', () => {
