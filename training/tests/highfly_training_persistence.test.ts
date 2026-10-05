@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  HIGHFLY_TRAINING_SCHEMA_VERSION,
   HIGHFLY_TRAINING_SCORING_VERSION,
   applyHunterProgression,
   commitTrainingCoreStat,
@@ -45,7 +46,7 @@ describe('HIGHFLY Training persistence RUN138', () => {
     setActiveHighflyHunterProfile(JSON.parse(serialized));
     const restored = getActiveHighflyHunterProfile()!;
     expect(restored).toEqual(first);
-    expect(restored.schemaVersion).toBe(2);
+    expect(restored.schemaVersion).toBe(HIGHFLY_TRAINING_SCHEMA_VERSION);
     const total = Object.values(restored.awakening.base).reduce((a, b) => a + b, 0);
     expect(total).toBeCloseTo(50, 8);
   });
