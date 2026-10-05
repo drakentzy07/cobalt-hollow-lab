@@ -23,9 +23,15 @@ describe('HIGHFLY Training Core RUN138', () => {
     expect(profile.hunter.level).toBe(25);
     for (const stat of HIGHFLY_CORE_STATS) {
       expect(profile.training.core[stat].current).toBeGreaterThan(0);
+      expect(profile.training.core[stat].naturalLevelGrowth).toBe(0);
+      expect(profile.training.core[stat].trainingAllocated).toBe(0);
       expect(profile.training.core[stat].trainingGrowth).toBe(0);
       expect(profile.training.core[stat].calibrated).toBe(false);
     }
+    expect(profile.training.points.earned).toBe(0);
+    expect(profile.training.points.available).toBe(0);
+    expect(Object.values(profile.training.points.allocated).reduce((a, b) => a + b, 0)).toBe(0);
+    expect(profile.training.points.freeResetUsed).toBe(false);
   });
 
   it('level, rank and later class/debug progression cannot mutate awakened Core', () => {
@@ -59,7 +65,11 @@ describe('HIGHFLY Training Core RUN138', () => {
       { progress: 4, confidence: 0.82, readiness: 0.74 },
     );
     expect(trained.training.core.STR.current).toBeCloseTo(before + 0.4, 10);
+    expect(trained.training.core.STR.trainingAllocated).toBeCloseTo(0.4, 10);
     expect(trained.training.core.STR.trainingGrowth).toBeCloseTo(0.4, 10);
+    expect(trained.training.points.earned).toBeCloseTo(0.4, 10);
+    expect(trained.training.points.available).toBe(0);
+    expect(trained.training.points.allocated.STR).toBeCloseTo(0.4, 10);
   });
 
   it('keeps the official five-day reference and 3+1 base mesocycle', () => {
