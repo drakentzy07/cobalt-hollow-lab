@@ -30,12 +30,14 @@ replace_once(
     """  attackPower: number;
   rangedPower: number;
   maxHp: number;
+  hp: number;
 """,
     """  attackPower: number;
   rangedPower: number;
   spellPower: number;
   healPower: number;
   maxHp: number;
+  hp: number;
 """,
     "PF-5 entity spell/heal fields",
 )
