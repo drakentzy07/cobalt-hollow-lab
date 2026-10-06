@@ -5,6 +5,7 @@ on:
     branches:
       - highfly-training-run1j
       - highfly-progression-foundation-1-99
+      - highfly-game-c1-character-combat-hud
   workflow_dispatch:
 
 permissions:
@@ -130,6 +131,8 @@ jobs:
           python ../overlays/highfly_run129_real_training.py
           python ../overlays/highfly_run137_training_intelligence.py
           python ../overlays/highfly_progression_pf5_stat_authority.py
+          python ../overlays/highfly_game_c1.py
+          cp ../game/c1/highfly_game_c1.test.ts tests/highfly_game_c1.test.ts
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -249,6 +252,12 @@ jobs:
           test -s training/tests/highfly_training_progression_schema.test.ts
           test -s training/runtime/stat_authority.ts
           test -s overlays/highfly_progression_pf5_stat_authority.py
+          test -s overlays/highfly_game_c1.py
+          test -s game/c1/runtime.ts
+          test -s game/c1/elemental_basic.ts
+          test -s game/c1/elemental_weapon_vfx.ts
+          test -s game/c1/hud.css
+          test -s game/c1/highfly_game_c1.test.ts
           test -s overlays/highfly_training_run1i_ui.py
           test -s overlays/highfly_training_persistence_v1.py
           test -s overlays/highfly_training_ui_v1.py
@@ -421,6 +430,15 @@ jobs:
           ! grep -F "hf-rest-skip" upstream/src/highfly/training/ui.ts
           ! grep -F "CONTINUAR ANTES DE TIEMPO" upstream/src/highfly/training/ui.ts
           grep -F "HIGHFLY RUN129 — premium mandatory recovery" upstream/src/styles/shell.css
+          grep -F "HIGHFLY_GAME_C1_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C1_APPLIED=1')")
+          grep -F "hf-game-c1" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "highfly_basic_4_" upstream/src/sim/combat/auto_attack.ts
+          grep -F "contextualUse(): boolean" upstream/src/ui/hud/action_bar/mobile_action_ring_controller.ts
+          grep -F "resolveNearbyInteractionCandidate" upstream/src/main.ts
+          grep -F "hud.onMobileContextualUse = highflyContextualUse" upstream/src/main.ts
+          grep -F "mobile-consumable-seat" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "hf-c1-ult" upstream/src/styles/hf_game_c1.css
+          ! grep -R -i -E "qmale|qfemale|hf_aff_" upstream/src/highfly/game_c1_runtime.ts upstream/src/sim/combat/highfly_elemental_basic.ts upstream/src/highfly/game_c1_elemental_weapon_vfx.ts upstream/src/styles/hf_game_c1.css
 
       - name: TypeScript source smoke
         working-directory: upstream
@@ -430,7 +448,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -2267,6 +2285,101 @@ jobs:
           for (const selector of ['#mobile-action-attack', '#mobile-move-joystick', '#mobile-menu-anchor']) {
             const el = page.locator(selector);
             await el.waitFor({ state: 'visible', timeout: 15000 });
+          }
+
+          // GAME-C1: definitive S23 landscape HUD contract.
+          const c1Hud = await page.evaluate(() => {
+            const rect = (selector) => {
+              const el = document.querySelector(selector);
+              if (!(el instanceof HTMLElement)) return null;
+              const style = getComputedStyle(el);
+              const r = el.getBoundingClientRect();
+              return {
+                x: r.x, y: r.y, width: r.width, height: r.height,
+                right: r.right, bottom: r.bottom,
+                display: style.display,
+                visibility: style.visibility,
+              };
+            };
+            const skills = Array.from({ length: 10 }, (_, i) =>
+              rect(`#actionbar .action-btn[data-hotbar-slot="${i + 1}"]`),
+            );
+            return {
+              active: document.body.classList.contains('hf-game-c1'),
+              skills,
+              attack: rect('#mobile-action-attack'),
+              target: rect('#mobile-target-cycle'),
+              evade: rect('#mobile-evade'),
+              jump: rect('#mobile-jump'),
+              esp1: rect('#hf-c1-esp1'),
+              esp2: rect('#hf-c1-esp2'),
+              ult: rect('#hf-c1-ult'),
+              gem: rect('#hf-c1-gem-seat'),
+              consumable: rect('#mobile-consumable-seat'),
+              stance: rect('#mobile-stance-anchor'),
+              interact: rect('#mobile-interact'),
+              attackMode:
+                document.querySelector('#mobile-action-attack')?.getAttribute('data-highfly-context') ?? null,
+              viewport: [innerWidth, innerHeight],
+            };
+          });
+          console.log('HIGHFLY_GAME_C1_S23_HUD', JSON.stringify(c1Hud, null, 2));
+          if (!c1Hud.active) throw new Error('C1: hf-game-c1 body class missing');
+          if (c1Hud.skills.some((r) => !r || r.display === 'none' || r.visibility === 'hidden')) {
+            throw new Error('C1: S1-S10 native skill seat missing/hidden: ' + JSON.stringify(c1Hud.skills));
+          }
+          for (let i = 0; i < c1Hud.skills.length; i++) {
+            const a = c1Hud.skills[i];
+            if (!a) continue;
+            if (
+              a.x < -2 || a.y < -2 ||
+              a.right > c1Hud.viewport[0] + 2 ||
+              a.bottom > c1Hud.viewport[1] + 2
+            ) {
+              throw new Error('C1: skill outside viewport S' + (i + 1) + ': ' + JSON.stringify(a));
+            }
+            for (let j = i + 1; j < c1Hud.skills.length; j++) {
+              const b = c1Hud.skills[j];
+              if (!b) continue;
+              const overlap =
+                a.x < b.right - 1 &&
+                a.right > b.x + 1 &&
+                a.y < b.bottom - 1 &&
+                a.bottom > b.y + 1;
+              if (overlap) {
+                throw new Error(
+                  'C1: skill collision S' + (i + 1) + '/S' + (j + 1) +
+                  ': ' + JSON.stringify({ a, b }),
+                );
+              }
+            }
+          }
+          for (const [name, control] of Object.entries({
+            attack: c1Hud.attack,
+            target: c1Hud.target,
+            evade: c1Hud.evade,
+            jump: c1Hud.jump,
+            esp1: c1Hud.esp1,
+            esp2: c1Hud.esp2,
+            ult: c1Hud.ult,
+            gem: c1Hud.gem,
+          })) {
+            if (!control || control.display === 'none' || control.visibility === 'hidden') {
+              throw new Error('C1: required control missing/hidden: ' + name);
+            }
+            if (
+              control.x < -2 || control.y < -2 ||
+              control.right > c1Hud.viewport[0] + 2 ||
+              control.bottom > c1Hud.viewport[1] + 2
+            ) {
+              throw new Error('C1: control outside viewport: ' + name + '=' + JSON.stringify(control));
+            }
+          }
+          if (c1Hud.interact?.display !== 'none') {
+            throw new Error('C1: separate Use button survived: ' + JSON.stringify(c1Hud.interact));
+          }
+          if (!['ATK', 'USAR'].includes(c1Hud.attackMode ?? '')) {
+            throw new Error('C1: contextual ATK/USAR state missing: ' + c1Hud.attackMode);
           }
 
           // Training is intentionally inside the large HIGHFLY More menu, so it
