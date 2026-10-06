@@ -60,12 +60,16 @@ body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="8"]  { right: 204px !
 body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="9"]  { right: 170px !important; bottom: 264px !important; }
 body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="10"] { right: 102px !important; bottom: 318px !important; }
 
-/* Retire donor radial/paged skill chrome; keep native handlers behind C1. */
-body.mobile-touch.hf-game-c1 #mobile-action-ring .mobile-action-slot,
-body.mobile-touch.hf-game-c1 #mobile-action-page-toggle,
-body.mobile-touch.hf-game-c1 #mobile-action-radial,
-body.mobile-touch.hf-game-c1 #mobile-interact {
+/* C2.2 VIDEO QA: retire donor radial/paged chrome unconditionally on
+   HIGHFLY touch builds. These rules must survive even if a donor lifecycle
+   temporarily rewrites root state classes. Native handlers remain reusable. */
+body.mobile-touch #mobile-action-ring .mobile-action-slot,
+body.mobile-touch #mobile-action-page-toggle,
+body.mobile-touch #mobile-action-radial,
+body.mobile-touch #mobile-interact {
   display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 body.mobile-touch.hf-game-c1 #mobile-action-attack {
@@ -207,16 +211,18 @@ body.mobile-touch.hf-game-c1 #buff-bar .ui-aura {
 #hf-c1-toast span { margin-top: 3px; opacity: .82; font-size: 10px; }
 #hf-c1-toast.show { opacity: 1; translate: -50% 0; }
 
-/* Full-screen menus/windows own input and visual priority. Combat controls leave
-   the foreground and return automatically when the window closes. */
-body.mobile-touch.hf-game-c1.mobile-more-open #actionbar,
-body.mobile-touch.hf-game-c1.mobile-window-open #actionbar,
-body.mobile-touch.hf-game-c1.mobile-more-open #mobile-action-ring,
-body.mobile-touch.hf-game-c1.mobile-window-open #mobile-action-ring,
-body.mobile-touch.hf-game-c1.mobile-more-open #hf-c1-special-seats,
-body.mobile-touch.hf-game-c1.mobile-window-open #hf-c1-special-seats,
-body.mobile-touch.hf-game-c1.mobile-more-open #hf-c1-utility-lane,
-body.mobile-touch.hf-game-c1.mobile-window-open #hf-c1-utility-lane {
+/* C2.2 VIDEO QA: a large menu/window owns the whole touch surface.
+   The video proved that hiding only the combat ring is insufficient: joystick,
+   actionbar and HIGHFLY seats must all leave the foreground. The modal/window
+   itself lives outside #mobile-controls and keeps its own close control. */
+body.mobile-touch.mobile-more-open #mobile-controls,
+body.mobile-touch.mobile-window-open #mobile-controls,
+body.mobile-touch.mobile-more-open #actionbar,
+body.mobile-touch.mobile-window-open #actionbar,
+body.mobile-touch.mobile-more-open #hf-c1-special-seats,
+body.mobile-touch.mobile-window-open #hf-c1-special-seats,
+body.mobile-touch.mobile-more-open #hf-c1-utility-lane,
+body.mobile-touch.mobile-window-open #hf-c1-utility-lane {
   visibility: hidden !important;
   pointer-events: none !important;
 }
