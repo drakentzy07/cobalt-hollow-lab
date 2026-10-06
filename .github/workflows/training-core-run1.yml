@@ -475,7 +475,7 @@ jobs:
           grep -F "EDITAR HUD MÓVIL" upstream/src/ui/options_window.ts
           grep -F "C2.3-human-fix" upstream/src/highfly/game_c1_runtime.ts
           grep -F "currentAlignment >= bestAlignment - 0.06" upstream/src/main.ts
-          grep -F "C2.2-mobile-polish" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "C2.3-human-fix" upstream/src/highfly/game_c1_runtime.ts
           grep -F "PREPARANDO HUNTER…" upstream/src/styles/hf_game_c1.css
           grep -F "softTargetLocked?: () => boolean;" upstream/src/game/pad_target_pick.ts
           grep -F "let highflyManualTargetId: number | null = null;" upstream/src/main.ts
