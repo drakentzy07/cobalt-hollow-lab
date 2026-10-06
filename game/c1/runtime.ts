@@ -24,6 +24,7 @@ let mode: HighflyWeaponElement =
 let enabled = mode !== 'base';
 let lastElementSignature = '';
 let toastTimer = 0;
+const C22_TRAINING_GUIDE_KEY = 'highfly.c22.training-guide.v1';
 
 function game(): any {
   return w.__game?.sim ? w.__game : null;
@@ -277,6 +278,102 @@ function ensureHighflyHudAuthority(): void {
   document.body.dataset.highflyHudBuild = 'C2.2_VIDEO_QA';
 }
 
+function visibleElement(selector: string): HTMLElement | null {
+  const el = document.querySelector(selector);
+  if (!(el instanceof HTMLElement)) return null;
+  const style = getComputedStyle(el);
+  const rect = el.getBoundingClientRect();
+  return (
+    style.display !== 'none' &&
+    style.visibility !== 'hidden' &&
+    Number(style.opacity || '1') > 0 &&
+    rect.width > 0 &&
+    rect.height > 0
+  )
+    ? el
+    : null;
+}
+
+function removeFirstUseCoach(): void {
+  document.getElementById('hf-c22-first-use-coach')?.remove();
+}
+
+function paintFirstUseCoach(): void {
+  if (!document.body.classList.contains('mobile-touch') || !game()) {
+    removeFirstUseCoach();
+    return;
+  }
+
+  try {
+    if (localStorage.getItem(C22_TRAINING_GUIDE_KEY) === 'done') {
+      removeFirstUseCoach();
+      return;
+    }
+  } catch {
+    // Storage can be unavailable in private/embedded contexts; keep guidance transient.
+  }
+
+  // Never stack HIGHFLY guidance over Claude's own first-spawn/tutorial sheets.
+  if (
+    visibleElement('#tutorial-greeting') ||
+    visibleElement('.tutorial-overlay') ||
+    visibleElement('.camera-prompt')
+  ) {
+    removeFirstUseCoach();
+    return;
+  }
+
+  if (visibleElement('#highfly-training-window')) {
+    try {
+      localStorage.setItem(C22_TRAINING_GUIDE_KEY, 'done');
+    } catch {}
+    removeFirstUseCoach();
+    return;
+  }
+
+  let coach = document.getElementById('hf-c22-first-use-coach') as HTMLButtonElement | null;
+  if (!coach) {
+    coach = document.createElement('button');
+    coach.type = 'button';
+    coach.id = 'hf-c22-first-use-coach';
+    coach.className = 'hf-c22-first-use-coach';
+    document.body.append(coach);
+  }
+
+  if (document.body.classList.contains('mobile-more-open')) {
+    coach.textContent = 'ENTRENAMIENTO · TOCÁ PARA ABRIR';
+    coach.onclick = () => document.getElementById('mobile-training')?.click();
+  } else {
+    coach.textContent = 'MENÚ · TOCÁ ⋯ PARA ENTRAR A ENTRENAMIENTO';
+    coach.onclick = () => document.getElementById('mobile-menu-anchor')?.click();
+  }
+}
+
+function paintCreatorPreviewStatus(): void {
+  const container = visibleElement('#offline-preview-container');
+  if (!container) {
+    document.getElementById('hf-c22-preview-status')?.remove();
+    return;
+  }
+  const canvas = container.querySelector('#char-preview-canvas');
+  const ready =
+    canvas instanceof HTMLCanvasElement &&
+    !!canvas.dataset.highflyPreviewVisual &&
+    Number(canvas.dataset.highflyPreviewFrame ?? '0') > 0;
+  if (ready) {
+    document.getElementById('hf-c22-preview-status')?.remove();
+    return;
+  }
+  let status = document.getElementById('hf-c22-preview-status');
+  if (!status) {
+    status = document.createElement('div');
+    status.id = 'hf-c22-preview-status';
+    status.className = 'hf-c22-preview-status';
+    status.textContent = 'CARGANDO HUNTER…';
+    container.append(status);
+  }
+}
+
 function boot(): void {
   ensureHighflyHudAuthority();
   ensureSpecialSeats();
@@ -288,6 +385,8 @@ function boot(): void {
     ensureUtilityLane();
     installSkillTouch();
     paintContextualAttack();
+    paintFirstUseCoach();
+    paintCreatorPreviewStatus();
     configureElement();
     window.setTimeout(tick, 180);
   };
