@@ -421,7 +421,7 @@ jobs:
           grep -F "SEMANA SOLO VISTA · NO HABILITADA" upstream/src/highfly/training/ui.ts
           grep -F "restartCurrentCycle" upstream/src/highfly/training/cycle_control.ts
           grep -F "launch-transparent.svg?v=122" upstream/public/manifest.webmanifest
-          grep -F "$('#mm-training')?.addEventListener('click'" upstream/src/ui/hud.ts
+          grep -F "mm-training')?.addEventListener('click'" upstream/src/ui/hud.ts
           grep -F "Remo con Mancuernas" upstream/src/highfly/training/personal_routine.ts
           grep -F "HIGHFLY_TRAINING_SCORING_VERSION = 'run2-awakening-v1'" upstream/src/highfly/training/core.ts
           grep -F "export function useFreeTrainingReset" upstream/src/highfly/training/core.ts
