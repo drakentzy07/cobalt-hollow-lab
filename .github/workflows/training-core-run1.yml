@@ -9,6 +9,7 @@ on:
       - highfly-game-c2-mobile-feel
       - highfly-game-c2-1-s23-feedback
       - highfly-game-c2-2-mobile-polish
+      - highfly-game-c2-3-human-fix
   workflow_dispatch:
 
 permissions:
@@ -149,9 +150,11 @@ jobs:
           python ../overlays/highfly_game_c1.py
           python ../overlays/highfly_game_c21_s23_feedback.py
           python ../overlays/highfly_game_c22_mobile_polish.py
+          python ../overlays/highfly_game_c23_human_fix.py
           cp ../game/c1/highfly_game_c1.test.ts tests/highfly_game_c1.test.ts
           cp ../game/c1/highfly_game_c21.test.ts tests/highfly_game_c21.test.ts
           cp ../game/c1/highfly_game_c22.test.ts tests/highfly_game_c22.test.ts
+          cp ../game/c1/highfly_game_c23.test.ts tests/highfly_game_c23.test.ts
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -468,6 +471,10 @@ jobs:
           grep -F "function highflySoftTargetStillAligned" upstream/src/main.ts
           grep -F "const highflyCompactMobile = width <= 960 && height <= 540;" upstream/src/render/nameplate_painter.ts
           grep -F "HIGHFLY_GAME_C22_MOBILE_POLISH_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C22_MOBILE_POLISH_APPLIED=1')")
+          grep -F "HIGHFLY_GAME_C23_HUMAN_FIX_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C23_HUMAN_FIX_APPLIED=1')")
+          grep -F "EDITAR HUD MÓVIL" upstream/src/ui/options_window.ts
+          grep -F "C2.3-human-fix" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "currentAlignment >= bestAlignment - 0.06" upstream/src/main.ts
           grep -F "C2.2-mobile-polish" upstream/src/highfly/game_c1_runtime.ts
           grep -F "PREPARANDO HUNTER…" upstream/src/styles/hf_game_c1.css
           grep -F "softTargetLocked?: () => boolean;" upstream/src/game/pad_target_pick.ts
@@ -486,7 +493,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts tests/highfly_game_c21.test.ts tests/highfly_game_c22.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts tests/highfly_game_c21.test.ts tests/highfly_game_c22.test.ts tests/highfly_game_c23.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -2799,7 +2806,7 @@ jobs:
 
   deploy-game-c2:
     name: Deploy HIGHFLY GAME-C2 Mobile Feel
-    if: github.ref_name == 'highfly-game-c2-mobile-feel' || github.ref_name == 'highfly-game-c2-1-s23-feedback' || github.ref_name == 'highfly-game-c2-2-mobile-polish'
+    if: github.ref_name == 'highfly-game-c2-mobile-feel' || github.ref_name == 'highfly-game-c2-1-s23-feedback' || github.ref_name == 'highfly-game-c2-2-mobile-polish' || github.ref_name == 'highfly-game-c2-3-human-fix'
     needs: thin-offline
     runs-on: ubuntu-latest
     timeout-minutes: 30
