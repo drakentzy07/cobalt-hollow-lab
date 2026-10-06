@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  HIGHFLY_AWAKENING_BASES,
+  HIGHFLY_AWAKENING_BUDGET,
   HIGHFLY_TRAINING_SCORING_VERSION,
   createHighflyHunterProfile,
   type HighflyHunterProfile,
@@ -37,7 +39,7 @@ const rawResult: SessionTrainingResult = {
   behavioralPerformance: { PER: 100, INT: 100, completion: 1, rest: 1, prescription: 1 },
 };
 
-describe('HIGHFLY Training-only Core migration + session authority', () => {
+describe('HIGHFLY permanent Core migration + session authority', () => {
   it('stronger real RM gives stronger session authority without granting stats by itself', () => {
     const novice = withSquatRm(80);
     const advanced = withSquatRm(160);
@@ -50,7 +52,7 @@ describe('HIGHFLY Training-only Core migration + session authority', () => {
     expect(adaptationStimulusForCurrent(35, 3)).toBeLessThan(adaptationStimulusForCurrent(15, 3));
   });
 
-  it('migrates old earned Core into Training-only allocation and is idempotent', () => {
+  it('migrates old earned Core into Training allocation on top of permanent class Core and is idempotent', () => {
     const legacy = withSquatRm(160) as any;
     legacy.schemaVersion = 1;
     legacy.scoringVersion = 'run1-b';
@@ -65,14 +67,21 @@ describe('HIGHFLY Training-only Core migration + session authority', () => {
     legacy.training.cycleProgression.completedSessions = ['1:1'];
 
     const migrated = migrateLegacyFixedCoreBaseline(legacy);
+    const warriorBase = HIGHFLY_AWAKENING_BASES.warrior;
+
     expect(migrated.scoringVersion).toBe(HIGHFLY_TRAINING_SCORING_VERSION);
+    expect(migrated.awakening.budget).toBe(HIGHFLY_AWAKENING_BUDGET);
+    expect(Object.values(migrated.awakening.base).reduce((sum, value) => sum + value, 0))
+      .toBeCloseTo(50, 8);
+
+    // Schema-1 Current was earned real-world Training. Preserve it exactly as
+    // Training allocation; then restore the permanent Warrior base once.
     expect(migrated.training.core.STR.trainingGrowth).toBeCloseTo(2.9, 10);
     expect(migrated.training.core.STR.trainingAllocated).toBeCloseTo(2.9, 10);
-    expect(migrated.training.core.STR.current).toBeCloseTo(2.9, 10);
-    expect(migrated.training.core.STR.awakeningBase).toBe(0);
+    expect(migrated.training.core.STR.awakeningBase).toBeCloseTo(warriorBase.STR, 10);
     expect(migrated.training.core.STR.naturalLevelGrowth).toBe(0);
-    expect(migrated.awakening.budget).toBe(0);
-    expect(Object.values(migrated.awakening.base).reduce((sum, value) => sum + value, 0)).toBe(0);
+    expect(migrated.training.core.STR.current).toBeCloseTo(warriorBase.STR + 2.9, 10);
+
     expect(migrated.training.points.earned).toBeGreaterThan(0);
     expect(migrated.training.points.allocated.STR).toBeCloseTo(2.9, 10);
     expect(migrated.training.cycleProgression?.completedSessions).toEqual(['1:1']);
