@@ -37,7 +37,7 @@ const rawResult: SessionTrainingResult = {
   behavioralPerformance: { PER: 100, INT: 100, completion: 1, rest: 1, prescription: 1 },
 };
 
-describe('HIGHFLY RUN138 Awakening + real session Core', () => {
+describe('HIGHFLY Training-only Core migration + session authority', () => {
   it('stronger real RM gives stronger session authority without granting stats by itself', () => {
     const novice = withSquatRm(80);
     const advanced = withSquatRm(160);
