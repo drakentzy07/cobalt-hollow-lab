@@ -598,8 +598,8 @@ function render(): void {
 
     <section>
       <div class="hf-section-title">
-        <h4>HUNTER CORE</h4>
-        <span>STR / AGI / VIT / PER / INT sólo suben por entrenamiento real</span>
+        <h4>HUNTER CORE · PERMANENTE</h4>
+        <span>BASE DE CLASE + NIVEL + TRAINING · sólo TRAINING se asigna libremente</span>
         <span class="hf-tp-wallet">TP DISPONIBLES <b>${(profileOrNull()?.training.points.available ?? 0).toFixed(2)}</b> · GANADOS <b>${(profileOrNull()?.training.points.earned ?? 0).toFixed(2)}</b></span>
       </div>
       <div class="hf-core-grid">${coreCards()}</div>
