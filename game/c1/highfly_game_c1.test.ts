@@ -9,7 +9,6 @@ import {
 import { BUILTIN_WORLD, CLASSES, MOBS } from '../src/sim/data';
 import { createMob } from '../src/sim/entity';
 import { Sim } from '../src/sim/sim';
-import { placePlayerInOpenField } from './helpers/open_field';
 
 function fixture() {
   const sim = new Sim({
@@ -19,7 +18,6 @@ function fixture() {
     world: { ...BUILTIN_WORLD, camps: [], npcs: {}, groundObjects: [] },
   });
   sim.setPlayerLevel(20);
-  placePlayerInOpenField(sim);
   const p = sim.player;
   const target = createMob(sim.nextId++, MOBS.forest_wolf, 1, {
     x: p.pos.x,
