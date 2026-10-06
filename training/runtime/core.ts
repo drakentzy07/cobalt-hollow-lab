@@ -664,8 +664,13 @@ export function migrateAwakeningStats(profile: HighflyHunterProfile): HighflyHun
       finiteNonNegative(previous.awakeningBase) +
       finiteNonNegative(previous.naturalLevelGrowth);
 
+    // Wallet-backed allocation only existed as an authority from schema 3.
+    // Schema 1/2 migration must trust their historical Core/growth evidence even
+    // if a malformed or test-built object happens to carry an empty wallet.
+    const walletAllocated =
+      legacy.schemaVersion >= 3 ? legacyWallet?.allocated?.[stat] : undefined;
     const trainingAllocated = finiteNonNegative(
-      legacyWallet?.allocated?.[stat] ??
+      walletAllocated ??
         previous.trainingAllocated ??
         previous.trainingGrowth ??
         (legacy.schemaVersion < 2
