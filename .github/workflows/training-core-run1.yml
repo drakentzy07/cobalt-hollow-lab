@@ -452,7 +452,10 @@ jobs:
           grep -F "mobile-consumable-seat" upstream/src/highfly/game_c1_runtime.ts
           grep -F "hf-c1-ult" upstream/src/styles/hf_game_c1.css
           grep -F "HIGHFLY_GAME_C21_S23_FEEDBACK_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C21_S23_FEEDBACK_APPLIED=1')")
-          grep -F "const coneDot = Math.cos((70 * Math.PI) / 180);" upstream/src/game/auto_target.ts
+          grep -F "const coneDot = Math.cos((45 * Math.PI) / 180);" upstream/src/game/auto_target.ts
+          grep -F "const holdDot = Math.cos((55 * Math.PI) / 180);" upstream/src/main.ts
+          grep -F "bestDot < currentDot + 0.16" upstream/src/main.ts
+          grep -F "entity.dead ? 10 : entity.kind === 'mob' ? 20" upstream/src/render/nameplate_painter.ts
           grep -F "softTargetLocked?: () => boolean;" upstream/src/game/pad_target_pick.ts
           grep -F "let highflyManualTargetId: number | null = null;" upstream/src/main.ts
           grep -F "hud.extendHighflyComboForEvade();" upstream/src/main.ts
@@ -464,6 +467,10 @@ jobs:
           grep -F "body.mobile-touch #mobile-interact" upstream/src/styles/hf_game_c1.css
           grep -F "body.mobile-touch.mobile-more-open #mobile-controls" upstream/src/styles/hf_game_c1.css
           grep -F "body.mobile-touch.mobile-window-open #mobile-controls" upstream/src/styles/hf_game_c1.css
+          grep -F "paintFirstUseCoach" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "paintCreatorPreviewStatus" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "#hf-c22-first-use-coach" upstream/src/styles/hf_game_c1.css
+          grep -F "#hf-c22-preview-status" upstream/src/styles/hf_game_c1.css
           ! grep -R -i -E "qmale|qfemale|hf_aff_" upstream/src/highfly/game_c1_runtime.ts upstream/src/sim/combat/highfly_elemental_basic.ts upstream/src/highfly/game_c1_elemental_weapon_vfx.ts upstream/src/styles/hf_game_c1.css
 
       - name: TypeScript source smoke
