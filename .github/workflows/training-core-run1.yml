@@ -129,6 +129,7 @@ jobs:
           python ../overlays/highfly_run122_training_lock.py
           python ../overlays/highfly_run129_real_training.py
           python ../overlays/highfly_run137_training_intelligence.py
+          python ../overlays/highfly_progression_pf5_stat_authority.py
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -244,6 +245,9 @@ jobs:
           test -s training/tests/highfly_training_run1i.test.ts
           test -s training/tests/highfly_training_j3b.test.ts
           test -s training/tests/highfly_training_pf4_respec.test.ts
+          test -s training/tests/highfly_training_pf5_stat_authority.test.ts
+          test -s training/runtime/stat_authority.ts
+          test -s overlays/highfly_progression_pf5_stat_authority.py
           test -s overlays/highfly_training_run1i_ui.py
           test -s overlays/highfly_training_persistence_v1.py
           test -s overlays/highfly_training_ui_v1.py
@@ -398,6 +402,11 @@ jobs:
           grep -F "Remo con Mancuernas" upstream/src/highfly/training/personal_routine.ts
           grep -F "HIGHFLY_TRAINING_SCORING_VERSION = 'run2-awakening-v1'" upstream/src/highfly/training/core.ts
           grep -F "export function useFreeTrainingReset" upstream/src/highfly/training/core.ts
+          grep -F "HIGHFLY_CORE_STAT_AUTHORITY_V1 = 'pf5-stat-bible-v1'" upstream/src/highfly/training/stat_authority.ts
+          grep -F "resolveHighflyPrimaryCoreForEntity" upstream/src/sim/entity.ts
+          grep -F "entity.attackPower = baseline.attackPower;" upstream/src/highfly/training/combat_runtime.ts
+          ! grep -F "applyTrainingBridge(" upstream/src/highfly/training/combat_runtime.ts
+          ! grep -F "trainingGain(" upstream/src/highfly/training/combat_runtime.ts
           grep -F "Primera sesión válida: conserva el Core y acredita Training Points para asignación manual." upstream/src/highfly/training/pipeline.ts
           grep -F "CORE + TRAINING" upstream/src/highfly/training/ui.ts
           grep -F "DESCANSO OBLIGATORIO" upstream/src/highfly/training/ui.ts
@@ -413,7 +422,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
