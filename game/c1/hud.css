@@ -544,3 +544,155 @@ body.mobile-touch.hf-game-c24 .tut-prompt[data-hf-action="bags"] {
 body.mobile-touch.hf-game-c24.hf-c23-hud-editing #actionbar .action-btn.empty {
   opacity: .52 !important;
 }
+
+
+/* ==========================================================================
+   HIGHFLY GAME-C2.5 — CRESCENT HUD / VISUAL AUTHORITY
+   One geometry across mobile landscape. Editor remains optional personalization.
+   ========================================================================== */
+
+/* Combat HUD never leaks into entry / creator / loading. */
+body.mobile-touch.hf-game-c25:not(.game-active) #actionbar,
+body.mobile-touch.hf-game-c25:not(.game-active) #mobile-action-attack,
+body.mobile-touch.hf-game-c25:not(.game-active) #mobile-target-cycle,
+body.mobile-touch.hf-game-c25:not(.game-active) #mobile-jump,
+body.mobile-touch.hf-game-c25:not(.game-active) #mobile-evade,
+body.mobile-touch.hf-game-c25:not(.game-active) #hf-c1-special-seats,
+body.mobile-touch.hf-game-c25:not(.game-active) #hf-c1-utility-lane,
+body.mobile-touch.hf-game-c25:not(.game-active) #buff-bar,
+body.mobile-touch.hf-game-c25:not(.game-active) #debuff-bar {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Active skill family: one size, one circle language. */
+body.mobile-touch.hf-game-c25 #actionbar {
+  --hf-c1-skill: 42px;
+}
+body.mobile-touch.hf-game-c25 #actionbar .action-btn[data-hotbar-slot] {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  max-width: 42px !important;
+  max-height: 42px !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+}
+
+/* Definitive two-arc crescent. right grows toward screen centre. */
+body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="1"]  { right:112px !important; bottom:46px !important; }
+body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="2"]  { right:140px !important; bottom:96px !important; }
+body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="3"]  { right:166px !important; bottom:146px !important; }
+body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="4"]  { right:166px !important; bottom:196px !important; }
+body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="5"]  { right:140px !important; bottom:246px !important; }
+body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="6"]  { right:170px !important; bottom:46px !important; }
+body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="7"]  { right:204px !important; bottom:96px !important; }
+body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="8"]  { right:230px !important; bottom:146px !important; }
+body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="9"]  { right:230px !important; bottom:196px !important; }
+body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="10"] { right:204px !important; bottom:246px !important; }
+
+/* Empty seats preserve the crescent but stay visually subordinate. */
+body.mobile-touch.hf-game-c25 #actionbar .action-btn.empty {
+  opacity: .34 !important;
+  border: 1px solid rgba(206, 182, 255, .24) !important;
+  background: rgba(8, 7, 14, .56) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.018) !important;
+}
+body.mobile-touch.hf-game-c25 #actionbar .action-btn.empty::after {
+  color: rgba(232, 222, 250, .30) !important;
+  font-size: 8px !important;
+}
+
+/* Special skills keep the same circular vocabulary and sit outside the crescent. */
+body.mobile-touch.hf-game-c25 .hf-c1-special-seat {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  min-height: 42px !important;
+  max-width: 42px !important;
+  max-height: 42px !important;
+  box-sizing: border-box !important;
+  border-radius: 50% !important;
+}
+body.mobile-touch.hf-game-c25 #hf-c1-esp1 { right:286px !important; bottom:146px !important; }
+body.mobile-touch.hf-game-c25 #hf-c1-esp2 { right:286px !important; bottom:196px !important; }
+body.mobile-touch.hf-game-c25 #hf-c1-ult  { right:260px !important; bottom:246px !important; }
+
+/* Core controls align to the crescent instead of competing with it. */
+body.mobile-touch.hf-game-c25 #mobile-action-attack {
+  width:68px !important;
+  height:68px !important;
+  right:18px !important;
+  bottom:40px !important;
+}
+body.mobile-touch.hf-game-c25 #mobile-target-cycle {
+  width:48px !important;
+  height:48px !important;
+  right:18px !important;
+  bottom:146px !important;
+}
+body.mobile-touch.hf-game-c25 #mobile-jump {
+  right:218px !important;
+  bottom:8px !important;
+}
+body.mobile-touch.hf-game-c25 #mobile-evade {
+  right:278px !important;
+  bottom:8px !important;
+}
+
+/* PASSIVE / BUFF / DEBUFF state family: uniform rounded-square tiles. */
+body.mobile-touch.hf-game-c25 #buff-bar,
+body.mobile-touch.hf-game-c25 #debuff-bar {
+  left:30vw !important;
+  right:auto !important;
+  width:auto !important;
+  max-width:190px !important;
+  gap:4px !important;
+}
+body.mobile-touch.hf-game-c25 #buff-bar {
+  bottom:58px !important;
+}
+body.mobile-touch.hf-game-c25 #debuff-bar {
+  bottom:94px !important;
+}
+body.mobile-touch.hf-game-c25 #buff-bar .buff,
+body.mobile-touch.hf-game-c25 #buff-bar .ui-aura,
+body.mobile-touch.hf-game-c25 #debuff-bar .buff,
+body.mobile-touch.hf-game-c25 #debuff-bar .ui-aura {
+  width:30px !important;
+  height:30px !important;
+  min-width:30px !important;
+  min-height:30px !important;
+  max-width:30px !important;
+  max-height:30px !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  border-radius:7px !important;
+  border:1px solid rgba(206, 185, 255, .28) !important;
+  background:rgba(9, 7, 16, .70) !important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.025) !important;
+}
+body.mobile-touch.hf-game-c25 #buff-bar :is(img, .icon),
+body.mobile-touch.hf-game-c25 #debuff-bar :is(img, .icon) {
+  border-radius:6px !important;
+}
+
+/* C2.5 owns compact landscape too: do not re-shape the crescent by height. */
+@media (max-height: 400px) and (orientation: landscape) {
+  body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="1"]  { right:112px !important; bottom:46px !important; }
+  body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="2"]  { right:140px !important; bottom:96px !important; }
+  body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="3"]  { right:166px !important; bottom:146px !important; }
+  body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="4"]  { right:166px !important; bottom:196px !important; }
+  body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="5"]  { right:140px !important; bottom:246px !important; }
+  body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="6"]  { right:170px !important; bottom:46px !important; }
+  body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="7"]  { right:204px !important; bottom:96px !important; }
+  body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="8"]  { right:230px !important; bottom:146px !important; }
+  body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="9"]  { right:230px !important; bottom:196px !important; }
+  body.mobile-touch.hf-game-c25 #actionbar [data-hotbar-slot="10"] { right:204px !important; bottom:246px !important; }
+  body.mobile-touch.hf-game-c25 #hf-c1-esp1 { right:286px !important; bottom:146px !important; }
+  body.mobile-touch.hf-game-c25 #hf-c1-esp2 { right:286px !important; bottom:196px !important; }
+  body.mobile-touch.hf-game-c25 #hf-c1-ult  { right:260px !important; bottom:246px !important; }
+  body.mobile-touch.hf-game-c25 #mobile-target-cycle { bottom:146px !important; }
+}
