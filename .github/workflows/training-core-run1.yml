@@ -18,7 +18,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: highfly-training-run1j
+  # Branch-scoped: work on C2.2/SkinLab must never cancel a C2.3 human-gate run.
+  group: highfly-training-run1j-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
