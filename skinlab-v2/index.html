@@ -42,7 +42,7 @@
 <body>
 <div id="app">
   <header>
-    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · PAINTER PRO v1</div></div></div>
+    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · BLACK AURA AUTO · PAINTER PRO v1.1</div></div></div>
     <div class="status">
       <span class="pill" id="rigPill">Rig_Medium …</span>
       <span class="pill" id="rPill">handslot.r …</span>
@@ -58,6 +58,7 @@
       <div class="row">
         <button id="baseBtn" class="active">BASE</button>
         <button id="blackBtn">WARRIOR BLACK AURA</button>
+        <button id="autoAuraBtn">⚡ AUTO · BLACK AURA</button>
       </div>
       <div class="row">
         <select id="animSelect"></select>
@@ -142,7 +143,7 @@
         <b>Base</b><span>ClaudeCraft Warrior real: knight.glb</span>
         <b>Rig</b><span>Rig_Medium original, sin retarget</span>
         <b>Arma</b><span>Espada + escudo en sockets originales</span>
-        <b>Painter</b><span>5 piezas · paleta · acabado · pincel UV 3D</span>
+        <b>Auto</b><span>BLACK AURA oficial aplicado al abrir · Painter queda editable</span>
       </div>
       <p class="small">PAINTER PRO modifica sólo la capa cosmética. Rig, pesos, clips, sockets, hitboxes y gameplay permanecen intactos.</p>
     </section>
@@ -157,6 +158,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const UPSTREAM='9b57e49c9676d75962700f828cc00a50a9a988b5';
 const RAW='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/'+UPSTREAM+'/public/';
@@ -220,8 +222,12 @@ renderer.toneMappingExposure=1.08;
 stage.appendChild(renderer.domElement);
 
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x09090d);
-scene.fog=new THREE.Fog(0x09090d,7,18);
+scene.background=new THREE.Color(0x07080c);
+scene.fog=new THREE.Fog(0x07080c,7,18);
+const pmremGenerator=new THREE.PMREMGenerator(renderer);
+scene.environment=pmremGenerator.fromScene(new RoomEnvironment(),0.04).texture;
+scene.environmentIntensity=.92;
+pmremGenerator.dispose();
 
 const camera=new THREE.PerspectiveCamera(35,1,.01,100);
 camera.position.set(4.5,2.7,5.5);
@@ -231,10 +237,12 @@ controls.enableDamping=true;
 controls.minDistance=2.4;
 controls.maxDistance=10;
 
-scene.add(new THREE.HemisphereLight(0xbcc7ff,0x261c31,2.0));
-const key=new THREE.DirectionalLight(0xffffff,4.2); key.position.set(3.5,6,4); scene.add(key);
-const rim=new THREE.DirectionalLight(0x8b5cf6,5.5); rim.position.set(-4,3,-3); scene.add(rim);
-const fill=new THREE.PointLight(0x7c3aed,35,9,2); fill.position.set(0,1.8,-2); scene.add(fill);
+scene.add(new THREE.HemisphereLight(0xbcc7ff,0x14121d,1.55));
+const key=new THREE.DirectionalLight(0xffffff,3.6); key.position.set(3.5,6,4); scene.add(key);
+const rim=new THREE.DirectionalLight(0x8b5cf6,4.4); rim.position.set(-4,3,-3); scene.add(rim);
+const fill=new THREE.PointLight(0x7c3aed,24,8,2); fill.position.set(0,1.8,-2); scene.add(fill);
+const front=new THREE.SpotLight(0xf8fbff,38,12,.48,.55,1.3);front.position.set(1.2,4.2,5.4);front.target.position.set(0,1.25,0);scene.add(front,front.target);
+const edgeKey=new THREE.DirectionalLight(0xdce7ff,2.0);edgeKey.position.set(-2,2.6,4.5);scene.add(edgeKey);
 
 const floor=new THREE.Mesh(new THREE.CircleGeometry(4.5,96),new THREE.MeshStandardMaterial({color:0x111119,roughness:.88,metalness:.05}));
 floor.rotation.x=-Math.PI/2; floor.position.y=0; scene.add(floor);
@@ -297,6 +305,17 @@ const DEFAULT_PAINTER={
   sword:{primary:'#04060b',secondary:'#ffffff',accent:'#6d28d9',finish:'gloss',brightness:1.02,contrast:1.30,metalness:.88,roughness:.11,detail:.82},
   shield:{primary:'#060810',secondary:'#f4f7ff',accent:'#5b21b6',finish:'darkMetal',brightness:.96,contrast:1.22,metalness:.76,roughness:.18,detail:.74}
 };
+const AUTO_BLACK_AURA={
+  id:'warrior_black_aura_auto_v1',
+  label:'AUTO · BLACK AURA',
+  pieces:{
+    helmet:{primary:'#03050a',secondary:'#f4f7ff',accent:'#38145f',finish:'darkMetal',brightness:.82,contrast:1.48,metalness:.78,roughness:.18,detail:.42},
+    armor:{primary:'#05070d',secondary:'#edf3ff',accent:'#3b1768',finish:'darkMetal',brightness:.90,contrast:1.38,metalness:.66,roughness:.21,detail:.80},
+    cape:{primary:'#030409',secondary:'#bbc6dc',accent:'#25103f',finish:'matte',brightness:.72,contrast:1.16,metalness:.03,roughness:.88,detail:.22},
+    sword:{primary:'#02040a',secondary:'#ffffff',accent:'#6d28d9',finish:'gloss',brightness:1.10,contrast:1.58,metalness:.94,roughness:.06,detail:.96},
+    shield:{primary:'#04060c',secondary:'#f7f9ff',accent:'#45187d',finish:'darkMetal',brightness:.92,contrast:1.40,metalness:.82,roughness:.14,detail:.86}
+  }
+};
 const deepClone=o=>JSON.parse(JSON.stringify(o));
 let painterState=deepClone(DEFAULT_PAINTER);
 let painterTextures={};
@@ -324,9 +343,9 @@ function channelForPixel(r,g,b,piece,detail){
   const d=clamp01(detail);
 
   if(piece==='helmet'){
-    const secondaryCut=.12+.19*d;
-    if(lum<secondaryCut)return ['secondary',lum];
-    if(chroma>(.38-.18*d) && lum<.58)return ['accent',lum];
+    // Visor and shell stay black; only a narrow authored detail band becomes silver.
+    if(lum>.30 && lum<(.38+.08*d) && chroma<.14)return ['secondary',lum];
+    if(chroma>(.32-.10*d) && lum>.18 && lum<.48)return ['accent',lum];
     return ['primary',lum];
   }
   if(piece==='cape'){
@@ -335,8 +354,9 @@ function channelForPixel(r,g,b,piece,detail){
     return ['primary',lum];
   }
   if(piece==='sword'||piece==='shield'){
-    if(lum>(.94-.18*d))return ['secondary',lum];
-    if(chroma>(.40-.20*d) && lum>.28)return ['accent',lum];
+    const cut=piece==='sword' ? (.78-.15*d) : (.86-.12*d);
+    if(lum>cut && chroma<.24)return ['secondary',lum];
+    if(chroma>(.34-.16*d) && lum>.24)return ['accent',lum];
     return ['primary',lum];
   }
   if(lum>(.96-.19*d))return ['secondary',lum];
@@ -388,20 +408,29 @@ function buildPieceTexture(piece){
   const ctx=canvas.getContext('2d',{willReadFrequently:true});
   ctx.drawImage(painterSourceBitmap,0,0);
   const image=ctx.getImageData(0,0,canvas.width,canvas.height),d=image.data;
+  const glowCanvas=document.createElement('canvas');glowCanvas.width=canvas.width;glowCanvas.height=canvas.height;
+  const glowCtx=glowCanvas.getContext('2d',{willReadFrequently:true});
+  const glowImage=glowCtx.createImageData(canvas.width,canvas.height),g=glowImage.data;
   let primary=0,secondary=0,accent=0,total=0;
   for(let i=0;i<d.length;i+=4){
     if(d[i+3]===0)continue;
     const [channel,lum]=channelForPixel(d[i]/255,d[i+1]/255,d[i+2]/255,piece,s.detail);
     const rgb=shadeColor(s[channel],lum,s.brightness,s.contrast,channel);
     d[i]=rgb[0];d[i+1]=rgb[1];d[i+2]=rgb[2];
+    const glow=channel==='secondary'?255:channel==='accent'?32:0;
+    g[i]=glow;g[i+1]=glow;g[i+2]=glow;g[i+3]=d[i+3];
     if(channel==='primary')primary++; else if(channel==='secondary')secondary++; else accent++;
     total++;
   }
   ctx.putImageData(image,0,0);
+  glowCtx.putImageData(glowImage,0,0);
   const texture=new THREE.CanvasTexture(canvas);
   texture.colorSpace=THREE.SRGBColorSpace;texture.flipY=false;texture.needsUpdate=true;
   texture.name='HIGHFLY_PAINTER_'+piece;
-  painterTextures[piece]={canvas,ctx,texture,ratios:{primary:primary/total,secondary:secondary/total,accent:accent/total}};
+  const emissiveTexture=new THREE.CanvasTexture(glowCanvas);
+  emissiveTexture.colorSpace=THREE.SRGBColorSpace;emissiveTexture.flipY=false;emissiveTexture.needsUpdate=true;
+  emissiveTexture.name='HIGHFLY_PAINTER_GLOW_'+piece;
+  painterTextures[piece]={canvas,ctx,texture,emissiveTexture,ratios:{primary:primary/total,secondary:secondary/total,accent:accent/total}};
   for(const op of paintOps[piece])paintUvInternal(piece,op.uv,op.color,op.size,op.opacity,false);
   return painterTextures[piece];
 }
@@ -419,9 +448,13 @@ async function loadPainterSource(){
 function applyPaintMaterial(m,role){
   const p=painterTextures[role];const s=painterState[role];
   if(!p||!s)return;
-  m.map=p.texture;m.emissiveMap=null;
+  m.map=p.texture;
   if(m.color)m.color.set(0xffffff);
-  if(m.emissive){m.emissive.set(0x000000);m.emissiveIntensity=0}
+  if(m.emissive){
+    m.emissive.set(role==='sword'?0xffffff:role==='shield'?0xeef4ff:0xdce7ff);
+    m.emissiveMap=p.emissiveTexture;
+    m.emissiveIntensity=role==='sword'?.62:role==='shield'?.20:role==='helmet'?.07:.05;
+  }
   if('metalness'in m)m.metalness=s.metalness;
   if('roughness'in m)m.roughness=s.roughness;
   m.needsUpdate=true;
@@ -433,7 +466,7 @@ function roleForMesh(o){
     if(n.name==='Warrior_Shield')return 'shield';
     n=n.parent;
   }
-  if(o.name==='Knight_Helmet')return 'helmet';
+  if(o.name==='Knight_Helmet'||o.name==='Knight_HelmetVisor')return 'helmet';
   if(o.name==='Knight_Cape')return 'cape';
   if(['Knight_ArmLeft','Knight_ArmRight','Knight_Body','Knight_LegLeft','Knight_LegRight'].includes(o.name))return 'armor';
   return null;
@@ -453,8 +486,8 @@ function applyWarriorBlackFinal(){
   const sword=actor.getObjectByName('Warrior_Sword');
   if(sword){
     const c=painterState.sword.secondary;
-    silhouetteAccents+=ensureRigidSilhouette(sword,'painter-sword-silhouette',c,1.050,.92);
-    edgeAccents+=ensureRigidEdgeAccent(sword,'painter-sword-edge',c,1.0,18);
+    silhouetteAccents+=ensureRigidSilhouette(sword,'painter-sword-silhouette',c,1.062,1.0);
+    edgeAccents+=ensureRigidEdgeAccent(sword,'painter-sword-edge',c,1.0,12);
   }
   const shield=actor.getObjectByName('Warrior_Shield');
   if(shield){
@@ -553,6 +586,26 @@ async function copyPainterRecipe(){
   try{await navigator.clipboard.writeText(recipe);painterStatus.textContent='RECETA copiada al portapapeles.'}
   catch{painterStatus.textContent='No se pudo copiar; receta disponible en window.__SKINLAB_RECIPE__.'}
   window.__SKINLAB_RECIPE__=recipe;
+}
+function applyAutoBlackAura(){
+  painterState=deepClone(AUTO_BLACK_AURA.pieces);
+  paintOps={helmet:[],armor:[],cape:[],sword:[],shield:[]};
+  rebuildPainterTextures();
+  pieceSelect.value='helmet';
+  syncPainterUi();
+  setMode('black');
+  const visor=actor?.getObjectByName('Knight_HelmetVisor');
+  Object.assign(window.__SKINLAB_DIAG__,{
+    autoPresetApplied:true,
+    autoPresetId:AUTO_BLACK_AURA.id,
+    helmetVisorFound:!!visor,
+    helmetVisorPainted:!!visor && roleForMesh(visor)==='helmet',
+    swordEmissiveTrim:!!painterTextures.sword?.emissiveTexture,
+    studioEnvironment:!!scene.environment
+  });
+  autoAuraBtn.classList.add('active');
+  painterStatus.textContent='AUTO · BLACK AURA aplicado · casco negro + metal profundo + filo blanco intenso.';
+  return true;
 }
 function setMode(mode){
   currentMode=mode;
@@ -672,7 +725,13 @@ window.__SKINLAB_DIAG__={
   painterTextures:0,
   brushEnabled:false,
   brushOps:0,
-  lastPainterPiece:null
+  lastPainterPiece:null,
+  autoPresetApplied:false,
+  autoPresetId:null,
+  helmetVisorFound:false,
+  helmetVisorPainted:false,
+  swordEmissiveTrim:false,
+  studioEnvironment:false
 };
 function playClip(name){
   if(!mixer||!actor)return false;
@@ -789,9 +848,9 @@ async function boot(){
       testableClips:names.length
     });
     window.__SKINLAB_CLIPS__=names.slice();
-    window.__SKINLAB_API__={setMode,playClip,runFactoryTest,stopFactoryTest,applyPainterPiece,paintAt:paintUvInternal,setBrushEnabled,copyPainterRecipe};
+    window.__SKINLAB_API__={setMode,playClip,runFactoryTest,stopFactoryTest,applyPainterPiece,paintAt:paintUvInternal,setBrushEnabled,copyPainterRecipe,applyAutoBlackAura};
     syncPainterUi();
-    setMode('black');
+    applyAutoBlackAura();
   }catch(err){
     console.error(err);
     window.__SKINLAB_DIAG__.error=String(err?.message||err);
@@ -802,7 +861,8 @@ async function boot(){
 }
 
 baseBtn.onclick=()=>setMode('base');
-blackBtn.onclick=()=>setMode('black');
+blackBtn.onclick=()=>{setMode('black');autoAuraBtn.classList.remove('active')};
+autoAuraBtn.onclick=()=>applyAutoBlackAura();
 document.getElementById('playBtn').onclick=()=>playClip(document.getElementById('animSelect').value);
 testAllBtn.onclick=()=>runFactoryTest();
 stopTestBtn.onclick=()=>stopFactoryTest();

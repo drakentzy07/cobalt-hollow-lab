@@ -1,50 +1,29 @@
-# HIGHFLY Skin Lab v2 — PAINTER PRO v1
+# HIGHFLY Skin Lab v2 — PAINTER PRO v1.1 / AUTO BLACK AURA
 
-Skin Lab is now a reusable cosmetic authoring tool instead of a one-off recolor.
+The lab now opens with the canonical AUTO · BLACK AURA preset already applied.
+
+## Black Aura target
+- Helmet shell + visor: black/deep graphite
+- White/silver: controlled trim only, never a white visor block
+- Armor: black metal with brighter silver trim and violet only as a secondary accent
+- Sword: black body, high-contrast white cutting trim with emissive highlight
+- Shield: black metal with silver border
+- Cape: deep matte black
+- Studio environment: reflected metal depth for preview
+
+## Root-cause fix
+Knight_HelmetVisor is explicitly classified as the helmet painter role. It can no longer escape the cosmetic paint pass and remain in the original light material.
+
+## One-click preset
+Button: AUTO · BLACK AURA
+
+It restores the complete canonical recipe automatically. The same recipe is applied on boot, so users do not need to understand the Painter controls just to preview the intended skin.
+
+## Painter Pro remains editable
+Helmet, Armor, Cape, Sword and Shield still expose palette, finish, brightness, contrast, metalness, roughness, detail and direct UV brush controls.
 
 ## Immutable gameplay authority
-Painter Pro never changes:
-- character geometry
-- Rig_Medium / skin weights
-- authored animation clips
-- weapon sockets / grips
-- hitboxes / traces
-- combat, skills or timings
-
-## Painter surfaces
-Five independent cosmetic surfaces are available:
-1. Helmet
-2. Armor
-3. Cape
-4. Sword
-5. Shield
-
-Each surface has:
-- Primary / Secondary / Accent palette
-- Brightness and contrast
-- Metalness and roughness
-- Detail/trim density
-- Finish preset: Matte, Satin, Gloss, Dark Metal, Chrome
-
-## Direct 3D brush
-Enable **PINCEL 3D**, choose the surface and brush channel, then drag directly on the visible model. Raycasting resolves the hit UV and paints the corresponding CanvasTexture. This is cosmetic-only and remains attached to the original UVs through animation.
-
-Brush settings:
-- Primary / Secondary / Accent / Custom color
-- Size
-- Opacity
-
-## Recipes
-Custom painter state and brush strokes can be saved to localStorage and exported as JSON recipe. This is the foundation for future HIGHFLY skin catalog entries.
-
-## Default
-Warrior Black Aura remains the initial demonstration preset, now editable live through Painter Pro.
+No changes to model geometry, Rig_Medium, skin weights, authored clips, sockets, grips, hitboxes, traces, combat, abilities, timing or damage authority.
 
 ## QA
-The browser gate validates:
-- frozen Warrior assembly
-- 25 authored clips
-- five painter textures
-- piece palette/material application
-- a real direct UV brush operation
-- no browser/page errors
+Browser gate validates the canonical auto preset, painted visor role, sword emissive trim, studio environment, 25 authored animations and the Painter Pro controls.

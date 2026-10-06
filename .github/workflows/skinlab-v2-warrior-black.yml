@@ -37,6 +37,12 @@ jobs:
           grep -q "function paintUvInternal" skinlab-v2/index.html
           grep -q "highfly_skin_painter_custom_v1" skinlab-v2/index.html
           grep -q "copyPainterRecipe" skinlab-v2/index.html
+          grep -q "AUTO_BLACK_AURA" skinlab-v2/index.html
+          grep -q 'id="autoAuraBtn"' skinlab-v2/index.html
+          grep -q "Knight_HelmetVisor" skinlab-v2/index.html
+          grep -q "applyAutoBlackAura" skinlab-v2/index.html
+          grep -q "emissiveTexture" skinlab-v2/index.html
+          grep -q "RoomEnvironment" skinlab-v2/index.html
           grep -q "function resolveNode" skinlab-v2/index.html
           grep -q "name.replace(/\[\[\\\].:/\]/g" skinlab-v2/index.html
           grep -q "0.555174" skinlab-v2/index.html
