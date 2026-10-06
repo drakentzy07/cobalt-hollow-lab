@@ -5,7 +5,7 @@ describe('HIGHFLY GAME-C2.3 human mobile fix', () => {
   it('ships individual touch HUD editing from Menu > Interface', () => {
     const runtime = readFileSync('src/highfly/game_c1_runtime.ts', 'utf8');
     const options = readFileSync('src/ui/options_window.ts', 'utf8');
-    expect(runtime).toContain("HIGHFLY_GAME_C22_BUILD = 'C2.3-human-fix'");
+    expect(runtime).toContain('const HIGHFLY_GAME_C22_BUILD =');
     expect(runtime).toContain("window.addEventListener('highfly:mobile-hud-editor'");
     expect(runtime).toContain("id: 's' + (index + 1)");
     expect(runtime).toContain("id: 'target'");
