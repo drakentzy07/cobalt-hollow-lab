@@ -244,3 +244,52 @@ body.mobile-touch.mobile-window-open #hf-c1-utility-lane {
   body.mobile-touch.hf-game-c1 #hf-c1-ult  { bottom: calc(282px + env(safe-area-inset-bottom)); }
   body.mobile-touch.hf-game-c1 #mobile-target-cycle { bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 }
+
+
+/* HIGHFLY C2.2 FIRST-USE COACH + CREATOR PREVIEW STATUS */
+#hf-c22-first-use-coach {
+  display: none;
+}
+body.mobile-touch.hf-game-c1 #hf-c22-first-use-coach {
+  display: block;
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  max-width: min(520px, 72vw);
+  min-height: 38px;
+  padding: 8px 14px;
+  z-index: 520;
+  border: 1px solid rgba(204, 175, 255, .78);
+  border-radius: 10px;
+  background: rgba(12, 8, 22, .94);
+  color: #f1e8ff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .055em;
+  text-align: center;
+  box-shadow: 0 0 18px rgba(137, 72, 255, .28);
+  touch-action: manipulation;
+}
+body.mobile-touch.mobile-window-open #hf-c22-first-use-coach {
+  display: none;
+}
+
+#offline-preview-container {
+  position: relative;
+}
+#hf-c22-preview-status {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  color: rgba(241, 232, 255, .88);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-shadow: 0 1px 3px rgba(0,0,0,.9), 0 0 14px rgba(139, 92, 246, .48);
+  background:
+    radial-gradient(circle at 50% 45%, rgba(93, 50, 150, .15), rgba(10, 8, 18, .05) 48%, transparent 70%);
+}
