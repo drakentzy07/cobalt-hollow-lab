@@ -50,18 +50,40 @@ describe('HIGHFLY PF-5 permanent Core authority', () => {
     }
   });
 
-  it('keeps Training allocation manual and allows off-meta builds on top of natural class growth', () => {
+  it('keeps Training manual/off-meta while natural level growth follows class affinity', () => {
     let mage = createHighflyHunterProfile({ profileId: 'strong-mage', classId: 'mage', level: 40 });
     const naturalStr = mage.training.core.STR.current;
+    const intAt40 = mage.training.core.INT.current;
+    const totalAt40 = HIGHFLY_CORE_STATS.reduce(
+      (sum, stat) => sum + mage.training.core[stat].current,
+      0,
+    );
+
     mage = earnTrainingPoints(mage, 25, proof);
     mage = allocateTrainingPoints(mage, 'STR', 25);
     expect(mage.training.core.STR.trainingAllocated).toBe(25);
     expect(mage.training.core.STR.current).toBeCloseTo(naturalStr + 25, 8);
     expect(mage.training.points.available).toBe(0);
 
+    const totalTrainedAt40 = HIGHFLY_CORE_STATS.reduce(
+      (sum, stat) => sum + mage.training.core[stat].current,
+      0,
+    );
+    expect(totalTrainedAt40).toBeCloseTo(totalAt40 + 25, 8);
+
     const lv60 = applyHunterProgression(mage, { level: 60 });
+    const totalAt60 = HIGHFLY_CORE_STATS.reduce(
+      (sum, stat) => sum + lv60.training.core[stat].current,
+      0,
+    );
+
     expect(lv60.training.core.STR.trainingAllocated).toBe(25);
-    expect(lv60.training.core.STR.current).toBeGreaterThan(mage.training.core.STR.current);
+    // Mage has zero natural STR weight by design: off-meta STR came only from Training.
+    expect(lv60.training.core.STR.current).toBeCloseTo(mage.training.core.STR.current, 8);
+    // Natural level growth instead follows Mage affinity.
+    expect(lv60.training.core.INT.current).toBeGreaterThan(intAt40);
+    // LV40 -> LV60 is exactly twenty levels, so natural total Core rises by 20.
+    expect(totalAt60 - totalTrainedAt40).toBeCloseTo(20, 8);
   });
 
   it('keeps every stat viable for every class', () => {
@@ -97,6 +119,47 @@ describe('HIGHFLY PF-5 permanent Core authority', () => {
     probe.level = 60;
     recalcPlayerStats(probe, 'warrior', {}, undefined, {});
     expect(probe.stats.int).not.toBeCloseTo(expected.INT, 4);
+  });
+
+  it('converts trained STR/VIT into derived combat through Claude recalc exactly once', () => {
+    const baseProfile = createHighflyHunterProfile({
+      profileId: 'derived-base',
+      classId: 'warrior',
+      level: 1,
+    });
+    setActiveHighflyHunterProfile(baseProfile);
+    bindHighflyLocalStatAuthority(900);
+
+    const base = createPlayer(900, 'warrior', { x: 0, y: 0, z: 0 }, 'Base');
+    recalcPlayerStats(base, 'warrior', {}, undefined, {});
+    const baseAttackPower = base.attackPower;
+    const baseMaxHp = base.maxHp;
+
+    clearHighflyLocalStatAuthority();
+    clearActiveHighflyHunterProfile();
+
+    let trainedProfile = createHighflyHunterProfile({
+      profileId: 'derived-trained',
+      classId: 'warrior',
+      level: 1,
+    });
+    trainedProfile = earnTrainingPoints(trainedProfile, 40, {
+      ...proof,
+      evidenceId: 'pf5-derived-combat',
+    });
+    trainedProfile = allocateTrainingPoints(trainedProfile, 'STR', 20);
+    trainedProfile = allocateTrainingPoints(trainedProfile, 'VIT', 20);
+
+    setActiveHighflyHunterProfile(trainedProfile);
+    bindHighflyLocalStatAuthority(901);
+
+    const trained = createPlayer(901, 'warrior', { x: 0, y: 0, z: 0 }, 'Trained');
+    recalcPlayerStats(trained, 'warrior', {}, undefined, {});
+
+    expect(trained.stats.str).toBeCloseTo(baseProfile.training.core.STR.current + 20, 8);
+    expect(trained.stats.sta).toBeCloseTo(baseProfile.training.core.VIT.current + 20, 8);
+    expect(trained.attackPower).toBeGreaterThan(baseAttackPower);
+    expect(trained.maxHp).toBeGreaterThan(baseMaxHp);
   });
 
   it('uses bounded side mechanics without double-counting AP/HP/crit', () => {
