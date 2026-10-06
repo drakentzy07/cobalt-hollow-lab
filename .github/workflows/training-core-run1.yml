@@ -27,6 +27,16 @@ jobs:
       - name: Checkout lab overlay
         uses: actions/checkout@v4
 
+      - name: Checkout latest Skin Lab v2
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: highfly-skinlab-v2-warrior-black
+          path: skinlab-source
+          sparse-checkout: |
+            skinlab-v2
+          sparse-checkout-cone-mode: true
+
       - name: Checkout frozen ClaudeCraft code slice
         uses: actions/checkout@v4
         with:
@@ -2724,6 +2734,20 @@ jobs:
           await page.screenshot({ path: '../run1j-j4-s23.png', fullPage: true }).catch(() => {});
           await browser.close();
           NODE
+
+      - name: Merge persistent Skin Lab route into GAME-C2 Pages
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s skinlab-source/skinlab-v2/index.html
+          rm -rf upstream/dist/skinlab-v2
+          mkdir -p upstream/dist/skinlab-v2
+          cp skinlab-source/skinlab-v2/index.html upstream/dist/skinlab-v2/index.html
+          test -s upstream/dist/index.html
+          test -s upstream/dist/skinlab-v2/index.html
+          grep -F "HIGHFLY · SKIN LAB v2" upstream/dist/skinlab-v2/index.html
+          echo "PAGES_BUNDLE_OK=GAME_C2_PLUS_SKINLAB"
 
       - name: Configure GitHub Pages for GAME-C2 playtest
         if: success()
