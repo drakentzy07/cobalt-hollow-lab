@@ -375,8 +375,10 @@ jobs:
           grep -F "highflyResourceCostMultiplier" upstream/src/sim/types.ts
           grep -F "HIGHFLY INT: final resolved resource efficiency" upstream/src/sim/combat/ability_resolution.ts
           grep -F "highflyResourceRecoveryMultiplier" upstream/src/sim/combat/auras.ts
-          grep -F "trainingGain(profile.training.core.AGI.trainingGrowth)" upstream/src/highfly/training/combat_runtime.ts
-          grep -F "baseline.hitBonus + precisionBonus" upstream/src/highfly/training/combat_runtime.ts
+          ! grep -F "trainingGain(profile.training.core.AGI.trainingGrowth)" upstream/src/highfly/training/combat_runtime.ts
+          ! grep -F "baseline.hitBonus + precisionBonus" upstream/src/highfly/training/combat_runtime.ts
+          grep -F "highflyUniqueCoreModifiers(profile)" upstream/src/highfly/training/combat_runtime.ts
+          grep -F "baseline.hitBonus + unique.hitBonus" upstream/src/highfly/training/combat_runtime.ts
           grep -F "HIGHFLY_RUN1J_REAL_DEVICE_FIX_APPLIED=1" <(python -c "print('HIGHFLY_RUN1J_REAL_DEVICE_FIX_APPLIED=1')")
           grep -F "staleDonorLevel20" upstream/src/main.ts
           grep -F "SALTAR EJERCICIO" upstream/src/highfly/training/ui.ts
