@@ -91,9 +91,9 @@ export function adaptationStimulusForCurrent(
 }
 
 /**
- * The first valid real session preserves the Awakening and earns a small,
- * visible decimal increment. The divisor is a versioned game tuning constant,
- * not a physiological claim.
+ * The first valid real session preserves permanent Core and earns a small,
+ * decimal Training Point reward. Allocation remains a separate player choice.
+ * The divisor is a versioned game tuning constant, not a physiological claim.
  */
 export function initialTrainingGrowthDelta(
   current: number,
@@ -120,9 +120,10 @@ function legacyStatUps(profile: HighflyHunterProfile, stat: HighflyCoreStat): nu
 
 /**
  * Migration order matters:
- * 1) RUN1-A fixed-10 profiles are first reconstructed from their own evidence.
- * 2) Every schema-1 earned Current becomes Training Growth.
- * 3) The class Awakening base is added ONCE by migrateAwakeningStats().
+ * 1) RUN1-A fixed-10 profiles are reconstructed from their own evidence.
+ * 2) Legacy earned Current is interpreted as real Training allocation.
+ * 3) migrateAwakeningStats() restores class base + level growth exactly once.
+ * 4) Existing wallet/evidence/history survive unchanged.
  */
 export function migrateLegacyFixedCoreBaseline(
   profile: HighflyHunterProfile,
