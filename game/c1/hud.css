@@ -388,7 +388,7 @@ body.mobile-touch.hf-game-c23 #debuff-bar {
   gap: 4px !important;
   width: auto !important;
   max-width: 190px !important;
-  pointer-events: auto;
+  pointer-events: none;
 }
 body.mobile-touch.hf-game-c23 #buff-bar {
   right: calc(286px + env(safe-area-inset-right)) !important;
@@ -427,6 +427,7 @@ body.hf-c23-hud-editing [data-hf-hud-target] {
   outline: 1px dashed rgba(174, 116, 255, .48) !important;
   outline-offset: 4px !important;
   touch-action: none !important;
+  pointer-events: auto !important;
   filter: none !important;
 }
 body.hf-c23-hud-editing [data-hf-hud-target="skills"] {
