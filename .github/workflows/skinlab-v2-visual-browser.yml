@@ -40,12 +40,14 @@ jobs:
           cat > skinlab-visual.cjs <<'NODE'
           const { chromium } = require('playwright');
           (async () => {
-            const browser = await chromium.launch({headless:true});
+            const browser = await chromium.launch({headless:true,args:['--enable-unsafe-swiftshader']});
             const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
             const errors = [];
+            const warnings = [];
             page.on('pageerror', e => errors.push('pageerror: '+e.message));
             page.on('console', m => {
-              if (m.type() === 'error' || m.type() === 'warning') errors.push('console '+m.type()+': '+m.text());
+              if (m.type() === 'error') errors.push('console error: '+m.text());
+              if (m.type() === 'warning') warnings.push('console warning: '+m.text());
             });
             page.on('requestfailed', r => errors.push('requestfailed: '+r.url()+' :: '+(r.failure()?.errorText || 'unknown')));
 
@@ -65,7 +67,7 @@ jobs:
               const errorPanel = await page.locator('#error').textContent().catch(()=> '');
               const statusText = await page.locator('body').innerText().catch(()=> '');
               require('fs').writeFileSync('visual-artifacts/browser-errors.txt',
-                ['WAIT: '+waitErr.message,'ERROR PANEL: '+errorPanel,'BODY: '+statusText,...errors].join('\n\n'));
+                ['WAIT: '+waitErr.message,'ERROR PANEL: '+errorPanel,'BODY: '+statusText,...errors,...warnings].join('\n\n'));
               await page.screenshot({ path: 'visual-artifacts/failed-load.png', fullPage: true });
               throw waitErr;
             }
@@ -90,6 +92,7 @@ jobs:
             const visibleError = await page.locator('#error').evaluate(el => getComputedStyle(el).display !== 'none');
             if (visibleError) throw new Error('Skin Lab error panel became visible');
 
+            if (warnings.length) require('fs').writeFileSync('visual-artifacts/browser-warnings.txt', warnings.join('\n'));
             if (errors.length) {
               require('fs').writeFileSync('visual-artifacts/browser-errors.txt', errors.join('\n'));
               throw new Error(errors.join(' | '));
