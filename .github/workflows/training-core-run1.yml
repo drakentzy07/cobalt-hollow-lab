@@ -378,7 +378,7 @@ jobs:
           grep -F 'DESPERTAR <b>' upstream/src/highfly/training/ui.ts
           grep -F 'NIVEL <b>+' upstream/src/highfly/training/ui.ts
           grep -F 'TRAINING <b>+' upstream/src/highfly/training/ui.ts
-          grep -F "\${state.calibrated ? 'BASE ESTABLECIDA' : 'EN CALIBRACIÓN'}" upstream/src/highfly/training/ui.ts
+          grep -F "\${profile.awakening.initialized ? (state.calibrated ? 'CORE + TRAINING' : 'DESPERTAR ACTIVO') : 'SIN DESPERTAR'}" upstream/src/highfly/training/ui.ts
           grep -F 'body.start-screen-open .homepage-footer' upstream/src/styles/shell.website.css
           grep -F '#loot-explorer-window' upstream/src/styles/shell.css
           grep -F '#highfly-chat-send' upstream/src/styles/shell.css
