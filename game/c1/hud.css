@@ -552,15 +552,15 @@ body.mobile-touch.hf-game-c24.hf-c23-hud-editing #actionbar .action-btn.empty {
    ========================================================================== */
 
 /* Combat HUD never leaks into entry / creator / loading. */
-body.mobile-touch.hf-game-c25:not(.game-active) #actionbar,
-body.mobile-touch.hf-game-c25:not(.game-active) #mobile-action-attack,
-body.mobile-touch.hf-game-c25:not(.game-active) #mobile-target-cycle,
-body.mobile-touch.hf-game-c25:not(.game-active) #mobile-jump,
-body.mobile-touch.hf-game-c25:not(.game-active) #mobile-evade,
-body.mobile-touch.hf-game-c25:not(.game-active) #hf-c1-special-seats,
-body.mobile-touch.hf-game-c25:not(.game-active) #hf-c1-utility-lane,
-body.mobile-touch.hf-game-c25:not(.game-active) #buff-bar,
-body.mobile-touch.hf-game-c25:not(.game-active) #debuff-bar {
+body.mobile-touch.hf-game-c25:not(.hf-c25-world-ready) #actionbar,
+body.mobile-touch.hf-game-c25:not(.hf-c25-world-ready) #mobile-action-attack,
+body.mobile-touch.hf-game-c25:not(.hf-c25-world-ready) #mobile-target-cycle,
+body.mobile-touch.hf-game-c25:not(.hf-c25-world-ready) #mobile-jump,
+body.mobile-touch.hf-game-c25:not(.hf-c25-world-ready) #mobile-evade,
+body.mobile-touch.hf-game-c25:not(.hf-c25-world-ready) #hf-c1-special-seats,
+body.mobile-touch.hf-game-c25:not(.hf-c25-world-ready) #hf-c1-utility-lane,
+body.mobile-touch.hf-game-c25:not(.hf-c25-world-ready) #buff-bar,
+body.mobile-touch.hf-game-c25:not(.hf-c25-world-ready) #debuff-bar {
   visibility: hidden !important;
   pointer-events: none !important;
 }
@@ -579,6 +579,23 @@ body.mobile-touch.hf-game-c25 #actionbar .action-btn[data-hotbar-slot] {
   box-sizing: border-box !important;
   padding: 0 !important;
   border-radius: 50% !important;
+  overflow: hidden !important;
+}
+body.mobile-touch.hf-game-c25 #actionbar .action-btn[data-hotbar-slot] .icon-label {
+  position: absolute !important;
+  inset: 2px !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 50% !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  overflow: hidden !important;
+  clip-path: circle(50% at 50% 50%) !important;
+}
+body.mobile-touch.hf-game-c25 #actionbar .action-btn[data-hotbar-slot] :is(.cd-overlay, .recharge-overlay) {
+  border-radius: 50% !important;
+  overflow: hidden !important;
 }
 
 /* Definitive two-arc crescent. right grows toward screen centre. */
@@ -640,6 +657,47 @@ body.mobile-touch.hf-game-c25 #mobile-jump {
 body.mobile-touch.hf-game-c25 #mobile-evade {
   right:278px !important;
   bottom:8px !important;
+}
+
+/* Utility/passive seats use one visual family: same box, same rim, same crop. */
+body.mobile-touch.hf-game-c25 #hf-c1-utility-lane {
+  gap: 6px !important;
+}
+body.mobile-touch.hf-game-c25 #hf-c1-gem-seat,
+body.mobile-touch.hf-game-c25 #mobile-consumable-seat,
+body.mobile-touch.hf-game-c25 #mobile-stance-anchor {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(206, 185, 255, .34) !important;
+  background: rgba(9, 7, 16, .70) !important;
+  color: rgba(238, 228, 255, .72) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.025) !important;
+  overflow: hidden !important;
+}
+body.mobile-touch.hf-game-c25 #mobile-consumable-seat .icon-label,
+body.mobile-touch.hf-game-c25 #mobile-stance-anchor .icon-label {
+  position: absolute !important;
+  inset: 2px !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 6px !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  overflow: hidden !important;
+}
+body.mobile-touch.hf-game-c25 #hf-c1-gem-seat[data-element="base"],
+body.mobile-touch.hf-game-c25 #mobile-consumable-seat.empty,
+body.mobile-touch.hf-game-c25 #mobile-stance-anchor[aria-pressed="false"] {
+  background: rgba(9, 7, 16, .56) !important;
+  border-color: rgba(206, 185, 255, .22) !important;
 }
 
 /* PASSIVE / BUFF / DEBUFF state family: uniform rounded-square tiles. */
