@@ -641,11 +641,15 @@ export function createHighflyHunterProfile(args: {
 }
 
 /**
- * Migration is intentionally power-preserving:
- * - schema 1 zero-origin values became Training Growth in schema 2;
- * - schema 2 Training Growth becomes wallet-backed Training allocation in schema 3;
- * - Natural Level Growth starts at zero until PF-2 owns the 1..99 curve.
- * No existing Hunter gains or loses Core merely by loading a newer schema.
+ * Migration is intentionally evidence-preserving:
+ * - schema 1 zero-origin earned values are retained as Training allocation;
+ * - schema 2 Training Growth remains Training allocation;
+ * - schema 3 wallet allocation remains authoritative;
+ * - schema 4 accidentally zeroed permanent base/growth and is restored here;
+ * - schema 5 final Core is Base + Natural Level Growth + Training.
+ *
+ * Loading never mints Training Points. Restoring class/level Core is not a
+ * Training reward; it reconstructs permanent progression that schema 4 hid.
  */
 export function migrateAwakeningStats(profile: HighflyHunterProfile): HighflyHunterProfile {
   const legacy = profile as HighflyHunterProfile & {
