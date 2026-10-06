@@ -1,5 +1,5 @@
-export const HIGHFLY_TRAINING_SCHEMA_VERSION = 4 as const;
-export const HIGHFLY_PROGRESSION_SCHEMA_VERSION = 4 as const;
+export const HIGHFLY_TRAINING_SCHEMA_VERSION = 5 as const;
+export const HIGHFLY_PROGRESSION_SCHEMA_VERSION = 5 as const;
 export const HIGHFLY_TRAINING_SCORING_VERSION = 'run2-awakening-v1' as const;
 
 export const HIGHFLY_CORE_STATS = ['STR', 'AGI', 'VIT', 'PER', 'INT'] as const;
@@ -7,7 +7,7 @@ export type HighflyCoreStat = (typeof HIGHFLY_CORE_STATS)[number];
 export type HighflyCoreVector = Record<HighflyCoreStat, number>;
 
 export const HIGHFLY_AWAKENING_STATS_VERSION = 1 as const;
-export const HIGHFLY_AWAKENING_BUDGET = 0 as const;
+export const HIGHFLY_AWAKENING_BUDGET = 50 as const;
 export const HIGHFLY_AWAKENING_CLASSES = [
   'warrior',
   'mage',
@@ -22,8 +22,8 @@ export const HIGHFLY_AWAKENING_CLASSES = [
 export type HighflyAwakeningClassId = (typeof HIGHFLY_AWAKENING_CLASSES)[number];
 
 export const HIGHFLY_NORMAL_MAX_LEVEL = 99 as const;
-/** PF-5 contract: character level grants ZERO STR/AGI/VIT/PER/INT. */
-export const HIGHFLY_NATURAL_GROWTH_BUDGET = 0 as const;
+/** LV2..99 grants one normalized natural Core point per level: 98 total. */
+export const HIGHFLY_NATURAL_GROWTH_BUDGET = 98 as const;
 
 /**
  * ClaudeCraft v0.44.0 donor statsPerLevel remapped to HIGHFLY:
@@ -45,9 +45,9 @@ export const HIGHFLY_NATURAL_GROWTH_WEIGHTS: Readonly<
 } as const;
 
 /**
- * Archived ClaudeCraft class-affinity reference from the pre-PF5 experiment.
- * PF-5 does NOT inject these values into STR/AGI/VIT/PER/INT. Class identity
- * now affects derived-stat conversion only (Stat Bible), never the five Core.
+ * Awakening v1 reuses ClaudeCraft's class identity, normalized to an equal
+ * 50-point HIGHFLY budget. Claude STA maps to VIT and SPI maps to PER.
+ * These are permanent birth aptitudes, not Training rewards.
  */
 export const HIGHFLY_AWAKENING_BASES: Readonly<
   Record<HighflyAwakeningClassId, Readonly<HighflyCoreVector>>
@@ -77,13 +77,13 @@ export interface HighflyAwakeningState {
 }
 
 export interface HighflyCoreStatState {
-  /** Authoritative Hunter Core Stat = allocated real-Training points only. */
+  /** Permanent Hunter Core = Awakening base + Natural Level Growth + Training allocation. */
   current: number;
-  /** Historical best Training-only value. */
+  /** Historical best permanent value. */
   peak: number;
-  /** Legacy compatibility field. Schema v4 always normalizes it to zero. */
+  /** Immutable class aptitude written once by Awakening. */
   awakeningBase: number;
-  /** Legacy compatibility field. Character level never grants Core in schema v4. */
+  /** Automatic class-affinity growth earned by character level. */
   naturalLevelGrowth: number;
   /** Training Points currently allocated to this primary stat. */
   trainingAllocated: number;
@@ -323,15 +323,17 @@ function blankCoreStat(
   naturalLevelGrowth = 0,
   trainingAllocated = 0,
 ): HighflyCoreStatState {
-  // PF-5 authority: only validated real Training may appear in Core.current.
-  const current = finiteNonNegative(trainingAllocated);
+  const current =
+    finiteNonNegative(awakeningBase) +
+    finiteNonNegative(naturalLevelGrowth) +
+    finiteNonNegative(trainingAllocated);
   return {
     current,
     peak: current,
-    awakeningBase: 0,
-    naturalLevelGrowth: 0,
-    trainingAllocated: current,
-    trainingGrowth: current,
+    awakeningBase: finiteNonNegative(awakeningBase),
+    naturalLevelGrowth: finiteNonNegative(naturalLevelGrowth),
+    trainingAllocated: finiteNonNegative(trainingAllocated),
+    trainingGrowth: finiteNonNegative(trainingAllocated),
     progress: 0,
     confidence: 0,
     readiness: 1,
@@ -411,7 +413,10 @@ export function allocateTrainingPoints(
 
   const previousState = profile.training.core[stat];
   const nextTrainingAllocated = previousState.trainingAllocated + amount;
-  const nextCurrent = nextTrainingAllocated;
+  const nextCurrent =
+    previousState.awakeningBase +
+    previousState.naturalLevelGrowth +
+    nextTrainingAllocated;
 
   const nextAllocated = {
     ...previousWallet.allocated,
@@ -472,14 +477,13 @@ export function useFreeTrainingReset(
   const nextCore = {} as HighflyCoreStatsState;
   for (const stat of HIGHFLY_CORE_STATS) {
     const previous = profile.training.core[stat];
+    const current = previous.awakeningBase + previous.naturalLevelGrowth;
     nextCore[stat] = {
       ...previous,
-      current: 0,
-      // Keep the historical Training-only peak; a respec moves allocation,
-      // it does not erase evidence of previously achieved Training power.
-      peak: Math.max(0, previous.peak),
-      awakeningBase: 0,
-      naturalLevelGrowth: 0,
+      current,
+      // A respec moves only Training allocation. Birth aptitude, natural level
+      // growth and the historical peak remain intact.
+      peak: Math.max(previous.peak, current),
       trainingAllocated: 0,
       trainingGrowth: 0,
     };
@@ -521,20 +525,24 @@ export function initializeAwakeningStats(
 ): HighflyHunterProfile {
   if (profile.awakening?.initialized) return profile;
 
+  const base = HIGHFLY_AWAKENING_BASES[classId];
+  const naturalGrowth = naturalLevelGrowthFor(classId, profile.hunter.level);
   const nextCore = {} as HighflyCoreStatsState;
+  const allocated = { ...ZERO_CORE_VECTOR };
+
   for (const stat of HIGHFLY_CORE_STATS) {
     const previous = profile.training.core[stat];
     const trainingAllocated = finiteNonNegative(
-      (previous as Partial<HighflyCoreStatState> | undefined)?.trainingAllocated ??
-        previous?.trainingGrowth ??
-        previous?.current,
+      previous?.trainingAllocated ?? previous?.trainingGrowth ?? previous?.current,
     );
+    allocated[stat] = trainingAllocated;
+    const current = base[stat] + naturalGrowth[stat] + trainingAllocated;
     nextCore[stat] = {
       ...previous,
-      current: trainingAllocated,
-      peak: Math.max(trainingAllocated, finiteNonNegative(previous?.peak)),
-      awakeningBase: 0,
-      naturalLevelGrowth: 0,
+      current,
+      peak: Math.max(current, finiteNonNegative(previous?.peak)),
+      awakeningBase: base[stat],
+      naturalLevelGrowth: naturalGrowth[stat],
       trainingAllocated,
       trainingGrowth: trainingAllocated,
       progress: finiteNonNegative(previous?.progress),
@@ -545,11 +553,11 @@ export function initializeAwakeningStats(
   }
 
   const existing = profile.training.points;
-  const allocated = { ...ZERO_CORE_VECTOR };
-  for (const stat of HIGHFLY_CORE_STATS) allocated[stat] = nextCore[stat].trainingAllocated;
   const available = finiteNonNegative(existing?.available);
   const points: HighflyTrainingPointWallet = {
-    earned: available + HIGHFLY_CORE_STATS.reduce((sum, stat) => sum + allocated[stat], 0),
+    earned:
+      available +
+      HIGHFLY_CORE_STATS.reduce((sum, stat) => sum + allocated[stat], 0),
     available,
     allocated,
     freeResetUsed: existing?.freeResetUsed ?? false,
@@ -564,9 +572,8 @@ export function initializeAwakeningStats(
       initialized: true,
       classId,
       initializedAt,
-      // Awakening now records identity only. It grants no Training Core.
-      budget: 0,
-      base: { ...ZERO_CORE_VECTOR },
+      budget: HIGHFLY_AWAKENING_BUDGET,
+      base: { ...base },
     },
     training: {
       ...profile.training,
@@ -652,42 +659,49 @@ export function migrateAwakeningStats(profile: HighflyHunterProfile): HighflyHun
     : isAwakeningClassId(legacy.awakening?.classId)
       ? legacy.awakening!.classId
       : null;
+  const base = classId ? HIGHFLY_AWAKENING_BASES[classId] : ZERO_CORE_VECTOR;
+  const natural = classId
+    ? naturalLevelGrowthFor(classId, legacy.hunter?.level ?? 1)
+    : ZERO_CORE_VECTOR;
 
-  const legacyWallet = legacy.training.points;
+  const wallet = legacy.training.points;
   const nextCore = {} as HighflyCoreStatsState;
   const allocated = { ...ZERO_CORE_VECTOR };
 
   for (const stat of HIGHFLY_CORE_STATS) {
     const previous = legacy.training.core[stat] as Partial<HighflyCoreStatState>;
     const legacyCurrent = finiteNonNegative(previous.current);
-    const syntheticBase =
+    const syntheticLegacyBase =
       finiteNonNegative(previous.awakeningBase) +
       finiteNonNegative(previous.naturalLevelGrowth);
 
-    // Wallet-backed allocation only existed as an authority from schema 3.
-    // Schema 1/2 migration must trust their historical Core/growth evidence even
-    // if a malformed or test-built object happens to carry an empty wallet.
+    // Schema 3+ already has wallet-backed Training allocation. In schema 4 the
+    // permanent base/growth were accidentally zeroed, so restore them without
+    // converting them into earned Training Points.
     const walletAllocated =
-      legacy.schemaVersion >= 3 ? legacyWallet?.allocated?.[stat] : undefined;
+      legacy.schemaVersion >= 3 ? wallet?.allocated?.[stat] : undefined;
     const trainingAllocated = finiteNonNegative(
       walletAllocated ??
         previous.trainingAllocated ??
         previous.trainingGrowth ??
         (legacy.schemaVersion < 2
           ? legacyCurrent
-          : Math.max(0, legacyCurrent - syntheticBase)),
+          : Math.max(0, legacyCurrent - syntheticLegacyBase)),
     );
-    const trainingPeak = Math.max(
-      trainingAllocated,
-      Math.max(0, finiteNonNegative(previous.peak) - syntheticBase),
-    );
-
     allocated[stat] = trainingAllocated;
+
+    const current = base[stat] + natural[stat] + trainingAllocated;
+    const legacyPeak = finiteNonNegative(previous.peak);
+    const restoredPeak =
+      legacy.schemaVersion === 4
+        ? base[stat] + natural[stat] + Math.max(trainingAllocated, legacyPeak)
+        : Math.max(current, legacyPeak);
+
     nextCore[stat] = {
-      current: trainingAllocated,
-      peak: trainingPeak,
-      awakeningBase: 0,
-      naturalLevelGrowth: 0,
+      current,
+      peak: restoredPeak,
+      awakeningBase: base[stat],
+      naturalLevelGrowth: natural[stat],
       trainingAllocated,
       trainingGrowth: trainingAllocated,
       progress: finiteNonNegative(previous.progress),
@@ -697,12 +711,12 @@ export function migrateAwakeningStats(profile: HighflyHunterProfile): HighflyHun
     };
   }
 
-  const available = finiteNonNegative(legacyWallet?.available);
+  const available = finiteNonNegative(wallet?.available);
   const points: HighflyTrainingPointWallet = {
     earned: available + HIGHFLY_CORE_STATS.reduce((sum, stat) => sum + allocated[stat], 0),
     available,
     allocated,
-    freeResetUsed: legacyWallet?.freeResetUsed ?? false,
+    freeResetUsed: wallet?.freeResetUsed ?? false,
   };
   assertTrainingPointConservation(points);
 
@@ -715,8 +729,8 @@ export function migrateAwakeningStats(profile: HighflyHunterProfile): HighflyHun
           initialized: true,
           classId,
           initializedAt: legacy.awakening?.initializedAt ?? profile.createdAt,
-          budget: 0,
-          base: { ...ZERO_CORE_VECTOR },
+          budget: HIGHFLY_AWAKENING_BUDGET,
+          base: { ...base },
         }
       : emptyAwakening(),
     training: {
@@ -735,22 +749,24 @@ export function applyNaturalLevelGrowth(
   profile: HighflyHunterProfile,
   level = profile.hunter.level,
 ): HighflyHunterProfile {
+  if (!profile.awakening.initialized || !profile.awakening.classId) return profile;
   const normalizedLevel = clampHighflyNormalLevel(level);
+  const growth = naturalLevelGrowthFor(profile.awakening.classId, normalizedLevel);
   const nextCore = {} as HighflyCoreStatsState;
 
-  // Compatibility function retained because persistence/progression callers
-  // already use it. In PF-5, level is deliberately isolated from Core.
   for (const stat of HIGHFLY_CORE_STATS) {
     const previous = profile.training.core[stat];
-    const trainingAllocated = finiteNonNegative(previous.trainingAllocated);
+    const naturalLevelGrowth = growth[stat];
+    const current =
+      previous.awakeningBase +
+      naturalLevelGrowth +
+      previous.trainingAllocated;
     nextCore[stat] = {
       ...previous,
-      current: trainingAllocated,
-      peak: Math.max(previous.peak, trainingAllocated),
-      awakeningBase: 0,
-      naturalLevelGrowth: 0,
-      trainingAllocated,
-      trainingGrowth: trainingAllocated,
+      current,
+      peak: Math.max(previous.peak, current),
+      naturalLevelGrowth,
+      trainingGrowth: previous.trainingAllocated,
     };
   }
 
@@ -760,11 +776,6 @@ export function applyNaturalLevelGrowth(
     training: { ...profile.training, core: nextCore },
   };
 }
-
-/**
- * PF-2/PF-5: level/rank/spec/class progression belongs to the game chassis.
- * It never grants STR/AGI/VIT/PER/INT. Only validated Training allocation does.
- */
 
 /**
  * PF-2: real level owns only Natural Level Growth. Rank/spec/debug class changes
@@ -820,7 +831,8 @@ export function commitTrainingCoreStat(
   if (nextCurrent + 1e-9 < previous.current) {
     throw new Error('HIGHFLY Core Stats cannot decrease outside an authorized Training respec');
   }
-  const trainingAllocated = nextCurrent;
+  const trainingAllocated =
+    nextCurrent - previous.awakeningBase - previous.naturalLevelGrowth;
   if (trainingAllocated + 1e-9 < previous.trainingAllocated) {
     throw new Error('HIGHFLY Training allocation cannot decrease outside an authorized respec');
   }
