@@ -99,19 +99,22 @@ describe('HIGHFLY GAME-C1 character + combat + HUD foundation', () => {
     expect(combined).not.toContain('hf_aff_');
   });
 
-  it('reserves exactly ten native skill seats in the approved compact cluster', () => {
+  it('reserves exactly ten native skill seats in the approved C2.5 crescent', () => {
     const css = readFileSync('src/styles/hf_game_c1.css', 'utf8');
-    expect(css.toLowerCase()).not.toContain('crescent');
     const points: Array<{ slot: number; right: number; bottom: number }> = [];
     const lines = css.split(/\r?\n/);
     for (let slot = 1; slot <= 10; slot++) {
       const marker = '[data-hotbar-slot="' + slot + '"]';
-      const line = lines.find((row) =>
-        row.includes(marker) && row.includes('{ right:') && row.includes('bottom:'),
+      const authored = lines.filter((row) =>
+        row.includes('hf-game-c25') &&
+        row.includes(marker) &&
+        row.includes('{ right:') &&
+        row.includes('bottom:'),
       );
-      expect(line, 'missing S' + slot).toBeDefined();
-      const match = line?.match(/right:\s*(\d+)px[^;]*;\s*bottom:\s*(\d+)px/);
-      expect(match, 'unreadable geometry S' + slot).not.toBeNull();
+      expect(authored.length, 'missing C2.5 S' + slot).toBeGreaterThan(0);
+      const line = authored[authored.length - 1];
+      const match = line.match(/right:\s*(\d+)px[^;]*;\s*bottom:\s*(\d+)px/);
+      expect(match, 'unreadable C2.5 geometry S' + slot).not.toBeNull();
       points.push({ slot, right: Number(match?.[1]), bottom: Number(match?.[2]) });
     }
     expect(new Set(points.map((p) => p.right + ':' + p.bottom)).size).toBe(10);
