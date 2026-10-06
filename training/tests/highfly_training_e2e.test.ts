@@ -30,27 +30,31 @@ function session(id: string, loadKg: number): SessionRecord {
 }
 
 describe('HIGHFLY Training RUN138 end-to-end', () => {
-  it('starts awakened and first real session earns decimal TP without auto-allocation', () => {
+  it('starts with permanent class Core and first real session earns TP without auto-allocation', () => {
     const profile = createHighflyHunterProfile({ profileId: 'e2e', classId: 'warrior' });
     const before = profile.training.core.STR.current;
+    expect(before).toBeGreaterThan(0);
+
     const first = runTrainingSessionPipeline({
       profile, session: session('baseline', 85),
       definitions: new Map([[squat.exerciseId, squat]]),
       recordedAt: '2026-09-30T01:00:00.000Z',
     });
+
     expect(first.profile.training.core.STR.current).toBeCloseTo(before, 10);
     expect(first.profile.training.core.STR.trainingGrowth).toBe(0);
     expect(first.profile.training.points.available).toBeGreaterThan(0);
     expect(first.outcomes.find((o) => o.stat === 'STR')?.outcome).toBe('calibrated');
   });
 
-  it('earns TP, allocates freely, then changes derived game power exactly once', () => {
+  it('earns TP, allocates freely, and bridge never double-counts Claude primary-derived power', () => {
     clearActiveHighflyHunterProfile();
     const initial = createHighflyHunterProfile({ profileId: 'e2e', classId: 'warrior' });
     const baseline = runTrainingSessionPipeline({
       profile: initial, session: session('baseline', 85),
       definitions: new Map([[squat.exerciseId, squat]]),
     });
+
     baseline.profile.training.core.STR.progress = progressCostForCurrent(
       baseline.profile.training.core.STR.current,
     );
@@ -58,17 +62,12 @@ describe('HIGHFLY Training RUN138 end-to-end', () => {
       profile: baseline.profile, session: session('improved', 90),
       definitions: new Map([[squat.exerciseId, squat]]),
     });
-    const outcome = improved.outcomes.find((o) => o.stat === 'STR');
-    expect(outcome?.outcome).toBe('stat_up');
-    expect(improved.profile.training.core.STR.current).toBe(0);
-    expect(improved.profile.training.points.available).toBeGreaterThan(0);
 
-    const restored = JSON.parse(JSON.stringify(improved.profile));
-    expect(restored.training.core.STR.current).toBe(0);
-    expect(restored.training.points.available).toBeCloseTo(
-      improved.profile.training.points.available,
-      10,
-    );
+    expect(improved.outcomes.find((o) => o.stat === 'STR')?.outcome).toBe('stat_up');
+    const naturalStr = improved.profile.training.core.STR.current;
+    expect(naturalStr).toBeGreaterThan(0);
+    expect(improved.profile.training.core.STR.trainingAllocated).toBe(0);
+    expect(improved.profile.training.points.available).toBeGreaterThan(0);
 
     const total = improved.profile.training.points.available;
     let allocated = allocateTrainingPoints(improved.profile, 'STR', total / 3);
@@ -78,10 +77,11 @@ describe('HIGHFLY Training RUN138 end-to-end', () => {
       'INT',
       allocated.training.points.available,
     );
+
     expect(allocated.training.points.available).toBeCloseTo(0, 10);
-    expect(allocated.training.core.STR.current).toBeGreaterThan(0);
-    expect(allocated.training.core.PER.current).toBeGreaterThan(0);
-    expect(allocated.training.core.INT.current).toBeGreaterThan(0);
+    expect(allocated.training.core.STR.current).toBeGreaterThan(naturalStr);
+    expect(allocated.training.core.PER.trainingAllocated).toBeGreaterThan(0);
+    expect(allocated.training.core.INT.trainingAllocated).toBeGreaterThan(0);
 
     setActiveHighflyHunterProfile(allocated);
     const entity: Parameters<typeof bindActiveTrainingCombatEntity>[0] & {
@@ -104,17 +104,24 @@ describe('HIGHFLY Training RUN138 end-to-end', () => {
       moveSpeed: 7,
       dead: false,
     };
+
     bindActiveTrainingCombatEntity(entity);
     setActiveTrainingBridgeFlags({
       enabled: true, applyMovement: true, applyPerception: true, applyIntelligence: true,
     });
     applyActiveTrainingBridgeToEntity(entity);
 
-    // STR / PER / INT are Training-only Core; only DERIVED game outputs move.
-    expect(entity.attackPower).toBeGreaterThan(100);
-    expect(entity.spellPower).toBeGreaterThan(50);
-    expect(entity.healPower).toBeGreaterThan(60);
-    expect(entity.maxHp).toBeGreaterThan(1000);
+    // Permanent Core already entered Claude's recalc. Bridge must not add AP/HP/crit again.
+    expect(entity.attackPower).toBe(100);
+    expect(entity.rangedPower).toBe(0);
+    expect(entity.spellPower).toBe(50);
+    expect(entity.healPower).toBe(60);
+    expect(entity.maxHp).toBe(1000);
+    expect(entity.critChance).toBe(0.05);
+    expect(entity.dodgeChance).toBe(0.05);
+
+    // Only HIGHFLY-specific side mechanics remain in this bridge.
+    expect(entity.moveSpeed).toBeGreaterThan(7);
     expect(entity.hitBonus).toBeGreaterThan(0);
     expect(entity.critDmgPhysBonus).toBeGreaterThan(0);
     expect(entity.highflyResourceCostMultiplier ?? 1).toBeLessThan(1);
