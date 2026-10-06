@@ -45,19 +45,30 @@ jobs:
             const errors = [];
             page.on('pageerror', e => errors.push('pageerror: '+e.message));
             page.on('console', m => {
-              if (m.type() === 'error') errors.push('console: '+m.text());
+              if (m.type() === 'error' || m.type() === 'warning') errors.push('console '+m.type()+': '+m.text());
             });
+            page.on('requestfailed', r => errors.push('requestfailed: '+r.url()+' :: '+(r.failure()?.errorText || 'unknown')));
 
             await page.goto('http://127.0.0.1:4173/skinlab-v2/', {
               waitUntil: 'domcontentloaded',
               timeout: 120000
             });
 
-            await page.waitForFunction(() => {
-              const r=document.querySelector('#rigPill')?.textContent || '';
-              const a=document.querySelector('#animPill')?.textContent || '';
-              return r.includes('✓') && a.includes('clips ✓');
-            }, { timeout: 120000 });
+            await page.screenshot({ path: 'visual-artifacts/boot.png', fullPage: true });
+            try {
+              await page.waitForFunction(() => {
+                const r=document.querySelector('#rigPill')?.textContent || '';
+                const a=document.querySelector('#animPill')?.textContent || '';
+                return r.includes('✓') && a.includes('clips ✓');
+              }, null, { timeout: 120000 });
+            } catch (waitErr) {
+              const errorPanel = await page.locator('#error').textContent().catch(()=> '');
+              const statusText = await page.locator('body').innerText().catch(()=> '');
+              require('fs').writeFileSync('visual-artifacts/browser-errors.txt',
+                ['WAIT: '+waitErr.message,'ERROR PANEL: '+errorPanel,'BODY: '+statusText,...errors].join('\n\n'));
+              await page.screenshot({ path: 'visual-artifacts/failed-load.png', fullPage: true });
+              throw waitErr;
+            }
 
             const bodyText = await page.locator('body').innerText();
             if (!bodyText.includes('Rig_Medium ✓')) throw new Error('Rig_Medium gate missing');
