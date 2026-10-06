@@ -36,7 +36,8 @@ describe('HIGHFLY GAME-C2.4 human closure', () => {
     expect(runtime).toContain("C2.4-human-closure");
     expect(runtime).toContain("'hf-game-c24'");
     expect(runtime).toContain("id: 's' + (index + 1)");
-    expect(css).toContain('[data-hotbar-slot="1"]  { right: 100px !important; bottom: 38px !important; }');
+    expect(css).toContain('[data-hotbar-slot="1"]  { right: 110px !important; bottom: 38px !important; }');
+    expect(css).toContain('[data-hotbar-slot="7"]  { bottom: 100px !important; }');
     expect(css).toContain('#mobile-jump { right: 218px !important; }');
     expect(css).toContain('#mobile-evade { right: 278px !important; }');
     expect(css).toContain('opacity: .20 !important;');
