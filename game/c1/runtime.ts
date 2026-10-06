@@ -576,7 +576,7 @@ function syncHighflyBagsCoach(): void {
 }
 
 function boot(): void {
-  document.body.classList.add('hf-game-c1', 'hf-game-c22');
+  document.body.classList.add('hf-game-c1', 'hf-game-c22', 'hf-game-c23');
   ensureBuildStamp();
   ensureSpecialSeats();
   ensureGhostSkillSeats();
