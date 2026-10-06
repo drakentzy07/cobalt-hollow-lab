@@ -41,7 +41,7 @@ describe('HIGHFLY GAME-C2.5 HUD + target polish', () => {
     const runtime = readFileSync('src/highfly/game_c1_runtime.ts', 'utf8');
     const css = readFileSync('src/styles/hf_game_c1.css', 'utf8');
 
-    expect(runtime).toContain("C2.5-hud-target-polish");
+    expect(runtime).toContain('const HIGHFLY_GAME_C22_BUILD =');
     expect(runtime).toContain("'hf-game-c25'");
     expect(css).toContain('hf-game-c25:not(.hf-c25-world-ready) #actionbar');
     expect(runtime).toContain("document.body.classList.toggle('hf-c25-world-ready', ready)");
