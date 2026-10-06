@@ -150,12 +150,20 @@ replace_once(
     "Sexo y edad sólo sirven para detectar valores extraordinarios. El peso corporal normaliza la fuerza relativa; ninguno otorga Core Stats por sí solo.",
     "RM explanatory copy",
 )
-replace_once(
-    ui,
-    "Los valores 10.0 son la base calibrada; el resultado de sesión se muestra por separado.",
-    "El Core nace del DESPERTAR de clase y después sólo aumenta mediante entrenamiento real",
-    "Core section copy",
-)
+ui_text = ui.read_text(encoding="utf-8")
+old_core_copy = "Los valores 10.0 son la base calibrada; el resultado de sesión se muestra por separado."
+if old_core_copy in ui_text:
+    replace_once(
+        ui,
+        old_core_copy,
+        "El Core nace del DESPERTAR de clase y progresa con NIVEL + TRAINING",
+        "Core section copy",
+    )
+elif (
+    "BASE DE CLASE + NIVEL + TRAINING" not in ui_text
+    and "El Core nace del DESPERTAR de clase" not in ui_text
+):
+    raise SystemExit("Core section copy: neither legacy nor permanent-Core copy found")
 
 # Cycle reset cannot be used as a recovery escape.
 replace_once(
