@@ -296,6 +296,10 @@ jobs:
           grep -q "HIGHFLY_TRAINING_BRIDGE_LAB_TUNING" training/runtime/bridge.ts
           grep -q "setActiveHighflyHunterProfile" training/runtime/profile_store.ts
           grep -q "loadHighflyTrainingProfile" overlays/highfly_training_persistence_v1.py
+          grep -F "function trainingSlotKey(playerClass: PlayerClass, name: string)" overlays/highfly_training_persistence_v1.py
+          grep -F "legacyTrainingSlotKey(name)" overlays/highfly_training_persistence_v1.py
+          grep -F "trainingProfileMatchesClass" overlays/highfly_training_persistence_v1.py
+          grep -F "loadHighflyTrainingProfile(playerClass, name)" overlays/highfly_training_persistence_v1.py
           grep -q "installHighflyTrainingUi" training/runtime/ui.ts
           grep -q "bindTouchTap" training/runtime/ui.ts
           grep -q "REGISTRAR SESIÓN" training/runtime/ui.ts
@@ -943,15 +947,17 @@ jobs:
             process.exitCode = 3;
           }
 
-          // RUN1-F: mutate the dedicated Training slot, reload, and prove that
-          // Training Core survives independently from CharacterState.
+          // RUN1-F / C2.1: mutate the Warrior Training identity slot, reload,
+          // then prove same-name Mage uses a separate class-bound Training profile.
           const injectedTraining = await page.evaluate(async () => {
             const db = await new Promise((resolve, reject) => {
               const request = indexedDB.open('highfly-offline', 1);
               request.onsuccess = () => resolve(request.result);
               request.onerror = () => reject(request.error);
             });
-            const key = 'training:' + encodeURIComponent('CobaltWarrior'.trim().toLowerCase());
+            const key =
+              'training:warrior:' +
+              encodeURIComponent('CobaltWarrior'.trim().toLowerCase());
             const slot = await new Promise((resolve, reject) => {
               const tx = db.transaction('saves', 'readonly');
               const request = tx.objectStore('saves').get(key);
@@ -960,8 +966,17 @@ jobs:
             });
             if (!slot?.profile?.training?.core?.STR) {
               db.close();
-              throw new Error('RUN1-F training slot was not persisted');
+              throw new Error('RUN1-F class-bound Warrior Training slot was not persisted');
             }
+            if (
+              slot.playerClass !== 'warrior' ||
+              slot.profile.awakening?.classId !== 'warrior' ||
+              slot.profile.hunter?.classId !== 'warrior'
+            ) {
+              db.close();
+              throw new Error('RUN1-F Warrior Training identity is inconsistent');
+            }
+
             const str = slot.profile.training.core.STR;
             if (
               !Number.isFinite(str.awakeningBase) ||
@@ -970,12 +985,15 @@ jobs:
               !slot.profile.training.points?.allocated
             ) {
               db.close();
-              throw new Error('RUN1-F PF-2 Core schema was not persisted');
+              throw new Error('RUN1-F permanent Core schema was not persisted');
             }
+
             const delta = 0.4;
             const trainingAllocated = str.trainingAllocated + delta;
-            const current = trainingAllocated;
+            const current =
+              str.awakeningBase + str.naturalLevelGrowth + trainingAllocated;
             const peak = Math.max(str.peak ?? current, current);
+
             slot.profile.training.core.STR = {
               ...str,
               current,
@@ -993,6 +1011,7 @@ jobs:
               Object.values(slot.profile.training.points.allocated)
                 .reduce((sum, value) => sum + Number(value || 0), 0);
             slot.updatedAt = Date.now() + 60000;
+
             await new Promise((resolve, reject) => {
               const tx = db.transaction('saves', 'readwrite');
               tx.objectStore('saves').put(slot, key);
@@ -1004,6 +1023,8 @@ jobs:
             return {
               current,
               peak,
+              awakeningBase: str.awakeningBase,
+              naturalLevelGrowth: str.naturalLevelGrowth,
               trainingAllocated,
               progress: 7,
               confidence: 0.91,
@@ -1033,6 +1054,8 @@ jobs:
               ? {
                   current: str.current,
                   peak: str.peak,
+                  awakeningBase: str.awakeningBase,
+                  naturalLevelGrowth: str.naturalLevelGrowth,
                   progress: str.progress,
                   confidence: str.confidence,
                   readiness: str.readiness,
@@ -1045,27 +1068,31 @@ jobs:
                 }
               : null;
           });
+
           console.log(
             'RUN1F_TRAINING_RELOAD',
             JSON.stringify({ injectedTraining, restoredTraining }, null, 2),
           );
           if (
             !restoredTraining ||
-            restoredTraining.current !== injectedTraining.current ||
-            restoredTraining.peak !== injectedTraining.peak ||
+            Math.abs(restoredTraining.current - injectedTraining.current) > 0.0001 ||
+            Math.abs(restoredTraining.peak - injectedTraining.peak) > 0.0001 ||
+            Math.abs(restoredTraining.awakeningBase - injectedTraining.awakeningBase) > 0.0001 ||
+            Math.abs(restoredTraining.naturalLevelGrowth - injectedTraining.naturalLevelGrowth) > 0.0001 ||
             restoredTraining.progress !== injectedTraining.progress ||
             Math.abs(restoredTraining.confidence - injectedTraining.confidence) > 0.0001 ||
             Math.abs(restoredTraining.readiness - injectedTraining.readiness) > 0.0001 ||
             Math.abs(restoredTraining.trainingAllocated - injectedTraining.trainingAllocated) > 0.0001 ||
             Math.abs(restoredTraining.walletAllocated - injectedTraining.trainingAllocated) > 0.0001 ||
-            restoredTraining.awakeningClassId !== 'warrior'
+            restoredTraining.awakeningClassId !== 'warrior' ||
+            restoredTraining.classId !== 'warrior'
           ) {
             console.error('RUN1F_TRAINING_RELOAD_FAIL', { injectedTraining, restoredTraining });
             process.exitCode = 6;
           }
 
-          // Regression for Lucas' real-device report: playing another class with
-          // the SAME name must never overwrite the previous class' progress.
+          // Same visible name + different class is a DIFFERENT Hunter identity.
+          // Its class base/natural growth must never reuse Warrior Training.
           await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
           await enterOffline({ cls: 'mage', hunterName: 'CobaltWarrior' });
           const mageExpected = await page.evaluate(() => {
@@ -1088,36 +1115,65 @@ jobs:
               request.onsuccess = () => resolve(request.result);
               request.onerror = () => reject(request.error);
             });
+            const mageKey =
+              'training:mage:' +
+              encodeURIComponent('CobaltWarrior'.trim().toLowerCase());
+            const warriorKey =
+              'training:warrior:' +
+              encodeURIComponent('CobaltWarrior'.trim().toLowerCase());
+            const [mageSlot, warriorSlot] = await Promise.all([
+              new Promise((resolve, reject) => {
+                const tx = db.transaction('saves', 'readonly');
+                const request = tx.objectStore('saves').get(mageKey);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+              }),
+              new Promise((resolve, reject) => {
+                const tx = db.transaction('saves', 'readonly');
+                const request = tx.objectStore('saves').get(warriorKey);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+              }),
+            ]);
             db.close();
+
             const profile = primary?.trainingProfile ?? null;
             const str = profile?.training?.core?.STR ?? null;
             return {
               current: str?.current ?? null,
-              peak: str?.peak ?? null,
               awakeningBase: str?.awakeningBase ?? null,
               naturalLevelGrowth: str?.naturalLevelGrowth ?? null,
               trainingAllocated: str?.trainingAllocated ?? null,
               walletAllocated: profile?.training?.points?.allocated?.STR ?? null,
               awakeningClassId: profile?.awakening?.classId ?? null,
               classId: profile?.hunter?.classId ?? null,
+              mageSlotClass: mageSlot?.profile?.awakening?.classId ?? null,
+              warriorSlotTraining:
+                warriorSlot?.profile?.training?.core?.STR?.trainingAllocated ?? null,
             };
           });
+
           console.log('RUN1F_TRAINING_CLASS_SWITCH', mageTraining);
           const mageCoreConsistent =
             mageTraining.current !== null &&
             mageTraining.awakeningBase !== null &&
             mageTraining.naturalLevelGrowth !== null &&
             mageTraining.trainingAllocated !== null &&
-            Math.abs(mageTraining.current - mageTraining.trainingAllocated) <= 0.0001 &&
-            Math.abs(mageTraining.awakeningBase) <= 0.0001 &&
-            Math.abs(mageTraining.naturalLevelGrowth) <= 0.0001;
+            Math.abs(
+              mageTraining.current -
+                (mageTraining.awakeningBase +
+                  mageTraining.naturalLevelGrowth +
+                  mageTraining.trainingAllocated)
+            ) <= 0.0001;
+
           if (
             !mageCoreConsistent ||
-            Math.abs(mageTraining.trainingAllocated - injectedTraining.trainingAllocated) > 0.0001 ||
-            Math.abs(mageTraining.walletAllocated - injectedTraining.trainingAllocated) > 0.0001 ||
-            mageTraining.peak < injectedTraining.peak ||
-            mageTraining.awakeningClassId !== 'warrior' ||
-            mageTraining.classId !== 'mage'
+            Math.abs(mageTraining.trainingAllocated) > 0.0001 ||
+            Math.abs(mageTraining.walletAllocated) > 0.0001 ||
+            mageTraining.awakeningClassId !== 'mage' ||
+            mageTraining.classId !== 'mage' ||
+            mageTraining.mageSlotClass !== 'mage' ||
+            Math.abs(mageTraining.warriorSlotTraining - injectedTraining.trainingAllocated) > 0.0001
           ) {
             console.error('RUN1F_TRAINING_CLASS_SWITCH_FAIL', {
               injectedTraining,
@@ -1139,10 +1195,32 @@ jobs:
 
           await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
           await enterOffline({ cls: 'warrior', hunterName: 'CobaltWarrior' });
-          const warriorRestoredAgain = await page.evaluate(() => {
+          const warriorRestoredAgain = await page.evaluate(async () => {
             const sim = window.__game.sim;
             const p = sim.player;
-            return { level: p.level, xp: sim.xp, x: p.pos.x, z: p.pos.z };
+            const db = await new Promise((resolve, reject) => {
+              const request = indexedDB.open('highfly-offline', 1);
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => reject(request.error);
+            });
+            const key =
+              'training:warrior:' +
+              encodeURIComponent('CobaltWarrior'.trim().toLowerCase());
+            const slot = await new Promise((resolve, reject) => {
+              const tx = db.transaction('saves', 'readonly');
+              const request = tx.objectStore('saves').get(key);
+              request.onsuccess = () => resolve(request.result);
+              request.onerror = () => reject(request.error);
+            });
+            db.close();
+            return {
+              level: p.level,
+              xp: sim.xp,
+              x: p.pos.x,
+              z: p.pos.z,
+              trainingAllocated: slot?.profile?.training?.core?.STR?.trainingAllocated ?? null,
+              awakeningClassId: slot?.profile?.awakening?.classId ?? null,
+            };
           });
           const warriorReturnDelta = Math.hypot(
             warriorRestoredAgain.x - expected.x,
@@ -1155,7 +1233,9 @@ jobs:
           if (
             warriorRestoredAgain.level !== expected.level ||
             warriorRestoredAgain.xp !== expected.xp ||
-            warriorReturnDelta > 0.05
+            warriorReturnDelta > 0.05 ||
+            Math.abs(warriorRestoredAgain.trainingAllocated - injectedTraining.trainingAllocated) > 0.0001 ||
+            warriorRestoredAgain.awakeningClassId !== 'warrior'
           ) {
             process.exitCode = 5;
           }
