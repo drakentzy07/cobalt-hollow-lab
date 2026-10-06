@@ -7,6 +7,7 @@ on:
       - highfly-progression-foundation-1-99
       - highfly-game-c1-character-combat-hud
       - highfly-game-c2-mobile-feel
+      - highfly-game-c2-1-s23-feedback
   workflow_dispatch:
 
 permissions:
@@ -135,7 +136,9 @@ jobs:
           python ../overlays/highfly_run137_training_intelligence.py
           python ../overlays/highfly_progression_pf5_stat_authority.py
           python ../overlays/highfly_game_c1.py
+          python ../overlays/highfly_game_c21_s23_feedback.py
           cp ../game/c1/highfly_game_c1.test.ts tests/highfly_game_c1.test.ts
+          cp ../game/c1/highfly_game_c21.test.ts tests/highfly_game_c21.test.ts
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -256,11 +259,13 @@ jobs:
           test -s training/runtime/stat_authority.ts
           test -s overlays/highfly_progression_pf5_stat_authority.py
           test -s overlays/highfly_game_c1.py
+          test -s overlays/highfly_game_c21_s23_feedback.py
           test -s game/c1/runtime.ts
           test -s game/c1/elemental_basic.ts
           test -s game/c1/elemental_weapon_vfx.ts
           test -s game/c1/hud.css
           test -s game/c1/highfly_game_c1.test.ts
+          test -s game/c1/highfly_game_c21.test.ts
           test -s overlays/highfly_training_run1i_ui.py
           test -s overlays/highfly_training_persistence_v1.py
           test -s overlays/highfly_training_ui_v1.py
@@ -272,9 +277,9 @@ jobs:
           test -s overlays/highfly_training_core_v1.py
           grep -q "HIGHFLY_CORE_STATS" training/runtime/core.ts
           grep -q "HIGHFLY_AWAKENING_BASES" training/runtime/core.ts
-          grep -q "HIGHFLY_AWAKENING_BUDGET = 0" training/runtime/core.ts
-          grep -q "HIGHFLY_NATURAL_GROWTH_BUDGET = 0" training/runtime/core.ts
-          grep -q "HIGHFLY_TRAINING_SCHEMA_VERSION = 4" training/runtime/core.ts
+          grep -q "HIGHFLY_AWAKENING_BUDGET = 50" training/runtime/core.ts
+          grep -q "HIGHFLY_NATURAL_GROWTH_BUDGET = 98" training/runtime/core.ts
+          grep -q "HIGHFLY_TRAINING_SCHEMA_VERSION = 5" training/runtime/core.ts
           grep -q "trainingGrowth" training/runtime/core.ts
           grep -q "run2-awakening-v1" training/runtime/core.ts
           grep -q "training-performance-gate" training/runtime/core.ts
@@ -366,16 +371,12 @@ jobs:
           grep -F 'NO LOGRÉ OBJETIVO · REPETIR' upstream/src/highfly/training/ui.ts
           grep -F 'graphicsRebuildPaused || highflyTrainingFocusActive' upstream/src/main.ts
           grep -F "target?.closest?.('#highfly-training-window')" upstream/src/main.ts
-          grep -F 'HUNTER CORE · ESTADO CONSOLIDADO' upstream/src/highfly/training/ui.ts
-          grep -F 'TRAINING ACTIVO' upstream/src/highfly/training/ui.ts
-          grep -F 'state.trainingAllocated.toFixed(2)' upstream/src/highfly/training/ui.ts
-          grep -F 'CLASE · NIVEL · EQUIPO <b>0 CORE</b>' upstream/src/highfly/training/ui.ts
-          grep -F 'STR / AGI / VIT / PER / INT nacen en 0 y sólo aumentan mediante entrenamiento real' upstream/src/highfly/training/ui.ts
-          ! grep -F 'DESPERTAR <b>' upstream/src/highfly/training/ui.ts
-          if grep -Fq "\${state.calibrated ? 'BASE ESTABLECIDA' : 'EN CALIBRACIÓN'}" upstream/src/highfly/training/ui.ts; then
-            echo "Obsolete zero-origin Core badge survived RUN138" >&2
-            exit 1
-          fi
+          grep -F 'HUNTER CORE · PERMANENTE' upstream/src/highfly/training/ui.ts
+          grep -F 'BASE DE CLASE + NIVEL + TRAINING · sólo TRAINING se asigna libremente' upstream/src/highfly/training/ui.ts
+          grep -F 'DESPERTAR <b>' upstream/src/highfly/training/ui.ts
+          grep -F 'NIVEL <b>+' upstream/src/highfly/training/ui.ts
+          grep -F 'TRAINING <b>+' upstream/src/highfly/training/ui.ts
+          grep -F "\${state.calibrated ? 'BASE ESTABLECIDA' : 'EN CALIBRACIÓN'}" upstream/src/highfly/training/ui.ts
           grep -F 'body.start-screen-open .homepage-footer' upstream/src/styles/shell.website.css
           grep -F '#loot-explorer-window' upstream/src/styles/shell.css
           grep -F '#highfly-chat-send' upstream/src/styles/shell.css
@@ -394,9 +395,9 @@ jobs:
           grep -F "highflyResourceRecoveryMultiplier" upstream/src/sim/combat/auras.ts
           ! grep -F "trainingGain(profile.training.core.AGI.trainingGrowth)" upstream/src/highfly/training/combat_runtime.ts
           ! grep -F "applyTrainingBridge(" upstream/src/highfly/training/combat_runtime.ts
-          grep -F "highflyTrainingDerivedModifiers(profile)" upstream/src/highfly/training/combat_runtime.ts
-          grep -F "baseline.hitBonus + derived.hitBonus" upstream/src/highfly/training/combat_runtime.ts
-          grep -F "baseline.spellPower * (1 + derived.spellPowerBonus)" upstream/src/highfly/training/combat_runtime.ts
+          grep -F "highflyUniqueCoreModifiers(profile)" upstream/src/highfly/training/combat_runtime.ts
+          grep -F "baseline.hitBonus + unique.hitBonus" upstream/src/highfly/training/combat_runtime.ts
+          grep -F "entity.spellPower = baseline.spellPower;" upstream/src/highfly/training/combat_runtime.ts
           grep -F "HIGHFLY_RUN1J_REAL_DEVICE_FIX_APPLIED=1" <(python -c "print('HIGHFLY_RUN1J_REAL_DEVICE_FIX_APPLIED=1')")
           grep -F "staleDonorLevel20" upstream/src/main.ts
           grep -F "SALTAR EJERCICIO" upstream/src/highfly/training/ui.ts
@@ -422,13 +423,13 @@ jobs:
           grep -F "Remo con Mancuernas" upstream/src/highfly/training/personal_routine.ts
           grep -F "HIGHFLY_TRAINING_SCORING_VERSION = 'run2-awakening-v1'" upstream/src/highfly/training/core.ts
           grep -F "export function useFreeTrainingReset" upstream/src/highfly/training/core.ts
-          grep -F "HIGHFLY_CORE_STAT_AUTHORITY_V1 = 'pf5-training-only-derived-v1'" upstream/src/highfly/training/stat_authority.ts
-          ! grep -F "resolveHighflyPrimaryCoreForEntity" upstream/src/sim/entity.ts
-          grep -F "highflyTrainingDerivedModifiers(profile)" upstream/src/highfly/training/combat_runtime.ts
+          grep -F "HIGHFLY_CORE_STAT_AUTHORITY_V1 = 'pf5-permanent-core-v2'" upstream/src/highfly/training/stat_authority.ts
+          grep -F "resolveHighflyPrimaryCoreForEntity" upstream/src/sim/entity.ts
+          grep -F "highflyUniqueCoreModifiers(profile)" upstream/src/highfly/training/combat_runtime.ts
           ! grep -F "applyTrainingBridge(" upstream/src/highfly/training/combat_runtime.ts
           ! grep -F "trainingGain(" upstream/src/highfly/training/combat_runtime.ts
           grep -F "Primera sesión válida: conserva el Core y acredita Training Points para asignación manual." upstream/src/highfly/training/pipeline.ts
-          grep -F "TRAINING ACTIVO" upstream/src/highfly/training/ui.ts
+          grep -F "BASE DE CLASE + NIVEL + TRAINING · sólo TRAINING se asigna libremente" upstream/src/highfly/training/ui.ts
           grep -F "DESCANSO OBLIGATORIO" upstream/src/highfly/training/ui.ts
           ! grep -F "hf-rest-skip" upstream/src/highfly/training/ui.ts
           ! grep -F "CONTINUAR ANTES DE TIEMPO" upstream/src/highfly/training/ui.ts
@@ -441,6 +442,14 @@ jobs:
           grep -F "hud.onMobileContextualUse = highflyContextualUse" upstream/src/main.ts
           grep -F "mobile-consumable-seat" upstream/src/highfly/game_c1_runtime.ts
           grep -F "hf-c1-ult" upstream/src/styles/hf_game_c1.css
+          grep -F "HIGHFLY_GAME_C21_S23_FEEDBACK_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C21_S23_FEEDBACK_APPLIED=1')")
+          grep -F "const coneDot = Math.cos((70 * Math.PI) / 180);" upstream/src/game/auto_target.ts
+          grep -F "softTargetLocked?: () => boolean;" upstream/src/game/pad_target_pick.ts
+          grep -F "let highflyManualTargetId: number | null = null;" upstream/src/main.ts
+          grep -F "hud.extendHighflyComboForEvade();" upstream/src/main.ts
+          grep -F "extendHighflyComboForEvade(): void" upstream/src/ui/hud.ts
+          grep -F "if (this.highflyComboEvadeGraceUsed) return;" upstream/src/ui/hud.ts
+          grep -F "mobile-window-open #actionbar" upstream/src/styles/hf_game_c1.css
           ! grep -R -i -E "qmale|qfemale|hf_aff_" upstream/src/highfly/game_c1_runtime.ts upstream/src/sim/combat/highfly_elemental_basic.ts upstream/src/highfly/game_c1_elemental_weapon_vfx.ts upstream/src/styles/hf_game_c1.css
 
       - name: TypeScript source smoke
@@ -451,7 +460,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts tests/highfly_game_c21.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -2659,7 +2668,7 @@ jobs:
 
   deploy-game-c2:
     name: Deploy HIGHFLY GAME-C2 Mobile Feel
-    if: github.ref_name == 'highfly-game-c2-mobile-feel'
+    if: github.ref_name == 'highfly-game-c2-mobile-feel' || github.ref_name == 'highfly-game-c2-1-s23-feedback'
     needs: thin-offline
     runs-on: ubuntu-latest
     timeout-minutes: 30
