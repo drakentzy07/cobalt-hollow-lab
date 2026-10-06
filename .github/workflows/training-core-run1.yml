@@ -8,6 +8,7 @@ on:
       - highfly-game-c1-character-combat-hud
       - highfly-game-c2-mobile-feel
       - highfly-game-c2-1-s23-feedback
+      - highfly-game-c2-2-video-qa
   workflow_dispatch:
 
 permissions:
@@ -139,6 +140,7 @@ jobs:
           python ../overlays/highfly_game_c21_s23_feedback.py
           cp ../game/c1/highfly_game_c1.test.ts tests/highfly_game_c1.test.ts
           cp ../game/c1/highfly_game_c21.test.ts tests/highfly_game_c21.test.ts
+          cp ../game/c1/highfly_game_c22.test.ts tests/highfly_game_c22.test.ts
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -456,6 +458,10 @@ jobs:
           grep -F "extendHighflyComboForEvade(): void" upstream/src/ui/hud.ts
           grep -F "if (this.highflyComboEvadeGraceUsed) return;" upstream/src/ui/hud.ts
           grep -F "mobile-window-open #actionbar" upstream/src/styles/hf_game_c1.css
+          grep -F "C2.2_VIDEO_QA" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "body.mobile-touch #mobile-interact" upstream/src/styles/hf_game_c1.css
+          grep -F "body.mobile-touch.mobile-more-open #mobile-controls" upstream/src/styles/hf_game_c1.css
+          grep -F "body.mobile-touch.mobile-window-open #mobile-controls" upstream/src/styles/hf_game_c1.css
           ! grep -R -i -E "qmale|qfemale|hf_aff_" upstream/src/highfly/game_c1_runtime.ts upstream/src/sim/combat/highfly_elemental_basic.ts upstream/src/highfly/game_c1_elemental_weapon_vfx.ts upstream/src/styles/hf_game_c1.css
 
       - name: TypeScript source smoke
@@ -466,7 +472,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts tests/highfly_game_c21.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts tests/highfly_game_c21.test.ts tests/highfly_game_c22.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -2413,9 +2419,19 @@ jobs:
             const skills = Array.from({ length: 10 }, (_, i) =>
               rect(`#actionbar .action-btn[data-hotbar-slot="${i + 1}"]`),
             );
+            const donorSlots = [...document.querySelectorAll(
+              '#mobile-action-ring .mobile-action-slot',
+            )].map((el) => {
+              const style = getComputedStyle(el);
+              return { display: style.display, visibility: style.visibility };
+            });
             return {
               active: document.body.classList.contains('hf-game-c1'),
+              build: document.body.dataset.highflyHudBuild ?? null,
               skills,
+              donorSlots,
+              pageToggle: rect('#mobile-action-page-toggle'),
+              donorRadial: rect('#mobile-action-radial'),
               attack: rect('#mobile-action-attack'),
               target: rect('#mobile-target-cycle'),
               evade: rect('#mobile-evade'),
@@ -2433,7 +2449,19 @@ jobs:
             };
           });
           console.log('HIGHFLY_GAME_C1_S23_HUD', JSON.stringify(c1Hud, null, 2));
-          if (!c1Hud.active) throw new Error('C1: hf-game-c1 body class missing');
+          if (!c1Hud.active) throw new Error('C2.2: hf-game-c1 body class missing');
+          if (c1Hud.build !== 'C2.2_VIDEO_QA') {
+            throw new Error('C2.2: wrong/stale HUD build marker: ' + c1Hud.build);
+          }
+          if (c1Hud.donorSlots.some((r) => r.display !== 'none')) {
+            throw new Error('C2.2: donor paged skill seat survived: ' + JSON.stringify(c1Hud.donorSlots));
+          }
+          if (c1Hud.pageToggle?.display !== 'none' || c1Hud.donorRadial?.display !== 'none') {
+            throw new Error(
+              'C2.2: donor page/radial chrome survived: ' +
+              JSON.stringify({ pageToggle: c1Hud.pageToggle, donorRadial: c1Hud.donorRadial }),
+            );
+          }
           if (c1Hud.skills.some((r) => !r || r.display === 'none' || r.visibility === 'hidden')) {
             throw new Error('C1: S1-S10 native skill seat missing/hidden: ' + JSON.stringify(c1Hud.skills));
           }
@@ -2491,6 +2519,64 @@ jobs:
             throw new Error('C1: contextual ATK/USAR state missing: ' + c1Hud.attackMode);
           }
 
+          // C2.2 video regression: donor/root state transitions must not be able
+          // to permanently drop HIGHFLY HUD ownership.
+          await page.evaluate(() => document.body.classList.remove('hf-game-c1'));
+          await page.waitForFunction(
+            () =>
+              document.body.classList.contains('hf-game-c1') &&
+              document.body.dataset.highflyHudBuild === 'C2.2_VIDEO_QA',
+            null,
+            { timeout: 2000 },
+          );
+
+          // Exercise the real More path seen in the S23 video. While this large
+          // modal owns the screen, gameplay chrome must be completely absent.
+          await page.locator('#mobile-menu-anchor').click({ force: true });
+          await page.locator('#mobile-more').waitFor({ state: 'visible', timeout: 10000 });
+          await page.locator('#mobile-more').click({ force: true });
+          await page.waitForFunction(
+            () => document.body.classList.contains('mobile-more-open'),
+            null,
+            { timeout: 5000 },
+          );
+          await page.locator('#mobile-extra-controls').waitFor({ state: 'visible', timeout: 5000 });
+
+          const moreOwnership = await page.evaluate(() => {
+            const visible = (selector) => {
+              const el = document.querySelector(selector);
+              if (!(el instanceof HTMLElement)) return false;
+              const style = getComputedStyle(el);
+              return style.display !== 'none' && style.visibility !== 'hidden';
+            };
+            return {
+              modal: visible('#mobile-extra-controls'),
+              mobileControls: visible('#mobile-controls'),
+              actionbar: visible('#actionbar'),
+              esp1: visible('#hf-c1-esp1'),
+              utility: visible('#hf-c1-utility-lane'),
+            };
+          });
+          console.log('HIGHFLY_C22_MORE_OWNERSHIP', moreOwnership);
+          if (
+            !moreOwnership.modal ||
+            moreOwnership.mobileControls ||
+            moreOwnership.actionbar ||
+            moreOwnership.esp1 ||
+            moreOwnership.utility
+          ) {
+            throw new Error(
+              'C2.2: gameplay HUD leaked through More modal: ' +
+              JSON.stringify(moreOwnership),
+            );
+          }
+          await page.locator('#mobile-more-close').click({ force: true });
+          await page.waitForFunction(
+            () => !document.body.classList.contains('mobile-more-open'),
+            null,
+            { timeout: 5000 },
+          );
+
           // Training is intentionally inside the large HIGHFLY More menu, so it
           // must be hidden at world boot. Exercise the real user path instead of
           // incorrectly requiring it to be a permanent HUD button.
@@ -2529,8 +2615,16 @@ jobs:
           if (mobile.left < -2 || mobile.right > mobile.viewportWidth + 2) throw new Error('J4: Training overflows horizontally');
           if (mobile.bodyScrollWidth > mobile.viewportWidth + 2) throw new Error('J4: body horizontal overflow');
           if (!mobile.text.includes('RUTINA HIGHFLY · 5D')) throw new Error('J4: exact HIGHFLY routine missing');
+          if (!mobile.text.includes('HUNTER CORE · PERMANENTE')) {
+            throw new Error('C2.2: stale Training Core heading rendered');
+          }
+          if (!mobile.text.includes('BASE DE CLASE + NIVEL + TRAINING')) {
+            throw new Error('C2.2: permanent Core source copy missing');
+          }
           if (mobile.text.includes('READINESS')) throw new Error('J4: removed Readiness resurfaced');
-          if (!mobile.hudVisible) throw new Error('J4: mobile HUD hidden after world boot');
+          if (mobile.hudVisible) {
+            throw new Error('C2.2: gameplay HUD leaked through fullscreen Training');
+          }
 
           const mobileShell = await page.evaluate(() => {
             const hiddenIds = ['mobile-meters', 'mobile-wiki', 'mobile-steam-wishlist', 'mobile-donate'];
@@ -2765,7 +2859,7 @@ jobs:
 
   deploy-game-c2:
     name: Deploy HIGHFLY GAME-C2 Mobile Feel
-    if: github.ref_name == 'highfly-game-c2-mobile-feel' || github.ref_name == 'highfly-game-c2-1-s23-feedback'
+    if: github.ref_name == 'highfly-game-c2-mobile-feel' || github.ref_name == 'highfly-game-c2-1-s23-feedback' || github.ref_name == 'highfly-game-c2-2-video-qa'
     needs: thin-offline
     runs-on: ubuntu-latest
     timeout-minutes: 30
