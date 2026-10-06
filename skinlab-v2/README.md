@@ -1,43 +1,19 @@
 # HIGHFLY Skin Lab v2 — Skin Factory
 
-## SKIN_001 — Warrior Black Aura / Refinement Pass 2
+## SKIN_001 — Warrior Black Aura / Refinement Pass 3
 
-This is a **runtime cosmetic skin**, not a generated image. The frozen ClaudeCraft Warrior remains mechanically identical.
+This pass corrects the exact visual failure from Pass 2. The browser gate measured the armor at ~61% dark and the helmet at only ~53% dark, which was not black-dominant enough.
+
+### Pass 3 visual contract
+- armor: at least 70% dark / no more than 30% white-silver atlas accents
+- helmet: at least 70% dark / no more than 30% white-silver grooves and trim
+- weapon atlas: dark body remains dominant, while rigid sword silhouette/edge provides the strong white cutting presence
+- shield: dark body with stronger silver/white rim
 
 ### Chapa y pintura only
-Unchanged:
-- geometry / model
-- Rig_Medium
-- skin weights
-- all 25 authored clips
-- sockets / weapon grips
-- hitboxes / traces
-- combat / skills / timings / gameplay
+Unchanged: geometry, rig, weights, all 25 clips, sockets, grips, hitboxes, traces, combat, skills, timings and gameplay.
 
-Changed:
-- three role-specific runtime paint maps derived from ClaudeCraft's own Warrior base atlas:
-  - armor paint
-  - inverted helmet paint
-  - sword/shield paint
-- rigid cosmetic silhouette + edge accents on sword/shield only
+The Warrior remains exactly the same model. Only UV paint maps and rigid cosmetic overlays on sword/shield are changed.
 
-### Visual target
-- helmet: black/graphite shell, white/silver vertical grooves and trim
-- armor: black dominant with stronger white/silver separation
-- sword: black/gunmetal body with a much stronger bright cutting silhouette/edge
-- shield: black body with cleaner silver/white rim
-- violet remains ambient secondary light only
-
-The helmet is skinned, so it receives **no detached line geometry**. Its contrast is encoded through the same UV paint atlas and therefore follows all animations safely.
-
-## Factory QA
-The browser gate requires:
-- original rig and sockets
-- 25 clips available
-- 3 paint maps loaded
-- refinementPass = 2
-- sword/shield rigid cosmetic accents attached
-- Black Aura mode active
-- all 25 clips exercised
-
-No proxy gameplay animation is added.
+### QA rule
+Do not relax the percentages just to obtain GREEN. A pass is GREEN only when the runtime result is genuinely black-dominant and all 25 clips still work.

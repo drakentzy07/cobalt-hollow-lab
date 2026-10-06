@@ -29,7 +29,7 @@
 <body>
 <div id="app">
   <header>
-    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · WARRIOR BLACK AURA · PASS 2</div></div></div>
+    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · WARRIOR BLACK AURA · PASS 3</div></div></div>
     <div class="status">
       <span class="pill" id="rigPill">Rig_Medium …</span>
       <span class="pill" id="rPill">handslot.r …</span>
@@ -279,7 +279,7 @@ function classifyPixel(r,g,b,mode){
   if(mode==='helmet'){
     // The authored Warrior helmet is light metal with dark vertical grooves.
     // Invert that relationship: shell becomes black, grooves/trim become silver.
-    const accent=lum<.43 || (chroma>.16 && lum<.58);
+    const accent=lum<.24 || (chroma>.24 && lum<.40);
     if(accent)return {rgb:[235,241,252],accent:true};
     const t=Math.max(0,Math.min(1,(1-lum)*1.4));
     return {rgb:[
@@ -291,7 +291,7 @@ function classifyPixel(r,g,b,mode){
 
   if(mode==='weapon'){
     // Stronger authored highlights for sword/shield, but the body stays black.
-    const accent=lum>.76 || (chroma>.20 && lum>.31);
+    const accent=lum>.82 || (chroma>.26 && lum>.46);
     if(accent){
       const shine=Math.max(0,Math.min(1,(lum-.31)/.69));
       return {rgb:[
@@ -309,7 +309,7 @@ function classifyPixel(r,g,b,mode){
   }
 
   // Armor: broaden white/silver trims versus v1, but keep black dominant.
-  const accent=lum>.73 || (chroma>.16 && lum>.30);
+  const accent=lum>.84 || (chroma>.24 && lum>.48);
   if(accent){
     const shine=Math.max(0,Math.min(1,(lum-.30)/.70));
     return {rgb:[
@@ -437,12 +437,12 @@ function applyWarriorBlackFinal(){
   if(sword){
     // A hard white silhouette + geometry edges gives the blade much more
     // visual cutting presence without changing the held mesh or hit authority.
-    silhouetteAccents+=ensureRigidSilhouette(sword,'sword-white-silhouette',1.045,.90);
-    edgeAccents+=ensureRigidEdgeAccent(sword,'sword-white-edge',1.0,20);
+    silhouetteAccents+=ensureRigidSilhouette(sword,'sword-white-silhouette',1.050,.98);
+    edgeAccents+=ensureRigidEdgeAccent(sword,'sword-white-edge',1.0,18);
   }
   const shield=actor.getObjectByName('Warrior_Shield');
   if(shield){
-    silhouetteAccents+=ensureRigidSilhouette(shield,'shield-silver-silhouette',1.022,.42);
+    silhouetteAccents+=ensureRigidSilhouette(shield,'shield-silver-silhouette',1.024,.50);
     edgeAccents+=ensureRigidEdgeAccent(shield,'shield-silver-edge',.84,24);
   }
 
@@ -454,7 +454,7 @@ function applyWarriorBlackFinal(){
     rigidEdgeAccentExpected:2,
     helmetAccentMode:'inverted-paint-atlas',
     skinId:'warrior_black_final',
-    refinementPass:2
+    refinementPass:3
   });
   return affected;
 }

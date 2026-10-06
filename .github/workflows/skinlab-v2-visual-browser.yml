@@ -93,9 +93,13 @@ jobs:
                 blackDiag.rigidSilhouetteAccents < 2 ||
                 blackDiag.helmetAccentMode !== 'inverted-paint-atlas' ||
                 blackDiag.auraPaintMaps !== 3 ||
-                blackDiag.refinementPass !== 2 ||
-                blackDiag.auraDarkRatio < .62 ||
-                blackDiag.auraLightRatio > .38)
+                blackDiag.refinementPass !== 3 ||
+                blackDiag.auraDarkRatio < .70 ||
+                blackDiag.auraLightRatio > .30 ||
+                blackDiag.auraHelmetDarkRatio < .70 ||
+                blackDiag.auraHelmetLightRatio > .30 ||
+                blackDiag.auraWeaponDarkRatio < .55 ||
+                blackDiag.auraWeaponLightRatio > .45)
               throw new Error('FINAL cosmetic material gate failed: '+JSON.stringify(blackDiag));
             await page.screenshot({ path: 'visual-artifacts/warrior-black-final-idle.png', fullPage: true });
 
@@ -134,7 +138,7 @@ jobs:
 
             require('fs').writeFileSync(
               'visual-artifacts/visual-gate.txt',
-              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nWARRIOR BLACK FINAL material remap OK\nAtlas white/silver accents OK\nBlack-dominant armor paint OK\nHelmet inverted paint-map OK\nWeapon paint-map OK\nRigid sword/shield white-edge + silhouette accents OK\n25/25 authored clips exercised OK\n'
+              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nWARRIOR BLACK FINAL material remap OK\nAtlas white/silver accents OK\nBlack-dominant armor >=70% OK\nHelmet black-dominant >=70% OK\nWeapon dark body with bright edge OK\nRigid sword/shield white-edge + silhouette accents OK\n25/25 authored clips exercised OK\n'
             );
             await browser.close();
           })().catch(err => { console.error(err); process.exit(1); });
