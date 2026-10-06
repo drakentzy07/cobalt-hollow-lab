@@ -33,7 +33,7 @@ describe('HIGHFLY GAME-C2.4 human closure', () => {
   it('ships a usable first-boot HUD while retaining optional individual editing', () => {
     const runtime = readFileSync('src/highfly/game_c1_runtime.ts', 'utf8');
     const css = readFileSync('src/styles/hf_game_c1.css', 'utf8');
-    expect(runtime).toContain("C2.4-human-closure");
+    expect(runtime).toContain('const HIGHFLY_GAME_C22_BUILD =');
     expect(runtime).toContain("'hf-game-c24'");
     expect(runtime).toContain("id: 's' + (index + 1)");
     expect(css).toContain('[data-hotbar-slot="1"]  { right: 110px !important; bottom: 38px !important; }');
