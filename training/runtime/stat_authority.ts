@@ -1,19 +1,22 @@
 import {
   HIGHFLY_CORE_STATS,
+  HIGHFLY_NORMAL_MAX_LEVEL,
   type HighflyAwakeningClassId,
   type HighflyCoreVector,
   type HighflyHunterProfile,
   isAwakeningClassId,
+  naturalLevelGrowthFor,
 } from './core';
+import { getActiveHighflyHunterProfile } from './profile_store';
 
-export const HIGHFLY_CORE_STAT_AUTHORITY_V1 = 'pf5-training-only-derived-v1' as const;
+export const HIGHFLY_CORE_STAT_AUTHORITY_V1 = 'pf5-permanent-core-v2' as const;
 
 /**
- * Class identity changes how efficiently Training Core converts into DERIVED
- * combat power. It never grants STR/AGI/VIT/PER/INT itself.
+ * Permanent Core contract:
+ * Awakening/Class Base + Natural Level Growth + manually allocated Training.
  *
- * Every entry is > 0 so off-meta builds remain viable. The spread is deliberately
- * modest: class identity matters without turning a low-affinity stat into a dead stat.
+ * Class affinity changes efficiency, never eligibility. Every stat remains
+ * viable for every class so Training can create deliberately off-meta Hunters.
  */
 export const HIGHFLY_STAT_BIBLE_V1: Readonly<
   Record<HighflyAwakeningClassId, Readonly<HighflyCoreVector>>
@@ -29,101 +32,124 @@ export const HIGHFLY_STAT_BIBLE_V1: Readonly<
   druid:   { STR: 0.95, AGI: 1.00, VIT: 1.10, PER: 1.15, INT: 1.15 },
 } as const;
 
-export interface HighflyTrainingDerivedModifiers {
-  physicalAttackBonus: number;
-  rangedAttackBonus: number;
-  spellPowerBonus: number;
-  healingPowerBonus: number;
-  maxHpBonus: number;
-  critChanceBonus: number;
-  dodgeChanceBonus: number;
+export interface HighflyUniqueCoreModifiers {
+  staggerBonus: number;
   moveSpeedBonus: number;
+  tenacityBonus: number;
   hitBonus: number;
   weakPointBonus: number;
   resourceCostReduction: number;
   resourceRecoveryBonus: number;
 }
 
-const ZERO_DERIVED: HighflyTrainingDerivedModifiers = {
-  physicalAttackBonus: 0,
-  rangedAttackBonus: 0,
-  spellPowerBonus: 0,
-  healingPowerBonus: 0,
-  maxHpBonus: 0,
-  critChanceBonus: 0,
-  dodgeChanceBonus: 0,
-  moveSpeedBonus: 0,
-  hitBonus: 0,
-  weakPointBonus: 0,
-  resourceCostReduction: 0,
-  resourceRecoveryBonus: 0,
-};
+let bootstrapArmed = false;
+let boundEntityId: number | null = null;
 
 function finiteNonNegative(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
-function trainingGain(value: number): number {
-  // Unbounded but strongly diminishing. Power-like derived stats can continue
-  // growing with long-term Training; percentage-sensitive stats are capped below.
-  return Math.log1p(finiteNonNegative(value) / 25);
+function saturating(value: number, pivot: number): number {
+  const v = Math.max(0, finiteNonNegative(value));
+  return v <= 0 ? 0 : v / (v + pivot);
 }
 
-export function trainingCoreVector(profile: HighflyHunterProfile): HighflyCoreVector {
-  const wallet = profile.training.points;
+export function armHighflyLocalStatAuthority(): void {
+  bootstrapArmed = true;
+  boundEntityId = null;
+}
+
+export function bindHighflyLocalStatAuthority(entityId: number): void {
+  if (!Number.isFinite(entityId)) return;
+  boundEntityId = entityId;
+  bootstrapArmed = false;
+}
+
+export function clearHighflyLocalStatAuthority(): void {
+  bootstrapArmed = false;
+  boundEntityId = null;
+}
+
+export function highflyCoreVectorAtLevel(
+  profile: HighflyHunterProfile,
+  classId: HighflyAwakeningClassId,
+  level: number,
+): HighflyCoreVector {
+  const natural = naturalLevelGrowthFor(classId, level);
   return Object.fromEntries(
     HIGHFLY_CORE_STATS.map((stat) => [
       stat,
-      finiteNonNegative(wallet?.allocated?.[stat] ?? profile.training.core[stat].trainingAllocated),
+      finiteNonNegative(profile.awakening.base[stat]) +
+        finiteNonNegative(natural[stat]) +
+        finiteNonNegative(profile.training.core[stat].trainingAllocated),
     ]),
   ) as HighflyCoreVector;
 }
 
-function authorityClass(profile: HighflyHunterProfile): HighflyAwakeningClassId | null {
-  if (isAwakeningClassId(profile.hunter.classId)) return profile.hunter.classId;
-  if (isAwakeningClassId(profile.awakening.classId)) return profile.awakening.classId;
-  return null;
+/**
+ * Only the ONE local Hunter may replace ClaudeCraft's class+level primary seed.
+ * Probes, previews and other players retain donor stats.
+ */
+export function resolveHighflyPrimaryCoreForEntity(
+  entityId: number,
+  classId: string,
+  level: number,
+): HighflyCoreVector | null {
+  const profile = getActiveHighflyHunterProfile();
+  if (!profile?.awakening.initialized || !profile.awakening.classId) return null;
+  if (!isAwakeningClassId(classId) || profile.awakening.classId !== classId) return null;
+
+  if (boundEntityId !== null) {
+    if (entityId !== boundEntityId) return null;
+  } else {
+    if (!bootstrapArmed) return null;
+    boundEntityId = entityId;
+    bootstrapArmed = false;
+  }
+
+  return highflyCoreVectorAtLevel(profile, profile.awakening.classId, level);
 }
 
 /**
- * The ONE Training -> game conversion contract.
- *
- * ClaudeCraft remains authoritative for its normal class/level/gear/talent/buff
- * baseline. These modifiers are applied afterwards to derived outputs only.
- * Therefore equipment/class/level can never write HIGHFLY Core, and Training
- * can never be accidentally counted once as a primary and again as a bridge.
+ * Mechanics ClaudeCraft does not natively derive from primaries.
+ * AP/SP/HP/crit/dodge remain owned by Claude's ONE recalc pass, so Core is
+ * never counted twice.
  */
-export function highflyTrainingDerivedModifiers(
+export function highflyUniqueCoreModifiers(
   profile: HighflyHunterProfile,
-): HighflyTrainingDerivedModifiers {
-  const classId = authorityClass(profile);
-  if (!classId) return { ...ZERO_DERIVED };
+): HighflyUniqueCoreModifiers {
+  const classId = profile.awakening.classId;
+  if (!profile.awakening.initialized || !classId) {
+    return {
+      staggerBonus: 0,
+      moveSpeedBonus: 0,
+      tenacityBonus: 0,
+      hitBonus: 0,
+      weakPointBonus: 0,
+      resourceCostReduction: 0,
+      resourceRecoveryBonus: 0,
+    };
+  }
 
-  const core = trainingCoreVector(profile);
   const affinity = HIGHFLY_STAT_BIBLE_V1[classId];
+  const core = Object.fromEntries(
+    HIGHFLY_CORE_STATS.map((stat) => [stat, finiteNonNegative(profile.training.core[stat].current)]),
+  ) as HighflyCoreVector;
 
-  const str = trainingGain(core.STR) * affinity.STR;
-  const agi = trainingGain(core.AGI) * affinity.AGI;
-  const vit = trainingGain(core.VIT) * affinity.VIT;
-  const per = trainingGain(core.PER) * affinity.PER;
-  const int = trainingGain(core.INT) * affinity.INT;
+  const str = saturating(core.STR, 140) * affinity.STR;
+  const agi = saturating(core.AGI, 140) * affinity.AGI;
+  const vit = saturating(core.VIT, 150) * affinity.VIT;
+  const per = saturating(core.PER, 135) * affinity.PER;
+  const int = saturating(core.INT, 135) * affinity.INT;
 
   return {
-    // Power channels may keep scaling slowly for long-lived Hunters.
-    physicalAttackBonus: 0.30 * str + 0.10 * agi,
-    rangedAttackBonus: 0.10 * str + 0.30 * agi + 0.05 * per,
-    spellPowerBonus: 0.08 * per + 0.34 * int,
-    healingPowerBonus: 0.12 * per + 0.30 * int,
-    maxHpBonus: 0.06 * str + 0.28 * vit,
-
-    // Percentage-sensitive channels have explicit ceilings.
-    critChanceBonus: Math.min(0.06, 0.025 * agi + 0.015 * per),
-    dodgeChanceBonus: Math.min(0.06, 0.03 * agi),
-    moveSpeedBonus: Math.min(0.08, 0.045 * agi),
-    hitBonus: Math.min(0.06, 0.04 * per),
-    weakPointBonus: Math.min(0.18, 0.12 * per),
-    resourceCostReduction: Math.min(0.12, 0.08 * int),
-    resourceRecoveryBonus: Math.min(0.18, 0.12 * int),
+    staggerBonus: Math.min(0.18, 0.16 * str),
+    moveSpeedBonus: Math.min(0.08, 0.065 * agi),
+    tenacityBonus: Math.min(0.12, 0.10 * vit),
+    hitBonus: Math.min(0.06, 0.05 * per),
+    weakPointBonus: Math.min(0.18, 0.15 * per),
+    resourceCostReduction: Math.min(0.12, 0.10 * int),
+    resourceRecoveryBonus: Math.min(0.18, 0.15 * int),
   };
 }
 
@@ -141,3 +167,5 @@ export function assertHighflyStatBibleV1(): void {
   }
 }
 assertHighflyStatBibleV1();
+
+export const HIGHFLY_STAT_AUTHORITY_NORMAL_MAX_LEVEL = HIGHFLY_NORMAL_MAX_LEVEL;
