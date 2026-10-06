@@ -25,7 +25,7 @@ let enabled = mode !== 'base';
 let lastElementSignature = '';
 let toastTimer = 0;
 
-const HIGHFLY_GAME_C22_BUILD = 'C2.5-hud-target-polish';
+const HIGHFLY_GAME_C22_BUILD = 'C2.6-hud-editor-menu';
 let coachSuppressTimer = 0;
 
 function game(): any {
@@ -468,6 +468,59 @@ function highflyHudScale(delta: number): void {
   highflyHudSave(highflyHudSelected, value);
 }
 
+function highflyHudPresetPayload(): string {
+  const targets: Record<string, HighflyHudTransform> = {};
+  for (const target of HIGHFLY_HUD_TARGETS) targets[target.id] = highflyHudRead(target.id);
+  return JSON.stringify({
+    version: 1,
+    build: HIGHFLY_GAME_C22_BUILD,
+    viewport: { width: window.innerWidth, height: window.innerHeight },
+    targets,
+  });
+}
+
+async function highflyHudExportPreset(): Promise<void> {
+  const payload = highflyHudPresetPayload();
+  try {
+    await navigator.clipboard.writeText(payload);
+    toast('PRESET HUD COPIADO', 'Pegalo en el chat y lo convierto en el default oficial.');
+  } catch {
+    window.prompt('COPIÁ ESTE PRESET HUD', payload);
+  }
+}
+
+function syncHighflyMobileSettingsEntry(): void {
+  const button = document.getElementById('mobile-bar-editor');
+  if (!(button instanceof HTMLButtonElement)) return;
+  const label = button.querySelector<HTMLElement>('.mobile-label');
+  button.title = 'Ajustes';
+  button.setAttribute('aria-label', 'Ajustes');
+  button.removeAttribute('data-i18n-title');
+  button.removeAttribute('data-i18n-aria');
+  if (label) {
+    label.textContent = 'Ajustes';
+    label.removeAttribute('data-i18n');
+  }
+  if (button.dataset.hfC26Settings === '1') return;
+  button.dataset.hfC26Settings = '1';
+  button.addEventListener(
+    'click',
+    (event) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      document.body.classList.remove('mobile-more-open');
+      document.getElementById('mobile-more')?.setAttribute('aria-expanded', 'false');
+      document.getElementById('mobile-extra-controls')?.setAttribute('aria-hidden', 'true');
+      const options = document.getElementById('options-menu');
+      const open =
+        options instanceof HTMLElement &&
+        getComputedStyle(options).display !== 'none';
+      if (!open) w.__game?.hud?.toggleOptionsMenu?.();
+    },
+    { capture: true },
+  );
+}
+
 function ensureHighflyHudEditor(): HTMLElement {
   let root = document.getElementById('hf-c23-hud-editor');
   if (root) return root;
@@ -481,13 +534,15 @@ function ensureHighflyHudEditor(): HTMLElement {
       '<button type="button" data-hf-hud-plus>+</button>' +
       '<button type="button" data-hf-hud-reset>RESTAURAR BLOQUE</button>' +
       '<button type="button" data-hf-hud-reset-all>RESTAURAR TODO</button>' +
-      '<button type="button" data-hf-hud-done>LISTO</button>' +
+      '<button type="button" data-hf-hud-export>EXPORTAR PRESET</button>' +
+      '<button type="button" data-hf-hud-done>GUARDAR</button>' +
     '</div>' +
     '<small>TOCÁ Y ARRASTRÁ CUALQUIER BLOQUE · −/+ CAMBIA SU TAMAÑO</small>';
   root.querySelector('[data-hf-hud-minus]')?.addEventListener('click', () => highflyHudScale(-0.05));
   root.querySelector('[data-hf-hud-plus]')?.addEventListener('click', () => highflyHudScale(0.05));
   root.querySelector('[data-hf-hud-reset]')?.addEventListener('click', () => highflyHudReset(highflyHudSelected));
   root.querySelector('[data-hf-hud-reset-all]')?.addEventListener('click', highflyHudResetAll);
+  root.querySelector('[data-hf-hud-export]')?.addEventListener('click', () => void highflyHudExportPreset());
   root.querySelector('[data-hf-hud-done]')?.addEventListener('click', () => {
     highflyHudEditing = false;
     highflyHudDrag = null;
@@ -499,8 +554,10 @@ function ensureHighflyHudEditor(): HTMLElement {
 }
 
 function openHighflyHudEditor(): void {
-  const close = document.querySelector<HTMLElement>('#options-window [data-close], #options [data-close]');
-  close?.click();
+  const options = document.getElementById('options-menu');
+  if (options instanceof HTMLElement && getComputedStyle(options).display !== 'none') {
+    w.__game?.hud?.toggleOptionsMenu?.();
+  }
   highflyHudEditing = true;
   highflyHudSelect(highflyHudSelected);
   const root = ensureHighflyHudEditor();
@@ -602,11 +659,13 @@ function boot(): void {
   ensureUtilityLane();
   installCoachmarkRelease();
   installHighflyHudEditorInput();
+  syncHighflyMobileSettingsEntry();
   syncHighflyWorldReady();
   highflyHudApplyAll();
 
   const tick = () => {
     syncHighflyWorldReady();
+    syncHighflyMobileSettingsEntry();
     ensureSpecialSeats();
     ensureGhostSkillSeats();
     ensureUtilityLane();
