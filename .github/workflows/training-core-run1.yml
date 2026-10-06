@@ -499,7 +499,6 @@ jobs:
           grep -F "function highflyFinisherBias" upstream/src/game/auto_target.ts
           grep -F "return (1 - ratio) * 0.45;" upstream/src/game/auto_target.ts
           grep -F "'hf-game-c25'" upstream/src/highfly/game_c1_runtime.ts
-          grep -F "hf-game-c25:not(.game-active) #actionbar" upstream/src/styles/hf_game_c1.css
           grep -F 'data-hotbar-slot="10"] { right:204px !important; bottom:246px !important; }' upstream/src/styles/hf_game_c1.css
           grep -F "function syncHighflyWorldReady(): void" upstream/src/highfly/game_c1_runtime.ts
           grep -F "hf-game-c25:not(.hf-c25-world-ready) #actionbar" upstream/src/styles/hf_game_c1.css
