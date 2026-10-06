@@ -246,6 +246,7 @@ jobs:
           test -s training/tests/highfly_training_j3b.test.ts
           test -s training/tests/highfly_training_pf4_respec.test.ts
           test -s training/tests/highfly_training_pf5_stat_authority.test.ts
+          test -s training/tests/highfly_training_progression_schema.test.ts
           test -s training/runtime/stat_authority.ts
           test -s overlays/highfly_progression_pf5_stat_authority.py
           test -s overlays/highfly_training_run1i_ui.py
@@ -429,7 +430,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
