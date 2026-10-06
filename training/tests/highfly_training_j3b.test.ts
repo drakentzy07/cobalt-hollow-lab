@@ -28,17 +28,17 @@ function fullTrainingProfile() {
       stat,
       profile.training.core[stat].current + 60,
       {
-      source: 'training-performance-gate',
-      scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
-      evidenceId: 'j3b-' + stat,
+        source: 'training-performance-gate',
+        scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
+        evidenceId: 'j3b-' + stat,
       },
     );
   }
   return profile;
 }
 
-describe('HIGHFLY RUN1-J J3B native RPG bridge', () => {
-  it('maps every Training Core stat into an existing live RPG/combat seam without stacking', () => {
+describe('HIGHFLY RUN1-J J3B post-PF5 compatibility bridge', () => {
+  it('adds only HIGHFLY-exclusive seams and never double-counts Claude-derived combat stats', () => {
     clearActiveHighflyHunterProfile();
     clearActiveTrainingCombatBinding();
     setActiveHighflyHunterProfile(fullTrainingProfile());
@@ -72,21 +72,22 @@ describe('HIGHFLY RUN1-J J3B native RPG bridge', () => {
     });
     applyActiveTrainingBridgeToEntity(entity);
 
-    // STR
-    expect(entity.attackPower).toBeGreaterThan(100);
-    // AGI
-    expect(entity.rangedPower).toBeGreaterThan(80);
+    // PF-5 single authority: these already came from permanent Core through
+    // recalcPlayerStats and MUST remain untouched by the compatibility bridge.
+    expect(entity.attackPower).toBe(100);
+    expect(entity.rangedPower).toBe(80);
+    expect(entity.spellPower).toBe(60);
+    expect(entity.healPower).toBe(70);
+    expect(entity.maxHp).toBe(1000);
+    expect(entity.critChance).toBe(0.05);
+    expect(entity.dodgeChance).toBe(0.05);
+
+    // Only mechanics not natively derived by Claude stay in this bridge.
     expect(entity.moveSpeed).toBeGreaterThan(7);
-    expect(entity.dodgeChance).toBeGreaterThan(0.05);
-    // VIT
-    expect(entity.maxHp).toBeGreaterThan(1000);
-    // PER
     expect(entity.hitBonus).toBeGreaterThan(0);
-    expect(entity.critChance).toBeGreaterThan(0.05);
     expect(entity.critDmgPhysBonus).toBeGreaterThan(0);
-    // INT
-    expect(entity.spellPower).toBeGreaterThan(60);
-    expect(entity.healPower).toBeGreaterThan(70);
+    expect(entity.critDmgSpellBonus).toBeGreaterThan(0);
+    expect(entity.critDmgHealBonus).toBeGreaterThan(0);
     expect(entity.highflyResourceCostMultiplier).toBeLessThan(1);
     expect(entity.highflyResourceRecoveryMultiplier).toBeGreaterThan(1);
 
@@ -99,6 +100,7 @@ describe('HIGHFLY RUN1-J J3B native RPG bridge', () => {
     expect(entity.spellPower).toBeCloseTo(once.spellPower, 8);
     expect(entity.healPower).toBeCloseTo(once.healPower, 8);
     expect(entity.maxHp).toBe(once.maxHp);
+    expect(entity.moveSpeed).toBeCloseTo(once.moveSpeed, 8);
     expect(entity.hitBonus).toBeCloseTo(once.hitBonus, 8);
     expect(entity.highflyResourceCostMultiplier).toBeCloseTo(
       once.highflyResourceCostMultiplier,
