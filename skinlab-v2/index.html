@@ -70,7 +70,7 @@
       </div>
       <div id="testStatus" class="small" style="margin:-2px 0 10px">Factory test: listo.</div>
 
-      <details class="painter" id="painterPanel" open>
+      <details class="painter" id="painterPanel">
         <summary>🎨 PAINTER PRO v1 <span class="chip live" id="painterLive">LIVE</span></summary>
         <div class="painter-body">
           <div class="grid2">
@@ -136,7 +136,7 @@
 
       <div class="row">
         <button id="bonesBtn">HUESOS</button>
-        <button id="rotateBtn" class="active">ROTACIÓN</button>
+        <button id="rotateBtn">ROTACIÓN</button>
         <button id="resetBtn">RESET CÁMARA</button>
       </div>
       <div class="legend">
@@ -230,7 +230,7 @@ scene.environmentIntensity=.92;
 pmremGenerator.dispose();
 
 const camera=new THREE.PerspectiveCamera(35,1,.01,100);
-camera.position.set(4.5,2.7,5.5);
+camera.position.set(3.55,2.15,4.35);
 const controls=new OrbitControls(camera,renderer.domElement);
 controls.target.set(0,1.15,0);
 controls.enableDamping=true;
@@ -240,16 +240,16 @@ controls.maxDistance=10;
 scene.add(new THREE.HemisphereLight(0xbcc7ff,0x14121d,1.55));
 const key=new THREE.DirectionalLight(0xffffff,3.6); key.position.set(3.5,6,4); scene.add(key);
 const rim=new THREE.DirectionalLight(0x8b5cf6,4.4); rim.position.set(-4,3,-3); scene.add(rim);
-const fill=new THREE.PointLight(0x7c3aed,24,8,2); fill.position.set(0,1.8,-2); scene.add(fill);
+const fill=new THREE.PointLight(0x7c3aed,14,8,2); fill.position.set(0,1.8,-2); scene.add(fill);
 const front=new THREE.SpotLight(0xf8fbff,38,12,.48,.55,1.3);front.position.set(1.2,4.2,5.4);front.target.position.set(0,1.25,0);scene.add(front,front.target);
 const edgeKey=new THREE.DirectionalLight(0xdce7ff,2.0);edgeKey.position.set(-2,2.6,4.5);scene.add(edgeKey);
 
-const floor=new THREE.Mesh(new THREE.CircleGeometry(4.5,96),new THREE.MeshStandardMaterial({color:0x111119,roughness:.88,metalness:.05}));
+const floor=new THREE.Mesh(new THREE.CircleGeometry(4.5,96),new THREE.MeshStandardMaterial({color:0x090a10,roughness:.94,metalness:.02}));
 floor.rotation.x=-Math.PI/2; floor.position.y=0; scene.add(floor);
 const ring=new THREE.Mesh(new THREE.RingGeometry(1.15,1.19,96),new THREE.MeshBasicMaterial({color:0x4c1d95,transparent:true,opacity:.65,side:THREE.DoubleSide}));
 ring.rotation.x=-Math.PI/2; ring.position.y=.006; scene.add(ring);
 
-let actor=null,mixer=null,skeletonHelper=null,autoRotate=true,currentMode='base';
+let actor=null,mixer=null,skeletonHelper=null,autoRotate=false,currentMode='base';
 const armorNames=new Set(['Knight_ArmLeft','Knight_ArmRight','Knight_Body','Knight_Cape','Knight_Helmet','Knight_LegLeft','Knight_LegRight']);
 const originalMat=new Map();
 
@@ -310,7 +310,7 @@ const AUTO_BLACK_AURA={
   label:'AUTO · BLACK AURA',
   pieces:{
     helmet:{primary:'#03050a',secondary:'#f4f7ff',accent:'#38145f',finish:'darkMetal',brightness:.82,contrast:1.48,metalness:.78,roughness:.18,detail:.42},
-    armor:{primary:'#05070d',secondary:'#edf3ff',accent:'#3b1768',finish:'darkMetal',brightness:.90,contrast:1.38,metalness:.66,roughness:.21,detail:.80},
+    armor:{primary:'#04060b',secondary:'#f1f5ff',accent:'#241039',finish:'darkMetal',brightness:.92,contrast:1.42,metalness:.68,roughness:.20,detail:.86},
     cape:{primary:'#030409',secondary:'#bbc6dc',accent:'#25103f',finish:'matte',brightness:.72,contrast:1.16,metalness:.03,roughness:.88,detail:.22},
     sword:{primary:'#02040a',secondary:'#ffffff',accent:'#6d28d9',finish:'gloss',brightness:1.10,contrast:1.58,metalness:.94,roughness:.06,detail:.96},
     shield:{primary:'#04060c',secondary:'#f7f9ff',accent:'#45187d',finish:'darkMetal',brightness:.92,contrast:1.40,metalness:.82,roughness:.14,detail:.86}
@@ -351,6 +351,11 @@ function channelForPixel(r,g,b,piece,detail){
   if(piece==='cape'){
     if(chroma>(.42-.18*d) && lum>.22)return ['accent',lum];
     if(lum>(.96-.12*d))return ['secondary',lum];
+    return ['primary',lum];
+  }
+  if(piece==='armor'){
+    if(lum>(.90-.23*d) && chroma<.26)return ['secondary',lum];
+    if(chroma>(.38-.12*d) && lum>.26)return ['accent',lum];
     return ['primary',lum];
   }
   if(piece==='sword'||piece==='shield'){
@@ -492,8 +497,8 @@ function applyWarriorBlackFinal(){
   const shield=actor.getObjectByName('Warrior_Shield');
   if(shield){
     const c=painterState.shield.secondary;
-    silhouetteAccents+=ensureRigidSilhouette(shield,'painter-shield-silhouette',c,1.022,.38);
-    edgeAccents+=ensureRigidEdgeAccent(shield,'painter-shield-edge',c,.78,24);
+    silhouetteAccents+=ensureRigidSilhouette(shield,'painter-shield-silhouette',c,1.028,.54);
+    edgeAccents+=ensureRigidEdgeAccent(shield,'painter-shield-edge',c,.92,18);
   }
   Object.assign(window.__SKINLAB_DIAG__,{
     finalAffectedMeshes:affected,atlasAccentMaterials:affected,rigidEdgeAccents:edgeAccents,
@@ -885,7 +890,7 @@ loadPresetBtn.onclick=()=>loadPainterPreset();
 copyRecipeBtn.onclick=()=>copyPainterRecipe();
 bonesBtn.onclick=()=>{if(!skeletonHelper)return;skeletonHelper.visible=!skeletonHelper.visible;bonesBtn.classList.toggle('active',skeletonHelper.visible)};
 rotateBtn.onclick=()=>{autoRotate=!autoRotate;rotateBtn.classList.toggle('active',autoRotate)};
-resetBtn.onclick=()=>{camera.position.set(4.5,2.7,5.5);controls.target.set(0,1.15,0);controls.update()};
+resetBtn.onclick=()=>{camera.position.set(3.55,2.15,4.35);controls.target.set(0,1.15,0);controls.update()};
 
 const clock=new THREE.Clock();
 function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
