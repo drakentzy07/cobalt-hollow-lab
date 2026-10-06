@@ -25,7 +25,7 @@ let enabled = mode !== 'base';
 let lastElementSignature = '';
 let toastTimer = 0;
 
-const HIGHFLY_GAME_C22_BUILD = 'C2.4-human-closure';
+const HIGHFLY_GAME_C22_BUILD = 'C2.5-hud-target-polish';
 let coachSuppressTimer = 0;
 
 function game(): any {
@@ -584,7 +584,7 @@ function syncHighflyBagsCoach(): void {
 }
 
 function boot(): void {
-  document.body.classList.add('hf-game-c1', 'hf-game-c22', 'hf-game-c23', 'hf-game-c24');
+  document.body.classList.add('hf-game-c1', 'hf-game-c22', 'hf-game-c23', 'hf-game-c24', 'hf-game-c25');
   ensureBuildStamp();
   ensureSpecialSeats();
   ensureGhostSkillSeats();
