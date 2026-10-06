@@ -138,6 +138,7 @@ jobs:
           python ../overlays/highfly_progression_pf5_stat_authority.py
           python ../overlays/highfly_game_c1.py
           python ../overlays/highfly_game_c21_s23_feedback.py
+          python ../overlays/highfly_game_c22_video_qa.py
           cp ../game/c1/highfly_game_c1.test.ts tests/highfly_game_c1.test.ts
           cp ../game/c1/highfly_game_c21.test.ts tests/highfly_game_c21.test.ts
           cp ../game/c1/highfly_game_c22.test.ts tests/highfly_game_c22.test.ts
@@ -458,6 +459,7 @@ jobs:
           grep -F "extendHighflyComboForEvade(): void" upstream/src/ui/hud.ts
           grep -F "if (this.highflyComboEvadeGraceUsed) return;" upstream/src/ui/hud.ts
           grep -F "mobile-window-open #actionbar" upstream/src/styles/hf_game_c1.css
+          grep -F "HIGHFLY_GAME_C22_VIDEO_QA_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C22_VIDEO_QA_APPLIED=1')")
           grep -F "C2.2_VIDEO_QA" upstream/src/highfly/game_c1_runtime.ts
           grep -F "body.mobile-touch #mobile-interact" upstream/src/styles/hf_game_c1.css
           grep -F "body.mobile-touch.mobile-more-open #mobile-controls" upstream/src/styles/hf_game_c1.css
