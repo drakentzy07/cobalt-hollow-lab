@@ -22,9 +22,10 @@
 - restrained violet environment/accent
 - dark metallic sword with bright authored atlas reflection plus rigid white edge accent
 - black shield with silver atlas/edge accent
+- black skinned helmet with white/silver detail driven by its original atlas
 - face stays untouched
 
-Rigid line geometry is used only on non-skinned rigid pieces (helmet, sword, shield). Skinned body meshes use the original UV atlas itself for silver/white detail so accents remain attached through every animation.
+Rigid line geometry is used only on genuinely non-skinned rigid pieces (sword and shield in this build). The Warrior helmet is skinned at runtime, so it deliberately does **not** receive a static line overlay; helmet and body details use the original UV atlas as the silver/white accent mask so they remain attached through every animation.
 
 ## Factory QA
 The lab exposes all 25 authored Warrior clips and a `TEST 25 CLIPS` mode. The browser gate exercises all 25, with screenshots for locomotion, jump, the three 1H attacks, block, shield bash and hit.

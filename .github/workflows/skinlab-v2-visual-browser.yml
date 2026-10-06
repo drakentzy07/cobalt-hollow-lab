@@ -89,7 +89,8 @@ jobs:
                 blackDiag.skinId !== 'warrior_black_final' ||
                 blackDiag.finalAffectedMeshes < 6 ||
                 blackDiag.atlasAccentMaterials < 3 ||
-                blackDiag.rigidEdgeAccents < 3)
+                blackDiag.rigidEdgeAccents !== blackDiag.rigidEdgeAccentExpected ||
+                !String(blackDiag.helmetAccentMode).startsWith('atlas'))
               throw new Error('FINAL cosmetic material gate failed: '+JSON.stringify(blackDiag));
             await page.screenshot({ path: 'visual-artifacts/warrior-black-final-idle.png', fullPage: true });
 
@@ -128,7 +129,7 @@ jobs:
 
             require('fs').writeFileSync(
               'visual-artifacts/visual-gate.txt',
-              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nWARRIOR BLACK FINAL material remap OK\nAtlas white/silver accents OK\nRigid helmet/sword/shield edge accents OK\n25/25 authored clips exercised OK\n'
+              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nWARRIOR BLACK FINAL material remap OK\nAtlas white/silver accents OK\nSkinned helmet atlas accent OK\nRigid sword/shield edge accents OK\n25/25 authored clips exercised OK\n'
             );
             await browser.close();
           })().catch(err => { console.error(err); process.exit(1); });

@@ -271,7 +271,8 @@ function applyWarriorBlackFinal(){
   });
 
   const helmet=actor.getObjectByName('Knight_Helmet');
-  if(helmet)edgeAccents+=ensureRigidEdgeAccent(helmet,'helmet-silver',.34,32);
+  const helmetAccentMode=helmet?.isSkinnedMesh ? 'atlas-skinned' : 'atlas+rigid-edge';
+  if(helmet && !helmet.isSkinnedMesh)edgeAccents+=ensureRigidEdgeAccent(helmet,'helmet-silver',.34,32);
   const sword=actor.getObjectByName('Warrior_Sword');
   if(sword)edgeAccents+=ensureRigidEdgeAccent(sword,'sword-white-edge',.74,24);
   const shield=actor.getObjectByName('Warrior_Shield');
@@ -281,6 +282,8 @@ function applyWarriorBlackFinal(){
     finalAffectedMeshes:affected,
     atlasAccentMaterials:atlasAccents,
     rigidEdgeAccents:edgeAccents,
+    rigidEdgeAccentExpected:2,
+    helmetAccentMode,
     skinId:'warrior_black_final'
   });
   return affected;
@@ -389,6 +392,8 @@ window.__SKINLAB_DIAG__={
   finalAffectedMeshes:0,
   atlasAccentMaterials:0,
   rigidEdgeAccents:0,
+  rigidEdgeAccentExpected:2,
+  helmetAccentMode:null,
   skinId:'warrior_base_gold',
   factoryReady:false,
   testedClips:0,
