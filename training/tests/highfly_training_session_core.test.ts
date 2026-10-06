@@ -50,7 +50,7 @@ describe('HIGHFLY RUN138 Awakening + real session Core', () => {
     expect(adaptationStimulusForCurrent(35, 3)).toBeLessThan(adaptationStimulusForCurrent(15, 3));
   });
 
-  it('migrates old earned Core as Training Growth, adds Awakening once, and is idempotent', () => {
+  it('migrates old earned Core into Training-only allocation and is idempotent', () => {
     const legacy = withSquatRm(160) as any;
     legacy.schemaVersion = 1;
     legacy.scoringVersion = 'run1-b';
@@ -67,9 +67,14 @@ describe('HIGHFLY RUN138 Awakening + real session Core', () => {
     const migrated = migrateLegacyFixedCoreBaseline(legacy);
     expect(migrated.scoringVersion).toBe(HIGHFLY_TRAINING_SCORING_VERSION);
     expect(migrated.training.core.STR.trainingGrowth).toBeCloseTo(2.9, 10);
-    expect(migrated.training.core.STR.current).toBeCloseTo(
-      migrated.training.core.STR.awakeningBase + 2.9, 10,
-    );
+    expect(migrated.training.core.STR.trainingAllocated).toBeCloseTo(2.9, 10);
+    expect(migrated.training.core.STR.current).toBeCloseTo(2.9, 10);
+    expect(migrated.training.core.STR.awakeningBase).toBe(0);
+    expect(migrated.training.core.STR.naturalLevelGrowth).toBe(0);
+    expect(migrated.awakening.budget).toBe(0);
+    expect(Object.values(migrated.awakening.base).reduce((sum, value) => sum + value, 0)).toBe(0);
+    expect(migrated.training.points.earned).toBeGreaterThan(0);
+    expect(migrated.training.points.allocated.STR).toBeCloseTo(2.9, 10);
     expect(migrated.training.cycleProgression?.completedSessions).toEqual(['1:1']);
     expect(migrateLegacyFixedCoreBaseline(migrated)).toEqual(migrated);
   });
