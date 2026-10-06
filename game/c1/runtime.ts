@@ -334,20 +334,28 @@ type HighflyHudTarget = {
 };
 
 const HIGHFLY_HUD_TARGETS: HighflyHudTarget[] = [
-  { id: 'skills', label: 'HABILIDADES S1–S10', selectors: ['#actionbar'] },
-  { id: 'specials', label: 'ESP1 · ESP2 · ULT', selectors: ['#hf-c1-special-seats'] },
+  ...Array.from({ length: 10 }, (_, index) => ({
+    id: 's' + (index + 1),
+    label: 'HABILIDAD S' + (index + 1),
+    selectors: ['#actionbar [data-hotbar-slot="' + (index + 1) + '"]'],
+  })),
+  { id: 'esp1', label: 'ESPECIAL 1', selectors: ['#hf-c1-esp1'] },
+  { id: 'esp2', label: 'ESPECIAL 2', selectors: ['#hf-c1-esp2'] },
+  { id: 'ult', label: 'ULT', selectors: ['#hf-c1-ult'] },
   { id: 'target', label: 'TARGET', selectors: ['#mobile-target-cycle'] },
   { id: 'attack', label: 'ATK / USAR', selectors: ['#mobile-action-attack'] },
   { id: 'evade', label: 'EVADIR', selectors: ['#mobile-evade'] },
   { id: 'jump', label: 'SALTAR', selectors: ['#mobile-jump'] },
-  { id: 'utilities', label: 'GEMA · POT · ITEMS', selectors: ['#hf-c1-utility-lane'] },
+  { id: 'gem', label: 'GEMA', selectors: ['#hf-c1-gem-seat'] },
+  { id: 'potion', label: 'POCIÓN / CONSUMIBLE', selectors: ['#mobile-consumable-seat'] },
+  { id: 'stance', label: 'ITEM / POSTURA', selectors: ['#mobile-stance-anchor'] },
   { id: 'buffs', label: 'BUFFS / PASIVAS', selectors: ['#buff-bar'] },
   { id: 'debuffs', label: 'DEBUFFS', selectors: ['#debuff-bar'] },
 ];
 
 const HIGHFLY_HUD_STORE_PREFIX = 'highfly:c23:hud:';
 let highflyHudEditing = false;
-let highflyHudSelected = 'skills';
+let highflyHudSelected = 's1';
 let highflyHudDrag:
   | { pointerId: number; targetId: string; startX: number; startY: number; base: HighflyHudTransform }
   | null = null;
@@ -456,7 +464,7 @@ function ensureHighflyHudEditor(): HTMLElement {
   root.id = 'hf-c23-hud-editor';
   root.innerHTML =
     '<div class="hf-c23-hud-editor__title">HIGHFLY · EDITAR HUD</div>' +
-    '<div class="hf-c23-hud-editor__selected"><b data-hf-hud-label>HABILIDADES S1–S10</b><span data-hf-hud-scale>100%</span></div>' +
+    '<div class="hf-c23-hud-editor__selected"><b data-hf-hud-label>HABILIDAD S1</b><span data-hf-hud-scale>100%</span></div>' +
     '<div class="hf-c23-hud-editor__actions">' +
       '<button type="button" data-hf-hud-minus>−</button>' +
       '<button type="button" data-hf-hud-plus>+</button>' +
