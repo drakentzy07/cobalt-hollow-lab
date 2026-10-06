@@ -164,8 +164,8 @@ matches = lore_pattern.findall(main_text)
 if len(matches) != 1:
     raise SystemExit(f"RUN120 creator lore anchor expected 1, found {len(matches)}")
 origin_note = """<div class="highfly-core-origin-note">
-          <b>HUNTER CORE · 0 / 0 / 0 / 0 / 0</b>
-          <span>STR · AGI · VIT · PER · INT se activan únicamente mediante entrenamiento real.</span>
+          <b>HUNTER CORE · BASE LV1 = 50</b>
+          <span>La clase distribuye el Core inicial. LV2→99 aporta +98 de crecimiento natural total; TRAINING se suma y se asigna manualmente.</span>
         </div>"""
 main_text = lore_pattern.sub(lambda m: m.group(1) + "\n        " + origin_note, main_text, count=1)
 main.write_text(main_text, encoding="utf-8")
