@@ -12,6 +12,7 @@ on:
       - highfly-game-c2-3-human-fix
       - highfly-game-c2-4-human-closure
       - highfly-game-c2-5-hud-target-polish
+      - highfly-game-c2-5-1-hud-visual-fix
   workflow_dispatch:
 
 permissions:
@@ -162,6 +163,7 @@ jobs:
           cp ../game/c1/highfly_game_c23.test.ts tests/highfly_game_c23.test.ts
           cp ../game/c1/highfly_game_c24.test.ts tests/highfly_game_c24.test.ts
           cp ../game/c1/highfly_game_c25.test.ts tests/highfly_game_c25.test.ts
+          cp ../game/c1/highfly_game_c251.test.ts tests/highfly_game_c251.test.ts
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -290,6 +292,7 @@ jobs:
           test -s overlays/highfly_game_c24_human_closure.py
           test -s overlays/highfly_game_c25_hud_target_polish.py
           test -s game/c1/highfly_game_c25.test.ts
+          test -s game/c1/highfly_game_c251.test.ts
           test -s game/c1/runtime.ts
           test -s game/c1/elemental_basic.ts
           test -s game/c1/elemental_weapon_vfx.ts
@@ -498,6 +501,11 @@ jobs:
           grep -F "'hf-game-c25'" upstream/src/highfly/game_c1_runtime.ts
           grep -F "hf-game-c25:not(.game-active) #actionbar" upstream/src/styles/hf_game_c1.css
           grep -F 'data-hotbar-slot="10"] { right:204px !important; bottom:246px !important; }' upstream/src/styles/hf_game_c1.css
+          grep -F "function syncHighflyWorldReady(): void" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "hf-game-c25:not(.hf-c25-world-ready) #actionbar" upstream/src/styles/hf_game_c1.css
+          grep -F "clip-path: circle(50% at 50% 50%) !important;" upstream/src/styles/hf_game_c1.css
+          grep -F "body.mobile-touch.hf-game-c25 #mobile-consumable-seat," upstream/src/styles/hf_game_c1.css
+          grep -F "body.mobile-touch.hf-game-c25 #mobile-stance-anchor {" upstream/src/styles/hf_game_c1.css
           grep -F "PREPARANDO HUNTER…" upstream/src/styles/hf_game_c1.css
           grep -F "softTargetLocked?: () => boolean;" upstream/src/game/pad_target_pick.ts
           grep -F "let highflyManualTargetId: number | null = null;" upstream/src/main.ts
@@ -515,7 +523,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts tests/highfly_game_c21.test.ts tests/highfly_game_c22.test.ts tests/highfly_game_c23.test.ts tests/highfly_game_c24.test.ts tests/highfly_game_c25.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts tests/highfly_game_c21.test.ts tests/highfly_game_c22.test.ts tests/highfly_game_c23.test.ts tests/highfly_game_c24.test.ts tests/highfly_game_c25.test.ts tests/highfly_game_c251.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -2828,7 +2836,7 @@ jobs:
 
   deploy-game-c2:
     name: Deploy HIGHFLY GAME-C2 Mobile Feel
-    if: github.ref_name == 'highfly-game-c2-mobile-feel' || github.ref_name == 'highfly-game-c2-1-s23-feedback' || github.ref_name == 'highfly-game-c2-2-mobile-polish' || github.ref_name == 'highfly-game-c2-3-human-fix' || github.ref_name == 'highfly-game-c2-4-human-closure' || github.ref_name == 'highfly-game-c2-5-hud-target-polish'
+    if: github.ref_name == 'highfly-game-c2-mobile-feel' || github.ref_name == 'highfly-game-c2-1-s23-feedback' || github.ref_name == 'highfly-game-c2-2-mobile-polish' || github.ref_name == 'highfly-game-c2-3-human-fix' || github.ref_name == 'highfly-game-c2-4-human-closure' || github.ref_name == 'highfly-game-c2-5-hud-target-polish' || github.ref_name == 'highfly-game-c2-5-1-hud-visual-fix'
     needs: thin-offline
     runs-on: ubuntu-latest
     timeout-minutes: 30
