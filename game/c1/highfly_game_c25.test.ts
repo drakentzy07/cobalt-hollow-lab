@@ -37,13 +37,14 @@ describe('HIGHFLY GAME-C2.5 HUD + target polish', () => {
     ).toBe(2);
   });
 
-  it('ships one clean crescent HUD and hides combat chrome before game-active', () => {
+  it('ships one clean crescent HUD and hides combat chrome until real world-ready', () => {
     const runtime = readFileSync('src/highfly/game_c1_runtime.ts', 'utf8');
     const css = readFileSync('src/styles/hf_game_c1.css', 'utf8');
 
     expect(runtime).toContain("C2.5-hud-target-polish");
     expect(runtime).toContain("'hf-game-c25'");
-    expect(css).toContain('hf-game-c25:not(.game-active) #actionbar');
+    expect(css).toContain('hf-game-c25:not(.hf-c25-world-ready) #actionbar');
+    expect(runtime).toContain("document.body.classList.toggle('hf-c25-world-ready', ready)");
     expect(css).toContain('[data-hotbar-slot="1"]  { right:112px !important; bottom:46px !important; }');
     expect(css).toContain('[data-hotbar-slot="10"] { right:204px !important; bottom:246px !important; }');
     expect(css).toContain('#hf-c1-esp1 { right:286px !important; bottom:146px !important; }');
