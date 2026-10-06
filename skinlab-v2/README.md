@@ -1,31 +1,22 @@
-# HIGHFLY Skin Lab v2 — PAINTER PRO v1.1 / AUTO BLACK AURA
+# HIGHFLY Skin Lab v2 — BLACK AURA FINAL WEAPON POLISH
 
-The lab now opens with the canonical AUTO · BLACK AURA preset already applied.
+This pass freezes the approved helmet, armor and cape and changes only sword + shield.
 
-## Black Aura target
-- Helmet shell + visor: black/deep graphite
-- White/silver: controlled trim only, never a white visor block
-- Armor: black metal with brighter silver trim and violet only as a secondary accent
-- Sword: black body, high-contrast white cutting trim with emissive highlight
-- Shield: black metal with silver border
-- Cape: deep matte black
-- Studio environment: reflected metal depth for preview
+## Sword
+- black/dark graphite blade mass
+- much smaller white/silver classified area
+- white cutting trim stays bright through the emissive atlas
+- tight exterior halo only
+- no EdgesGeometry polygon wireframe
 
-## Root-cause fix
-Knight_HelmetVisor is explicitly classified as the helmet painter role. It can no longer escape the cosmetic paint pass and remain in the original light material.
+## Shield
+- solid black plate body
+- restrained silver outer rim
+- subtle violet secondary accent
+- no internal white polygon grid / wireframe
 
-## One-click preset
-Button: AUTO · BLACK AURA
-
-It restores the complete canonical recipe automatically. The same recipe is applied on boot, so users do not need to understand the Painter controls just to preview the intended skin.
-
-## Painter Pro remains editable
-Helmet, Armor, Cape, Sword and Shield still expose palette, finish, brightness, contrast, metalness, roughness, detail and direct UV brush controls.
-
-## Immutable gameplay authority
-No changes to model geometry, Rig_Medium, skin weights, authored clips, sockets, grips, hitboxes, traces, combat, abilities, timing or damage authority.
+## Frozen
+Helmet, visor, armor, cape, rig, weights, clips, sockets, grips, hit authority and gameplay remain unchanged.
 
 ## QA
-Browser gate validates the canonical auto preset, painted visor role, sword emissive trim, studio environment, 25 authored animations and the Painter Pro controls.
-
-Visual inspection retry marker: AUTO_BLACK_AURA_FINAL_PASS_1
+The visual gate requires zero rigid EdgesGeometry accents, two cosmetic silhouette halos, the final weapon polish diagnostic, 25/25 authored clips, and the existing Painter Pro / Auto Black Aura contract.

@@ -43,6 +43,9 @@ jobs:
           grep -q "applyAutoBlackAura" skinlab-v2/index.html
           grep -q "emissiveTexture" skinlab-v2/index.html
           grep -q "RoomEnvironment" skinlab-v2/index.html
+          grep -q "weaponPolishVersion:1" skinlab-v2/index.html
+          grep -q "silhouette-emissive-no-wireframe" skinlab-v2/index.html
+          grep -q "wireframeSuppressed:true" skinlab-v2/index.html
           grep -q "function resolveNode" skinlab-v2/index.html
           grep -q "name.replace(/\[\[\\\].:/\]/g" skinlab-v2/index.html
           grep -q "0.555174" skinlab-v2/index.html

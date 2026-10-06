@@ -312,8 +312,8 @@ const AUTO_BLACK_AURA={
     helmet:{primary:'#03050a',secondary:'#f4f7ff',accent:'#38145f',finish:'darkMetal',brightness:.82,contrast:1.48,metalness:.78,roughness:.18,detail:.42},
     armor:{primary:'#04060b',secondary:'#f1f5ff',accent:'#241039',finish:'darkMetal',brightness:.92,contrast:1.42,metalness:.68,roughness:.20,detail:.86},
     cape:{primary:'#030409',secondary:'#bbc6dc',accent:'#25103f',finish:'matte',brightness:.72,contrast:1.16,metalness:.03,roughness:.88,detail:.22},
-    sword:{primary:'#02040a',secondary:'#ffffff',accent:'#6d28d9',finish:'gloss',brightness:1.10,contrast:1.58,metalness:.94,roughness:.06,detail:.96},
-    shield:{primary:'#04060c',secondary:'#f7f9ff',accent:'#45187d',finish:'darkMetal',brightness:.92,contrast:1.40,metalness:.82,roughness:.14,detail:.86}
+    sword:{primary:'#010309',secondary:'#ffffff',accent:'#572397',finish:'gloss',brightness:1.04,contrast:1.66,metalness:.96,roughness:.05,detail:.78},
+    shield:{primary:'#03050b',secondary:'#f7f9ff',accent:'#35165f',finish:'darkMetal',brightness:.90,contrast:1.46,metalness:.84,roughness:.13,detail:.72}
   }
 };
 const deepClone=o=>JSON.parse(JSON.stringify(o));
@@ -358,10 +358,17 @@ function channelForPixel(r,g,b,piece,detail){
     if(chroma>(.38-.12*d) && lum>.26)return ['accent',lum];
     return ['primary',lum];
   }
-  if(piece==='sword'||piece==='shield'){
-    const cut=piece==='sword' ? (.78-.15*d) : (.86-.12*d);
-    if(lum>cut && chroma<.24)return ['secondary',lum];
-    if(chroma>(.34-.16*d) && lum>.24)return ['accent',lum];
+  if(piece==='sword'){
+    // Final weapon polish: only the brightest neutral authored pixels become the
+    // silver cutting trim. The blade mass stays black instead of turning white.
+    if(lum>(.93-.04*d) && chroma<.12)return ['secondary',lum];
+    if(chroma>(.34-.10*d) && lum>.24 && lum<.78)return ['accent',lum];
+    return ['primary',lum];
+  }
+  if(piece==='shield'){
+    // Shield is a solid black plate with restrained silver rim/detail.
+    if(lum>(.95-.03*d) && chroma<.10)return ['secondary',lum];
+    if(chroma>(.38-.08*d) && lum>.25 && lum<.72)return ['accent',lum];
     return ['primary',lum];
   }
   if(lum>(.96-.19*d))return ['secondary',lum];
@@ -458,7 +465,7 @@ function applyPaintMaterial(m,role){
   if(m.emissive){
     m.emissive.set(role==='sword'?0xffffff:role==='shield'?0xeef4ff:0xdce7ff);
     m.emissiveMap=p.emissiveTexture;
-    m.emissiveIntensity=role==='sword'?.62:role==='shield'?.20:role==='helmet'?.07:.05;
+    m.emissiveIntensity=role==='sword'?.78:role==='shield'?.10:role==='helmet'?.07:.05;
   }
   if('metalness'in m)m.metalness=s.metalness;
   if('roughness'in m)m.roughness=s.roughness;
@@ -491,19 +498,21 @@ function applyWarriorBlackFinal(){
   const sword=actor.getObjectByName('Warrior_Sword');
   if(sword){
     const c=painterState.sword.secondary;
-    silhouetteAccents+=ensureRigidSilhouette(sword,'painter-sword-silhouette',c,1.062,1.0);
-    edgeAccents+=ensureRigidEdgeAccent(sword,'painter-sword-edge',c,1.0,12);
+    // No EdgesGeometry here: it made every polygon read like a wireframe.
+    // A tight back-face halo plus the emissive texture gives one clean premium edge.
+    silhouetteAccents+=ensureRigidSilhouette(sword,'painter-sword-silhouette',c,1.022,.72);
   }
   const shield=actor.getObjectByName('Warrior_Shield');
   if(shield){
     const c=painterState.shield.secondary;
-    silhouetteAccents+=ensureRigidSilhouette(shield,'painter-shield-silhouette',c,1.028,.54);
-    edgeAccents+=ensureRigidEdgeAccent(shield,'painter-shield-edge',c,.92,18);
+    // Solid shield body, restrained outer silver halo; no internal white wire grid.
+    silhouetteAccents+=ensureRigidSilhouette(shield,'painter-shield-silhouette',c,1.014,.30);
   }
   Object.assign(window.__SKINLAB_DIAG__,{
     finalAffectedMeshes:affected,atlasAccentMaterials:affected,rigidEdgeAccents:edgeAccents,
-    rigidSilhouetteAccents:silhouetteAccents,rigidEdgeAccentExpected:2,
-    helmetAccentMode:'painter-pro',skinId:'warrior_black_final',refinementPass:4,
+    rigidSilhouetteAccents:silhouetteAccents,rigidEdgeAccentExpected:0,
+    weaponPolishVersion:1,weaponOutlineMode:'silhouette-emissive-no-wireframe',wireframeSuppressed:true,
+    helmetAccentMode:'painter-pro',skinId:'warrior_black_final',refinementPass:5,
     painterReady:true,painterVersion:1,painterPieces:5,brushOps:Object.values(paintOps).reduce((a,v)=>a+v.length,0)
   });
   return affected;
@@ -609,7 +618,7 @@ function applyAutoBlackAura(){
     studioEnvironment:!!scene.environment
   });
   autoAuraBtn.classList.add('active');
-  painterStatus.textContent='AUTO · BLACK AURA aplicado · casco negro + metal profundo + filo blanco intenso.';
+  painterStatus.textContent='AUTO · BLACK AURA FINAL · espada negra con filo blanco limpio + escudo sólido sin wireframe.';
   return true;
 }
 function setMode(mode){

@@ -92,8 +92,11 @@ jobs:
                 blackDiag.painterVersion !== 1 ||
                 blackDiag.painterPieces !== 5 ||
                 blackDiag.painterTextures !== 5 ||
-                blackDiag.rigidEdgeAccents < 2 ||
+                blackDiag.rigidEdgeAccents !== 0 ||
                 blackDiag.rigidSilhouetteAccents < 2 ||
+                blackDiag.weaponPolishVersion !== 1 ||
+                blackDiag.weaponOutlineMode !== 'silhouette-emissive-no-wireframe' ||
+                !blackDiag.wireframeSuppressed ||
                 !blackDiag.autoPresetApplied ||
                 blackDiag.autoPresetId !== 'warrior_black_aura_auto_v1' ||
                 !blackDiag.helmetVisorFound ||
@@ -161,7 +164,7 @@ jobs:
 
             require('fs').writeFileSync(
               'visual-artifacts/visual-gate.txt',
-              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nPAINTER PRO v1.1 READY\nAUTO BLACK AURA default preset OK\nHelmet visor painted by helmet role OK\nStudio metal environment OK\nSword emissive white trim OK\n5 independent paint pieces OK\nPalette + finish controls OK\nDirect UV brush engine OK\nPreset recipe pipeline OK\n25/25 authored clips exercised OK\n'
+              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nPAINTER PRO v1.1 READY\nAUTO BLACK AURA default preset OK\nHelmet visor painted by helmet role OK\nStudio metal environment OK\nSword black-body + clean emissive cutting trim OK\nShield solid-body + restrained silver rim OK\nWeapon wireframe suppressed OK\n5 independent paint pieces OK\nPalette + finish controls OK\nDirect UV brush engine OK\nPreset recipe pipeline OK\n25/25 authored clips exercised OK\n'
             );
             await browser.close();
           })().catch(err => { console.error(err); process.exit(1); });
