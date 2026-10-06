@@ -6,10 +6,13 @@ on:
       - highfly-training-run1j
       - highfly-progression-foundation-1-99
       - highfly-game-c1-character-combat-hud
+      - highfly-game-c2-mobile-feel
   workflow_dispatch:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: highfly-training-run1j
@@ -2606,6 +2609,16 @@ jobs:
           await browser.close();
           NODE
 
+      - name: Configure GitHub Pages for GAME-C2 playtest
+        if: success()
+        uses: actions/configure-pages@v5
+
+      - name: Upload GAME-C2 playtest
+        if: success()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: upstream/dist
+
       - name: Upload browser diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -2643,3 +2656,16 @@ jobs:
           set -euo pipefail
           du -sh upstream/dist
           find upstream/dist/media -type f 2>/dev/null | wc -l || true
+
+  deploy-game-c2:
+    name: Deploy HIGHFLY GAME-C2 Mobile Feel
+    if: github.ref_name == 'highfly-game-c2-mobile-feel'
+    needs: thin-offline
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy GAME-C2 to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
