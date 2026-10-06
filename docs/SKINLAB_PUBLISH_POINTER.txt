@@ -1,0 +1,5 @@
+HIGHFLY Skin Lab canonical Pages publish pointer
+skinlab_branch=highfly-skinlab-v2-warrior-black
+skinlab_commit=1e8f6b1feb11d348a8808226c2de83c11776e3a3
+feature=PAINTER_PRO_V1
+pages_owner=highfly-game-c2-2-mobile-polish
