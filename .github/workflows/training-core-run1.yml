@@ -259,7 +259,9 @@ jobs:
           test -s overlays/highfly_training_core_v1.py
           grep -q "HIGHFLY_CORE_STATS" training/runtime/core.ts
           grep -q "HIGHFLY_AWAKENING_BASES" training/runtime/core.ts
-          grep -q "HIGHFLY_AWAKENING_BUDGET = 50" training/runtime/core.ts
+          grep -q "HIGHFLY_AWAKENING_BUDGET = 0" training/runtime/core.ts
+          grep -q "HIGHFLY_NATURAL_GROWTH_BUDGET = 0" training/runtime/core.ts
+          grep -q "HIGHFLY_TRAINING_SCHEMA_VERSION = 4" training/runtime/core.ts
           grep -q "trainingGrowth" training/runtime/core.ts
           grep -q "run2-awakening-v1" training/runtime/core.ts
           grep -q "training-performance-gate" training/runtime/core.ts
@@ -352,9 +354,11 @@ jobs:
           grep -F 'graphicsRebuildPaused || highflyTrainingFocusActive' upstream/src/main.ts
           grep -F "target?.closest?.('#highfly-training-window')" upstream/src/main.ts
           grep -F 'HUNTER CORE · ESTADO CONSOLIDADO' upstream/src/highfly/training/ui.ts
-          grep -F 'DESPERTAR ACTIVO' upstream/src/highfly/training/ui.ts
-          grep -F 'state.awakeningBase.toFixed(2)' upstream/src/highfly/training/ui.ts
+          grep -F 'TRAINING ACTIVO' upstream/src/highfly/training/ui.ts
           grep -F 'state.trainingAllocated.toFixed(2)' upstream/src/highfly/training/ui.ts
+          grep -F 'CLASE · NIVEL · EQUIPO <b>0 CORE</b>' upstream/src/highfly/training/ui.ts
+          grep -F 'STR / AGI / VIT / PER / INT nacen en 0 y sólo aumentan mediante entrenamiento real' upstream/src/highfly/training/ui.ts
+          ! grep -F 'DESPERTAR <b>' upstream/src/highfly/training/ui.ts
           if grep -Fq "\${state.calibrated ? 'BASE ESTABLECIDA' : 'EN CALIBRACIÓN'}" upstream/src/highfly/training/ui.ts; then
             echo "Obsolete zero-origin Core badge survived RUN138" >&2
             exit 1
@@ -376,9 +380,10 @@ jobs:
           grep -F "HIGHFLY INT: final resolved resource efficiency" upstream/src/sim/combat/ability_resolution.ts
           grep -F "highflyResourceRecoveryMultiplier" upstream/src/sim/combat/auras.ts
           ! grep -F "trainingGain(profile.training.core.AGI.trainingGrowth)" upstream/src/highfly/training/combat_runtime.ts
-          ! grep -F "baseline.hitBonus + precisionBonus" upstream/src/highfly/training/combat_runtime.ts
-          grep -F "highflyUniqueCoreModifiers(profile)" upstream/src/highfly/training/combat_runtime.ts
-          grep -F "baseline.hitBonus + unique.hitBonus" upstream/src/highfly/training/combat_runtime.ts
+          ! grep -F "applyTrainingBridge(" upstream/src/highfly/training/combat_runtime.ts
+          grep -F "highflyTrainingDerivedModifiers(profile)" upstream/src/highfly/training/combat_runtime.ts
+          grep -F "baseline.hitBonus + derived.hitBonus" upstream/src/highfly/training/combat_runtime.ts
+          grep -F "baseline.spellPower * (1 + derived.spellPowerBonus)" upstream/src/highfly/training/combat_runtime.ts
           grep -F "HIGHFLY_RUN1J_REAL_DEVICE_FIX_APPLIED=1" <(python -c "print('HIGHFLY_RUN1J_REAL_DEVICE_FIX_APPLIED=1')")
           grep -F "staleDonorLevel20" upstream/src/main.ts
           grep -F "SALTAR EJERCICIO" upstream/src/highfly/training/ui.ts
@@ -404,13 +409,13 @@ jobs:
           grep -F "Remo con Mancuernas" upstream/src/highfly/training/personal_routine.ts
           grep -F "HIGHFLY_TRAINING_SCORING_VERSION = 'run2-awakening-v1'" upstream/src/highfly/training/core.ts
           grep -F "export function useFreeTrainingReset" upstream/src/highfly/training/core.ts
-          grep -F "HIGHFLY_CORE_STAT_AUTHORITY_V1 = 'pf5-stat-bible-v1'" upstream/src/highfly/training/stat_authority.ts
-          grep -F "resolveHighflyPrimaryCoreForEntity" upstream/src/sim/entity.ts
-          grep -F "entity.attackPower = baseline.attackPower;" upstream/src/highfly/training/combat_runtime.ts
+          grep -F "HIGHFLY_CORE_STAT_AUTHORITY_V1 = 'pf5-training-only-derived-v1'" upstream/src/highfly/training/stat_authority.ts
+          ! grep -F "resolveHighflyPrimaryCoreForEntity" upstream/src/sim/entity.ts
+          grep -F "highflyTrainingDerivedModifiers(profile)" upstream/src/highfly/training/combat_runtime.ts
           ! grep -F "applyTrainingBridge(" upstream/src/highfly/training/combat_runtime.ts
           ! grep -F "trainingGain(" upstream/src/highfly/training/combat_runtime.ts
           grep -F "Primera sesión válida: conserva el Core y acredita Training Points para asignación manual." upstream/src/highfly/training/pipeline.ts
-          grep -F "CORE + TRAINING" upstream/src/highfly/training/ui.ts
+          grep -F "TRAINING ACTIVO" upstream/src/highfly/training/ui.ts
           grep -F "DESCANSO OBLIGATORIO" upstream/src/highfly/training/ui.ts
           ! grep -F "hf-rest-skip" upstream/src/highfly/training/ui.ts
           ! grep -F "CONTINUAR ANTES DE TIEMPO" upstream/src/highfly/training/ui.ts
@@ -936,10 +941,7 @@ jobs:
             }
             const delta = 0.4;
             const trainingAllocated = str.trainingAllocated + delta;
-            const current =
-              str.awakeningBase +
-              str.naturalLevelGrowth +
-              trainingAllocated;
+            const current = trainingAllocated;
             const peak = Math.max(str.peak ?? current, current);
             slot.profile.training.core.STR = {
               ...str,
@@ -1073,14 +1075,9 @@ jobs:
             mageTraining.awakeningBase !== null &&
             mageTraining.naturalLevelGrowth !== null &&
             mageTraining.trainingAllocated !== null &&
-            Math.abs(
-              mageTraining.current -
-                (
-                  mageTraining.awakeningBase +
-                  mageTraining.naturalLevelGrowth +
-                  mageTraining.trainingAllocated
-                )
-            ) <= 0.0001;
+            Math.abs(mageTraining.current - mageTraining.trainingAllocated) <= 0.0001 &&
+            Math.abs(mageTraining.awakeningBase) <= 0.0001 &&
+            Math.abs(mageTraining.naturalLevelGrowth) <= 0.0001;
           if (
             !mageCoreConsistent ||
             Math.abs(mageTraining.trainingAllocated - injectedTraining.trainingAllocated) > 0.0001 ||
