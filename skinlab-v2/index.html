@@ -42,7 +42,7 @@
 <body>
 <div id="app">
   <header>
-    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · BLACK AURA AUTO · PAINTER PRO v1.1</div></div></div>
+    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · PREMIUM AUTHORING v1 · BLACK AURA</div></div></div>
     <div class="status">
       <span class="pill" id="rigPill">Rig_Medium …</span>
       <span class="pill" id="rPill">handslot.r …</span>
@@ -59,6 +59,7 @@
         <button id="baseBtn" class="active">BASE</button>
         <button id="blackBtn">WARRIOR BLACK AURA</button>
         <button id="autoAuraBtn">⚡ AUTO · BLACK AURA</button>
+        <button id="authorBtn">✨ PREMIUM AUTHOR</button>
       </div>
       <div class="row">
         <select id="animSelect"></select>
@@ -442,7 +443,7 @@ function buildPieceTexture(piece){
   const emissiveTexture=new THREE.CanvasTexture(glowCanvas);
   emissiveTexture.colorSpace=THREE.SRGBColorSpace;emissiveTexture.flipY=false;emissiveTexture.needsUpdate=true;
   emissiveTexture.name='HIGHFLY_PAINTER_GLOW_'+piece;
-  painterTextures[piece]={canvas,ctx,texture,emissiveTexture,ratios:{primary:primary/total,secondary:secondary/total,accent:accent/total}};
+  painterTextures[piece]={canvas,ctx,texture,glowCanvas,glowCtx,emissiveTexture,ratios:{primary:primary/total,secondary:secondary/total,accent:accent/total}};
   for(const op of paintOps[piece])paintUvInternal(piece,op.uv,op.color,op.size,op.opacity,false);
   return painterTextures[piece];
 }
@@ -483,6 +484,123 @@ function roleForMesh(o){
   if(['Knight_ArmLeft','Knight_ArmRight','Knight_Body','Knight_LegLeft','Knight_LegRight'].includes(o.name))return 'armor';
   return null;
 }
+
+function qPos(attr,i){
+  return [
+    Math.round(attr.getX(i)*10000),
+    Math.round(attr.getY(i)*10000),
+    Math.round(attr.getZ(i)*10000)
+  ].join(',');
+}
+function edgeKey(attr,a,b){
+  const A=qPos(attr,a),B=qPos(attr,b);
+  return A<B?A+'|'+B:B+'|'+A;
+}
+function uvOf(attr,i){return {x:attr.getX(i),y:attr.getY(i)}}
+function collectFeatureSegments(mesh,minAngleDeg=35,minLenRatio=.04){
+  const geo=mesh.geometry, pos=geo?.attributes?.position, uv=geo?.attributes?.uv;
+  if(!geo||!pos||!uv)return [];
+  if(!geo.boundingBox)geo.computeBoundingBox();
+  const size=new THREE.Vector3();geo.boundingBox.getSize(size);
+  const diag=Math.max(.0001,size.length());
+  const index=geo.index;
+  const triCount=Math.floor((index?index.count:pos.count)/3);
+  const map=new Map();
+  const P0=new THREE.Vector3(),P1=new THREE.Vector3(),P2=new THREE.Vector3();
+  const A=new THREE.Vector3(),B=new THREE.Vector3(),N=new THREE.Vector3();
+  const idxAt=k=>index?index.getX(k):k;
+  for(let t=0;t<triCount;t++){
+    const ia=idxAt(t*3),ib=idxAt(t*3+1),ic=idxAt(t*3+2);
+    P0.fromBufferAttribute(pos,ia);P1.fromBufferAttribute(pos,ib);P2.fromBufferAttribute(pos,ic);
+    A.subVectors(P1,P0);B.subVectors(P2,P0);N.crossVectors(A,B).normalize();
+    const ids=[[ia,ib],[ib,ic],[ic,ia]];
+    for(const [i0,i1] of ids){
+      const key=edgeKey(pos,i0,i1);
+      const a=new THREE.Vector3().fromBufferAttribute(pos,i0);
+      const b=new THREE.Vector3().fromBufferAttribute(pos,i1);
+      const use={uv0:uvOf(uv,i0),uv1:uvOf(uv,i1),normal:N.clone(),len:a.distanceTo(b)/diag};
+      const list=map.get(key)||[];list.push(use);map.set(key,list);
+    }
+  }
+  const out=[];
+  const minAngle=THREE.MathUtils.degToRad(minAngleDeg);
+  for(const uses of map.values()){
+    if(uses.length<2)continue;
+    let angle=0;
+    for(let i=0;i<uses.length;i++)for(let j=i+1;j<uses.length;j++){
+      angle=Math.max(angle,uses[i].normal.angleTo(uses[j].normal));
+    }
+    if(angle<minAngle)continue;
+    for(const u of uses){
+      if(u.len<minLenRatio)continue;
+      out.push({uv0:u.uv0,uv1:u.uv1,angle,len:u.len});
+    }
+  }
+  return out;
+}
+function collectRoleFeatureSegments(role,minAngleDeg,minLenRatio){
+  const all=[];
+  actor?.traverse(o=>{
+    if(!o.isMesh||o.userData?.skinAccentOverlay)return;
+    const rec=originalMat.get(o.uuid);
+    const resolved=rec?.group==='sword'?'sword':rec?.group==='shield'?'shield':roleForMesh(o);
+    if(resolved===role)all.push(...collectFeatureSegments(o,minAngleDeg,minLenRatio));
+  });
+  return all;
+}
+function strokeUvSegments(piece,segments,color,width,alpha=1,glowAlpha=0){
+  const pack=painterTextures[piece];if(!pack||!segments.length)return 0;
+  const draw=(ctx,w,h,stroke,a,lineWidth)=>{
+    ctx.save();ctx.strokeStyle=stroke;ctx.globalAlpha=a;ctx.lineWidth=lineWidth;
+    ctx.lineCap='round';ctx.lineJoin='round';
+    for(const s of segments){
+      const x0=clamp01(s.uv0.x)*w,y0=(1-clamp01(s.uv0.y))*h;
+      const x1=clamp01(s.uv1.x)*w,y1=(1-clamp01(s.uv1.y))*h;
+      // Avoid atlas-wrap chords that would slash across unrelated islands.
+      if(Math.abs(s.uv0.x-s.uv1.x)>.35||Math.abs(s.uv0.y-s.uv1.y)>.35)continue;
+      ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();
+    }
+    ctx.restore();
+  };
+  draw(pack.ctx,pack.canvas.width,pack.canvas.height,color,alpha,width);
+  if(glowAlpha>0)draw(pack.glowCtx,pack.glowCanvas.width,pack.glowCanvas.height,'#ffffff',glowAlpha,Math.max(2,width*.72));
+  pack.texture.needsUpdate=true;pack.emissiveTexture.needsUpdate=true;
+  return segments.length;
+}
+function applyPremiumAuthoring(){
+  if(!actor||Object.keys(painterTextures).length!==5)return false;
+
+  // Real mesh creases become texture-space authored trims. Unlike EdgesGeometry
+  // these lines live ON the material: no floating wireframe and no gameplay mesh changes.
+  const swordBevel=collectRoleFeatureSegments('sword',18,.085);
+  const swordEdge=collectRoleFeatureSegments('sword',48,.10);
+  const shieldTrim=collectRoleFeatureSegments('shield',42,.025);
+  const helmetTrim=collectRoleFeatureSegments('helmet',48,.018);
+  const armorTrim=collectRoleFeatureSegments('armor',58,.022);
+
+  // Wide gunmetal bevel under a narrower bright cutting edge.
+  strokeUvSegments('sword',swordBevel,'#7f8aa3',10,.82,.08);
+  strokeUvSegments('sword',swordEdge,'#f7f9ff',5,1,.92);
+
+  // Structural secondary-color trims: restrained on armor, clearer on shield/helmet.
+  strokeUvSegments('shield',shieldTrim,'#e8eefc',6,.90,.20);
+  strokeUvSegments('helmet',helmetTrim,'#eef3ff',4,.78,.10);
+  strokeUvSegments('armor',armorTrim,'#d7deed',3,.62,.05);
+
+  Object.assign(window.__SKINLAB_DIAG__,{
+    premiumAuthoringReady:true,
+    premiumAuthoringVersion:1,
+    premiumAuthoringMode:'geometry-to-uv-trim',
+    swordBevelSegments:swordBevel.length,
+    swordEdgeSegments:swordEdge.length,
+    shieldTrimSegments:shieldTrim.length,
+    helmetTrimSegments:helmetTrim.length,
+    armorTrimSegments:armorTrim.length
+  });
+  authorBtn?.classList.add('active');
+  return swordBevel.length>0&&swordEdge.length>0;
+}
+
 function applyWarriorBlackFinal(){
   restoreMaterials();clearRigidAccents();
   if(Object.keys(painterTextures).length!==5)throw new Error('Painter textures incompletas');
@@ -607,6 +725,7 @@ function applyAutoBlackAura(){
   rebuildPainterTextures();
   pieceSelect.value='helmet';
   syncPainterUi();
+  applyPremiumAuthoring();
   setMode('black');
   const visor=actor?.getObjectByName('Knight_HelmetVisor');
   Object.assign(window.__SKINLAB_DIAG__,{
@@ -618,7 +737,7 @@ function applyAutoBlackAura(){
     studioEnvironment:!!scene.environment
   });
   autoAuraBtn.classList.add('active');
-  painterStatus.textContent='AUTO · BLACK AURA FINAL · espada negra con filo blanco limpio + escudo sólido sin wireframe.';
+  painterStatus.textContent='BLACK AURA PREMIUM · trims authorados desde la geometría real · espada con bisel + filo + armadura/escudo/casco con detalle secundario.';
   return true;
 }
 function setMode(mode){
@@ -745,7 +864,15 @@ window.__SKINLAB_DIAG__={
   helmetVisorFound:false,
   helmetVisorPainted:false,
   swordEmissiveTrim:false,
-  studioEnvironment:false
+  studioEnvironment:false,
+  premiumAuthoringReady:false,
+  premiumAuthoringVersion:0,
+  premiumAuthoringMode:null,
+  swordBevelSegments:0,
+  swordEdgeSegments:0,
+  shieldTrimSegments:0,
+  helmetTrimSegments:0,
+  armorTrimSegments:0
 };
 function playClip(name){
   if(!mixer||!actor)return false;
@@ -862,7 +989,7 @@ async function boot(){
       testableClips:names.length
     });
     window.__SKINLAB_CLIPS__=names.slice();
-    window.__SKINLAB_API__={setMode,playClip,runFactoryTest,stopFactoryTest,applyPainterPiece,paintAt:paintUvInternal,setBrushEnabled,copyPainterRecipe,applyAutoBlackAura};
+    window.__SKINLAB_API__={setMode,playClip,runFactoryTest,stopFactoryTest,applyPainterPiece,paintAt:paintUvInternal,setBrushEnabled,copyPainterRecipe,applyAutoBlackAura,applyPremiumAuthoring};
     syncPainterUi();
     applyAutoBlackAura();
   }catch(err){
@@ -877,6 +1004,7 @@ async function boot(){
 baseBtn.onclick=()=>setMode('base');
 blackBtn.onclick=()=>{setMode('black');autoAuraBtn.classList.remove('active')};
 autoAuraBtn.onclick=()=>applyAutoBlackAura();
+authorBtn.onclick=()=>{applyPremiumAuthoring();setMode('black');painterStatus.textContent='PREMIUM AUTHOR reaplicado sobre la skin actual.'};
 document.getElementById('playBtn').onclick=()=>playClip(document.getElementById('animSelect').value);
 testAllBtn.onclick=()=>runFactoryTest();
 stopTestBtn.onclick=()=>stopFactoryTest();

@@ -46,6 +46,11 @@ jobs:
           grep -q "weaponPolishVersion:1" skinlab-v2/index.html
           grep -q "silhouette-emissive-no-wireframe" skinlab-v2/index.html
           grep -q "wireframeSuppressed:true" skinlab-v2/index.html
+          grep -q 'id="authorBtn"' skinlab-v2/index.html
+          grep -q "applyPremiumAuthoring" skinlab-v2/index.html
+          grep -q "geometry-to-uv-trim" skinlab-v2/index.html
+          grep -q "swordBevelSegments" skinlab-v2/index.html
+          grep -q "swordEdgeSegments" skinlab-v2/index.html
           grep -q "function resolveNode" skinlab-v2/index.html
           grep -q "name.replace(/\[\[\\\].:/\]/g" skinlab-v2/index.html
           grep -q "0.555174" skinlab-v2/index.html

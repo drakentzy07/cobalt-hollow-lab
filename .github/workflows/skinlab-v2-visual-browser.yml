@@ -102,7 +102,15 @@ jobs:
                 !blackDiag.helmetVisorFound ||
                 !blackDiag.helmetVisorPainted ||
                 !blackDiag.swordEmissiveTrim ||
-                !blackDiag.studioEnvironment)
+                !blackDiag.studioEnvironment ||
+                !blackDiag.premiumAuthoringReady ||
+                blackDiag.premiumAuthoringVersion !== 1 ||
+                blackDiag.premiumAuthoringMode !== 'geometry-to-uv-trim' ||
+                blackDiag.swordBevelSegments < 1 ||
+                blackDiag.swordEdgeSegments < 1 ||
+                blackDiag.shieldTrimSegments < 1 ||
+                blackDiag.helmetTrimSegments < 1 ||
+                blackDiag.armorTrimSegments < 1)
               throw new Error('AUTO BLACK AURA material gate failed: '+JSON.stringify(blackDiag));
 
             // Exercise real Painter Pro controls. The result-first UI keeps the
@@ -126,8 +134,14 @@ jobs:
             await page.click('#autoAuraBtn');
             await page.waitForTimeout(500);
             const autoDiag=await page.evaluate(()=>window.__SKINLAB_DIAG__);
-            if(!autoDiag.autoPresetApplied || !autoDiag.helmetVisorPainted || !autoDiag.swordEmissiveTrim)
-              throw new Error('AUTO button did not reapply canonical skin: '+JSON.stringify(autoDiag));
+            if(!autoDiag.autoPresetApplied || !autoDiag.helmetVisorPainted || !autoDiag.swordEmissiveTrim || !autoDiag.premiumAuthoringReady)
+              throw new Error('AUTO button did not reapply canonical premium skin: '+JSON.stringify(autoDiag));
+            await page.click('#authorBtn');
+            await page.waitForTimeout(450);
+            const authoredDiag=await page.evaluate(()=>window.__SKINLAB_DIAG__);
+            if(!authoredDiag.premiumAuthoringReady || authoredDiag.swordBevelSegments<1 || authoredDiag.swordEdgeSegments<1)
+              throw new Error('Premium authoring did not generate sword trims: '+JSON.stringify(authoredDiag));
+            await page.screenshot({ path:'visual-artifacts/black-aura-premium-authoring.png', fullPage:true });
 
             const keyClips=[
               'Walking_A','Running_A','Running_Strafe_Left','Running_Strafe_Right','Walking_Backwards','Jump_Idle',
@@ -164,7 +178,7 @@ jobs:
 
             require('fs').writeFileSync(
               'visual-artifacts/visual-gate.txt',
-              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nPAINTER PRO v1.1 READY\nAUTO BLACK AURA default preset OK\nHelmet visor painted by helmet role OK\nStudio metal environment OK\nSword black-body + clean emissive cutting trim OK\nShield solid-body + restrained silver rim OK\nWeapon wireframe suppressed OK\n5 independent paint pieces OK\nPalette + finish controls OK\nDirect UV brush engine OK\nPreset recipe pipeline OK\n25/25 authored clips exercised OK\n'
+              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nPAINTER PRO v1.1 READY\nAUTO BLACK AURA default preset OK\nHelmet visor painted by helmet role OK\nStudio metal environment OK\nSword black-body + clean emissive cutting trim OK\nShield solid-body + restrained silver rim OK\nWeapon wireframe suppressed OK\nPREMIUM AUTHORING v1 geometry-to-UV trims OK\nSword bevel + cutting-edge authored trims OK\nHelmet/armor/shield structural trims OK\n5 independent paint pieces OK\nPalette + finish controls OK\nDirect UV brush engine OK\nPreset recipe pipeline OK\n25/25 authored clips exercised OK\n'
             );
             await browser.close();
           })().catch(err => { console.error(err); process.exit(1); });
