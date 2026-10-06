@@ -29,7 +29,7 @@
 <body>
 <div id="app">
   <header>
-    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · WARRIOR BLACK FINAL</div></div></div>
+    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · WARRIOR BLACK AURA · PASS 2</div></div></div>
     <div class="status">
       <span class="pill" id="rigPill">Rig_Medium …</span>
       <span class="pill" id="rPill">handslot.r …</span>
@@ -44,7 +44,7 @@
       <h2>WARRIOR VISUAL</h2>
       <div class="row">
         <button id="baseBtn" class="active">BASE</button>
-        <button id="blackBtn">WARRIOR BLACK FINAL</button>
+        <button id="blackBtn">WARRIOR BLACK AURA</button>
       </div>
       <div class="row">
         <select id="animSelect"></select>
@@ -204,44 +204,130 @@ function restoreMaterials(){
   });
 }
 let accentRoots=[];
-let blackAuraTexture=null;
+let blackAuraTextures=null;
 
 function clearRigidAccents(){
-  for(const line of accentRoots) line.visible=false;
+  for(const accent of accentRoots) accent.visible=false;
 }
 
 function ensureRigidEdgeAccent(root,name,opacity=.38,threshold=28){
-  let count=0;
+  const targets=[];
   root.traverse(o=>{
-    if(!o.isMesh || o.isSkinnedMesh || !o.geometry)return;
+    if(o.isMesh && !o.isSkinnedMesh && o.geometry && !o.userData?.skinAccentOverlay)targets.push(o);
+  });
+  let count=0;
+  for(const o of targets){
     let line=o.children.find(c=>c.userData?.skinAccentName===name);
     if(!line){
       const geo=new THREE.EdgesGeometry(o.geometry,threshold);
       const mat=new THREE.LineBasicMaterial({
-        color:0xf3f6ff,
+        color:0xf7f9ff,
         transparent:true,
         opacity,
         depthWrite:false,
         toneMapped:false
       });
       line=new THREE.LineSegments(geo,mat);
-      line.renderOrder=3;
+      line.renderOrder=5;
       line.userData.skinAccentName=name;
+      line.userData.skinAccentOverlay=true;
       o.add(line);
       accentRoots.push(line);
     }
     line.visible=true;
     count++;
-  });
+  }
   return count;
 }
 
-// "Chapa y pintura": derive a new color atlas from ClaudeCraft's own Warrior
-// atlas. Geometry, UVs, skin weights, rig and animation remain untouched.
-async function buildWarriorBlackAuraTexture(){
-  const response=await fetch(URLS.warriorBaseAtlas,{cache:'force-cache'});
-  if(!response.ok)throw new Error('No se pudo cargar atlas Warrior base: '+response.status);
-  const bitmap=await createImageBitmap(await response.blob());
+function ensureRigidSilhouette(root,name,scale=1.035,opacity=.78){
+  const targets=[];
+  root.traverse(o=>{
+    if(o.isMesh && !o.isSkinnedMesh && o.geometry && !o.userData?.skinAccentOverlay)targets.push(o);
+  });
+  let count=0;
+  for(const o of targets){
+    let shell=o.children.find(c=>c.userData?.skinAccentName===name);
+    if(!shell){
+      const mat=new THREE.MeshBasicMaterial({
+        color:0xf7f9ff,
+        side:THREE.BackSide,
+        transparent:true,
+        opacity,
+        depthWrite:false,
+        toneMapped:false
+      });
+      shell=new THREE.Mesh(o.geometry,mat);
+      shell.scale.setScalar(scale);
+      shell.renderOrder=4;
+      shell.userData.skinAccentName=name;
+      shell.userData.skinAccentOverlay=true;
+      o.add(shell);
+      accentRoots.push(shell);
+    }
+    shell.visible=true;
+    count++;
+  }
+  return count;
+}
+
+function classifyPixel(r,g,b,mode){
+  const max=Math.max(r,g,b),min=Math.min(r,g,b);
+  const chroma=max-min;
+  const lum=.2126*r+.7152*g+.0722*b;
+
+  if(mode==='helmet'){
+    // The authored Warrior helmet is light metal with dark vertical grooves.
+    // Invert that relationship: shell becomes black, grooves/trim become silver.
+    const accent=lum<.43 || (chroma>.16 && lum<.58);
+    if(accent)return {rgb:[235,241,252],accent:true};
+    const t=Math.max(0,Math.min(1,(1-lum)*1.4));
+    return {rgb:[
+      Math.round(6+15*t),
+      Math.round(7+16*t),
+      Math.round(11+22*t)
+    ],accent:false};
+  }
+
+  if(mode==='weapon'){
+    // Stronger authored highlights for sword/shield, but the body stays black.
+    const accent=lum>.76 || (chroma>.20 && lum>.31);
+    if(accent){
+      const shine=Math.max(0,Math.min(1,(lum-.31)/.69));
+      return {rgb:[
+        Math.round(214+41*shine),
+        Math.round(221+34*shine),
+        Math.round(235+20*shine)
+      ],accent:true};
+    }
+    const t=Math.max(0,Math.min(1,lum/.85));
+    return {rgb:[
+      Math.round(5+19*t),
+      Math.round(6+20*t),
+      Math.round(10+28*t)
+    ],accent:false};
+  }
+
+  // Armor: broaden white/silver trims versus v1, but keep black dominant.
+  const accent=lum>.73 || (chroma>.16 && lum>.30);
+  if(accent){
+    const shine=Math.max(0,Math.min(1,(lum-.30)/.70));
+    return {rgb:[
+      Math.round(205+47*shine),
+      Math.round(212+40*shine),
+      Math.round(226+29*shine)
+    ],accent:true};
+  }
+  const t=Math.max(0,Math.min(1,lum/.86));
+  const violetBias=(chroma>.10 && b>=r)?6:0;
+  return {rgb:[
+    Math.round(6+25*t),
+    Math.round(7+26*t),
+    Math.round(12+31*t+violetBias)
+  ],accent:false};
+}
+
+async function buildPaintTextureFromBitmap(bitmap,mode,label){
   const canvas=document.createElement('canvas');
   canvas.width=bitmap.width;
   canvas.height=bitmap.height;
@@ -253,32 +339,9 @@ async function buildWarriorBlackAuraTexture(){
 
   for(let i=0;i<d.length;i+=4){
     if(d[i+3]===0)continue;
-    const r=d[i]/255,g=d[i+1]/255,b=d[i+2]/255;
-    const max=Math.max(r,g,b),min=Math.min(r,g,b);
-    const chroma=max-min;
-    const lum=.2126*r+.7152*g+.0722*b;
-
-    let nr,ng,nb;
-    // Authored near-white / highly saturated accent islands become the
-    // WHITE/SILVER trim. Everything else remains black/gunmetal.
-    const authoredAccent=(lum>.90)||(chroma>.18 && lum>.34);
-    if(authoredAccent){
-      const shine=Math.max(0,Math.min(1,(lum-.34)/.66));
-      nr=Math.round(202+48*shine);
-      ng=Math.round(210+42*shine);
-      nb=Math.round(225+30*shine);
-      light++;
-    }else{
-      const t=Math.max(0,Math.min(1,lum/.90));
-      // Preserve source shading only inside a very dark graphite range.
-      nr=Math.round(6+24*t);
-      ng=Math.round(7+25*t);
-      nb=Math.round(11+32*t);
-      // Tiny violet undertone, never the dominant color.
-      if(chroma>.10 && b>=r){nb=Math.min(45,nb+7);}
-      dark++;
-    }
-    d[i]=nr;d[i+1]=ng;d[i+2]=nb;
+    const out=classifyPixel(d[i]/255,d[i+1]/255,d[i+2]/255,mode);
+    d[i]=out.rgb[0]; d[i+1]=out.rgb[1]; d[i+2]=out.rgb[2];
+    if(out.accent)light++; else dark++;
     total++;
   }
   ctx.putImageData(image,0,0);
@@ -286,30 +349,62 @@ async function buildWarriorBlackAuraTexture(){
   tex.colorSpace=THREE.SRGBColorSpace;
   tex.flipY=false;
   tex.needsUpdate=true;
-  tex.name='HIGHFLY_WarriorBlackAura_Atlas';
-  window.__SKINLAB_DIAG__.auraDarkRatio=total?dark/total:0;
-  window.__SKINLAB_DIAG__.auraLightRatio=total?light/total:0;
-  window.__SKINLAB_DIAG__.auraAtlasSize=canvas.width+'x'+canvas.height;
-  return tex;
+  tex.name='HIGHFLY_'+label;
+  return {
+    texture:tex,
+    darkRatio:total?dark/total:0,
+    lightRatio:total?light/total:0,
+    size:canvas.width+'x'+canvas.height
+  };
+}
+
+// Chapa y pintura real: three cosmetic paint maps from ClaudeCraft's own UV atlas.
+// No geometry, weights, bones, sockets or animation data is modified.
+async function buildWarriorBlackAuraTextures(){
+  const response=await fetch(URLS.warriorBaseAtlas,{cache:'force-cache'});
+  if(!response.ok)throw new Error('No se pudo cargar atlas Warrior base: '+response.status);
+  const bitmap=await createImageBitmap(await response.blob());
+  const armor=await buildPaintTextureFromBitmap(bitmap,'armor','WarriorBlackAura_Armor');
+  const helmet=await buildPaintTextureFromBitmap(bitmap,'helmet','WarriorBlackAura_Helmet');
+  const weapon=await buildPaintTextureFromBitmap(bitmap,'weapon','WarriorBlackAura_Weapon');
+
+  Object.assign(window.__SKINLAB_DIAG__,{
+    auraDarkRatio:armor.darkRatio,
+    auraLightRatio:armor.lightRatio,
+    auraHelmetDarkRatio:helmet.darkRatio,
+    auraHelmetLightRatio:helmet.lightRatio,
+    auraWeaponDarkRatio:weapon.darkRatio,
+    auraWeaponLightRatio:weapon.lightRatio,
+    auraAtlasSize:armor.size,
+    auraPaintMaps:3
+  });
+  return {armor,helmet,weapon};
 }
 
 function applyPaintMaterial(m,role){
-  m.map=blackAuraTexture;
+  const pack=role==='helmet'
+    ? blackAuraTextures.helmet
+    : (role==='sword'||role==='shield')
+      ? blackAuraTextures.weapon
+      : blackAuraTextures.armor;
+
+  m.map=pack.texture;
   m.emissiveMap=null;
   if(m.color)m.color.set(0xffffff);
   if(m.emissive){m.emissive.set(0x000000);m.emissiveIntensity=0;}
+
   if(role==='sword'){
-    if('metalness'in m)m.metalness=.78;
-    if('roughness'in m)m.roughness=.18;
+    if('metalness'in m)m.metalness=.86;
+    if('roughness'in m)m.roughness=.12;
   }else if(role==='shield'){
-    if('metalness'in m)m.metalness=.66;
-    if('roughness'in m)m.roughness=.24;
+    if('metalness'in m)m.metalness=.74;
+    if('roughness'in m)m.roughness=.18;
   }else if(role==='helmet'){
-    if('metalness'in m)m.metalness=.62;
-    if('roughness'in m)m.roughness=.24;
+    if('metalness'in m)m.metalness=.70;
+    if('roughness'in m)m.roughness=.19;
   }else{
-    if('metalness'in m)m.metalness=.48;
-    if('roughness'in m)m.roughness=.34;
+    if('metalness'in m)m.metalness=.54;
+    if('roughness'in m)m.roughness=.28;
   }
   m.needsUpdate=true;
 }
@@ -317,11 +412,11 @@ function applyPaintMaterial(m,role){
 function applyWarriorBlackFinal(){
   restoreMaterials();
   clearRigidAccents();
-  if(!blackAuraTexture)throw new Error('Warrior Black Aura atlas todavía no está listo');
+  if(!blackAuraTextures)throw new Error('Warrior Black Aura paint maps todavía no están listos');
 
-  let affected=0,edgeAccents=0;
+  let affected=0,edgeAccents=0,silhouetteAccents=0;
   actor.traverse(o=>{
-    if(!o.isMesh)return;
+    if(!o.isMesh || o.userData?.skinAccentOverlay)return;
     const rec=originalMat.get(o.uuid);
     if(!rec)return;
 
@@ -338,19 +433,28 @@ function applyWarriorBlackFinal(){
     affected++;
   });
 
-  // White "blade/trim" accents only on truly rigid cosmetic props.
   const sword=actor.getObjectByName('Warrior_Sword');
-  if(sword)edgeAccents+=ensureRigidEdgeAccent(sword,'sword-white-edge',.96,24);
+  if(sword){
+    // A hard white silhouette + geometry edges gives the blade much more
+    // visual cutting presence without changing the held mesh or hit authority.
+    silhouetteAccents+=ensureRigidSilhouette(sword,'sword-white-silhouette',1.045,.90);
+    edgeAccents+=ensureRigidEdgeAccent(sword,'sword-white-edge',1.0,20);
+  }
   const shield=actor.getObjectByName('Warrior_Shield');
-  if(shield)edgeAccents+=ensureRigidEdgeAccent(shield,'shield-silver-edge',.72,28);
+  if(shield){
+    silhouetteAccents+=ensureRigidSilhouette(shield,'shield-silver-silhouette',1.022,.42);
+    edgeAccents+=ensureRigidEdgeAccent(shield,'shield-silver-edge',.84,24);
+  }
 
   Object.assign(window.__SKINLAB_DIAG__,{
     finalAffectedMeshes:affected,
     atlasAccentMaterials:affected,
     rigidEdgeAccents:edgeAccents,
+    rigidSilhouetteAccents:silhouetteAccents,
     rigidEdgeAccentExpected:2,
-    helmetAccentMode:'paint-atlas',
-    skinId:'warrior_black_final'
+    helmetAccentMode:'inverted-paint-atlas',
+    skinId:'warrior_black_final',
+    refinementPass:2
   });
   return affected;
 }
@@ -516,9 +620,9 @@ async function boot(){
       load(URLS.warrior),
       load(URLS.sword),
       load(URLS.shield),
-      buildWarriorBlackAuraTexture()
+      buildWarriorBlackAuraTextures()
     ]);
-    blackAuraTexture=auraAtlas;
+    blackAuraTextures=auraAtlas;
     actor=warrior.scene;
     actor.userData.clips=warrior.animations;
 
