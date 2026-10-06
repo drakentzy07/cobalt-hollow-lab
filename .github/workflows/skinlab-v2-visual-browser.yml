@@ -37,7 +37,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p visual-artifacts
-          cat > /tmp/skinlab-visual.cjs <<'NODE'
+          cat > skinlab-visual.cjs <<'NODE'
           const { chromium } = require('playwright');
           (async () => {
             const browser = await chromium.launch({headless:true});
@@ -91,7 +91,7 @@ jobs:
             await browser.close();
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
-          node /tmp/skinlab-visual.cjs
+          node skinlab-visual.cjs
 
       - name: Upload visual proof
         if: always()
