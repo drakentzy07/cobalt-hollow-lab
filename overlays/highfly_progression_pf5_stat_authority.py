@@ -94,22 +94,9 @@ replace_once(
 
 replace_once(
     main,
-    """  bindActiveTrainingCombatEntity(sim.player);
-  setActiveTrainingBridgeFlags({
-    enabled: true,
-    applyMovement: false,
-    applyPerception: true,
-    applyIntelligence: false,
-  });
-""",
+    "  bindActiveTrainingCombatEntity(sim.player);\n",
     """  bindActiveTrainingCombatEntity(sim.player);
   bindHighflyLocalStatAuthority(sim.player.id);
-  setActiveTrainingBridgeFlags({
-    enabled: true,
-    applyMovement: true,
-    applyPerception: true,
-    applyIntelligence: true,
-  });
 """,
     "PF-5 bind local authority",
 )
