@@ -2662,10 +2662,13 @@ jobs:
     if: github.ref_name == 'highfly-game-c2-mobile-feel'
     needs: thin-offline
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment:
-      name: github-pages
+      name: highfly-game-c2-mobile-feel-preview
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy GAME-C2 to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages
