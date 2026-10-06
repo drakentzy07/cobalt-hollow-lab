@@ -653,6 +653,13 @@ export function migrateAwakeningStats(profile: HighflyHunterProfile): HighflyHun
     awakening?: HighflyAwakeningState;
     training: HighflyHunterProfile['training'] & { points?: HighflyTrainingPointWallet };
   };
+  // HighflyHunterProfile.schemaVersion is the CURRENT literal (v5), but this
+  // migration intentionally reads historical payloads too. Capture the raw
+  // persisted number outside that literal type so v1..v4 branches stay valid.
+  const legacySchemaVersion = Number(
+    (profile as unknown as { schemaVersion?: number }).schemaVersion ??
+      HIGHFLY_TRAINING_SCHEMA_VERSION,
+  );
 
   const classId = isAwakeningClassId(legacy.hunter?.classId)
     ? legacy.hunter.classId
@@ -679,12 +686,12 @@ export function migrateAwakeningStats(profile: HighflyHunterProfile): HighflyHun
     // permanent base/growth were accidentally zeroed, so restore them without
     // converting them into earned Training Points.
     const walletAllocated =
-      legacy.schemaVersion >= 3 ? wallet?.allocated?.[stat] : undefined;
+      legacySchemaVersion >= 3 ? wallet?.allocated?.[stat] : undefined;
     const trainingAllocated = finiteNonNegative(
       walletAllocated ??
         previous.trainingAllocated ??
         previous.trainingGrowth ??
-        (legacy.schemaVersion < 2
+        (legacySchemaVersion < 2
           ? legacyCurrent
           : Math.max(0, legacyCurrent - syntheticLegacyBase)),
     );
@@ -693,7 +700,7 @@ export function migrateAwakeningStats(profile: HighflyHunterProfile): HighflyHun
     const current = base[stat] + natural[stat] + trainingAllocated;
     const legacyPeak = finiteNonNegative(previous.peak);
     const restoredPeak =
-      legacy.schemaVersion === 4
+      legacySchemaVersion === 4
         ? base[stat] + natural[stat] + Math.max(trainingAllocated, legacyPeak)
         : Math.max(current, legacyPeak);
 
