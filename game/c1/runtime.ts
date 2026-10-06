@@ -269,12 +269,21 @@ function paintContextualAttack(): void {
   }
 }
 
-function boot(): void {
+function ensureHighflyHudAuthority(): void {
+  // ClaudeCraft mutates root state classes during mobile/window transitions.
+  // C2.2 makes HIGHFLY HUD ownership self-healing instead of assuming the
+  // one-time boot marker can never disappear.
   document.body.classList.add('hf-game-c1');
+  document.body.dataset.highflyHudBuild = 'C2.2_VIDEO_QA';
+}
+
+function boot(): void {
+  ensureHighflyHudAuthority();
   ensureSpecialSeats();
   ensureUtilityLane();
 
   const tick = () => {
+    ensureHighflyHudAuthority();
     ensureSpecialSeats();
     ensureUtilityLane();
     installSkillTouch();
