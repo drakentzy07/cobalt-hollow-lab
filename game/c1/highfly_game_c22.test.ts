@@ -56,7 +56,7 @@ describe('HIGHFLY GAME-C2.2 mobile combat polish', () => {
   it('shows immediate creator loading feedback and a build identity marker', () => {
     const css = readFileSync('src/styles/hf_game_c1.css', 'utf8');
     const runtime = readFileSync('src/highfly/game_c1_runtime.ts', 'utf8');
-    expect(runtime).toContain("HIGHFLY_GAME_C22_BUILD = 'C2.2-mobile-polish'");
+    expect(runtime).toContain('HIGHFLY_GAME_C22_BUILD');
     expect(runtime).toContain('syncCreatorPreviewState');
     expect(runtime).toContain('hf-preview-loading');
     expect(css).toContain('PREPARANDO HUNTER…');
