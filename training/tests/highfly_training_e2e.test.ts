@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { runTrainingSessionPipeline } from '../src/highfly/training/pipeline';
 import { progressCostForCurrent } from '../src/highfly/training/adaptation';
-import { trainingGain } from '../src/highfly/training/bridge';
 import {
   allocateTrainingPoints,
   createHighflyHunterProfile,
@@ -43,10 +42,9 @@ describe('HIGHFLY Training RUN138 end-to-end', () => {
     expect(first.profile.training.core.STR.trainingGrowth).toBe(0);
     expect(first.profile.training.points.available).toBeGreaterThan(0);
     expect(first.outcomes.find((o) => o.stat === 'STR')?.outcome).toBe('calibrated');
-    expect(trainingGain(first.profile.training.core.STR.trainingGrowth)).toBe(0);
   });
 
-  it('earns TP, persists it, allocates manually, and only then changes local combat AP', () => {
+  it('earns TP, allocates freely, and never double-counts AP/HP/crit outside primary recalc', () => {
     clearActiveHighflyHunterProfile();
     const initial = createHighflyHunterProfile({ profileId: 'e2e', classId: 'warrior' });
     const baseline = runTrainingSessionPipeline({
@@ -75,11 +73,11 @@ describe('HIGHFLY Training RUN138 end-to-end', () => {
 
     const allocated = allocateTrainingPoints(
       improved.profile,
-      'STR',
+      'PER',
       improved.profile.training.points.available,
     );
     expect(allocated.training.points.available).toBeCloseTo(0, 10);
-    expect(allocated.training.core.STR.trainingGrowth).toBeGreaterThan(0);
+    expect(allocated.training.core.PER.trainingGrowth).toBeGreaterThan(0);
 
     setActiveHighflyHunterProfile(allocated);
     const entity = {
@@ -90,13 +88,38 @@ describe('HIGHFLY Training RUN138 end-to-end', () => {
     };
     bindActiveTrainingCombatEntity(entity);
     setActiveTrainingBridgeFlags({
-      enabled: true, applyMovement: false, applyPerception: true, applyIntelligence: false,
+      enabled: true, applyMovement: true, applyPerception: true, applyIntelligence: true,
     });
     applyActiveTrainingBridgeToEntity(entity);
-    expect(entity.attackPower).toBeGreaterThan(100);
-    const once = entity.attackPower;
+
+    // PF-5: primary-stat recalc is the ONLY owner of AP/HP/crit/dodge.
+    expect(entity.attackPower).toBe(100);
+    expect(entity.maxHp).toBe(1000);
+    expect(entity.critChance).toBe(0.05);
+    expect(entity.dodgeChance).toBe(0.05);
+
+    // HIGHFLY-only mechanics remain useful and bounded.
+    expect(entity.moveSpeed).toBeGreaterThan(7);
+    expect(entity.hitBonus).toBeGreaterThan(0);
+    expect(entity.critDmgPhysBonus).toBeGreaterThan(0);
+    expect(entity.highflyResourceCostMultiplier ?? 1).toBeLessThan(1);
+    expect(entity.highflyResourceRecoveryMultiplier ?? 1).toBeGreaterThan(1);
+
+    const once = {
+      attackPower: entity.attackPower,
+      maxHp: entity.maxHp,
+      hitBonus: entity.hitBonus,
+      moveSpeed: entity.moveSpeed,
+      resourceCost: entity.highflyResourceCostMultiplier,
+    };
     refreshActiveTrainingCombatBridge();
     refreshActiveTrainingCombatBridge();
-    expect(entity.attackPower).toBe(once);
+    expect({
+      attackPower: entity.attackPower,
+      maxHp: entity.maxHp,
+      hitBonus: entity.hitBonus,
+      moveSpeed: entity.moveSpeed,
+      resourceCost: entity.highflyResourceCostMultiplier,
+    }).toEqual(once);
   });
 });
