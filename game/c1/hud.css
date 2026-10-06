@@ -754,3 +754,43 @@ body.mobile-touch.hf-game-c25 #debuff-bar :is(img, .icon) {
   body.mobile-touch.hf-game-c25 #hf-c1-ult  { right:260px !important; bottom:246px !important; }
   body.mobile-touch.hf-game-c25 #mobile-target-cycle { bottom:146px !important; }
 }
+
+
+/* ==========================================================================
+   HIGHFLY GAME-C2.6 — MOBILE SETTINGS / MODAL AUTHORITY / S1-S10
+   ========================================================================== */
+
+/* HIGHFLY's authored mobile HUD ends at S10. ClaudeCraft's native S11 must
+   never leak into the top-left corner or any alternate bar surface. */
+body.mobile-touch.hf-game-c25 #actionbar .action-btn[data-hotbar-slot="11"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+/* More/Ajustes is a true top modal: above character windows, HUD and nameplates. */
+body.mobile-touch.mobile-more-open #mobile-extra-controls {
+  z-index: 1000 !important;
+  isolation: isolate !important;
+  box-shadow:
+    0 0 0 100vmax rgba(5, 4, 12, .58),
+    0 12px 34px rgba(0, 0, 0, .62),
+    inset 0 1px 0 rgba(255,255,255,.07) !important;
+}
+body.mobile-touch.mobile-more-open #ui,
+body.mobile-touch.mobile-more-open #nameplates {
+  pointer-events: none !important;
+}
+body.mobile-touch.mobile-more-open #mobile-extra-controls,
+body.mobile-touch.mobile-more-open #mobile-extra-controls * {
+  pointer-events: auto !important;
+}
+
+/* The first More tile is now the canonical settings entry, not a second bar editor. */
+body.mobile-touch #mobile-bar-editor {
+  border-color: rgba(207, 177, 98, .72) !important;
+}
+body.mobile-touch #mobile-bar-editor .mobile-label {
+  color: rgba(255, 238, 182, .96) !important;
+}
