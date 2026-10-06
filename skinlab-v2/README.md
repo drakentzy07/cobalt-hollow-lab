@@ -27,3 +27,5 @@ No changes to model geometry, Rig_Medium, skin weights, authored clips, sockets,
 
 ## QA
 Browser gate validates the canonical auto preset, painted visor role, sword emissive trim, studio environment, 25 authored animations and the Painter Pro controls.
+
+Visual inspection retry marker: AUTO_BLACK_AURA_FINAL_PASS_1
