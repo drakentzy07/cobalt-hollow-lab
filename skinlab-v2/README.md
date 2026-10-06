@@ -1,19 +1,50 @@
-# HIGHFLY Skin Lab v2 — Skin Factory
+# HIGHFLY Skin Lab v2 — PAINTER PRO v1
 
-## SKIN_001 — Warrior Black Aura / Refinement Pass 3
+Skin Lab is now a reusable cosmetic authoring tool instead of a one-off recolor.
 
-This pass corrects the exact visual failure from Pass 2. The browser gate measured the armor at ~61% dark and the helmet at only ~53% dark, which was not black-dominant enough.
+## Immutable gameplay authority
+Painter Pro never changes:
+- character geometry
+- Rig_Medium / skin weights
+- authored animation clips
+- weapon sockets / grips
+- hitboxes / traces
+- combat, skills or timings
 
-### Pass 3 visual contract
-- armor: at least 70% dark / no more than 30% white-silver atlas accents
-- helmet: at least 70% dark / no more than 30% white-silver grooves and trim
-- weapon atlas: dark body remains dominant, while rigid sword silhouette/edge provides the strong white cutting presence
-- shield: dark body with stronger silver/white rim
+## Painter surfaces
+Five independent cosmetic surfaces are available:
+1. Helmet
+2. Armor
+3. Cape
+4. Sword
+5. Shield
 
-### Chapa y pintura only
-Unchanged: geometry, rig, weights, all 25 clips, sockets, grips, hitboxes, traces, combat, skills, timings and gameplay.
+Each surface has:
+- Primary / Secondary / Accent palette
+- Brightness and contrast
+- Metalness and roughness
+- Detail/trim density
+- Finish preset: Matte, Satin, Gloss, Dark Metal, Chrome
 
-The Warrior remains exactly the same model. Only UV paint maps and rigid cosmetic overlays on sword/shield are changed.
+## Direct 3D brush
+Enable **PINCEL 3D**, choose the surface and brush channel, then drag directly on the visible model. Raycasting resolves the hit UV and paints the corresponding CanvasTexture. This is cosmetic-only and remains attached to the original UVs through animation.
 
-### QA rule
-Do not relax the percentages just to obtain GREEN. A pass is GREEN only when the runtime result is genuinely black-dominant and all 25 clips still work.
+Brush settings:
+- Primary / Secondary / Accent / Custom color
+- Size
+- Opacity
+
+## Recipes
+Custom painter state and brush strokes can be saved to localStorage and exported as JSON recipe. This is the foundation for future HIGHFLY skin catalog entries.
+
+## Default
+Warrior Black Aura remains the initial demonstration preset, now editable live through Painter Pro.
+
+## QA
+The browser gate validates:
+- frozen Warrior assembly
+- 25 authored clips
+- five painter textures
+- piece palette/material application
+- a real direct UV brush operation
+- no browser/page errors

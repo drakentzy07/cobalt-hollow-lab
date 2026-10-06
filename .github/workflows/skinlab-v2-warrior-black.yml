@@ -30,6 +30,13 @@ jobs:
           grep -q "sword_1handed.glb" skinlab-v2/index.html
           grep -q "shield_round.glb" skinlab-v2/index.html
           grep -q "WARRIOR BLACK" skinlab-v2/index.html
+          grep -q "PAINTER PRO v1" skinlab-v2/index.html
+          grep -q 'id="pieceSelect"' skinlab-v2/index.html
+          grep -q 'id="finishSelect"' skinlab-v2/index.html
+          grep -q 'id="brushBtn"' skinlab-v2/index.html
+          grep -q "function paintUvInternal" skinlab-v2/index.html
+          grep -q "highfly_skin_painter_custom_v1" skinlab-v2/index.html
+          grep -q "copyPainterRecipe" skinlab-v2/index.html
           grep -q "function resolveNode" skinlab-v2/index.html
           grep -q "name.replace(/\[\[\\\].:/\]/g" skinlab-v2/index.html
           grep -q "0.555174" skinlab-v2/index.html

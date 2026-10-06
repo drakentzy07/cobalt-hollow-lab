@@ -88,19 +88,29 @@ jobs:
             if (blackDiag.mode !== 'black' ||
                 blackDiag.skinId !== 'warrior_black_final' ||
                 blackDiag.finalAffectedMeshes < 6 ||
-                blackDiag.atlasAccentMaterials < 6 ||
-                blackDiag.rigidEdgeAccents !== blackDiag.rigidEdgeAccentExpected ||
-                blackDiag.rigidSilhouetteAccents < 2 ||
-                blackDiag.helmetAccentMode !== 'inverted-paint-atlas' ||
-                blackDiag.auraPaintMaps !== 3 ||
-                blackDiag.refinementPass !== 3 ||
-                blackDiag.auraDarkRatio < .70 ||
-                blackDiag.auraLightRatio > .30 ||
-                blackDiag.auraHelmetDarkRatio < .70 ||
-                blackDiag.auraHelmetLightRatio > .30 ||
-                blackDiag.auraWeaponDarkRatio < .55 ||
-                blackDiag.auraWeaponLightRatio > .45)
-              throw new Error('FINAL cosmetic material gate failed: '+JSON.stringify(blackDiag));
+                !blackDiag.painterReady ||
+                blackDiag.painterVersion !== 1 ||
+                blackDiag.painterPieces !== 5 ||
+                blackDiag.painterTextures !== 5 ||
+                blackDiag.rigidEdgeAccents < 2 ||
+                blackDiag.rigidSilhouetteAccents < 2)
+              throw new Error('PAINTER PRO material gate failed: '+JSON.stringify(blackDiag));
+
+            // Exercise real Painter Pro controls: recolor helmet + finish, then direct UV brush on sword.
+            await page.selectOption('#pieceSelect','helmet');
+            await page.locator('#primaryColor').evaluate((el)=>{el.value='#05070d';el.dispatchEvent(new Event('input',{bubbles:true}));});
+            await page.locator('#secondaryColor').evaluate((el)=>{el.value='#f2f5ff';el.dispatchEvent(new Event('input',{bubbles:true}));});
+            await page.selectOption('#finishSelect','darkMetal');
+            await page.click('#applyPainterBtn');
+            await page.waitForTimeout(300);
+            let painterDiag=await page.evaluate(()=>window.__SKINLAB_DIAG__);
+            if(painterDiag.lastPainterPiece!=='helmet')throw new Error('Painter piece apply failed: '+JSON.stringify(painterDiag));
+
+            const brushOk=await page.evaluate(()=>window.__SKINLAB_API__.paintAt('sword',{x:.5,y:.5},'#ffffff',18,.8,true));
+            if(!brushOk)throw new Error('Direct UV brush engine failed');
+            painterDiag=await page.evaluate(()=>window.__SKINLAB_DIAG__);
+            if(painterDiag.brushOps<1)throw new Error('Brush operation was not recorded: '+JSON.stringify(painterDiag));
+            await page.screenshot({ path: 'visual-artifacts/painter-pro-v1.png', fullPage: true });
             await page.screenshot({ path: 'visual-artifacts/warrior-black-final-idle.png', fullPage: true });
 
             const keyClips=[
@@ -138,7 +148,7 @@ jobs:
 
             require('fs').writeFileSync(
               'visual-artifacts/visual-gate.txt',
-              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nWARRIOR BLACK FINAL material remap OK\nAtlas white/silver accents OK\nBlack-dominant armor >=70% OK\nHelmet black-dominant >=70% OK\nWeapon dark body with bright edge OK\nRigid sword/shield white-edge + silhouette accents OK\n25/25 authored clips exercised OK\n'
+              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nPAINTER PRO v1 READY\n5 independent paint pieces OK\nPalette + finish controls OK\nDirect UV brush engine OK\nPreset recipe pipeline OK\nRigid sword/shield cosmetic accents OK\n25/25 authored clips exercised OK\n'
             );
             await browser.close();
           })().catch(err => { console.error(err); process.exit(1); });

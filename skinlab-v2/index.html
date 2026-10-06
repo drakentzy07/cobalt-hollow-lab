@@ -13,9 +13,22 @@
     h1{font-size:14px;margin:0;letter-spacing:.12em}.sub{font-size:11px;color:#aaaabb;margin-top:3px}
     .status{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.pill{font-size:10px;padding:5px 8px;border:1px solid #30303c;border-radius:999px;background:#111119;color:#b8b8c6}.pill.ok{border-color:#315d45;color:#93e6b0}
     main{position:relative;min-height:0}#stage{position:absolute;inset:0}
-    .panel{position:absolute;left:14px;top:14px;width:min(390px,calc(100vw - 28px));padding:13px;border:1px solid #2b2b36;border-radius:16px;background:rgba(10,10,15,.88);backdrop-filter:blur(14px);box-shadow:0 18px 60px #0008}
+    .panel{position:absolute;left:14px;top:14px;width:min(430px,calc(100vw - 28px));max-height:calc(100% - 28px);overflow:auto;padding:13px;border:1px solid #2b2b36;border-radius:16px;background:rgba(10,10,15,.90);backdrop-filter:blur(14px);box-shadow:0 18px 60px #0008}
     .panel h2{font-size:12px;letter-spacing:.12em;margin:0 0 10px;color:#d9d9e3}.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-    button,select{border:1px solid #343442;background:#15151d;color:#eee;border-radius:10px;padding:9px 11px;font:inherit;font-size:12px}
+    button,select,input{border:1px solid #343442;background:#15151d;color:#eee;border-radius:10px;padding:9px 11px;font:inherit;font-size:12px}
+    input[type="color"]{width:100%;height:36px;padding:3px;cursor:pointer}
+    input[type="range"]{width:100%;padding:0;accent-color:#8b5cf6}
+    details.painter{margin:12px 0 10px;border:1px solid #343442;border-radius:13px;background:#0d0d14}
+    details.painter>summary{cursor:pointer;padding:11px 12px;font-size:11px;font-weight:800;letter-spacing:.08em;color:#eee;list-style:none}
+    details.painter>summary::-webkit-details-marker{display:none}
+    .painter-body{padding:0 11px 11px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.field{display:grid;gap:4px;margin-bottom:8px}
+    .field label,.range-head{font-size:9px;color:#aaa}.range-head{display:flex;justify-content:space-between;gap:8px}
+    .paint-note{font-size:9px;line-height:1.35;color:#8f8fa0;margin:6px 0 10px}
+    .chip{font-size:9px;padding:4px 7px;border-radius:999px;border:1px solid #3b3b48;color:#aaa}
+    .chip.live{border-color:#4f8a61;color:#9beab2;background:#102018}
+    .painter-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}
+    .painter-row button{padding:7px 9px;font-size:10px}
     button{cursor:pointer}button:hover{background:#1c1c27}button.active{border-color:#8b5cf6;background:#261942;box-shadow:0 0 22px #7c3aed33}
     .small{font-size:10px;color:#9b9baa;line-height:1.4}.legend{display:grid;grid-template-columns:auto 1fr;gap:5px 8px;font-size:10px;color:#aaa}
     .legend b{color:#ddd}.footer{position:absolute;right:14px;bottom:14px;padding:9px 12px;border:1px solid #2b2b36;border-radius:12px;background:rgba(10,10,15,.75);font-size:10px;color:#aaa}
@@ -29,7 +42,7 @@
 <body>
 <div id="app">
   <header>
-    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · WARRIOR BLACK AURA · PASS 3</div></div></div>
+    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · PAINTER PRO v1</div></div></div>
     <div class="status">
       <span class="pill" id="rigPill">Rig_Medium …</span>
       <span class="pill" id="rPill">handslot.r …</span>
@@ -55,6 +68,71 @@
         <button id="stopTestBtn">STOP</button>
       </div>
       <div id="testStatus" class="small" style="margin:-2px 0 10px">Factory test: listo.</div>
+
+      <details class="painter" id="painterPanel" open>
+        <summary>🎨 PAINTER PRO v1 <span class="chip live" id="painterLive">LIVE</span></summary>
+        <div class="painter-body">
+          <div class="grid2">
+            <div class="field"><label>PIEZA</label>
+              <select id="pieceSelect">
+                <option value="helmet">CASCO</option>
+                <option value="armor">ARMADURA</option>
+                <option value="cape">CAPA</option>
+                <option value="sword">ESPADA</option>
+                <option value="shield">ESCUDO</option>
+              </select>
+            </div>
+            <div class="field"><label>ACABADO</label>
+              <select id="finishSelect">
+                <option value="matte">MATE</option>
+                <option value="satin">SATINADO</option>
+                <option value="gloss">BRILLANTE</option>
+                <option value="darkMetal">METAL OSCURO</option>
+                <option value="chrome">CROMO</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid3">
+            <div class="field"><label>PRIMARY</label><input id="primaryColor" type="color"></div>
+            <div class="field"><label>SECONDARY</label><input id="secondaryColor" type="color"></div>
+            <div class="field"><label>ACCENT</label><input id="accentColor" type="color"></div>
+          </div>
+          <div class="field"><div class="range-head"><span>BRILLO</span><b id="brightnessOut">1.00</b></div><input id="brightnessRange" type="range" min="0.45" max="1.55" step="0.01"></div>
+          <div class="field"><div class="range-head"><span>CONTRASTE</span><b id="contrastOut">1.00</b></div><input id="contrastRange" type="range" min="0.55" max="1.75" step="0.01"></div>
+          <div class="grid2">
+            <div class="field"><div class="range-head"><span>METAL</span><b id="metalnessOut">0.50</b></div><input id="metalnessRange" type="range" min="0" max="1" step="0.01"></div>
+            <div class="field"><div class="range-head"><span>RUGOSIDAD</span><b id="roughnessOut">0.30</b></div><input id="roughnessRange" type="range" min="0.03" max="1" step="0.01"></div>
+          </div>
+          <div class="field"><div class="range-head"><span>DETALLE / TRIM</span><b id="detailOut">0.72</b></div><input id="detailRange" type="range" min="0" max="1" step="0.01"></div>
+          <div class="painter-row">
+            <button id="applyPainterBtn">APLICAR PIEZA</button>
+            <button id="brushBtn">🖌 PINCEL 3D</button>
+            <button id="resetPieceBtn">RESET PIEZA</button>
+          </div>
+          <div class="grid2" style="margin-top:9px">
+            <div class="field"><label>CANAL PINCEL</label>
+              <select id="brushChannel">
+                <option value="primary">PRIMARY</option>
+                <option value="secondary">SECONDARY</option>
+                <option value="accent">ACCENT</option>
+                <option value="custom">CUSTOM</option>
+              </select>
+            </div>
+            <div class="field"><label>COLOR CUSTOM</label><input id="brushColor" type="color" value="#ffffff"></div>
+          </div>
+          <div class="grid2">
+            <div class="field"><div class="range-head"><span>TAMAÑO</span><b id="brushSizeOut">26</b></div><input id="brushSizeRange" type="range" min="3" max="96" step="1" value="26"></div>
+            <div class="field"><div class="range-head"><span>INTENSIDAD</span><b id="brushOpacityOut">0.85</b></div><input id="brushOpacityRange" type="range" min="0.05" max="1" step="0.05" value="0.85"></div>
+          </div>
+          <div class="painter-row">
+            <button id="savePresetBtn">GUARDAR CUSTOM</button>
+            <button id="loadPresetBtn">CARGAR CUSTOM</button>
+            <button id="copyRecipeBtn">COPIAR RECETA</button>
+          </div>
+          <div class="paint-note" id="painterStatus">Elegí una pieza. Con PINCEL 3D activo, pintá directamente sobre el modelo.</div>
+        </div>
+      </details>
+
       <div class="row">
         <button id="bonesBtn">HUESOS</button>
         <button id="rotateBtn" class="active">ROTACIÓN</button>
@@ -64,9 +142,9 @@
         <b>Base</b><span>ClaudeCraft Warrior real: knight.glb</span>
         <b>Rig</b><span>Rig_Medium original, sin retarget</span>
         <b>Arma</b><span>Espada + escudo en sockets originales</span>
-        <b>Skin 001</b><span>Override visual únicamente; gameplay intacto</span>
+        <b>Painter</b><span>5 piezas · paleta · acabado · pincel UV 3D</span>
       </div>
-      <p class="small">FACTORY conserva rig, pesos, clips, sockets, hitboxes y gameplay. La skin remapea materiales del atlas original y suma acentos rígidos sólo en casco/espada/escudo.</p>
+      <p class="small">PAINTER PRO modifica sólo la capa cosmética. Rig, pesos, clips, sockets, hitboxes y gameplay permanecen intactos.</p>
     </section>
     <div class="footer">Arrastrar: rotar · rueda/pinch: zoom · botón HUESOS: inspección</div>
     <div id="error"></div>
@@ -204,259 +282,277 @@ function restoreMaterials(){
   });
 }
 let accentRoots=[];
-let blackAuraTextures=null;
+const PAINTER_PIECES=['helmet','armor','cape','sword','shield'];
+const FINISHES={
+  matte:{metalness:.08,roughness:.84},
+  satin:{metalness:.28,roughness:.46},
+  gloss:{metalness:.54,roughness:.16},
+  darkMetal:{metalness:.72,roughness:.22},
+  chrome:{metalness:1.0,roughness:.07}
+};
+const DEFAULT_PAINTER={
+  helmet:{primary:'#070910',secondary:'#edf3ff',accent:'#5b21b6',finish:'darkMetal',brightness:.92,contrast:1.22,metalness:.72,roughness:.22,detail:.76},
+  armor:{primary:'#070910',secondary:'#e9efff',accent:'#4c1d95',finish:'darkMetal',brightness:.94,contrast:1.18,metalness:.58,roughness:.28,detail:.70},
+  cape:{primary:'#05060a',secondary:'#cad2e6',accent:'#32105d',finish:'matte',brightness:.82,contrast:1.08,metalness:.06,roughness:.82,detail:.34},
+  sword:{primary:'#04060b',secondary:'#ffffff',accent:'#6d28d9',finish:'gloss',brightness:1.02,contrast:1.30,metalness:.88,roughness:.11,detail:.82},
+  shield:{primary:'#060810',secondary:'#f4f7ff',accent:'#5b21b6',finish:'darkMetal',brightness:.96,contrast:1.22,metalness:.76,roughness:.18,detail:.74}
+};
+const deepClone=o=>JSON.parse(JSON.stringify(o));
+let painterState=deepClone(DEFAULT_PAINTER);
+let painterTextures={};
+let painterSourceBitmap=null;
+let paintOps={helmet:[],armor:[],cape:[],sword:[],shield:[]};
+let brushEnabled=false;
+let brushDragging=false;
 
-function clearRigidAccents(){
-  for(const accent of accentRoots) accent.visible=false;
+function hexRgb(hex){
+  const n=parseInt(hex.slice(1),16);
+  return [(n>>16)&255,(n>>8)&255,n&255];
+}
+function clamp01(v){return Math.max(0,Math.min(1,v))}
+function shadeColor(hex,sourceLum,brightness,contrast,channel){
+  const c=hexRgb(hex);
+  const centered=(sourceLum-.5)*contrast+.5;
+  const channelLift=channel==='secondary'?(.90+.18*centered):channel==='accent'?(.78+.30*centered):(.48+.72*centered);
+  const mul=Math.max(.18,Math.min(1.55,channelLift*brightness));
+  return c.map(v=>Math.max(0,Math.min(255,Math.round(v*mul))));
+}
+function channelForPixel(r,g,b,piece,detail){
+  const max=Math.max(r,g,b),min=Math.min(r,g,b);
+  const chroma=max-min;
+  const lum=.2126*r+.7152*g+.0722*b;
+  const d=clamp01(detail);
+
+  if(piece==='helmet'){
+    const secondaryCut=.12+.19*d;
+    if(lum<secondaryCut)return ['secondary',lum];
+    if(chroma>(.38-.18*d) && lum<.58)return ['accent',lum];
+    return ['primary',lum];
+  }
+  if(piece==='cape'){
+    if(chroma>(.42-.18*d) && lum>.22)return ['accent',lum];
+    if(lum>(.96-.12*d))return ['secondary',lum];
+    return ['primary',lum];
+  }
+  if(piece==='sword'||piece==='shield'){
+    if(lum>(.94-.18*d))return ['secondary',lum];
+    if(chroma>(.40-.20*d) && lum>.28)return ['accent',lum];
+    return ['primary',lum];
+  }
+  if(lum>(.96-.19*d))return ['secondary',lum];
+  if(chroma>(.40-.21*d) && lum>.27)return ['accent',lum];
+  return ['primary',lum];
 }
 
-function ensureRigidEdgeAccent(root,name,opacity=.38,threshold=28){
+function clearRigidAccents(){
+  for(const accent of accentRoots)accent.visible=false;
+}
+function ensureRigidEdgeAccent(root,name,color,opacity=.5,threshold=24){
   const targets=[];
-  root.traverse(o=>{
-    if(o.isMesh && !o.isSkinnedMesh && o.geometry && !o.userData?.skinAccentOverlay)targets.push(o);
-  });
+  root.traverse(o=>{if(o.isMesh&&!o.isSkinnedMesh&&o.geometry&&!o.userData?.skinAccentOverlay)targets.push(o)});
   let count=0;
   for(const o of targets){
     let line=o.children.find(c=>c.userData?.skinAccentName===name);
     if(!line){
-      const geo=new THREE.EdgesGeometry(o.geometry,threshold);
-      const mat=new THREE.LineBasicMaterial({
-        color:0xf7f9ff,
-        transparent:true,
-        opacity,
-        depthWrite:false,
-        toneMapped:false
-      });
-      line=new THREE.LineSegments(geo,mat);
-      line.renderOrder=5;
-      line.userData.skinAccentName=name;
-      line.userData.skinAccentOverlay=true;
-      o.add(line);
-      accentRoots.push(line);
+      line=new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry,threshold),new THREE.LineBasicMaterial({
+        color:new THREE.Color(color),transparent:true,opacity,depthWrite:false,toneMapped:false
+      }));
+      line.renderOrder=5;line.userData.skinAccentName=name;line.userData.skinAccentOverlay=true;o.add(line);accentRoots.push(line);
     }
-    line.visible=true;
-    count++;
+    line.material.color.set(color);line.material.opacity=opacity;line.visible=true;count++;
   }
   return count;
 }
-
-function ensureRigidSilhouette(root,name,scale=1.035,opacity=.78){
+function ensureRigidSilhouette(root,name,color,scale=1.035,opacity=.65){
   const targets=[];
-  root.traverse(o=>{
-    if(o.isMesh && !o.isSkinnedMesh && o.geometry && !o.userData?.skinAccentOverlay)targets.push(o);
-  });
+  root.traverse(o=>{if(o.isMesh&&!o.isSkinnedMesh&&o.geometry&&!o.userData?.skinAccentOverlay)targets.push(o)});
   let count=0;
   for(const o of targets){
     let shell=o.children.find(c=>c.userData?.skinAccentName===name);
     if(!shell){
-      const mat=new THREE.MeshBasicMaterial({
-        color:0xf7f9ff,
-        side:THREE.BackSide,
-        transparent:true,
-        opacity,
-        depthWrite:false,
-        toneMapped:false
-      });
-      shell=new THREE.Mesh(o.geometry,mat);
-      shell.scale.setScalar(scale);
-      shell.renderOrder=4;
-      shell.userData.skinAccentName=name;
-      shell.userData.skinAccentOverlay=true;
-      o.add(shell);
-      accentRoots.push(shell);
+      shell=new THREE.Mesh(o.geometry,new THREE.MeshBasicMaterial({
+        color:new THREE.Color(color),side:THREE.BackSide,transparent:true,opacity,depthWrite:false,toneMapped:false
+      }));
+      shell.renderOrder=4;shell.userData.skinAccentName=name;shell.userData.skinAccentOverlay=true;o.add(shell);accentRoots.push(shell);
     }
-    shell.visible=true;
-    count++;
+    shell.material.color.set(color);shell.material.opacity=opacity;shell.scale.setScalar(scale);shell.visible=true;count++;
   }
   return count;
 }
 
-function classifyPixel(r,g,b,mode){
-  const max=Math.max(r,g,b),min=Math.min(r,g,b);
-  const chroma=max-min;
-  const lum=.2126*r+.7152*g+.0722*b;
-
-  if(mode==='helmet'){
-    // The authored Warrior helmet is light metal with dark vertical grooves.
-    // Invert that relationship: shell becomes black, grooves/trim become silver.
-    const accent=lum<.24 || (chroma>.24 && lum<.40);
-    if(accent)return {rgb:[235,241,252],accent:true};
-    const t=Math.max(0,Math.min(1,(1-lum)*1.4));
-    return {rgb:[
-      Math.round(6+15*t),
-      Math.round(7+16*t),
-      Math.round(11+22*t)
-    ],accent:false};
-  }
-
-  if(mode==='weapon'){
-    // Stronger authored highlights for sword/shield, but the body stays black.
-    const accent=lum>.82 || (chroma>.26 && lum>.46);
-    if(accent){
-      const shine=Math.max(0,Math.min(1,(lum-.31)/.69));
-      return {rgb:[
-        Math.round(214+41*shine),
-        Math.round(221+34*shine),
-        Math.round(235+20*shine)
-      ],accent:true};
-    }
-    const t=Math.max(0,Math.min(1,lum/.85));
-    return {rgb:[
-      Math.round(5+19*t),
-      Math.round(6+20*t),
-      Math.round(10+28*t)
-    ],accent:false};
-  }
-
-  // Armor: broaden white/silver trims versus v1, but keep black dominant.
-  const accent=lum>.84 || (chroma>.24 && lum>.48);
-  if(accent){
-    const shine=Math.max(0,Math.min(1,(lum-.30)/.70));
-    return {rgb:[
-      Math.round(205+47*shine),
-      Math.round(212+40*shine),
-      Math.round(226+29*shine)
-    ],accent:true};
-  }
-  const t=Math.max(0,Math.min(1,lum/.86));
-  const violetBias=(chroma>.10 && b>=r)?6:0;
-  return {rgb:[
-    Math.round(6+25*t),
-    Math.round(7+26*t),
-    Math.round(12+31*t+violetBias)
-  ],accent:false};
-}
-
-async function buildPaintTextureFromBitmap(bitmap,mode,label){
+function buildPieceTexture(piece){
+  if(!painterSourceBitmap)throw new Error('Painter source atlas unavailable');
+  const s=painterState[piece];
   const canvas=document.createElement('canvas');
-  canvas.width=bitmap.width;
-  canvas.height=bitmap.height;
+  canvas.width=painterSourceBitmap.width;canvas.height=painterSourceBitmap.height;
   const ctx=canvas.getContext('2d',{willReadFrequently:true});
-  ctx.drawImage(bitmap,0,0);
-  const image=ctx.getImageData(0,0,canvas.width,canvas.height);
-  const d=image.data;
-  let dark=0,light=0,total=0;
-
+  ctx.drawImage(painterSourceBitmap,0,0);
+  const image=ctx.getImageData(0,0,canvas.width,canvas.height),d=image.data;
+  let primary=0,secondary=0,accent=0,total=0;
   for(let i=0;i<d.length;i+=4){
     if(d[i+3]===0)continue;
-    const out=classifyPixel(d[i]/255,d[i+1]/255,d[i+2]/255,mode);
-    d[i]=out.rgb[0]; d[i+1]=out.rgb[1]; d[i+2]=out.rgb[2];
-    if(out.accent)light++; else dark++;
+    const [channel,lum]=channelForPixel(d[i]/255,d[i+1]/255,d[i+2]/255,piece,s.detail);
+    const rgb=shadeColor(s[channel],lum,s.brightness,s.contrast,channel);
+    d[i]=rgb[0];d[i+1]=rgb[1];d[i+2]=rgb[2];
+    if(channel==='primary')primary++; else if(channel==='secondary')secondary++; else accent++;
     total++;
   }
   ctx.putImageData(image,0,0);
-  const tex=new THREE.CanvasTexture(canvas);
-  tex.colorSpace=THREE.SRGBColorSpace;
-  tex.flipY=false;
-  tex.needsUpdate=true;
-  tex.name='HIGHFLY_'+label;
-  return {
-    texture:tex,
-    darkRatio:total?dark/total:0,
-    lightRatio:total?light/total:0,
-    size:canvas.width+'x'+canvas.height
-  };
+  const texture=new THREE.CanvasTexture(canvas);
+  texture.colorSpace=THREE.SRGBColorSpace;texture.flipY=false;texture.needsUpdate=true;
+  texture.name='HIGHFLY_PAINTER_'+piece;
+  painterTextures[piece]={canvas,ctx,texture,ratios:{primary:primary/total,secondary:secondary/total,accent:accent/total}};
+  for(const op of paintOps[piece])paintUvInternal(piece,op.uv,op.color,op.size,op.opacity,false);
+  return painterTextures[piece];
 }
-
-// Chapa y pintura real: three cosmetic paint maps from ClaudeCraft's own UV atlas.
-// No geometry, weights, bones, sockets or animation data is modified.
-async function buildWarriorBlackAuraTextures(){
+function rebuildPainterTextures(){
+  for(const piece of PAINTER_PIECES)buildPieceTexture(piece);
+  window.__SKINLAB_DIAG__.painterTextures=Object.keys(painterTextures).length;
+}
+async function loadPainterSource(){
   const response=await fetch(URLS.warriorBaseAtlas,{cache:'force-cache'});
   if(!response.ok)throw new Error('No se pudo cargar atlas Warrior base: '+response.status);
-  const bitmap=await createImageBitmap(await response.blob());
-  const armor=await buildPaintTextureFromBitmap(bitmap,'armor','WarriorBlackAura_Armor');
-  const helmet=await buildPaintTextureFromBitmap(bitmap,'helmet','WarriorBlackAura_Helmet');
-  const weapon=await buildPaintTextureFromBitmap(bitmap,'weapon','WarriorBlackAura_Weapon');
-
-  Object.assign(window.__SKINLAB_DIAG__,{
-    auraDarkRatio:armor.darkRatio,
-    auraLightRatio:armor.lightRatio,
-    auraHelmetDarkRatio:helmet.darkRatio,
-    auraHelmetLightRatio:helmet.lightRatio,
-    auraWeaponDarkRatio:weapon.darkRatio,
-    auraWeaponLightRatio:weapon.lightRatio,
-    auraAtlasSize:armor.size,
-    auraPaintMaps:3
-  });
-  return {armor,helmet,weapon};
+  painterSourceBitmap=await createImageBitmap(await response.blob());
+  rebuildPainterTextures();
 }
 
 function applyPaintMaterial(m,role){
-  const pack=role==='helmet'
-    ? blackAuraTextures.helmet
-    : (role==='sword'||role==='shield')
-      ? blackAuraTextures.weapon
-      : blackAuraTextures.armor;
-
-  m.map=pack.texture;
-  m.emissiveMap=null;
+  const p=painterTextures[role];const s=painterState[role];
+  if(!p||!s)return;
+  m.map=p.texture;m.emissiveMap=null;
   if(m.color)m.color.set(0xffffff);
-  if(m.emissive){m.emissive.set(0x000000);m.emissiveIntensity=0;}
-
-  if(role==='sword'){
-    if('metalness'in m)m.metalness=.86;
-    if('roughness'in m)m.roughness=.12;
-  }else if(role==='shield'){
-    if('metalness'in m)m.metalness=.74;
-    if('roughness'in m)m.roughness=.18;
-  }else if(role==='helmet'){
-    if('metalness'in m)m.metalness=.70;
-    if('roughness'in m)m.roughness=.19;
-  }else{
-    if('metalness'in m)m.metalness=.54;
-    if('roughness'in m)m.roughness=.28;
-  }
+  if(m.emissive){m.emissive.set(0x000000);m.emissiveIntensity=0}
+  if('metalness'in m)m.metalness=s.metalness;
+  if('roughness'in m)m.roughness=s.roughness;
   m.needsUpdate=true;
 }
-
+function roleForMesh(o){
+  let n=o;
+  while(n){
+    if(n.name==='Warrior_Sword')return 'sword';
+    if(n.name==='Warrior_Shield')return 'shield';
+    n=n.parent;
+  }
+  if(o.name==='Knight_Helmet')return 'helmet';
+  if(o.name==='Knight_Cape')return 'cape';
+  if(['Knight_ArmLeft','Knight_ArmRight','Knight_Body','Knight_LegLeft','Knight_LegRight'].includes(o.name))return 'armor';
+  return null;
+}
 function applyWarriorBlackFinal(){
-  restoreMaterials();
-  clearRigidAccents();
-  if(!blackAuraTextures)throw new Error('Warrior Black Aura paint maps todavía no están listos');
-
+  restoreMaterials();clearRigidAccents();
+  if(Object.keys(painterTextures).length!==5)throw new Error('Painter textures incompletas');
   let affected=0,edgeAccents=0,silhouetteAccents=0;
   actor.traverse(o=>{
-    if(!o.isMesh || o.userData?.skinAccentOverlay)return;
-    const rec=originalMat.get(o.uuid);
-    if(!rec)return;
-
-    let role=null;
-    if(rec.group==='sword')role='sword';
-    else if(rec.group==='shield')role='shield';
-    else if(o.name==='Knight_Helmet')role='helmet';
-    else if(o.name==='Knight_Cape')role='armor';
-    else if(armorNames.has(o.name))role='armor';
+    if(!o.isMesh||o.userData?.skinAccentOverlay)return;
+    const rec=originalMat.get(o.uuid);if(!rec)return;
+    const role=rec.group==='sword'?'sword':rec.group==='shield'?'shield':roleForMesh(o);
     if(!role)return;
-
     const mats=Array.isArray(o.material)?o.material:[o.material];
-    mats.forEach(m=>applyPaintMaterial(m,role));
-    affected++;
+    mats.forEach(m=>applyPaintMaterial(m,role));affected++;
   });
-
   const sword=actor.getObjectByName('Warrior_Sword');
   if(sword){
-    // A hard white silhouette + geometry edges gives the blade much more
-    // visual cutting presence without changing the held mesh or hit authority.
-    silhouetteAccents+=ensureRigidSilhouette(sword,'sword-white-silhouette',1.050,.98);
-    edgeAccents+=ensureRigidEdgeAccent(sword,'sword-white-edge',1.0,18);
+    const c=painterState.sword.secondary;
+    silhouetteAccents+=ensureRigidSilhouette(sword,'painter-sword-silhouette',c,1.050,.92);
+    edgeAccents+=ensureRigidEdgeAccent(sword,'painter-sword-edge',c,1.0,18);
   }
   const shield=actor.getObjectByName('Warrior_Shield');
   if(shield){
-    silhouetteAccents+=ensureRigidSilhouette(shield,'shield-silver-silhouette',1.024,.50);
-    edgeAccents+=ensureRigidEdgeAccent(shield,'shield-silver-edge',.84,24);
+    const c=painterState.shield.secondary;
+    silhouetteAccents+=ensureRigidSilhouette(shield,'painter-shield-silhouette',c,1.022,.38);
+    edgeAccents+=ensureRigidEdgeAccent(shield,'painter-shield-edge',c,.78,24);
   }
-
   Object.assign(window.__SKINLAB_DIAG__,{
-    finalAffectedMeshes:affected,
-    atlasAccentMaterials:affected,
-    rigidEdgeAccents:edgeAccents,
-    rigidSilhouetteAccents:silhouetteAccents,
-    rigidEdgeAccentExpected:2,
-    helmetAccentMode:'inverted-paint-atlas',
-    skinId:'warrior_black_final',
-    refinementPass:3
+    finalAffectedMeshes:affected,atlasAccentMaterials:affected,rigidEdgeAccents:edgeAccents,
+    rigidSilhouetteAccents:silhouetteAccents,rigidEdgeAccentExpected:2,
+    helmetAccentMode:'painter-pro',skinId:'warrior_black_final',refinementPass:4,
+    painterReady:true,painterVersion:1,painterPieces:5,brushOps:Object.values(paintOps).reduce((a,v)=>a+v.length,0)
   });
   return affected;
+}
+function paintUvInternal(piece,uv,color,size,opacity,record=true){
+  const pack=painterTextures[piece];if(!pack)return false;
+  const x=clamp01(uv.x)*pack.canvas.width;
+  const y=(1-clamp01(uv.y))*pack.canvas.height;
+  pack.ctx.save();pack.ctx.globalAlpha=opacity;pack.ctx.fillStyle=color;
+  pack.ctx.beginPath();pack.ctx.arc(x,y,size,0,Math.PI*2);pack.ctx.fill();pack.ctx.restore();
+  pack.texture.needsUpdate=true;
+  if(record)paintOps[piece].push({uv:{x:uv.x,y:uv.y},color,size,opacity});
+  window.__SKINLAB_DIAG__.brushOps=Object.values(paintOps).reduce((a,v)=>a+v.length,0);
+  return true;
+}
+
+const raycaster=new THREE.Raycaster(),paintPointer=new THREE.Vector2();
+function currentBrushColor(){
+  const piece=pieceSelect.value,channel=brushChannel.value;
+  return channel==='custom'?brushColor.value:painterState[piece][channel];
+}
+function paintFromPointer(ev){
+  if(!brushEnabled||!actor)return;
+  const rect=renderer.domElement.getBoundingClientRect();
+  paintPointer.x=((ev.clientX-rect.left)/rect.width)*2-1;
+  paintPointer.y=-((ev.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(paintPointer,camera);
+  const wanted=pieceSelect.value;
+  const hit=raycaster.intersectObject(actor,true).find(h=>h.uv&&roleForMesh(h.object)===wanted);
+  if(!hit)return;
+  paintUvInternal(wanted,hit.uv,currentBrushColor(),Number(brushSizeRange.value),Number(brushOpacityRange.value),true);
+  painterStatus.textContent='Pintando '+wanted.toUpperCase()+' · '+currentBrushColor();
+}
+function setBrushEnabled(on){
+  brushEnabled=!!on;brushBtn.classList.toggle('active',brushEnabled);
+  if(brushEnabled){autoRotate=false;rotateBtn.classList.remove('active');controls.enabled=false}
+  else{controls.enabled=true;brushDragging=false}
+  window.__SKINLAB_DIAG__.brushEnabled=brushEnabled;
+  painterStatus.textContent=brushEnabled?'PINCEL 3D ACTIVO · arrastrá sobre la pieza seleccionada.':'Pincel 3D desactivado.';
+}
+renderer.domElement.addEventListener('pointerdown',ev=>{
+  if(!brushEnabled)return;brushDragging=true;renderer.domElement.setPointerCapture?.(ev.pointerId);paintFromPointer(ev);ev.preventDefault();
+});
+renderer.domElement.addEventListener('pointermove',ev=>{if(brushEnabled&&brushDragging){paintFromPointer(ev);ev.preventDefault()}});
+renderer.domElement.addEventListener('pointerup',ev=>{if(brushEnabled){brushDragging=false;renderer.domElement.releasePointerCapture?.(ev.pointerId);ev.preventDefault()}});
+
+function syncPainterUi(){
+  const s=painterState[pieceSelect.value];
+  primaryColor.value=s.primary;secondaryColor.value=s.secondary;accentColor.value=s.accent;finishSelect.value=s.finish;
+  brightnessRange.value=s.brightness;contrastRange.value=s.contrast;metalnessRange.value=s.metalness;roughnessRange.value=s.roughness;detailRange.value=s.detail;
+  brightnessOut.textContent=Number(s.brightness).toFixed(2);contrastOut.textContent=Number(s.contrast).toFixed(2);
+  metalnessOut.textContent=Number(s.metalness).toFixed(2);roughnessOut.textContent=Number(s.roughness).toFixed(2);detailOut.textContent=Number(s.detail).toFixed(2);
+}
+function readPainterUi(){
+  const s=painterState[pieceSelect.value];
+  Object.assign(s,{
+    primary:primaryColor.value,secondary:secondaryColor.value,accent:accentColor.value,finish:finishSelect.value,
+    brightness:Number(brightnessRange.value),contrast:Number(contrastRange.value),metalness:Number(metalnessRange.value),
+    roughness:Number(roughnessRange.value),detail:Number(detailRange.value)
+  });
+}
+function applyPainterPiece(){
+  readPainterUi();buildPieceTexture(pieceSelect.value);setMode('black');
+  window.__SKINLAB_DIAG__.lastPainterPiece=pieceSelect.value;
+  painterStatus.textContent='APLICADO · '+pieceSelect.value.toUpperCase();
+}
+function resetPainterPiece(){
+  const p=pieceSelect.value;painterState[p]=deepClone(DEFAULT_PAINTER[p]);paintOps[p]=[];buildPieceTexture(p);syncPainterUi();setMode('black');
+  painterStatus.textContent='RESET · '+p.toUpperCase();
+}
+function savePainterPreset(){
+  localStorage.setItem('highfly_skin_painter_custom_v1',JSON.stringify({state:painterState,paintOps}));
+  painterStatus.textContent='CUSTOM guardado en este navegador.';
+}
+function loadPainterPreset(){
+  const raw=localStorage.getItem('highfly_skin_painter_custom_v1');
+  if(!raw){painterStatus.textContent='No hay CUSTOM guardado todavía.';return}
+  try{
+    const data=JSON.parse(raw);painterState=data.state||deepClone(DEFAULT_PAINTER);paintOps=data.paintOps||{helmet:[],armor:[],cape:[],sword:[],shield:[]};
+    rebuildPainterTextures();syncPainterUi();setMode('black');painterStatus.textContent='CUSTOM cargado.';
+  }catch{painterStatus.textContent='CUSTOM inválido.'}
+}
+async function copyPainterRecipe(){
+  const recipe=JSON.stringify({version:1,name:'HIGHFLY_CUSTOM_SKIN',pieces:painterState,paintOps},null,2);
+  try{await navigator.clipboard.writeText(recipe);painterStatus.textContent='RECETA copiada al portapapeles.'}
+  catch{painterStatus.textContent='No se pudo copiar; receta disponible en window.__SKINLAB_RECIPE__.'}
+  window.__SKINLAB_RECIPE__=recipe;
 }
 function setMode(mode){
   currentMode=mode;
@@ -569,7 +665,14 @@ window.__SKINLAB_DIAG__={
   testedClips:0,
   testableClips:0,
   lastClip:null,
-  mode:'base'
+  mode:'base',
+  painterReady:false,
+  painterVersion:1,
+  painterPieces:0,
+  painterTextures:0,
+  brushEnabled:false,
+  brushOps:0,
+  lastPainterPiece:null
 };
 function playClip(name){
   if(!mixer||!actor)return false;
@@ -616,13 +719,12 @@ function stopFactoryTest(){
 
 async function boot(){
   try{
-    const [warrior,sword,shield,auraAtlas]=await Promise.all([
+    const [warrior,sword,shield]=await Promise.all([
       load(URLS.warrior),
       load(URLS.sword),
       load(URLS.shield),
-      buildWarriorBlackAuraTextures()
+      loadPainterSource()
     ]);
-    blackAuraTextures=auraAtlas;
     actor=warrior.scene;
     actor.userData.clips=warrior.animations;
 
@@ -687,7 +789,8 @@ async function boot(){
       testableClips:names.length
     });
     window.__SKINLAB_CLIPS__=names.slice();
-    window.__SKINLAB_API__={setMode,playClip,runFactoryTest,stopFactoryTest};
+    window.__SKINLAB_API__={setMode,playClip,runFactoryTest,stopFactoryTest,applyPainterPiece,paintAt:paintUvInternal,setBrushEnabled,copyPainterRecipe};
+    syncPainterUi();
     setMode('black');
   }catch(err){
     console.error(err);
@@ -704,6 +807,22 @@ document.getElementById('playBtn').onclick=()=>playClip(document.getElementById(
 testAllBtn.onclick=()=>runFactoryTest();
 stopTestBtn.onclick=()=>stopFactoryTest();
 document.getElementById('animSelect').onchange=e=>playClip(e.target.value);
+pieceSelect.onchange=()=>syncPainterUi();
+finishSelect.onchange=()=>{
+  const f=FINISHES[finishSelect.value];metalnessRange.value=f.metalness;roughnessRange.value=f.roughness;
+  metalnessOut.textContent=f.metalness.toFixed(2);roughnessOut.textContent=f.roughness.toFixed(2);
+};
+for(const [input,out] of [[brightnessRange,brightnessOut],[contrastRange,contrastOut],[metalnessRange,metalnessOut],[roughnessRange,roughnessOut],[detailRange,detailOut]]){
+  input.oninput=()=>out.textContent=Number(input.value).toFixed(2);
+}
+brushSizeRange.oninput=()=>brushSizeOut.textContent=brushSizeRange.value;
+brushOpacityRange.oninput=()=>brushOpacityOut.textContent=Number(brushOpacityRange.value).toFixed(2);
+applyPainterBtn.onclick=()=>applyPainterPiece();
+brushBtn.onclick=()=>setBrushEnabled(!brushEnabled);
+resetPieceBtn.onclick=()=>resetPainterPiece();
+savePresetBtn.onclick=()=>savePainterPreset();
+loadPresetBtn.onclick=()=>loadPainterPreset();
+copyRecipeBtn.onclick=()=>copyPainterRecipe();
 bonesBtn.onclick=()=>{if(!skeletonHelper)return;skeletonHelper.visible=!skeletonHelper.visible;bonesBtn.classList.toggle('active',skeletonHelper.visible)};
 rotateBtn.onclick=()=>{autoRotate=!autoRotate;rotateBtn.classList.toggle('active',autoRotate)};
 resetBtn.onclick=()=>{camera.position.set(4.5,2.7,5.5);controls.target.set(0,1.15,0);controls.update()};
