@@ -325,6 +325,17 @@ function paintContextualAttack(): void {
   }
 }
 
+function syncHighflyWorldReady(): void {
+  const loading = document.getElementById('loading-screen');
+  const loadingVisible =
+    loading instanceof HTMLElement &&
+    loading.classList.contains('visible') &&
+    getComputedStyle(loading).display !== 'none' &&
+    getComputedStyle(loading).visibility !== 'hidden';
+  const ready = Boolean(w.__game?.sim?.player) && !loadingVisible;
+  document.body.classList.toggle('hf-c25-world-ready', ready);
+}
+
 
 type HighflyHudTransform = { x: number; y: number; scale: number };
 type HighflyHudTarget = {
@@ -591,9 +602,11 @@ function boot(): void {
   ensureUtilityLane();
   installCoachmarkRelease();
   installHighflyHudEditorInput();
+  syncHighflyWorldReady();
   highflyHudApplyAll();
 
   const tick = () => {
+    syncHighflyWorldReady();
     ensureSpecialSeats();
     ensureGhostSkillSeats();
     ensureUtilityLane();
