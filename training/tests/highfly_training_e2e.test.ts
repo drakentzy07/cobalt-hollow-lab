@@ -84,7 +84,10 @@ describe('HIGHFLY Training RUN138 end-to-end', () => {
     expect(allocated.training.core.INT.current).toBeGreaterThan(0);
 
     setActiveHighflyHunterProfile(allocated);
-    const entity = {
+    const entity: Parameters<typeof bindActiveTrainingCombatEntity>[0] & {
+      highflyResourceCostMultiplier?: number;
+      highflyResourceRecoveryMultiplier?: number;
+    } = {
       id: 1003,
       attackPower: 100,
       rangedPower: 0,
