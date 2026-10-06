@@ -67,7 +67,7 @@ replace_once(
   // any farther perfectly-centred target is considered.
   const priorityRange = Math.min(range, 12);
   const priorityConeDot = Math.cos((32 * Math.PI) / 180);
-  const fallbackConeDot = Math.cos((42 * Math.PI) / 180);
+  const coneDot = Math.cos((42 * Math.PI) / 180);
 
   for (const e of entities) {
     if (!isAttackable(e)) continue;
@@ -76,7 +76,7 @@ replace_once(
     const distance = Math.hypot(dx, dz);
     if (distance <= 0.0001 || distance > range) continue;
     const forwardDot = (dx * fx + dz * fz) / distance;
-    if (forwardDot < fallbackConeDot) continue;
+    if (forwardDot < coneDot) continue;
 
     if (distance <= priorityRange && forwardDot >= priorityConeDot) {
       const score = distance * 0.55 + (1 - forwardDot) * 18;
