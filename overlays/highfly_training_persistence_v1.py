@@ -30,7 +30,8 @@ replace_once(
 }
 
 interface HighflyTrainingSlot {
-  version: 1;
+  version: 1 | 2;
+  playerClass?: PlayerClass;
   name: string;
   profile: HighflyHunterProfile;
   updatedAt: number;
@@ -53,7 +54,11 @@ function identitySlotKey(playerClass: PlayerClass, name: string): string {
   return `hunter:${playerClass}:${encodeURIComponent(normalizedHunterName(name))}`;
 }
 
-function trainingSlotKey(name: string): string {
+function trainingSlotKey(playerClass: PlayerClass, name: string): string {
+  return `training:${playerClass}:${encodeURIComponent(normalizedHunterName(name))}`;
+}
+
+function legacyTrainingSlotKey(name: string): string {
   return `training:${encodeURIComponent(normalizedHunterName(name))}`;
 }
 """,
@@ -84,9 +89,9 @@ function validTrainingProfile(value: unknown): value is HighflyHunterProfile {
     hunter?: unknown;
   };
   return (
-    (v.schemaVersion === 1 ||
-      v.schemaVersion === 2 ||
-      v.schemaVersion === HIGHFLY_TRAINING_SCHEMA_VERSION) &&
+    typeof v.schemaVersion === 'number' &&
+    v.schemaVersion >= 1 &&
+    v.schemaVersion <= HIGHFLY_TRAINING_SCHEMA_VERSION &&
     typeof v.scoringVersion === 'string' &&
     typeof v.profileId === 'string' &&
     !!v.training &&
@@ -100,7 +105,7 @@ function validTrainingSlot(value: unknown): value is HighflyTrainingSlot {
   if (!value || typeof value !== 'object') return false;
   const v = value as Partial<HighflyTrainingSlot>;
   return (
-    v.version === 1 &&
+    (v.version === 1 || v.version === 2) &&
     typeof v.name === 'string' &&
     typeof v.updatedAt === 'number' &&
     validTrainingProfile(v.profile)
@@ -182,13 +187,17 @@ replace_once(
     """      store.put(save, PRIMARY_SLOT_KEY);
       store.put(save, identitySlotKey(save.playerClass, save.name));
       if (save.trainingProfile && validTrainingProfile(save.trainingProfile)) {
+        if (!trainingProfileMatchesClass(save.trainingProfile, save.playerClass)) {
+          return;
+        }
         const trainingSlot: HighflyTrainingSlot = {
-          version: 1,
+          version: 2,
+          playerClass: save.playerClass,
           name: save.name,
           profile: save.trainingProfile,
           updatedAt: save.updatedAt,
         };
-        const key = trainingSlotKey(save.name);
+        const key = trainingSlotKey(save.playerClass, save.name);
         const existingRequest = store.get(key);
         existingRequest.onsuccess = () => {
           const existing = validTrainingSlot(existingRequest.result)
@@ -223,6 +232,16 @@ function newestTraining(
   if (!b) return a;
   return a.updatedAt >= b.updatedAt ? a : b;
 }
+
+function trainingProfileMatchesClass(
+  profile: HighflyHunterProfile,
+  playerClass: PlayerClass,
+): boolean {
+  const awakeningClass = profile.awakening?.classId;
+  const hunterClass = profile.hunter?.classId;
+  if (awakeningClass) return awakeningClass === playerClass;
+  return hunterClass === playerClass;
+}
 """
 replace_once(save, newest_anchor, newest_replacement, "training newest helper")
 
@@ -232,23 +251,42 @@ load_anchor = """export async function loadHighflyOfflineSave(
 ): Promise<HighflyOfflineSave | null> {
 """
 load_training = """export async function loadHighflyTrainingProfile(
+  playerClass: PlayerClass,
   name: string,
 ): Promise<HighflyHunterProfile | null> {
   const primary = newest(readLocal(), await readIdbKey(PRIMARY_SLOT_KEY));
   const primaryTraining =
     primary &&
+    primary.playerClass === playerClass &&
     normalizedHunterName(primary.name) === normalizedHunterName(name) &&
     primary.trainingProfile &&
-    validTrainingProfile(primary.trainingProfile)
+    validTrainingProfile(primary.trainingProfile) &&
+    trainingProfileMatchesClass(primary.trainingProfile, playerClass)
       ? {
-          version: 1 as const,
+          version: 2 as const,
+          playerClass,
           name: primary.name,
           profile: primary.trainingProfile,
           updatedAt: primary.updatedAt,
         }
       : null;
-  const exact = await readIdbTrainingSlot(trainingSlotKey(name));
-  return newestTraining(exact, primaryTraining)?.profile ?? null;
+
+  const exactRaw = await readIdbTrainingSlot(trainingSlotKey(playerClass, name));
+  const exact =
+    exactRaw && trainingProfileMatchesClass(exactRaw.profile, playerClass)
+      ? exactRaw
+      : null;
+
+  // v1 compatibility: old Training slots were keyed only by name. Adopt one
+  // only when its own persisted Hunter/Awakening class matches the requested
+  // identity. This prevents Warrior Training from leaking into a Mage slot.
+  const legacyRaw = await readIdbTrainingSlot(legacyTrainingSlotKey(name));
+  const legacy =
+    legacyRaw && trainingProfileMatchesClass(legacyRaw.profile, playerClass)
+      ? legacyRaw
+      : null;
+
+  return newestTraining(newestTraining(exact, primaryTraining), legacy)?.profile ?? null;
 }
 
 """ + load_anchor
@@ -290,11 +328,11 @@ replace_once(
   const matchingOfflineSave = storedOfflineSave;
 
   const storedTrainingProfile =
-    world ? null : await loadHighflyTrainingProfile(name);
+    world ? null : await loadHighflyTrainingProfile(playerClass, name);
   const baseTrainingProfile =
     storedTrainingProfile ??
     createHighflyHunterProfile({
-      profileId: `offline:${encodeURIComponent(name.trim().toLowerCase())}`,
+      profileId: `offline:${playerClass}:${encodeURIComponent(name.trim().toLowerCase())}`,
       classId: playerClass,
     });
   setActiveHighflyHunterProfile(
