@@ -383,23 +383,31 @@ replace_once(
   const matchingOfflineSave = storedOfflineSave;
 
   const storedTrainingProfile =
-    world ? null : await loadHighflyTrainingProfile(name);
+    world ? null : await loadHighflyTrainingProfile(playerClass, name);
   const baseTrainingProfile =
 """,
     """  const storedOfflineSave =
     world ? null : await loadHighflyOfflineSave(playerClass, name);
   const storedTrainingProfile =
-    world ? null : await loadHighflyTrainingProfile(name);
+    world ? null : await loadHighflyTrainingProfile(playerClass, name);
   const trainingHasRealProgress =
     !!storedTrainingProfile &&
     (
       (storedTrainingProfile.training.cycleProgression?.completedSessions.length ?? 0) > 0 ||
+      (storedTrainingProfile.training.history?.length ?? 0) > 0 ||
+      storedTrainingProfile.training.points.earned > 0 ||
+      storedTrainingProfile.training.points.available > 0 ||
       Object.values(storedTrainingProfile.training.core).some(
-        (stat) => stat.current > 0 || stat.peak > 0 || stat.progress > 0,
+        (stat) =>
+          stat.trainingAllocated > 0 ||
+          stat.trainingGrowth > 0 ||
+          stat.progress > 0 ||
+          stat.calibrated,
       )
     );
   // Early donor/test builds could leave a brand-new offline Hunter at level 20.
-  // Only discard that exact stale seed when no real Training progress exists.
+  // Permanent class/level Core is NOT Training evidence. Discard only that exact
+  // stale level-20 seed when no real Training evidence exists.
   const staleDonorLevel20 =
     storedOfflineSave?.state.level === 20 && !trainingHasRealProgress;
   const matchingOfflineSave = staleDonorLevel20 ? null : storedOfflineSave;
