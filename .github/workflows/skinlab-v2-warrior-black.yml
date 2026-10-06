@@ -1,0 +1,54 @@
+name: Skin Lab v2 — Warrior Black
+
+on:
+  push:
+    branches: [highfly-skinlab-v2-warrior-black]
+    paths:
+      - 'skinlab-v2/**'
+      - '.github/workflows/skinlab-v2-warrior-black.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Static contract audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f skinlab-v2/index.html
+          test -f skinlab-v2/README.md
+          grep -q "Rig_Medium" skinlab-v2/index.html
+          grep -q "handslot.r" skinlab-v2/index.html
+          grep -q "handslot.l" skinlab-v2/index.html
+          grep -q "knight.glb" skinlab-v2/index.html
+          grep -q "sword_1handed.glb" skinlab-v2/index.html
+          grep -q "shield_round.glb" skinlab-v2/index.html
+          grep -q "WARRIOR BLACK" skinlab-v2/index.html
+          ! grep -Rqi "quaternius\|kitsune\|ronin" skinlab-v2
+          echo "Skin Lab v2 contract: GREEN"
+
+      - name: Upstream asset audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public"
+          curl -fsSL "$BASE/models/chars/players/knight.glb" -o /tmp/knight.glb
+          curl -fsSL "$BASE/models/weapons/sword_1handed.glb" -o /tmp/sword.glb
+          curl -fsSL "$BASE/models/weapons/shield_round.glb" -o /tmp/shield.glb
+          test "$(stat -c%s /tmp/knight.glb)" -gt 100000
+          test "$(stat -c%s /tmp/sword.glb)" -gt 10000
+          test "$(stat -c%s /tmp/shield.glb)" -gt 10000
+          echo "ClaudeCraft Warrior assets: GREEN"
+
+      - name: Publish lab artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-skinlab-v2-warrior-black
+          path: skinlab-v2/
+          if-no-files-found: error
