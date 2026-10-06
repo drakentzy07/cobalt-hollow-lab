@@ -492,7 +492,7 @@ function qPos(attr,i){
     Math.round(attr.getZ(i)*10000)
   ].join(',');
 }
-function edgeKey(attr,a,b){
+function authorEdgeKey(attr,a,b){
   const A=qPos(attr,a),B=qPos(attr,b);
   return A<B?A+'|'+B:B+'|'+A;
 }
@@ -515,7 +515,7 @@ function collectFeatureSegments(mesh,minAngleDeg=35,minLenRatio=.04){
     A.subVectors(P1,P0);B.subVectors(P2,P0);N.crossVectors(A,B).normalize();
     const ids=[[ia,ib],[ib,ic],[ic,ia]];
     for(const [i0,i1] of ids){
-      const key=edgeKey(pos,i0,i1);
+      const key=authorEdgeKey(pos,i0,i1);
       const a=new THREE.Vector3().fromBufferAttribute(pos,i0);
       const b=new THREE.Vector3().fromBufferAttribute(pos,i1);
       const use={uv0:uvOf(uv,i0),uv1:uvOf(uv,i1),normal:N.clone(),len:a.distanceTo(b)/diag};
