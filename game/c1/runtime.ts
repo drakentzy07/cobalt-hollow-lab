@@ -25,6 +25,9 @@ let enabled = mode !== 'base';
 let lastElementSignature = '';
 let toastTimer = 0;
 
+const HIGHFLY_GAME_C22_BUILD = 'C2.2-mobile-polish';
+let coachSuppressTimer = 0;
+
 function game(): any {
   return w.__game?.sim ? w.__game : null;
 }
@@ -107,6 +110,59 @@ function ensureSpecialSeats(): void {
     host.append(button);
   }
   document.body.append(host);
+}
+
+function ensureGhostSkillSeats(): void {
+  let host = document.getElementById('hf-c22-ghost-skills');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'hf-c22-ghost-skills';
+    host.setAttribute('aria-hidden', 'true');
+    for (let slot = 1; slot <= 10; slot++) {
+      const ghost = document.createElement('span');
+      ghost.className = 'hf-c22-ghost-skill';
+      ghost.dataset.slot = String(slot);
+      ghost.textContent = 'S' + slot;
+      host.append(ghost);
+    }
+    document.body.append(host);
+  }
+}
+
+function syncCreatorPreviewState(): void {
+  const box = document.getElementById('offline-preview-container');
+  if (!(box instanceof HTMLElement)) return;
+  const canvas = box.querySelector<HTMLCanvasElement>('#char-preview-canvas');
+  box.classList.toggle('hf-preview-loading', !canvas?.dataset.highflyPreviewVisual);
+}
+
+function installCoachmarkRelease(): void {
+  if (document.body.dataset.hfC22CoachRelease === '1') return;
+  document.body.dataset.hfC22CoachRelease = '1';
+  document.addEventListener(
+    'pointerup',
+    (event) => {
+      const target = event.target as Element | null;
+      if (!target?.closest('.qd-coach, .tut-prompt')) return;
+      document.body.classList.add('hf-c22-coach-actioned');
+      if (coachSuppressTimer) window.clearTimeout(coachSuppressTimer);
+      coachSuppressTimer = window.setTimeout(
+        () => document.body.classList.remove('hf-c22-coach-actioned'),
+        2200,
+      );
+    },
+    { capture: true },
+  );
+}
+
+function ensureBuildStamp(): void {
+  document.body.dataset.highflyBuild = HIGHFLY_GAME_C22_BUILD;
+  if (document.getElementById('hf-c22-build-stamp')) return;
+  const stamp = document.createElement('small');
+  stamp.id = 'hf-c22-build-stamp';
+  stamp.textContent = 'HIGHFLY C2.2';
+  stamp.setAttribute('aria-hidden', 'true');
+  document.body.append(stamp);
 }
 
 function ensureUtilityLane(): void {
@@ -270,15 +326,20 @@ function paintContextualAttack(): void {
 }
 
 function boot(): void {
-  document.body.classList.add('hf-game-c1');
+  document.body.classList.add('hf-game-c1', 'hf-game-c22');
+  ensureBuildStamp();
   ensureSpecialSeats();
+  ensureGhostSkillSeats();
   ensureUtilityLane();
+  installCoachmarkRelease();
 
   const tick = () => {
     ensureSpecialSeats();
+    ensureGhostSkillSeats();
     ensureUtilityLane();
     installSkillTouch();
     paintContextualAttack();
+    syncCreatorPreviewState();
     configureElement();
     window.setTimeout(tick, 180);
   };
