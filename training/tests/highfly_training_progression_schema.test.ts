@@ -40,6 +40,44 @@ describe('HIGHFLY Progression schema v5 permanent Core restoration', () => {
     expect(migrated.training.points.earned).toBeCloseTo(training, 8);
   });
 
+  it('preserves schema-3 wallet allocation while restoring current permanent Core', () => {
+    const current = createHighflyHunterProfile({
+      profileId: 'schema3',
+      classId: 'hunter',
+      level: 30,
+    });
+    const legacy = JSON.parse(JSON.stringify(current)) as any;
+    legacy.schemaVersion = 3;
+
+    const training = 4.25;
+    for (const stat of HIGHFLY_CORE_STATS) {
+      legacy.training.points.allocated[stat] = 0;
+      legacy.training.core[stat].trainingAllocated = 0;
+      legacy.training.core[stat].trainingGrowth = 0;
+    }
+    legacy.training.points.allocated.AGI = training;
+    legacy.training.points.earned = training;
+    legacy.training.points.available = 0;
+    legacy.training.core.AGI.trainingAllocated = training;
+    legacy.training.core.AGI.trainingGrowth = training;
+    legacy.training.core.AGI.current =
+      legacy.training.core.AGI.awakeningBase +
+      legacy.training.core.AGI.naturalLevelGrowth +
+      training;
+
+    const migrated = migrateAwakeningStats(legacy);
+    const expected =
+      HIGHFLY_AWAKENING_BASES.hunter.AGI +
+      naturalLevelGrowthFor('hunter', 30).AGI +
+      training;
+
+    expect(migrated.training.core.AGI.current).toBeCloseTo(expected, 8);
+    expect(migrated.training.core.AGI.trainingAllocated).toBeCloseTo(training, 8);
+    expect(migrated.training.points.allocated.AGI).toBeCloseTo(training, 8);
+    expect(migrated.training.points.earned).toBeCloseTo(training, 8);
+    expect(migrated.training.points.available).toBe(0);
+  });
+
   it('new Hunters have permanent class Core and an empty conserved Training wallet', () => {
     const profile = createHighflyHunterProfile({ profileId: 'new', classId: 'mage', level: 1 });
     const coreTotal = HIGHFLY_CORE_STATS.reduce(
