@@ -1,0 +1,102 @@
+name: Skin Lab v2 — Visual Browser Gate
+
+on:
+  push:
+    branches: [highfly-skinlab-v2-warrior-black]
+    paths:
+      - 'skinlab-v2/**'
+      - '.github/workflows/skinlab-v2-visual-browser.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start Skin Lab
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/skinlab-http.log 2>&1 &
+          echo $! > /tmp/skinlab-http.pid
+          sleep 2
+          curl -fsS http://127.0.0.1:4173/skinlab-v2/ > /dev/null
+
+      - name: Install browser
+        shell: bash
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.55.0 --no-save
+          npx playwright install --with-deps chromium
+
+      - name: Browser visual gate
+        shell: bash
+        run: |
+          mkdir -p visual-artifacts
+          cat > /tmp/skinlab-visual.cjs <<'NODE'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({headless:true});
+            const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+            const errors = [];
+            page.on('pageerror', e => errors.push('pageerror: '+e.message));
+            page.on('console', m => {
+              if (m.type() === 'error') errors.push('console: '+m.text());
+            });
+
+            await page.goto('http://127.0.0.1:4173/skinlab-v2/', {
+              waitUntil: 'domcontentloaded',
+              timeout: 120000
+            });
+
+            await page.waitForFunction(() => {
+              const r=document.querySelector('#rigPill')?.textContent || '';
+              const a=document.querySelector('#animPill')?.textContent || '';
+              return r.includes('✓') && a.includes('clips ✓');
+            }, { timeout: 120000 });
+
+            const bodyText = await page.locator('body').innerText();
+            if (!bodyText.includes('Rig_Medium ✓')) throw new Error('Rig_Medium gate missing');
+            if (!bodyText.includes('handslot.r ✓')) throw new Error('handslot.r gate missing');
+            if (!bodyText.includes('handslot.l ✓')) throw new Error('handslot.l gate missing');
+
+            await page.screenshot({ path: 'visual-artifacts/warrior-base.png', fullPage: true });
+
+            await page.click('#blackBtn');
+            await page.waitForTimeout(1200);
+            const activeBlack = await page.locator('#blackBtn').evaluate(el => el.classList.contains('active'));
+            if (!activeBlack) throw new Error('WARRIOR BLACK did not activate');
+            await page.screenshot({ path: 'visual-artifacts/warrior-black.png', fullPage: true });
+
+            await page.selectOption('#animSelect', { label: '1H_Melee_Attack_Chop' });
+            await page.waitForTimeout(900);
+            await page.screenshot({ path: 'visual-artifacts/warrior-black-attack.png', fullPage: true });
+
+            const visibleError = await page.locator('#error').evaluate(el => getComputedStyle(el).display !== 'none');
+            if (visibleError) throw new Error('Skin Lab error panel became visible');
+
+            if (errors.length) {
+              require('fs').writeFileSync('visual-artifacts/browser-errors.txt', errors.join('\n'));
+              throw new Error(errors.join(' | '));
+            }
+
+            require('fs').writeFileSync(
+              'visual-artifacts/visual-gate.txt',
+              'GREEN\nRig_Medium OK\nhandslot.r OK\nhandslot.l OK\nBASE OK\nWARRIOR BLACK OK\n1H attack preview OK\n'
+            );
+            await browser.close();
+          })().catch(err => { console.error(err); process.exit(1); });
+          NODE
+          node /tmp/skinlab-visual.cjs
+
+      - name: Upload visual proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skinlab-v2-warrior-black-visual-proof
+          path: visual-artifacts/
+          if-no-files-found: warn
