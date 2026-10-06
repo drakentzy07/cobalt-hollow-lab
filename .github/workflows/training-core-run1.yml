@@ -1637,31 +1637,46 @@ jobs:
               request.onsuccess = () => resolve(request.result);
               request.onerror = () => reject(request.error);
             });
+            const key =
+              'training:warrior:' +
+              encodeURIComponent('TrainingHunterJ'.trim().toLowerCase());
             const value = await new Promise((resolve, reject) => {
               const tx = db.transaction('saves', 'readonly');
-              const request = tx.objectStore('saves').get(
-                'training:' + encodeURIComponent('TrainingHunterJ'.toLowerCase()),
-              );
+              const request = tx.objectStore('saves').get(key);
               request.onsuccess = () => resolve(request.result);
               request.onerror = () => reject(request.error);
             });
             db.close();
-            return value?.profile?.training
+
+            const profile = value?.profile ?? null;
+            return profile?.training
               ? {
-                  lateral: value.profile.training.accessoryLoads?.d1_lateral_raise?.kg ?? null,
-                  facepull: value.profile.training.accessoryLoads?.d1_facepull?.kg ?? null,
-                  sessions: value.profile.training.cycleProgression?.completedSessions ?? [],
+                  slotVersion: value?.version ?? null,
+                  slotClass: value?.playerClass ?? null,
+                  awakeningClassId: profile.awakening?.classId ?? null,
+                  hunterClassId: profile.hunter?.classId ?? null,
+                  lateral: profile.training.accessoryLoads?.d1_lateral_raise?.kg ?? null,
+                  facepull: profile.training.accessoryLoads?.d1_facepull?.kg ?? null,
+                  sessions: profile.training.cycleProgression?.completedSessions ?? [],
+                  tpEarned: profile.training.points?.earned ?? null,
+                  tpAvailable: profile.training.points?.available ?? null,
                 }
               : null;
           });
           console.log('RUN1J_PERSISTED', persisted);
           if (
             !persisted ||
+            persisted.slotVersion !== 2 ||
+            persisted.slotClass !== 'warrior' ||
+            persisted.awakeningClassId !== 'warrior' ||
+            persisted.hunterClassId !== 'warrior' ||
             persisted.lateral !== 10 ||
             persisted.facepull !== 20 ||
-            !persisted.sessions.includes('1:1')
+            !persisted.sessions.includes('1:1') ||
+            !(persisted.tpEarned > 0) ||
+            !(persisted.tpAvailable > 0)
           ) {
-            throw new Error('RUN1-J accessory/cycle persistence failed');
+            throw new Error('RUN1-J class-bound Training persistence failed');
           }
 
           if (pageErrors.length > 0) {
