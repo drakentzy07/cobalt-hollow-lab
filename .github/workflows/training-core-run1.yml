@@ -195,7 +195,9 @@ jobs:
           grep -F "HIGHFLY RUN0.9.3 — PHASE 0 PREVIEW + HUD" src/styles/hud.mobile.css
           grep -F "bestSoftAutoTarget" src/game/auto_target.ts
           grep -F "highflyBasicAttack" src/sim/combat/auto_attack.ts
-          grep -F "highflyComboExpiresAt = now + 0.95" src/ui/hud.ts
+          grep -F "highflyComboExpiresAt = now + 1.15" src/ui/hud.ts
+          grep -F "extendHighflyComboForEvade(): void" src/ui/hud.ts
+          grep -F "if (this.highflyComboEvadeGraceUsed) return;" src/ui/hud.ts
           grep -F "highfly_basic_3: 'Warrior_Reaping_Arc'" src/render/characters/manifest.ts
           grep -F "HIGHFLY RUN1-J VISUAL RELEASE" src/styles/shell.website.css
           grep -F "HIGHFLY RUN1-J VISUAL RELEASE" src/styles/shell.css
