@@ -47,17 +47,18 @@ body.mobile-touch.hf-game-c1 #actionbar .actionbar-toggle {
   display: none !important;
 }
 
-/* Definitive compact right cluster: relations mirror the approved HIGHFLY map. */
-body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="1"]  { right: 102px !important; bottom: 60px !important; }
-body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="2"]  { right: 146px !important; bottom: 112px !important; }
-body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="3"]  { right: 104px !important; bottom: 168px !important; }
-body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="4"]  { right: 156px !important; bottom: 220px !important; }
-body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="5"]  { right: 92px !important;  bottom: 274px !important; }
-body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="6"]  { right: 202px !important; bottom: 60px !important; }
-body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="7"]  { right: 212px !important; bottom: 130px !important; }
-body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="8"]  { right: 220px !important; bottom: 205px !important; }
-body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="9"]  { right: 232px !important; bottom: 274px !important; }
-body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="10"] { right: 150px !important; bottom: 326px !important; }
+/* HIGHFLY C2.1 — compact right cluster, matching the approved hand map.
+   right increases toward screen centre; bottom increases upward. */
+body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="1"]  { right: 104px !important; bottom: 50px !important; }
+body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="2"]  { right: 130px !important; bottom: 104px !important; }
+body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="3"]  { right: 104px !important; bottom: 160px !important; }
+body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="4"]  { right: 150px !important; bottom: 212px !important; }
+body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="5"]  { right: 84px !important;  bottom: 264px !important; }
+body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="6"]  { right: 158px !important; bottom: 50px !important; }
+body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="7"]  { right: 188px !important; bottom: 120px !important; }
+body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="8"]  { right: 204px !important; bottom: 212px !important; }
+body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="9"]  { right: 170px !important; bottom: 264px !important; }
+body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="10"] { right: 102px !important; bottom: 318px !important; }
 
 /* Retire donor radial/paged skill chrome; keep native handlers behind C1. */
 body.mobile-touch.hf-game-c1 #mobile-action-ring .mobile-action-slot,
@@ -96,7 +97,7 @@ body.mobile-touch.hf-game-c1 #mobile-target-cycle {
   width: 50px !important;
   height: 50px !important;
   right: 18px !important;
-  bottom: calc(188px + env(safe-area-inset-bottom)) !important;
+  bottom: calc(160px + env(safe-area-inset-bottom)) !important;
   z-index: 184 !important;
 }
 
@@ -132,9 +133,9 @@ body.mobile-touch.hf-game-c1 .hf-c1-special-seat {
   font-weight: 900;
   pointer-events: none;
 }
-body.mobile-touch.hf-game-c1 #hf-c1-esp1 { right: 270px; bottom: calc(168px + env(safe-area-inset-bottom)); }
-body.mobile-touch.hf-game-c1 #hf-c1-esp2 { right: 292px; bottom: calc(274px + env(safe-area-inset-bottom)); }
-body.mobile-touch.hf-game-c1 #hf-c1-ult  { right: 252px; bottom: calc(326px + env(safe-area-inset-bottom)); }
+body.mobile-touch.hf-game-c1 #hf-c1-esp1 { right: 244px; bottom: calc(160px + env(safe-area-inset-bottom)); }
+body.mobile-touch.hf-game-c1 #hf-c1-esp2 { right: 256px; bottom: calc(264px + env(safe-area-inset-bottom)); }
+body.mobile-touch.hf-game-c1 #hf-c1-ult  { right: 210px; bottom: calc(318px + env(safe-area-inset-bottom)); }
 
 /* Actionable utility lane only: gem, native consumable seat, stance when applicable.
    Passive aura information stays in Claude's separate buff/debuff strips. */
@@ -206,20 +207,34 @@ body.mobile-touch.hf-game-c1 #buff-bar .ui-aura {
 #hf-c1-toast span { margin-top: 3px; opacity: .82; font-size: 10px; }
 #hf-c1-toast.show { opacity: 1; translate: -50% 0; }
 
+/* Full-screen menus/windows own input and visual priority. Combat controls leave
+   the foreground and return automatically when the window closes. */
+body.mobile-touch.hf-game-c1.mobile-more-open #actionbar,
+body.mobile-touch.hf-game-c1.mobile-window-open #actionbar,
+body.mobile-touch.hf-game-c1.mobile-more-open #mobile-action-ring,
+body.mobile-touch.hf-game-c1.mobile-window-open #mobile-action-ring,
+body.mobile-touch.hf-game-c1.mobile-more-open #hf-c1-special-seats,
+body.mobile-touch.hf-game-c1.mobile-window-open #hf-c1-special-seats,
+body.mobile-touch.hf-game-c1.mobile-more-open #hf-c1-utility-lane,
+body.mobile-touch.hf-game-c1.mobile-window-open #hf-c1-utility-lane {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 @media (max-height: 400px) and (orientation: landscape) {
   body.mobile-touch.hf-game-c1 #actionbar { --hf-c1-skill: 42px; }
-  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="1"]  { bottom: 52px !important; }
-  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="2"]  { bottom: 100px !important; }
-  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="3"]  { bottom: 154px !important; }
-  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="4"]  { bottom: 206px !important; }
-  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="5"]  { bottom: 258px !important; }
-  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="6"]  { bottom: 52px !important; }
-  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="7"]  { bottom: 122px !important; }
-  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="8"]  { bottom: 192px !important; }
-  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="9"]  { bottom: 258px !important; }
-  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="10"] { bottom: 304px !important; }
-  body.mobile-touch.hf-game-c1 #hf-c1-esp1 { bottom: calc(154px + env(safe-area-inset-bottom)); }
-  body.mobile-touch.hf-game-c1 #hf-c1-esp2 { bottom: calc(258px + env(safe-area-inset-bottom)); }
-  body.mobile-touch.hf-game-c1 #hf-c1-ult  { bottom: calc(304px + env(safe-area-inset-bottom)); }
-  body.mobile-touch.hf-game-c1 #mobile-target-cycle { bottom: calc(154px + env(safe-area-inset-bottom)) !important; }
+  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="1"]  { bottom: 46px !important; }
+  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="2"]  { bottom: 94px !important; }
+  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="3"]  { bottom: 144px !important; }
+  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="4"]  { bottom: 190px !important; }
+  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="5"]  { bottom: 236px !important; }
+  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="6"]  { bottom: 46px !important; }
+  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="7"]  { bottom: 108px !important; }
+  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="8"]  { bottom: 190px !important; }
+  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="9"]  { bottom: 236px !important; }
+  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="10"] { bottom: 282px !important; }
+  body.mobile-touch.hf-game-c1 #hf-c1-esp1 { bottom: calc(144px + env(safe-area-inset-bottom)); }
+  body.mobile-touch.hf-game-c1 #hf-c1-esp2 { bottom: calc(236px + env(safe-area-inset-bottom)); }
+  body.mobile-touch.hf-game-c1 #hf-c1-ult  { bottom: calc(282px + env(safe-area-inset-bottom)); }
+  body.mobile-touch.hf-game-c1 #mobile-target-cycle { bottom: calc(144px + env(safe-area-inset-bottom)) !important; }
 }
