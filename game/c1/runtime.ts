@@ -25,7 +25,7 @@ let enabled = mode !== 'base';
 let lastElementSignature = '';
 let toastTimer = 0;
 
-const HIGHFLY_GAME_C22_BUILD = 'C2.2-mobile-polish';
+const HIGHFLY_GAME_C22_BUILD = 'C2.3-human-fix';
 let coachSuppressTimer = 0;
 
 function game(): any {
@@ -160,7 +160,7 @@ function ensureBuildStamp(): void {
   if (document.getElementById('hf-c22-build-stamp')) return;
   const stamp = document.createElement('small');
   stamp.id = 'hf-c22-build-stamp';
-  stamp.textContent = 'HIGHFLY C2.2';
+  stamp.textContent = 'HIGHFLY C2.3';
   stamp.setAttribute('aria-hidden', 'true');
   document.body.append(stamp);
 }
@@ -325,6 +325,256 @@ function paintContextualAttack(): void {
   }
 }
 
+
+type HighflyHudTransform = { x: number; y: number; scale: number };
+type HighflyHudTarget = {
+  id: string;
+  label: string;
+  selectors: string[];
+};
+
+const HIGHFLY_HUD_TARGETS: HighflyHudTarget[] = [
+  { id: 'skills', label: 'HABILIDADES S1–S10', selectors: ['#actionbar'] },
+  { id: 'specials', label: 'ESP1 · ESP2 · ULT', selectors: ['#hf-c1-special-seats'] },
+  { id: 'target', label: 'TARGET', selectors: ['#mobile-target-cycle'] },
+  { id: 'attack', label: 'ATK / USAR', selectors: ['#mobile-action-attack'] },
+  { id: 'evade', label: 'EVADIR', selectors: ['#mobile-evade'] },
+  { id: 'jump', label: 'SALTAR', selectors: ['#mobile-jump'] },
+  { id: 'utilities', label: 'GEMA · POT · ITEMS', selectors: ['#hf-c1-utility-lane'] },
+  { id: 'buffs', label: 'BUFFS / PASIVAS', selectors: ['#buff-bar'] },
+  { id: 'debuffs', label: 'DEBUFFS', selectors: ['#debuff-bar'] },
+];
+
+const HIGHFLY_HUD_STORE_PREFIX = 'highfly:c23:hud:';
+let highflyHudEditing = false;
+let highflyHudSelected = 'skills';
+let highflyHudDrag:
+  | { pointerId: number; targetId: string; startX: number; startY: number; base: HighflyHudTransform }
+  | null = null;
+
+function highflyHudElements(target: HighflyHudTarget): HTMLElement[] {
+  const out: HTMLElement[] = [];
+  for (const selector of target.selectors) {
+    const el = document.querySelector<HTMLElement>(selector);
+    if (el) out.push(el);
+  }
+  return out;
+}
+
+function highflyHudRead(targetId: string): HighflyHudTransform {
+  try {
+    const raw = localStorage.getItem(HIGHFLY_HUD_STORE_PREFIX + targetId);
+    if (!raw) return { x: 0, y: 0, scale: 1 };
+    const parsed = JSON.parse(raw) as Partial<HighflyHudTransform>;
+    return {
+      x: Number.isFinite(parsed.x) ? Number(parsed.x) : 0,
+      y: Number.isFinite(parsed.y) ? Number(parsed.y) : 0,
+      scale: Number.isFinite(parsed.scale)
+        ? Math.min(1.45, Math.max(0.65, Number(parsed.scale)))
+        : 1,
+    };
+  } catch {
+    return { x: 0, y: 0, scale: 1 };
+  }
+}
+
+function highflyHudApply(targetId: string, value = highflyHudRead(targetId)): void {
+  const target = HIGHFLY_HUD_TARGETS.find((candidate) => candidate.id === targetId);
+  if (!target) return;
+  for (const el of highflyHudElements(target)) {
+    el.dataset.hfHudTarget = targetId;
+    el.style.setProperty(
+      'transform',
+      'translate(' + value.x + 'px, ' + value.y + 'px) scale(' + value.scale + ')',
+      'important',
+    );
+    el.style.setProperty('transform-origin', 'center center', 'important');
+  }
+}
+
+function highflyHudSave(targetId: string, value: HighflyHudTransform): void {
+  try {
+    localStorage.setItem(HIGHFLY_HUD_STORE_PREFIX + targetId, JSON.stringify(value));
+  } catch {
+    // Storage can be unavailable in a hardened browser; the live edit still works.
+  }
+  highflyHudApply(targetId, value);
+  highflyHudPaintToolbar();
+}
+
+function highflyHudApplyAll(): void {
+  for (const target of HIGHFLY_HUD_TARGETS) highflyHudApply(target.id);
+}
+
+function highflyHudReset(targetId: string): void {
+  try {
+    localStorage.removeItem(HIGHFLY_HUD_STORE_PREFIX + targetId);
+  } catch {
+    // no-op
+  }
+  const target = HIGHFLY_HUD_TARGETS.find((candidate) => candidate.id === targetId);
+  if (!target) return;
+  for (const el of highflyHudElements(target)) {
+    el.style.removeProperty('transform');
+    el.style.removeProperty('transform-origin');
+  }
+  highflyHudPaintToolbar();
+}
+
+function highflyHudResetAll(): void {
+  for (const target of HIGHFLY_HUD_TARGETS) highflyHudReset(target.id);
+}
+
+function highflyHudSelect(id: string): void {
+  if (!HIGHFLY_HUD_TARGETS.some((target) => target.id === id)) return;
+  highflyHudSelected = id;
+  document.body.dataset.hfHudSelected = id;
+  highflyHudPaintToolbar();
+}
+
+function highflyHudPaintToolbar(): void {
+  const root = document.getElementById('hf-c23-hud-editor');
+  if (!root) return;
+  const target = HIGHFLY_HUD_TARGETS.find((candidate) => candidate.id === highflyHudSelected);
+  const value = highflyHudRead(highflyHudSelected);
+  const label = root.querySelector<HTMLElement>('[data-hf-hud-label]');
+  const scale = root.querySelector<HTMLElement>('[data-hf-hud-scale]');
+  if (label) label.textContent = target?.label ?? 'HUD';
+  if (scale) scale.textContent = Math.round(value.scale * 100) + '%';
+}
+
+function highflyHudScale(delta: number): void {
+  const value = highflyHudRead(highflyHudSelected);
+  value.scale = Math.min(1.45, Math.max(0.65, Math.round((value.scale + delta) * 100) / 100));
+  highflyHudSave(highflyHudSelected, value);
+}
+
+function ensureHighflyHudEditor(): HTMLElement {
+  let root = document.getElementById('hf-c23-hud-editor');
+  if (root) return root;
+  root = document.createElement('div');
+  root.id = 'hf-c23-hud-editor';
+  root.innerHTML =
+    '<div class="hf-c23-hud-editor__title">HIGHFLY · EDITAR HUD</div>' +
+    '<div class="hf-c23-hud-editor__selected"><b data-hf-hud-label>HABILIDADES S1–S10</b><span data-hf-hud-scale>100%</span></div>' +
+    '<div class="hf-c23-hud-editor__actions">' +
+      '<button type="button" data-hf-hud-minus>−</button>' +
+      '<button type="button" data-hf-hud-plus>+</button>' +
+      '<button type="button" data-hf-hud-reset>RESTAURAR BLOQUE</button>' +
+      '<button type="button" data-hf-hud-reset-all>RESTAURAR TODO</button>' +
+      '<button type="button" data-hf-hud-done>LISTO</button>' +
+    '</div>' +
+    '<small>TOCÁ Y ARRASTRÁ CUALQUIER BLOQUE · −/+ CAMBIA SU TAMAÑO</small>';
+  root.querySelector('[data-hf-hud-minus]')?.addEventListener('click', () => highflyHudScale(-0.05));
+  root.querySelector('[data-hf-hud-plus]')?.addEventListener('click', () => highflyHudScale(0.05));
+  root.querySelector('[data-hf-hud-reset]')?.addEventListener('click', () => highflyHudReset(highflyHudSelected));
+  root.querySelector('[data-hf-hud-reset-all]')?.addEventListener('click', highflyHudResetAll);
+  root.querySelector('[data-hf-hud-done]')?.addEventListener('click', () => {
+    highflyHudEditing = false;
+    highflyHudDrag = null;
+    document.body.classList.remove('hf-c23-hud-editing');
+    root!.hidden = true;
+  });
+  document.body.append(root);
+  return root;
+}
+
+function openHighflyHudEditor(): void {
+  const close = document.querySelector<HTMLElement>('#options-window [data-close], #options [data-close]');
+  close?.click();
+  highflyHudEditing = true;
+  highflyHudSelect(highflyHudSelected);
+  const root = ensureHighflyHudEditor();
+  root.hidden = false;
+  document.body.classList.add('hf-c23-hud-editing');
+  highflyHudApplyAll();
+}
+
+function highflyHudTargetFromEvent(event: PointerEvent): HighflyHudTarget | null {
+  const path = event.composedPath();
+  for (const target of HIGHFLY_HUD_TARGETS) {
+    const elements = highflyHudElements(target);
+    if (elements.some((el) => path.includes(el))) return target;
+  }
+  return null;
+}
+
+function installHighflyHudEditorInput(): void {
+  if (document.body.dataset.hfC23HudEditorInput === '1') return;
+  document.body.dataset.hfC23HudEditorInput = '1';
+  window.addEventListener('highfly:mobile-hud-editor', openHighflyHudEditor);
+  document.addEventListener(
+    'pointerdown',
+    (event) => {
+      if (!highflyHudEditing) return;
+      const target = highflyHudTargetFromEvent(event);
+      if (!target) return;
+      event.preventDefault();
+      highflyHudSelect(target.id);
+      highflyHudDrag = {
+        pointerId: event.pointerId,
+        targetId: target.id,
+        startX: event.clientX,
+        startY: event.clientY,
+        base: highflyHudRead(target.id),
+      };
+    },
+    { capture: true },
+  );
+  document.addEventListener(
+    'pointermove',
+    (event) => {
+      const drag = highflyHudDrag;
+      if (!highflyHudEditing || !drag || drag.pointerId !== event.pointerId) return;
+      event.preventDefault();
+      highflyHudSave(drag.targetId, {
+        x: drag.base.x + event.clientX - drag.startX,
+        y: drag.base.y + event.clientY - drag.startY,
+        scale: drag.base.scale,
+      });
+    },
+    { capture: true },
+  );
+  const finish = (event: PointerEvent) => {
+    if (highflyHudDrag?.pointerId === event.pointerId) highflyHudDrag = null;
+  };
+  document.addEventListener('pointerup', finish, { capture: true });
+  document.addEventListener('pointercancel', finish, { capture: true });
+}
+
+function syncHighflyBagsCoach(): void {
+  const bags = document.getElementById('bags');
+  const open =
+    !!bags &&
+    bags.style.display !== 'none' &&
+    getComputedStyle(bags).display !== 'none';
+  if (open) {
+    try {
+      localStorage.setItem('highfly:c23:coach:bags', '1');
+    } catch {
+      // no-op
+    }
+  }
+  let done = false;
+  try {
+    done = localStorage.getItem('highfly:c23:coach:bags') === '1';
+  } catch {
+    done = open;
+  }
+  document.querySelectorAll<HTMLElement>('.qd-coach, .tut-prompt').forEach((coach) => {
+    const bagsCoach = (coach.textContent ?? '').toLocaleUpperCase('es').includes('BOLSAS');
+    coach.classList.toggle('hf-c23-bags-complete', bagsCoach && done);
+    if (!bagsCoach || done || coach.dataset.hfC23BagsTap === '1') return;
+    coach.dataset.hfC23BagsTap = '1';
+    coach.addEventListener('click', () => {
+      const button =
+        document.getElementById('mobile-menu-bags') ??
+        document.getElementById('mobile-bags');
+      if (button instanceof HTMLElement) button.click();
+    });
+  });
+}
+
 function boot(): void {
   document.body.classList.add('hf-game-c1', 'hf-game-c22');
   ensureBuildStamp();
@@ -332,6 +582,8 @@ function boot(): void {
   ensureGhostSkillSeats();
   ensureUtilityLane();
   installCoachmarkRelease();
+  installHighflyHudEditorInput();
+  highflyHudApplyAll();
 
   const tick = () => {
     ensureSpecialSeats();
@@ -340,6 +592,8 @@ function boot(): void {
     installSkillTouch();
     paintContextualAttack();
     syncCreatorPreviewState();
+    syncHighflyBagsCoach();
+    if (!highflyHudEditing) highflyHudApplyAll();
     configureElement();
     window.setTimeout(tick, 180);
   };
