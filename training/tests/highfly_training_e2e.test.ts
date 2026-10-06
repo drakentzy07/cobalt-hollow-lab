@@ -44,7 +44,7 @@ describe('HIGHFLY Training RUN138 end-to-end', () => {
     expect(first.outcomes.find((o) => o.stat === 'STR')?.outcome).toBe('calibrated');
   });
 
-  it('earns TP, allocates freely, and never double-counts AP/HP/crit outside primary recalc', () => {
+  it('earns TP, allocates freely, then changes derived game power exactly once', () => {
     clearActiveHighflyHunterProfile();
     const initial = createHighflyHunterProfile({ profileId: 'e2e', classId: 'warrior' });
     const baseline = runTrainingSessionPipeline({
@@ -60,31 +60,46 @@ describe('HIGHFLY Training RUN138 end-to-end', () => {
     });
     const outcome = improved.outcomes.find((o) => o.stat === 'STR');
     expect(outcome?.outcome).toBe('stat_up');
-    expect(outcome?.statDelta ?? 0).toBeGreaterThan(0);
-    expect(outcome?.statDelta ?? 1).toBeLessThan(1);
+    expect(improved.profile.training.core.STR.current).toBe(0);
+    expect(improved.profile.training.points.available).toBeGreaterThan(0);
 
     const restored = JSON.parse(JSON.stringify(improved.profile));
-    expect(restored.training.core.STR.current).toBeCloseTo(improved.profile.training.core.STR.current, 10);
-    expect(restored.training.core.STR.trainingGrowth).toBe(0);
+    expect(restored.training.core.STR.current).toBe(0);
     expect(restored.training.points.available).toBeCloseTo(
       improved.profile.training.points.available,
       10,
     );
 
-    const allocated = allocateTrainingPoints(
-      improved.profile,
-      'PER',
-      improved.profile.training.points.available,
+    const total = improved.profile.training.points.available;
+    let allocated = allocateTrainingPoints(improved.profile, 'STR', total / 3);
+    allocated = allocateTrainingPoints(allocated, 'PER', total / 3);
+    allocated = allocateTrainingPoints(
+      allocated,
+      'INT',
+      allocated.training.points.available,
     );
     expect(allocated.training.points.available).toBeCloseTo(0, 10);
-    expect(allocated.training.core.PER.trainingGrowth).toBeGreaterThan(0);
+    expect(allocated.training.core.STR.current).toBeGreaterThan(0);
+    expect(allocated.training.core.PER.current).toBeGreaterThan(0);
+    expect(allocated.training.core.INT.current).toBeGreaterThan(0);
 
     setActiveHighflyHunterProfile(allocated);
     const entity = {
-      id: 1003, attackPower: 100, rangedPower: 0, maxHp: 1000, hp: 800,
-      critChance: 0.05, dodgeChance: 0.05, hitBonus: 0,
-      critDmgPhysBonus: 0, critDmgSpellBonus: 0, critDmgHealBonus: 0,
-      moveSpeed: 7, dead: false,
+      id: 1003,
+      attackPower: 100,
+      rangedPower: 0,
+      spellPower: 50,
+      healPower: 60,
+      maxHp: 1000,
+      hp: 800,
+      critChance: 0.05,
+      dodgeChance: 0.05,
+      hitBonus: 0,
+      critDmgPhysBonus: 0,
+      critDmgSpellBonus: 0,
+      critDmgHealBonus: 0,
+      moveSpeed: 7,
+      dead: false,
     };
     bindActiveTrainingCombatEntity(entity);
     setActiveTrainingBridgeFlags({
@@ -92,34 +107,19 @@ describe('HIGHFLY Training RUN138 end-to-end', () => {
     });
     applyActiveTrainingBridgeToEntity(entity);
 
-    // PF-5: primary-stat recalc is the ONLY owner of AP/HP/crit/dodge.
-    expect(entity.attackPower).toBe(100);
-    expect(entity.maxHp).toBe(1000);
-    expect(entity.critChance).toBe(0.05);
-    expect(entity.dodgeChance).toBe(0.05);
-
-    // HIGHFLY-only mechanics remain useful and bounded.
-    expect(entity.moveSpeed).toBeGreaterThan(7);
+    // STR / PER / INT are Training-only Core; only DERIVED game outputs move.
+    expect(entity.attackPower).toBeGreaterThan(100);
+    expect(entity.spellPower).toBeGreaterThan(50);
+    expect(entity.healPower).toBeGreaterThan(60);
+    expect(entity.maxHp).toBeGreaterThan(1000);
     expect(entity.hitBonus).toBeGreaterThan(0);
     expect(entity.critDmgPhysBonus).toBeGreaterThan(0);
     expect(entity.highflyResourceCostMultiplier ?? 1).toBeLessThan(1);
     expect(entity.highflyResourceRecoveryMultiplier ?? 1).toBeGreaterThan(1);
 
-    const once = {
-      attackPower: entity.attackPower,
-      maxHp: entity.maxHp,
-      hitBonus: entity.hitBonus,
-      moveSpeed: entity.moveSpeed,
-      resourceCost: entity.highflyResourceCostMultiplier,
-    };
+    const once = JSON.stringify(entity);
     refreshActiveTrainingCombatBridge();
     refreshActiveTrainingCombatBridge();
-    expect({
-      attackPower: entity.attackPower,
-      maxHp: entity.maxHp,
-      hitBonus: entity.hitBonus,
-      moveSpeed: entity.moveSpeed,
-      resourceCost: entity.highflyResourceCostMultiplier,
-    }).toEqual(once);
+    expect(JSON.stringify(entity)).toBe(once);
   });
 });
