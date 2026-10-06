@@ -1,36 +1,44 @@
 # HIGHFLY Skin Lab v2 — Skin Factory
 
-## First production skin
-- ID: `SKIN_001 / warrior_black_final`
-- Class: Warrior
-- Gameplay changes: **none**
-- Base authority: frozen ClaudeCraft Warrior
-- Status: FINAL LAB candidate; integrate into the game only after visual QA approval
+## SKIN_001 — Warrior Black Aura
+This lab applies a **real runtime cosmetic texture** to the frozen ClaudeCraft Warrior. It is not a screenshot/mock.
 
-## Frozen authority
-- Upstream: `9b57e49c9676d75962700f828cc00a50a9a988b5`
-- Character: `public/models/chars/players/knight.glb`
-- Rig: `Rig_Medium`
-- Authored sockets: `handslot.r` / `handslot.l`
-- Runtime sockets: `handslotr` / `handslotl`
-- Weapon: `sword_1handed.glb`
-- Shield: `shield_round.glb`
+### Chapa y pintura contract
+Unchanged:
+- model / geometry
+- Rig_Medium
+- skin weights
+- animations
+- sockets / grips
+- hitboxes / traces
+- combat / skills / timings / gameplay
 
-## Warrior Black Final look
-- black / graphite armor and helmet
-- silver / white detail recovered from the original atlas via emissive-map remap
-- restrained violet environment/accent
-- dark metallic sword with bright authored atlas reflection plus rigid white edge accent
-- black shield with silver atlas/edge accent
-- black skinned helmet with white/silver detail driven by its original atlas
-- face stays untouched
+Changed:
+- body/helmet/cape visual atlas
+- sword visual atlas
+- shield visual atlas
+- rigid cosmetic white edge lines on sword + shield only
 
-Rigid line geometry is used only on genuinely non-skinned rigid pieces (sword and shield in this build). The Warrior helmet is skinned at runtime, so it deliberately does **not** receive a static line overlay; helmet and body details use the original UV atlas as the silver/white accent mask so they remain attached through every animation.
+## Paint source
+The Black Aura atlas is derived at runtime from ClaudeCraft's own:
+`public/textures/skins/knight/base.png`
+
+The same UVs are preserved. The recolor rule forces the visual majority into black/gunmetal and maps authored bright/saturated accent islands to white/silver. The face remains on the original material because `Knight_Head` is excluded from the cosmetic paint pass.
+
+## Target
+- black / graphite dominant armor
+- black helmet with white/silver authored detail
+- black sword with bright white cutting-edge treatment
+- black shield with white/silver trim
+- restrained violet only from showroom accent lighting
 
 ## Factory QA
-The lab exposes all 25 authored Warrior clips and a `TEST 25 CLIPS` mode. The browser gate exercises all 25, with screenshots for locomotion, jump, the three 1H attacks, block, shield bash and hit.
+All 25 authored Warrior clips remain available. The visual gate requires:
+- exact original rig + sockets
+- sword/shield attachment authority intact
+- Black Aura atlas >=70% dark pixels
+- <=30% silver/white accent pixels
+- skin active in browser
+- all 25 clips exercised
 
-There is no authored clip named `Dash` in `knight.glb`. Dash remains gameplay authority and will be tested when the approved cosmetic is integrated into HIGHFLY; the Skin Lab does not invent a proxy animation.
-
-## Hard rule
-No retargeting, regenerated weights, gameplay edits, hitbox/trace edits, socket edits, timing edits, or skill authority changes are permitted for a cosmetic skin.
+No proxy Dash clip is invented; Dash remains gameplay authority and is tested only after app integration.
