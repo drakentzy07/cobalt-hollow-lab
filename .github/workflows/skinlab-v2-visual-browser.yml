@@ -86,7 +86,7 @@ jobs:
             if (!activeBlack) throw new Error('WARRIOR BLACK did not activate');
             const blackDiag = await page.evaluate(() => window.__SKINLAB_DIAG__);
             if (blackDiag.mode !== 'black' ||
-                blackDiag.skinId !== 'warrior_black_final' ||
+                blackDiag.skinId !== 'warrior_black_aura_premium_v2' ||
                 blackDiag.finalAffectedMeshes < 6 ||
                 !blackDiag.painterReady ||
                 blackDiag.painterVersion !== 1 ||
@@ -94,23 +94,27 @@ jobs:
                 blackDiag.painterTextures !== 5 ||
                 blackDiag.rigidEdgeAccents !== 0 ||
                 blackDiag.rigidSilhouetteAccents < 2 ||
-                blackDiag.weaponPolishVersion !== 1 ||
-                blackDiag.weaponOutlineMode !== 'silhouette-emissive-no-wireframe' ||
+                blackDiag.weaponPolishVersion !== 2 ||
+                blackDiag.weaponOutlineMode !== 'authored-bevel-selective-3d-rails' ||
                 !blackDiag.wireframeSuppressed ||
                 !blackDiag.autoPresetApplied ||
-                blackDiag.autoPresetId !== 'warrior_black_aura_auto_v1' ||
+                blackDiag.autoPresetId !== 'warrior_black_aura_premium_v2' ||
                 !blackDiag.helmetVisorFound ||
                 !blackDiag.helmetVisorPainted ||
                 !blackDiag.swordEmissiveTrim ||
                 !blackDiag.studioEnvironment ||
                 !blackDiag.premiumAuthoringReady ||
-                blackDiag.premiumAuthoringVersion !== 1 ||
-                blackDiag.premiumAuthoringMode !== 'geometry-to-uv-trim' ||
+                blackDiag.premiumAuthoringVersion !== 2 ||
+                blackDiag.premiumAuthoringMode !== 'geometry-uv-plus-selective-3d-rails' ||
                 blackDiag.swordBevelSegments < 1 ||
                 blackDiag.swordEdgeSegments < 1 ||
                 blackDiag.shieldTrimSegments < 1 ||
                 blackDiag.helmetTrimSegments < 1 ||
-                blackDiag.armorTrimSegments < 1)
+                blackDiag.armorTrimSegments < 1 ||
+                blackDiag.heroSwordBevelRails < 1 ||
+                blackDiag.heroSwordEdgeRails < 1 ||
+                blackDiag.shieldPremiumRails < 1 ||
+                !blackDiag.premiumCosmeticFx)
               throw new Error('AUTO BLACK AURA material gate failed: '+JSON.stringify(blackDiag));
 
             // Exercise real Painter Pro controls. The result-first UI keeps the
@@ -141,7 +145,7 @@ jobs:
             const authoredDiag=await page.evaluate(()=>window.__SKINLAB_DIAG__);
             if(!authoredDiag.premiumAuthoringReady || authoredDiag.swordBevelSegments<1 || authoredDiag.swordEdgeSegments<1)
               throw new Error('Premium authoring did not generate sword trims: '+JSON.stringify(authoredDiag));
-            await page.screenshot({ path:'visual-artifacts/black-aura-premium-authoring.png', fullPage:true });
+            await page.screenshot({ path:'visual-artifacts/black-aura-premium-v2.png', fullPage:true });
 
             const keyClips=[
               'Walking_A','Running_A','Running_Strafe_Left','Running_Strafe_Right','Walking_Backwards','Jump_Idle',
@@ -178,7 +182,7 @@ jobs:
 
             require('fs').writeFileSync(
               'visual-artifacts/visual-gate.txt',
-              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nPAINTER PRO v1.1 READY\nAUTO BLACK AURA default preset OK\nHelmet visor painted by helmet role OK\nStudio metal environment OK\nSword black-body + clean emissive cutting trim OK\nShield solid-body + restrained silver rim OK\nWeapon wireframe suppressed OK\nPREMIUM AUTHORING v1 geometry-to-UV trims OK\nSword bevel + cutting-edge authored trims OK\nHelmet/armor/shield structural trims OK\n5 independent paint pieces OK\nPalette + finish controls OK\nDirect UV brush engine OK\nPreset recipe pipeline OK\n25/25 authored clips exercised OK\n'
+              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nPAINTER PRO v1.1 READY\nAUTO BLACK AURA default preset OK\nHelmet visor painted by helmet role OK\nStudio metal environment OK\nSword black-body + clean emissive cutting trim OK\nShield solid-body + restrained silver rim OK\nWeapon wireframe suppressed OK\nPREMIUM AUTHORING v2 geometry-UV + selective 3D rails OK\nHERO SWORD gunmetal bevel + silver cutting rails OK\nShield premium rim rails OK\nHelmet/armor/shield structural trims OK\nSubtle violet cosmetic aura OK\n5 independent paint pieces OK\nPalette + finish controls OK\nDirect UV brush engine OK\nPreset recipe pipeline OK\n25/25 authored clips exercised OK\n'
             );
             await browser.close();
           })().catch(err => { console.error(err); process.exit(1); });

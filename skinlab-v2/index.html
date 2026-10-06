@@ -42,7 +42,7 @@
 <body>
 <div id="app">
   <header>
-    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · PREMIUM AUTHORING v1 · BLACK AURA</div></div></div>
+    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · PREMIUM AUTHORING v2 · BLACK AURA</div></div></div>
     <div class="status">
       <span class="pill" id="rigPill">Rig_Medium …</span>
       <span class="pill" id="rPill">handslot.r …</span>
@@ -59,7 +59,7 @@
         <button id="baseBtn" class="active">BASE</button>
         <button id="blackBtn">WARRIOR BLACK AURA</button>
         <button id="autoAuraBtn">⚡ AUTO · BLACK AURA</button>
-        <button id="authorBtn">✨ PREMIUM AUTHOR</button>
+        <button id="authorBtn">💎 PREMIUM V2</button>
       </div>
       <div class="row">
         <select id="animSelect"></select>
@@ -307,14 +307,14 @@ const DEFAULT_PAINTER={
   shield:{primary:'#060810',secondary:'#f4f7ff',accent:'#5b21b6',finish:'darkMetal',brightness:.96,contrast:1.22,metalness:.76,roughness:.18,detail:.74}
 };
 const AUTO_BLACK_AURA={
-  id:'warrior_black_aura_auto_v1',
-  label:'AUTO · BLACK AURA',
+  id:'warrior_black_aura_premium_v2',
+  label:'AUTO · BLACK AURA PREMIUM V2',
   pieces:{
-    helmet:{primary:'#03050a',secondary:'#f4f7ff',accent:'#38145f',finish:'darkMetal',brightness:.82,contrast:1.48,metalness:.78,roughness:.18,detail:.42},
-    armor:{primary:'#04060b',secondary:'#f1f5ff',accent:'#241039',finish:'darkMetal',brightness:.92,contrast:1.42,metalness:.68,roughness:.20,detail:.86},
-    cape:{primary:'#030409',secondary:'#bbc6dc',accent:'#25103f',finish:'matte',brightness:.72,contrast:1.16,metalness:.03,roughness:.88,detail:.22},
-    sword:{primary:'#010309',secondary:'#ffffff',accent:'#572397',finish:'gloss',brightness:1.04,contrast:1.66,metalness:.96,roughness:.05,detail:.78},
-    shield:{primary:'#03050b',secondary:'#f7f9ff',accent:'#35165f',finish:'darkMetal',brightness:.90,contrast:1.46,metalness:.84,roughness:.13,detail:.72}
+    helmet:{primary:'#020409',secondary:'#f7f9ff',accent:'#4b176f',finish:'darkMetal',brightness:.86,contrast:1.50,metalness:.82,roughness:.15,detail:.58},
+    armor:{primary:'#03050a',secondary:'#f4f7ff',accent:'#2f104d',finish:'darkMetal',brightness:.95,contrast:1.46,metalness:.74,roughness:.17,detail:.92},
+    cape:{primary:'#020308',secondary:'#c2cbe0',accent:'#2b0f48',finish:'matte',brightness:.72,contrast:1.18,metalness:.03,roughness:.88,detail:.24},
+    sword:{primary:'#010208',secondary:'#ffffff',accent:'#6d28d9',finish:'gloss',brightness:1.08,contrast:1.58,metalness:.98,roughness:.045,detail:.92},
+    shield:{primary:'#02040a',secondary:'#f8fbff',accent:'#4c1d95',finish:'darkMetal',brightness:.94,contrast:1.48,metalness:.88,roughness:.11,detail:.86}
   }
 };
 const deepClone=o=>JSON.parse(JSON.stringify(o));
@@ -344,8 +344,8 @@ function channelForPixel(r,g,b,piece,detail){
   const d=clamp01(detail);
 
   if(piece==='helmet'){
-    // Visor and shell stay black; only a narrow authored detail band becomes silver.
-    if(lum>.30 && lum<(.38+.08*d) && chroma<.14)return ['secondary',lum];
+    // Premium V2: keep the shell black, but preserve more of the authored neutral ridges.
+    if(lum>.26 && lum<(.44+.10*d) && chroma<.18)return ['secondary',lum];
     if(chroma>(.32-.10*d) && lum>.18 && lum<.48)return ['accent',lum];
     return ['primary',lum];
   }
@@ -355,20 +355,19 @@ function channelForPixel(r,g,b,piece,detail){
     return ['primary',lum];
   }
   if(piece==='armor'){
-    if(lum>(.90-.23*d) && chroma<.26)return ['secondary',lum];
+    if(lum>(.88-.24*d) && chroma<.27)return ['secondary',lum];
     if(chroma>(.38-.12*d) && lum>.26)return ['accent',lum];
     return ['primary',lum];
   }
   if(piece==='sword'){
-    // Final weapon polish: only the brightest neutral authored pixels become the
-    // silver cutting trim. The blade mass stays black instead of turning white.
-    if(lum>(.93-.04*d) && chroma<.12)return ['secondary',lum];
+    // Premium V2 lets the source bevel contribute before the selective 3D cutting rails.
+    if(lum>(.88-.08*d) && chroma<.18)return ['secondary',lum];
     if(chroma>(.34-.10*d) && lum>.24 && lum<.78)return ['accent',lum];
     return ['primary',lum];
   }
   if(piece==='shield'){
-    // Shield is a solid black plate with restrained silver rim/detail.
-    if(lum>(.95-.03*d) && chroma<.10)return ['secondary',lum];
+    // Stronger authored rim/details while the central plate remains black.
+    if(lum>(.92-.08*d) && chroma<.16)return ['secondary',lum];
     if(chroma>(.38-.08*d) && lum>.25 && lum<.72)return ['accent',lum];
     return ['primary',lum];
   }
@@ -411,6 +410,72 @@ function ensureRigidSilhouette(root,name,color,scale=1.035,opacity=.65){
     shell.material.color.set(color);shell.material.opacity=opacity;shell.scale.setScalar(scale);shell.visible=true;count++;
   }
   return count;
+}
+
+
+function ensureRigidFeatureRails(root,name,color,{threshold=26,minLenRatio=.08,maxSegments=8,radiusRatio=.0045,opacity=1,emissiveIntensity=.18}={}){
+  const targets=[];
+  root.traverse(o=>{if(o.isMesh&&!o.isSkinnedMesh&&o.geometry&&!o.userData?.skinAccentOverlay)targets.push(o)});
+  let total=0;
+  for(const o of targets){
+    let group=o.children.find(c=>c.userData?.skinAccentName===name);
+    if(!group){
+      group=new THREE.Group();
+      group.userData.skinAccentName=name;group.userData.skinAccentOverlay=true;
+      const edges=new THREE.EdgesGeometry(o.geometry,threshold);
+      const pos=edges.getAttribute('position');
+      if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();
+      const size=new THREE.Vector3();o.geometry.boundingBox.getSize(size);
+      const diag=Math.max(.0001,size.length());
+      const candidates=[];
+      const a=new THREE.Vector3(),b=new THREE.Vector3();
+      for(let i=0;i<pos.count;i+=2){
+        a.fromBufferAttribute(pos,i);b.fromBufferAttribute(pos,i+1);
+        const len=a.distanceTo(b);
+        if(len/diag>=minLenRatio)candidates.push({a:a.clone(),b:b.clone(),len});
+      }
+      candidates.sort((x,y)=>y.len-x.len);
+      const mat=new THREE.MeshStandardMaterial({
+        color:new THREE.Color(color),metalness:1,roughness:.07,
+        emissive:new THREE.Color(color),emissiveIntensity,
+        transparent:opacity<1,opacity,depthWrite:true
+      });
+      const yAxis=new THREE.Vector3(0,1,0),mid=new THREE.Vector3(),dir=new THREE.Vector3();
+      for(const seg of candidates.slice(0,maxSegments)){
+        mid.copy(seg.a).add(seg.b).multiplyScalar(.5);
+        dir.copy(seg.b).sub(seg.a).normalize();
+        const tube=new THREE.Mesh(
+          new THREE.CylinderGeometry(diag*radiusRatio,diag*radiusRatio,seg.len*1.01,8,1,false),
+          mat
+        );
+        tube.position.copy(mid);
+        tube.quaternion.setFromUnitVectors(yAxis,dir);
+        tube.userData.skinAccentOverlay=true;
+        group.add(tube);total++;
+      }
+      o.add(group);accentRoots.push(group);
+    }else{
+      group.visible=true;
+      total+=group.children.length;
+    }
+  }
+  return total;
+}
+function ensurePremiumAura(root){
+  let light=root.children.find(c=>c.userData?.skinAccentName==='premium-violet-aura');
+  if(!light){
+    root.updateWorldMatrix(true,true);
+    const box=new THREE.Box3().setFromObject(root);
+    const center=box.getCenter(new THREE.Vector3());
+    root.worldToLocal(center);
+    light=new THREE.PointLight(0x6d28d9,.72,1.45,2);
+    light.position.copy(center);
+    light.userData.skinAccentName='premium-violet-aura';
+    light.userData.skinAccentOverlay=true;
+    root.add(light);accentRoots.push(light);
+  }
+  light.visible=true;
+  return true;
 }
 
 function buildPieceTexture(piece){
@@ -570,27 +635,26 @@ function strokeUvSegments(piece,segments,color,width,alpha=1,glowAlpha=0){
 function applyPremiumAuthoring(){
   if(!actor||Object.keys(painterTextures).length!==5)return false;
 
-  // Real mesh creases become texture-space authored trims. Unlike EdgesGeometry
-  // these lines live ON the material: no floating wireframe and no gameplay mesh changes.
-  const swordBevel=collectRoleFeatureSegments('sword',18,.085);
-  const swordEdge=collectRoleFeatureSegments('sword',48,.10);
-  const shieldTrim=collectRoleFeatureSegments('shield',42,.025);
-  const helmetTrim=collectRoleFeatureSegments('helmet',48,.018);
-  const armorTrim=collectRoleFeatureSegments('armor',58,.022);
+  // V2: geometry -> UV authoring is deliberately bold enough to survive a mobile view.
+  const swordBevel=collectRoleFeatureSegments('sword',16,.070);
+  const swordEdge=collectRoleFeatureSegments('sword',42,.085);
+  const shieldTrim=collectRoleFeatureSegments('shield',34,.020);
+  const helmetTrim=collectRoleFeatureSegments('helmet',40,.016);
+  const armorTrim=collectRoleFeatureSegments('armor',48,.018);
 
-  // Wide gunmetal bevel under a narrower bright cutting edge.
-  strokeUvSegments('sword',swordBevel,'#7f8aa3',10,.82,.08);
-  strokeUvSegments('sword',swordEdge,'#f7f9ff',5,1,.92);
+  // Hero sword: broad gunmetal bevel, then a much narrower luminous silver cutting edge.
+  strokeUvSegments('sword',swordBevel,'#7f899f',18,.90,.10);
+  strokeUvSegments('sword',swordEdge,'#ffffff',10,1,.98);
 
-  // Structural secondary-color trims: restrained on armor, clearer on shield/helmet.
-  strokeUvSegments('shield',shieldTrim,'#e8eefc',6,.90,.20);
-  strokeUvSegments('helmet',helmetTrim,'#eef3ff',4,.78,.10);
-  strokeUvSegments('armor',armorTrim,'#d7deed',3,.62,.05);
+  // Global trim language: visible at gameplay distance, still subordinate to black.
+  strokeUvSegments('shield',shieldTrim,'#f3f6ff',11,.95,.24);
+  strokeUvSegments('helmet',helmetTrim,'#f4f7ff',8,.90,.14);
+  strokeUvSegments('armor',armorTrim,'#dfe6f5',6,.80,.07);
 
   Object.assign(window.__SKINLAB_DIAG__,{
     premiumAuthoringReady:true,
-    premiumAuthoringVersion:1,
-    premiumAuthoringMode:'geometry-to-uv-trim',
+    premiumAuthoringVersion:2,
+    premiumAuthoringMode:'geometry-uv-plus-selective-3d-rails',
     swordBevelSegments:swordBevel.length,
     swordEdgeSegments:swordEdge.length,
     shieldTrimSegments:shieldTrim.length,
@@ -613,24 +677,34 @@ function applyWarriorBlackFinal(){
     const mats=Array.isArray(o.material)?o.material:[o.material];
     mats.forEach(m=>applyPaintMaterial(m,role));affected++;
   });
+  let heroSwordBevelRails=0,heroSwordEdgeRails=0,shieldPremiumRails=0,premiumCosmeticFx=false;
   const sword=actor.getObjectByName('Warrior_Sword');
   if(sword){
     const c=painterState.sword.secondary;
-    // No EdgesGeometry here: it made every polygon read like a wireframe.
-    // A tight back-face halo plus the emissive texture gives one clean premium edge.
-    silhouetteAccents+=ensureRigidSilhouette(sword,'painter-sword-silhouette',c,1.022,.72);
+    // Clean outer silhouette + SELECTIVE physical rails. This is not a polygon wireframe.
+    silhouetteAccents+=ensureRigidSilhouette(sword,'painter-sword-silhouette',c,1.024,.82);
+    heroSwordBevelRails+=ensureRigidFeatureRails(sword,'premium-sword-gunmetal-bevel','#7f899f',{
+      threshold:14,minLenRatio:.065,maxSegments:10,radiusRatio:.0060,opacity:.96,emissiveIntensity:.05
+    });
+    heroSwordEdgeRails+=ensureRigidFeatureRails(sword,'premium-sword-silver-edge','#ffffff',{
+      threshold:30,minLenRatio:.090,maxSegments:6,radiusRatio:.0038,opacity:1,emissiveIntensity:.34
+    });
+    premiumCosmeticFx=ensurePremiumAura(sword);
   }
   const shield=actor.getObjectByName('Warrior_Shield');
   if(shield){
     const c=painterState.shield.secondary;
-    // Solid shield body, restrained outer silver halo; no internal white wire grid.
-    silhouetteAccents+=ensureRigidSilhouette(shield,'painter-shield-silhouette',c,1.014,.30);
+    silhouetteAccents+=ensureRigidSilhouette(shield,'painter-shield-silhouette',c,1.017,.46);
+    shieldPremiumRails+=ensureRigidFeatureRails(shield,'premium-shield-rim','#eef3ff',{
+      threshold:34,minLenRatio:.030,maxSegments:14,radiusRatio:.0034,opacity:.95,emissiveIntensity:.14
+    });
   }
   Object.assign(window.__SKINLAB_DIAG__,{
     finalAffectedMeshes:affected,atlasAccentMaterials:affected,rigidEdgeAccents:edgeAccents,
     rigidSilhouetteAccents:silhouetteAccents,rigidEdgeAccentExpected:0,
-    weaponPolishVersion:1,weaponOutlineMode:'silhouette-emissive-no-wireframe',wireframeSuppressed:true,
-    helmetAccentMode:'painter-pro',skinId:'warrior_black_final',refinementPass:5,
+    weaponPolishVersion:2,weaponOutlineMode:'authored-bevel-selective-3d-rails',wireframeSuppressed:true,
+    helmetAccentMode:'premium-author-v2',skinId:'warrior_black_aura_premium_v2',refinementPass:6,
+    heroSwordBevelRails,heroSwordEdgeRails,shieldPremiumRails,premiumCosmeticFx,
     painterReady:true,painterVersion:1,painterPieces:5,brushOps:Object.values(paintOps).reduce((a,v)=>a+v.length,0)
   });
   return affected;
@@ -737,7 +811,7 @@ function applyAutoBlackAura(){
     studioEnvironment:!!scene.environment
   });
   autoAuraBtn.classList.add('active');
-  painterStatus.textContent='BLACK AURA PREMIUM · trims authorados desde la geometría real · espada con bisel + filo + armadura/escudo/casco con detalle secundario.';
+  painterStatus.textContent='BLACK AURA PREMIUM V2 · HERO SWORD con bisel + filo 3D selectivo · trims globales reforzados · aura violeta sutil.';
   return true;
 }
 function setMode(mode){
@@ -872,7 +946,11 @@ window.__SKINLAB_DIAG__={
   swordEdgeSegments:0,
   shieldTrimSegments:0,
   helmetTrimSegments:0,
-  armorTrimSegments:0
+  armorTrimSegments:0,
+  heroSwordBevelRails:0,
+  heroSwordEdgeRails:0,
+  shieldPremiumRails:0,
+  premiumCosmeticFx:false
 };
 function playClip(name){
   if(!mixer||!actor)return false;
@@ -1004,7 +1082,7 @@ async function boot(){
 baseBtn.onclick=()=>setMode('base');
 blackBtn.onclick=()=>{setMode('black');autoAuraBtn.classList.remove('active')};
 autoAuraBtn.onclick=()=>applyAutoBlackAura();
-authorBtn.onclick=()=>{applyPremiumAuthoring();setMode('black');painterStatus.textContent='PREMIUM AUTHOR reaplicado sobre la skin actual.'};
+authorBtn.onclick=()=>{applyPremiumAuthoring();setMode('black');painterStatus.textContent='PREMIUM V2 reaplicada · HERO SWORD + GLOBAL TRIM + COSMETIC FX.'};
 document.getElementById('playBtn').onclick=()=>playClip(document.getElementById('animSelect').value);
 testAllBtn.onclick=()=>runFactoryTest();
 stopTestBtn.onclick=()=>stopFactoryTest();

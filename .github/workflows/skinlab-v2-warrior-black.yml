@@ -43,14 +43,20 @@ jobs:
           grep -q "applyAutoBlackAura" skinlab-v2/index.html
           grep -q "emissiveTexture" skinlab-v2/index.html
           grep -q "RoomEnvironment" skinlab-v2/index.html
-          grep -q "weaponPolishVersion:1" skinlab-v2/index.html
-          grep -q "silhouette-emissive-no-wireframe" skinlab-v2/index.html
+          grep -q "weaponPolishVersion:2" skinlab-v2/index.html
+          grep -q "authored-bevel-selective-3d-rails" skinlab-v2/index.html
           grep -q "wireframeSuppressed:true" skinlab-v2/index.html
           grep -q 'id="authorBtn"' skinlab-v2/index.html
           grep -q "applyPremiumAuthoring" skinlab-v2/index.html
-          grep -q "geometry-to-uv-trim" skinlab-v2/index.html
+          grep -q "geometry-uv-plus-selective-3d-rails" skinlab-v2/index.html
           grep -q "swordBevelSegments" skinlab-v2/index.html
           grep -q "swordEdgeSegments" skinlab-v2/index.html
+          grep -q "ensureRigidFeatureRails" skinlab-v2/index.html
+          grep -q "heroSwordBevelRails" skinlab-v2/index.html
+          grep -q "heroSwordEdgeRails" skinlab-v2/index.html
+          grep -q "shieldPremiumRails" skinlab-v2/index.html
+          grep -q "premiumCosmeticFx" skinlab-v2/index.html
+          grep -q "warrior_black_aura_premium_v2" skinlab-v2/index.html
           grep -q "function resolveNode" skinlab-v2/index.html
           grep -q "name.replace(/\[\[\\\].:/\]/g" skinlab-v2/index.html
           grep -q "0.555174" skinlab-v2/index.html
