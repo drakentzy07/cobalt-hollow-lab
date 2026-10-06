@@ -49,7 +49,7 @@ body.mobile-touch.hf-game-c1 #actionbar .actionbar-toggle {
 
 /* HIGHFLY C2.1 — compact right cluster, matching the approved hand map.
    right increases toward screen centre; bottom increases upward. */
-body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="1"]  { right: 100px !important; bottom: 38px !important; }
+body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="1"]  { right: 110px !important; bottom: 38px !important; }
 body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="2"]  { right: 126px !important; bottom: 92px !important; }
 body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="3"]  { right: 154px !important; bottom: 146px !important; }
 body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="4"]  { right: 154px !important; bottom: 200px !important; }
@@ -229,7 +229,7 @@ body.mobile-touch.hf-game-c1.mobile-window-open #hf-c1-utility-lane {
   body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="4"]  { bottom: 190px !important; }
   body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="5"]  { bottom: 236px !important; }
   body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="6"]  { bottom: 46px !important; }
-  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="7"]  { bottom: 108px !important; }
+  body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="7"]  { bottom: 100px !important; }
   body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="8"]  { bottom: 190px !important; }
   body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="9"]  { bottom: 236px !important; }
   body.mobile-touch.hf-game-c1 #actionbar [data-hotbar-slot="10"] { bottom: 282px !important; }
