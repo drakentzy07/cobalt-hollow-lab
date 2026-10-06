@@ -11,52 +11,93 @@ import {
   naturalLevelGrowthFor,
 } from '../src/highfly/training/core';
 
-function coreTotal(profile: ReturnType<typeof createHighflyHunterProfile>): number {
-  return HIGHFLY_CORE_STATS.reduce((sum, stat) => sum + profile.training.core[stat].current, 0);
+function naturalTotal(profile: ReturnType<typeof createHighflyHunterProfile>): number {
+  return HIGHFLY_CORE_STATS.reduce(
+    (sum, stat) => sum + profile.training.core[stat].naturalLevelGrowth,
+    0,
+  );
 }
 
-describe('HIGHFLY PF-2/PF-5 level isolation 1-99', () => {
-  it('level 1, 20, 50 and 99 grant zero Core for every class', () => {
-    expect(HIGHFLY_NATURAL_GROWTH_BUDGET).toBe(0);
-    expect(HIGHFLY_NORMAL_MAX_LEVEL).toBe(99);
+describe('HIGHFLY PF-2 natural level growth 1-99', () => {
+  it('gives every class the same total natural budget at LV1/LV20/LV50/LV99', () => {
     for (const level of [1, 20, 50, 99]) {
       for (const classId of HIGHFLY_AWAKENING_CLASSES) {
-        const profile = createHighflyHunterProfile({ profileId: classId + level, classId, level });
+        const profile = createHighflyHunterProfile({
+          profileId: `${classId}-lv${level}`,
+          classId,
+          level,
+        });
         expect(profile.hunter.level).toBe(level);
-        expect(coreTotal(profile)).toBe(0);
-        for (const stat of HIGHFLY_CORE_STATS) {
-          expect(profile.training.core[stat].naturalLevelGrowth).toBe(0);
-          expect(naturalLevelGrowthFor(classId, level)[stat]).toBe(0);
-        }
+        expect(naturalTotal(profile)).toBeCloseTo(level - 1, 10);
       }
     }
+    expect(HIGHFLY_NATURAL_GROWTH_BUDGET).toBe(98);
+    expect(HIGHFLY_NORMAL_MAX_LEVEL).toBe(99);
   });
 
-  it('keeps real Training exact when level changes', () => {
-    let profile = createHighflyHunterProfile({ profileId: 'training-plus-level', classId: 'warrior' });
+  it('preserves Claude class identity after normalization', () => {
+    const warrior = naturalLevelGrowthFor('warrior', 99);
+    const mage = naturalLevelGrowthFor('mage', 99);
+    const rogue = naturalLevelGrowthFor('rogue', 99);
+    const priest = naturalLevelGrowthFor('priest', 99);
+
+    expect(warrior.STR).toBeCloseTo(warrior.VIT, 10);
+    expect(warrior.STR).toBeGreaterThan(warrior.AGI);
+    expect(warrior.PER).toBe(0);
+    expect(warrior.INT).toBe(0);
+
+    expect(mage.INT).toBeGreaterThan(mage.VIT);
+    expect(mage.INT).toBeGreaterThan(mage.PER);
+    expect(rogue.AGI).toBeGreaterThan(rogue.STR);
+    expect(rogue.AGI).toBeGreaterThan(rogue.VIT);
+    expect(priest.PER).toBeGreaterThan(priest.INT);
+    expect(priest.PER).toBeGreaterThan(priest.VIT);
+  });
+
+  it('keeps Training allocation exact while level changes only Natural Growth', () => {
+    let profile = createHighflyHunterProfile({
+      profileId: 'training-plus-level',
+      classId: 'warrior',
+      level: 1,
+    });
+    const base = profile.training.core.STR.current;
     profile = commitTrainingCoreStat(
       profile,
       'STR',
-      0.4,
+      base + 0.4,
       {
         source: 'training-performance-gate',
         scoringVersion: HIGHFLY_TRAINING_SCORING_VERSION,
         evidenceId: 'pf2-training',
       },
     );
+
     const leveled = applyHunterProgression(profile, { level: 99 });
-    expect(leveled.training.core.STR.current).toBeCloseTo(0.4, 10);
+
     expect(leveled.training.core.STR.trainingAllocated).toBeCloseTo(0.4, 10);
+    expect(leveled.training.core.STR.trainingGrowth).toBeCloseTo(0.4, 10);
+    expect(leveled.training.points.earned).toBeCloseTo(0.4, 10);
     expect(leveled.training.points.allocated.STR).toBeCloseTo(0.4, 10);
-    expect(coreTotal(leveled)).toBeCloseTo(0.4, 10);
+    expect(naturalTotal(leveled)).toBeCloseTo(98, 10);
+    expect(leveled.training.core.STR.current).toBeCloseTo(
+      leveled.training.core.STR.awakeningBase +
+        leveled.training.core.STR.naturalLevelGrowth +
+        0.4,
+      10,
+    );
   });
 
-  it('still clamps conventional character progression to LV99', () => {
-    const profile = createHighflyHunterProfile({ profileId: 'cap', classId: 'druid', level: 500 });
+  it('clamps conventional progression to LV99', () => {
+    const profile = createHighflyHunterProfile({
+      profileId: 'cap',
+      classId: 'druid',
+      level: 500,
+    });
     expect(profile.hunter.level).toBe(99);
-    expect(coreTotal(profile)).toBe(0);
+    expect(naturalTotal(profile)).toBeCloseTo(98, 10);
+
     const capped = applyHunterProgression(profile, { level: 1000 });
     expect(capped.hunter.level).toBe(99);
-    expect(coreTotal(capped)).toBe(0);
+    expect(naturalTotal(capped)).toBeCloseTo(98, 10);
   });
 });
