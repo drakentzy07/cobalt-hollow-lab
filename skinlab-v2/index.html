@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>HIGHFLY Skin Lab v2 — Warrior Black</title>
+  <style>
+    :root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07070a;color:#f5f5f7}
+    #app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr}
+    header{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(8,8,12,.92);border-bottom:1px solid #252531;backdrop-filter:blur(12px);z-index:5}
+    .brand{display:flex;align-items:center;gap:10px;min-width:0}.mark{width:11px;height:28px;border-radius:8px;background:linear-gradient(#8b5cf6,#3b0764);box-shadow:0 0 24px #7c3aed88}
+    h1{font-size:14px;margin:0;letter-spacing:.12em}.sub{font-size:11px;color:#aaaabb;margin-top:3px}
+    .status{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.pill{font-size:10px;padding:5px 8px;border:1px solid #30303c;border-radius:999px;background:#111119;color:#b8b8c6}.pill.ok{border-color:#315d45;color:#93e6b0}
+    main{position:relative;min-height:0}#stage{position:absolute;inset:0}
+    .panel{position:absolute;left:14px;top:14px;width:min(340px,calc(100vw - 28px));padding:13px;border:1px solid #2b2b36;border-radius:16px;background:rgba(10,10,15,.88);backdrop-filter:blur(14px);box-shadow:0 18px 60px #0008}
+    .panel h2{font-size:12px;letter-spacing:.12em;margin:0 0 10px;color:#d9d9e3}.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    button,select{border:1px solid #343442;background:#15151d;color:#eee;border-radius:10px;padding:9px 11px;font:inherit;font-size:12px}
+    button{cursor:pointer}button:hover{background:#1c1c27}button.active{border-color:#8b5cf6;background:#261942;box-shadow:0 0 22px #7c3aed33}
+    .small{font-size:10px;color:#9b9baa;line-height:1.4}.legend{display:grid;grid-template-columns:auto 1fr;gap:5px 8px;font-size:10px;color:#aaa}
+    .legend b{color:#ddd}.footer{position:absolute;right:14px;bottom:14px;padding:9px 12px;border:1px solid #2b2b36;border-radius:12px;background:rgba(10,10,15,.75);font-size:10px;color:#aaa}
+    #error{display:none;position:absolute;inset:auto 14px 14px 14px;background:#3a1016;border:1px solid #7f1d1d;color:#fecaca;padding:10px;border-radius:12px;z-index:9;font-size:11px}
+    @media(max-width:700px){header{align-items:flex-start}.status{display:none}.panel{top:auto;bottom:12px}.footer{display:none}}
+  </style>
+  <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
+  </script>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">WARRIOR BLACK · PROTOTYPE 0</div></div></div>
+    <div class="status">
+      <span class="pill" id="rigPill">Rig_Medium …</span>
+      <span class="pill" id="rPill">handslot.r …</span>
+      <span class="pill" id="lPill">handslot.l …</span>
+      <span class="pill" id="animPill">animations …</span>
+    </div>
+  </header>
+  <main>
+    <div id="stage"></div>
+    <section class="panel">
+      <h2>WARRIOR VISUAL</h2>
+      <div class="row">
+        <button id="baseBtn" class="active">BASE</button>
+        <button id="blackBtn">WARRIOR BLACK</button>
+      </div>
+      <div class="row">
+        <select id="animSelect"></select>
+        <button id="playBtn">REPLAY</button>
+      </div>
+      <div class="row">
+        <button id="bonesBtn">HUESOS</button>
+        <button id="rotateBtn" class="active">ROTACIÓN</button>
+        <button id="resetBtn">RESET CÁMARA</button>
+      </div>
+      <div class="legend">
+        <b>Base</b><span>ClaudeCraft Warrior real: knight.glb</span>
+        <b>Rig</b><span>Rig_Medium original, sin retarget</span>
+        <b>Arma</b><span>Espada + escudo en sockets originales</span>
+        <b>Black v0</b><span>Override visual únicamente; gameplay intacto</span>
+      </div>
+      <p class="small">Este prototipo NO cambia huesos, pesos, clips, hitboxes ni lógica de combate. BLACK aplica una capa cosmética a armadura + arma y conserva la cabeza/base del personaje.</p>
+    </section>
+    <div class="footer">Arrastrar: rotar · rueda/pinch: zoom · botón HUESOS: inspección</div>
+    <div id="error"></div>
+  </main>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const UPSTREAM='9b57e49c9676d75962700f828cc00a50a9a988b5';
+const RAW='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/'+UPSTREAM+'/public/';
+const URLS={
+  warrior:RAW+'models/chars/players/knight.glb',
+  sword:RAW+'models/weapons/sword_1handed.glb',
+  shield:RAW+'models/weapons/shield_round.glb'
+};
+
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.08;
+stage.appendChild(renderer.domElement);
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x09090d);
+scene.fog=new THREE.Fog(0x09090d,7,18);
+
+const camera=new THREE.PerspectiveCamera(35,1,.01,100);
+camera.position.set(4.5,2.7,5.5);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.target.set(0,1.15,0);
+controls.enableDamping=true;
+controls.minDistance=2.4;
+controls.maxDistance=10;
+
+scene.add(new THREE.HemisphereLight(0xbcc7ff,0x261c31,2.0));
+const key=new THREE.DirectionalLight(0xffffff,4.2); key.position.set(3.5,6,4); scene.add(key);
+const rim=new THREE.DirectionalLight(0x8b5cf6,5.5); rim.position.set(-4,3,-3); scene.add(rim);
+const fill=new THREE.PointLight(0x7c3aed,35,9,2); fill.position.set(0,1.8,-2); scene.add(fill);
+
+const floor=new THREE.Mesh(new THREE.CircleGeometry(4.5,96),new THREE.MeshStandardMaterial({color:0x111119,roughness:.88,metalness:.05}));
+floor.rotation.x=-Math.PI/2; floor.position.y=0; scene.add(floor);
+const ring=new THREE.Mesh(new THREE.RingGeometry(1.15,1.19,96),new THREE.MeshBasicMaterial({color:0x4c1d95,transparent:true,opacity:.65,side:THREE.DoubleSide}));
+ring.rotation.x=-Math.PI/2; ring.position.y=.006; scene.add(ring);
+
+let actor=null,mixer=null,skeletonHelper=null,autoRotate=true,currentMode='base';
+const armorNames=new Set(['Knight_ArmLeft','Knight_ArmRight','Knight_Body','Knight_Cape','Knight_Helmet','Knight_LegLeft','Knight_LegRight']);
+const originalMat=new Map();
+
+function cloneMaterialTree(root,group='body'){
+  root.traverse(o=>{
+    if(!o.isMesh)return;
+    const mats=Array.isArray(o.material)?o.material:[o.material];
+    const cloned=mats.map(m=>m.clone());
+    o.material=Array.isArray(o.material)?cloned:cloned[0];
+    originalMat.set(o.uuid,{group,name:o.name,materials:cloned.map(m=>({
+      color:m.color?.clone(),emissive:m.emissive?.clone(),metalness:m.metalness,roughness:m.roughness,emissiveIntensity:m.emissiveIntensity
+    }))});
+  });
+}
+function restoreMaterials(){
+  if(!actor)return;
+  actor.traverse(o=>{
+    if(!o.isMesh)return;
+    const rec=originalMat.get(o.uuid); if(!rec)return;
+    const mats=Array.isArray(o.material)?o.material:[o.material];
+    mats.forEach((m,i)=>{
+      const s=rec.materials[i]; if(!s)return;
+      if(m.color&&s.color)m.color.copy(s.color);
+      if(m.emissive&&s.emissive)m.emissive.copy(s.emissive);
+      if(s.metalness!==undefined)m.metalness=s.metalness;
+      if(s.roughness!==undefined)m.roughness=s.roughness;
+      if(s.emissiveIntensity!==undefined)m.emissiveIntensity=s.emissiveIntensity;
+      m.needsUpdate=true;
+    });
+  });
+}
+function applyBlack(){
+  restoreMaterials();
+  actor.traverse(o=>{
+    if(!o.isMesh)return;
+    const rec=originalMat.get(o.uuid); if(!rec)return;
+    const isArmor=armorNames.has(o.name);
+    const isWeapon=rec.group==='weapon';
+    if(!isArmor&&!isWeapon)return;
+    const mats=Array.isArray(o.material)?o.material:[o.material];
+    mats.forEach(m=>{
+      if(m.color)m.color.multiply(new THREE.Color(isWeapon?0x25212f:0x35303f));
+      if('metalness'in m)m.metalness=Math.max(.42,m.metalness??0);
+      if('roughness'in m)m.roughness=isWeapon?.28:.40;
+      if(m.emissive){m.emissive.set(0x16082c);m.emissiveIntensity=isWeapon?.18:.10;}
+      m.needsUpdate=true;
+    });
+  });
+}
+function setMode(mode){
+  currentMode=mode;
+  if(mode==='black')applyBlack(); else restoreMaterials();
+  baseBtn.classList.toggle('active',mode==='base');
+  blackBtn.classList.toggle('active',mode==='black');
+}
+function pill(id,ok,label){const el=document.getElementById(id);el.textContent=label;el.classList.toggle('ok',!!ok)}
+
+const loader=new GLTFLoader();
+const load=u=>new Promise((resolve,reject)=>loader.load(u,resolve,undefined,reject));
+
+function attachAsset(root,boneName,gltf,label){
+  const bone=root.getObjectByName(boneName);
+  if(!bone)throw new Error('No se encontró '+boneName);
+  const obj=gltf.scene;
+  obj.name=label;
+  cloneMaterialTree(obj,'weapon');
+  bone.add(obj);
+  return obj;
+}
+
+function playClip(name){
+  if(!mixer||!actor)return;
+  const clip=THREE.AnimationClip.findByName(actor.userData.clips,name);
+  if(!clip)return;
+  mixer.stopAllAction();
+  const a=mixer.clipAction(clip); a.reset().fadeIn(.12).play();
+}
+
+async function boot(){
+  try{
+    const [warrior,sword,shield]=await Promise.all([load(URLS.warrior),load(URLS.sword),load(URLS.shield)]);
+    actor=warrior.scene;
+    actor.userData.clips=warrior.animations;
+    actor.getObjectByName('Knight_HelmetVisor')&&(actor.getObjectByName('Knight_HelmetVisor').visible=false);
+    cloneMaterialTree(actor,'body');
+    scene.add(actor);
+
+    attachAsset(actor,'handslot.r',sword,'Warrior_Sword');
+    attachAsset(actor,'handslot.l',shield,'Warrior_Shield');
+
+    const box=new THREE.Box3().setFromObject(actor);
+    const h=Math.max(.001,box.max.y-box.min.y);
+    const scale=2.45/h; actor.scale.setScalar(scale);
+    const box2=new THREE.Box3().setFromObject(actor);
+    actor.position.y-=box2.min.y;
+
+    mixer=new THREE.AnimationMixer(actor);
+    const names=warrior.animations.map(a=>a.name);
+    const preferred=['Idle','Walking_A','Running_A','1H_Melee_Attack_Chop','1H_Melee_Attack_Slice_Diagonal','Block','Shield_Bash','Hit_A','Jump_Idle','Cheer'];
+    const select=document.getElementById('animSelect');
+    preferred.filter(n=>names.includes(n)).forEach(n=>{const op=document.createElement('option');op.value=n;op.textContent=n;select.appendChild(op)});
+    names.filter(n=>!preferred.includes(n)).forEach(n=>{const op=document.createElement('option');op.value=n;op.textContent=n;select.appendChild(op)});
+    playClip('Idle');
+
+    const rig=!!actor.getObjectByName('Rig_Medium'),rh=!!actor.getObjectByName('handslot.r'),lh=!!actor.getObjectByName('handslot.l');
+    pill('rigPill',rig,rig?'Rig_Medium ✓':'Rig_Medium ✕');
+    pill('rPill',rh,rh?'handslot.r ✓':'handslot.r ✕');
+    pill('lPill',lh,lh?'handslot.l ✓':'handslot.l ✕');
+    pill('animPill',names.length>0,names.length+' clips ✓');
+
+    skeletonHelper=new THREE.SkeletonHelper(actor); skeletonHelper.visible=false; scene.add(skeletonHelper);
+    setMode('base');
+  }catch(err){
+    console.error(err);
+    const e=document.getElementById('error');e.style.display='block';e.textContent='Carga fallida: '+(err?.message||err);
+  }
+}
+
+baseBtn.onclick=()=>setMode('base');
+blackBtn.onclick=()=>setMode('black');
+document.getElementById('playBtn').onclick=()=>playClip(document.getElementById('animSelect').value);
+document.getElementById('animSelect').onchange=e=>playClip(e.target.value);
+bonesBtn.onclick=()=>{if(!skeletonHelper)return;skeletonHelper.visible=!skeletonHelper.visible;bonesBtn.classList.toggle('active',skeletonHelper.visible)};
+rotateBtn.onclick=()=>{autoRotate=!autoRotate;rotateBtn.classList.toggle('active',autoRotate)};
+resetBtn.onclick=()=>{camera.position.set(4.5,2.7,5.5);controls.target.set(0,1.15,0);controls.update()};
+
+const clock=new THREE.Clock();
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+addEventListener('resize',resize);resize();
+function frame(){
+  requestAnimationFrame(frame);
+  const dt=Math.min(.05,clock.getDelta());
+  mixer?.update(dt);
+  if(actor&&autoRotate)actor.rotation.y+=dt*.28;
+  controls.update(); renderer.render(scene,camera);
+}
+boot();frame();
+</script>
+</body>
+</html>
