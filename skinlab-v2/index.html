@@ -71,6 +71,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 const UPSTREAM='9b57e49c9676d75962700f828cc00a50a9a988b5';
 const RAW='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/'+UPSTREAM+'/public/';
@@ -168,7 +170,12 @@ function setMode(mode){
 }
 function pill(id,ok,label){const el=document.getElementById(id);el.textContent=label;el.classList.toggle('ok',!!ok)}
 
+const ktx2Loader=new KTX2Loader()
+  .setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/libs/basis/')
+  .detectSupport(renderer);
 const loader=new GLTFLoader();
+loader.setKTX2Loader(ktx2Loader);
+loader.setMeshoptDecoder(MeshoptDecoder);
 const load=u=>new Promise((resolve,reject)=>loader.load(u,resolve,undefined,reject));
 
 function attachAsset(root,boneName,gltf,label){
