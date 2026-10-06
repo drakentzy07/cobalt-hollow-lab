@@ -7,113 +7,72 @@ def replace_once(path: Path, old: str, new: str, label: str) -> None:
         raise SystemExit(f"{label}: expected exactly one match, found {count}")
     path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
-entity = Path("src/sim/entity.ts")
-main = Path("src/main.ts")
 runtime = Path("src/highfly/training/combat_runtime.ts")
+ui = Path("src/highfly/training/ui.ts")
 
 # ---------------------------------------------------------------------------
-# PF-5A — Primary Core enters ClaudeCraft's ONE canonical stat pass.
-# Gear, buffs, talents, forms and all downstream derived-stat code stay donor.
+# PF-5 — TRAINING-ONLY CORE -> DERIVED GAME POWER
+#
+# ClaudeCraft keeps its complete class/level/gear/talent/buff baseline intact.
+# HIGHFLY reads only wallet-backed Training allocation and modifies DERIVED
+# outputs afterwards. We intentionally do not patch recalcPlayerStats primaries.
 # ---------------------------------------------------------------------------
-entity_text = entity.read_text(encoding="utf-8")
-authority_import = (
-    "import { resolveHighflyPrimaryCoreForEntity } "
-    "from '../highfly/training/stat_authority';\n"
-)
-if authority_import not in entity_text:
-    entity.write_text(authority_import + entity_text, encoding="utf-8")
 
-replace_once(
-    entity,
-    """  const def = CLASSES[cls];
-  const lvl = e.level;
-  const s: Stats = {
-    str: def.baseStats.str + def.statsPerLevel.str * (lvl - 1),
-    agi: def.baseStats.agi + def.statsPerLevel.agi * (lvl - 1),
-    sta: def.baseStats.sta + def.statsPerLevel.sta * (lvl - 1),
-    int: def.baseStats.int + def.statsPerLevel.int * (lvl - 1),
-    spi: def.baseStats.spi + def.statsPerLevel.spi * (lvl - 1),
-""",
-    """  const def = CLASSES[cls];
-  const lvl = e.level;
-  // HIGHFLY PF-5: replace ONLY the class+level primary seed for the bound local
-  // Hunter. ClaudeCraft remains the single downstream authority for gear,
-  // buffs, talents, forms, AP/SP/HP/armor/crit/dodge and resources.
-  const highflyCore = resolveHighflyPrimaryCoreForEntity(e.id, cls, lvl);
-  const s: Stats = {
-    str: highflyCore?.STR ?? def.baseStats.str + def.statsPerLevel.str * (lvl - 1),
-    agi: highflyCore?.AGI ?? def.baseStats.agi + def.statsPerLevel.agi * (lvl - 1),
-    sta: highflyCore?.VIT ?? def.baseStats.sta + def.statsPerLevel.sta * (lvl - 1),
-    int: highflyCore?.INT ?? def.baseStats.int + def.statsPerLevel.int * (lvl - 1),
-    spi: highflyCore?.PER ?? def.baseStats.spi + def.statsPerLevel.spi * (lvl - 1),
-""",
-    "PF-5 primary seed",
-)
-
-# ---------------------------------------------------------------------------
-# PF-5B — Arm before Sim construction, then hard-bind to its local player id.
-# ---------------------------------------------------------------------------
-replace_once(
-    main,
-    """import {
-  applyActiveTrainingBridgeToEntity,
-  bindActiveTrainingCombatEntity,
-  setActiveTrainingBridgeFlags,
-} from './highfly/training/combat_runtime';
-""",
-    """import {
-  applyActiveTrainingBridgeToEntity,
-  bindActiveTrainingCombatEntity,
-  setActiveTrainingBridgeFlags,
-} from './highfly/training/combat_runtime';
-import {
-  armHighflyLocalStatAuthority,
-  bindHighflyLocalStatAuthority,
-} from './highfly/training/stat_authority';
-""",
-    "PF-5 main stat-authority imports",
-)
-
-replace_once(
-    main,
-    """  setActiveHighflyHunterProfile(
-    applyHunterProgression(baseTrainingProfile, { classId: playerClass }),
-  );
-  installHighflyTrainingUi();
-""",
-    """  setActiveHighflyHunterProfile(
-    applyHunterProgression(baseTrainingProfile, { classId: playerClass }),
-  );
-  // The next matching player recalc is the offline Hunter being constructed.
-  // Once claimed, PF-5 refuses every other player/probe id.
-  armHighflyLocalStatAuthority();
-  installHighflyTrainingUi();
-""",
-    "PF-5 arm before Sim",
-)
-
-replace_once(
-    main,
-    "  bindActiveTrainingCombatEntity(sim.player);\n",
-    """  bindActiveTrainingCombatEntity(sim.player);
-  bindHighflyLocalStatAuthority(sim.player.id);
-""",
-    "PF-5 bind local authority",
-)
-
-# ---------------------------------------------------------------------------
-# PF-5C — Retire duplicate Training-derived AP/HP/crit/dodge/ranged multipliers.
-# The legacy bridge may remain importable for old tests/history, but runtime no
-# longer calls it. Only mechanics Claude does NOT natively derive remain here.
-# ---------------------------------------------------------------------------
 replace_once(
     runtime,
     "import { applyTrainingBridge, trainingGain } from './bridge';",
-    "import { highflyUniqueCoreModifiers } from './stat_authority';",
-    "PF-5 runtime authority import",
+    "import { highflyTrainingDerivedModifiers } from './stat_authority';",
+    "PF-5 derived-authority import",
 )
 
-old = """  const result = applyTrainingBridge({
+replace_once(
+    runtime,
+    """  attackPower: number;
+  rangedPower: number;
+  maxHp: number;
+""",
+    """  attackPower: number;
+  rangedPower: number;
+  spellPower: number;
+  healPower: number;
+  maxHp: number;
+""",
+    "PF-5 entity spell/heal fields",
+)
+
+replace_once(
+    runtime,
+    """  attackPower: number;
+  rangedPower: number;
+  maxHp: number;
+  critChance: number;
+""",
+    """  attackPower: number;
+  rangedPower: number;
+  spellPower: number;
+  healPower: number;
+  maxHp: number;
+  critChance: number;
+""",
+    "PF-5 baseline spell/heal fields",
+)
+
+replace_once(
+    runtime,
+    """  entity.attackPower = baseline.attackPower;
+  entity.rangedPower = baseline.rangedPower;
+  entity.maxHp = baseline.maxHp;
+""",
+    """  entity.attackPower = baseline.attackPower;
+  entity.rangedPower = baseline.rangedPower;
+  entity.spellPower = baseline.spellPower;
+  entity.healPower = baseline.healPower;
+  entity.maxHp = baseline.maxHp;
+""",
+    "PF-5 baseline restore spell/heal",
+)
+
+old_block = """  const result = applyTrainingBridge({
     baseline: {
       physicalAP: baseline.attackPower,
       stagger: 1,
@@ -154,43 +113,133 @@ old = """  const result = applyTrainingBridge({
     entity.highflyResourceRecoveryMultiplier = Math.max(1, result.combat.resourceRecovery);
   }
 """
-new = """  // PF-5: AP/ranged AP/HP/crit/dodge are ALREADY derived from the full HIGHFLY
-  // primary Core inside recalcPlayerStats. Never multiply them here again.
-  const unique = highflyUniqueCoreModifiers(profile);
-  entity.attackPower = baseline.attackPower;
-  entity.rangedPower = baseline.rangedPower;
-  entity.maxHp = baseline.maxHp;
-  entity.critChance = baseline.critChance;
-  entity.dodgeChance = baseline.dodgeChance;
+new_block = """  const derived = highflyTrainingDerivedModifiers(profile);
+
+  // Core power is applied ONCE, here, to derived outputs. Claude's internal
+  // class/gear primaries remain untouched and therefore cannot become HIGHFLY Core.
+  entity.attackPower = Math.max(
+    0,
+    baseline.attackPower * (1 + derived.physicalAttackBonus),
+  );
+  entity.rangedPower = Math.max(
+    0,
+    baseline.rangedPower * (1 + derived.rangedAttackBonus),
+  );
+  entity.spellPower = Math.max(
+    0,
+    baseline.spellPower * (1 + derived.spellPowerBonus),
+  );
+  entity.healPower = Math.max(
+    0,
+    baseline.healPower * (1 + derived.healingPowerBonus),
+  );
+  entity.maxHp = Math.max(
+    1,
+    Math.round(baseline.maxHp * (1 + derived.maxHpBonus)),
+  );
+
+  entity.critChance = Math.max(
+    0,
+    Math.min(1, baseline.critChance + derived.critChanceBonus),
+  );
+  entity.dodgeChance = Math.max(
+    0,
+    Math.min(1, baseline.dodgeChance + derived.dodgeChanceBonus),
+  );
 
   if (flags.applyMovement) {
-    entity.moveSpeed = Math.max(0, baseline.moveSpeed * (1 + unique.moveSpeedBonus));
+    entity.moveSpeed = Math.max(
+      0,
+      baseline.moveSpeed * (1 + derived.moveSpeedBonus),
+    );
   }
   if (flags.applyPerception) {
-    entity.hitBonus = Math.max(0, Math.min(1, baseline.hitBonus + unique.hitBonus));
-    entity.critDmgPhysBonus = Math.max(0, baseline.critDmgPhysBonus + unique.weakPointBonus);
-    entity.critDmgSpellBonus = Math.max(0, baseline.critDmgSpellBonus + unique.weakPointBonus);
-    entity.critDmgHealBonus = Math.max(0, baseline.critDmgHealBonus + unique.weakPointBonus);
+    entity.hitBonus = Math.max(0, Math.min(1, baseline.hitBonus + derived.hitBonus));
+    entity.critDmgPhysBonus = Math.max(
+      0,
+      baseline.critDmgPhysBonus + derived.weakPointBonus,
+    );
+    entity.critDmgSpellBonus = Math.max(
+      0,
+      baseline.critDmgSpellBonus + derived.weakPointBonus,
+    );
+    entity.critDmgHealBonus = Math.max(
+      0,
+      baseline.critDmgHealBonus + derived.weakPointBonus,
+    );
   }
   if (flags.applyIntelligence) {
     entity.highflyResourceCostMultiplier = Math.max(
       0.1,
-      1 - unique.resourceCostReduction,
+      1 - derived.resourceCostReduction,
     );
     entity.highflyResourceRecoveryMultiplier = Math.max(
       1,
-      1 + unique.resourceRecoveryBonus,
+      1 + derived.resourceRecoveryBonus,
     );
   }
 """
-replace_once(runtime, old, new, "PF-5 dedupe runtime outputs")
+replace_once(runtime, old_block, new_block, "PF-5 derived output mapping")
+
+replace_once(
+    runtime,
+    """    attackPower: entity.attackPower,
+    rangedPower: entity.rangedPower,
+    maxHp: entity.maxHp,
+""",
+    """    attackPower: entity.attackPower,
+    rangedPower: entity.rangedPower,
+    spellPower: entity.spellPower,
+    healPower: entity.healPower,
+    maxHp: entity.maxHp,
+""",
+    "PF-5 baseline snapshot spell/heal",
+)
+
+# Final visible semantics after legacy RUN129/RUN137 overlays.
+replace_once(
+    ui,
+    "${profile.awakening.initialized ? (state.calibrated ? 'CORE + TRAINING' : 'DESPERTAR ACTIVO') : 'SIN DESPERTAR'}",
+    "${state.trainingAllocated > 0 ? 'TRAINING ACTIVO' : 'CORE 0 · SIN ASIGNAR'}",
+    "PF-5 Core badge",
+)
+
+replace_once(
+    ui,
+    """          <div class="hf-core-source">
+            <span>DESPERTAR <b>${state.awakeningBase.toFixed(2)}</b></span>
+            <span>NIVEL <b>+${state.naturalLevelGrowth.toFixed(2)}</b></span>
+            <span>TRAINING <b>+${state.trainingAllocated.toFixed(2)}</b></span>
+          </div>
+""",
+    """          <div class="hf-core-source">
+            <span>TRAINING CORE <b>${state.trainingAllocated.toFixed(2)}</b></span>
+            <span>CLASE · NIVEL · EQUIPO <b>0 CORE</b></span>
+          </div>
+""",
+    "PF-5 Core source display",
+)
+
+replace_once(
+    ui,
+    "El Core nace del DESPERTAR de clase y después sólo aumenta mediante entrenamiento real",
+    "STR / AGI / VIT / PER / INT nacen en 0 y sólo aumentan mediante entrenamiento real",
+    "PF-5 Core authority copy",
+)
 
 final_runtime = runtime.read_text(encoding="utf-8")
 if "applyTrainingBridge(" in final_runtime or "trainingGain(" in final_runtime:
-    raise SystemExit("PF-5 duplicate Training bridge survived combat runtime")
-if "entity.attackPower = baseline.attackPower;" not in final_runtime:
-    raise SystemExit("PF-5 donor AP authority missing")
-if "highflyUniqueCoreModifiers(profile)" not in final_runtime:
-    raise SystemExit("PF-5 unique Core modifier seam missing")
+    raise SystemExit("PF-5 legacy Training bridge survived runtime")
+if "highflyTrainingDerivedModifiers(profile)" not in final_runtime:
+    raise SystemExit("PF-5 derived authority missing")
+if "resolveHighflyPrimaryCoreForEntity" in Path("src/sim/entity.ts").read_text(encoding="utf-8"):
+    raise SystemExit("PF-5 must not inject HIGHFLY Core into Claude primary stats")
 
-print("HIGHFLY_PROGRESSION_PF5_STAT_AUTHORITY_APPLIED=1")
+final_ui = ui.read_text(encoding="utf-8")
+for forbidden in ("DESPERTAR <b>", "NIVEL <b>+", "El Core nace del DESPERTAR"):
+    if forbidden in final_ui:
+        raise SystemExit(f"PF-5 obsolete Core source survived: {forbidden}")
+if "CLASE · NIVEL · EQUIPO <b>0 CORE</b>" not in final_ui:
+    raise SystemExit("PF-5 Training-only Core disclosure missing")
+
+print("HIGHFLY_PROGRESSION_PF5_TRAINING_ONLY_BRIDGE_APPLIED=1")
