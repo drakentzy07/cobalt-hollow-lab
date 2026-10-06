@@ -58,24 +58,23 @@ jobs:
 
             await page.screenshot({ path: 'visual-artifacts/boot.png', fullPage: true });
             try {
-              await page.waitForFunction(() => {
-                const r=document.querySelector('#rigPill')?.textContent || '';
-                const a=document.querySelector('#animPill')?.textContent || '';
-                return r.includes('✓') && a.includes('clips ✓');
-              }, null, { timeout: 120000 });
+              await page.waitForFunction(() => window.__SKINLAB_DIAG__?.ready || window.__SKINLAB_DIAG__?.error, null, { timeout: 120000 });
             } catch (waitErr) {
-              const errorPanel = await page.locator('#error').textContent().catch(()=> '');
               const statusText = await page.locator('body').innerText().catch(()=> '');
+              const diag = await page.evaluate(() => window.__SKINLAB_DIAG__ || null).catch(()=> null);
               require('fs').writeFileSync('visual-artifacts/browser-errors.txt',
-                ['WAIT: '+waitErr.message,'ERROR PANEL: '+errorPanel,'BODY: '+statusText,...errors,...warnings].join('\n\n'));
+                ['WAIT: '+waitErr.message,'DIAG: '+JSON.stringify(diag,null,2),'BODY: '+statusText,...errors,...warnings].join('\n\n'));
               await page.screenshot({ path: 'visual-artifacts/failed-load.png', fullPage: true });
               throw waitErr;
             }
 
-            const bodyText = await page.locator('body').innerText();
-            if (!bodyText.includes('Rig_Medium ✓')) throw new Error('Rig_Medium gate missing');
-            if (!bodyText.includes('handslot.r ✓')) throw new Error('handslot.r gate missing');
-            if (!bodyText.includes('handslot.l ✓')) throw new Error('handslot.l gate missing');
+            const diag = await page.evaluate(() => window.__SKINLAB_DIAG__);
+            if (diag.error) throw new Error('Skin Lab boot error: '+diag.error);
+            if (!diag.rig) throw new Error('Rig_Medium gate missing');
+            if (!diag.rightSocket || diag.rightSocketRuntime !== 'handslotr') throw new Error('Right socket resolver mismatch: '+JSON.stringify(diag));
+            if (!diag.leftSocket || diag.leftSocketRuntime !== 'handslotl') throw new Error('Left socket resolver mismatch: '+JSON.stringify(diag));
+            if (!diag.swordAttached || !diag.shieldAttached) throw new Error('Held asset parent gate failed: '+JSON.stringify(diag));
+            if (diag.clips < 20) throw new Error('Animation set incomplete: '+diag.clips);
 
             await page.screenshot({ path: 'visual-artifacts/warrior-base.png', fullPage: true });
 
@@ -83,6 +82,9 @@ jobs:
             await page.waitForTimeout(1200);
             const activeBlack = await page.locator('#blackBtn').evaluate(el => el.classList.contains('active'));
             if (!activeBlack) throw new Error('WARRIOR BLACK did not activate');
+            const blackDiag = await page.evaluate(() => window.__SKINLAB_DIAG__);
+            if (blackDiag.mode !== 'black' || blackDiag.blackAffectedMeshes < 3)
+              throw new Error('BLACK cosmetic material gate failed: '+JSON.stringify(blackDiag));
             await page.screenshot({ path: 'visual-artifacts/warrior-black.png', fullPage: true });
 
             await page.selectOption('#animSelect', { label: '1H_Melee_Attack_Chop' });
@@ -100,7 +102,7 @@ jobs:
 
             require('fs').writeFileSync(
               'visual-artifacts/visual-gate.txt',
-              'GREEN\nRig_Medium OK\nhandslot.r OK\nhandslot.l OK\nBASE OK\nWARRIOR BLACK OK\n1H attack preview OK\n'
+              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nBASE OK\nWARRIOR BLACK OK\n1H attack preview OK\n'
             );
             await browser.close();
           })().catch(err => { console.error(err); process.exit(1); });

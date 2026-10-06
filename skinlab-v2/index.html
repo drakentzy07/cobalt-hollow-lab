@@ -82,6 +82,24 @@ const URLS={
   shield:RAW+'models/weapons/shield_round.glb'
 };
 
+// Mirrors the frozen ClaudeCraft player_warrior manifest instead of inventing
+// a second assembly contract inside the lab.
+const WARRIOR_DEF={
+  show:['Knight_Helmet','Knight_Cape'],
+  rightSocket:'handslot.r',
+  leftSocket:'handslot.l',
+  sword:{
+    url:URLS.sword,
+    accessory:'1H_Sword',
+    grip:{position:[0,0.555174,0],quaternion:[0,1,0,0],scale:0.8876}
+  },
+  shield:{
+    url:URLS.shield,
+    accessory:'Round_Shield',
+    grip:{position:[0,0.017,0.1771],quaternion:[0,0,0,1],scale:0.4413}
+  }
+};
+
 const stage=document.getElementById('stage');
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -164,7 +182,16 @@ function applyBlack(){
 }
 function setMode(mode){
   currentMode=mode;
-  if(mode==='black')applyBlack(); else restoreMaterials();
+  let affected=0;
+  if(mode==='black'){
+    applyBlack();
+    actor?.traverse(o=>{
+      const rec=originalMat.get(o.uuid);
+      if(o.isMesh && rec && (armorNames.has(o.name)||rec.group==='weapon'))affected++;
+    });
+  }else restoreMaterials();
+  window.__SKINLAB_DIAG__.mode=mode;
+  window.__SKINLAB_DIAG__.blackAffectedMeshes=affected;
   baseBtn.classList.toggle('active',mode==='base');
   blackBtn.classList.toggle('active',mode==='black');
 }
@@ -178,16 +205,84 @@ loader.setKTX2Loader(ktx2Loader);
 loader.setMeshoptDecoder(MeshoptDecoder);
 const load=u=>new Promise((resolve,reject)=>loader.load(u,resolve,undefined,reject));
 
-function attachAsset(root,boneName,gltf,label){
-  const bone=root.getObjectByName(boneName);
-  if(!bone)throw new Error('No se encontró '+boneName);
-  const obj=gltf.scene;
-  obj.name=label;
-  cloneMaterialTree(obj,'weapon');
-  bone.add(obj);
-  return obj;
+// IMPORTANT: this is the same rule used by ClaudeCraft's resolveBone().
+// GLTFLoader strips reserved characters like "." from node names used by
+// PropertyBinding, so authored "handslot.r" is runtime "handslotr".
+function sanitizeAuthoredNodeName(name){
+  return name.replace(/[[\].:/]/g,'');
+}
+function resolveNode(root,authoredName){
+  return root.getObjectByName(authoredName) ??
+    root.getObjectByName(sanitizeAuthoredNodeName(authoredName)) ??
+    null;
 }
 
+// ClaudeCraft KayKit assembly: only the manifest-listed non-skinned accessories
+// survive. Do not hand-toggle individual meshes in the lab.
+function applyShowRule(root,show){
+  const keep=new Set(show);
+  root.traverse(o=>{
+    if(o.isMesh && !o.isSkinnedMesh && !keep.has(o.name)) o.visible=false;
+  });
+}
+
+// Matches ClaudeCraft flattenWeaponScene: held GLBs often carry one transformed
+// child, while the grip contract expects a neutral payload root.
+function flattenWeaponScene(src){
+  if(src.children.length!==1)return src;
+  const holder=new THREE.Group();
+  const child=src.children[0];
+  holder.scale.copy(child.scale);
+  child.scale.set(1,1,1);
+  child.position.set(0,0,0);
+  child.rotation.set(0,0,0);
+  src.remove(child);
+  holder.add(child);
+  return holder;
+}
+function applyGrip(payload,grip){
+  payload.position.set(...grip.position);
+  payload.quaternion.set(...grip.quaternion);
+  payload.scale.setScalar(grip.scale);
+}
+function attachHeldAsset(root,authoredBone,gltf,label,grip){
+  const bone=resolveNode(root,authoredBone);
+  if(!bone)throw new Error('Socket faltante: '+authoredBone+' (runtime esperado '+sanitizeAuthoredNodeName(authoredBone)+')');
+  const payload=flattenWeaponScene(gltf.scene);
+  payload.name=label;
+  cloneMaterialTree(payload,'weapon');
+  applyGrip(payload,grip);
+  bone.add(payload);
+  return {payload,bone};
+}
+
+function normalizeBody(root,targetHeight=2.45){
+  // Intentionally BEFORE held props, matching the concept of body normalization:
+  // a sword/shield must never change character scale.
+  const box=new THREE.Box3().setFromObject(root);
+  const h=Math.max(.001,box.max.y-box.min.y);
+  const scale=targetHeight/h;
+  root.scale.setScalar(scale);
+  const grounded=new THREE.Box3().setFromObject(root);
+  root.position.y-=grounded.min.y;
+  return {scale,height:h};
+}
+
+window.__SKINLAB_DIAG__={
+  ready:false,
+  error:null,
+  upstream:UPSTREAM,
+  rig:false,
+  rightSocket:false,
+  leftSocket:false,
+  rightSocketRuntime:null,
+  leftSocketRuntime:null,
+  clips:0,
+  swordAttached:false,
+  shieldAttached:false,
+  blackAffectedMeshes:0,
+  mode:'base'
+};
 function playClip(name){
   if(!mixer||!actor)return;
   const clip=THREE.AnimationClip.findByName(actor.userData.clips,name);
@@ -201,18 +296,28 @@ async function boot(){
     const [warrior,sword,shield]=await Promise.all([load(URLS.warrior),load(URLS.sword),load(URLS.shield)]);
     actor=warrior.scene;
     actor.userData.clips=warrior.animations;
-    actor.getObjectByName('Knight_HelmetVisor')&&(actor.getObjectByName('Knight_HelmetVisor').visible=false);
+
+    // 1) Assemble the body exactly from the frozen Warrior manifest contract.
+    applyShowRule(actor,WARRIOR_DEF.show);
     cloneMaterialTree(actor,'body');
     scene.add(actor);
 
-    attachAsset(actor,'handslot.r',sword,'Warrior_Sword');
-    attachAsset(actor,'handslot.l',shield,'Warrior_Shield');
+    // 2) Normalize BODY only. Held props are attached afterwards so they can
+    // never influence avatar scale/grounding.
+    normalizeBody(actor);
 
-    const box=new THREE.Box3().setFromObject(actor);
-    const h=Math.max(.001,box.max.y-box.min.y);
-    const scale=2.45/h; actor.scale.setScalar(scale);
-    const box2=new THREE.Box3().setFromObject(actor);
-    actor.position.y-=box2.min.y;
+    // 3) Resolve sanitized runtime sockets and apply the same KayKit fallback
+    // grips used by ClaudeCraft for 1H sword + round shield.
+    const right=resolveNode(actor,WARRIOR_DEF.rightSocket);
+    const left=resolveNode(actor,WARRIOR_DEF.leftSocket);
+    if(!right||!left){
+      const runtimeNames=[];
+      actor.traverse(o=>{if(o.name)runtimeNames.push(o.name)});
+      throw new Error('Sockets Warrior inválidos. Buscados '+WARRIOR_DEF.rightSocket+' / '+WARRIOR_DEF.leftSocket+
+        '. Runtime: '+runtimeNames.join(', '));
+    }
+    const swordMount=attachHeldAsset(actor,WARRIOR_DEF.rightSocket,sword,'Warrior_Sword',WARRIOR_DEF.sword.grip);
+    const shieldMount=attachHeldAsset(actor,WARRIOR_DEF.leftSocket,shield,'Warrior_Shield',WARRIOR_DEF.shield.grip);
 
     mixer=new THREE.AnimationMixer(actor);
     const names=warrior.animations.map(a=>a.name);
@@ -222,17 +327,36 @@ async function boot(){
     names.filter(n=>!preferred.includes(n)).forEach(n=>{const op=document.createElement('option');op.value=n;op.textContent=n;select.appendChild(op)});
     playClip('Idle');
 
-    const rig=!!actor.getObjectByName('Rig_Medium'),rh=!!actor.getObjectByName('handslot.r'),lh=!!actor.getObjectByName('handslot.l');
+    const rig=!!resolveNode(actor,'Rig_Medium');
+    const rh=!!right,lh=!!left;
     pill('rigPill',rig,rig?'Rig_Medium ✓':'Rig_Medium ✕');
     pill('rPill',rh,rh?'handslot.r ✓':'handslot.r ✕');
     pill('lPill',lh,lh?'handslot.l ✓':'handslot.l ✕');
     pill('animPill',names.length>0,names.length+' clips ✓');
 
-    skeletonHelper=new THREE.SkeletonHelper(actor); skeletonHelper.visible=false; scene.add(skeletonHelper);
+    skeletonHelper=new THREE.SkeletonHelper(actor);
+    skeletonHelper.visible=false;
+    scene.add(skeletonHelper);
+
+    Object.assign(window.__SKINLAB_DIAG__,{
+      ready:true,
+      error:null,
+      rig,
+      rightSocket:rh,
+      leftSocket:lh,
+      rightSocketRuntime:right.name,
+      leftSocketRuntime:left.name,
+      clips:names.length,
+      swordAttached:swordMount.payload.parent===right,
+      shieldAttached:shieldMount.payload.parent===left
+    });
     setMode('base');
   }catch(err){
     console.error(err);
-    const e=document.getElementById('error');e.style.display='block';e.textContent='Carga fallida: '+(err?.message||err);
+    window.__SKINLAB_DIAG__.error=String(err?.message||err);
+    const e=document.getElementById('error');
+    e.style.display='block';
+    e.textContent='Carga fallida: '+(err?.message||err);
   }
 }
 

@@ -30,6 +30,13 @@ jobs:
           grep -q "sword_1handed.glb" skinlab-v2/index.html
           grep -q "shield_round.glb" skinlab-v2/index.html
           grep -q "WARRIOR BLACK" skinlab-v2/index.html
+          grep -q "function resolveNode" skinlab-v2/index.html
+          grep -q "name.replace(/\[\[\\\].:/\]/g" skinlab-v2/index.html
+          grep -q "0.555174" skinlab-v2/index.html
+          grep -q "0.4413" skinlab-v2/index.html
+          grep -q "applyShowRule" skinlab-v2/index.html
+          grep -q "normalizeBody(actor)" skinlab-v2/index.html
+          ! grep -q "getObjectByName('handslot.r')" skinlab-v2/index.html
           ! grep -Rqi "quaternius\|kitsune\|ronin" skinlab-v2
           echo "Skin Lab v2 contract: GREEN"
 
