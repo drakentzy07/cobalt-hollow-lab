@@ -47,6 +47,8 @@ describe('HIGHFLY RUN1-J J3B native RPG bridge', () => {
       id: 3301,
       attackPower: 100,
       rangedPower: 80,
+      spellPower: 60,
+      healPower: 70,
       maxHp: 1000,
       hp: 800,
       critChance: 0.05,
@@ -83,6 +85,8 @@ describe('HIGHFLY RUN1-J J3B native RPG bridge', () => {
     expect(entity.critChance).toBeGreaterThan(0.05);
     expect(entity.critDmgPhysBonus).toBeGreaterThan(0);
     // INT
+    expect(entity.spellPower).toBeGreaterThan(60);
+    expect(entity.healPower).toBeGreaterThan(70);
     expect(entity.highflyResourceCostMultiplier).toBeLessThan(1);
     expect(entity.highflyResourceRecoveryMultiplier).toBeGreaterThan(1);
 
@@ -92,6 +96,8 @@ describe('HIGHFLY RUN1-J J3B native RPG bridge', () => {
 
     expect(entity.attackPower).toBeCloseTo(once.attackPower, 8);
     expect(entity.rangedPower).toBeCloseTo(once.rangedPower, 8);
+    expect(entity.spellPower).toBeCloseTo(once.spellPower, 8);
+    expect(entity.healPower).toBeCloseTo(once.healPower, 8);
     expect(entity.maxHp).toBe(once.maxHp);
     expect(entity.hitBonus).toBeCloseTo(once.hitBonus, 8);
     expect(entity.highflyResourceCostMultiplier).toBeCloseTo(
