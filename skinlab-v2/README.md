@@ -1,25 +1,35 @@
-# HIGHFLY Skin Lab v2 — Warrior Black
+# HIGHFLY Skin Lab v2 — Skin Factory
 
-Clean-room rebuild of the skin laboratory.
+## First production skin
+- ID: `SKIN_001 / warrior_black_final`
+- Class: Warrior
+- Gameplay changes: **none**
+- Base authority: frozen ClaudeCraft Warrior
+- Status: FINAL LAB candidate; integrate into the game only after visual QA approval
 
 ## Frozen authority
-- ClaudeCraft upstream lock: `9b57e49c9676d75962700f828cc00a50a9a988b5`
+- Upstream: `9b57e49c9676d75962700f828cc00a50a9a988b5`
 - Character: `public/models/chars/players/knight.glb`
 - Rig: `Rig_Medium`
-- Main hand authored socket: `handslot.r`
-- Offhand authored socket: `handslot.l`
-- Runtime GLTFLoader sockets: `handslotr` / `handslotl`
+- Authored sockets: `handslot.r` / `handslot.l`
+- Runtime sockets: `handslotr` / `handslotl`
 - Weapon: `sword_1handed.glb`
-- Offhand: `shield_round.glb`
+- Shield: `shield_round.glb`
 
-## Assembly contract
-Skin Lab v2 intentionally mirrors the relevant ClaudeCraft assembly rules instead of inventing new ones:
+## Warrior Black Final look
+- black / graphite armor and helmet
+- silver / white detail recovered from the original atlas via emissive-map remap
+- restrained violet environment/accent
+- dark metallic sword with bright authored atlas reflection plus rigid white edge accent
+- black shield with silver atlas/edge accent
+- face stays untouched
 
-1. `resolveNode` follows ClaudeCraft `resolveBone`: try authored name, then strip `[].:/`.
-2. Warrior non-skinned accessory visibility follows manifest `show: ['Knight_Helmet','Knight_Cape']`.
-3. Body normalization happens before held props are attached.
-4. Sword and round shield use the frozen KayKit fallback grips from `held_item_grips.ts`.
-5. KTX2 and Meshopt are mandatory because all three frozen GLBs require them.
-6. `BASE ⇄ WARRIOR BLACK` is visual-only: no retargeting, skin-weight regeneration, gameplay, hitbox, trace, socket, timing, or animation authority changes.
+Rigid line geometry is used only on non-skinned rigid pieces (helmet, sword, shield). Skinned body meshes use the original UV atlas itself for silver/white detail so accents remain attached through every animation.
 
-The old Skin Lab branches are historical only and are not inherited by this branch.
+## Factory QA
+The lab exposes all 25 authored Warrior clips and a `TEST 25 CLIPS` mode. The browser gate exercises all 25, with screenshots for locomotion, jump, the three 1H attacks, block, shield bash and hit.
+
+There is no authored clip named `Dash` in `knight.glb`. Dash remains gameplay authority and will be tested when the approved cosmetic is integrated into HIGHFLY; the Skin Lab does not invent a proxy animation.
+
+## Hard rule
+No retargeting, regenerated weights, gameplay edits, hitbox/trace edits, socket edits, timing edits, or skill authority changes are permitted for a cosmetic skin.

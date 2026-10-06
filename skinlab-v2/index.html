@@ -13,7 +13,7 @@
     h1{font-size:14px;margin:0;letter-spacing:.12em}.sub{font-size:11px;color:#aaaabb;margin-top:3px}
     .status{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.pill{font-size:10px;padding:5px 8px;border:1px solid #30303c;border-radius:999px;background:#111119;color:#b8b8c6}.pill.ok{border-color:#315d45;color:#93e6b0}
     main{position:relative;min-height:0}#stage{position:absolute;inset:0}
-    .panel{position:absolute;left:14px;top:14px;width:min(340px,calc(100vw - 28px));padding:13px;border:1px solid #2b2b36;border-radius:16px;background:rgba(10,10,15,.88);backdrop-filter:blur(14px);box-shadow:0 18px 60px #0008}
+    .panel{position:absolute;left:14px;top:14px;width:min(390px,calc(100vw - 28px));padding:13px;border:1px solid #2b2b36;border-radius:16px;background:rgba(10,10,15,.88);backdrop-filter:blur(14px);box-shadow:0 18px 60px #0008}
     .panel h2{font-size:12px;letter-spacing:.12em;margin:0 0 10px;color:#d9d9e3}.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
     button,select{border:1px solid #343442;background:#15151d;color:#eee;border-radius:10px;padding:9px 11px;font:inherit;font-size:12px}
     button{cursor:pointer}button:hover{background:#1c1c27}button.active{border-color:#8b5cf6;background:#261942;box-shadow:0 0 22px #7c3aed33}
@@ -29,12 +29,13 @@
 <body>
 <div id="app">
   <header>
-    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">WARRIOR BLACK · PROTOTYPE 0</div></div></div>
+    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · WARRIOR BLACK FINAL</div></div></div>
     <div class="status">
       <span class="pill" id="rigPill">Rig_Medium …</span>
       <span class="pill" id="rPill">handslot.r …</span>
       <span class="pill" id="lPill">handslot.l …</span>
       <span class="pill" id="animPill">animations …</span>
+      <span class="pill" id="factoryPill">factory …</span>
     </div>
   </header>
   <main>
@@ -43,12 +44,17 @@
       <h2>WARRIOR VISUAL</h2>
       <div class="row">
         <button id="baseBtn" class="active">BASE</button>
-        <button id="blackBtn">WARRIOR BLACK</button>
+        <button id="blackBtn">WARRIOR BLACK FINAL</button>
       </div>
       <div class="row">
         <select id="animSelect"></select>
         <button id="playBtn">REPLAY</button>
       </div>
+      <div class="row">
+        <button id="testAllBtn">TEST 25 CLIPS</button>
+        <button id="stopTestBtn">STOP</button>
+      </div>
+      <div id="testStatus" class="small" style="margin:-2px 0 10px">Factory test: listo.</div>
       <div class="row">
         <button id="bonesBtn">HUESOS</button>
         <button id="rotateBtn" class="active">ROTACIÓN</button>
@@ -60,7 +66,7 @@
         <b>Arma</b><span>Espada + escudo en sockets originales</span>
         <b>Black v0</b><span>Override visual únicamente; gameplay intacto</span>
       </div>
-      <p class="small">Este prototipo NO cambia huesos, pesos, clips, hitboxes ni lógica de combate. BLACK aplica una capa cosmética a armadura + arma y conserva la cabeza/base del personaje.</p>
+      <p class="small">FACTORY conserva rig, pesos, clips, sockets, hitboxes y gameplay. La skin remapea materiales del atlas original y suma acentos rígidos sólo en casco/espada/escudo.</p>
     </section>
     <div class="footer">Arrastrar: rotar · rueda/pinch: zoom · botón HUESOS: inspección</div>
     <div id="error"></div>
@@ -97,6 +103,32 @@ const WARRIOR_DEF={
     url:URLS.shield,
     accessory:'Round_Shield',
     grip:{position:[0,0.017,0.1771],quaternion:[0,0,0,1],scale:0.4413}
+  }
+};
+
+const SKIN_FACTORY={
+  warrior_base_gold:{
+    id:'warrior_base_gold',
+    label:'BASE',
+    classId:'warrior',
+    gameplayChanges:false
+  },
+  warrior_black_final:{
+    id:'warrior_black_final',
+    label:'WARRIOR BLACK FINAL',
+    classId:'warrior',
+    productionIndex:'SKIN_001',
+    gameplayChanges:false,
+    palette:{
+      armor:0x101118,
+      armorAlt:0x171821,
+      helmet:0x08090d,
+      cape:0x08070d,
+      sword:0x0c0d13,
+      shield:0x0d0e15,
+      silver:0xe8efff,
+      violet:0x24113f
+    }
   }
 };
 
@@ -141,7 +173,12 @@ function cloneMaterialTree(root,group='body'){
     const cloned=mats.map(m=>m.clone());
     o.material=Array.isArray(o.material)?cloned:cloned[0];
     originalMat.set(o.uuid,{group,name:o.name,materials:cloned.map(m=>({
-      color:m.color?.clone(),emissive:m.emissive?.clone(),metalness:m.metalness,roughness:m.roughness,emissiveIntensity:m.emissiveIntensity
+      color:m.color?.clone(),
+      emissive:m.emissive?.clone(),
+      emissiveMap:m.emissiveMap ?? null,
+      metalness:m.metalness,
+      roughness:m.roughness,
+      emissiveIntensity:m.emissiveIntensity
     }))});
   });
 }
@@ -158,38 +195,106 @@ function restoreMaterials(){
       if(s.metalness!==undefined)m.metalness=s.metalness;
       if(s.roughness!==undefined)m.roughness=s.roughness;
       if(s.emissiveIntensity!==undefined)m.emissiveIntensity=s.emissiveIntensity;
+      m.emissiveMap=s.emissiveMap ?? null;
       m.needsUpdate=true;
     });
   });
 }
-function applyBlack(){
+let accentRoots=[];
+function clearRigidAccents(){
+  for(const line of accentRoots) line.visible=false;
+}
+function ensureRigidEdgeAccent(root,name,opacity=.38,threshold=28){
+  let count=0;
+  root.traverse(o=>{
+    if(!o.isMesh || o.isSkinnedMesh || !o.geometry)return;
+    let line=o.children.find(c=>c.userData?.skinAccentName===name);
+    if(!line){
+      const geo=new THREE.EdgesGeometry(o.geometry,threshold);
+      const mat=new THREE.LineBasicMaterial({
+        color:0xe8efff,
+        transparent:true,
+        opacity,
+        depthWrite:false,
+        toneMapped:false
+      });
+      line=new THREE.LineSegments(geo,mat);
+      line.renderOrder=3;
+      line.userData.skinAccentName=name;
+      o.add(line);
+      accentRoots.push(line);
+    }
+    line.visible=true;
+    count++;
+  });
+  return count;
+}
+function applyMappedFinish(m,style){
+  if(m.color)m.color.set(style.color);
+  if('metalness'in m)m.metalness=style.metalness;
+  if('roughness'in m)m.roughness=style.roughness;
+  if(m.emissive){
+    m.emissive.set(style.emissive);
+    m.emissiveIntensity=style.emissiveIntensity;
+    // Re-use the exact resident atlas as a detail mask. Bright authored pixels
+    // become silver/white accents; dark pixels stay black/graphite.
+    m.emissiveMap=style.useAtlasAccent ? (m.map ?? null) : null;
+  }
+  m.needsUpdate=true;
+}
+function applyWarriorBlackFinal(){
   restoreMaterials();
+  clearRigidAccents();
+  const p=SKIN_FACTORY.warrior_black_final.palette;
+  let affected=0,atlasAccents=0,edgeAccents=0;
   actor.traverse(o=>{
     if(!o.isMesh)return;
     const rec=originalMat.get(o.uuid); if(!rec)return;
-    const isArmor=armorNames.has(o.name);
-    const isWeapon=rec.group==='weapon';
-    if(!isArmor&&!isWeapon)return;
     const mats=Array.isArray(o.material)?o.material:[o.material];
-    mats.forEach(m=>{
-      if(m.color)m.color.multiply(new THREE.Color(isWeapon?0x25212f:0x35303f));
-      if('metalness'in m)m.metalness=Math.max(.42,m.metalness??0);
-      if('roughness'in m)m.roughness=isWeapon?.28:.40;
-      if(m.emissive){m.emissive.set(0x16082c);m.emissiveIntensity=isWeapon?.18:.10;}
-      m.needsUpdate=true;
-    });
+
+    let style=null;
+    if(rec.group==='sword'){
+      style={color:p.sword,metalness:.82,roughness:.16,emissive:p.silver,emissiveIntensity:.64,useAtlasAccent:true};
+    }else if(rec.group==='shield'){
+      style={color:p.shield,metalness:.72,roughness:.22,emissive:p.silver,emissiveIntensity:.42,useAtlasAccent:true};
+    }else if(o.name==='Knight_Helmet'){
+      style={color:p.helmet,metalness:.74,roughness:.23,emissive:p.silver,emissiveIntensity:.24,useAtlasAccent:true};
+    }else if(o.name==='Knight_Cape'){
+      style={color:p.cape,metalness:.04,roughness:.78,emissive:p.violet,emissiveIntensity:.08,useAtlasAccent:false};
+    }else if(armorNames.has(o.name)){
+      const alt=o.name.includes('Arm')||o.name.includes('Leg');
+      style={color:alt?p.armorAlt:p.armor,metalness:.56,roughness:.32,emissive:p.silver,emissiveIntensity:alt?.22:.17,useAtlasAccent:true};
+    }
+    if(!style)return;
+    mats.forEach(m=>{applyMappedFinish(m,style); if(style.useAtlasAccent&&m.emissiveMap)atlasAccents++;});
+    affected++;
   });
+
+  const helmet=actor.getObjectByName('Knight_Helmet');
+  if(helmet)edgeAccents+=ensureRigidEdgeAccent(helmet,'helmet-silver',.34,32);
+  const sword=actor.getObjectByName('Warrior_Sword');
+  if(sword)edgeAccents+=ensureRigidEdgeAccent(sword,'sword-white-edge',.74,24);
+  const shield=actor.getObjectByName('Warrior_Shield');
+  if(shield)edgeAccents+=ensureRigidEdgeAccent(shield,'shield-silver-edge',.46,28);
+
+  Object.assign(window.__SKINLAB_DIAG__,{
+    finalAffectedMeshes:affected,
+    atlasAccentMaterials:atlasAccents,
+    rigidEdgeAccents:edgeAccents,
+    skinId:'warrior_black_final'
+  });
+  return affected;
 }
 function setMode(mode){
   currentMode=mode;
   let affected=0;
   if(mode==='black'){
-    applyBlack();
-    actor?.traverse(o=>{
-      const rec=originalMat.get(o.uuid);
-      if(o.isMesh && rec && (armorNames.has(o.name)||rec.group==='weapon'))affected++;
-    });
-  }else restoreMaterials();
+    affected=applyWarriorBlackFinal();
+  }else{
+    restoreMaterials();
+    clearRigidAccents();
+    window.__SKINLAB_DIAG__.skinId='warrior_base_gold';
+  }
   window.__SKINLAB_DIAG__.mode=mode;
   window.__SKINLAB_DIAG__.blackAffectedMeshes=affected;
   baseBtn.classList.toggle('active',mode==='base');
@@ -245,12 +350,12 @@ function applyGrip(payload,grip){
   payload.quaternion.set(...grip.quaternion);
   payload.scale.setScalar(grip.scale);
 }
-function attachHeldAsset(root,authoredBone,gltf,label,grip){
+function attachHeldAsset(root,authoredBone,gltf,label,grip,materialGroup){
   const bone=resolveNode(root,authoredBone);
   if(!bone)throw new Error('Socket faltante: '+authoredBone+' (runtime esperado '+sanitizeAuthoredNodeName(authoredBone)+')');
   const payload=flattenWeaponScene(gltf.scene);
   payload.name=label;
-  cloneMaterialTree(payload,'weapon');
+  cloneMaterialTree(payload,materialGroup);
   applyGrip(payload,grip);
   bone.add(payload);
   return {payload,bone};
@@ -281,14 +386,57 @@ window.__SKINLAB_DIAG__={
   swordAttached:false,
   shieldAttached:false,
   blackAffectedMeshes:0,
+  finalAffectedMeshes:0,
+  atlasAccentMaterials:0,
+  rigidEdgeAccents:0,
+  skinId:'warrior_base_gold',
+  factoryReady:false,
+  testedClips:0,
+  testableClips:0,
+  lastClip:null,
   mode:'base'
 };
 function playClip(name){
-  if(!mixer||!actor)return;
+  if(!mixer||!actor)return false;
   const clip=THREE.AnimationClip.findByName(actor.userData.clips,name);
-  if(!clip)return;
+  if(!clip)return false;
   mixer.stopAllAction();
   const a=mixer.clipAction(clip); a.reset().fadeIn(.12).play();
+  window.__SKINLAB_DIAG__.lastClip=name;
+  return true;
+}
+let factoryTestToken=0;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function runFactoryTest(){
+  if(!actor)return;
+  const token=++factoryTestToken;
+  const clips=actor.userData.clips;
+  const select=document.getElementById('animSelect');
+  const status=document.getElementById('testStatus');
+  testAllBtn.classList.add('active');
+  let passed=0;
+  for(let i=0;i<clips.length;i++){
+    if(token!==factoryTestToken)break;
+    const clip=clips[i];
+    select.value=clip.name;
+    const ok=playClip(clip.name);
+    status.textContent='Factory test '+(i+1)+'/'+clips.length+' · '+clip.name;
+    if(ok)passed++;
+    const dwell=Math.max(650,Math.min(1350,clip.duration*520));
+    await sleep(dwell);
+  }
+  if(token===factoryTestToken){
+    window.__SKINLAB_DIAG__.testedClips=passed;
+    status.textContent='Factory test GREEN · '+passed+'/'+clips.length+' clips reproducidos.';
+    playClip('Idle');
+  }
+  testAllBtn.classList.remove('active');
+}
+function stopFactoryTest(){
+  factoryTestToken++;
+  testAllBtn.classList.remove('active');
+  document.getElementById('testStatus').textContent='Factory test detenido.';
+  playClip('Idle');
 }
 
 async function boot(){
@@ -316,12 +464,16 @@ async function boot(){
       throw new Error('Sockets Warrior inválidos. Buscados '+WARRIOR_DEF.rightSocket+' / '+WARRIOR_DEF.leftSocket+
         '. Runtime: '+runtimeNames.join(', '));
     }
-    const swordMount=attachHeldAsset(actor,WARRIOR_DEF.rightSocket,sword,'Warrior_Sword',WARRIOR_DEF.sword.grip);
-    const shieldMount=attachHeldAsset(actor,WARRIOR_DEF.leftSocket,shield,'Warrior_Shield',WARRIOR_DEF.shield.grip);
+    const swordMount=attachHeldAsset(actor,WARRIOR_DEF.rightSocket,sword,'Warrior_Sword',WARRIOR_DEF.sword.grip,'sword');
+    const shieldMount=attachHeldAsset(actor,WARRIOR_DEF.leftSocket,shield,'Warrior_Shield',WARRIOR_DEF.shield.grip,'shield');
 
     mixer=new THREE.AnimationMixer(actor);
     const names=warrior.animations.map(a=>a.name);
-    const preferred=['Idle','Walking_A','Running_A','1H_Melee_Attack_Chop','1H_Melee_Attack_Slice_Diagonal','Block','Shield_Bash','Hit_A','Jump_Idle','Cheer'];
+    const preferred=[
+      'Idle','Walking_A','Running_A','Running_Strafe_Left','Running_Strafe_Right','Walking_Backwards','Jump_Idle',
+      '1H_Melee_Attack_Chop','1H_Melee_Attack_Slice_Diagonal','1H_Melee_Attack_Slice_Horizontal',
+      'Block','Shield_Bash','Hit_A','Death_A','Punch_A','Cheer'
+    ];
     const select=document.getElementById('animSelect');
     preferred.filter(n=>names.includes(n)).forEach(n=>{const op=document.createElement('option');op.value=n;op.textContent=n;select.appendChild(op)});
     names.filter(n=>!preferred.includes(n)).forEach(n=>{const op=document.createElement('option');op.value=n;op.textContent=n;select.appendChild(op)});
@@ -332,7 +484,8 @@ async function boot(){
     pill('rigPill',rig,rig?'Rig_Medium ✓':'Rig_Medium ✕');
     pill('rPill',rh,rh?'handslot.r ✓':'handslot.r ✕');
     pill('lPill',lh,lh?'handslot.l ✓':'handslot.l ✕');
-    pill('animPill',names.length>0,names.length+' clips ✓');
+    pill('animPill',names.length===25,names.length+' clips ✓');
+    pill('factoryPill',names.length===25,'FACTORY '+(names.length===25?'✓':'✕'));
 
     skeletonHelper=new THREE.SkeletonHelper(actor);
     skeletonHelper.visible=false;
@@ -348,9 +501,13 @@ async function boot(){
       leftSocketRuntime:left.name,
       clips:names.length,
       swordAttached:swordMount.payload.parent===right,
-      shieldAttached:shieldMount.payload.parent===left
+      shieldAttached:shieldMount.payload.parent===left,
+      factoryReady:names.length===25,
+      testableClips:names.length
     });
-    setMode('base');
+    window.__SKINLAB_CLIPS__=names.slice();
+    window.__SKINLAB_API__={setMode,playClip,runFactoryTest,stopFactoryTest};
+    setMode('black');
   }catch(err){
     console.error(err);
     window.__SKINLAB_DIAG__.error=String(err?.message||err);
@@ -363,6 +520,8 @@ async function boot(){
 baseBtn.onclick=()=>setMode('base');
 blackBtn.onclick=()=>setMode('black');
 document.getElementById('playBtn').onclick=()=>playClip(document.getElementById('animSelect').value);
+testAllBtn.onclick=()=>runFactoryTest();
+stopTestBtn.onclick=()=>stopFactoryTest();
 document.getElementById('animSelect').onchange=e=>playClip(e.target.value);
 bonesBtn.onclick=()=>{if(!skeletonHelper)return;skeletonHelper.visible=!skeletonHelper.visible;bonesBtn.classList.toggle('active',skeletonHelper.visible)};
 rotateBtn.onclick=()=>{autoRotate=!autoRotate;rotateBtn.classList.toggle('active',autoRotate)};

@@ -74,8 +74,10 @@ jobs:
             if (!diag.rightSocket || diag.rightSocketRuntime !== 'handslotr') throw new Error('Right socket resolver mismatch: '+JSON.stringify(diag));
             if (!diag.leftSocket || diag.leftSocketRuntime !== 'handslotl') throw new Error('Left socket resolver mismatch: '+JSON.stringify(diag));
             if (!diag.swordAttached || !diag.shieldAttached) throw new Error('Held asset parent gate failed: '+JSON.stringify(diag));
-            if (diag.clips < 20) throw new Error('Animation set incomplete: '+diag.clips);
+            if (diag.clips !== 25 || !diag.factoryReady) throw new Error('Factory animation set incomplete: '+JSON.stringify(diag));
 
+            await page.click('#baseBtn');
+            await page.waitForTimeout(500);
             await page.screenshot({ path: 'visual-artifacts/warrior-base.png', fullPage: true });
 
             await page.click('#blackBtn');
@@ -83,13 +85,37 @@ jobs:
             const activeBlack = await page.locator('#blackBtn').evaluate(el => el.classList.contains('active'));
             if (!activeBlack) throw new Error('WARRIOR BLACK did not activate');
             const blackDiag = await page.evaluate(() => window.__SKINLAB_DIAG__);
-            if (blackDiag.mode !== 'black' || blackDiag.blackAffectedMeshes < 3)
-              throw new Error('BLACK cosmetic material gate failed: '+JSON.stringify(blackDiag));
-            await page.screenshot({ path: 'visual-artifacts/warrior-black.png', fullPage: true });
+            if (blackDiag.mode !== 'black' ||
+                blackDiag.skinId !== 'warrior_black_final' ||
+                blackDiag.finalAffectedMeshes < 6 ||
+                blackDiag.atlasAccentMaterials < 3 ||
+                blackDiag.rigidEdgeAccents < 3)
+              throw new Error('FINAL cosmetic material gate failed: '+JSON.stringify(blackDiag));
+            await page.screenshot({ path: 'visual-artifacts/warrior-black-final-idle.png', fullPage: true });
 
-            await page.selectOption('#animSelect', { label: '1H_Melee_Attack_Chop' });
-            await page.waitForTimeout(900);
-            await page.screenshot({ path: 'visual-artifacts/warrior-black-attack.png', fullPage: true });
+            const keyClips=[
+              'Walking_A','Running_A','Running_Strafe_Left','Running_Strafe_Right','Walking_Backwards','Jump_Idle',
+              '1H_Melee_Attack_Chop','1H_Melee_Attack_Slice_Diagonal','1H_Melee_Attack_Slice_Horizontal',
+              'Block','Shield_Bash','Hit_A'
+            ];
+            for (const clip of keyClips) {
+              await page.selectOption('#animSelect', { label: clip });
+              await page.waitForTimeout(520);
+              await page.screenshot({
+                path:'visual-artifacts/'+clip.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'.png',
+                fullPage:true
+              });
+            }
+
+            // Exercise every authored clip, not only the showcase set.
+            const allClips=await page.evaluate(()=>window.__SKINLAB_CLIPS__ || []);
+            if(allClips.length!==25)throw new Error('Expected 25 authored clips, got '+allClips.length);
+            for(const clip of allClips){
+              await page.selectOption('#animSelect',{label:clip});
+              await page.waitForTimeout(120);
+            }
+            await page.selectOption('#animSelect',{label:'Idle'});
+            await page.waitForTimeout(250);
 
             const visibleError = await page.locator('#error').evaluate(el => getComputedStyle(el).display !== 'none');
             if (visibleError) throw new Error('Skin Lab error panel became visible');
@@ -102,7 +128,7 @@ jobs:
 
             require('fs').writeFileSync(
               'visual-artifacts/visual-gate.txt',
-              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nBASE OK\nWARRIOR BLACK OK\n1H attack preview OK\n'
+              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nWARRIOR BLACK FINAL material remap OK\nAtlas white/silver accents OK\nRigid helmet/sword/shield edge accents OK\n25/25 authored clips exercised OK\n'
             );
             await browser.close();
           })().catch(err => { console.error(err); process.exit(1); });
