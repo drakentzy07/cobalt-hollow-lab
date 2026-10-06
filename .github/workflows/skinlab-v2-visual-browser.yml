@@ -102,7 +102,9 @@ jobs:
                 !blackDiag.studioEnvironment)
               throw new Error('AUTO BLACK AURA material gate failed: '+JSON.stringify(blackDiag));
 
-            // Exercise real Painter Pro controls: recolor helmet + finish, then direct UV brush on sword.
+            // Exercise real Painter Pro controls. The result-first UI keeps the
+            // Painter collapsed by default, so the gate deliberately opens it.
+            await page.locator('#painterPanel').evaluate(el => { el.open = true; });
             await page.selectOption('#pieceSelect','helmet');
             await page.locator('#primaryColor').evaluate((el)=>{el.value='#05070d';el.dispatchEvent(new Event('input',{bubbles:true}));});
             await page.locator('#secondaryColor').evaluate((el)=>{el.value='#f2f5ff';el.dispatchEvent(new Event('input',{bubbles:true}));});
