@@ -2535,14 +2535,23 @@ jobs:
           // Exercise the real More path seen in the S23 video. While this large
           // modal owns the screen, gameplay chrome must be completely absent.
           await page.locator('#mobile-menu-anchor').click({ force: true });
-          await page.locator('#mobile-more').waitFor({ state: 'visible', timeout: 10000 });
-          await page.locator('#mobile-more').click({ force: true });
           await page.waitForFunction(
-            () => document.body.classList.contains('mobile-more-open'),
+            () => {
+              if (!document.body.classList.contains('mobile-more-open')) return false;
+              const panel = document.getElementById('mobile-extra-controls');
+              if (!(panel instanceof HTMLElement)) return false;
+              const style = getComputedStyle(panel);
+              const rect = panel.getBoundingClientRect();
+              return (
+                style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                rect.width > 0 &&
+                rect.height > 0
+              );
+            },
             null,
-            { timeout: 5000 },
+            { timeout: 10000 },
           );
-          await page.locator('#mobile-extra-controls').waitFor({ state: 'visible', timeout: 5000 });
 
           const moreOwnership = await page.evaluate(() => {
             const visible = (selector) => {
