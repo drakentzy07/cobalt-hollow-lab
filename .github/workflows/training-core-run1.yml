@@ -477,7 +477,7 @@ jobs:
           grep -F "HIGHFLY_GAME_C22_MOBILE_POLISH_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C22_MOBILE_POLISH_APPLIED=1')")
           grep -F "HIGHFLY_GAME_C23_HUMAN_FIX_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C23_HUMAN_FIX_APPLIED=1')")
           grep -F "EDITAR HUD MÓVIL" upstream/src/ui/options_window.ts
-          grep -F "C2.3-human-fix" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "'hf-game-c23'" upstream/src/highfly/game_c1_runtime.ts
           grep -F "currentAlignment >= bestAlignment - 0.06" upstream/src/main.ts
           grep -F "C2.4-human-closure" upstream/src/highfly/game_c1_runtime.ts
           grep -F "HIGHFLY_GAME_C24_HUMAN_CLOSURE_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C24_HUMAN_CLOSURE_APPLIED=1')")
