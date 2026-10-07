@@ -232,6 +232,62 @@ jobs:
           printf 'UPSTREAM=%s\\nCLEAN_HEAD=%s\\n' "$(git rev-parse HEAD)" "$GITHUB_SHA" > ../clean-v1-evidence/provenance.txt
           echo "CLEAN_V1_CANONICAL_DELTA_CAPTURED=1"
 
+      - name: Checkout frozen ClaudeCraft replay slice
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream-replay
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /android/
+            /capacitor.config.ts
+            /tests/global_setup.ts
+            /tests/svelte_testing_setup.ts
+            /tests/jsdom_local_storage_setup.ts
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+
+      - name: Verify CLEAN V1 canonical replay matches source bytes
+        working-directory: upstream-replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          test -s ../clean-v1-evidence/highfly-clean-v1.patch
+          git apply --check ../clean-v1-evidence/highfly-clean-v1.patch
+          git apply --binary ../clean-v1-evidence/highfly-clean-v1.patch
+          if ! diff -qr --exclude=.git ../upstream . > ../clean-v1-evidence/replay-diff.txt; then
+            echo "CLEAN V1 canonical replay diverged from historical #302 overlay output"
+            head -80 ../clean-v1-evidence/replay-diff.txt
+            exit 1
+          fi
+          echo "CLEAN_V1_CANONICAL_REPLAY_BYTE_EQUIVALENT=1"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
