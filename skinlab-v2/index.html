@@ -90,11 +90,10 @@ body.fullscreen-lab #app{grid-template-rows:1fr}body.fullscreen-lab header{displ
       <button id="simpleFullBtn">🛡 SET COMPLETO</button><button id="simpleBaseBtn">👤 CUERPO LIMPIO</button>
     </div>
     <div class="group" style="margin-top:9px;padding-top:9px">
-      <h2>FORMA</h2>
+      <h2>SKIN ESPECIAL · CABALLERO CUERVO</h2>
+      <div class="note">Inspirada en la silueta aviar de Sunraku, con diseño original HIGHFLY: casco forjado real unido al hueso de la cabeza y armadura Knight nativa.</div>
       <div class="simpleactions">
-        <button id="simpleSizeMinus">− TAMAÑO</button><button id="simpleSizePlus">+ TAMAÑO</button>
-        <button id="simpleWidthMinus">− ANCHO</button><button id="simpleWidthPlus">+ ANCHO</button>
-        <button id="simpleLongMinus">− LARGO</button><button id="simpleLongPlus">+ LARGO</button>
+        <button class="wide" id="simpleCorvusBtn">🪶 APLICAR CABALLERO CUERVO</button>
       </div>
     </div>
     <div class="group" style="margin-top:9px;padding-top:9px">
@@ -275,12 +274,13 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { buildCorvusHelmet } from './corvus-knight.mjs';
 
 const UPSTREAM='9b57e49c9676d75962700f828cc00a50a9a988b5';
 const MODEL='./assets/warrior_modular.glb';
 const SOURCE_BLOB='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2';
 const SOURCE_BYTES=3477500;
-const DESIGN_REV='skin-factory-v1-simple-es+native-wearable+real-joints+responsive';
+const DESIGN_REV='skin-factory-v1.1-corvus-rigid-head-no-simple-molder';
 const NATIVE_WEARABLES={
   tricorne:{url:'./assets/harbormaster_tricorne.glb',bone:'head',label:'TRICORNE'},
   spyglass:{url:'./assets/harbormaster_spyglass.glb',bone:'hips',label:'SPYGLASS'}
@@ -1106,6 +1106,81 @@ function setDesignMode(mode){
 
 const SIMPLE_SAVE_KEY='highfly_skin_factory_simple_v1';
 let simplePaintPick=false,simpleMotionTimer=null;
+let corvusHelmet=null,corvusActive=false;
+
+function clearCorvus(){
+  if(corvusHelmet){corvusHelmet.removeFromParent();corvusHelmet=null;}
+  if(corvusActive){corvusActive=false;restoreArmorMaterials('knight');}
+  const btn=document.getElementById('simpleCorvusBtn');if(btn)btn.classList.remove('active');
+  if(window.__MODULAR_FACTORY_DIAG__)Object.assign(window.__MODULAR_FACTORY_DIAG__,{
+    corvusReady:false,corvusAttached:false,corvusBoneName:null
+  });
+}
+async function applyCorvusSkin(){
+  if(!actor)return false;
+  clearCorvus();
+  const bone=resolveRealBone('head');
+  if(!bone){simpleStatus('Falta el hueso real de cabeza. No se cambió el personaje.');return false;}
+  const btn=document.getElementById('simpleCorvusBtn');
+  btn.disabled=true;
+  simpleStatus('Preparando casco original sobre referencia de cráneo Rig_Medium…');
+  try{
+    // The original reference was generated from the frozen real GLB inverse bind matrices.
+    const ref=await loader.loadAsync('./assets/bind/reference_head.glb');
+    const helmet=buildCorvusHelmet(ref.scene);
+    helmet.position.set(0,0,0);
+    helmet.quaternion.set(0,0,0,1);
+    helmet.scale.set(1,1,1);
+    bone.add(helmet);
+    corvusHelmet=helmet;
+    document.getElementById('simpleSetSelect').value='knight';
+    document.getElementById('simpleSlotSelect').value='head';
+    syncSimpleToTechnical();
+    restoreArmorTransforms();restoreArmorGeometry('knight');
+    restoreArmorMaterials('knight');
+    showAnatomy('full');
+    showArmorNames(ARMOR_LIBRARY.knight.head,false);
+    const perSlot={
+      chest:'#20252d',arms:'#58616c',hands:'#272c36',legs:'#171b24',
+      feet:'#262e38',back:'#11151c'
+    };
+    let nativeMeshes=0;
+    for(const [slot,color] of Object.entries(perSlot))for(const root of armorRootNodes('knight',slot)){
+      root.traverse(o=>{
+        if(!(o.isMesh||o.isSkinnedMesh))return;
+        const mats=Array.isArray(o.material)?o.material:[o.material];
+        const paint=mats.map((src,i)=>{
+          const m=src.clone();m.map=null;m.emissiveMap=null;
+          if(m.color)m.color.set(color).lerp(new THREE.Color('#a2abb8'),i%4===2?.18:0);
+          if('metalness'in m)m.metalness=slot==='back'?.20:.69;
+          if('roughness'in m)m.roughness=slot==='back'?.70:.38;
+          if(m.emissive)m.emissive.setHex(0x130d25);
+          m.emissiveIntensity=.15;m.needsUpdate=true;return m;
+        });
+        o.material=Array.isArray(o.material)?paint:paint[0];nativeMeshes++;
+      });
+    }
+    corvusActive=true;btn.classList.add('active');
+    let wearableMeshes=0;helmet.traverse(o=>{if(o.isMesh)wearableMeshes++});
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{
+      corvusReady:true,corvusAttached:helmet.parent===bone,
+      corvusBoneName:bone.name,corvusSourceHead:'M_Head',
+      corvusHeadReferenceReal:helmet.userData.hfNativeHeadReference?.sourceMeshes>0,
+      corvusMeshCount:wearableMeshes,corvusNativeArmorMeshes:nativeMeshes,
+      corvusRootIdentity:identityError(helmet)<1e-7,
+      corvusSkinWeightsPreserved:[...armorRootNodes('knight')].every(root=>{
+        let safe=true;root.traverse(o=>{if(o.isSkinnedMesh&&armorSkinFingerprint.has(o.uuid)&&skinFingerprint(o)!==armorSkinFingerprint.get(o.uuid))safe=false});return safe;
+      }),
+      corvusClips:actor.userData.clips.length
+    });
+    simpleStatus('Caballero Cuervo listo. Girá el modelo, probá las 22 animaciones y pintá con clic para personalizar.');
+    frameVisible();return true;
+  }catch(e){
+    clearCorvus();simpleStatus('No se pudo montar el casco: '+String(e?.message||e));
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{corvusError:String(e?.message||e)});
+    return false;
+  }finally{btn.disabled=false}
+}
 function simpleStatus(msg){const el=document.getElementById('simpleStatus');if(el)el.textContent=msg}
 function simpleSet(){return document.getElementById('simpleSetSelect').value}
 function simpleSlot(){return document.getElementById('simpleSlotSelect').value}
@@ -1114,32 +1189,23 @@ function syncSimpleToTechnical(){
   document.getElementById('moldSlotSelect').value=simpleSlot();
 }
 function simplePutPiece(){
-  syncSimpleToTechnical();showSlotForFactory(simpleSet(),simpleSlot());frameVisible();
+  clearCorvus();syncSimpleToTechnical();showSlotForFactory(simpleSet(),simpleSlot());frameVisible();
   simpleStatus('Pieza colocada: '+document.getElementById('simpleSlotSelect').selectedOptions[0].text+' · '+document.getElementById('simpleSetSelect').selectedOptions[0].text+'.');
   return true;
 }
 function simpleRemovePiece(){
-  restoreArmorTransforms();hideAllArmor();showAllBase();frameVisible();
+  clearCorvus();restoreArmorTransforms();hideAllArmor();showAllBase();frameVisible();
   simpleStatus('Pieza retirada. El cuerpo base queda intacto.');return true;
 }
 function simpleFullSet(){
-  syncSimpleToTechnical();showAnatomy('full');frameVisible();
+  clearCorvus();syncSimpleToTechnical();showAnatomy('full');frameVisible();
   simpleStatus('Set completo aplicado para revisar la silueta general.');return true;
 }
 function simpleBase(){
-  syncSimpleToTechnical();showAnatomy('base');setDesignMode('clean');frameVisible();
+  clearCorvus();syncSimpleToTechnical();showAnatomy('base');setDesignMode('clean');frameVisible();
   simpleStatus('Maniquí limpio listo para diseñar.');return true;
 }
 function clampSlider(id,v){const el=document.getElementById(id);el.value=Math.max(+el.min,Math.min(+el.max,v));document.getElementById(id+'Val').textContent=el.value}
-function simpleMold(deltaSize=0,deltaWidth=0,deltaLength=0){
-  syncSimpleToTechnical();simplePutPiece();
-  clampSlider('moldWidth',+document.getElementById('moldWidth').value+deltaSize+deltaWidth);
-  clampSlider('moldCrown',+document.getElementById('moldCrown').value+deltaSize+deltaLength);
-  clampSlider('moldFront',+document.getElementById('moldFront').value+deltaSize);
-  const ok=moldCurrentSlot();
-  simpleStatus(ok?'Forma actualizada. Probá movimientos para revisar el encaje.':'Esta familia no tiene esa parte.');
-  return ok;
-}
 function simpleMaterialParams(){
   const kind=document.getElementById('simpleMaterial').value;
   return {
@@ -1193,19 +1259,19 @@ function runSimpleMotion(){
   simpleStatus('Probando '+clips.length+' movimientos: mirá si la pieza clippea o se despega.');return true;
 }
 function currentSimpleRecipe(){
-  return {version:1,set:simpleSet(),slot:simpleSlot(),color:document.getElementById('simpleColor').value,material:document.getElementById('simpleMaterial').value,
-    mold:{width:+document.getElementById('moldWidth').value,length:+document.getElementById('moldCrown').value,depth:+document.getElementById('moldFront').value,taper:+document.getElementById('moldTaper').value}};
+  return {version:2,set:simpleSet(),slot:simpleSlot(),color:document.getElementById('simpleColor').value,
+    material:document.getElementById('simpleMaterial').value,specialSkin:corvusActive?'corvus':null};
 }
 function saveSimpleRecipe(){
   const r=currentSimpleRecipe();localStorage.setItem(SIMPLE_SAVE_KEY,JSON.stringify(r));
   Object.assign(window.__MODULAR_FACTORY_DIAG__,{simpleSaved:true,simpleRecipe:r});simpleStatus('Diseño guardado en este navegador.');return r;
 }
-function loadSimpleRecipe(){
+async function loadSimpleRecipe(){
   let r;try{r=JSON.parse(localStorage.getItem(SIMPLE_SAVE_KEY)||'null')}catch{}if(!r){simpleStatus('Todavía no hay un diseño guardado.');return false}
   document.getElementById('simpleSetSelect').value=r.set||'knight';document.getElementById('simpleSlotSelect').value=r.slot||'head';
   document.getElementById('simpleColor').value=r.color||'#171821';document.getElementById('simpleMaterial').value=r.material||'mate';
-  syncSimpleToTechnical();for(const [id,key] of [['moldWidth','width'],['moldCrown','length'],['moldFront','depth'],['moldTaper','taper']])clampSlider(id,+r.mold?.[key]||0);
-  simplePutPiece();moldCurrentSlot();simplePaint();simpleStatus('Diseño guardado restaurado.');return true;
+  if(r.specialSkin==='corvus'){const ok=await applyCorvusSkin();if(ok)simpleStatus('Diseño Caballero Cuervo restaurado.');return ok;}
+  simplePutPiece();simplePaint();simpleStatus('Diseño guardado restaurado.');return true;
 }
 function toggleTechMode(){
   const on=!document.body.classList.contains('tech-mode');document.body.classList.toggle('tech-mode',on);
@@ -1263,12 +1329,7 @@ document.getElementById('simplePutBtn').onclick=simplePutPiece;
 document.getElementById('simpleRemoveBtn').onclick=simpleRemovePiece;
 document.getElementById('simpleFullBtn').onclick=simpleFullSet;
 document.getElementById('simpleBaseBtn').onclick=simpleBase;
-document.getElementById('simpleSizeMinus').onclick=()=>simpleMold(-6,0,0);
-document.getElementById('simpleSizePlus').onclick=()=>simpleMold(6,0,0);
-document.getElementById('simpleWidthMinus').onclick=()=>simpleMold(0,-7,0);
-document.getElementById('simpleWidthPlus').onclick=()=>simpleMold(0,7,0);
-document.getElementById('simpleLongMinus').onclick=()=>simpleMold(0,0,-7);
-document.getElementById('simpleLongPlus').onclick=()=>simpleMold(0,0,7);
+document.getElementById('simpleCorvusBtn').onclick=applyCorvusSkin;
 document.getElementById('simplePaintBtn').onclick=simplePaint;
 document.getElementById('simplePickPaintBtn').onclick=()=>setSimplePaintPick(!simplePaintPick);
 document.getElementById('simpleBlackBtn').onclick=()=>{syncSimpleToTechnical();document.getElementById('paintScopeSelect').value='slot';simplePutPiece();paintArmorPreset('black');simpleStatus('Preset Negro Aura aplicado.')};
@@ -1378,6 +1439,6 @@ function loop(){
   renderer.render(scene,camera);
 }loop();
 </script>
-<!-- skin-factory-run-stamp: visual-close-ci-r3 -->
+<!-- skin-factory-run-stamp: corvus-head-rigid-v1 -->
 </body>
 </html>
