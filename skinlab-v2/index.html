@@ -32,8 +32,20 @@
     button{cursor:pointer}button:hover{background:#1c1c27}button.active{border-color:#8b5cf6;background:#261942;box-shadow:0 0 22px #7c3aed33}
     .small{font-size:10px;color:#9b9baa;line-height:1.4}.legend{display:grid;grid-template-columns:auto 1fr;gap:5px 8px;font-size:10px;color:#aaa}
     .legend b{color:#ddd}.footer{position:absolute;right:14px;bottom:14px;padding:9px 12px;border:1px solid #2b2b36;border-radius:12px;background:rgba(10,10,15,.75);font-size:10px;color:#aaa}
+    .lab-actions{position:absolute;right:10px;top:10px;z-index:8;display:flex;gap:6px}.lab-actions button{padding:7px 9px;font-size:10px;background:rgba(16,16,24,.92);backdrop-filter:blur(10px)}
+    .panel.ui-hidden{transform:translateX(calc(-100% - 24px));opacity:0;pointer-events:none}
+    .panel{transition:transform .18s ease,opacity .18s ease}
+    body.fullscreen-lab #app{grid-template-rows:1fr}body.fullscreen-lab header{display:none}
     #error{display:none;position:absolute;inset:auto 14px 14px 14px;background:#3a1016;border:1px solid #7f1d1d;color:#fecaca;padding:10px;border-radius:12px;z-index:9;font-size:11px}
     @media(max-width:700px){header{align-items:flex-start}.status{display:none}.panel{top:auto;bottom:12px}.footer{display:none}}
+    @media(orientation:landscape) and (max-height:600px){
+      header{padding:6px 9px;min-height:36px}.mark{height:22px}.brand h1{font-size:11px}.sub{font-size:8px}.status{display:none}
+      .panel{left:7px;top:7px;bottom:auto;width:min(300px,32vw);max-height:calc(100% - 14px);padding:9px;border-radius:12px}
+      .panel h2{font-size:9px;margin-bottom:6px}.row{gap:5px;margin-bottom:6px}
+      button,select,input{font-size:9px;padding:6px 7px}.small,.legend{font-size:8px}
+      details.painter{margin:7px 0}.footer{display:none}
+      .lab-actions{top:6px;right:max(8px,env(safe-area-inset-right))}
+    }
   </style>
   <script type="importmap">
     {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
@@ -59,7 +71,8 @@
         <button id="baseBtn" class="active">BASE</button>
         <button id="blackBtn">WARRIOR BLACK AURA</button>
         <button id="autoAuraBtn">⚡ AUTO · BLACK AURA</button>
-        <button id="authorBtn">💎 PREMIUM V2</button>\n        <button id="modularFactoryBtn">🧩 MODULAR REAL</button>
+        <button id="authorBtn">💎 PREMIUM V2</button>
+        <button id="modularFactoryBtn">🧩 MODULAR REAL</button>
       </div>
       <div class="row">
         <select id="animSelect"></select>
@@ -148,6 +161,7 @@
       </div>
       <p class="small">PAINTER PRO modifica sólo la capa cosmética. Rig, pesos, clips, sockets, hitboxes y gameplay permanecen intactos.</p>
     </section>
+    <div class="lab-actions"><button id="uiToggleBtn">☰ UI</button><button id="fullscreenBtn">⛶ FULL</button></div>
     <div class="footer">Arrastrar: rotar · rueda/pinch: zoom · botón HUESOS: inspección</div>
     <div id="error"></div>
   </main>
@@ -1082,7 +1096,8 @@ async function boot(){
 baseBtn.onclick=()=>setMode('base');
 blackBtn.onclick=()=>{setMode('black');autoAuraBtn.classList.remove('active')};
 autoAuraBtn.onclick=()=>applyAutoBlackAura();
-authorBtn.onclick=()=>{applyPremiumAuthoring();setMode('black');painterStatus.textContent='PREMIUM V2 reaplicada · HERO SWORD + GLOBAL TRIM + COSMETIC FX.'};\ndocument.getElementById('modularFactoryBtn').onclick=()=>{location.href='./modular-factory.html'};
+authorBtn.onclick=()=>{applyPremiumAuthoring();setMode('black');painterStatus.textContent='PREMIUM V2 reaplicada · HERO SWORD + GLOBAL TRIM + COSMETIC FX.'};
+document.getElementById('modularFactoryBtn').onclick=()=>{location.href='./modular-factory.html'};
 document.getElementById('playBtn').onclick=()=>playClip(document.getElementById('animSelect').value);
 testAllBtn.onclick=()=>runFactoryTest();
 stopTestBtn.onclick=()=>stopFactoryTest();
@@ -1106,6 +1121,28 @@ copyRecipeBtn.onclick=()=>copyPainterRecipe();
 bonesBtn.onclick=()=>{if(!skeletonHelper)return;skeletonHelper.visible=!skeletonHelper.visible;bonesBtn.classList.toggle('active',skeletonHelper.visible)};
 rotateBtn.onclick=()=>{autoRotate=!autoRotate;rotateBtn.classList.toggle('active',autoRotate)};
 resetBtn.onclick=()=>{camera.position.set(3.55,2.15,4.35);controls.target.set(0,1.15,0);controls.update()};
+const panelEl=document.querySelector('.panel');
+const uiToggleBtn=document.getElementById('uiToggleBtn');
+const fullscreenBtn=document.getElementById('fullscreenBtn');
+uiToggleBtn.onclick=()=>{panelEl.classList.toggle('ui-hidden');uiToggleBtn.classList.toggle('active',!panelEl.classList.contains('ui-hidden'))};
+async function toggleFullscreen(){
+  if(!document.fullscreenElement){
+    try{await document.documentElement.requestFullscreen({navigationUI:'hide'})}
+    catch(_){try{await document.documentElement.requestFullscreen()}catch(__){}}
+    try{await screen.orientation?.lock?.('landscape')}catch(_){}
+    panelEl.classList.add('ui-hidden');
+  }else{
+    try{await document.exitFullscreen()}catch(_){}
+  }
+}
+fullscreenBtn.onclick=toggleFullscreen;
+function syncFullscreen(){
+  const on=!!document.fullscreenElement;
+  document.body.classList.toggle('fullscreen-lab',on);
+  fullscreenBtn.textContent=on?'⤢ SALIR':'⛶ FULL';
+  setTimeout(resize,60);
+}
+document.addEventListener('fullscreenchange',syncFullscreen);
 
 const clock=new THREE.Clock();
 function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
