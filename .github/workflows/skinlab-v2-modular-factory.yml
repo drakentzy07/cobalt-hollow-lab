@@ -34,6 +34,10 @@ jobs:
           grep -F "CLEAN MANNEQUIN" skinlab-v2/modular-factory.html
           grep -F "HF AVIAN v1" skinlab-v2/modular-factory.html
           grep -F "setDesignMode" skinlab-v2/modular-factory.html
+          grep -F "ARMOR ANATOMY / DONOR LAB" skinlab-v2/modular-factory.html
+          grep -F "HF ARMOR MOLDER" skinlab-v2/modular-factory.html
+          grep -F "Armor_knight_Head" skinlab-v2/modular-factory.html
+          grep -F "molderSkinPreserved" skinlab-v2/modular-factory.html
           echo "MODULAR FACTORY static contract: GREEN"
 
       - name: Verify frozen ClaudeCraft GLB identity
@@ -74,6 +78,24 @@ jobs:
             if(d.clips!==22)throw new Error('Expected 22 clips '+JSON.stringify(d));
             if(d.missingCore.length||d.visibleCount!==15||d.armorVisible!==0)throw new Error('Male base visibility gate failed '+JSON.stringify(d));
             if(!d.cleanReady||!d.avianReady||d.avianPieces<4||d.designMode!=='clean')throw new Error('Design modes gate failed '+JSON.stringify(d));
+            if(!d.armorAnatomyReady||d.armorSetCount!==7||d.knightHeadParts!==2||!d.molderReady||!d.molderSkinPreserved)
+              throw new Error('Armor anatomy/molder boot gate failed '+JSON.stringify(d));
+            await page.click('#anatomyFullBtn');await page.waitForTimeout(200);
+            let anatomy=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
+            if(anatomy.anatomySet!=='knight'||anatomy.anatomyMode!=='full'||anatomy.anatomyParts.length<10||anatomy.anatomyMeshes<1)
+              throw new Error('Knight full anatomy failed '+JSON.stringify(anatomy));
+            await page.click('[data-anatomy-slot="head"]');await page.waitForTimeout(180);
+            anatomy=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
+            if(anatomy.anatomySlot!=='head'||anatomy.anatomyParts.length!==2||anatomy.anatomyVertices<1)
+              throw new Error('Knight head anatomy failed '+JSON.stringify(anatomy));
+            await page.locator('#moldWidth').evaluate(el=>{el.value='25';el.dispatchEvent(new Event('input',{bubbles:true}))});
+            await page.locator('#moldCrown').evaluate(el=>{el.value='20';el.dispatchEvent(new Event('input',{bubbles:true}))});
+            await page.locator('#moldFront').evaluate(el=>{el.value='18';el.dispatchEvent(new Event('input',{bubbles:true}))});
+            await page.waitForTimeout(220);
+            const molded=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
+            if(!molded.molderReady||!molded.molderSkinPreserved||molded.molderChangedVertices<1)
+              throw new Error('Helmet molder deformation/skin preservation failed '+JSON.stringify(molded));
+            await page.click('#moldResetBtn');await page.waitForTimeout(120);
             await page.click('#avianBtn');await page.waitForTimeout(250);
             const avian=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
             const slots=avian.avianSlots||{};
