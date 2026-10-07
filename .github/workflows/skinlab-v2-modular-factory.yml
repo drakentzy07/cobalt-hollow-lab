@@ -6,6 +6,8 @@ on:
     paths:
       - 'skinlab-v2/modular-factory.html'
       - 'skinlab-v2/index.html'
+      - 'skinlab-v2/donors/**'
+      - 'scripts/skin_lab/**'
       - '.github/workflows/skinlab-v2-modular-factory.yml'
   workflow_dispatch:
 
@@ -42,27 +44,61 @@ jobs:
           grep -F "paintArmorPreset" skinlab-v2/modular-factory.html
           grep -F "Armor_knight_Head" skinlab-v2/modular-factory.html
           grep -F "molderSkinPreserved" skinlab-v2/modular-factory.html
+          grep -F "WEARABLE / BONE ATTACH LAB" skinlab-v2/modular-factory.html
+          grep -F "HARBORMASTER TRICORNE" skinlab-v2/modular-factory.html
+          grep -F "HARBORMASTER SPYGLASS" skinlab-v2/modular-factory.html
+          grep -F "runNativeWearableProof" skinlab-v2/modular-factory.html
+          grep -F "DONOR INSPECTOR" skinlab-v2/modular-factory.html
+          grep -F "inverseBindMatrix" scripts/skin_lab/extract_bind_reference.mjs
+          test -s skinlab-v2/donors/audits.json
+          grep -F '"skeleton": "game_rig"' skinlab-v2/donors/audits.json
+          grep -F '"license": "CC0 1.0"' skinlab-v2/donors/audits.json
           echo "MODULAR FACTORY static contract: GREEN"
 
-      - name: Verify frozen ClaudeCraft GLB identity
+      - name: Verify frozen ClaudeCraft GLB + native wearable identities
         shell: bash
         run: |
           set -euo pipefail
-          URL="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb"
-          curl -fsSL "$URL" -o /tmp/warrior_modular.glb
+          BASE="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public"
+          curl -fsSL "$BASE/models/chars/modular/warrior_modular.glb" -o /tmp/warrior_modular.glb
+          curl -fsSL "$BASE/models/chars/npc_gear/harbormaster_tricorne.glb" -o /tmp/harbormaster_tricorne.glb
+          curl -fsSL "$BASE/models/chars/npc_gear/harbormaster_spyglass.glb" -o /tmp/harbormaster_spyglass.glb
           test "$(stat -c%s /tmp/warrior_modular.glb)" = "3477500"
           test "$(git hash-object /tmp/warrior_modular.glb)" = "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2"
+          test "$(stat -c%s /tmp/harbormaster_tricorne.glb)" = "40512"
+          test "$(sha256sum /tmp/harbormaster_tricorne.glb | cut -d' ' -f1)" = "c02cc2676b5ec85cc050a3a9cb044760b670b8f5040b35caa252f841536acba5"
+          test "$(stat -c%s /tmp/harbormaster_spyglass.glb)" = "11024"
+          test "$(sha256sum /tmp/harbormaster_spyglass.glb | cut -d' ' -f1)" = "74aa429a1aed82725ab54ce8c9409f67075b213698b5277bc38c8fdc8e4f8df7"
           mkdir -p skinlab-v2/assets
           cp /tmp/warrior_modular.glb skinlab-v2/assets/warrior_modular.glb
-          test -s skinlab-v2/assets/warrior_modular.glb
-          echo "warrior_modular.glb identity + same-origin fixture: GREEN"
+          cp /tmp/harbormaster_tricorne.glb skinlab-v2/assets/harbormaster_tricorne.glb
+          cp /tmp/harbormaster_spyglass.glb skinlab-v2/assets/harbormaster_spyglass.glb
+          echo "warrior_modular + Harbormaster exact native assets: GREEN"
+
+      - name: Generate real Rig_Medium bind-frame references
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm init -y >/dev/null 2>&1
+          npm install @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer --no-save
+          node scripts/skin_lab/extract_bind_reference.mjs --src skinlab-v2/assets/warrior_modular.glb --out skinlab-v2/assets/bind --list > /tmp/skinlab-joints.json
+          grep -F '"head"' /tmp/skinlab-joints.json
+          grep -F '"hips"' /tmp/skinlab-joints.json
+          grep -F '"chest"' /tmp/skinlab-joints.json
+          for bone in head hips chest hand.r hand.l upper_arm.r upper_arm.l lowerleg.r lowerleg.l foot.r foot.l; do
+            node scripts/skin_lab/extract_bind_reference.mjs --src skinlab-v2/assets/warrior_modular.glb --out skinlab-v2/assets/bind --bone "$bone"
+          done
+          test -s skinlab-v2/assets/bind/reference_head.glb
+          test -s skinlab-v2/assets/bind/reference_hips.glb
+          test -s skinlab-v2/assets/bind/reference_chest.glb
+          echo "REAL_BIND_REFERENCES_GREEN=1"
 
       - name: Browser gate
         shell: bash
         run: |
           set -euo pipefail
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/skinlab-http.log 2>&1 &
-          npm init -y >/dev/null 2>&1
+          test -f package.json
           npm install playwright@1.55.0 --no-save
           npx playwright install --with-deps chromium
           cat > modular-gate.cjs <<'NODE'
@@ -75,6 +111,7 @@ jobs:
             page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
             await page.goto('http://127.0.0.1:4173/skinlab-v2/modular-factory.html',{waitUntil:'domcontentloaded',timeout:120000});
             await page.waitForFunction(()=>window.__MODULAR_FACTORY_DIAG__?.ready||window.__MODULAR_FACTORY_DIAG__?.error,null,{timeout:120000});
+            await page.waitForFunction(()=>window.__MODULAR_FACTORY_DIAG__?.wearableLabReady&&window.__MODULAR_FACTORY_DIAG__?.donorAuditReady,null,{timeout:120000});
             const d=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
             if(d.error)throw new Error(d.error);
             if(d.sourceBlob!=='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2'||d.sourceBytes!==3477500)throw new Error('Source identity mismatch '+JSON.stringify(d));
@@ -84,6 +121,21 @@ jobs:
             if(!d.cleanReady||!d.avianReady||d.avianPieces<4||d.designMode!=='clean')throw new Error('Design modes gate failed '+JSON.stringify(d));
             if(!d.armorAnatomyReady||d.armorSetCount!==7||d.knightHeadParts!==2||!d.molderReady||!d.molderSkinPreserved)
               throw new Error('Armor anatomy/molder boot gate failed '+JSON.stringify(d));
+            if(!d.wearableLabReady||!d.nativeWearableSourceIdentity||d.realBoneCount<10||!d.donorAuditReady||d.donorAuditCount<4)
+              throw new Error('Native wearable boot/audit gate failed '+JSON.stringify(d));
+            if(!d.realBoneNames.includes('head')||!d.realBoneNames.includes('hips')||!d.realBoneNames.includes('chest'))
+              throw new Error('Required real Rig_Medium bones missing '+JSON.stringify(d.realBoneNames));
+            await page.selectOption('#wearBoneSelect','head');
+            await page.locator('#toggleBindRef').check();await page.waitForTimeout(350);
+            let wear=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
+            if(!wear.bindReferenceLoaded||wear.bindReferenceBone!=='head')
+              throw new Error('Native head bind reference failed '+JSON.stringify(wear));
+            const proof=await page.evaluate(()=>window.__SKIN_FACTORY_API__.runNativeWearableProof());
+            wear=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
+            if(!proof||!wear.nativeWearableProof||!wear.tricorneAttached||!wear.spyglassAttached||
+               !wear.nativeWearableParentOK||!wear.nativeWearableNoNaN||wear.wearableDriftMax>=1e-7||
+               !Array.isArray(wear.nativeProofClips)||wear.nativeProofClips.length<5)
+              throw new Error('Harbormaster native bone-attach proof failed '+JSON.stringify(wear));
             await page.click('#anatomyFullBtn');await page.waitForTimeout(200);
             let anatomy=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
             if(anatomy.anatomySet!=='knight'||anatomy.anatomyMode!=='full'||anatomy.anatomyParts.length<10||anatomy.anatomyMeshes<1)
@@ -159,6 +211,8 @@ jobs:
             }
             if(errors.length)throw new Error(errors.join(' | '));
             console.log('MODULAR FACTORY browser gate: GREEN');
+            console.log('HARBORMASTER NATIVE WEARABLE proof: GREEN');
+            console.log('REAL BIND REFERENCE head: GREEN');
             console.log('S23 LANDSCAPE UI gate: GREEN '+JSON.stringify(mobile));
             await browser.close();
           })().catch(e=>{console.error(e);process.exit(1)});
