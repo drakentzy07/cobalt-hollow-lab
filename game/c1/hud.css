@@ -824,7 +824,7 @@ body.mobile-touch.hf-game-c1 #loading-screen {
   background-image:
     linear-gradient(180deg, rgba(2, 3, 11, .60), rgba(3, 4, 14, .25) 48%, rgba(2, 3, 10, .82)),
     var(--loading-backdrop-image, none),
-    url("/textures/loading/eastbrook-square.webp") !important;
+    url("/highfly/highfly-loading.avif") !important;
   background-position: center, center, center !important;
   background-size: cover, cover, cover !important;
   background-repeat: no-repeat, no-repeat, no-repeat !important;
