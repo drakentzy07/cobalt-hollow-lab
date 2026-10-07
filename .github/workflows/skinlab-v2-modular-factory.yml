@@ -150,6 +150,9 @@ jobs:
               throw new Error('Native wearable boot/audit gate failed '+JSON.stringify(d));
             if(!d.realBoneNames.includes('head')||!d.realBoneNames.includes('hips')||!d.realBoneNames.includes('chest'))
               throw new Error('Required real Rig_Medium bones missing '+JSON.stringify(d.realBoneNames));
+            await page.click('#techModeBtn');await page.waitForTimeout(120);
+            const techOpen=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
+            if(!techOpen.technicalMode)throw new Error('Technical mode did not open '+JSON.stringify(techOpen));
             await page.selectOption('#wearBoneSelect','head');
             await page.locator('#toggleBindRef').check();await page.waitForTimeout(350);
             let wear=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);

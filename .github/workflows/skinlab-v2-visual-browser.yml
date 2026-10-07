@@ -112,6 +112,10 @@ jobs:
             if(!simple.simpleSaved)throw new Error('Simple save failed '+JSON.stringify(simple));
             await page.screenshot({path:'visual-artifacts/simple-mode-v1.png',fullPage:true});
 
+            await page.click('#techModeBtn');await page.waitForTimeout(140);
+            let tech=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(!tech.technicalMode)throw new Error('Technical mode did not open '+JSON.stringify(tech));
+
             const runtimeHead=d.realBoneNames.find(n=>String(n).toLowerCase().replace(/[^a-z0-9]/g,'')==='head');
             if(!runtimeHead)throw new Error('Runtime head bone missing '+JSON.stringify(d.realBoneNames));
             await page.selectOption('#wearBoneSelect',runtimeHead);
@@ -153,8 +157,13 @@ jobs:
             await page.selectOption('#animSelect','Walking_A'); await page.waitForTimeout(350);
             await page.selectOption('#animSelect','Idle'); await page.waitForTimeout(250);
 
+            await page.click('#techModeBtn');await page.waitForTimeout(140);
+            tech=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(tech.technicalMode)throw new Error('Technical mode did not close '+JSON.stringify(tech));
+
             await page.setViewportSize({width:1365,height:768}); await page.waitForTimeout(260);
-            await page.click('#simpleFullBtn');await page.waitForTimeout(220);await page.click('#resetBtn');await page.waitForTimeout(220);
+            await page.click('#simpleFullBtn');await page.waitForTimeout(220);
+            await page.evaluate(()=>window.__SKIN_FACTORY_API__.frameVisible());await page.waitForTimeout(220);
             const desktop=await page.evaluate(()=>{
               const panel=document.querySelector('.panel')?.getBoundingClientRect(),canvas=document.querySelector('#stage canvas')?.getBoundingClientRect(),d=window.__SKIN_FACTORY_DIAG__||{};
               return {panelW:panel?.width||0,canvasW:canvas?.width||0,canvasH:canvas?.height||0,safe:d.safeViewport||null,framing:d.mobileFraming||null,precise:d.framePrecise||false};
@@ -165,7 +174,7 @@ jobs:
             await page.screenshot({path:'visual-artifacts/pc-centered-character.png',fullPage:true});
 
             await page.setViewportSize({width:823,height:384}); await page.waitForTimeout(260);
-            await page.click('#resetBtn'); await page.waitForTimeout(260);
+            await page.evaluate(()=>window.__SKIN_FACTORY_API__.frameVisible()); await page.waitForTimeout(260);
             const mobile=await page.evaluate(()=>{
               const panel=document.querySelector('.panel')?.getBoundingClientRect();
               const canvas=document.querySelector('#stage canvas')?.getBoundingClientRect();
