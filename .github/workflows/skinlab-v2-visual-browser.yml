@@ -5,6 +5,7 @@ on:
     branches: [highfly-skinlab-v2-warrior-black]
     paths:
       - 'skinlab-v2/**'
+      - 'scripts/skin_lab/**'
       - '.github/workflows/skinlab-v2-visual-browser.yml'
   workflow_dispatch:
 
@@ -18,15 +19,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Materialize frozen modular fixture
+      - name: Materialize frozen modular + Harbormaster fixtures
         shell: bash
         run: |
           set -euo pipefail
-          URL="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb"
+          BASE="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public"
           mkdir -p skinlab-v2/assets
-          curl -fsSL "$URL" -o skinlab-v2/assets/warrior_modular.glb
+          curl -fsSL "$BASE/models/chars/modular/warrior_modular.glb" -o skinlab-v2/assets/warrior_modular.glb
+          curl -fsSL "$BASE/models/chars/npc_gear/harbormaster_tricorne.glb" -o skinlab-v2/assets/harbormaster_tricorne.glb
+          curl -fsSL "$BASE/models/chars/npc_gear/harbormaster_spyglass.glb" -o skinlab-v2/assets/harbormaster_spyglass.glb
           test "$(stat -c%s skinlab-v2/assets/warrior_modular.glb)" = "3477500"
           test "$(git hash-object skinlab-v2/assets/warrior_modular.glb)" = "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2"
+          test "$(stat -c%s skinlab-v2/assets/harbormaster_tricorne.glb)" = "40512"
+          test "$(sha256sum skinlab-v2/assets/harbormaster_tricorne.glb | cut -d' ' -f1)" = "c02cc2676b5ec85cc050a3a9cb044760b670b8f5040b35caa252f841536acba5"
+          test "$(stat -c%s skinlab-v2/assets/harbormaster_spyglass.glb)" = "11024"
+          test "$(sha256sum skinlab-v2/assets/harbormaster_spyglass.glb | cut -d' ' -f1)" = "74aa429a1aed82725ab54ce8c9409f67075b213698b5277bc38c8fdc8e4f8df7"
+
+      - name: Generate bind references from real Rig_Medium joints
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm init -y >/dev/null 2>&1
+          npm install @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer --no-save
+          mkdir -p skinlab-v2/assets/bind
+          node scripts/skin_lab/extract_bind_reference.mjs --src skinlab-v2/assets/warrior_modular.glb --out skinlab-v2/assets/bind --list > skinlab-v2/assets/bind/joints.json
+          node scripts/skin_lab/extract_bind_reference.mjs --src skinlab-v2/assets/warrior_modular.glb --out skinlab-v2/assets/bind --all
+          test -s skinlab-v2/assets/bind/reference_head.glb
+          test -s skinlab-v2/assets/bind/reference_hips.glb
+          test -s skinlab-v2/assets/bind/reference_chest.glb
 
       - name: Start unified Skin Factory
         shell: bash
@@ -39,7 +59,7 @@ jobs:
       - name: Install browser
         shell: bash
         run: |
-          npm init -y >/dev/null 2>&1
+          test -f package.json
           npm install playwright@1.55.0 --no-save
           npx playwright install --with-deps chromium
 
@@ -59,6 +79,11 @@ jobs:
 
             await page.goto('http://127.0.0.1:4173/skinlab-v2/', {waitUntil:'domcontentloaded',timeout:120000});
             await page.waitForFunction(() => window.__SKIN_FACTORY_DIAG__?.ready || window.__SKIN_FACTORY_DIAG__?.error, null, {timeout:120000});
+            await page.waitForFunction(() =>
+              window.__SKIN_FACTORY_DIAG__?.wearableLabReady &&
+              window.__SKIN_FACTORY_DIAG__?.donorAuditReady &&
+              window.__SKIN_FACTORY_DIAG__?.sourceJointManifestReady,
+              null,{timeout:120000});
             let d = await page.evaluate(() => window.__SKIN_FACTORY_DIAG__);
             if(d.error) throw new Error(d.error);
             if(!d.unifiedFactory || d.canonicalRoute!=='/skinlab-v2/') throw new Error('Unified route contract failed '+JSON.stringify(d));
@@ -66,7 +91,25 @@ jobs:
             if(!d.rig||!d.rightSocket||!d.leftSocket||d.clips!==22) throw new Error('Rig/socket/clip gate failed '+JSON.stringify(d));
             if(!d.armorAnatomyReady||d.armorSetCount!==7||!d.molderReady||d.molderPhase!==2||!d.painterReady||d.painterVersion!==2)
               throw new Error('Unified factory modules incomplete '+JSON.stringify(d));
+            if(!d.wearableLabReady||!d.nativeWearableSourceIdentity||!d.donorAuditReady||!d.sourceJointManifestReady||d.sourceJointCount<10)
+              throw new Error('Native wearable/bind modules incomplete '+JSON.stringify(d));
             await page.screenshot({path:'visual-artifacts/unified-boot.png',fullPage:true});
+
+            const runtimeHead=d.realBoneNames.find(n=>String(n).toLowerCase().replace(/[^a-z0-9]/g,'')==='head');
+            if(!runtimeHead)throw new Error('Runtime head bone missing '+JSON.stringify(d.realBoneNames));
+            await page.selectOption('#wearBoneSelect',runtimeHead);
+            await page.locator('#toggleBindRef').check();
+            await page.waitForFunction(()=>window.__SKIN_FACTORY_DIAG__?.bindReferenceLoaded===true,null,{timeout:30000});
+            let wear=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(wear.bindReferenceBone!=='head')throw new Error('Head bind reference mismatch '+JSON.stringify(wear));
+
+            const proof=await page.evaluate(()=>window.__SKIN_FACTORY_API__.runNativeWearableProof());
+            wear=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(!proof||!wear.nativeWearableProof||!wear.tricorneAttached||!wear.spyglassAttached||
+               !wear.nativeWearableParentOK||!wear.nativeWearableNoNaN||wear.wearableDriftMax>=1e-7||
+               !Array.isArray(wear.nativeProofClips)||wear.nativeProofClips.length<5)
+              throw new Error('Harbormaster native wearable proof failed '+JSON.stringify(wear));
+            await page.screenshot({path:'visual-artifacts/native-wearables.png',fullPage:true});
 
             await page.click('#anatomyFullBtn'); await page.waitForTimeout(220);
             d=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
@@ -112,7 +155,7 @@ jobs:
             if(errors.length) throw new Error(errors.join(' | '));
 
             require('fs').writeFileSync('visual-artifacts/visual-gate.txt',
-              'GREEN\nUNIFIED /skinlab-v2/ READY\n7 DONOR SETS READY\nARMOR ANATOMY READY\nMOLDER PHASE 2 CHEST VERIFIED\nSKIN WEIGHTS PRESERVED\nPAINTER V2 RAVEN VERIFIED\n22 CLIPS READY\nS23 PHYSICAL STAGE VERIFIED\n');
+              'GREEN\nUNIFIED /skinlab-v2/ READY\nHARBORMASTER TRICORNE HEAD GREEN\nHARBORMASTER SPYGLASS HIPS GREEN\nREAL BIND REFERENCE HEAD GREEN\nNO WEARABLE DRIFT GREEN\n7 DONOR SETS READY\nARMOR ANATOMY READY\nMOLDER PHASE 2 CHEST VERIFIED\nSKIN WEIGHTS PRESERVED\nPAINTER V2 RAVEN VERIFIED\n22 CLIPS READY\nS23 PHYSICAL STAGE VERIFIED\n');
             await browser.close();
           })().catch(err=>{console.error(err);process.exit(1)});
           NODE
