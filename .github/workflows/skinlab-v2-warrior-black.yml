@@ -64,7 +64,10 @@ jobs:
           grep -q "HF_BirdBeak_Upper" skinlab-v2/index.html
           grep -q "HF_EyeGlow_L" skinlab-v2/index.html
           grep -q "HF_Crest_" skinlab-v2/index.html
-          grep -q "HF_BeakTrim_Top" skinlab-v2/index.html
+          grep -q "HF_BeakTrim" skinlab-v2/index.html
+          grep -q "avianHelmetVersion:2" skinlab-v2/index.html
+          grep -q "avianBaseHeadHidden" skinlab-v2/index.html
+          grep -q "hf_avian_knight_legendary_01_pass1_1" skinlab-v2/index.html
           grep -q "hf_avian_knight_legendary_01_pass1" skinlab-v2/index.html
           grep -q "function resolveNode" skinlab-v2/index.html
           grep -q "name.replace(/\[\[\\\].:/\]/g" skinlab-v2/index.html
