@@ -1,28 +1,42 @@
-name: HIGHFLY Skin Lab v2 — Pages Ownership Guard
+name: HIGHFLY Skin Factory — Separate Publication Guard
 
-# GitHub Pages root is owned only by the current canonical GAME-C2.8 workflow.
-# Skin Lab pushes are validated by the contract + visual browser workflows only.
-# To publish a new Skin Lab revision, refresh the canonical GAME-C2.8 deployment,
-# which always copies highfly-skinlab-v2-warrior-black/skinlab-v2 into dist.
+# ARCHITECTURE CONTRACT
+# ---------------------
+# HIGHFLY GAME and Skin Factory are separate products.
+# This laboratory branch MUST NEVER deploy, upload, merge into, or overwrite
+# the GitHub Pages artifact used by the full HIGHFLY application.
+#
+# Skin Factory is validated here only. Its public publication belongs to a
+# dedicated site/repository so lab runs can never cancel or replace GAME runs.
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - highfly-skinlab-v2-warrior-black
+    paths:
+      - "skinlab-v2/**"
+      - "scripts/skin_lab/**"
+      - ".github/workflows/skinlab-v2-*.yml"
+      - ".github/workflows/deploy-skinlab-v2-pages.yml"
 
 permissions:
   contents: read
 
 jobs:
-  ownership-guard:
+  publication-separation-guard:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify Skin Lab source exists
+      - name: Checkout Skin Factory source
         uses: actions/checkout@v4
 
-      - name: Confirm canonical Pages ownership
+      - name: Verify laboratory source and isolation
         shell: bash
         run: |
           set -euo pipefail
           test -s skinlab-v2/index.html
-          grep -F "HIGHFLY · SKIN LAB v2" skinlab-v2/index.html
-          echo "PAGES_OWNER=highfly-game-c2-8-mobile-hud-editor"
-          echo "SKINLAB_DIRECT_DEPLOY=disabled"
+          grep -F "<title>HIGHFLY · SKIN FACTORY</title>" skinlab-v2/index.html
+          test "${{ github.ref_name }}" = "highfly-skinlab-v2-warrior-black"
+          echo "SKIN_FACTORY_PRODUCT=LABORATORY"
+          echo "HIGHFLY_GAME_PAGES_DEPLOY=FORBIDDEN"
+          echo "SEPARATE_PUBLICATION_REQUIRED=1"
