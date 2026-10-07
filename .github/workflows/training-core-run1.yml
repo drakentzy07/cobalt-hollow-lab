@@ -530,7 +530,11 @@ jobs:
           grep -F "highfly/highfly-loading.avif" upstream/src/styles/hf_game_c1.css
           grep -F "data-hotbar-slot=\"11\"" upstream/src/styles/hf_game_c1.css
           grep -F "z-index: 1000 !important;" upstream/src/styles/hf_game_c1.css
-          grep -F "C2.8-mobile-hud-editor" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "C2.8.1-s23-hud-default" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "s5: { x: 47, y: -11, scale: 1, opacity: 1 }" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "s10: { x: 49, y: -24, scale: 1, opacity: 1 }" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "ult: { x: 48, y: -7, scale: 1, opacity: 1 }" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "highfly:c281:hud:" upstream/src/highfly/game_c1_runtime.ts
           grep -F "HIGHFLY_GAME_C28_MOBILE_HUD_EDITOR_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C28_MOBILE_HUD_EDITOR_APPLIED=1')")
           grep -F "PERSONALIZAR HUD" upstream/src/highfly/game_c1_runtime.ts
           grep -F "id: 'move', label: 'JOYSTICK'" upstream/src/highfly/game_c1_runtime.ts
@@ -2683,6 +2687,27 @@ jobs:
           const editing = await page.evaluate(() => document.body.classList.contains('hf-c28-hud-editing'));
           if (!editing) throw new Error('C2.8: mobile HUD editor mode did not activate');
 
+          const editorClearance = await page.evaluate(() => {
+            const editor = document.getElementById('hf-c28-hud-editor');
+            const s5 = document.querySelector('#actionbar [data-hotbar-slot="5"]');
+            const s10 = document.querySelector('#actionbar [data-hotbar-slot="10"]');
+            const ult = document.getElementById('hf-c1-ult');
+            if (!(editor instanceof HTMLElement) ||
+                !(s5 instanceof HTMLElement) ||
+                !(s10 instanceof HTMLElement) ||
+                !(ult instanceof HTMLElement)) return null;
+            const editorRect = editor.getBoundingClientRect();
+            const topLeft = Math.min(
+              s5.getBoundingClientRect().left,
+              s10.getBoundingClientRect().left,
+              ult.getBoundingClientRect().left,
+            );
+            return { editorRight: editorRect.right, topLeft };
+          });
+          if (!editorClearance || editorClearance.editorRight > editorClearance.topLeft - 16) {
+            throw new Error('C2.8.1: editor still blocks S5/S10/ULT: ' + JSON.stringify(editorClearance));
+          }
+
           await page.evaluate(() => {
             const target = document.getElementById('mobile-target-cycle');
             if (!(target instanceof HTMLElement)) throw new Error('TARGET missing');
@@ -2704,7 +2729,7 @@ jobs:
           const editorState = await page.evaluate(() => ({
             selected: document.body.dataset.hfHudSelected ?? null,
             label: document.querySelector('[data-hf-hud-label]')?.textContent ?? '',
-            stored: localStorage.getItem('highfly:c23:hud:target'),
+            stored: localStorage.getItem('highfly:c281:hud:target'),
             hasJoystick: Boolean(document.querySelector('#mobile-move-zone[data-hf-hud-target="move"]')),
             hasMenu: Boolean(document.querySelector('#mobile-menu-anchor[data-hf-hud-target="menu"]')),
           }));
@@ -2720,7 +2745,7 @@ jobs:
           }
           await page.locator('#hf-c28-hud-editor [data-hf-hud-done].primary').click({ force: true });
           await page.locator('#hf-c28-hud-editor').waitFor({ state: 'hidden', timeout: 10000 });
-          await page.evaluate(() => localStorage.removeItem('highfly:c23:hud:target'));
+          await page.evaluate(() => localStorage.removeItem('highfly:c281:hud:target'));
 
           // Training is intentionally inside the large HIGHFLY More menu, so it
           // must be hidden at world boot. Exercise the real user path instead of
