@@ -58,6 +58,15 @@ body.fullscreen-lab #app{grid-template-rows:1fr}body.fullscreen-lab header{displ
   <h2>MALE BASE REAL <span class="badge">NO ARMOR</span></h2>
   <div class="note">Fuente congelada ClaudeCraft · blob <b>e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2</b> · 3.477.500 bytes. Sólo cuerpo M_* + M_Loin + una cara.</div>
   <div class="group">
+    <h2>MODO DE DISEÑO</h2>
+    <div class="row">
+      <button id="rawBtn">RAW</button>
+      <button id="cleanBtn" class="active">CLEAN MANNEQUIN</button>
+      <button id="avianBtn">⚡ HF AVIAN v0</button>
+    </div>
+    <div class="note">RAW = fuente intacta · CLEAN = maniquí de trabajo · HF AVIAN = prototipo original HIGHFLY sobre el rig real.</div>
+  </div>
+  <div class="group">
     <h2>VISTAS</h2>
     <div class="row">
       <button data-view="front">FRENTE</button><button data-view="profile">PERFIL</button><button data-view="back">ESPALDA</button><button data-view="three">3/4</button><button id="freeBtn" class="active">LIBRE</button>
@@ -163,11 +172,14 @@ function safeViewportMetrics(){
 }
 function applySafeProjection(){
   const m=safeViewportMetrics();
-  camera.aspect=m.w/m.h;
+  const x=Math.round(m.covered),vw=Math.max(1,Math.round(m.safeW)),vh=Math.max(1,Math.round(m.h));
   camera.clearViewOffset();
-  if(m.covered>1)camera.setViewOffset(m.w,m.h,-m.covered*.5,0,m.w,m.h);
-  else camera.updateProjectionMatrix();
-  if(window.__MODULAR_FACTORY_DIAG__)window.__MODULAR_FACTORY_DIAG__.safeViewport={covered:Math.round(m.covered),safeW:Math.round(m.safeW),w:m.w,h:m.h};
+  camera.aspect=vw/vh;
+  camera.updateProjectionMatrix();
+  renderer.setViewport(x,0,vw,vh);
+  renderer.setScissor(x,0,vw,vh);
+  renderer.setScissorTest(true);
+  if(window.__MODULAR_FACTORY_DIAG__)window.__MODULAR_FACTORY_DIAG__.safeViewport={covered:x,safeW:vw,w:m.w,h:m.h};
   return m;
 }
 function fitDistance(size){
@@ -243,7 +255,156 @@ function play(name){
   const clip=THREE.AnimationClip.findByName(actor.userData.clips,name);if(!clip)return false;
   mixer.stopAllAction();mixer.clipAction(clip).reset().fadeIn(.1).play();window.__MODULAR_FACTORY_DIAG__.lastClip=name;return true;
 }
-window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null};
+
+const cleanSourceMaterials=new Map();
+let designMode='clean',avianPieces=[],avianReady=false;
+
+function rememberBaseMaterials(){
+  actor?.traverse(o=>{
+    if(!(o.isMesh||o.isSkinnedMesh)||cleanSourceMaterials.has(o.uuid))return;
+    const mats=Array.isArray(o.material)?o.material:[o.material];
+    cleanSourceMaterials.set(o.uuid,mats.map(m=>m.clone()));
+  });
+}
+function restoreRawMaterials(){
+  actor?.traverse(o=>{
+    const src=cleanSourceMaterials.get(o.uuid);if(!src)return;
+    o.material=Array.isArray(o.material)?src.map(m=>m.clone()):src[0].clone();
+  });
+}
+function cleanMatFor(nodeName,src){
+  const m=src.clone();m.map=null;m.emissiveMap=null;m.metalness=0;m.roughness=.82;
+  const n=nodeName.toLowerCase(),mn=(m.name||'').toLowerCase();
+  if(n.includes('eye'))m.color.setHex(0x243047);
+  else if(n.includes('brow'))m.color.setHex(0x5a4033);
+  else if(n.includes('loin')){m.color.setHex(0x2a3040);m.roughness=.94}
+  else if(n.includes('mouth')&&mn.includes('tooth'))m.color.setHex(0xf3eadb);
+  else if(n.includes('mouth')&&(mn.includes('mouth')||mn.includes('line'))){m.color.setHex(0x4b3132);m.roughness=.9}
+  else m.color.setHex(0xd8ab8f);
+  if(m.emissive)m.emissive.setHex(0x000000);m.needsUpdate=true;return m;
+}
+function applyCleanMaterials(){
+  restoreRawMaterials();
+  for(const core of CORE){
+    for(const root of partNodes(core)){
+      root.traverse(o=>{
+        if(!(o.isMesh||o.isSkinnedMesh))return;
+        const mats=Array.isArray(o.material)?o.material:[o.material];
+        const next=mats.map(m=>cleanMatFor(core,m));
+        o.material=Array.isArray(o.material)?next:next[0];
+      });
+    }
+  }
+}
+function findBone(re){
+  let hit=null;actor?.traverse(o=>{if(!hit&&o.isBone&&re.test(o.name))hit=o});return hit;
+}
+function addAvian(parent,obj){
+  if(!parent||!obj)return null;parent.add(obj);avianPieces.push(obj);obj.visible=false;return obj;
+}
+function mat(hex,opts={}){
+  return new THREE.MeshStandardMaterial({color:hex,roughness:opts.roughness??.66,metalness:opts.metalness??.06,flatShading:true,emissive:opts.emissive??0x000000,emissiveIntensity:opts.emissiveIntensity??0});
+}
+function headMetrics(){
+  const b=new THREE.Box3();for(const n of partNodes('M_Head'))b.expandByObject(n,true);
+  const c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);return {b,c,s};
+}
+function torsoMetrics(){
+  const b=new THREE.Box3();for(const n of partNodes('M_Torso'))b.expandByObject(n,true);
+  const c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);return {b,c,s};
+}
+function buildAvianPrototype(){
+  if(avianReady||!actor)return;
+  actor.updateWorldMatrix(true,true);
+  const headBone=findBone(/^head$/i)||findBone(/head/i);
+  const chestBone=findBone(/^chest$/i)||findBone(/chest|spine/i);
+  const hipsBone=findBone(/^hips$/i)||findBone(/hip|pelvis/i);
+  const right=resolveNode(actor,'handslot.r'),left=resolveNode(actor,'handslot.l');
+  if(!headBone||!chestBone||!hipsBone||!right||!left)return;
+
+  const hm=headMetrics(),tm=torsoMetrics();
+  const hc=headBone.worldToLocal(hm.c.clone()),tc=chestBone.worldToLocal(tm.c.clone());
+
+  // Original HIGHFLY avian hood: faceted shell, split crest, amber wedge beak, violet eye fins.
+  const hood=new THREE.Group();hood.name='HF_Avian_Head';
+  hood.position.copy(hc);
+  const shell=new THREE.Mesh(new THREE.IcosahedronGeometry(1,2),mat(0x3e8edb,{roughness:.72}));
+  shell.scale.set(hm.s.x*.62,hm.s.y*.62,Math.max(hm.s.z*.62,hm.s.x*.55));hood.add(shell);
+  const browMat=mat(0xd7ecff,{roughness:.6});
+  const eyeMat=mat(0x6f1d8c,{roughness:.32,emissive:0x300030,emissiveIntensity:.55});
+  for(const side of [-1,1]){
+    const brow=new THREE.Mesh(new THREE.ConeGeometry(hm.s.x*.115,hm.s.x*.34,3),browMat);
+    brow.rotation.set(Math.PI/2,0,side*.48);brow.position.set(side*hm.s.x*.20,hm.s.y*.06,hm.s.z*.48);hood.add(brow);
+    const eye=new THREE.Mesh(new THREE.OctahedronGeometry(hm.s.x*.075,0),eyeMat);
+    eye.scale.set(1.05,.72,.36);eye.position.set(side*hm.s.x*.19,-hm.s.y*.015,hm.s.z*.55);hood.add(eye);
+  }
+  const beak=new THREE.Mesh(new THREE.ConeGeometry(hm.s.x*.22,hm.s.z*.72,4),mat(0xf0ad35,{roughness:.74}));
+  beak.rotation.x=Math.PI/2;beak.position.set(0,-hm.s.y*.07,hm.s.z*.72);hood.add(beak);
+  const crestMat=mat(0x69bdf0,{roughness:.76});
+  [-.16,0,.16].forEach((x,i)=>{
+    const spike=new THREE.Mesh(new THREE.ConeGeometry(hm.s.x*(.085+i*.012),hm.s.y*(.34+i*.06),4),crestMat);
+    spike.position.set(hm.s.x*x,hm.s.y*(.54+i*.045),-hm.s.z*.02);spike.rotation.z=x*.9;hood.add(spike);
+  });
+  addAvian(headBone,hood);
+
+  // Asymmetric chest straps / hunter harness, deliberately not Sunraku's pattern.
+  const harness=new THREE.Group();harness.name='HF_Avian_Chest';harness.position.copy(tc);
+  const strapMat=mat(0x23273a,{roughness:.94});
+  for(const zrot of [-.58,.58]){
+    const strap=new THREE.Mesh(new THREE.BoxGeometry(tm.s.x*.12,tm.s.y*.92,tm.s.z*.20),strapMat);
+    strap.rotation.z=zrot;strap.position.z=tm.s.z*.34;harness.add(strap);
+  }
+  const clasp=new THREE.Mesh(new THREE.OctahedronGeometry(tm.s.x*.10,0),mat(0x7a3fd1,{metalness:.28,roughness:.38}));
+  clasp.position.set(0,-tm.s.y*.02,tm.s.z*.47);harness.add(clasp);
+  addAvian(chestBone,harness);
+
+  // Feathered waist: short, mobile, original split-tail silhouette.
+  const hipsWorld=hipsBone.getWorldPosition(new THREE.Vector3()),hipsLocal=hipsBone.worldToLocal(hipsWorld.clone());
+  const skirt=new THREE.Group();skirt.name='HF_Avian_Legs';skirt.position.copy(hipsLocal);skirt.position.y-=tm.s.y*.34;
+  const featherColors=[0x355f9e,0x446fb1,0x5c7fcc,0x7a3fd1,0x263b66];
+  for(let i=0;i<9;i++){
+    const a=(i/9)*Math.PI*2;
+    const feather=new THREE.Mesh(new THREE.ConeGeometry(tm.s.x*.095,tm.s.y*.42,3),mat(featherColors[i%featherColors.length],{roughness:.9}));
+    feather.position.set(Math.cos(a)*tm.s.x*.31,-tm.s.y*.11,Math.sin(a)*tm.s.z*.42);
+    feather.rotation.z=Math.sin(a)*.38;feather.rotation.x=Math.cos(a)*.22;skirt.add(feather);
+  }
+  const sash=new THREE.Mesh(new THREE.BoxGeometry(tm.s.x*.62,tm.s.y*.08,tm.s.z*.62),mat(0x9b343e,{roughness:.88}));
+  skirt.add(sash);addAvian(hipsBone,skirt);
+
+  // Dual crystalline hunter daggers attached to the real hand sockets.
+  const buildDagger=(side)=>{
+    const g=new THREE.Group();g.name=side<0?'HF_Avian_Dagger_L':'HF_Avian_Dagger_R';
+    const handle=new THREE.Mesh(new THREE.CylinderGeometry(.035,.04,.26,6),mat(0x351e2d,{roughness:.92}));handle.position.y=.12;g.add(handle);
+    const guard=new THREE.Mesh(new THREE.BoxGeometry(.22,.045,.07),mat(0x7a3fd1,{metalness:.35,roughness:.36}));guard.position.y=.27;g.add(guard);
+    const blade=new THREE.Mesh(new THREE.ConeGeometry(.105,.62,4),mat(0x55d9df,{metalness:.22,roughness:.28,emissive:0x0b5660,emissiveIntensity:.75}));
+    blade.position.y=.59;blade.rotation.y=Math.PI/4;g.add(blade);
+    g.rotation.z=side<0?.18:-.18;return g;
+  };
+  addAvian(right,buildDagger(1));addAvian(left,buildDagger(-1));
+  avianReady=true;
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{avianReady:true,avianPieces:avianPieces.length});
+}
+function setAvianVisible(on){
+  avianPieces.forEach(o=>o.visible=on);
+  // Hood replaces the visible face/head only in prototype mode.
+  ['M_Head',...FACE].forEach(n=>setPartVisible(n,!on));
+}
+function setDesignMode(mode){
+  if(!actor)return;
+  designMode=mode;
+  document.getElementById('rawBtn').classList.toggle('active',mode==='raw');
+  document.getElementById('cleanBtn').classList.toggle('active',mode==='clean');
+  document.getElementById('avianBtn').classList.toggle('active',mode==='avian');
+  setAvianVisible(false);
+  if(mode==='raw')restoreRawMaterials();
+  else{
+    applyCleanMaterials();
+    if(mode==='avian'){buildAvianPrototype();setAvianVisible(true)}
+  }
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{designMode:mode,cleanReady:true,avianReady});
+  updateDiag();frameVisible();
+}
+window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null,designMode:'clean',cleanReady:false,avianReady:false,avianPieces:0};
 
 const ktx2=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/libs/basis/').detectSupport(renderer);
 const loader=new GLTFLoader();loader.setKTX2Loader(ktx2);loader.setMeshoptDecoder(MeshoptDecoder);
@@ -251,7 +412,9 @@ loader.load(MODEL,g=>{
   try{
     actor=g.scene;actor.userData.clips=g.animations||[];scene.add(actor);
     actor.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){meshByName.set(o.name,o);o.castShadow=true;o.receiveShadow=true;o.visible=false}});
+    rememberBaseMaterials();
     setBaseVisibility();
+    applyCleanMaterials();
     const rig=resolveNode(actor,'Rig_Medium'),right=resolveNode(actor,'handslot.r'),left=resolveNode(actor,'handslot.l');
     if(!rig||!right||!left)throw new Error('Rig_Medium o sockets faltantes');
     addSocketHelper(right,'Socket_R',0x69f0ae);addSocketHelper(left,'Socket_L',0x8b5cf6);
@@ -259,7 +422,10 @@ loader.load(MODEL,g=>{
     mixer=new THREE.AnimationMixer(actor);
     const select=document.getElementById('animSelect');actor.userData.clips.forEach(c=>{const op=document.createElement('option');op.value=c.name;op.textContent=c.name;select.appendChild(op)});
     select.value=actor.userData.clips.some(c=>c.name==='Idle')?'Idle':actor.userData.clips[0]?.name||'';play(select.value);
-    Object.assign(window.__MODULAR_FACTORY_DIAG__,{ready:true,rig:true,rightSocket:true,leftSocket:true,rightSocketRuntime:right.name,leftSocketRuntime:left.name,clips:actor.userData.clips.length});
+    buildAvianPrototype();
+    setAvianVisible(false);
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{ready:true,rig:true,rightSocket:true,leftSocket:true,rightSocketRuntime:right.name,leftSocketRuntime:left.name,clips:actor.userData.clips.length,cleanReady:true,avianReady,avianPieces:avianPieces.length,designMode:'clean'});
+    window.__MODULAR_FACTORY_API__={setDesignMode,frameVisible,fixedView};
     pill('rigPill',true,'Rig_Medium ✓');pill('socketPill',true,'handslot L/R ✓');pill('clipPill',actor.userData.clips.length===22,actor.userData.clips.length+' clips ✓');
     frameVisible();updateDiag();
   }catch(err){throw err}
@@ -268,6 +434,9 @@ loader.load(MODEL,g=>{
   const e=document.getElementById('error');e.style.display='block';e.textContent='Carga fallida: '+(err?.message||err);
 });
 
+document.getElementById('rawBtn').onclick=()=>setDesignMode('raw');
+document.getElementById('cleanBtn').onclick=()=>setDesignMode('clean');
+document.getElementById('avianBtn').onclick=()=>setDesignMode('avian');
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>fixedView(b.dataset.view));
 document.getElementById('freeBtn').onclick=()=>{document.getElementById('freeBtn').classList.add('active')};
 document.getElementById('bonesBtn').onclick=e=>{if(!skeleton)return;skeleton.visible=!skeleton.visible;e.currentTarget.classList.toggle('active',skeleton.visible)};
@@ -320,9 +489,15 @@ function syncFullscreen(){
 document.addEventListener('fullscreenchange',syncFullscreen);
 
 const clock=new THREE.Clock();
-function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);applySafeProjection()}
-addEventListener('resize',resize);resize();
-function loop(){requestAnimationFrame(loop);const dt=Math.min(.05,clock.getDelta());mixer?.update(dt);if(actor&&autoRotate)actor.rotation.y+=dt*.28;controls.update();renderer.render(scene,camera)}loop();
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setScissorTest(false);renderer.setSize(w,h,false);applySafeProjection();if(actor)frameVisible()}
+addEventListener('resize',resize);visualViewport?.addEventListener?.('resize',resize);resize();
+function loop(){
+  requestAnimationFrame(loop);
+  const dt=Math.min(.05,clock.getDelta());mixer?.update(dt);if(actor&&autoRotate)actor.rotation.y+=dt*.28;controls.update();
+  const w=stage.clientWidth,h=stage.clientHeight;
+  renderer.setScissorTest(false);renderer.setViewport(0,0,w,h);renderer.clear();
+  applySafeProjection();renderer.render(scene,camera);
+}loop();
 </script>
 </body>
 </html>
