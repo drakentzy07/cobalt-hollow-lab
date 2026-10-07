@@ -41,7 +41,10 @@ jobs:
           curl -fsSL "$URL" -o /tmp/warrior_modular.glb
           test "$(stat -c%s /tmp/warrior_modular.glb)" = "3477500"
           test "$(git hash-object /tmp/warrior_modular.glb)" = "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2"
-          echo "warrior_modular.glb identity: GREEN"
+          mkdir -p skinlab-v2/assets
+          cp /tmp/warrior_modular.glb skinlab-v2/assets/warrior_modular.glb
+          test -s skinlab-v2/assets/warrior_modular.glb
+          echo "warrior_modular.glb identity + same-origin fixture: GREEN"
 
       - name: Browser gate
         shell: bash
