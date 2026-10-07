@@ -2362,6 +2362,42 @@ jobs:
             throw new Error('J4: creator preview has no real visible surface: ' + JSON.stringify(previewSurface));
           }
 
+          const creatorHudLeaks = await page.evaluate(() => {
+            const visible = (selector) =>
+              Array.from(document.querySelectorAll(selector)).some((node) => {
+                if (!(node instanceof HTMLElement)) return false;
+                const style = getComputedStyle(node);
+                const rect = node.getBoundingClientRect();
+                return (
+                  style.display !== 'none' &&
+                  style.visibility !== 'hidden' &&
+                  Number(style.opacity || '1') > 0.01 &&
+                  rect.width > 1 &&
+                  rect.height > 1
+                );
+              });
+            return {
+              worldReady: document.body.classList.contains('hf-c25-world-ready'),
+              actionbar: visible('#actionbar .action-btn[data-hotbar-slot]'),
+              specials: visible('#hf-c1-special-seats button'),
+              utility: visible('#hf-c1-utility-lane > *'),
+              attack: visible('#mobile-action-attack'),
+              target: visible('#mobile-target-cycle'),
+              movement: visible('#mobile-move-zone'),
+            };
+          });
+          if (
+            creatorHudLeaks.worldReady ||
+            creatorHudLeaks.actionbar ||
+            creatorHudLeaks.specials ||
+            creatorHudLeaks.utility ||
+            creatorHudLeaks.attack ||
+            creatorHudLeaks.target ||
+            creatorHudLeaks.movement
+          ) {
+            throw new Error('C2.7: HUD leaked over creator: ' + JSON.stringify(creatorHudLeaks));
+          }
+
           await page.evaluate(() => document.querySelector('#btn-start-offline')?.click());
           await page
             .locator('#mobile-preflight-continue')
@@ -2379,6 +2415,45 @@ jobs:
           if (!loadingVisible) {
             throw new Error('J4: real world-loading surface was never visible');
           }
+
+          const loadingHudLeaks = await page.evaluate(() => {
+            const visible = (selector) =>
+              Array.from(document.querySelectorAll(selector)).some((node) => {
+                if (!(node instanceof HTMLElement)) return false;
+                const style = getComputedStyle(node);
+                const rect = node.getBoundingClientRect();
+                return (
+                  style.display !== 'none' &&
+                  style.visibility !== 'hidden' &&
+                  Number(style.opacity || '1') > 0.01 &&
+                  rect.width > 1 &&
+                  rect.height > 1
+                );
+              });
+            return {
+              worldReady: document.body.classList.contains('hf-c25-world-ready'),
+              pregame: document.body.classList.contains('hf-c27-pregame'),
+              actionbar: visible('#actionbar .action-btn[data-hotbar-slot]'),
+              specials: visible('#hf-c1-special-seats button'),
+              utility: visible('#hf-c1-utility-lane > *'),
+              attack: visible('#mobile-action-attack'),
+              target: visible('#mobile-target-cycle'),
+              movement: visible('#mobile-move-zone'),
+            };
+          });
+          if (
+            loadingHudLeaks.worldReady ||
+            !loadingHudLeaks.pregame ||
+            loadingHudLeaks.actionbar ||
+            loadingHudLeaks.specials ||
+            loadingHudLeaks.utility ||
+            loadingHudLeaks.attack ||
+            loadingHudLeaks.target ||
+            loadingHudLeaks.movement
+          ) {
+            throw new Error('C2.7: HUD leaked over loading: ' + JSON.stringify(loadingHudLeaks));
+          }
+
           const loadingVisual = await page.evaluate(() => {
             const screen = document.querySelector('#loading-screen');
             const logo = document.querySelector('#loading-screen .ls-logo');
@@ -2403,6 +2478,9 @@ jobs:
           if (!loadingVisual) throw new Error('J4: loading surface missing');
           if (!loadingVisual.background?.includes('highfly-loading.avif')) {
             throw new Error('RUN117: original HIGHFLY loading artwork is not the effective loading background: ' + loadingVisual.background);
+          }
+          if (!loadingVisual.background?.includes('eastbrook-square')) {
+            throw new Error('C2.7: warm loading fallback art missing under dynamic backdrop: ' + loadingVisual.background);
           }
           if (!loadingVisual.src?.endsWith('/highfly/highfly-logo-full.webp')) {
             throw new Error('J4: loading HIGHFLY logo source mismatch: ' + loadingVisual.src);
@@ -2566,6 +2644,32 @@ jobs:
           if (!['ATK', 'USAR'].includes(c1Hud.attackMode ?? '')) {
             throw new Error('C1: contextual ATK/USAR state missing: ' + c1Hud.attackMode);
           }
+
+          // C2.7 HUMAN gate: use the real touch path. The More tray's first tile
+          // must say Ajustes, open native Options, never the native action-bar editor,
+          // and expose Interfaz > Frames > EDITAR HUD MÓVIL.
+          await page.locator('#mobile-menu-anchor').click({ force: true });
+          await page.locator('#mobile-more').waitFor({ state: 'visible', timeout: 10000 });
+          await page.locator('#mobile-more').click({ force: true });
+          await page.locator('#mobile-extra-controls').waitFor({ state: 'visible', timeout: 10000 });
+          const settingsLabel = await page.locator('#mobile-bar-editor .mobile-label').textContent();
+          if ((settingsLabel ?? '').trim().toLocaleUpperCase('es') !== 'AJUSTES') {
+            throw new Error('C2.7: More first tile is not AJUSTES: ' + settingsLabel);
+          }
+          await page.locator('#mobile-bar-editor').click({ force: true });
+          await page.locator('#options-menu').waitFor({ state: 'visible', timeout: 10000 });
+          const barEditorVisible = await page.locator('#bar-editor').isVisible().catch(() => false);
+          if (barEditorVisible) throw new Error('C2.7: Ajustes still opened native bar editor');
+
+          const interfaceButton = page.locator('#options-menu .opt-btn[data-menu-action="interface"]');
+          await interfaceButton.waitFor({ state: 'visible', timeout: 10000 });
+          await interfaceButton.click({ force: true });
+          const tabs = page.locator('#options-menu .opt-tab');
+          if ((await tabs.count()) < 2) throw new Error('C2.7: Options Interfaz tabs missing');
+          await tabs.nth(1).click({ force: true });
+          await page.getByRole('button', { name: 'EDITAR HUD MÓVIL', exact: true })
+            .waitFor({ state: 'visible', timeout: 10000 });
+          await page.evaluate(() => window.__game?.hud?.toggleOptionsMenu?.());
 
           // Training is intentionally inside the large HIGHFLY More menu, so it
           // must be hidden at world boot. Exercise the real user path instead of
