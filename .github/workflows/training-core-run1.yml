@@ -3,19 +3,7 @@ name: HIGHFLY TRAINING CORE RUN1-J
 on:
   push:
     branches:
-      - highfly-training-run1j
-      - highfly-progression-foundation-1-99
-      - highfly-game-c1-character-combat-hud
-      - highfly-game-c2-mobile-feel
-      - highfly-game-c2-1-s23-feedback
-      - highfly-game-c2-2-mobile-polish
-      - highfly-game-c2-3-human-fix
-      - highfly-game-c2-4-human-closure
-      - highfly-game-c2-5-hud-target-polish
-      - highfly-game-c2-5-1-hud-visual-fix
-      - highfly-game-c2-6-hud-editor-menu
-      - highfly-game-c2-7-human-red-repair
-      - highfly-game-c2-8-mobile-hud-editor
+      - highfly-main-clean-v1
   workflow_dispatch:
 
 permissions:
@@ -3052,7 +3040,7 @@ jobs:
 
   deploy-game-c2:
     name: Deploy HIGHFLY GAME-C2 Mobile Feel
-    if: github.ref_name == 'highfly-game-c2-8-mobile-hud-editor'
+    if: ${{ false }} # CLEAN V1 equivalence only; public Pages remains frozen C2.8.2
     needs: thin-offline
     runs-on: ubuntu-latest
     timeout-minutes: 30
