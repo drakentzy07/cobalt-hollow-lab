@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - highfly-main-clean-v1
+      - highfly-clean-v1-direct-validation
   workflow_dispatch:
 
 permissions:
@@ -88,149 +89,44 @@ jobs:
           grep -F "export function abilityImageUrl" src/ui/icons.ts
           echo "CLAUDECRAFT_ORIGINAL_SKILLS_OK=1"
 
-      - name: Apply lab overlay patches
+      - name: Apply persisted HIGHFLY CLEAN V1 canonical patch (no historical overlays)
         working-directory: upstream
         shell: bash
         run: |
           set -euo pipefail
-          git apply --check ../overlays/pages-media-base.patch
-          git apply --check ../overlays/cobalt-offline-gate.patch
-          git apply ../overlays/pages-media-base.patch
-          git apply ../overlays/cobalt-offline-gate.patch
-          python ../overlays/highfly_mobile_360.py
-          python ../overlays/highfly_mobile_analog.py
-          python ../overlays/verify_highfly_8way.py
-          python ../overlays/highfly_offline_save.py
-          python ../overlays/highfly_entry_es.py
-          python ../overlays/highfly_mobile_creator.py
-          python ../overlays/highfly_offline_resume_preview.py
-          python ../overlays/highfly_mobile_polish.py
-          python ../overlays/highfly_advanced_mobility.py
-          python ../overlays/highfly_run09_mobile_actions.py
-          python ../overlays/highfly_run091_ui_polish.py
-          python ../overlays/highfly_run092_hud_comfort.py
-          python ../overlays/highfly_run093_preview_hud.py
-          python ../overlays/highfly_run093_combat.py
-          python ../overlays/highfly_training_core_v1.py
-          python ../overlays/highfly_training_persistence_v1.py
-          python ../overlays/highfly_training_ui_v1.py
-          python ../overlays/highfly_training_e2e_v1.py
-          python ../overlays/highfly_training_run1i_ui.py
-          python ../overlays/highfly_run1j_branding.py
-          python ../overlays/highfly_run1j_spanish.py
-          python ../overlays/highfly_run1j_j4_brandfix.py
-          python ../overlays/highfly_run1j_j3a_flags.py
-          python ../overlays/highfly_run1j_j3b_native_bridge.py
-          python ../overlays/highfly_run1j_real_device_fix.py
-          python ../overlays/highfly_run1j_foundation_close.py
-          python ../overlays/highfly_run1j_final_polish.py
-          python ../overlays/highfly_run1j_visual_release.py
-          python ../overlays/highfly_run115_visuals.py
-          python ../overlays/highfly_run119_foundation_authority.py
-          python ../overlays/highfly_run120_closure.py
-          python ../overlays/highfly_run122_training_lock.py
-          python ../overlays/highfly_run129_real_training.py
-          python ../overlays/highfly_run137_training_intelligence.py
-          python ../overlays/highfly_progression_pf5_stat_authority.py
-          python ../overlays/highfly_game_c1.py
-          python ../overlays/highfly_game_c21_s23_feedback.py
-          python ../overlays/highfly_game_c22_mobile_polish.py
-          python ../overlays/highfly_game_c23_human_fix.py
-          python ../overlays/highfly_game_c24_human_closure.py
-          python ../overlays/highfly_game_c25_hud_target_polish.py
-          python ../overlays/highfly_game_c27_human_red_repair.py
-          python ../overlays/highfly_game_c28_mobile_hud_editor.py
-          cp ../game/c1/highfly_game_c1.test.ts tests/highfly_game_c1.test.ts
-          cp ../game/c1/highfly_game_c21.test.ts tests/highfly_game_c21.test.ts
-          cp ../game/c1/highfly_game_c22.test.ts tests/highfly_game_c22.test.ts
-          cp ../game/c1/highfly_game_c23.test.ts tests/highfly_game_c23.test.ts
-          cp ../game/c1/highfly_game_c24.test.ts tests/highfly_game_c24.test.ts
-          cp ../game/c1/highfly_game_c25.test.ts tests/highfly_game_c25.test.ts
-          cp ../game/c1/highfly_game_c251.test.ts tests/highfly_game_c251.test.ts
-          cp ../game/c1/highfly_game_c26.test.ts tests/highfly_game_c26.test.ts
-          cp ../game/c1/highfly_game_c27.test.ts tests/highfly_game_c27.test.ts
-          cp ../game/c1/highfly_game_c28.test.ts tests/highfly_game_c28.test.ts
-          python ../overlays/rewrite_source_public_paths.py
-          python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
-          git diff --check
-          git diff -- src/render/assets/media.ts src/game/offline_mode_gate.ts src/game/input.ts src/game/mobile_controls.ts src/main.ts src/ui/icons.ts src/ui/class_icon_art.ts src/ui/chrome_icon_art.ts vite.config.ts
-          grep -F "HIGHFLY RUN0.5 analog locomotion" src/main.ts
-          grep -F "/cobalt-hollow-lab/ui/skills" src/ui/icons.ts
-          grep -F "/cobalt-hollow-lab/ui/classes" src/ui/class_icon_art.ts
-          grep -F "/cobalt-hollow-lab/ui/chrome" src/ui/chrome_icon_art.ts
-          grep -F "mapHighflyJoystickVector" src/game/mobile_controls.ts
-          grep -F "isHighflyMobileCameraDecoupled" src/game/input.ts
-          grep -F "const localRight = highflyMove.x;" src/main.ts
-          grep -F "facing = desired;" src/main.ts
-          grep -F "HIGHFLY action locomotion owns the whole body" src/main.ts
-          grep -F "return !movementFrozen() ? baseFacing : null;" src/main.ts
-          grep -F "HIGHFLY_OFFLINE_SAVE_APPLIED=1" <(python -c "print('HIGHFLY_OFFLINE_SAVE_APPLIED=1')")
-          grep -F "loadHighflyOfflineSave" src/main.ts
-          grep -F "serializeCharacter(sim.playerId)" src/main.ts
-          test -f src/game/highfly_offline_save.ts
-          grep -F "identitySlotKey" src/game/highfly_offline_save.ts
-          grep -F "store.put(save, identitySlotKey(save.playerClass, save.name));" src/game/highfly_offline_save.ts
-          grep -F "loadHighflyOfflineSave(playerClass, name)" src/main.ts
-          grep -F "let currentLanguage: SupportedLanguage = 'es_ES';" src/ui/i18n.ts
-          grep -F "let serverMode: ServerMode = 'offline';" src/main.ts
-          grep -F "height: clamp(180px, 42vh, 240px);" src/styles/shell.css
-          grep -F "recoverHighflyOfflinePreview" src/main.ts
-          grep -F "characterPreview.armOpen();" src/main.ts
-          grep -F "overflow-x: hidden !important;" src/styles/shell.css
-          grep -F "selectHighflyOfflineClass" src/main.ts
-          grep -F "offlineNameInput.value = saved?.name ?? '';" src/main.ts
-          grep -F '"start_url": "/cobalt-hollow-lab/"' public/manifest.webmanifest
-          grep -F '"scope": "/cobalt-hollow-lab/"' public/manifest.webmanifest
-          grep -F "HIGHFLY RUN0.8.1" src/styles/shell.css
-          grep -F "direction: ltr !important;" src/styles/shell.css
-          grep -F "position: fixed !important;" src/styles/shell.css
-          grep -F "this.camYaw -= dx * dragSens;" src/game/input.ts
-          grep -F "handleOfflineSelect();" src/main.ts
-          grep -F "HIGHFLY double jump" src/sim/player_motion.ts
-          grep -F "highflyEvadeSeq?: number;" src/sim/types.ts
-          grep -F "triggerHighflyEvade" src/game/input.ts
-          grep -F "HIGHFLY_EVADE_SPEED" src/sim/player_motion.ts
-          grep -F "id=\"mobile-evade\"" index.html
-          grep -F "tapMenus: () => true" src/ui/hud/menu/menu_control_controller.ts
-          grep -F "this.camPitch + this.touchPitchSign * dy * dragSens" src/game/input.ts
-          grep -F "HIGHFLY RUN0.9" src/styles/hud.mobile.css
-          grep -F "HIGHFLY RUN0.9.1" src/styles/hud.mobile.css
-          grep -F 'id="mobile-training"' index.html
-          grep -F 'id="highfly-training-window"' index.html
-          grep -F "this.bindButton('mobile-menu-anchor'" src/game/mobile_controls.ts
-          grep -F "canvas.parentElement !== container" src/main.ts
-          grep -F "HIGHFLY RUN0.9.2 — HUD COMFORT POLISH" src/styles/hud.mobile.css
-          grep -F "transform: scale(calc(0.82 * var(--mobile-chrome-scale, 1)));" src/styles/hud.mobile.css
-          grep -F "bottom: calc(38px + env(safe-area-inset-bottom));" src/styles/hud.mobile.css
-          grep -F "Passive (when available) | Evade | Jump | Skill 1 | Use | Attack." src/styles/hud.mobile.css
-          grep -F "HIGHFLY RUN0.9.3 — PHASE 0 PREVIEW + HUD" src/styles/hud.mobile.css
-          grep -F "bestSoftAutoTarget" src/game/auto_target.ts
-          grep -F "highflyBasicAttack" src/sim/combat/auto_attack.ts
-          grep -F "highflyComboExpiresAt = now + 1.15" src/ui/hud.ts
-          grep -F "extendHighflyComboForEvade(): void" src/ui/hud.ts
-          grep -F "if (this.highflyComboEvadeGraceUsed) return;" src/ui/hud.ts
-          grep -F "highfly_basic_3: 'Warrior_Reaping_Arc'" src/render/characters/manifest.ts
-          grep -F "HIGHFLY RUN1-J VISUAL RELEASE" src/styles/shell.website.css
-          grep -F "HIGHFLY RUN1-J VISUAL RELEASE" src/styles/shell.css
-          grep -F "MUNDO LOCAL · PROGRESO PERSISTENTE" index.html
-          grep -F ">ENTRAR AL MUNDO</span>" index.html
+          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          test -s ../clean/canonical/HIGHFLY_CLEAN_V1.patch
+          expected="$(cut -d ' ' -f1 ../clean/canonical/source-sha256.txt)"
+          actual="$(sha256sum ../clean/canonical/HIGHFLY_CLEAN_V1.patch | cut -d ' ' -f1)"
+          test "$actual" = "$expected"
+          test "$actual" = "b78ba81e52b10b2ddba7c6fa829d436f59ad4594ec2a0d0d5f0341ce26773cb9"
+          git apply --check ../clean/canonical/HIGHFLY_CLEAN_V1.patch
+          git apply --binary ../clean/canonical/HIGHFLY_CLEAN_V1.patch
+          git diff --check HEAD
+          test -f src/main.ts
+          test -f src/highfly/game_c1_runtime.ts
+          test -f tests/highfly_game_c28.test.ts
+          echo "CLEAN_V1_DIRECT_SOURCE_APPLIED=1"
 
-      - name: Capture CLEAN V1 canonical source delta (non-mutating gameplay)
+      - name: Verify direct CLEAN source exactly reproduces archived canonical delta
         working-directory: upstream
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p ../clean-v1-evidence
-          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
-          # Intent-to-add includes new source files in the diff without changing their contents.
           git add --sparse --intent-to-add --all
           git diff --binary HEAD > ../clean-v1-evidence/highfly-clean-v1.patch
           test -s ../clean-v1-evidence/highfly-clean-v1.patch
+          cmp -s ../clean-v1-evidence/highfly-clean-v1.patch ../clean/canonical/HIGHFLY_CLEAN_V1.patch || {
+            echo "::error::Direct source differs from archived canonical patch"
+            exit 1
+          }
           git diff --check HEAD
           git diff --name-status HEAD > ../clean-v1-evidence/changed-paths.txt
-          sha256sum ../clean-v1-evidence/highfly-clean-v1.patch > ../clean-v1-evidence/sha256.txt
-          printf 'UPSTREAM=%s\\nCLEAN_HEAD=%s\\n' "$(git rev-parse HEAD)" "$GITHUB_SHA" > ../clean-v1-evidence/provenance.txt
-          echo "CLEAN_V1_CANONICAL_DELTA_CAPTURED=1"
+          cmp -s ../clean-v1-evidence/changed-paths.txt ../clean/canonical/changed-paths.txt
+          cp ../clean/canonical/source-sha256.txt ../clean-v1-evidence/sha256.txt
+          cp ../clean/canonical/provenance.txt ../clean-v1-evidence/provenance.txt
+          echo "CLEAN_V1_DIRECT_CANONICAL_DELTA_EXACT=1"
 
       - name: Checkout frozen ClaudeCraft replay slice
         uses: actions/checkout@v4
