@@ -31,6 +31,9 @@ jobs:
           grep -F "Rig_Medium" skinlab-v2/modular-factory.html
           grep -F "handslot.r" skinlab-v2/modular-factory.html
           grep -F "handslot.l" skinlab-v2/modular-factory.html
+          grep -F "CLEAN MANNEQUIN" skinlab-v2/modular-factory.html
+          grep -F "HF AVIAN v0" skinlab-v2/modular-factory.html
+          grep -F "setDesignMode" skinlab-v2/modular-factory.html
           echo "MODULAR FACTORY static contract: GREEN"
 
       - name: Verify frozen ClaudeCraft GLB identity
@@ -70,6 +73,13 @@ jobs:
             if(!d.rig||!d.rightSocket||!d.leftSocket)throw new Error('Rig/socket gate failed '+JSON.stringify(d));
             if(d.clips!==22)throw new Error('Expected 22 clips '+JSON.stringify(d));
             if(d.missingCore.length||d.visibleCount!==15||d.armorVisible!==0)throw new Error('Male base visibility gate failed '+JSON.stringify(d));
+            if(!d.cleanReady||!d.avianReady||d.avianPieces<4||d.designMode!=='clean')throw new Error('Design modes gate failed '+JSON.stringify(d));
+            await page.click('#avianBtn');await page.waitForTimeout(250);
+            const avian=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
+            if(avian.designMode!=='avian'||!avian.avianReady||avian.avianPieces<4)throw new Error('HF AVIAN v0 activation failed '+JSON.stringify(avian));
+            await page.click('#cleanBtn');await page.waitForTimeout(200);
+            const clean=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
+            if(clean.designMode!=='clean')throw new Error('CLEAN mannequin restore failed '+JSON.stringify(clean));
             await page.click('[data-view="front"]');await page.waitForTimeout(200);
             await page.click('[data-view="profile"]');await page.waitForTimeout(200);
             await page.click('[data-view="back"]');await page.waitForTimeout(200);
@@ -89,11 +99,18 @@ jobs:
                 canvasW:canvas?.width||0,
                 canvasH:canvas?.height||0,
                 fullVisible:full instanceof HTMLElement && getComputedStyle(full).display!=='none' && full.getBoundingClientRect().width>0,
-                uiVisible:ui instanceof HTMLElement && getComputedStyle(ui).display!=='none' && ui.getBoundingClientRect().width>0
+                uiVisible:ui instanceof HTMLElement && getComputedStyle(ui).display!=='none' && ui.getBoundingClientRect().width>0,
+                safe:window.__MODULAR_FACTORY_DIAG__?.safeViewport||null
               };
             });
-            if(!mobile.fullVisible||!mobile.uiVisible||mobile.panelW>330||mobile.canvasW<800||mobile.canvasH<320){
-              throw new Error('S23 landscape/fullscreen UI gate failed '+JSON.stringify(mobile));
+            if(!mobile.fullVisible||!mobile.uiVisible||mobile.panelW>330||mobile.canvasW<800||mobile.canvasH<320||
+               !mobile.safe||mobile.safe.covered<200||mobile.safe.safeW>=mobile.safe.w){
+              throw new Error('S23 landscape/usable viewport gate failed '+JSON.stringify(mobile));
+            }
+            await page.click('#uiToggleBtn');await page.waitForTimeout(260);
+            const expanded=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__?.safeViewport);
+            if(!expanded||expanded.covered!==0||Math.abs(expanded.safeW-expanded.w)>2){
+              throw new Error('S23 full-canvas expansion failed '+JSON.stringify(expanded));
             }
             if(errors.length)throw new Error(errors.join(' | '));
             console.log('MODULAR FACTORY browser gate: GREEN');
