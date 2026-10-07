@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HIGHFLY · SKIN LAB v2 — MODULAR FACTORY</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;--bg:#07070a;--panel:#101018;--line:#30303d;--txt:#f5f5f7;--muted:#a1a1b2;--violet:#8b5cf6;--ok:#91e6ad}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--txt)}
+#app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 15px;border-bottom:1px solid #252531;background:rgba(8,8,12,.95);z-index:5}
+.brand{display:flex;gap:10px;align-items:center;min-width:0}.mark{width:11px;height:30px;border-radius:8px;background:linear-gradient(#a78bfa,#4c1d95);box-shadow:0 0 25px #7c3aed88}
+h1{font-size:14px;letter-spacing:.11em;margin:0}.sub{font-size:10px;color:var(--muted);margin-top:3px}
+.nav{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.pill,.nav a{font-size:10px;padding:6px 9px;border:1px solid var(--line);border-radius:999px;background:#13131b;color:#c8c8d4;text-decoration:none}.pill.ok{color:var(--ok);border-color:#315d45}
+main{position:relative;min-height:0}#stage{position:absolute;inset:0}
+.panel{position:absolute;left:14px;top:14px;width:min(430px,calc(100vw - 28px));max-height:calc(100% - 28px);overflow:auto;padding:13px;border:1px solid #2b2b36;border-radius:16px;background:rgba(10,10,15,.91);backdrop-filter:blur(14px);box-shadow:0 18px 60px #0008;z-index:3}
+.panel h2{font-size:11px;letter-spacing:.12em;margin:0 0 9px;color:#dedee8}.group{border-top:1px solid #292936;padding-top:11px;margin-top:11px}
+.row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px}button,select{border:1px solid #373744;background:#16161f;color:#eee;border-radius:10px;padding:8px 10px;font:inherit;font-size:11px;cursor:pointer}
+button:hover{background:#1d1d29}button.active{border-color:var(--violet);background:#291b45;box-shadow:0 0 20px #7c3aed33}
+.slotgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.slot{display:flex;justify-content:space-between;align-items:center;border:1px solid #30303c;background:#12121a;border-radius:10px;padding:8px 9px;font-size:10px}.slot input{accent-color:var(--violet)}
+.note,.diag{font-size:10px;line-height:1.42;color:var(--muted)}.diag{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}
+.badge{display:inline-block;margin-left:5px;font-size:8px;padding:2px 5px;border-radius:999px;border:1px solid #3b3b49;color:#999}
+.footer{position:absolute;right:14px;bottom:14px;padding:9px 12px;border:1px solid #2b2b36;border-radius:12px;background:rgba(10,10,15,.78);font-size:10px;color:#aaa}
+#error{display:none;position:absolute;left:14px;right:14px;bottom:14px;background:#3a1016;border:1px solid #7f1d1d;color:#fecaca;padding:10px;border-radius:12px;z-index:9;font-size:11px}
+@media(max-width:760px){header{align-items:flex-start}.nav .pill{display:none}.panel{top:auto;bottom:10px;max-height:52vh}.footer{display:none}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="app">
+<header>
+  <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2 — MODULAR FACTORY</h1><div class="sub">MANIQUÍ OFICIAL · MALE BASE REAL · warrior_modular.glb</div></div></div>
+  <div class="nav">
+    <a href="./">← SKIN LAB v2</a>
+    <span class="pill" id="rigPill">Rig_Medium …</span>
+    <span class="pill" id="socketPill">sockets …</span>
+    <span class="pill" id="clipPill">clips …</span>
+  </div>
+</header>
+<main>
+<div id="stage"></div>
+<section class="panel">
+  <h2>MALE BASE REAL <span class="badge">NO ARMOR</span></h2>
+  <div class="note">Fuente congelada ClaudeCraft · blob <b>e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2</b> · 3.477.500 bytes. Sólo cuerpo M_* + M_Loin + una cara.</div>
+  <div class="group">
+    <h2>VISTAS</h2>
+    <div class="row">
+      <button data-view="front">FRENTE</button><button data-view="profile">PERFIL</button><button data-view="back">ESPALDA</button><button data-view="three">3/4</button><button id="freeBtn" class="active">LIBRE</button>
+    </div>
+  </div>
+  <div class="group">
+    <h2>INSPECCIÓN</h2>
+    <div class="row"><button id="bonesBtn">HUESOS</button><button id="socketsBtn">SOCKETS</button><button id="spinBtn">ROTACIÓN</button><button id="resetBtn">RESET</button></div>
+  </div>
+  <div class="group">
+    <h2>SLOTS BASE</h2>
+    <div class="slotgrid">
+      <label class="slot">HEAD <input data-slot="Head" type="checkbox" checked></label>
+      <label class="slot">CHEST <input data-slot="Chest" type="checkbox" checked></label>
+      <label class="slot">ARMS <input data-slot="Arms" type="checkbox" checked></label>
+      <label class="slot">HANDS <input data-slot="Hands" type="checkbox" checked></label>
+      <label class="slot">LEGS <input data-slot="Legs" type="checkbox" checked></label>
+      <label class="slot">FEET <input data-slot="Feet" type="checkbox" checked></label>
+      <label class="slot">BACK <input data-slot="Back" type="checkbox" checked></label>
+    </div>
+  </div>
+  <div class="group">
+    <h2>ANIMACIÓN ORIGINAL</h2>
+    <div class="row"><select id="animSelect"></select><button id="playBtn">REPLAY</button></div>
+  </div>
+  <div class="group">
+    <h2>DIAGNÓSTICO</h2>
+    <div id="diag" class="diag">Cargando warrior_modular.glb real…</div>
+  </div>
+</section>
+<div class="footer">Arrastrar: rotación libre · rueda/pinch: zoom · sin retarget · sin gameplay changes</div>
+<div id="error"></div>
+</main>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const UPSTREAM='9b57e49c9676d75962700f828cc00a50a9a988b5';
+const MODEL='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/'+UPSTREAM+'/public/models/chars/modular/warrior_modular.glb';
+const SOURCE_BLOB='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2';
+const SOURCE_BYTES=3477500;
+const FACE=['M_Ear_round','M_Eye_almond','M_Brow_soft','M_Mouth_neutral'];
+const CORE=['M_Head','M_Torso','M_ArmL','M_ArmR','M_HandL','M_HandR','M_LegL','M_LegR','M_FootL','M_FootR','M_Loin',...FACE];
+const SLOT_MAP={
+  Head:['M_Head',...FACE],
+  Chest:['M_Torso'],
+  Arms:['M_ArmL','M_ArmR'],
+  Hands:['M_HandL','M_HandR'],
+  Legs:['M_LegL','M_LegR','M_Loin'],
+  Feet:['M_FootL','M_FootR'],
+  Back:[]
+};
+
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.12;
+stage.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x080910);
+const pmrem=new THREE.PMREMGenerator(renderer);
+scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;pmrem.dispose();
+scene.add(new THREE.HemisphereLight(0xdde3ff,0x171522,1.75));
+const key=new THREE.DirectionalLight(0xffffff,3.3);key.position.set(4,7,5);scene.add(key);
+const rim=new THREE.DirectionalLight(0x8b5cf6,3.2);rim.position.set(-4,3,-4);scene.add(rim);
+const floor=new THREE.Mesh(new THREE.CircleGeometry(4.5,96),new THREE.MeshStandardMaterial({color:0x0b0c12,roughness:.92}));
+floor.rotation.x=-Math.PI/2;scene.add(floor);
+
+const camera=new THREE.PerspectiveCamera(35,1,.01,100);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.minDistance=1.6;controls.maxDistance=8;
+let actor=null,mixer=null,skeleton=null,socketHelpers=[],autoRotate=false;
+const meshByName=new Map();
+
+function runtimeName(name){return name.replace(/[[\].:/]/g,'')}
+function resolveNode(root,name){return root.getObjectByName(name)||root.getObjectByName(runtimeName(name))||null}
+function visibleBox(){
+  const b=new THREE.Box3();let any=false;
+  actor?.traverse(o=>{if((o.isMesh||o.isSkinnedMesh)&&o.visible){b.expandByObject(o,true);any=true}});
+  if(!any)b.setFromCenterAndSize(new THREE.Vector3(0,1.2,0),new THREE.Vector3(1,2.4,1));
+  return b;
+}
+function frameVisible(){
+  if(!actor)return;
+  const b=visibleBox(),c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);
+  const d=Math.max(s.x,s.y,s.z,1)*1.65;controls.target.copy(c);camera.position.set(c.x+d*.8,c.y+d*.16,c.z+d*1.35);controls.update();
+}
+function fixedView(kind){
+  if(!actor)return;
+  const b=visibleBox(),c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);
+  const d=Math.max(s.x,s.y,s.z,1)*1.65;
+  const p={front:[c.x,c.y,c.z+d],profile:[c.x+d,c.y,c.z],back:[c.x,c.y,c.z-d],three:[c.x+d*.78,c.y+d*.12,c.z+d*.78]}[kind];
+  camera.position.set(...p);controls.target.copy(c);controls.update();document.getElementById('freeBtn').classList.remove('active');
+}
+function setBaseVisibility(){
+  if(!actor)return;
+  actor.traverse(o=>{if(o.isMesh||o.isSkinnedMesh)o.visible=false});
+  for(const [slot,names] of Object.entries(SLOT_MAP)){
+    const input=document.querySelector('[data-slot="'+slot+'"]');
+    if(!input?.checked)continue;
+    names.forEach(n=>{const o=meshByName.get(n);if(o)o.visible=true});
+  }
+  updateDiag();
+}
+function updateDiag(){
+  if(!actor)return;
+  const visible=[];let armorVisible=0;
+  actor.traverse(o=>{if((o.isMesh||o.isSkinnedMesh)&&o.visible){visible.push(o.name);if(o.name.startsWith('Armor_'))armorVisible++}});
+  const missing=CORE.filter(n=>!meshByName.has(n));
+  const diag=window.__MODULAR_FACTORY_DIAG__;
+  diag.visible=visible;diag.visibleCount=visible.length;diag.armorVisible=armorVisible;diag.missingCore=missing;
+  document.getElementById('diag').textContent=
+    'SOURCE '+SOURCE_BLOB.slice(0,8)+'…\n'+
+    'MALE CORE '+(missing.length?'MISSING '+missing.join(', '):'15/15 ✓')+'\n'+
+    'ARMOR VISIBLE '+armorVisible+'\n'+
+    'VISIBLE '+visible.join(', ');
+}
+function addSocketHelper(node,label,color){
+  const g=new THREE.Group();g.name='HF_'+label;const axes=new THREE.AxesHelper(.18);g.add(axes);
+  const dot=new THREE.Mesh(new THREE.SphereGeometry(.035,14,10),new THREE.MeshBasicMaterial({color}));g.add(dot);
+  node.add(g);g.visible=false;socketHelpers.push(g);return g;
+}
+function pill(id,ok,text){const el=document.getElementById(id);el.textContent=text;el.classList.toggle('ok',!!ok)}
+function play(name){
+  if(!mixer||!actor)return false;
+  const clip=THREE.AnimationClip.findByName(actor.userData.clips,name);if(!clip)return false;
+  mixer.stopAllAction();mixer.clipAction(clip).reset().fadeIn(.1).play();window.__MODULAR_FACTORY_DIAG__.lastClip=name;return true;
+}
+window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null};
+
+const ktx2=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/libs/basis/').detectSupport(renderer);
+const loader=new GLTFLoader();loader.setKTX2Loader(ktx2);loader.setMeshoptDecoder(MeshoptDecoder);
+loader.load(MODEL,g=>{
+  try{
+    actor=g.scene;actor.userData.clips=g.animations||[];scene.add(actor);
+    actor.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){meshByName.set(o.name,o);o.castShadow=true;o.receiveShadow=true;o.visible=false}});
+    setBaseVisibility();
+    const rig=resolveNode(actor,'Rig_Medium'),right=resolveNode(actor,'handslot.r'),left=resolveNode(actor,'handslot.l');
+    if(!rig||!right||!left)throw new Error('Rig_Medium o sockets faltantes');
+    addSocketHelper(right,'Socket_R',0x69f0ae);addSocketHelper(left,'Socket_L',0x8b5cf6);
+    skeleton=new THREE.SkeletonHelper(actor);skeleton.visible=false;scene.add(skeleton);
+    mixer=new THREE.AnimationMixer(actor);
+    const select=document.getElementById('animSelect');actor.userData.clips.forEach(c=>{const op=document.createElement('option');op.value=c.name;op.textContent=c.name;select.appendChild(op)});
+    select.value=actor.userData.clips.some(c=>c.name==='Idle')?'Idle':actor.userData.clips[0]?.name||'';play(select.value);
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{ready:true,rig:true,rightSocket:true,leftSocket:true,rightSocketRuntime:right.name,leftSocketRuntime:left.name,clips:actor.userData.clips.length});
+    pill('rigPill',true,'Rig_Medium ✓');pill('socketPill',true,'handslot L/R ✓');pill('clipPill',actor.userData.clips.length===22,actor.userData.clips.length+' clips ✓');
+    frameVisible();updateDiag();
+  }catch(err){throw err}
+},undefined,err=>{
+  console.error(err);window.__MODULAR_FACTORY_DIAG__.error=String(err?.message||err);
+  const e=document.getElementById('error');e.style.display='block';e.textContent='Carga fallida: '+(err?.message||err);
+});
+
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>fixedView(b.dataset.view));
+document.getElementById('freeBtn').onclick=()=>{document.getElementById('freeBtn').classList.add('active')};
+document.getElementById('bonesBtn').onclick=e=>{if(!skeleton)return;skeleton.visible=!skeleton.visible;e.currentTarget.classList.toggle('active',skeleton.visible)};
+document.getElementById('socketsBtn').onclick=e=>{const on=!socketHelpers[0]?.visible;socketHelpers.forEach(h=>h.visible=on);e.currentTarget.classList.toggle('active',on)};
+document.getElementById('spinBtn').onclick=e=>{autoRotate=!autoRotate;e.currentTarget.classList.toggle('active',autoRotate)};
+document.getElementById('resetBtn').onclick=()=>frameVisible();
+document.querySelectorAll('[data-slot]').forEach(i=>i.onchange=()=>{setBaseVisibility();frameVisible()});
+document.getElementById('animSelect').onchange=e=>play(e.target.value);
+document.getElementById('playBtn').onclick=()=>play(document.getElementById('animSelect').value);
+
+const clock=new THREE.Clock();
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix()}
+addEventListener('resize',resize);resize();
+function loop(){requestAnimationFrame(loop);const dt=Math.min(.05,clock.getDelta());mixer?.update(dt);if(actor&&autoRotate)actor.rotation.y+=dt*.28;controls.update();renderer.render(scene,camera)}loop();
+</script>
+</body>
+</html>
