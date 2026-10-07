@@ -329,10 +329,15 @@ function highflySurfaceVisible(id: string): boolean {
   const el = document.getElementById(id);
   if (!(el instanceof HTMLElement) || el.hidden) return false;
   const style = getComputedStyle(el);
+  const rects = el.getClientRects();
+  if (rects.length === 0) return false;
+  const rect = el.getBoundingClientRect();
   return (
     style.display !== 'none' &&
     style.visibility !== 'hidden' &&
-    Number(style.opacity || '1') > 0.01
+    Number(style.opacity || '1') > 0.01 &&
+    rect.width > 1 &&
+    rect.height > 1
   );
 }
 
