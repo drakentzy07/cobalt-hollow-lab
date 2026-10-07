@@ -18,7 +18,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Start Skin Lab
+      - name: Materialize frozen modular fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb"
+          mkdir -p skinlab-v2/assets
+          curl -fsSL "$URL" -o skinlab-v2/assets/warrior_modular.glb
+          test "$(stat -c%s skinlab-v2/assets/warrior_modular.glb)" = "3477500"
+          test "$(git hash-object skinlab-v2/assets/warrior_modular.glb)" = "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2"
+
+      - name: Start unified Skin Factory
         shell: bash
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/skinlab-http.log 2>&1 &
@@ -33,7 +43,7 @@ jobs:
           npm install playwright@1.55.0 --no-save
           npx playwright install --with-deps chromium
 
-      - name: Browser visual gate
+      - name: Unified factory visual gate
         shell: bash
         run: |
           mkdir -p visual-artifacts
@@ -43,149 +53,68 @@ jobs:
             const browser = await chromium.launch({headless:true,args:['--enable-unsafe-swiftshader']});
             const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
             const errors = [];
-            const warnings = [];
             page.on('pageerror', e => errors.push('pageerror: '+e.message));
-            page.on('console', m => {
-              if (m.type() === 'error') errors.push('console error: '+m.text());
-              if (m.type() === 'warning') warnings.push('console warning: '+m.text());
-            });
+            page.on('console', m => { if (m.type() === 'error') errors.push('console error: '+m.text()); });
             page.on('requestfailed', r => errors.push('requestfailed: '+r.url()+' :: '+(r.failure()?.errorText || 'unknown')));
 
-            await page.goto('http://127.0.0.1:4173/skinlab-v2/', {
-              waitUntil: 'domcontentloaded',
-              timeout: 120000
-            });
+            await page.goto('http://127.0.0.1:4173/skinlab-v2/', {waitUntil:'domcontentloaded',timeout:120000});
+            await page.waitForFunction(() => window.__SKIN_FACTORY_DIAG__?.ready || window.__SKIN_FACTORY_DIAG__?.error, null, {timeout:120000});
+            let d = await page.evaluate(() => window.__SKIN_FACTORY_DIAG__);
+            if(d.error) throw new Error(d.error);
+            if(!d.unifiedFactory || d.canonicalRoute!=='/skinlab-v2/') throw new Error('Unified route contract failed '+JSON.stringify(d));
+            if(d.sourceBlob!=='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2'||d.sourceBytes!==3477500) throw new Error('Source identity mismatch '+JSON.stringify(d));
+            if(!d.rig||!d.rightSocket||!d.leftSocket||d.clips!==22) throw new Error('Rig/socket/clip gate failed '+JSON.stringify(d));
+            if(!d.armorAnatomyReady||d.armorSetCount!==7||!d.molderReady||d.molderPhase!==2||!d.painterReady||d.painterVersion!==2)
+              throw new Error('Unified factory modules incomplete '+JSON.stringify(d));
+            await page.screenshot({path:'visual-artifacts/unified-boot.png',fullPage:true});
 
-            await page.screenshot({ path: 'visual-artifacts/boot.png', fullPage: true });
-            try {
-              await page.waitForFunction(() => window.__SKINLAB_DIAG__?.ready || window.__SKINLAB_DIAG__?.error, null, { timeout: 120000 });
-            } catch (waitErr) {
-              const statusText = await page.locator('body').innerText().catch(()=> '');
-              const diag = await page.evaluate(() => window.__SKINLAB_DIAG__ || null).catch(()=> null);
-              require('fs').writeFileSync('visual-artifacts/browser-errors.txt',
-                ['WAIT: '+waitErr.message,'DIAG: '+JSON.stringify(diag,null,2),'BODY: '+statusText,...errors,...warnings].join('\n\n'));
-              await page.screenshot({ path: 'visual-artifacts/failed-load.png', fullPage: true });
-              throw waitErr;
-            }
+            await page.click('#anatomyFullBtn'); await page.waitForTimeout(220);
+            d=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(d.anatomySet!=='knight'||d.anatomyMode!=='full'||d.anatomyParts.length<10) throw new Error('Knight donor full-set failed '+JSON.stringify(d));
 
-            const diag = await page.evaluate(() => window.__SKINLAB_DIAG__);
-            if (diag.error) throw new Error('Skin Lab boot error: '+diag.error);
-            if (!diag.rig) throw new Error('Rig_Medium gate missing');
-            if (!diag.rightSocket || diag.rightSocketRuntime !== 'handslotr') throw new Error('Right socket resolver mismatch: '+JSON.stringify(diag));
-            if (!diag.leftSocket || diag.leftSocketRuntime !== 'handslotl') throw new Error('Left socket resolver mismatch: '+JSON.stringify(diag));
-            if (!diag.swordAttached || !diag.shieldAttached) throw new Error('Held asset parent gate failed: '+JSON.stringify(diag));
-            if (diag.clips !== 25 || !diag.factoryReady) throw new Error('Factory animation set incomplete: '+JSON.stringify(diag));
-
-            await page.click('#baseBtn');
-            await page.waitForTimeout(500);
-            await page.screenshot({ path: 'visual-artifacts/warrior-base.png', fullPage: true });
-
-            await page.click('#blackBtn');
-            await page.waitForTimeout(1200);
-            const activeBlack = await page.locator('#blackBtn').evaluate(el => el.classList.contains('active'));
-            if (!activeBlack) throw new Error('WARRIOR BLACK did not activate');
-            const blackDiag = await page.evaluate(() => window.__SKINLAB_DIAG__);
-            if (blackDiag.mode !== 'black' ||
-                blackDiag.skinId !== 'warrior_black_aura_premium_v2' ||
-                blackDiag.finalAffectedMeshes < 6 ||
-                !blackDiag.painterReady ||
-                blackDiag.painterVersion !== 1 ||
-                blackDiag.painterPieces !== 5 ||
-                blackDiag.painterTextures !== 5 ||
-                blackDiag.rigidEdgeAccents !== 0 ||
-                blackDiag.rigidSilhouetteAccents < 2 ||
-                blackDiag.weaponPolishVersion !== 2 ||
-                blackDiag.weaponOutlineMode !== 'authored-bevel-selective-3d-rails' ||
-                !blackDiag.wireframeSuppressed ||
-                !blackDiag.autoPresetApplied ||
-                blackDiag.autoPresetId !== 'warrior_black_aura_premium_v2' ||
-                !blackDiag.helmetVisorFound ||
-                !blackDiag.helmetVisorPainted ||
-                !blackDiag.swordEmissiveTrim ||
-                !blackDiag.studioEnvironment ||
-                !blackDiag.premiumAuthoringReady ||
-                blackDiag.premiumAuthoringVersion !== 2 ||
-                blackDiag.premiumAuthoringMode !== 'geometry-uv-plus-selective-3d-rails' ||
-                blackDiag.swordBevelSegments < 1 ||
-                blackDiag.swordEdgeSegments < 1 ||
-                blackDiag.shieldTrimSegments < 1 ||
-                blackDiag.helmetTrimSegments < 1 ||
-                blackDiag.armorTrimSegments < 1 ||
-                blackDiag.heroSwordBevelRails < 1 ||
-                blackDiag.heroSwordEdgeRails < 1 ||
-                blackDiag.shieldPremiumRails < 1 ||
-                !blackDiag.premiumCosmeticFx)
-              throw new Error('AUTO BLACK AURA material gate failed: '+JSON.stringify(blackDiag));
-
-            // Exercise real Painter Pro controls. The result-first UI keeps the
-            // Painter collapsed by default, so the gate deliberately opens it.
-            await page.locator('#painterPanel').evaluate(el => { el.open = true; });
-            await page.selectOption('#pieceSelect','helmet');
-            await page.locator('#primaryColor').evaluate((el)=>{el.value='#05070d';el.dispatchEvent(new Event('input',{bubbles:true}));});
-            await page.locator('#secondaryColor').evaluate((el)=>{el.value='#f2f5ff';el.dispatchEvent(new Event('input',{bubbles:true}));});
-            await page.selectOption('#finishSelect','darkMetal');
-            await page.click('#applyPainterBtn');
-            await page.waitForTimeout(300);
-            let painterDiag=await page.evaluate(()=>window.__SKINLAB_DIAG__);
-            if(painterDiag.lastPainterPiece!=='helmet')throw new Error('Painter piece apply failed: '+JSON.stringify(painterDiag));
-
-            const brushOk=await page.evaluate(()=>window.__SKINLAB_API__.paintAt('sword',{x:.5,y:.5},'#ffffff',18,.8,true));
-            if(!brushOk)throw new Error('Direct UV brush engine failed');
-            painterDiag=await page.evaluate(()=>window.__SKINLAB_DIAG__);
-            if(painterDiag.brushOps<1)throw new Error('Brush operation was not recorded: '+JSON.stringify(painterDiag));
-            await page.screenshot({ path: 'visual-artifacts/painter-pro-v1.png', fullPage: true });
-            await page.screenshot({ path: 'visual-artifacts/warrior-black-auto-idle.png', fullPage: true });
-            await page.click('#autoAuraBtn');
-            await page.waitForTimeout(500);
-            const autoDiag=await page.evaluate(()=>window.__SKINLAB_DIAG__);
-            if(!autoDiag.autoPresetApplied || !autoDiag.helmetVisorPainted || !autoDiag.swordEmissiveTrim || !autoDiag.premiumAuthoringReady)
-              throw new Error('AUTO button did not reapply canonical premium skin: '+JSON.stringify(autoDiag));
-            await page.click('#authorBtn');
-            await page.waitForTimeout(450);
-            const authoredDiag=await page.evaluate(()=>window.__SKINLAB_DIAG__);
-            if(!authoredDiag.premiumAuthoringReady || authoredDiag.swordBevelSegments<1 || authoredDiag.swordEdgeSegments<1)
-              throw new Error('Premium authoring did not generate sword trims: '+JSON.stringify(authoredDiag));
-            await page.screenshot({ path:'visual-artifacts/black-aura-premium-v2.png', fullPage:true });
-
-            const keyClips=[
-              'Walking_A','Running_A','Running_Strafe_Left','Running_Strafe_Right','Walking_Backwards','Jump_Idle',
-              '1H_Melee_Attack_Chop','1H_Melee_Attack_Slice_Diagonal','1H_Melee_Attack_Slice_Horizontal',
-              'Block','Shield_Bash','Hit_A'
-            ];
-            for (const clip of keyClips) {
-              await page.selectOption('#animSelect', { label: clip });
-              await page.waitForTimeout(520);
-              await page.screenshot({
-                path:'visual-artifacts/'+clip.replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'.png',
-                fullPage:true
-              });
-            }
-
-            // Exercise every authored clip, not only the showcase set.
-            const allClips=await page.evaluate(()=>window.__SKINLAB_CLIPS__ || []);
-            if(allClips.length!==25)throw new Error('Expected 25 authored clips, got '+allClips.length);
-            for(const clip of allClips){
-              await page.selectOption('#animSelect',{label:clip});
-              await page.waitForTimeout(120);
-            }
-            await page.selectOption('#animSelect',{label:'Idle'});
+            await page.selectOption('#moldSlotSelect','chest');
+            await page.click('[data-anatomy-slot="chest"]');
+            await page.locator('#moldWidth').evaluate(el=>{el.value='22';el.dispatchEvent(new Event('input',{bubbles:true}))});
+            await page.locator('#moldCrown').evaluate(el=>{el.value='14';el.dispatchEvent(new Event('input',{bubbles:true}))});
+            await page.locator('#moldFront').evaluate(el=>{el.value='12';el.dispatchEvent(new Event('input',{bubbles:true}))});
             await page.waitForTimeout(250);
+            d=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(d.molderSlot!=='chest'||d.molderChangedVertices<1||!d.molderSkinPreserved||d.molderMeshCount<1)
+              throw new Error('Phase2 chest molder failed '+JSON.stringify(d));
+            await page.screenshot({path:'visual-artifacts/chest-molder.png',fullPage:true});
 
-            const visibleError = await page.locator('#error').evaluate(el => getComputedStyle(el).display !== 'none');
-            if (visibleError) throw new Error('Skin Lab error panel became visible');
+            await page.selectOption('#paintScopeSelect','full');
+            await page.click('#paintRavenBtn'); await page.waitForTimeout(250);
+            d=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(d.painterPreset!=='raven'||d.painterMeshes<1||d.painterMaterials<1)
+              throw new Error('Raven donor painter failed '+JSON.stringify(d));
+            await page.screenshot({path:'visual-artifacts/raven-painter.png',fullPage:true});
 
-            if (warnings.length) require('fs').writeFileSync('visual-artifacts/browser-warnings.txt', warnings.join('\n'));
-            if (errors.length) {
-              require('fs').writeFileSync('visual-artifacts/browser-errors.txt', errors.join('\n'));
-              throw new Error(errors.join(' | '));
-            }
+            await page.selectOption('#animSelect','Walking_A'); await page.waitForTimeout(350);
+            await page.selectOption('#animSelect','Idle'); await page.waitForTimeout(250);
 
-            require('fs').writeFileSync(
-              'visual-artifacts/visual-gate.txt',
-              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nPAINTER PRO v1.1 READY\nAUTO BLACK AURA default preset OK\nHelmet visor painted by helmet role OK\nStudio metal environment OK\nSword black-body + clean emissive cutting trim OK\nShield solid-body + restrained silver rim OK\nWeapon wireframe suppressed OK\nPREMIUM AUTHORING v2 geometry-UV + selective 3D rails OK\nHERO SWORD gunmetal bevel + silver cutting rails OK\nShield premium rim rails OK\nHelmet/armor/shield structural trims OK\nSubtle violet cosmetic aura OK\n5 independent paint pieces OK\nPalette + finish controls OK\nDirect UV brush engine OK\nPreset recipe pipeline OK\n25/25 authored clips exercised OK\n'
-            );
+            await page.setViewportSize({width:915,height:412}); await page.waitForTimeout(220);
+            const mobile=await page.evaluate(()=>{
+              const panel=document.querySelector('.panel')?.getBoundingClientRect();
+              const canvas=document.querySelector('#stage canvas')?.getBoundingClientRect();
+              return {panelW:panel?.width||0,canvasW:canvas?.width||0,canvasH:canvas?.height||0,safe:window.__SKIN_FACTORY_DIAG__?.safeViewport||null};
+            });
+            if(mobile.panelW>330||mobile.canvasW<520||mobile.canvasH<320||!mobile.safe||mobile.safe.stageOffset<200)
+              throw new Error('S23 unified usable-stage failed '+JSON.stringify(mobile));
+            const beforeW=mobile.safe.w;
+            await page.click('#uiToggleBtn'); await page.waitForTimeout(300);
+            const expanded=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__?.safeViewport);
+            if(!expanded||expanded.stageOffset!==0||expanded.w<=beforeW+150)
+              throw new Error('S23 unified expansion failed '+JSON.stringify({beforeW,expanded}));
+
+            const visibleError=await page.locator('#error').evaluate(el=>getComputedStyle(el).display!=='none');
+            if(visibleError) throw new Error('Error panel became visible');
+            if(errors.length) throw new Error(errors.join(' | '));
+
+            require('fs').writeFileSync('visual-artifacts/visual-gate.txt',
+              'GREEN\nUNIFIED /skinlab-v2/ READY\n7 DONOR SETS READY\nARMOR ANATOMY READY\nMOLDER PHASE 2 CHEST VERIFIED\nSKIN WEIGHTS PRESERVED\nPAINTER V2 RAVEN VERIFIED\n22 CLIPS READY\nS23 PHYSICAL STAGE VERIFIED\n');
             await browser.close();
-          })().catch(err => { console.error(err); process.exit(1); });
+          })().catch(err=>{console.error(err);process.exit(1)});
           NODE
           node skinlab-visual.cjs
 
@@ -193,6 +122,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: skinlab-v2-warrior-black-visual-proof
+          name: skinlab-v2-unified-factory-visual-proof
           path: visual-artifacts/
           if-no-files-found: warn
