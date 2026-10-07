@@ -62,7 +62,7 @@ body.fullscreen-lab #app{grid-template-rows:1fr}body.fullscreen-lab header{displ
     <div class="row">
       <button id="rawBtn">RAW</button>
       <button id="cleanBtn" class="active">CLEAN MANNEQUIN</button>
-      <button id="avianBtn">⚡ HF AVIAN v0</button>
+      <button id="avianBtn">⚡ HF AVIAN v1</button>
     </div>
     <div class="note">RAW = fuente intacta · CLEAN = maniquí de trabajo · HF AVIAN = prototipo original HIGHFLY sobre el rig real.</div>
   </div>
@@ -114,7 +114,7 @@ const UPSTREAM='9b57e49c9676d75962700f828cc00a50a9a988b5';
 const MODEL='./assets/warrior_modular.glb';
 const SOURCE_BLOB='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2';
 const SOURCE_BYTES=3477500;
-const DESIGN_REV='clean-manikin+hf-avian-v0-p1';
+const DESIGN_REV='clean-manikin+hf-avian-v1-blockout-p1';
 const FACE=['M_Ear_round','M_Eye_almond','M_Brow_soft','M_Mouth_neutral'];
 const CORE=['M_Head','M_Torso','M_ArmL','M_ArmR','M_HandL','M_HandR','M_LegL','M_LegR','M_FootL','M_FootR','M_Loin',...FACE];
 const SLOT_MAP={
@@ -160,27 +160,33 @@ function visibleBox(){
   if(!any)b.setFromCenterAndSize(new THREE.Vector3(0,1.2,0),new THREE.Vector3(1,2.4,1));
   return b;
 }
-function safeViewportMetrics(){
-  const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
-  let covered=0;
-  const p=document.querySelector('.panel');
-  if(p && !p.classList.contains('ui-hidden') && getComputedStyle(p).display!=='none'){
-    const sr=stage.getBoundingClientRect(),pr=p.getBoundingClientRect();
-    covered=Math.max(0,Math.min(sr.right,pr.right)-Math.max(sr.left,pr.left));
-    covered=Math.min(covered,w*.48);
+function mobileLandscapeLab(){return matchMedia('(orientation: landscape) and (max-height: 600px)').matches}
+function syncStageSafeArea(){
+  const main=document.querySelector('main'),p=document.querySelector('.panel');
+  let left=0;
+  if(mobileLandscapeLab()&&main&&p&&!p.classList.contains('ui-hidden')&&getComputedStyle(p).display!=='none'){
+    const mr=main.getBoundingClientRect(),pr=p.getBoundingClientRect();
+    left=Math.max(0,pr.right-mr.left+8);
+    left=Math.min(left,mr.width*.46);
   }
-  return {w,h,covered,safeW:Math.max(1,w-covered)};
+  stage.style.left=Math.round(left)+'px';
+  stage.style.right='0px';
+  if(window.__MODULAR_FACTORY_DIAG__)window.__MODULAR_FACTORY_DIAG__.mobileStageOffset=Math.round(left);
+  return left;
+}
+function safeViewportMetrics(){
+  const stageOffset=syncStageSafeArea();
+  const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
+  return {w,h,covered:0,safeW:w,stageOffset};
 }
 function applySafeProjection(){
   const m=safeViewportMetrics();
-  const x=Math.round(m.covered),vw=Math.max(1,Math.round(m.safeW)),vh=Math.max(1,Math.round(m.h));
   camera.clearViewOffset();
-  camera.aspect=vw/vh;
+  camera.aspect=m.w/m.h;
   camera.updateProjectionMatrix();
-  renderer.setViewport(x,0,vw,vh);
-  renderer.setScissor(x,0,vw,vh);
-  renderer.setScissorTest(true);
-  if(window.__MODULAR_FACTORY_DIAG__)window.__MODULAR_FACTORY_DIAG__.safeViewport={covered:x,safeW:vw,w:m.w,h:m.h};
+  renderer.setScissorTest(false);
+  renderer.setViewport(0,0,m.w,m.h);
+  if(window.__MODULAR_FACTORY_DIAG__)window.__MODULAR_FACTORY_DIAG__.safeViewport={covered:0,safeW:m.w,w:m.w,h:m.h,stageOffset:Math.round(m.stageOffset)};
   return m;
 }
 function fitDistance(size){
@@ -372,6 +378,70 @@ function buildAvianPrototype(){
   const sash=new THREE.Mesh(new THREE.BoxGeometry(tm.s.x*.62,tm.s.y*.08,tm.s.z*.62),mat(0x9b343e,{roughness:.88}));
   skirt.add(sash);addAvian(hipsBone,skirt);
 
+  // v1 complete blockout: bracers, claw-hand plates, shin wraps, talon boots and back feathers.
+  const armR=findBone(/^upper_arm\.r$/i),armL=findBone(/^upper_arm\.l$/i);
+  const handR=findBone(/^hand\.r$/i),handL=findBone(/^hand\.l$/i);
+  const shinR=findBone(/^lowerleg\.r$/i),shinL=findBone(/^lowerleg\.l$/i);
+  const footR=findBone(/^foot\.r$/i),footL=findBone(/^foot\.l$/i);
+  const cyanMat=mat(0x4ebfd5,{roughness:.48,metalness:.18});
+  const navyMat=mat(0x20283b,{roughness:.92});
+  const violetMat=mat(0x7240b8,{roughness:.58,metalness:.16});
+
+  const buildBracer=(side)=>{
+    const g=new THREE.Group();g.name=side<0?'HF_Avian_Arm_L':'HF_Avian_Arm_R';
+    const cuff=new THREE.Mesh(new THREE.CylinderGeometry(tm.s.x*.085,tm.s.x*.10,tm.s.y*.24,6),navyMat.clone());
+    cuff.rotation.z=Math.PI/2;g.add(cuff);
+    const fin=new THREE.Mesh(new THREE.ConeGeometry(tm.s.x*.07,tm.s.y*.24,3),cyanMat.clone());
+    fin.position.set(0,0,-tm.s.z*.15);fin.rotation.x=-.25;g.add(fin);
+    return g;
+  };
+  if(armR)addAvian(armR,buildBracer(1));
+  if(armL)addAvian(armL,buildBracer(-1));
+
+  const buildHandPlate=(side)=>{
+    const g=new THREE.Group();g.name=side<0?'HF_Avian_Hand_L':'HF_Avian_Hand_R';
+    const plate=new THREE.Mesh(new THREE.BoxGeometry(tm.s.x*.18,tm.s.y*.075,tm.s.z*.20),violetMat.clone());
+    plate.position.z=tm.s.z*.08;g.add(plate);
+    const claw=new THREE.Mesh(new THREE.ConeGeometry(tm.s.x*.045,tm.s.z*.28,3),cyanMat.clone());
+    claw.rotation.x=Math.PI/2;claw.position.set(side*tm.s.x*.04,0,tm.s.z*.20);g.add(claw);
+    return g;
+  };
+  if(handR)addAvian(handR,buildHandPlate(1));
+  if(handL)addAvian(handL,buildHandPlate(-1));
+
+  const buildShin=(side)=>{
+    const g=new THREE.Group();g.name=side<0?'HF_Avian_Leg_L':'HF_Avian_Leg_R';
+    const wrap=new THREE.Mesh(new THREE.CylinderGeometry(tm.s.x*.09,tm.s.x*.105,tm.s.y*.30,6),navyMat.clone());
+    g.add(wrap);
+    for(let i=0;i<2;i++){
+      const band=new THREE.Mesh(new THREE.TorusGeometry(tm.s.x*.10,tm.s.x*.018,4,8),violetMat.clone());
+      band.rotation.x=Math.PI/2;band.position.y=(i?1:-1)*tm.s.y*.09;g.add(band);
+    }
+    return g;
+  };
+  if(shinR)addAvian(shinR,buildShin(1));
+  if(shinL)addAvian(shinL,buildShin(-1));
+
+  const buildFoot=(side)=>{
+    const g=new THREE.Group();g.name=side<0?'HF_Avian_Foot_L':'HF_Avian_Foot_R';
+    const boot=new THREE.Mesh(new THREE.BoxGeometry(tm.s.x*.22,tm.s.y*.11,tm.s.z*.32),navyMat.clone());
+    boot.position.z=tm.s.z*.06;g.add(boot);
+    const talon=new THREE.Mesh(new THREE.ConeGeometry(tm.s.x*.055,tm.s.z*.26,3),cyanMat.clone());
+    talon.rotation.x=Math.PI/2;talon.position.set(side*tm.s.x*.03,-tm.s.y*.01,tm.s.z*.25);g.add(talon);
+    return g;
+  };
+  if(footR)addAvian(footR,buildFoot(1));
+  if(footL)addAvian(footL,buildFoot(-1));
+
+  const back=new THREE.Group();back.name='HF_Avian_Back';back.position.copy(tc);
+  back.position.z-=tm.s.z*.42;back.position.y+=tm.s.y*.08;
+  for(let i=-2;i<=2;i++){
+    const feather=new THREE.Mesh(new THREE.ConeGeometry(tm.s.x*.075,tm.s.y*(.38-Math.abs(i)*.035),3),mat(i===0?0x7240b8:0x355f9e,{roughness:.86}));
+    feather.position.set(i*tm.s.x*.11,-Math.abs(i)*tm.s.y*.035,0);
+    feather.rotation.z=-i*.12;feather.rotation.x=Math.PI;back.add(feather);
+  }
+  addAvian(chestBone,back);
+
   // Dual crystalline hunter daggers attached to the real hand sockets.
   const buildDagger=(side)=>{
     const g=new THREE.Group();g.name=side<0?'HF_Avian_Dagger_L':'HF_Avian_Dagger_R';
@@ -383,7 +453,15 @@ function buildAvianPrototype(){
   };
   addAvian(right,buildDagger(1));addAvian(left,buildDagger(-1));
   avianReady=true;
-  Object.assign(window.__MODULAR_FACTORY_DIAG__,{avianReady:true,avianPieces:avianPieces.length});
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{
+    avianReady:true,
+    avianPieces:avianPieces.length,
+    avianVersion:1,
+    avianSlots:{
+      head:!!headBone,chest:!!chestBone,arms:!!(armR&&armL),hands:!!(handR&&handL),
+      legs:!!(shinR&&shinL),feet:!!(footR&&footL),back:true,weapons:!!(right&&left)
+    }
+  });
 }
 function setAvianVisible(on){
   avianPieces.forEach(o=>o.visible=on);
@@ -490,14 +568,13 @@ function syncFullscreen(){
 document.addEventListener('fullscreenchange',syncFullscreen);
 
 const clock=new THREE.Clock();
-function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setScissorTest(false);renderer.setSize(w,h,false);applySafeProjection();if(actor)frameVisible()}
-addEventListener('resize',resize);visualViewport?.addEventListener?.('resize',resize);resize();
+function resize(){syncStageSafeArea();const w=stage.clientWidth,h=stage.clientHeight;renderer.setScissorTest(false);renderer.setSize(w,h,false);applySafeProjection();if(actor)frameVisible()}
+addEventListener('resize',resize);visualViewport?.addEventListener?.('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,120));resize();
 function loop(){
   requestAnimationFrame(loop);
   const dt=Math.min(.05,clock.getDelta());mixer?.update(dt);if(actor&&autoRotate)actor.rotation.y+=dt*.28;controls.update();
-  const w=stage.clientWidth,h=stage.clientHeight;
-  renderer.setScissorTest(false);renderer.setViewport(0,0,w,h);renderer.clear();
-  applySafeProjection();renderer.render(scene,camera);
+  renderer.setScissorTest(false);renderer.setViewport(0,0,stage.clientWidth,stage.clientHeight);renderer.clear();
+  renderer.render(scene,camera);
 }loop();
 </script>
 </body>
