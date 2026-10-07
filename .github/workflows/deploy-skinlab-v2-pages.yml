@@ -1,8 +1,8 @@
 name: HIGHFLY Skin Lab v2 — Pages Ownership Guard
 
-# GitHub Pages is owned by the canonical GAME-C2 workflow.
+# GitHub Pages root is owned only by the current canonical GAME-C2.8 workflow.
 # Skin Lab pushes are validated by the contract + visual browser workflows only.
-# To publish a new Skin Lab revision, refresh the canonical GAME-C2 deployment,
+# To publish a new Skin Lab revision, refresh the canonical GAME-C2.8 deployment,
 # which always copies highfly-skinlab-v2-warrior-black/skinlab-v2 into dist.
 
 on:
@@ -24,5 +24,5 @@ jobs:
           set -euo pipefail
           test -s skinlab-v2/index.html
           grep -F "HIGHFLY · SKIN LAB v2" skinlab-v2/index.html
-          echo "PAGES_OWNER=highfly-game-c2-2-mobile-polish"
+          echo "PAGES_OWNER=highfly-game-c2-8-mobile-hud-editor"
           echo "SKINLAB_DIRECT_DEPLOY=disabled"
