@@ -266,6 +266,41 @@ ring.rotation.x=-Math.PI/2; ring.position.y=.006; scene.add(ring);
 
 let actor=null,mixer=null,skeletonHelper=null,autoRotate=false,currentMode='base';
 const armorNames=new Set(['Knight_ArmLeft','Knight_ArmRight','Knight_Body','Knight_Cape','Knight_Helmet','Knight_LegLeft','Knight_LegRight']);
+function effectiveVisible(o){let p=o;while(p){if(p.visible===false)return false;p=p.parent}return true}
+function actorVisibleBox(){
+  const b=new THREE.Box3();let any=false;
+  actor?.traverse(o=>{if((o.isMesh||o.isSkinnedMesh)&&effectiveVisible(o)){b.expandByObject(o,true);any=true}});
+  if(!any)b.setFromCenterAndSize(new THREE.Vector3(0,1.1,0),new THREE.Vector3(1,2.2,1));
+  return b;
+}
+function safeViewportMetrics(){
+  const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
+  let covered=0;
+  const p=document.querySelector('.panel');
+  if(p && !p.classList.contains('ui-hidden') && getComputedStyle(p).display!=='none'){
+    const sr=stage.getBoundingClientRect(),pr=p.getBoundingClientRect();
+    covered=Math.max(0,Math.min(sr.right,pr.right)-Math.max(sr.left,pr.left));
+    covered=Math.min(covered,w*.48);
+  }
+  return {w,h,covered,safeW:Math.max(1,w-covered)};
+}
+function applySafeProjection(){
+  const m=safeViewportMetrics();
+  camera.aspect=m.w/m.h;
+  camera.clearViewOffset();
+  if(m.covered>1)camera.setViewOffset(m.w,m.h,-m.covered*.5,0,m.w,m.h);
+  else camera.updateProjectionMatrix();
+  if(window.__SKINLAB_DIAG__)window.__SKINLAB_DIAG__.safeViewport={covered:Math.round(m.covered),safeW:Math.round(m.safeW),w:m.w,h:m.h};
+  return m;
+}
+function fitActor(){
+  if(!actor)return;
+  const b=actorVisibleBox(),center=new THREE.Vector3(),size=new THREE.Vector3();b.getCenter(center);b.getSize(size);
+  const m=safeViewportMetrics(),vfov=THREE.MathUtils.degToRad(camera.fov),hfov=2*Math.atan(Math.tan(vfov*.5)*(m.safeW/m.h));
+  const dy=(size.y*.5)/Math.tan(vfov*.5),dx=(Math.max(size.x,size.z)*.62)/Math.max(.05,Math.tan(hfov*.5));
+  const d=Math.max(dy,dx,1)*1.28,dir=new THREE.Vector3(.66,.10,1).normalize();
+  controls.target.copy(center);camera.position.copy(center).add(dir.multiplyScalar(d));applySafeProjection();controls.update();
+}
 const originalMat=new Map();
 
 function cloneMaterialTree(root,group='body'){
@@ -1084,6 +1119,7 @@ async function boot(){
     window.__SKINLAB_API__={setMode,playClip,runFactoryTest,stopFactoryTest,applyPainterPiece,paintAt:paintUvInternal,setBrushEnabled,copyPainterRecipe,applyAutoBlackAura,applyPremiumAuthoring};
     syncPainterUi();
     applyAutoBlackAura();
+    fitActor();
   }catch(err){
     console.error(err);
     window.__SKINLAB_DIAG__.error=String(err?.message||err);
@@ -1120,11 +1156,11 @@ loadPresetBtn.onclick=()=>loadPainterPreset();
 copyRecipeBtn.onclick=()=>copyPainterRecipe();
 bonesBtn.onclick=()=>{if(!skeletonHelper)return;skeletonHelper.visible=!skeletonHelper.visible;bonesBtn.classList.toggle('active',skeletonHelper.visible)};
 rotateBtn.onclick=()=>{autoRotate=!autoRotate;rotateBtn.classList.toggle('active',autoRotate)};
-resetBtn.onclick=()=>{camera.position.set(3.55,2.15,4.35);controls.target.set(0,1.15,0);controls.update()};
+resetBtn.onclick=()=>fitActor();
 const panelEl=document.querySelector('.panel');
 const uiToggleBtn=document.getElementById('uiToggleBtn');
 const fullscreenBtn=document.getElementById('fullscreenBtn');
-uiToggleBtn.onclick=()=>{panelEl.classList.toggle('ui-hidden');uiToggleBtn.classList.toggle('active',!panelEl.classList.contains('ui-hidden'))};
+uiToggleBtn.onclick=()=>{panelEl.classList.toggle('ui-hidden');uiToggleBtn.classList.toggle('active',!panelEl.classList.contains('ui-hidden'));setTimeout(resize,190)};
 let labFullscreen=false;
 async function toggleFullscreen(){
   if(!labFullscreen){
@@ -1163,7 +1199,7 @@ function syncFullscreen(){
 document.addEventListener('fullscreenchange',syncFullscreen);
 
 const clock=new THREE.Clock();
-function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);applySafeProjection()}
 addEventListener('resize',resize);resize();
 function frame(){
   requestAnimationFrame(frame);
