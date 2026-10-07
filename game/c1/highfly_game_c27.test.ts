@@ -66,10 +66,10 @@ describe('HIGHFLY GAME-C2.7 human-red repair', () => {
     const css = readFileSync('src/styles/hf_game_c1.css', 'utf8');
     for (const html of [index, play]) {
       expect(html).toContain('rel="preload" as="image"');
-      expect(html).toContain('textures/loading/eastbrook-square.webp');
+      expect(html).toContain('highfly/highfly-loading.avif');
       expect(html).toContain('fetchpriority="high"');
     }
     expect(css).toContain('var(--loading-backdrop-image, none),');
-    expect(css).toContain('textures/loading/eastbrook-square.webp');
+    expect(css).toContain('highfly/highfly-loading.avif');
   });
 });
