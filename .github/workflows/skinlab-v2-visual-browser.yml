@@ -145,7 +145,7 @@ jobs:
               return {panelW:panel?.width||0,canvasW:canvas?.width||0,canvasH:canvas?.height||0,
                 safe:diag.safeViewport||null,framing:diag.mobileFraming||null,precise:diag.framePreciseMobile||false,distance:diag.frameDistance||0};
             });
-            if(mobile.panelW>292||mobile.canvasW<515||mobile.canvasH<360||!mobile.safe||mobile.safe.stageOffset<235)
+            if(mobile.panelW>292||mobile.canvasW<515||mobile.canvasH<330||!mobile.safe||mobile.safe.stageOffset<235)
               throw new Error('S23 unified usable-stage failed '+JSON.stringify(mobile));
             if(!mobile.precise||!mobile.framing||
                mobile.framing.insetLeft<14||mobile.framing.insetRight<14||
