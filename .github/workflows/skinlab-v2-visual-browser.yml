@@ -157,7 +157,10 @@ jobs:
             await page.selectOption('#animSelect','Walking_A'); await page.waitForTimeout(350);
             await page.selectOption('#animSelect','Idle'); await page.waitForTimeout(250);
 
-            await page.click('#techModeBtn');await page.waitForTimeout(140);
+            // The UI toggle is synchronous; no page navigation is expected here.
+            // Avoid Playwright waiting on a spurious navigation after the actual click.
+            await page.locator('#techModeBtn').click({noWaitAfter:true});
+            await page.waitForFunction(()=>window.__SKIN_FACTORY_DIAG__?.technicalMode===false,null,{timeout:10000});
             tech=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
             if(tech.technicalMode)throw new Error('Technical mode did not close '+JSON.stringify(tech));
 
