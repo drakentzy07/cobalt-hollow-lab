@@ -61,7 +61,7 @@ function rebuild(){
   headBone.add(accessory); // identity transform in true head-bone local frame
   const ck=checkGeometry(accessory);
   Object.assign(DIAG,{nativeRig:!!headBone,realHead:true,headParentOK:accessory.parent===headBone,rootIdentity:
-    accessory.position.lengthSq()===0&&accessory.rotation.toArray().every(v=>v===0)&&accessory.scale.toArray().every(v=>v===1),
+    accessory.position.lengthSq()===0&&[accessory.rotation.x,accessory.rotation.y,accessory.rotation.z].every(v=>v===0)&&accessory.scale.toArray().every(v=>v===1),
     geometries:ck.meshCount,vertices:ck.vertices,nonfinite:ck.nonfinite,
     sourceOriginalIntact:true,featherCount:recipe.pieces.length,selectedId});
   markSelection();return ck;
