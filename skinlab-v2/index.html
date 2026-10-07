@@ -1106,11 +1106,12 @@ function setDesignMode(mode){
 
 const SIMPLE_SAVE_KEY='highfly_skin_factory_simple_v1';
 let simplePaintPick=false,simpleMotionTimer=null;
-let corvusHelmet=null,corvusActive=false;
+let corvusHelmet=null,corvusActive=false,corvusColorMap={};
 
 function clearCorvus(){
   if(corvusHelmet){corvusHelmet.removeFromParent();corvusHelmet=null;}
   if(corvusActive){corvusActive=false;restoreArmorMaterials('knight');}
+  corvusColorMap={};
   const btn=document.getElementById('simpleCorvusBtn');if(btn)btn.classList.remove('active');
   if(window.__MODULAR_FACTORY_DIAG__)Object.assign(window.__MODULAR_FACTORY_DIAG__,{
     corvusReady:false,corvusAttached:false,corvusBoneName:null
@@ -1160,7 +1161,7 @@ async function applyCorvusSkin(){
         o.material=Array.isArray(o.material)?paint:paint[0];nativeMeshes++;
       });
     }
-    corvusActive=true;btn.classList.add('active');
+    corvusActive=true;corvusColorMap={};btn.classList.add('active');
     let wearableMeshes=0;helmet.traverse(o=>{if(o.isMesh)wearableMeshes++});
     Object.assign(window.__MODULAR_FACTORY_DIAG__,{
       corvusReady:true,corvusAttached:helmet.parent===bone,
@@ -1212,9 +1213,42 @@ function simpleMaterialParams(){
     mate:{metal:.08,rough:.84},metal:{metal:.82,rough:.22},leather:{metal:.12,rough:.62},magic:{metal:.52,rough:.24}
   }[kind]||{metal:.1,rough:.7};
 }
+function paintCorvusMesh(o,color,p){
+  if(!(o.isMesh||o.isSkinnedMesh)||!effectiveVisible(o))return false;
+  const mats=Array.isArray(o.material)?o.material:[o.material];
+  const next=mats.map(src=>{
+    const m=src.clone();
+    if(m.color)m.color.set(color);
+    if('metalness'in m)m.metalness=p.metal;
+    if('roughness'in m)m.roughness=p.rough;
+    m.needsUpdate=true;return m;
+  });
+  o.material=Array.isArray(o.material)?next:next[0];
+  if(corvusActive)corvusColorMap[o.name]={color,metal:p.metal,rough:p.rough};
+  return true;
+}
+function restoreCorvusPaints(saved){
+  if(!corvusActive||!saved||typeof saved!=='object')return;
+  actor.traverse(o=>{
+    const item=saved[o.name];
+    if(item&&/^#[0-9a-fA-F]{6}$/.test(item.color)&&Number.isFinite(item.metal)&&Number.isFinite(item.rough)){
+      paintCorvusMesh(o,item.color,{metal:item.metal,rough:item.rough});
+    }
+  });
+  frameVisible();
+}
 function simplePaint(){
-  syncSimpleToTechnical();simplePutPiece();
+  syncSimpleToTechnical();
   const color=document.getElementById('simpleColor').value,p=simpleMaterialParams();
+  if(corvusActive){
+    const slot=simpleSlot();let count=0;
+    if(slot==='head')corvusHelmet?.traverse(o=>{if(paintCorvusMesh(o,color,p))count++});
+    else for(const root of armorRootNodes('knight',slot))root.traverse(o=>{if(paintCorvusMesh(o,color,p))count++});
+    simpleStatus(count?'Caballero Cuervo: '+count+' piezas pintadas. El casco y las animaciones siguen intactos.':'No hay pieza visible en este slot.');
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{painterReady:true,painterPreset:'custom',painterScope:'slot',painterMeshes:count,corvusPaintPreserved:corvusActive});
+    frameVisible();return count>0;
+  }
+  simplePutPiece();
   document.getElementById('paintScopeSelect').value='slot';
   document.getElementById('armorPrimary').value=color;document.getElementById('armorAccent').value=color;
   document.getElementById('armorMetal').value=p.metal;document.getElementById('armorRough').value=p.rough;
@@ -1241,6 +1275,7 @@ function paintArmorAtPointer(ev){
   const color=new THREE.Color(document.getElementById('simpleColor').value),p=simpleMaterialParams(),o=hit.object;
   const mats=(Array.isArray(o.material)?o.material:[o.material]).map(src=>{const m=src.clone();if(m.color)m.color.copy(color);if('metalness'in m)m.metalness=p.metal;if('roughness'in m)m.roughness=p.rough;m.needsUpdate=true;return m});
   o.material=Array.isArray(o.material)?mats:mats[0];
+  if(corvusActive)corvusColorMap[o.name]={color:document.getElementById('simpleColor').value,metal:p.metal,rough:p.rough};
   simpleStatus('Pintado con clic: '+(armorOwnerName(o)||o.name||'pieza')+'.');
   Object.assign(window.__MODULAR_FACTORY_DIAG__,{simplePaintPick:true,simplePaintHit:armorOwnerName(o)||o.name||'mesh'});
   return true;
@@ -1260,7 +1295,8 @@ function runSimpleMotion(){
 }
 function currentSimpleRecipe(){
   return {version:2,set:simpleSet(),slot:simpleSlot(),color:document.getElementById('simpleColor').value,
-    material:document.getElementById('simpleMaterial').value,specialSkin:corvusActive?'corvus':null};
+    material:document.getElementById('simpleMaterial').value,specialSkin:corvusActive?'corvus':null,
+    corvusColors:corvusActive?{...corvusColorMap}:null};
 }
 function saveSimpleRecipe(){
   const r=currentSimpleRecipe();localStorage.setItem(SIMPLE_SAVE_KEY,JSON.stringify(r));
@@ -1270,7 +1306,11 @@ async function loadSimpleRecipe(){
   let r;try{r=JSON.parse(localStorage.getItem(SIMPLE_SAVE_KEY)||'null')}catch{}if(!r){simpleStatus('Todavía no hay un diseño guardado.');return false}
   document.getElementById('simpleSetSelect').value=r.set||'knight';document.getElementById('simpleSlotSelect').value=r.slot||'head';
   document.getElementById('simpleColor').value=r.color||'#171821';document.getElementById('simpleMaterial').value=r.material||'mate';
-  if(r.specialSkin==='corvus'){const ok=await applyCorvusSkin();if(ok)simpleStatus('Diseño Caballero Cuervo restaurado.');return ok;}
+  if(r.specialSkin==='corvus'){
+    const ok=await applyCorvusSkin();
+    if(ok){restoreCorvusPaints(r.corvusColors);simpleStatus('Caballero Cuervo restaurado con sus colores guardados.');}
+    return ok;
+  }
   simplePutPiece();simplePaint();simpleStatus('Diseño guardado restaurado.');return true;
 }
 function toggleTechMode(){
@@ -1324,7 +1364,11 @@ loader.load(MODEL,g=>{
 });
 
 document.getElementById('simpleSetSelect').onchange=()=>{syncSimpleToTechnical();simplePutPiece()};
-document.getElementById('simpleSlotSelect').onchange=()=>{syncSimpleToTechnical();simplePutPiece()};
+document.getElementById('simpleSlotSelect').onchange=()=>{
+  syncSimpleToTechnical();
+  if(corvusActive)simpleStatus('Parte seleccionada. Podés pintarla sin quitar Caballero Cuervo.');
+  else simplePutPiece();
+};
 document.getElementById('simplePutBtn').onclick=simplePutPiece;
 document.getElementById('simpleRemoveBtn').onclick=simpleRemovePiece;
 document.getElementById('simpleFullBtn').onclick=simpleFullSet;
@@ -1332,8 +1376,14 @@ document.getElementById('simpleBaseBtn').onclick=simpleBase;
 document.getElementById('simpleCorvusBtn').onclick=applyCorvusSkin;
 document.getElementById('simplePaintBtn').onclick=simplePaint;
 document.getElementById('simplePickPaintBtn').onclick=()=>setSimplePaintPick(!simplePaintPick);
-document.getElementById('simpleBlackBtn').onclick=()=>{syncSimpleToTechnical();document.getElementById('paintScopeSelect').value='slot';simplePutPiece();paintArmorPreset('black');simpleStatus('Preset Negro Aura aplicado.')};
-document.getElementById('simpleVioletBtn').onclick=()=>{syncSimpleToTechnical();document.getElementById('paintScopeSelect').value='slot';simplePutPiece();paintArmorPreset('raven');simpleStatus('Preset Violeta Cuervo aplicado.')};
+document.getElementById('simpleBlackBtn').onclick=()=>{
+  if(corvusActive){document.getElementById('simpleColor').value='#101118';simplePaint();return;}
+  syncSimpleToTechnical();document.getElementById('paintScopeSelect').value='slot';simplePutPiece();paintArmorPreset('black');simpleStatus('Preset Negro Aura aplicado.');
+};
+document.getElementById('simpleVioletBtn').onclick=()=>{
+  if(corvusActive){document.getElementById('simpleColor').value='#5b21b6';simplePaint();return;}
+  syncSimpleToTechnical();document.getElementById('paintScopeSelect').value='slot';simplePutPiece();paintArmorPreset('raven');simpleStatus('Preset Violeta Cuervo aplicado.');
+};
 document.getElementById('simpleMotionBtn').onclick=runSimpleMotion;
 document.getElementById('simpleStopBtn').onclick=stopSimpleMotion;
 document.getElementById('simpleSaveBtn').onclick=saveSimpleRecipe;
@@ -1439,6 +1489,6 @@ function loop(){
   renderer.render(scene,camera);
 }loop();
 </script>
-<!-- skin-factory-run-stamp: corvus-visual-ci-v2 -->
+<!-- skin-factory-run-stamp: corvus-painter-preserved-v3 -->
 </body>
 </html>
