@@ -24,7 +24,8 @@ jobs:
         run: |
           set -euo pipefail
           test -s skinlab-v2/modular-factory.html
-          grep -F "HIGHFLY · SKIN FACTORY" skinlab-v2/modular-factory.html\n          cmp -s skinlab-v2/index.html skinlab-v2/modular-factory.html
+          grep -F "HIGHFLY · SKIN FACTORY" skinlab-v2/modular-factory.html
+          cmp -s skinlab-v2/index.html skinlab-v2/modular-factory.html
           grep -F "warrior_modular.glb" skinlab-v2/modular-factory.html
           grep -F "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2" skinlab-v2/modular-factory.html
           for p in M_Head M_Torso M_ArmL M_ArmR M_HandL M_HandR M_LegL M_LegR M_FootL M_FootR M_Loin M_Ear_round M_Eye_almond M_Brow_soft M_Mouth_neutral; do grep -F "$p" skinlab-v2/modular-factory.html >/dev/null; done
@@ -35,7 +36,10 @@ jobs:
           grep -F "HF AVIAN v1" skinlab-v2/modular-factory.html
           grep -F "setDesignMode" skinlab-v2/modular-factory.html
           grep -F "ARMOR ANATOMY / DONOR LAB" skinlab-v2/modular-factory.html
-          grep -F "HF ARMOR MOLDER · PHASE 2" skinlab-v2/modular-factory.html\n          grep -F "STYLE / PAINTER · DONOR ARMOR" skinlab-v2/modular-factory.html\n          grep -F "molderPhase:2" skinlab-v2/modular-factory.html\n          grep -F "paintArmorPreset" skinlab-v2/modular-factory.html
+          grep -F "HF ARMOR MOLDER · PHASE 2" skinlab-v2/modular-factory.html
+          grep -F "STYLE / PAINTER · DONOR ARMOR" skinlab-v2/modular-factory.html
+          grep -F "molderPhase:2" skinlab-v2/modular-factory.html
+          grep -F "paintArmorPreset" skinlab-v2/modular-factory.html
           grep -F "Armor_knight_Head" skinlab-v2/modular-factory.html
           grep -F "molderSkinPreserved" skinlab-v2/modular-factory.html
           echo "MODULAR FACTORY static contract: GREEN"
