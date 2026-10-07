@@ -33,7 +33,7 @@ body.fullscreen-lab #app{grid-template-rows:1fr}body.fullscreen-lab header{displ
   header{padding:7px 10px;gap:8px}
   h1{font-size:11px}.sub{font-size:8px}.mark{height:24px}
   .nav{gap:4px}.nav a,.nav .pill{font-size:8px;padding:4px 6px}
-  .panel{left:8px;top:8px;width:min(320px,36vw);max-height:calc(100% - 16px);padding:9px;border-radius:12px}
+  .panel{left:8px;top:8px;width:min(276px,31vw);max-height:calc(100% - 16px);padding:9px;border-radius:12px}
   .panel h2{font-size:9px;margin-bottom:6px}.group{padding-top:7px;margin-top:7px}
   button,select{font-size:9px;padding:6px 7px}.row{gap:5px;margin-bottom:5px}
   .slotgrid{gap:5px}.slot{font-size:8px;padding:6px 7px}
@@ -220,7 +220,7 @@ const UPSTREAM='9b57e49c9676d75962700f828cc00a50a9a988b5';
 const MODEL='./assets/warrior_modular.glb';
 const SOURCE_BLOB='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2';
 const SOURCE_BYTES=3477500;
-const DESIGN_REV='native-wearable-pipeline+real-joints-p3';
+const DESIGN_REV='native-wearable-pipeline+real-joints-p3+android-frame-p1';
 const NATIVE_WEARABLES={
   tricorne:{url:'./assets/harbormaster_tricorne.glb',bone:'head',label:'TRICORNE'},
   spyglass:{url:'./assets/harbormaster_spyglass.glb',bone:'hips',label:'SPYGLASS'}
@@ -294,7 +294,7 @@ const floor=new THREE.Mesh(new THREE.CircleGeometry(4.5,96),new THREE.MeshStanda
 floor.rotation.x=-Math.PI/2;scene.add(floor);
 
 const camera=new THREE.PerspectiveCamera(35,1,.01,100);
-const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.minDistance=1.6;controls.maxDistance=8;
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.minDistance=1.2;controls.maxDistance=12;
 let actor=null,mixer=null,skeleton=null,socketHelpers=[],autoRotate=false;
 const meshByName=new Map();
 const nativeWearableSources=new Map(),nativeWearableAttached=new Map();
@@ -307,9 +307,30 @@ function resolveNode(root,name){return root.getObjectByName(name)||root.getObjec
 function effectiveVisible(o){
   let p=o;while(p){if(p.visible===false)return false;p=p.parent}return true;
 }
-function visibleBox(){
+function expandVisibleMeshBox(box,o,precise=false){
+  if(!(o.isMesh||o.isSkinnedMesh)||!effectiveVisible(o))return false;
+  o.updateWorldMatrix(true,false);
+  if(precise&&o.isSkinnedMesh&&typeof o.computeBoundingBox==='function'){
+    o.computeBoundingBox();
+    if(o.boundingBox&&!o.boundingBox.isEmpty()){
+      box.union(o.boundingBox.clone().applyMatrix4(o.matrixWorld));
+      return true;
+    }
+  }
+  const g=o.geometry;
+  if(g){
+    if(!g.boundingBox)g.computeBoundingBox();
+    if(g.boundingBox&&!g.boundingBox.isEmpty()){
+      box.union(g.boundingBox.clone().applyMatrix4(o.matrixWorld));
+      return true;
+    }
+  }
+  box.expandByObject(o,true);return true;
+}
+function visibleBox(precise=mobileLandscapeLab()){
   const b=new THREE.Box3();let any=false;
-  actor?.traverse(o=>{if((o.isMesh||o.isSkinnedMesh)&&effectiveVisible(o)){b.expandByObject(o,true);any=true}});
+  actor?.updateMatrixWorld(true);
+  actor?.traverse(o=>{if(expandVisibleMeshBox(b,o,precise))any=true});
   if(!any)b.setFromCenterAndSize(new THREE.Vector3(0,1.2,0),new THREE.Vector3(1,2.4,1));
   return b;
 }
@@ -320,7 +341,7 @@ function syncStageSafeArea(){
   if(mobileLandscapeLab()&&main&&p&&!p.classList.contains('ui-hidden')&&getComputedStyle(p).display!=='none'){
     const mr=main.getBoundingClientRect(),pr=p.getBoundingClientRect();
     left=Math.max(0,pr.right-mr.left+8);
-    left=Math.min(left,mr.width*.46);
+    left=Math.min(left,mr.width*.40);
   }
   stage.style.left=Math.round(left)+'px';
   stage.style.right='0px';
@@ -348,25 +369,63 @@ function fitDistance(size){
   const hfov=2*Math.atan(Math.tan(vfov*.5)*(m.safeW/m.h));
   const dy=(size.y*.5)/Math.tan(vfov*.5);
   const dx=(Math.max(size.x,size.z)*.62)/Math.max(.05,Math.tan(hfov*.5));
-  return Math.max(dy,dx,.9)*1.30;
+  const margin=mobileLandscapeLab()?1.56:1.30;
+  return Math.max(dy,dx,.9)*margin;
+}
+function projectedBoxMetrics(box){
+  const m=safeViewportMetrics(),pts=[];
+  for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z]){
+    const p=new THREE.Vector3(x,y,z).project(camera);
+    if(Number.isFinite(p.x)&&Number.isFinite(p.y)&&Number.isFinite(p.z))pts.push(p);
+  }
+  if(!pts.length)return null;
+  const xs=pts.map(p=>(p.x*.5+.5)*m.w),ys=pts.map(p=>(-.5*p.y+.5)*m.h);
+  const left=Math.min(...xs),right=Math.max(...xs),top=Math.min(...ys),bottom=Math.max(...ys);
+  return {left,right,top,bottom,width:right-left,height:bottom-top,
+    insetLeft:left,insetRight:m.w-right,insetTop:top,insetBottom:m.h-bottom,w:m.w,h:m.h};
+}
+function recordFraming(box){
+  const f=projectedBoxMetrics(box);
+  if(window.__MODULAR_FACTORY_DIAG__)window.__MODULAR_FACTORY_DIAG__.mobileFraming=f;
+  return f;
+}
+function enforceMobileFraming(box,center,dir,distance){
+  if(!mobileLandscapeLab())return distance;
+  let f=recordFraming(box);if(!f)return distance;
+  const mx=Math.max(18,f.w*.055),my=Math.max(14,f.h*.045);
+  const availW=Math.max(1,f.w-2*mx),availH=Math.max(1,f.h-2*my);
+  const scale=Math.max(1,f.width/availW,f.height/availH);
+  if(scale>1.001){
+    distance*=scale*1.06;
+    camera.position.copy(center).add(dir.clone().multiplyScalar(distance));
+    controls.update();f=recordFraming(box);
+  }
+  return distance;
 }
 function frameVisible(){
   if(!actor)return;
-  const b=visibleBox(),c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);
-  const d=fitDistance(s),dir=new THREE.Vector3(.72,.10,1).normalize();
-  controls.target.copy(c);camera.position.copy(c).add(dir.multiplyScalar(d));applySafeProjection();controls.update();
+  const b=visibleBox(mobileLandscapeLab()),c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);
+  let d=fitDistance(s);
+  const dir=(mobileLandscapeLab()?new THREE.Vector3(.32,.045,1):new THREE.Vector3(.72,.10,1)).normalize();
+  controls.target.copy(c);camera.position.copy(c).add(dir.clone().multiplyScalar(d));applySafeProjection();controls.update();
+  d=enforceMobileFraming(b,c,dir,d);recordFraming(b);
+  if(window.__MODULAR_FACTORY_DIAG__)Object.assign(window.__MODULAR_FACTORY_DIAG__,{
+    frameBoxSize:s.toArray(),frameDistance:d,framePreciseMobile:mobileLandscapeLab()
+  });
 }
 function fixedView(kind){
   if(!actor)return;
-  const b=visibleBox(),c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);
-  const d=fitDistance(s);
+  const b=visibleBox(mobileLandscapeLab()),c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);
+  let d=fitDistance(s);
   const dir={
     front:new THREE.Vector3(0,0,1),
     profile:new THREE.Vector3(1,0,0),
     back:new THREE.Vector3(0,0,-1),
     three:new THREE.Vector3(.78,.10,.78).normalize()
   }[kind];
-  camera.position.copy(c).add(dir.multiplyScalar(d));controls.target.copy(c);applySafeProjection();controls.update();document.getElementById('freeBtn').classList.remove('active');
+  camera.position.copy(c).add(dir.clone().multiplyScalar(d));controls.target.copy(c);applySafeProjection();controls.update();
+  d=enforceMobileFraming(b,c,dir,d);recordFraming(b);
+  document.getElementById('freeBtn').classList.remove('active');
 }
 function partNodes(name){
   const exact=resolveNode(actor,name);
@@ -1151,7 +1210,7 @@ function setDesignMode(mode){
   Object.assign(window.__MODULAR_FACTORY_DIAG__,{designMode:mode,cleanReady:true,avianReady});
   updateDiag();frameVisible();
 }
-window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,designRev:DESIGN_REV,unifiedFactory:true,canonicalRoute:'/skinlab-v2/',rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null,designMode:'clean',cleanReady:false,avianReady:false,avianPieces:0,armorAnatomyReady:false,armorSetCount:0,knightHeadParts:0,molderReady:false,molderPhase:2,molderSkinPreserved:false,molderChangedVertices:0,painterReady:true,painterVersion:2,wearableLabReady:false,nativeWearableProof:false,nativeWearableSourceIdentity:false,tricorneAttached:false,spyglassAttached:false,wearableDriftMax:0,nativeWearableNoNaN:true,realBoneCount:0,realBoneNames:[],bindReferenceLoaded:false,donorInspectorReady:true,donorAuditReady:false,sourceJointManifestReady:false,sourceJointCount:0};
+window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,designRev:DESIGN_REV,unifiedFactory:true,canonicalRoute:'/skinlab-v2/',rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null,designMode:'clean',cleanReady:false,avianReady:false,avianPieces:0,armorAnatomyReady:false,armorSetCount:0,knightHeadParts:0,molderReady:false,molderPhase:2,molderSkinPreserved:false,molderChangedVertices:0,painterReady:true,painterVersion:2,wearableLabReady:false,nativeWearableProof:false,nativeWearableSourceIdentity:false,tricorneAttached:false,spyglassAttached:false,wearableDriftMax:0,nativeWearableNoNaN:true,realBoneCount:0,realBoneNames:[],bindReferenceLoaded:false,donorInspectorReady:true,donorAuditReady:false,sourceJointManifestReady:false,sourceJointCount:0,mobileFraming:null,framePreciseMobile:false,frameDistance:0};
 window.__SKINLAB_DIAG__=window.__MODULAR_FACTORY_DIAG__;
 window.__SKIN_FACTORY_DIAG__=window.__MODULAR_FACTORY_DIAG__;
 
@@ -1296,6 +1355,6 @@ function loop(){
   renderer.render(scene,camera);
 }loop();
 </script>
-<!-- skin-factory-run-stamp: harbormaster-native-r1 -->
+<!-- skin-factory-run-stamp: android-centered-frame-r1 -->
 </body>
 </html>

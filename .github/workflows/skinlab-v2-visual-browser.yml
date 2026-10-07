@@ -136,14 +136,22 @@ jobs:
             await page.selectOption('#animSelect','Walking_A'); await page.waitForTimeout(350);
             await page.selectOption('#animSelect','Idle'); await page.waitForTimeout(250);
 
-            await page.setViewportSize({width:915,height:412}); await page.waitForTimeout(220);
+            await page.setViewportSize({width:823,height:384}); await page.waitForTimeout(260);
+            await page.click('#resetBtn'); await page.waitForTimeout(260);
             const mobile=await page.evaluate(()=>{
               const panel=document.querySelector('.panel')?.getBoundingClientRect();
               const canvas=document.querySelector('#stage canvas')?.getBoundingClientRect();
-              return {panelW:panel?.width||0,canvasW:canvas?.width||0,canvasH:canvas?.height||0,safe:window.__SKIN_FACTORY_DIAG__?.safeViewport||null};
+              const diag=window.__SKIN_FACTORY_DIAG__||{};
+              return {panelW:panel?.width||0,canvasW:canvas?.width||0,canvasH:canvas?.height||0,
+                safe:diag.safeViewport||null,framing:diag.mobileFraming||null,precise:diag.framePreciseMobile||false,distance:diag.frameDistance||0};
             });
-            if(mobile.panelW>330||mobile.canvasW<520||mobile.canvasH<320||!mobile.safe||mobile.safe.stageOffset<200)
+            if(mobile.panelW>292||mobile.canvasW<515||mobile.canvasH<360||!mobile.safe||mobile.safe.stageOffset<235)
               throw new Error('S23 unified usable-stage failed '+JSON.stringify(mobile));
+            if(!mobile.precise||!mobile.framing||
+               mobile.framing.insetLeft<14||mobile.framing.insetRight<14||
+               mobile.framing.insetTop<10||mobile.framing.insetBottom<10)
+              throw new Error('S23 character framing/crop failed '+JSON.stringify(mobile));
+            await page.screenshot({path:'visual-artifacts/s23-centered-character.png',fullPage:true});
             const beforeW=mobile.safe.w;
             await page.click('#uiToggleBtn'); await page.waitForTimeout(300);
             const expanded=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__?.safeViewport);
@@ -155,7 +163,7 @@ jobs:
             if(errors.length) throw new Error(errors.join(' | '));
 
             require('fs').writeFileSync('visual-artifacts/visual-gate.txt',
-              'GREEN\nUNIFIED /skinlab-v2/ READY\nHARBORMASTER TRICORNE HEAD GREEN\nHARBORMASTER SPYGLASS HIPS GREEN\nREAL BIND REFERENCE HEAD GREEN\nNO WEARABLE DRIFT GREEN\n7 DONOR SETS READY\nARMOR ANATOMY READY\nMOLDER PHASE 2 CHEST VERIFIED\nSKIN WEIGHTS PRESERVED\nPAINTER V2 RAVEN VERIFIED\n22 CLIPS READY\nS23 PHYSICAL STAGE VERIFIED\n');
+              'GREEN\nUNIFIED /skinlab-v2/ READY\nHARBORMASTER TRICORNE HEAD GREEN\nHARBORMASTER SPYGLASS HIPS GREEN\nREAL BIND REFERENCE HEAD GREEN\nNO WEARABLE DRIFT GREEN\n7 DONOR SETS READY\nARMOR ANATOMY READY\nMOLDER PHASE 2 CHEST VERIFIED\nSKIN WEIGHTS PRESERVED\nPAINTER V2 RAVEN VERIFIED\n22 CLIPS READY\nS23 PHYSICAL STAGE VERIFIED\nS23 CHARACTER CENTERED + UNCROPPED VERIFIED\n');
             await browser.close();
           })().catch(err=>{console.error(err);process.exit(1)});
           NODE
