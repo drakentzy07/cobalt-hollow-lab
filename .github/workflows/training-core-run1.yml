@@ -288,6 +288,21 @@ jobs:
           fi
           echo "CLEAN_V1_CANONICAL_REPLAY_BYTE_EQUIVALENT=1"
 
+      - name: Select canonical CLEAN source for all downstream tests and build
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s clean-v1-evidence/highfly-clean-v1.patch
+          test -d upstream/.git
+          test -d upstream-replay/.git
+          # Only rename ephemeral CI directories. Historical source stays as an audit reference.
+          mv upstream upstream-historical-reference
+          mv upstream-replay upstream
+          test "$(git -C upstream rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          test -f upstream/src/main.ts
+          test -f upstream/src/highfly/game_c1_runtime.ts
+          echo "CLEAN_V1_CANONICAL_SOURCE_SELECTED=1"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
