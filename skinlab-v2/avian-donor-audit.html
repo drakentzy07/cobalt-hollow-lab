@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HIGHFLY Avian Donor Audit</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07080c;color:#eee;font-family:system-ui,sans-serif}
+#app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr}
+header{display:flex;gap:8px;align-items:center;padding:8px 10px;background:#0b0c12;border-bottom:1px solid #282a36;z-index:5}
+button{background:#151722;color:#eee;border:1px solid #353849;border-radius:8px;padding:7px 10px}
+button.active{border-color:#8b5cf6;background:#261942}
+#stage{position:relative;min-height:0}
+canvas{display:block;width:100%;height:100%}
+#info{position:absolute;right:8px;top:8px;width:min(430px,45vw);max-height:calc(100% - 16px);overflow:auto;background:#0b0c12dd;border:1px solid #2d3040;border-radius:10px;padding:8px;font-size:10px;white-space:pre-wrap}
+@media(max-width:950px),(max-height:520px){header{padding:4px 6px}button{padding:5px 7px;font-size:9px}#info{display:none}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
+</head>
+<body><div id="app"><header>
+<button data-k="avian" class="active">AVIAN STRIDER</button>
+<button data-k="griffin">STORMFEATHER GRIFFIN</button>
+<button data-k="gravewing">GRAVEWING</button>
+</header><div id="stage"><div id="info">loading…</div></div></div>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
+import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+const SHA='9b57e49c9676d75962700f828cc00a50a9a988b5';
+const RAW='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/'+SHA+'/public/';
+const URLS={
+ avian:RAW+'models/mounts/avian_strider.glb',
+ griffin:RAW+'models/mounts/stormfeather_griffin.glb',
+ gravewing:RAW+'models/creatures/gravewing.glb'
+};
+const stage=document.getElementById('stage'),info=document.getElementById('info');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.05;
+stage.prepend(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x07080c);
+const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromScene(new RoomEnvironment(),.04).texture;pm.dispose();
+scene.add(new THREE.HemisphereLight(0xffffff,0x303040,1.7));
+const dl=new THREE.DirectionalLight(0xffffff,2.4);dl.position.set(4,6,5);scene.add(dl);
+const camera=new THREE.PerspectiveCamera(35,1,.01,100);camera.position.set(4,2.8,5);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;
+const ktx=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/libs/basis/').detectSupport(renderer);
+const loader=new GLTFLoader();loader.setKTX2Loader(ktx);loader.setMeshoptDecoder(MeshoptDecoder);
+const load=u=>new Promise((res,rej)=>loader.load(u,res,undefined,rej));
+let current=null,currentKey='avian';
+window.__DONOR_AUDIT__={ready:false,error:null,results:{}};
+
+function summarize(key,gltf){
+ const root=gltf.scene;root.updateWorldMatrix(true,true);
+ const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+ const nodes=[],meshes=[],bones=[];
+ root.traverse(o=>{
+   if(o.name)nodes.push(o.name);
+   if(o.isBone)bones.push(o.name);
+   if(o.isMesh){
+     const b=new THREE.Box3().setFromObject(o),s=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3());
+     meshes.push({name:o.name||'(unnamed)',skinned:!!o.isSkinnedMesh,verts:o.geometry?.attributes?.position?.count||0,size:[+s.x.toFixed(4),+s.y.toFixed(4),+s.z.toFixed(4)],center:[+c.x.toFixed(4),+c.y.toFixed(4),+c.z.toFixed(4)]});
+   }
+ });
+ const interesting=nodes.filter(n=>/head|beak|bill|crest|neck|eye|feather|wing|skull|face|jaw|mask|helmet|plume/i.test(n));
+ const top=meshes.filter(m=>m.center[1] > box.min.y+size.y*.55).sort((a,b)=>b.center[1]-a.center[1]).slice(0,35);
+ const r={key,nodes:nodes.length,bones:bones.length,meshes:meshes.length,clips:gltf.animations.map(a=>a.name),interesting,topMeshes:top,bounds:{size:[size.x,size.y,size.z],center:[center.x,center.y,center.z]}};
+ window.__DONOR_AUDIT__.results[key]=r;return r;
+}
+function frameObject(root){
+ const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+ const d=Math.max(size.x,size.y,size.z);
+ controls.target.copy(center);camera.position.set(center.x+d*1.15,center.y+d*.42,center.z+d*1.55);controls.update();
+}
+async function show(key){
+ currentKey=key;document.querySelectorAll('button[data-k]').forEach(b=>b.classList.toggle('active',b.dataset.k===key));
+ if(current)scene.remove(current);
+ let gltf=window.__DONORS__?.[key];
+ if(!gltf){gltf=await load(URLS[key]);window.__DONORS__=window.__DONORS__||{};window.__DONORS__[key]=gltf}
+ current=gltf.scene;scene.add(current);frameObject(current);
+ const r=summarize(key,gltf);info.textContent=JSON.stringify(r,null,2);
+ return r;
+}
+for(const b of document.querySelectorAll('button[data-k]'))b.onclick=()=>show(b.dataset.k);
+async function boot(){
+ try{
+  for(const k of ['avian','griffin','gravewing']){const g=await load(URLS[k]);window.__DONORS__=window.__DONORS__||{};window.__DONORS__[k]=g;summarize(k,g)}
+  await show('avian');window.__DONOR_AUDIT__.ready=true;
+ }catch(e){window.__DONOR_AUDIT__.error=String(e?.message||e);info.textContent=window.__DONOR_AUDIT__.error}
+}
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+addEventListener('resize',resize);resize();
+(function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera)})();
+boot();
+</script></body></html>

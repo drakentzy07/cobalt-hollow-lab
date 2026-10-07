@@ -1,0 +1,62 @@
+name: Avian Donor Audit
+
+on:
+  push:
+    branches: [highfly-skinlab-avian-knight-legendary-clean]
+    paths:
+      - 'skinlab-v2/avian-donor-audit.html'
+      - '.github/workflows/avian-donor-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  donor-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start audit page
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/avian-audit.log 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:4173/skinlab-v2/avian-donor-audit.html >/dev/null
+      - name: Install browser
+        shell: bash
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.55.0 --no-save
+          npx playwright install --with-deps chromium
+      - name: Audit three avian donors
+        shell: bash
+        run: |
+          mkdir -p donor-artifacts
+          cat > /tmp/audit.mjs <<'EOF'
+          import { chromium } from 'playwright';
+          const browser=await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+          const page=await browser.newPage({viewport:{width:1440,height:900}});
+          page.on('pageerror',e=>console.log('PAGEERROR='+e.message));
+          await page.goto('http://127.0.0.1:4173/skinlab-v2/avian-donor-audit.html',{waitUntil:'load',timeout:90000});
+          await page.waitForFunction(()=>window.__DONOR_AUDIT__?.ready||window.__DONOR_AUDIT__?.error,{timeout:120000});
+          const diag=await page.evaluate(()=>window.__DONOR_AUDIT__);
+          console.log('DONOR_AUDIT='+JSON.stringify(diag));
+          if(diag.error)throw new Error(diag.error);
+          if(!diag.results.avian||!diag.results.griffin||!diag.results.gravewing)throw new Error('missing donor result');
+          const map=[['avian','AVIAN STRIDER'],['griffin','STORMFEATHER GRIFFIN'],['gravewing','GRAVEWING']];
+          for(const [k,label] of map){
+            await page.click('button[data-k="'+k+'"]');await page.waitForTimeout(700);
+            await page.screenshot({path:'donor-artifacts/'+k+'.png',fullPage:true});
+            console.log(label+'='+JSON.stringify(diag.results[k]));
+          }
+          await page.setViewportSize({width:844,height:390});
+          await page.click('button[data-k="avian"]');await page.waitForTimeout(300);
+          await page.screenshot({path:'donor-artifacts/avian-s23u.png',fullPage:true});
+          await browser.close();
+          EOF
+          node /tmp/audit.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: avian-donor-audit-proof
+          path: donor-artifacts/
