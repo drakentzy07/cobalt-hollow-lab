@@ -77,8 +77,27 @@ jobs:
             await page.click('#bonesBtn');await page.click('#socketsBtn');
             await page.selectOption('#animSelect','Walking_A');await page.waitForTimeout(250);
             await page.selectOption('#animSelect','Idle');await page.waitForTimeout(250);
+            await page.setViewportSize({width:915,height:412});
+            await page.waitForTimeout(150);
+            const mobile=await page.evaluate(()=>{
+              const panel=document.querySelector('.panel')?.getBoundingClientRect();
+              const canvas=document.querySelector('#stage canvas')?.getBoundingClientRect();
+              const full=document.querySelector('#fullscreenBtn');
+              const ui=document.querySelector('#uiToggleBtn');
+              return {
+                panelW:panel?.width||0,
+                canvasW:canvas?.width||0,
+                canvasH:canvas?.height||0,
+                fullVisible:full instanceof HTMLElement && getComputedStyle(full).display!=='none' && full.getBoundingClientRect().width>0,
+                uiVisible:ui instanceof HTMLElement && getComputedStyle(ui).display!=='none' && ui.getBoundingClientRect().width>0
+              };
+            });
+            if(!mobile.fullVisible||!mobile.uiVisible||mobile.panelW>330||mobile.canvasW<800||mobile.canvasH<320){
+              throw new Error('S23 landscape/fullscreen UI gate failed '+JSON.stringify(mobile));
+            }
             if(errors.length)throw new Error(errors.join(' | '));
             console.log('MODULAR FACTORY browser gate: GREEN');
+            console.log('S23 LANDSCAPE UI gate: GREEN '+JSON.stringify(mobile));
             await browser.close();
           })().catch(e=>{console.error(e);process.exit(1)});
           NODE
