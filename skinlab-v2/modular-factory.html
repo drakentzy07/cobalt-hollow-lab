@@ -114,7 +114,7 @@ const UPSTREAM='9b57e49c9676d75962700f828cc00a50a9a988b5';
 const MODEL='./assets/warrior_modular.glb';
 const SOURCE_BLOB='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2';
 const SOURCE_BYTES=3477500;
-const DESIGN_REV='clean-manikin+hf-avian-v1-blockout-p2';
+const DESIGN_REV='clean-manikin+hf-avian-v1-blockout-p3';
 const FACE=['M_Ear_round','M_Eye_almond','M_Brow_soft','M_Mouth_neutral'];
 const CORE=['M_Head','M_Torso','M_ArmL','M_ArmR','M_HandL','M_HandR','M_LegL','M_LegR','M_FootL','M_FootR','M_Loin',...FACE];
 const SLOT_MAP={
@@ -306,6 +306,12 @@ function applyCleanMaterials(){
 function findBone(re){
   let hit=null;actor?.traverse(o=>{if(!hit&&o.isBone&&re.test(o.name))hit=o});return hit;
 }
+function boneKey(name){return String(name||'').toLowerCase().replace(/[^a-z0-9]/g,'')}
+function findBoneKey(...keys){
+  const wanted=new Set(keys.map(boneKey));let hit=null;
+  actor?.traverse(o=>{if(!hit&&o.isBone&&wanted.has(boneKey(o.name)))hit=o});
+  return hit;
+}
 function addAvian(parent,obj){
   if(!parent||!obj)return null;parent.add(obj);avianPieces.push(obj);obj.visible=false;return obj;
 }
@@ -323,9 +329,9 @@ function torsoMetrics(){
 function buildAvianPrototype(){
   if(avianReady||!actor)return;
   actor.updateWorldMatrix(true,true);
-  const headBone=findBone(/^head$/i)||findBone(/head/i);
-  const chestBone=findBone(/^chest$/i)||findBone(/chest|spine/i);
-  const hipsBone=findBone(/^hips$/i)||findBone(/hip|pelvis/i);
+  const headBone=findBoneKey('head')||findBone(/head/i);
+  const chestBone=findBoneKey('chest','spine2','spine1','spine')||findBone(/chest|spine/i);
+  const hipsBone=findBoneKey('hips','pelvis')||findBone(/hip|pelvis/i);
   const right=resolveNode(actor,'handslot.r'),left=resolveNode(actor,'handslot.l');
   if(!headBone||!chestBone||!hipsBone||!right||!left)return;
 
@@ -379,10 +385,10 @@ function buildAvianPrototype(){
   skirt.add(sash);addAvian(hipsBone,skirt);
 
   // v1 complete blockout: bracers, claw-hand plates, shin wraps, talon boots and back feathers.
-  const armR=findBone(/^upper_arm\.r$/i),armL=findBone(/^upper_arm\.l$/i);
-  const handR=findBone(/^hand\.r$/i),handL=findBone(/^hand\.l$/i);
-  const shinR=findBone(/^lowerleg\.r$/i),shinL=findBone(/^lowerleg\.l$/i);
-  const footR=findBone(/^foot\.r$/i),footL=findBone(/^foot\.l$/i);
+  const armR=findBoneKey('upper_arm.r','upperarm.r','upperarmr'),armL=findBoneKey('upper_arm.l','upperarm.l','upperarml');
+  const handR=findBoneKey('hand.r','handr'),handL=findBoneKey('hand.l','handl');
+  const shinR=findBoneKey('lowerleg.r','lower_leg.r','lowerlegr'),shinL=findBoneKey('lowerleg.l','lower_leg.l','lowerlegl');
+  const footR=findBoneKey('foot.r','footr'),footL=findBoneKey('foot.l','footl');
   const cyanMat=mat(0x4ebfd5,{roughness:.48,metalness:.18});
   const navyMat=mat(0x20283b,{roughness:.92});
   const violetMat=mat(0x7240b8,{roughness:.58,metalness:.16});
