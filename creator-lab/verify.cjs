@@ -43,7 +43,7 @@ const fs=require('fs');
   await page.screenshot({path:'creator-proof/creator-painted-desktop.png',fullPage:true});
   await page.setViewportSize({width:823,height:384});await page.waitForTimeout(300);
   const mobile=await page.evaluate(()=>({canvas:document.querySelector('#stage canvas').getBoundingClientRect().toJSON(),panel:document.querySelector('aside').getBoundingClientRect().toJSON()}));
-  if(mobile.canvas.width<450||mobile.canvas.height<300)throw Error('S23 stage too small '+JSON.stringify(mobile));
+  if(mobile.canvas.width<515||mobile.canvas.height<300||mobile.panel.width>292)throw Error('S23 stage too small '+JSON.stringify(mobile));
   await page.screenshot({path:'creator-proof/creator-s23-landscape.png',fullPage:true});
   if(errors.length)throw Error('Console errors '+errors.join(' | '));
   fs.writeFileSync('creator-proof/verify.json',JSON.stringify({green:true,nativeHead:true,clips:22,exportedBytes:size,mobile},null,2));

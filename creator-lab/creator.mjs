@@ -193,8 +193,15 @@ document.addEventListener('keydown',e=>{
   if(e.key.toLowerCase()==='y'){e.preventDefault();redoOp()}
 });
 const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();
+let pressStart=null;
+renderer.domElement.addEventListener('pointerdown',event=>{
+  pressStart={x:event.clientX,y:event.clientY};
+});
 renderer.domElement.addEventListener('pointerup',event=>{
-  if(!accessory||controls.state!==-1)return;
+  const delta=pressStart?Math.hypot(pressStart.x-event.clientX,pressStart.y-event.clientY):Infinity;
+  pressStart=null;
+  // Dragging rotates the camera; only a genuine short tap picks a mesh.
+  if(!accessory||delta>7)return;
   const rect=renderer.domElement.getBoundingClientRect();
   pointer.x=(event.clientX-rect.left)/rect.width*2-1;pointer.y=-(event.clientY-rect.top)/rect.height*2+1;
   ray.setFromCamera(pointer,camera);
