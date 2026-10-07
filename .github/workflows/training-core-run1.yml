@@ -2741,13 +2741,15 @@ jobs:
         run: |
           set -euo pipefail
           test -s skinlab-source/skinlab-v2/index.html
+          test -s skinlab-source/skinlab-v2/modular-factory.html
           rm -rf upstream/dist/skinlab-v2
-          mkdir -p upstream/dist/skinlab-v2
-          cp skinlab-source/skinlab-v2/index.html upstream/dist/skinlab-v2/index.html
+          cp -R skinlab-source/skinlab-v2 upstream/dist/skinlab-v2
           test -s upstream/dist/index.html
           test -s upstream/dist/skinlab-v2/index.html
+          test -s upstream/dist/skinlab-v2/modular-factory.html
           grep -F "HIGHFLY · SKIN LAB v2" upstream/dist/skinlab-v2/index.html
-          echo "PAGES_BUNDLE_OK=GAME_C2_PLUS_SKINLAB"
+          grep -F "HIGHFLY · SKIN LAB v2 — MODULAR FACTORY" upstream/dist/skinlab-v2/modular-factory.html
+          echo "PAGES_BUNDLE_OK=GAME_C2_PLUS_SKINLAB_MODULAR_FACTORY"
 
       - name: Configure GitHub Pages for GAME-C2 playtest
         if: success()
