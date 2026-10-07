@@ -100,9 +100,11 @@ jobs:
             await page.click('#simplePutBtn');await page.waitForTimeout(160);
             let simple=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
             if(simple.anatomySlot!=='head')throw new Error('Simple piece selection failed '+JSON.stringify(simple));
-            await page.click('#simpleSizePlus');await page.waitForTimeout(160);
-            simple=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
-            if(simple.molderChangedVertices<1||!simple.molderSkinPreserved)throw new Error('Simple shape edit failed '+JSON.stringify(simple));
+            // Form-shaping lives only in professional mode; never expose broken size buttons.
+            if(await page.locator('#simpleSizePlus,#simpleWidthPlus,#simpleLongPlus').count())
+              throw new Error('Obsolete simple shape controls still visible in DOM');
+            if(!await page.locator('#simpleCorvusBtn').count())
+              throw new Error('Missing original Corvus skin button');
             await page.locator('#simpleColor').evaluate(el=>{el.value='#5b21b6';el.dispatchEvent(new Event('input',{bubbles:true}))});
             await page.click('#simplePaintBtn');await page.waitForTimeout(160);
             simple=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
@@ -198,12 +200,36 @@ jobs:
             if(!expanded||expanded.stageOffset!==0||expanded.w<=beforeW+150)
               throw new Error('S23 unified expansion failed '+JSON.stringify({beforeW,expanded}));
 
+            // Native 3D original crow-knight helmet. Reuse frozen head BIND-FRAME,
+            // preserve Knight weights + 22 source animations, no proxy skeleton.
+            await page.evaluate(()=>{
+              window.__SKIN_FACTORY_API__.attachNativeWearable('tricorne',false);
+              window.__SKIN_FACTORY_API__.attachNativeWearable('spyglass',false);
+            });
+            await page.setViewportSize({width:1365,height:768});
+            await page.locator('#simpleCorvusBtn').click({noWaitAfter:true});
+            await page.waitForFunction(()=>window.__SKIN_FACTORY_DIAG__?.corvusReady===true||
+              window.__SKIN_FACTORY_DIAG__?.corvusError,null,{timeout:45000});
+            const corvus=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(!corvus.corvusReady||!corvus.corvusAttached||!corvus.corvusRootIdentity||
+               !corvus.corvusHeadReferenceReal||corvus.corvusSourceHead!=='M_Head'||
+               corvus.corvusBoneName?.toLowerCase()!=='head'||corvus.corvusMeshCount<15||
+               corvus.corvusNativeArmorMeshes<5||!corvus.corvusSkinWeightsPreserved||
+               corvus.corvusClips!==22)
+              throw new Error('Corvus original REAL-rig helmet failed '+JSON.stringify(corvus));
+            await page.screenshot({path:'visual-artifacts/corvus-original-native-skin.png',fullPage:true});
+            await page.click('#simpleSaveBtn');
+            await page.click('#simpleBaseBtn');
+            await page.click('#simpleLoadBtn');
+            await page.waitForFunction(()=>window.__SKIN_FACTORY_DIAG__?.corvusReady===true,null,{timeout:45000});
+            if(!await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__?.corvusAttached))
+              throw new Error('Corvus simple save/load failed');
             const visibleError=await page.locator('#error').evaluate(el=>getComputedStyle(el).display!=='none');
             if(visibleError) throw new Error('Error panel became visible');
             if(errors.length) throw new Error(errors.join(' | '));
 
             require('fs').writeFileSync('visual-artifacts/visual-gate.txt',
-              'GREEN\nUNIFIED /skinlab-v2/ READY\nHARBORMASTER TRICORNE HEAD GREEN\nHARBORMASTER SPYGLASS HIPS GREEN\nREAL BIND REFERENCE HEAD GREEN\nNO WEARABLE DRIFT GREEN\n7 DONOR SETS READY\nARMOR ANATOMY READY\nMOLDER PHASE 2 CHEST VERIFIED\nSKIN WEIGHTS PRESERVED\nPAINTER V2 RAVEN VERIFIED\n22 CLIPS READY\nS23 PHYSICAL STAGE VERIFIED\nPC CHARACTER CENTERED + UNCROPPED VERIFIED\nSIMPLE MODE V1 VERIFIED\nS23 CHARACTER CENTERED + UNCROPPED VERIFIED\n');
+              'GREEN\nUNIFIED /skinlab-v2/ READY\nHARBORMASTER TRICORNE HEAD GREEN\nHARBORMASTER SPYGLASS HIPS GREEN\nREAL BIND REFERENCE HEAD GREEN\nNO WEARABLE DRIFT GREEN\n7 DONOR SETS READY\nARMOR ANATOMY READY\nMOLDER PHASE 2 CHEST VERIFIED\nSKIN WEIGHTS PRESERVED\nPAINTER V2 RAVEN VERIFIED\n22 CLIPS READY\nS23 PHYSICAL STAGE VERIFIED\nPC CHARACTER CENTERED + UNCROPPED VERIFIED\nSIMPLE MODE V1 VERIFIED\nCORVUS NATIVE HEAD + SKINNING VERIFIED\nS23 CHARACTER CENTERED + UNCROPPED VERIFIED\n');
             await browser.close();
           })().catch(err=>{console.error(err);process.exit(1)});
           NODE
