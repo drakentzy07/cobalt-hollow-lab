@@ -35,7 +35,7 @@ jobs:
           grep -F "handslot.r" skinlab-v2/modular-factory.html
           grep -F "handslot.l" skinlab-v2/modular-factory.html
           grep -F "CLEAN MANNEQUIN" skinlab-v2/modular-factory.html
-          grep -F "HF AVIAN v1" skinlab-v2/modular-factory.html
+          ! grep -F "HF AVIAN v1" skinlab-v2/modular-factory.html
           grep -F "setDesignMode" skinlab-v2/modular-factory.html
           grep -F "ARMOR ANATOMY / DONOR LAB" skinlab-v2/modular-factory.html
           grep -F "HF ARMOR MOLDER · PHASE 2" skinlab-v2/modular-factory.html
@@ -139,7 +139,7 @@ jobs:
             if(!d.rig||!d.rightSocket||!d.leftSocket)throw new Error('Rig/socket gate failed '+JSON.stringify(d));
             if(d.clips!==22)throw new Error('Expected 22 clips '+JSON.stringify(d));
             if(d.missingCore.length||d.visibleCount!==15||d.armorVisible!==0)throw new Error('Male base visibility gate failed '+JSON.stringify(d));
-            if(!d.cleanReady||!d.avianReady||d.avianPieces<4||d.designMode!=='clean')throw new Error('Design modes gate failed '+JSON.stringify(d));
+            if(!d.cleanReady||!d.legacyPrototypeRemoved||d.designMode!=='clean')throw new Error('Clean factory design-mode gate failed '+JSON.stringify(d));
             if(!d.armorAnatomyReady||d.armorSetCount!==7||d.knightHeadParts!==2||!d.molderReady||!d.molderSkinPreserved)
               throw new Error('Armor anatomy/molder boot gate failed '+JSON.stringify(d));
             if(!d.wearableLabReady||!d.nativeWearableSourceIdentity||d.realBoneCount<10||!d.donorAuditReady||d.donorAuditCount<4)
@@ -187,12 +187,6 @@ jobs:
             if(!paint.painterReady||paint.painterVersion!==2||paint.painterPreset!=='black'||paint.painterMeshes<1)
               throw new Error('Painter v2 black preset failed '+JSON.stringify(paint));
             await page.click('#paintSourceBtn');await page.waitForTimeout(100);
-            await page.click('#avianBtn');await page.waitForTimeout(250);
-            const avian=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
-            const slots=avian.avianSlots||{};
-            if(avian.designMode!=='avian'||!avian.avianReady||avian.avianVersion!==1||avian.avianPieces<10||
-               !slots.head||!slots.chest||!slots.arms||!slots.hands||!slots.legs||!slots.feet||!slots.back||!slots.weapons)
-              throw new Error('HF AVIAN v1 activation/slot gate failed '+JSON.stringify(avian));
             await page.click('#cleanBtn');await page.waitForTimeout(200);
             const clean=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
             if(clean.designMode!=='clean')throw new Error('CLEAN mannequin restore failed '+JSON.stringify(clean));
