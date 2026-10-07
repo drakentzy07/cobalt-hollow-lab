@@ -42,12 +42,12 @@ describe('HIGHFLY GAME-C2.8 mobile HUD editor', () => {
   it('bakes the S23 HUMAN layout as the official reset/default preset', () => {
     const runtime = readFileSync('src/highfly/game_c1_runtime.ts', 'utf8');
     expect(runtime).toContain("const HIGHFLY_HUD_STORE_PREFIX = 'highfly:c282:hud:'");
-    expect(runtime).toContain('s1: { x: 21, y: 15, scale: 1, opacity: 1 }');
-    expect(runtime).toContain('s5: { x: 59, y: -11, scale: 1, opacity: 1 }');
-    expect(runtime).toContain('s10: { x: 61, y: -24, scale: 1, opacity: 1 }');
-    expect(runtime).toContain('ult: { x: 60, y: -7, scale: 1, opacity: 1 }');
-    expect(runtime).toContain('attack: { x: 13, y: 8, scale: 1.08, opacity: 1 }');
-    expect(runtime).toContain('jump: { x: -74, y: 14, scale: 1, opacity: 1 }');
+    expect(runtime).toContain('s1: { x: 17, y: 15, scale: 1, opacity: 1 }');
+    expect(runtime).toContain('s5: { x: 55, y: -11, scale: 1, opacity: 1 }');
+    expect(runtime).toContain('s10: { x: 57, y: -24, scale: 1, opacity: 1 }');
+    expect(runtime).toContain('ult: { x: 56, y: -7, scale: 1, opacity: 1 }');
+    expect(runtime).toContain('attack: { x: 9, y: 8, scale: 1.08, opacity: 1 }');
+    expect(runtime).toContain('jump: { x: -78, y: 14, scale: 1, opacity: 1 }');
     expect(runtime).toContain('function highflyHudDefault(targetId: string)');
   });
 
