@@ -27,12 +27,14 @@ for html_name in ("index.html", "play.html"):
     html = Path(html_name)
     replace_once(html, old_button, new_button, f"C2.7 Ajustes tile {html_name}")
     text = html.read_text(encoding="utf-8")
-    preload = '<link rel="preload" as="image" href="/textures/loading/eastbrook-square.webp" fetchpriority="high" />'
+    preload = '<link rel="preload" as="image" href="/highfly/highfly-loading.avif" fetchpriority="high" />'
     if preload not in text:
-        anchor = '<link rel="manifest" href="/manifest.webmanifest" />'
-        if text.count(anchor) != 1:
-            raise SystemExit(f"C2.7 loading preload anchor {html_name}: expected 1, found {text.count(anchor)}")
-        text = text.replace(anchor, anchor + "\n" + preload, 1)
+        # Previous HIGHFLY overlays legitimately rewrite many <head> links.
+        # Anchor only to the structural <head> element so this pass is robust
+        # to manifest/base rewrites while remaining exactly-once.
+        if text.count("<head>") != 1:
+            raise SystemExit(f"C2.7 head anchor {html_name}: expected 1, found {text.count('<head>')}")
+        text = text.replace("<head>", "<head>\n" + preload, 1)
         html.write_text(text, encoding="utf-8")
 
 # ---------------------------------------------------------------------------
