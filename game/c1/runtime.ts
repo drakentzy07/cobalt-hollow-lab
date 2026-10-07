@@ -25,7 +25,7 @@ let enabled = mode !== 'base';
 let lastElementSignature = '';
 let toastTimer = 0;
 
-const HIGHFLY_GAME_C22_BUILD = 'C2.6-hud-editor-menu';
+const HIGHFLY_GAME_C22_BUILD = 'C2.7-human-red-repair';
 let coachSuppressTimer = 0;
 
 function game(): any {
@@ -325,15 +325,51 @@ function paintContextualAttack(): void {
   }
 }
 
+function highflySurfaceVisible(id: string): boolean {
+  const el = document.getElementById(id);
+  if (!(el instanceof HTMLElement) || el.hidden) return false;
+  const style = getComputedStyle(el);
+  return (
+    style.display !== 'none' &&
+    style.visibility !== 'hidden' &&
+    Number(style.opacity || '1') > 0.01
+  );
+}
+
+const HIGHFLY_WORLD_BLOCKERS = [
+  'start-screen',
+  'offline-select',
+  'charselect-panel',
+  'charcreate-panel',
+  'mobile-preflight',
+  'rotate-device',
+  'loading-screen',
+] as const;
+
 function syncHighflyWorldReady(): void {
-  const loading = document.getElementById('loading-screen');
-  const loadingVisible =
-    loading instanceof HTMLElement &&
-    loading.classList.contains('visible') &&
-    getComputedStyle(loading).display !== 'none' &&
-    getComputedStyle(loading).visibility !== 'hidden';
-  const ready = Boolean(w.__game?.sim?.player) && !loadingVisible;
+  const blocked = HIGHFLY_WORLD_BLOCKERS.some((id) => highflySurfaceVisible(id));
+  const ready =
+    document.body.classList.contains('game-active') &&
+    Boolean(w.__game?.sim?.player) &&
+    !blocked;
   document.body.classList.toggle('hf-c25-world-ready', ready);
+  document.body.classList.toggle('hf-c27-pregame', !ready);
+}
+
+function installHighflyWorldReadyObserver(): void {
+  if (document.body.dataset.hfC27WorldObserver === '1') return;
+  document.body.dataset.hfC27WorldObserver = '1';
+  const observer = new MutationObserver(syncHighflyWorldReady);
+  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  for (const id of HIGHFLY_WORLD_BLOCKERS) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    observer.observe(el, {
+      attributes: true,
+      attributeFilter: ['class', 'style', 'hidden', 'aria-hidden'],
+    });
+  }
+  document.addEventListener('visibilitychange', syncHighflyWorldReady);
 }
 
 
@@ -489,38 +525,6 @@ async function highflyHudExportPreset(): Promise<void> {
   }
 }
 
-function syncHighflyMobileSettingsEntry(): void {
-  const button = document.getElementById('mobile-bar-editor');
-  if (!(button instanceof HTMLButtonElement)) return;
-  const label = button.querySelector<HTMLElement>('.mobile-label');
-  button.title = 'Ajustes';
-  button.setAttribute('aria-label', 'Ajustes');
-  button.removeAttribute('data-i18n-title');
-  button.removeAttribute('data-i18n-aria');
-  if (label) {
-    label.textContent = 'Ajustes';
-    label.removeAttribute('data-i18n');
-  }
-  if (button.dataset.hfC26Settings === '1') return;
-  button.dataset.hfC26Settings = '1';
-  button.addEventListener(
-    'click',
-    (event) => {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      document.body.classList.remove('mobile-more-open');
-      document.getElementById('mobile-more')?.setAttribute('aria-expanded', 'false');
-      document.getElementById('mobile-extra-controls')?.setAttribute('aria-hidden', 'true');
-      const options = document.getElementById('options-menu');
-      const open =
-        options instanceof HTMLElement &&
-        getComputedStyle(options).display !== 'none';
-      if (!open) w.__game?.hud?.toggleOptionsMenu?.();
-    },
-    { capture: true },
-  );
-}
-
 function ensureHighflyHudEditor(): HTMLElement {
   let root = document.getElementById('hf-c23-hud-editor');
   if (root) return root;
@@ -659,13 +663,12 @@ function boot(): void {
   ensureUtilityLane();
   installCoachmarkRelease();
   installHighflyHudEditorInput();
-  syncHighflyMobileSettingsEntry();
+  installHighflyWorldReadyObserver();
   syncHighflyWorldReady();
   highflyHudApplyAll();
 
   const tick = () => {
     syncHighflyWorldReady();
-    syncHighflyMobileSettingsEntry();
     ensureSpecialSeats();
     ensureGhostSkillSeats();
     ensureUtilityLane();
