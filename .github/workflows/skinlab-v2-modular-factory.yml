@@ -1,0 +1,82 @@
+name: Skin Lab v2 — Modular Factory Real
+
+on:
+  push:
+    branches: [highfly-skinlab-v2-warrior-black]
+    paths:
+      - 'skinlab-v2/modular-factory.html'
+      - 'skinlab-v2/index.html'
+      - '.github/workflows/skinlab-v2-modular-factory.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  modular-real:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Static modular contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s skinlab-v2/modular-factory.html
+          grep -F "HIGHFLY · SKIN LAB v2 — MODULAR FACTORY" skinlab-v2/modular-factory.html
+          grep -F "warrior_modular.glb" skinlab-v2/modular-factory.html
+          grep -F "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2" skinlab-v2/modular-factory.html
+          for p in M_Head M_Torso M_ArmL M_ArmR M_HandL M_HandR M_LegL M_LegR M_FootL M_FootR M_Loin M_Ear_round M_Eye_almond M_Brow_soft M_Mouth_neutral; do grep -F "$p" skinlab-v2/modular-factory.html >/dev/null; done
+          grep -F "Rig_Medium" skinlab-v2/modular-factory.html
+          grep -F "handslot.r" skinlab-v2/modular-factory.html
+          grep -F "handslot.l" skinlab-v2/modular-factory.html
+          echo "MODULAR FACTORY static contract: GREEN"
+
+      - name: Verify frozen ClaudeCraft GLB identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb"
+          curl -fsSL "$URL" -o /tmp/warrior_modular.glb
+          test "$(stat -c%s /tmp/warrior_modular.glb)" = "3477500"
+          test "$(git hash-object /tmp/warrior_modular.glb)" = "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2"
+          echo "warrior_modular.glb identity: GREEN"
+
+      - name: Browser gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/skinlab-http.log 2>&1 &
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.55.0 --no-save
+          npx playwright install --with-deps chromium
+          cat > modular-gate.cjs <<'NODE'
+          const { chromium } = require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true,args:['--enable-unsafe-swiftshader']});
+            const page=await browser.newPage({viewport:{width:1600,height:900}});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(e.message));
+            page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+            await page.goto('http://127.0.0.1:4173/skinlab-v2/modular-factory.html',{waitUntil:'domcontentloaded',timeout:120000});
+            await page.waitForFunction(()=>window.__MODULAR_FACTORY_DIAG__?.ready||window.__MODULAR_FACTORY_DIAG__?.error,null,{timeout:120000});
+            const d=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
+            if(d.error)throw new Error(d.error);
+            if(d.sourceBlob!=='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2'||d.sourceBytes!==3477500)throw new Error('Source identity mismatch '+JSON.stringify(d));
+            if(!d.rig||!d.rightSocket||!d.leftSocket)throw new Error('Rig/socket gate failed '+JSON.stringify(d));
+            if(d.clips!==22)throw new Error('Expected 22 clips '+JSON.stringify(d));
+            if(d.missingCore.length||d.visibleCount!==15||d.armorVisible!==0)throw new Error('Male base visibility gate failed '+JSON.stringify(d));
+            await page.click('[data-view="front"]');await page.waitForTimeout(200);
+            await page.click('[data-view="profile"]');await page.waitForTimeout(200);
+            await page.click('[data-view="back"]');await page.waitForTimeout(200);
+            await page.click('[data-view="three"]');await page.waitForTimeout(200);
+            await page.click('#bonesBtn');await page.click('#socketsBtn');
+            await page.selectOption('#animSelect','Walking_A');await page.waitForTimeout(250);
+            await page.selectOption('#animSelect','Idle');await page.waitForTimeout(250);
+            if(errors.length)throw new Error(errors.join(' | '));
+            console.log('MODULAR FACTORY browser gate: GREEN');
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+          node modular-gate.cjs
