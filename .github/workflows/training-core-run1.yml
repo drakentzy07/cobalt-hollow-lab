@@ -2805,7 +2805,9 @@ jobs:
 
   deploy-game-c2:
     name: Deploy HIGHFLY GAME-C2 Mobile Feel
-    if: github.ref_name == 'highfly-game-c2-mobile-feel' || github.ref_name == 'highfly-game-c2-1-s23-feedback' || github.ref_name == 'highfly-game-c2-2-mobile-polish'
+    # C2.2 is historical and must never overwrite the canonical GAME Pages root.
+    # Skin Lab publication is refreshed through the current canonical GAME branch.
+    if: ${{ false }}
     needs: thin-offline
     runs-on: ubuntu-latest
     timeout-minutes: 30
