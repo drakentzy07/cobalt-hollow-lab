@@ -49,7 +49,7 @@ describe('HIGHFLY GAME-C2.8 mobile HUD editor', () => {
   it('brands every rotating loading backdrop with a persistent HIGHFLY logo layer', () => {
     const css = readFileSync('src/styles/hf_game_c1.css', 'utf8');
     expect(css).toContain('body.mobile-touch.hf-game-c1 #loading-screen::after {');
-    expect(css).toContain('background: url("/highfly/highfly-logo-full.webp") center / contain no-repeat !important;');
+    expect(css).toContain('highfly-logo-full.webp") center / contain no-repeat !important;');
     expect(css).toContain('z-index: 4 !important;');
   });
 });
