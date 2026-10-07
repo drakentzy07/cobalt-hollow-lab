@@ -25,7 +25,7 @@ let enabled = mode !== 'base';
 let lastElementSignature = '';
 let toastTimer = 0;
 
-const HIGHFLY_GAME_C22_BUILD = 'C2.7-human-red-repair';
+const HIGHFLY_GAME_C22_BUILD = 'C2.8-mobile-hud-editor';
 let coachSuppressTimer = 0;
 
 function game(): any {
@@ -378,7 +378,7 @@ function installHighflyWorldReadyObserver(): void {
 }
 
 
-type HighflyHudTransform = { x: number; y: number; scale: number };
+type HighflyHudTransform = { x: number; y: number; scale: number; opacity: number };
 type HighflyHudTarget = {
   id: string;
   label: string;
@@ -398,6 +398,8 @@ const HIGHFLY_HUD_TARGETS: HighflyHudTarget[] = [
   { id: 'attack', label: 'ATK / USAR', selectors: ['#mobile-action-attack'] },
   { id: 'evade', label: 'EVADIR', selectors: ['#mobile-evade'] },
   { id: 'jump', label: 'SALTAR', selectors: ['#mobile-jump'] },
+  { id: 'move', label: 'JOYSTICK', selectors: ['#mobile-move-zone'] },
+  { id: 'menu', label: 'MENÚ', selectors: ['#mobile-menu-anchor'] },
   { id: 'gem', label: 'GEMA', selectors: ['#hf-c1-gem-seat'] },
   { id: 'potion', label: 'POCIÓN / CONSUMIBLE', selectors: ['#mobile-consumable-seat'] },
   { id: 'stance', label: 'ITEM / POSTURA', selectors: ['#mobile-stance-anchor'] },
@@ -412,6 +414,10 @@ let highflyHudDrag:
   | { pointerId: number; targetId: string; startX: number; startY: number; base: HighflyHudTransform }
   | null = null;
 
+function highflyHudClampOffset(value: number): number {
+  return Math.max(-420, Math.min(420, Math.round(value)));
+}
+
 function highflyHudElements(target: HighflyHudTarget): HTMLElement[] {
   const out: HTMLElement[] = [];
   for (const selector of target.selectors) {
@@ -424,17 +430,20 @@ function highflyHudElements(target: HighflyHudTarget): HTMLElement[] {
 function highflyHudRead(targetId: string): HighflyHudTransform {
   try {
     const raw = localStorage.getItem(HIGHFLY_HUD_STORE_PREFIX + targetId);
-    if (!raw) return { x: 0, y: 0, scale: 1 };
+    if (!raw) return { x: 0, y: 0, scale: 1, opacity: 1 };
     const parsed = JSON.parse(raw) as Partial<HighflyHudTransform>;
     return {
-      x: Number.isFinite(parsed.x) ? Number(parsed.x) : 0,
-      y: Number.isFinite(parsed.y) ? Number(parsed.y) : 0,
+      x: Number.isFinite(parsed.x) ? highflyHudClampOffset(Number(parsed.x)) : 0,
+      y: Number.isFinite(parsed.y) ? highflyHudClampOffset(Number(parsed.y)) : 0,
       scale: Number.isFinite(parsed.scale)
         ? Math.min(1.45, Math.max(0.65, Number(parsed.scale)))
         : 1,
+      opacity: Number.isFinite(parsed.opacity)
+        ? Math.min(1, Math.max(0.35, Number(parsed.opacity)))
+        : 1,
     };
   } catch {
-    return { x: 0, y: 0, scale: 1 };
+    return { x: 0, y: 0, scale: 1, opacity: 1 };
   }
 }
 
@@ -449,16 +458,23 @@ function highflyHudApply(targetId: string, value = highflyHudRead(targetId)): vo
       'important',
     );
     el.style.setProperty('transform-origin', 'center center', 'important');
+    el.style.setProperty('opacity', String(value.opacity));
   }
 }
 
 function highflyHudSave(targetId: string, value: HighflyHudTransform): void {
+  const normalized: HighflyHudTransform = {
+    x: highflyHudClampOffset(value.x),
+    y: highflyHudClampOffset(value.y),
+    scale: Math.min(1.45, Math.max(0.65, Math.round(value.scale * 100) / 100)),
+    opacity: Math.min(1, Math.max(0.35, Math.round(value.opacity * 100) / 100)),
+  };
   try {
-    localStorage.setItem(HIGHFLY_HUD_STORE_PREFIX + targetId, JSON.stringify(value));
+    localStorage.setItem(HIGHFLY_HUD_STORE_PREFIX + targetId, JSON.stringify(normalized));
   } catch {
     // Storage can be unavailable in a hardened browser; the live edit still works.
   }
-  highflyHudApply(targetId, value);
+  highflyHudApply(targetId, normalized);
   highflyHudPaintToolbar();
 }
 
@@ -477,43 +493,63 @@ function highflyHudReset(targetId: string): void {
   for (const el of highflyHudElements(target)) {
     el.style.removeProperty('transform');
     el.style.removeProperty('transform-origin');
+    el.style.removeProperty('opacity');
   }
+  highflyHudApply(targetId);
   highflyHudPaintToolbar();
 }
 
 function highflyHudResetAll(): void {
   for (const target of HIGHFLY_HUD_TARGETS) highflyHudReset(target.id);
+  toast('HUD RESTAURADO', 'Volvimos a la distribución HIGHFLY por defecto.');
 }
 
 function highflyHudSelect(id: string): void {
   if (!HIGHFLY_HUD_TARGETS.some((target) => target.id === id)) return;
   highflyHudSelected = id;
   document.body.dataset.hfHudSelected = id;
+  for (const target of HIGHFLY_HUD_TARGETS) {
+    for (const el of highflyHudElements(target)) {
+      el.classList.toggle('hf-c28-hud-selected', target.id === id);
+    }
+  }
   highflyHudPaintToolbar();
 }
 
 function highflyHudPaintToolbar(): void {
-  const root = document.getElementById('hf-c23-hud-editor');
+  const root = document.getElementById('hf-c28-hud-editor');
   if (!root) return;
   const target = HIGHFLY_HUD_TARGETS.find((candidate) => candidate.id === highflyHudSelected);
   const value = highflyHudRead(highflyHudSelected);
   const label = root.querySelector<HTMLElement>('[data-hf-hud-label]');
-  const scale = root.querySelector<HTMLElement>('[data-hf-hud-scale]');
+  const scaleText = root.querySelector<HTMLElement>('[data-hf-hud-scale-text]');
+  const opacityText = root.querySelector<HTMLElement>('[data-hf-hud-opacity-text]');
+  const xText = root.querySelector<HTMLElement>('[data-hf-hud-x-text]');
+  const yText = root.querySelector<HTMLElement>('[data-hf-hud-y-text]');
+  const scale = root.querySelector<HTMLInputElement>('[data-hf-hud-scale]');
+  const opacity = root.querySelector<HTMLInputElement>('[data-hf-hud-opacity]');
+  const x = root.querySelector<HTMLInputElement>('[data-hf-hud-x]');
+  const y = root.querySelector<HTMLInputElement>('[data-hf-hud-y]');
   if (label) label.textContent = target?.label ?? 'HUD';
-  if (scale) scale.textContent = Math.round(value.scale * 100) + '%';
+  if (scaleText) scaleText.textContent = Math.round(value.scale * 100) + '%';
+  if (opacityText) opacityText.textContent = Math.round(value.opacity * 100) + '%';
+  if (xText) xText.textContent = (value.x >= 0 ? '+' : '') + value.x;
+  if (yText) yText.textContent = (value.y >= 0 ? '+' : '') + value.y;
+  if (scale) scale.value = String(Math.round(value.scale * 100));
+  if (opacity) opacity.value = String(Math.round(value.opacity * 100));
+  if (x) x.value = String(value.x);
+  if (y) y.value = String(value.y);
 }
 
-function highflyHudScale(delta: number): void {
-  const value = highflyHudRead(highflyHudSelected);
-  value.scale = Math.min(1.45, Math.max(0.65, Math.round((value.scale + delta) * 100) / 100));
-  highflyHudSave(highflyHudSelected, value);
+function highflyHudUpdateSelected(patch: Partial<HighflyHudTransform>): void {
+  highflyHudSave(highflyHudSelected, { ...highflyHudRead(highflyHudSelected), ...patch });
 }
 
 function highflyHudPresetPayload(): string {
   const targets: Record<string, HighflyHudTransform> = {};
   for (const target of HIGHFLY_HUD_TARGETS) targets[target.id] = highflyHudRead(target.id);
   return JSON.stringify({
-    version: 1,
+    version: 2,
     build: HIGHFLY_GAME_C22_BUILD,
     viewport: { width: window.innerWidth, height: window.innerHeight },
     targets,
@@ -530,49 +566,115 @@ async function highflyHudExportPreset(): Promise<void> {
   }
 }
 
+function closeHighflyHudEditor(): void {
+  highflyHudEditing = false;
+  highflyHudDrag = null;
+  document.body.classList.remove('hf-c23-hud-editing', 'hf-c28-hud-editing');
+  document.querySelectorAll('.hf-c28-hud-selected').forEach((el) =>
+    el.classList.remove('hf-c28-hud-selected'),
+  );
+  const root = document.getElementById('hf-c28-hud-editor');
+  if (root) root.hidden = true;
+  toast('HUD GUARDADO', 'La distribución quedó guardada en este dispositivo.');
+}
+
 function ensureHighflyHudEditor(): HTMLElement {
-  let root = document.getElementById('hf-c23-hud-editor');
+  let root = document.getElementById('hf-c28-hud-editor');
   if (root) return root;
   root = document.createElement('div');
-  root.id = 'hf-c23-hud-editor';
+  root.id = 'hf-c28-hud-editor';
+  root.hidden = true;
   root.innerHTML =
-    '<div class="hf-c23-hud-editor__title">HIGHFLY · EDITAR HUD</div>' +
-    '<div class="hf-c23-hud-editor__selected"><b data-hf-hud-label>HABILIDAD S1</b><span data-hf-hud-scale>100%</span></div>' +
-    '<div class="hf-c23-hud-editor__actions">' +
-      '<button type="button" data-hf-hud-minus>−</button>' +
-      '<button type="button" data-hf-hud-plus>+</button>' +
-      '<button type="button" data-hf-hud-reset>RESTAURAR BLOQUE</button>' +
-      '<button type="button" data-hf-hud-reset-all>RESTAURAR TODO</button>' +
-      '<button type="button" data-hf-hud-export>EXPORTAR PRESET</button>' +
-      '<button type="button" data-hf-hud-done>GUARDAR</button>' +
+    '<div class="hf-c28-hud-editor__head">' +
+      '<div><small>INTERFAZ PERSONALIZADA</small><b data-hf-hud-label>HABILIDAD S1</b></div>' +
+      '<button type="button" class="hf-c28-hud-editor__close" data-hf-hud-done aria-label="Guardar y salir">✓</button>' +
     '</div>' +
-    '<small>TOCÁ Y ARRASTRÁ CUALQUIER BLOQUE · −/+ CAMBIA SU TAMAÑO</small>';
-  root.querySelector('[data-hf-hud-minus]')?.addEventListener('click', () => highflyHudScale(-0.05));
-  root.querySelector('[data-hf-hud-plus]')?.addEventListener('click', () => highflyHudScale(0.05));
+    '<div class="hf-c28-hud-editor__sliders">' +
+      '<label><span>TAMAÑO <b data-hf-hud-scale-text>100%</b></span><input data-hf-hud-scale type="range" min="65" max="145" step="1" value="100"></label>' +
+      '<label><span>TRANSPARENCIA <b data-hf-hud-opacity-text>100%</b></span><input data-hf-hud-opacity type="range" min="35" max="100" step="1" value="100"></label>' +
+      '<label><span>X <b data-hf-hud-x-text>+0</b></span><input data-hf-hud-x type="range" min="-420" max="420" step="1" value="0"></label>' +
+      '<label><span>Y <b data-hf-hud-y-text>+0</b></span><input data-hf-hud-y type="range" min="-320" max="320" step="1" value="0"></label>' +
+    '</div>' +
+    '<div class="hf-c28-hud-editor__actions">' +
+      '<button type="button" data-hf-hud-reset>RESTABLECER ELEMENTO</button>' +
+      '<button type="button" data-hf-hud-reset-all>RESTABLECER TODO</button>' +
+      '<button type="button" data-hf-hud-export>EXPORTAR PRESET</button>' +
+      '<button type="button" class="primary" data-hf-hud-done>GUARDAR</button>' +
+    '</div>' +
+    '<small class="hf-c28-hud-editor__hint">TOCÁ UN CONTROL DEL HUD Y ARRASTRALO · TAMBIÉN PODÉS AJUSTARLO CON LOS DESLIZADORES</small>';
+
+  root.querySelector<HTMLInputElement>('[data-hf-hud-scale]')?.addEventListener('input', (event) => {
+    highflyHudUpdateSelected({ scale: Number((event.currentTarget as HTMLInputElement).value) / 100 });
+  });
+  root.querySelector<HTMLInputElement>('[data-hf-hud-opacity]')?.addEventListener('input', (event) => {
+    highflyHudUpdateSelected({ opacity: Number((event.currentTarget as HTMLInputElement).value) / 100 });
+  });
+  root.querySelector<HTMLInputElement>('[data-hf-hud-x]')?.addEventListener('input', (event) => {
+    highflyHudUpdateSelected({ x: Number((event.currentTarget as HTMLInputElement).value) });
+  });
+  root.querySelector<HTMLInputElement>('[data-hf-hud-y]')?.addEventListener('input', (event) => {
+    highflyHudUpdateSelected({ y: Number((event.currentTarget as HTMLInputElement).value) });
+  });
   root.querySelector('[data-hf-hud-reset]')?.addEventListener('click', () => highflyHudReset(highflyHudSelected));
   root.querySelector('[data-hf-hud-reset-all]')?.addEventListener('click', highflyHudResetAll);
   root.querySelector('[data-hf-hud-export]')?.addEventListener('click', () => void highflyHudExportPreset());
-  root.querySelector('[data-hf-hud-done]')?.addEventListener('click', () => {
-    highflyHudEditing = false;
-    highflyHudDrag = null;
-    document.body.classList.remove('hf-c23-hud-editing');
-    root!.hidden = true;
-  });
+  root.querySelectorAll('[data-hf-hud-done]').forEach((button) =>
+    button.addEventListener('click', closeHighflyHudEditor),
+  );
   document.body.append(root);
   return root;
 }
 
 function openHighflyHudEditor(): void {
-  const options = document.getElementById('options-menu');
-  if (options instanceof HTMLElement && getComputedStyle(options).display !== 'none') {
-    w.__game?.hud?.toggleOptionsMenu?.();
-  }
+  const settings = document.getElementById('hf-c28-mobile-settings');
+  if (settings) settings.hidden = true;
+  document.body.classList.remove('hf-c28-mobile-settings-open');
   highflyHudEditing = true;
-  highflyHudSelect(highflyHudSelected);
   const root = ensureHighflyHudEditor();
   root.hidden = false;
-  document.body.classList.add('hf-c23-hud-editing');
+  document.body.classList.add('hf-c23-hud-editing', 'hf-c28-hud-editing');
   highflyHudApplyAll();
+  highflyHudSelect(highflyHudSelected);
+}
+
+function ensureHighflyMobileSettings(): HTMLElement {
+  let root = document.getElementById('hf-c28-mobile-settings');
+  if (root) return root;
+  root = document.createElement('div');
+  root.id = 'hf-c28-mobile-settings';
+  root.hidden = true;
+  root.innerHTML =
+    '<div class="hf-c28-mobile-settings__panel" role="dialog" aria-modal="true" aria-label="Ajustes HIGHFLY">' +
+      '<div class="hf-c28-mobile-settings__head"><div><small>HIGHFLY</small><h2>AJUSTES</h2></div><button type="button" data-hf-settings-close aria-label="Cerrar">×</button></div>' +
+      '<div class="hf-c28-mobile-settings__section">' +
+        '<span class="hf-c28-mobile-settings__eyebrow">INTERFAZ</span>' +
+        '<h3>HUD MÓVIL</h3>' +
+        '<p>Mové y escalá habilidades, especiales, joystick, menú, utilidades, buffs y controles de combate sobre el juego real.</p>' +
+        '<button type="button" class="hf-c28-mobile-settings__customize" data-hf-settings-customize>PERSONALIZAR HUD</button>' +
+      '</div>' +
+      '<div class="hf-c28-mobile-settings__note">La distribución se guarda sólo en este dispositivo. Podés exportarla para convertirla en preset oficial.</div>' +
+    '</div>';
+  const close = () => {
+    root!.hidden = true;
+    document.body.classList.remove('hf-c28-mobile-settings-open');
+  };
+  root.querySelector('[data-hf-settings-close]')?.addEventListener('click', close);
+  root.addEventListener('pointerdown', (event) => {
+    if (event.target === root) close();
+  });
+  root.querySelector('[data-hf-settings-customize]')?.addEventListener('click', openHighflyHudEditor);
+  document.body.append(root);
+  return root;
+}
+
+function openHighflyMobileSettings(): void {
+  if (!document.body.classList.contains('mobile-touch')) {
+    w.__game?.hud?.toggleOptionsMenu?.();
+    return;
+  }
+  const root = ensureHighflyMobileSettings();
+  root.hidden = false;
+  document.body.classList.add('hf-c28-mobile-settings-open');
 }
 
 function highflyHudTargetFromEvent(event: PointerEvent): HighflyHudTarget | null {
@@ -588,6 +690,7 @@ function installHighflyHudEditorInput(): void {
   if (document.body.dataset.hfC23HudEditorInput === '1') return;
   document.body.dataset.hfC23HudEditorInput = '1';
   window.addEventListener('highfly:mobile-hud-editor', openHighflyHudEditor);
+  window.addEventListener('highfly:mobile-settings', openHighflyMobileSettings);
   document.addEventListener(
     'pointerdown',
     (event) => {
@@ -595,6 +698,7 @@ function installHighflyHudEditorInput(): void {
       const target = highflyHudTargetFromEvent(event);
       if (!target) return;
       event.preventDefault();
+      event.stopImmediatePropagation();
       highflyHudSelect(target.id);
       highflyHudDrag = {
         pointerId: event.pointerId,
@@ -612,16 +716,21 @@ function installHighflyHudEditorInput(): void {
       const drag = highflyHudDrag;
       if (!highflyHudEditing || !drag || drag.pointerId !== event.pointerId) return;
       event.preventDefault();
+      event.stopImmediatePropagation();
       highflyHudSave(drag.targetId, {
         x: drag.base.x + event.clientX - drag.startX,
         y: drag.base.y + event.clientY - drag.startY,
         scale: drag.base.scale,
+        opacity: drag.base.opacity,
       });
     },
     { capture: true },
   );
   const finish = (event: PointerEvent) => {
-    if (highflyHudDrag?.pointerId === event.pointerId) highflyHudDrag = null;
+    if (!highflyHudEditing || highflyHudDrag?.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    highflyHudDrag = null;
   };
   document.addEventListener('pointerup', finish, { capture: true });
   document.addEventListener('pointercancel', finish, { capture: true });
