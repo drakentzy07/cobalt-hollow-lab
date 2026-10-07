@@ -94,13 +94,14 @@ export async function writeBoneReference(src,outDir,bone,parts=DEFAULT_REFERENCE
 }
 
 function parseArgs(argv){
-  const out={src:DEFAULT_SRC,out:DEFAULT_OUT,bones:[],list:false};
+  const out={src:DEFAULT_SRC,out:DEFAULT_OUT,bones:[],list:false,all:false};
   for(let i=0;i<argv.length;i++){
     const a=argv[i];
     if(a==='--src') out.src=path.resolve(argv[++i]);
     else if(a==='--out') out.out=path.resolve(argv[++i]);
     else if(a==='--bone') out.bones.push(argv[++i]);
     else if(a==='--list') out.list=true;
+    else if(a==='--all') out.all=true;
     else throw new Error(`unknown argument ${a}`);
   }
   return out;
@@ -110,11 +111,12 @@ async function main(){
   const opt=parseArgs(process.argv.slice(2));
   const src=await loadModularBody(opt.src);
   const joints=realJointNames(src);
-  if(opt.list||!opt.bones.length){
+  if(opt.list||(!opt.bones.length&&!opt.all)){
     console.log(JSON.stringify({source:opt.src,joints},null,2));
-    if(!opt.bones.length) return;
+    if(!opt.bones.length&&!opt.all) return;
   }
-  for(const bone of opt.bones){
+  const requested=opt.all?joints:opt.bones;
+  for(const bone of requested){
     const r=await writeBoneReference(src,opt.out,bone);
     console.log(`BIND_REFERENCE_OK ${r.bone} ${path.relative(process.cwd(),r.file)} parts=${r.parts}`);
   }
