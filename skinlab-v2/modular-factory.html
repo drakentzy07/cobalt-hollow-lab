@@ -175,7 +175,7 @@ const UPSTREAM='9b57e49c9676d75962700f828cc00a50a9a988b5';
 const MODEL='./assets/warrior_modular.glb';
 const SOURCE_BLOB='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2';
 const SOURCE_BYTES=3477500;
-const DESIGN_REV='unified-factory+molder-phase2+painter-p2';
+const DESIGN_REV='unified-factory+molder-phase2+painter-p3';
 const FACE=['M_Ear_round','M_Eye_almond','M_Brow_soft','M_Mouth_neutral'];
 const CORE=['M_Head','M_Torso','M_ArmL','M_ArmR','M_HandL','M_HandR','M_LegL','M_LegR','M_FootL','M_FootR','M_Loin',...FACE];
 const SLOT_MAP={
@@ -830,7 +830,9 @@ function setDesignMode(mode){
   Object.assign(window.__MODULAR_FACTORY_DIAG__,{designMode:mode,cleanReady:true,avianReady});
   updateDiag();frameVisible();
 }
-window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,designRev:DESIGN_REV,rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null,designMode:'clean',cleanReady:false,avianReady:false,avianPieces:0,armorAnatomyReady:false,armorSetCount:0,knightHeadParts:0,molderReady:false,molderSkinPreserved:false,molderChangedVertices:0};
+window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,designRev:DESIGN_REV,unifiedFactory:true,canonicalRoute:'/skinlab-v2/',rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null,designMode:'clean',cleanReady:false,avianReady:false,avianPieces:0,armorAnatomyReady:false,armorSetCount:0,knightHeadParts:0,molderReady:false,molderPhase:2,molderSkinPreserved:false,molderChangedVertices:0,painterReady:true,painterVersion:2};
+window.__SKINLAB_DIAG__=window.__MODULAR_FACTORY_DIAG__;
+window.__SKIN_FACTORY_DIAG__=window.__MODULAR_FACTORY_DIAG__;
 
 const ktx2=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/libs/basis/').detectSupport(renderer);
 const loader=new GLTFLoader();loader.setKTX2Loader(ktx2);loader.setMeshoptDecoder(MeshoptDecoder);
@@ -855,10 +857,12 @@ loader.load(MODEL,g=>{
       ready:true,rig:true,rightSocket:true,leftSocket:true,rightSocketRuntime:right.name,leftSocketRuntime:left.name,
       clips:actor.userData.clips.length,cleanReady:true,avianReady,avianPieces:avianPieces.length,designMode:'clean',
       armorAnatomyReady:true,armorSetCount:Object.keys(ARMOR_LIBRARY).length,knightHeadParts:ARMOR_LIBRARY.knight.head.length,
-      molderReady:true,molderSkinPreserved:true,molderChangedVertices:0
+      molderReady:true,molderPhase:2,molderSkinPreserved:true,molderChangedVertices:0,
+      painterReady:true,painterVersion:2,unifiedFactory:true,canonicalRoute:'/skinlab-v2/'
     });
-    window.__MODULAR_FACTORY_API__={setDesignMode,frameVisible,fixedView,showAnatomy,moldHelmet,resetMolder,anatomyStats};
-    window.__ARMOR_MOLDER__={showAnatomy,moldHelmet,resetMolder,library:ARMOR_LIBRARY,stats:anatomyStats};
+    window.__MODULAR_FACTORY_API__={setDesignMode,frameVisible,fixedView,showAnatomy,moldCurrentSlot,resetMolder,anatomyStats,paintArmorPreset};
+    window.__ARMOR_MOLDER__={showAnatomy,moldCurrentSlot,resetMolder,library:ARMOR_LIBRARY,stats:anatomyStats,paintArmorPreset};
+    window.__SKIN_FACTORY_API__=window.__MODULAR_FACTORY_API__;
     pill('rigPill',true,'Rig_Medium ✓');pill('socketPill',true,'handslot L/R ✓');pill('clipPill',actor.userData.clips.length===22,actor.userData.clips.length+' clips ✓');
     frameVisible();updateDiag();
   }catch(err){throw err}
@@ -870,13 +874,25 @@ loader.load(MODEL,g=>{
 document.getElementById('rawBtn').onclick=()=>setDesignMode('raw');
 document.getElementById('cleanBtn').onclick=()=>setDesignMode('clean');
 document.getElementById('avianBtn').onclick=()=>setDesignMode('avian');
-document.getElementById('donorSetSelect').onchange=()=>{resetMolder();showAnatomy('full')};
+document.getElementById('donorSetSelect').onchange=()=>{restoreArmorGeometry();resetMolder();showAnatomy('full')};
 document.getElementById('anatomyBaseBtn').onclick=()=>showAnatomy('base');
 document.getElementById('anatomyFullBtn').onclick=()=>showAnatomy('full');
 document.getElementById('anatomyExplodedBtn').onclick=()=>showAnatomy('exploded');
-document.querySelectorAll('[data-anatomy-slot]').forEach(b=>b.onclick=()=>showAnatomy('slot',b.dataset.anatomySlot));
-for(const id of ['moldWidth','moldCrown','moldFront','moldTaper'])document.getElementById(id).oninput=moldHelmet;
+document.querySelectorAll('[data-anatomy-slot]').forEach(b=>b.onclick=()=>{
+  document.getElementById('moldSlotSelect').value=b.dataset.anatomySlot;
+  showAnatomy('slot',b.dataset.anatomySlot);
+});
+document.getElementById('moldSlotSelect').onchange=()=>{
+  for(const id of ['moldWidth','moldCrown','moldFront','moldTaper']){document.getElementById(id).value=0;document.getElementById(id+'Val').textContent='0'}
+  showSlotForFactory(document.getElementById('donorSetSelect').value,currentMoldSlot());frameVisible();
+};
+for(const id of ['moldWidth','moldCrown','moldFront','moldTaper'])document.getElementById(id).oninput=moldCurrentSlot;
+document.getElementById('moldApplyBtn').onclick=moldCurrentSlot;
 document.getElementById('moldResetBtn').onclick=resetMolder;
+document.getElementById('paintSourceBtn').onclick=()=>paintArmorPreset('source');
+document.getElementById('paintBlackBtn').onclick=()=>paintArmorPreset('black');
+document.getElementById('paintRavenBtn').onclick=()=>paintArmorPreset('raven');
+document.getElementById('paintCustomBtn').onclick=()=>paintArmorPreset('custom');
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>fixedView(b.dataset.view));
 document.getElementById('freeBtn').onclick=()=>{document.getElementById('freeBtn').classList.add('active')};
 document.getElementById('bonesBtn').onclick=e=>{if(!skeleton)return;skeleton.visible=!skeleton.visible;e.currentTarget.classList.toggle('active',skeleton.visible)};
