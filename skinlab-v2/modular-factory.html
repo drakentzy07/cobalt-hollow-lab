@@ -22,7 +22,18 @@ button:hover{background:#1d1d29}button.active{border-color:var(--violet);backgro
 .badge{display:inline-block;margin-left:5px;font-size:8px;padding:2px 5px;border-radius:999px;border:1px solid #3b3b49;color:#999}
 .footer{position:absolute;right:14px;bottom:14px;padding:9px 12px;border:1px solid #2b2b36;border-radius:12px;background:rgba(10,10,15,.78);font-size:10px;color:#aaa}
 #error{display:none;position:absolute;left:14px;right:14px;bottom:14px;background:#3a1016;border:1px solid #7f1d1d;color:#fecaca;padding:10px;border-radius:12px;z-index:9;font-size:11px}
-@media(max-width:760px){header{align-items:flex-start}.nav .pill{display:none}.panel{top:auto;bottom:10px;max-height:52vh}.footer{display:none}}
+@media(max-width:760px) and (orientation:portrait){header{align-items:flex-start}.nav .pill{display:none}.panel{top:auto;bottom:10px;max-height:52vh}.footer{display:none}}
+@media(orientation:landscape) and (max-height:600px){
+  header{padding:7px 10px;gap:8px}
+  h1{font-size:11px}.sub{font-size:8px}.mark{height:24px}
+  .nav{gap:4px}.nav a,.nav .pill{font-size:8px;padding:4px 6px}
+  .panel{left:8px;top:8px;width:min(320px,36vw);max-height:calc(100% - 16px);padding:9px;border-radius:12px}
+  .panel h2{font-size:9px;margin-bottom:6px}.group{padding-top:7px;margin-top:7px}
+  button,select{font-size:9px;padding:6px 7px}.row{gap:5px;margin-bottom:5px}
+  .slotgrid{gap:5px}.slot{font-size:8px;padding:6px 7px}
+  .note,.diag{font-size:8px;line-height:1.3}
+  .footer{display:none}
+}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/"}}</script>
 </head>
