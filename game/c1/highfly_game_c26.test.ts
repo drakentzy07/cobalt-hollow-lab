@@ -2,14 +2,15 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('HIGHFLY GAME-C2.6 mobile HUD editor menu', () => {
-  it('reuses the existing More tile as Ajustes and opens native Options', () => {
+  it('reuses the existing More tile as Ajustes and routes it through native Options', () => {
     const runtime = readFileSync('src/highfly/game_c1_runtime.ts', 'utf8');
-    expect(runtime).toContain("C2.6-hud-editor-menu");
-    expect(runtime).toContain("document.getElementById('mobile-bar-editor')");
-    expect(runtime).toContain("label.textContent = 'Ajustes'");
-    expect(runtime).toContain("button.setAttribute('aria-label', 'Ajustes')");
-    expect(runtime).toContain("w.__game?.hud?.toggleOptionsMenu?.()");
-    expect(runtime).toContain("document.body.classList.remove('mobile-more-open')");
+    const mobile = readFileSync('src/game/mobile_controls.ts', 'utf8');
+    const html = readFileSync('index.html', 'utf8');
+    expect(runtime).toContain('const HIGHFLY_GAME_C22_BUILD =');
+    expect(html).toContain('id="mobile-bar-editor" title="Ajustes" aria-label="Ajustes"');
+    expect(html).toContain('<span class="mobile-label">Ajustes</span>');
+    expect(mobile).toContain("this.bindButton('mobile-bar-editor', () => this.callbacks.onMenu());");
+    expect(runtime).not.toContain('function syncHighflyMobileSettingsEntry(): void');
   });
 
   it('exports the exact persisted S23 HUD preset and labels save explicitly', () => {
