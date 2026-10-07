@@ -215,6 +215,23 @@ jobs:
           grep -F "MUNDO LOCAL · PROGRESO PERSISTENTE" index.html
           grep -F ">ENTRAR AL MUNDO</span>" index.html
 
+      - name: Capture CLEAN V1 canonical source delta (non-mutating gameplay)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ../clean-v1-evidence
+          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          # Intent-to-add includes new source files in the diff without changing their contents.
+          git add -N --all
+          git diff --binary HEAD > ../clean-v1-evidence/highfly-clean-v1.patch
+          test -s ../clean-v1-evidence/highfly-clean-v1.patch
+          git diff --check HEAD
+          git diff --name-status HEAD > ../clean-v1-evidence/changed-paths.txt
+          sha256sum ../clean-v1-evidence/highfly-clean-v1.patch > ../clean-v1-evidence/sha256.txt
+          printf 'UPSTREAM=%s\\nCLEAN_HEAD=%s\\n' "$(git rev-parse HEAD)" "$GITHUB_SHA" > ../clean-v1-evidence/provenance.txt
+          echo "CLEAN_V1_CANONICAL_DELTA_CAPTURED=1"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -2999,6 +3016,15 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: upstream/dist
+
+      - name: Upload CLEAN V1 source delta evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-clean-v1-source-delta
+          path: clean-v1-evidence/
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Upload browser diagnostics
         if: always()
