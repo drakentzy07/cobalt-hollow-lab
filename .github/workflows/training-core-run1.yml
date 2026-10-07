@@ -2718,6 +2718,18 @@ jobs:
             throw new Error('C2.8.2: shifted combat HUD escaped S23 viewport: ' + JSON.stringify(badHudBounds));
           }
 
+          const jumpEvadeAlignment = await page.evaluate(() => {
+            const jump = document.getElementById('mobile-jump');
+            const evade = document.getElementById('mobile-evade');
+            if (!(jump instanceof HTMLElement) || !(evade instanceof HTMLElement)) return null;
+            const jr = jump.getBoundingClientRect();
+            const er = evade.getBoundingClientRect();
+            return { jumpTop: jr.top, evadeTop: er.top, delta: Math.abs(jr.top - er.top) };
+          });
+          if (!jumpEvadeAlignment || jumpEvadeAlignment.delta > 1) {
+            throw new Error('C2.8.2: SALTAR/EVADIR not visually aligned: ' + JSON.stringify(jumpEvadeAlignment));
+          }
+
           await page.evaluate(() => {
             const target = document.getElementById('mobile-target-cycle');
             if (!(target instanceof HTMLElement)) throw new Error('TARGET missing');

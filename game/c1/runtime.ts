@@ -426,7 +426,7 @@ const HIGHFLY_HUD_DEFAULTS: Record<string, HighflyHudTransform> = {
   target: { x: 8, y: 23, scale: 1, opacity: 1 },
   attack: { x: 9, y: 8, scale: 1.08, opacity: 1 },
   evade: { x: 51, y: 18, scale: 1, opacity: 1 },
-  jump: { x: -78, y: 14, scale: 1, opacity: 1 },
+  jump: { x: -78, y: 18, scale: 1, opacity: 1 },
   move: { x: 0, y: 0, scale: 1, opacity: 1 },
   menu: { x: 0, y: 0, scale: 1, opacity: 1 },
   gem: { x: 0, y: 0, scale: 1, opacity: 1 },

@@ -47,7 +47,7 @@ describe('HIGHFLY GAME-C2.8 mobile HUD editor', () => {
     expect(runtime).toContain('s10: { x: 57, y: -24, scale: 1, opacity: 1 }');
     expect(runtime).toContain('ult: { x: 56, y: -7, scale: 1, opacity: 1 }');
     expect(runtime).toContain('attack: { x: 9, y: 8, scale: 1.08, opacity: 1 }');
-    expect(runtime).toContain('jump: { x: -78, y: 14, scale: 1, opacity: 1 }');
+    expect(runtime).toContain('jump: { x: -78, y: 18, scale: 1, opacity: 1 }');
     expect(runtime).toContain('function highflyHudDefault(targetId: string)');
   });
 
