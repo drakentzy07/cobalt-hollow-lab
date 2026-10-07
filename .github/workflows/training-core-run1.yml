@@ -3010,7 +3010,7 @@ jobs:
 
   deploy-game-c2:
     name: Deploy HIGHFLY GAME-C2 Mobile Feel
-    if: github.ref_name == 'highfly-game-c2-mobile-feel' || github.ref_name == 'highfly-game-c2-1-s23-feedback' || github.ref_name == 'highfly-game-c2-2-mobile-polish' || github.ref_name == 'highfly-game-c2-3-human-fix' || github.ref_name == 'highfly-game-c2-4-human-closure' || github.ref_name == 'highfly-game-c2-5-hud-target-polish' || github.ref_name == 'highfly-game-c2-5-1-hud-visual-fix' || github.ref_name == 'highfly-game-c2-6-hud-editor-menu' || github.ref_name == 'highfly-game-c2-7-human-red-repair' || github.ref_name == 'highfly-game-c2-8-mobile-hud-editor'
+    if: github.ref_name == 'highfly-game-c2-8-mobile-hud-editor'
     needs: thin-offline
     runs-on: ubuntu-latest
     timeout-minutes: 30
