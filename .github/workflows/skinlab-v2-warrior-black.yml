@@ -21,49 +21,49 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f skinlab-v2/index.html
+          test -f skinlab-v2/legacy-warrior.html
           test -f skinlab-v2/README.md
-          grep -q "Rig_Medium" skinlab-v2/index.html
-          grep -q "handslot.r" skinlab-v2/index.html
-          grep -q "handslot.l" skinlab-v2/index.html
-          grep -q "knight.glb" skinlab-v2/index.html
-          grep -q "sword_1handed.glb" skinlab-v2/index.html
-          grep -q "shield_round.glb" skinlab-v2/index.html
-          grep -q "WARRIOR BLACK" skinlab-v2/index.html
-          grep -q "PAINTER PRO v1" skinlab-v2/index.html
-          grep -q 'id="pieceSelect"' skinlab-v2/index.html
-          grep -q 'id="finishSelect"' skinlab-v2/index.html
-          grep -q 'id="brushBtn"' skinlab-v2/index.html
-          grep -q "function paintUvInternal" skinlab-v2/index.html
-          grep -q "highfly_skin_painter_custom_v1" skinlab-v2/index.html
-          grep -q "copyPainterRecipe" skinlab-v2/index.html
-          grep -q "AUTO_BLACK_AURA" skinlab-v2/index.html
-          grep -q 'id="autoAuraBtn"' skinlab-v2/index.html
-          grep -q "Knight_HelmetVisor" skinlab-v2/index.html
-          grep -q "applyAutoBlackAura" skinlab-v2/index.html
-          grep -q "emissiveTexture" skinlab-v2/index.html
-          grep -q "RoomEnvironment" skinlab-v2/index.html
-          grep -q "weaponPolishVersion:2" skinlab-v2/index.html
-          grep -q "authored-bevel-selective-3d-rails" skinlab-v2/index.html
-          grep -q "wireframeSuppressed:true" skinlab-v2/index.html
-          grep -q 'id="authorBtn"' skinlab-v2/index.html
-          grep -q "applyPremiumAuthoring" skinlab-v2/index.html
-          grep -q "geometry-uv-plus-selective-3d-rails" skinlab-v2/index.html
-          grep -q "swordBevelSegments" skinlab-v2/index.html
-          grep -q "swordEdgeSegments" skinlab-v2/index.html
-          grep -q "ensureRigidFeatureRails" skinlab-v2/index.html
-          grep -q "heroSwordBevelRails" skinlab-v2/index.html
-          grep -q "heroSwordEdgeRails" skinlab-v2/index.html
-          grep -q "shieldPremiumRails" skinlab-v2/index.html
-          grep -q "premiumCosmeticFx" skinlab-v2/index.html
-          grep -q "warrior_black_aura_premium_v2" skinlab-v2/index.html
-          grep -q "function resolveNode" skinlab-v2/index.html
-          grep -q "name.replace(/\[\[\\\].:/\]/g" skinlab-v2/index.html
-          grep -q "0.555174" skinlab-v2/index.html
-          grep -q "0.4413" skinlab-v2/index.html
-          grep -q "applyShowRule" skinlab-v2/index.html
-          grep -q "normalizeBody(actor)" skinlab-v2/index.html
-          ! grep -q "getObjectByName('handslot.r')" skinlab-v2/index.html
+          grep -q "Rig_Medium" skinlab-v2/legacy-warrior.html
+          grep -q "handslot.r" skinlab-v2/legacy-warrior.html
+          grep -q "handslot.l" skinlab-v2/legacy-warrior.html
+          grep -q "knight.glb" skinlab-v2/legacy-warrior.html
+          grep -q "sword_1handed.glb" skinlab-v2/legacy-warrior.html
+          grep -q "shield_round.glb" skinlab-v2/legacy-warrior.html
+          grep -q "WARRIOR BLACK" skinlab-v2/legacy-warrior.html
+          grep -q "PAINTER PRO v1" skinlab-v2/legacy-warrior.html
+          grep -q 'id="pieceSelect"' skinlab-v2/legacy-warrior.html
+          grep -q 'id="finishSelect"' skinlab-v2/legacy-warrior.html
+          grep -q 'id="brushBtn"' skinlab-v2/legacy-warrior.html
+          grep -q "function paintUvInternal" skinlab-v2/legacy-warrior.html
+          grep -q "highfly_skin_painter_custom_v1" skinlab-v2/legacy-warrior.html
+          grep -q "copyPainterRecipe" skinlab-v2/legacy-warrior.html
+          grep -q "AUTO_BLACK_AURA" skinlab-v2/legacy-warrior.html
+          grep -q 'id="autoAuraBtn"' skinlab-v2/legacy-warrior.html
+          grep -q "Knight_HelmetVisor" skinlab-v2/legacy-warrior.html
+          grep -q "applyAutoBlackAura" skinlab-v2/legacy-warrior.html
+          grep -q "emissiveTexture" skinlab-v2/legacy-warrior.html
+          grep -q "RoomEnvironment" skinlab-v2/legacy-warrior.html
+          grep -q "weaponPolishVersion:2" skinlab-v2/legacy-warrior.html
+          grep -q "authored-bevel-selective-3d-rails" skinlab-v2/legacy-warrior.html
+          grep -q "wireframeSuppressed:true" skinlab-v2/legacy-warrior.html
+          grep -q 'id="authorBtn"' skinlab-v2/legacy-warrior.html
+          grep -q "applyPremiumAuthoring" skinlab-v2/legacy-warrior.html
+          grep -q "geometry-uv-plus-selective-3d-rails" skinlab-v2/legacy-warrior.html
+          grep -q "swordBevelSegments" skinlab-v2/legacy-warrior.html
+          grep -q "swordEdgeSegments" skinlab-v2/legacy-warrior.html
+          grep -q "ensureRigidFeatureRails" skinlab-v2/legacy-warrior.html
+          grep -q "heroSwordBevelRails" skinlab-v2/legacy-warrior.html
+          grep -q "heroSwordEdgeRails" skinlab-v2/legacy-warrior.html
+          grep -q "shieldPremiumRails" skinlab-v2/legacy-warrior.html
+          grep -q "premiumCosmeticFx" skinlab-v2/legacy-warrior.html
+          grep -q "warrior_black_aura_premium_v2" skinlab-v2/legacy-warrior.html
+          grep -q "function resolveNode" skinlab-v2/legacy-warrior.html
+          grep -q "name.replace(/\[\[\\\].:/\]/g" skinlab-v2/legacy-warrior.html
+          grep -q "0.555174" skinlab-v2/legacy-warrior.html
+          grep -q "0.4413" skinlab-v2/legacy-warrior.html
+          grep -q "applyShowRule" skinlab-v2/legacy-warrior.html
+          grep -q "normalizeBody(actor)" skinlab-v2/legacy-warrior.html
+          ! grep -q "getObjectByName('handslot.r')" skinlab-v2/legacy-warrior.html
           ! grep -Rqi "quaternius\|kitsune\|ronin" skinlab-v2
           echo "Skin Lab v2 contract: GREEN"
 
