@@ -157,10 +157,16 @@ function fixedView(kind){
   const p={front:[c.x,c.y,c.z+d],profile:[c.x+d,c.y,c.z],back:[c.x,c.y,c.z-d],three:[c.x+d*.78,c.y+d*.12,c.z+d*.78]}[kind];
   camera.position.set(...p);controls.target.copy(c);controls.update();document.getElementById('freeBtn').classList.remove('active');
 }
+function partNodes(name){
+  const exact=resolveNode(actor,name);
+  if(exact)return [exact];
+  const found=[];
+  actor.traverse(o=>{if(o.name===name||o.name.startsWith(name+'_'))found.push(o)});
+  return found;
+}
 function setPartVisible(name,on=true){
-  const o=resolveNode(actor,name);if(!o)return false;
-  if(o.isMesh||o.isSkinnedMesh)o.visible=on;
-  o.traverse(x=>{if(x.isMesh||x.isSkinnedMesh)x.visible=on});
+  const nodes=partNodes(name);if(!nodes.length)return false;
+  nodes.forEach(o=>{if(o.isMesh||o.isSkinnedMesh)o.visible=on;o.traverse(x=>{if(x.isMesh||x.isSkinnedMesh)x.visible=on})});
   return true;
 }
 function setBaseVisibility(){
@@ -175,9 +181,10 @@ function setBaseVisibility(){
 }
 function updateDiag(){
   if(!actor)return;
-  const visible=[];let armorVisible=0;
-  actor.traverse(o=>{if((o.isMesh||o.isSkinnedMesh)&&o.visible){visible.push(o.name);if(o.name.startsWith('Armor_'))armorVisible++}});
-  const missing=CORE.filter(n=>!meshByName.has(n));
+  const missing=CORE.filter(n=>partNodes(n).length===0);
+  const visible=CORE.filter(n=>partNodes(n).some(o=>effectiveVisible(o)));
+  let armorVisible=0;
+  actor.traverse(o=>{if((o.isMesh||o.isSkinnedMesh)&&o.name.startsWith('Armor_')&&effectiveVisible(o))armorVisible++});
   const diag=window.__MODULAR_FACTORY_DIAG__;
   diag.visible=visible;diag.visibleCount=visible.length;diag.armorVisible=armorVisible;diag.missingCore=missing;
   document.getElementById('diag').textContent=
