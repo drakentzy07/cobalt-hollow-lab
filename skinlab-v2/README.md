@@ -40,3 +40,4 @@ The premium additions are presentation-only. No changes to:
 - damage or combat authority
 
 This branch remains the active Skin Lab; the proto is preserved separately for instant rollback.
+\n## MODULAR FACTORY\n- Module: `skinlab-v2/modular-factory.html`\n- Canonical asset: `public/models/chars/modular/warrior_modular.glb`\n- Frozen blob: `e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2` (3,477,500 bytes)\n- First GREEN target: real MALE base only (`M_*` + `M_Loin` + one face), zero `Armor_*` meshes visible.\n- Inspector: front/profile/back/3-4/free, bones, sockets, slot toggles, original animation clips.\n- Rig/skinning/animations/gameplay remain untouched.\n
