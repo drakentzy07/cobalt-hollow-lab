@@ -206,6 +206,9 @@ jobs:
               window.__SKIN_FACTORY_API__.attachNativeWearable('tricorne',false);
               window.__SKIN_FACTORY_API__.attachNativeWearable('spyglass',false);
             });
+            // S23 expansion gate hid the panel; restore it before testing real user clicks.
+            await page.locator('#uiToggleBtn').click({noWaitAfter:true});
+            await page.waitForFunction(()=>!document.querySelector('.panel')?.classList.contains('ui-hidden'),null,{timeout:10000});
             await page.setViewportSize({width:1365,height:768});
             await page.locator('#simpleCorvusBtn').click({noWaitAfter:true});
             await page.waitForFunction(()=>window.__SKIN_FACTORY_DIAG__?.corvusReady===true||
