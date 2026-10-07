@@ -2818,4 +2818,4 @@ jobs:
         uses: actions/deploy-pages@v4
         with:
           artifact_name: github-pages
-# skinlab-v2-android-refresh: 2d8c23a hf-avian-v1 + physical-android-stage
+# skinlab-v2-android-refresh: d3c2719 armor-anatomy + donor-lab + helmet-molder-v1
