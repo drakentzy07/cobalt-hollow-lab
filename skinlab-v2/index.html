@@ -42,7 +42,7 @@
 <body>
 <div id="app">
   <header>
-    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · PREMIUM AUTHORING v2 · BLACK AURA</div></div></div>
+    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · LEGENDARY AUTHORING · AVIAN KNIGHT PASS 1</div></div></div>
     <div class="status">
       <span class="pill" id="rigPill">Rig_Medium …</span>
       <span class="pill" id="rPill">handslot.r …</span>
@@ -60,6 +60,8 @@
         <button id="blackBtn">WARRIOR BLACK AURA</button>
         <button id="autoAuraBtn">⚡ AUTO · BLACK AURA</button>
         <button id="authorBtn">💎 PREMIUM V2</button>
+        <button id="avianBtn">🦅 AVIAN LEGENDARY</button>
+        <button id="helmetFocusBtn">🎯 FOCUS CASCO</button>
       </div>
       <div class="row">
         <select id="animSelect"></select>
@@ -144,7 +146,7 @@
         <b>Base</b><span>ClaudeCraft Warrior real: knight.glb</span>
         <b>Rig</b><span>Rig_Medium original, sin retarget</span>
         <b>Arma</b><span>Espada + escudo en sockets originales</span>
-        <b>Auto</b><span>BLACK AURA oficial aplicado al abrir · Painter queda editable</span>
+        <b>Auto</b><span>AVIAN LEGENDARY PASS 1 aplicado al abrir · casco modular real sobre head</span>
       </div>
       <p class="small">PAINTER PRO modifica sólo la capa cosmética. Rig, pesos, clips, sockets, hitboxes y gameplay permanecen intactos.</p>
     </section>
@@ -250,7 +252,7 @@ floor.rotation.x=-Math.PI/2; floor.position.y=0; scene.add(floor);
 const ring=new THREE.Mesh(new THREE.RingGeometry(1.15,1.19,96),new THREE.MeshBasicMaterial({color:0x4c1d95,transparent:true,opacity:.65,side:THREE.DoubleSide}));
 ring.rotation.x=-Math.PI/2; ring.position.y=.006; scene.add(ring);
 
-let actor=null,mixer=null,skeletonHelper=null,autoRotate=false,currentMode='base';
+let actor=null,mixer=null,skeletonHelper=null,autoRotate=false,currentMode='base',avianHelmetRoot=null;
 const armorNames=new Set(['Knight_ArmLeft','Knight_ArmRight','Knight_Body','Knight_Cape','Knight_Helmet','Knight_LegLeft','Knight_LegRight']);
 const originalMat=new Map();
 
@@ -632,6 +634,154 @@ function strokeUvSegments(piece,segments,color,width,alpha=1,glowAlpha=0){
   pack.texture.needsUpdate=true;pack.emissiveTexture.needsUpdate=true;
   return segments.length;
 }
+
+function matAvian(color,{metalness=.8,roughness=.18,emissive=null,emissiveIntensity=0}={}){
+  const m=new THREE.MeshStandardMaterial({color:new THREE.Color(color),metalness,roughness});
+  if(emissive){m.emissive=new THREE.Color(emissive);m.emissiveIntensity=emissiveIntensity}
+  return m;
+}
+function addAvianMesh(root,name,geometry,material,pos=[0,0,0],rot=[0,0,0],scale=[1,1,1]){
+  const m=new THREE.Mesh(geometry,material);
+  m.name=name;m.position.set(...pos);m.rotation.set(...rot);m.scale.set(...scale);
+  m.castShadow=true;m.receiveShadow=true;root.add(m);return m;
+}
+function addAvianRail(root,name,a,b,radius,material){
+  const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b),mid=A.clone().add(B).multiplyScalar(.5);
+  const dir=B.clone().sub(A),len=dir.length();
+  const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,len,8,1,false),material);
+  mesh.name=name;mesh.position.copy(mid);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());
+  root.add(mesh);return mesh;
+}
+function setOriginalHelmetVisible(on){
+  const h=actor?.getObjectByName('Knight_Helmet'),v=actor?.getObjectByName('Knight_HelmetVisor');
+  if(h)h.visible=on;if(v)v.visible=on;
+}
+function buildAvianHelmet(){
+  if(avianHelmetRoot)return avianHelmetRoot;
+  const headBone=resolveNode(actor,'head');
+  const baseHelmet=actor?.getObjectByName('Knight_Helmet');
+  if(!headBone||!baseHelmet)throw new Error('AVIAN PASS1 requires head + Knight_Helmet');
+
+  actor.updateWorldMatrix(true,true);headBone.updateWorldMatrix(true,true);baseHelmet.updateWorldMatrix(true,true);
+  const box=new THREE.Box3().setFromObject(baseHelmet);
+  const centerWorld=box.getCenter(new THREE.Vector3());
+  const sizeWorld=box.getSize(new THREE.Vector3());
+  const centerLocal=headBone.worldToLocal(centerWorld.clone());
+  const ws=new THREE.Vector3();headBone.getWorldScale(ws);
+  const sx=sizeWorld.x/Math.max(.0001,Math.abs(ws.x));
+  const sy=sizeWorld.y/Math.max(.0001,Math.abs(ws.y));
+  const sz=sizeWorld.z/Math.max(.0001,Math.abs(ws.z));
+
+  const root=new THREE.Group();root.name='HF_AvianHelmet';root.position.copy(centerLocal);headBone.add(root);
+  avianHelmetRoot=root;
+
+  const graphite=matAvian('#05070d',{metalness:.86,roughness:.16});
+  const charcoal=matAvian('#111521',{metalness:.72,roughness:.20});
+  const silver=matAvian('#dfe6f2',{metalness:1,roughness:.09});
+  const silverDark=matAvian('#8d98ab',{metalness:.96,roughness:.12});
+  const violet=matAvian('#5b21b6',{metalness:.55,roughness:.16,emissive:'#6d28d9',emissiveIntensity:1.35});
+  const eyeDark=matAvian('#06030b',{metalness:.20,roughness:.28});
+
+  // HelmetShell: angular avian cranium, slightly swept backwards.
+  addAvianMesh(root,'HF_HelmetShell',new THREE.IcosahedronGeometry(.5,1),graphite,
+    [0,sy*.03,-sz*.03],[0,0,0],[sx*1.04,sy*1.01,sz*.98]);
+  addAvianMesh(root,'HF_ForeheadPlate',new THREE.BoxGeometry(1,1,1),charcoal,
+    [0,sy*.13,sz*.36],[-.17,0,0],[sx*.76,sy*.30,sz*.12]);
+
+  // BirdBeak: long but still proportional to the Knight head. Two faceted volumes.
+  addAvianMesh(root,'HF_BirdBeak_Upper',new THREE.ConeGeometry(.5,1,4,1,false),graphite,
+    [0,-sy*.07,sz*.75],[Math.PI/2,0,Math.PI/4],[sx*.54,sz*1.15,sy*.24]);
+  addAvianMesh(root,'HF_BirdBeak_Lower',new THREE.ConeGeometry(.5,1,4,1,false),charcoal,
+    [0,-sy*.18,sz*.63],[Math.PI/2,0,Math.PI/4],[sx*.42,sz*.84,sy*.15]);
+
+  // Aggressive eye recess + luminous slit, not giant headlights.
+  for(const side of [-1,1]){
+    const tag=side<0?'L':'R';
+    addAvianMesh(root,'HF_EyeFrame_'+tag,new THREE.BoxGeometry(1,1,1),eyeDark,
+      [side*sx*.23,sy*.055,sz*.50],[-.10,0,side*.17],[sx*.25,sy*.10,sz*.055]);
+    addAvianMesh(root,'HF_EyeGlow_'+tag,new THREE.BoxGeometry(1,1,1),violet,
+      [side*sx*.23,sy*.052,sz*.535],[-.10,0,side*.17],[sx*.14,sy*.026,sz*.022]);
+    addAvianMesh(root,'HF_Brow_'+tag,new THREE.BoxGeometry(1,1,1),graphite,
+      [side*sx*.22,sy*.145,sz*.49],[-.22,0,side*.20],[sx*.32,sy*.075,sz*.075]);
+    addAvianRail(root,'HF_BrowTrim_'+tag,
+      [side*sx*.39,sy*.18,sz*.54],[side*sx*.05,sy*.12,sz*.56],
+      Math.max(sx,sy,sz)*.010,silver);
+  }
+
+  // Beak metal language: top spine + side cutting trims.
+  addAvianRail(root,'HF_BeakTrim_Top',[0,sy*.04,sz*.50],[0,-sy*.02,sz*1.22],Math.max(sx,sy,sz)*.009,silver);
+  for(const side of [-1,1]){
+    addAvianRail(root,'HF_BeakTrim_'+(side<0?'L':'R'),
+      [side*sx*.31,-sy*.02,sz*.52],[side*sx*.06,-sy*.11,sz*1.22],
+      Math.max(sx,sy,sz)*.008,silverDark);
+  }
+
+  // Crest: rigid low-poly feathers swept backwards.
+  const crestGeom=new THREE.ConeGeometry(.5,1,3,1,false);
+  for(let i=0;i<5;i++){
+    const t=i/4;
+    addAvianMesh(root,'HF_Crest_'+String(i+1).padStart(2,'0'),crestGeom,i===0?silverDark:graphite,
+      [0,sy*(.49+.025*Math.sin(t*Math.PI)),sz*(.16-t*.58)],
+      [-(.42+.20*t),0,(i-2)*.055],
+      [sx*(.15-.018*i),sy*(.40-.035*i),sz*(.13-.012*i)]);
+  }
+
+  // SideFeathers: three rigid plates per side, layered toward jaw/back.
+  const featherGeom=new THREE.ConeGeometry(.5,1,3,1,false);
+  for(const side of [-1,1]){
+    for(let i=0;i<3;i++){
+      addAvianMesh(root,'HF_SideFeather_'+(side<0?'L':'R')+'_'+(i+1),featherGeom,graphite,
+        [side*sx*(.51+.035*i),sy*(.05-.10*i),-sz*(.06+.13*i)],
+        [Math.PI/2+.22*i,side*.28,side*(.42+.08*i)],
+        [sx*.16,sz*(.34-.035*i),sy*.10]);
+    }
+    addAvianMesh(root,'HF_JawGuard_'+(side<0?'L':'R'),new THREE.BoxGeometry(1,1,1),charcoal,
+      [side*sx*.47,-sy*.25,sz*.15],[.18,side*.08,side*.08],[sx*.16,sy*.30,sz*.18]);
+    addAvianRail(root,'HF_JawTrim_'+(side<0?'L':'R'),
+      [side*sx*.54,-sy*.09,sz*.29],[side*sx*.49,-sy*.39,sz*.09],
+      Math.max(sx,sy,sz)*.009,silverDark);
+  }
+
+  root.userData.avianParts=root.children.length;
+  root.visible=false;
+  Object.assign(window.__SKINLAB_DIAG__,{
+    avianHelmetBuilt:true,
+    avianHeadAttached:root.parent===headBone,
+    avianParts:root.children.length,
+    avianBeak:!!root.getObjectByName('HF_BirdBeak_Upper'),
+    avianEyeL:!!root.getObjectByName('HF_EyeGlow_L'),
+    avianEyeR:!!root.getObjectByName('HF_EyeGlow_R'),
+    avianCrestCount:root.children.filter(x=>x.name.startsWith('HF_Crest_')).length,
+    avianTrimCount:root.children.filter(x=>x.name.includes('Trim')).length,
+    avianAnchorSize:[sx,sy,sz]
+  });
+  return root;
+}
+function applyAvianLegendaryPass1(){
+  if(!avianHelmetRoot)buildAvianHelmet();
+  applyWarriorBlackFinal();
+  setOriginalHelmetVisible(false);
+  avianHelmetRoot.visible=true;
+  currentMode='avian';
+  Object.assign(window.__SKINLAB_DIAG__,{
+    mode:'avian',
+    skinId:'hf_avian_knight_legendary_01_pass1',
+    avianPass:1,
+    avianBaseHelmetHidden:actor?.getObjectByName('Knight_Helmet')?.visible===false,
+    avianHelmetVisible:avianHelmetRoot.visible
+  });
+  baseBtn.classList.remove('active');blackBtn.classList.remove('active');avianBtn.classList.add('active');
+  return true;
+}
+function focusAvianHelmet(){
+  if(!avianHelmetRoot)return false;
+  const box=new THREE.Box3().setFromObject(avianHelmetRoot);
+  const center=box.getCenter(new THREE.Vector3()),size=box.getSize(new THREE.Vector3());
+  controls.target.copy(center);
+  camera.position.set(center.x+size.x*1.9,center.y+size.y*.45,center.z+size.z*2.35);
+  controls.update();return true;
+}
+
 function applyPremiumAuthoring(){
   if(!actor||Object.keys(painterTextures).length!==5)return false;
 
@@ -817,6 +967,12 @@ function applyAutoBlackAura(){
 function setMode(mode){
   currentMode=mode;
   let affected=0;
+  if(avianHelmetRoot)avianHelmetRoot.visible=false;
+  setOriginalHelmetVisible(true);
+  avianBtn?.classList.remove('active');
+  if(mode==='avian'){
+    return applyAvianLegendaryPass1();
+  }
   if(mode==='black'){
     affected=applyWarriorBlackFinal();
   }else{
@@ -950,7 +1106,19 @@ window.__SKINLAB_DIAG__={
   heroSwordBevelRails:0,
   heroSwordEdgeRails:0,
   shieldPremiumRails:0,
-  premiumCosmeticFx:false
+  premiumCosmeticFx:false,
+  avianHelmetBuilt:false,
+  avianHeadAttached:false,
+  avianParts:0,
+  avianBeak:false,
+  avianEyeL:false,
+  avianEyeR:false,
+  avianCrestCount:0,
+  avianTrimCount:0,
+  avianBaseHelmetHidden:false,
+  avianHelmetVisible:false,
+  avianPass:0,
+  avianAnchorSize:null
 };
 function playClip(name){
   if(!mixer||!actor)return false;
@@ -1067,9 +1235,11 @@ async function boot(){
       testableClips:names.length
     });
     window.__SKINLAB_CLIPS__=names.slice();
-    window.__SKINLAB_API__={setMode,playClip,runFactoryTest,stopFactoryTest,applyPainterPiece,paintAt:paintUvInternal,setBrushEnabled,copyPainterRecipe,applyAutoBlackAura,applyPremiumAuthoring};
+    window.__SKINLAB_API__={setMode,playClip,runFactoryTest,stopFactoryTest,applyPainterPiece,paintAt:paintUvInternal,setBrushEnabled,copyPainterRecipe,applyAutoBlackAura,applyPremiumAuthoring,buildAvianHelmet,applyAvianLegendaryPass1,focusAvianHelmet};
     syncPainterUi();
     applyAutoBlackAura();
+    buildAvianHelmet();
+    setMode('avian');
   }catch(err){
     console.error(err);
     window.__SKINLAB_DIAG__.error=String(err?.message||err);
@@ -1083,6 +1253,8 @@ baseBtn.onclick=()=>setMode('base');
 blackBtn.onclick=()=>{setMode('black');autoAuraBtn.classList.remove('active')};
 autoAuraBtn.onclick=()=>applyAutoBlackAura();
 authorBtn.onclick=()=>{applyPremiumAuthoring();setMode('black');painterStatus.textContent='PREMIUM V2 reaplicada · HERO SWORD + GLOBAL TRIM + COSMETIC FX.'};
+avianBtn.onclick=()=>setMode('avian');
+helmetFocusBtn.onclick=()=>focusAvianHelmet();
 document.getElementById('playBtn').onclick=()=>playClip(document.getElementById('animSelect').value);
 testAllBtn.onclick=()=>runFactoryTest();
 stopTestBtn.onclick=()=>stopFactoryTest();

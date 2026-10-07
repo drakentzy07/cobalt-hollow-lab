@@ -2,7 +2,7 @@ name: Skin Lab v2 — Visual Browser Gate
 
 on:
   push:
-    branches: [highfly-skinlab-v2-warrior-black]
+    branches: [highfly-skinlab-v2-warrior-black, highfly-skinlab-avian-knight-legendary-01]
     paths:
       - 'skinlab-v2/**'
       - '.github/workflows/skinlab-v2-visual-browser.yml'
@@ -79,6 +79,28 @@ jobs:
             await page.click('#baseBtn');
             await page.waitForTimeout(500);
             await page.screenshot({ path: 'visual-artifacts/warrior-base.png', fullPage: true });
+
+            // AVIAN LEGENDARY PASS 1: real modular helmet on the original head bone.
+            await page.click('#avianBtn');
+            await page.waitForTimeout(900);
+            const avianDiag=await page.evaluate(()=>window.__SKINLAB_DIAG__);
+            if(avianDiag.mode!=='avian' ||
+               avianDiag.skinId!=='hf_avian_knight_legendary_01_pass1' ||
+               !avianDiag.avianHelmetBuilt ||
+               !avianDiag.avianHeadAttached ||
+               !avianDiag.avianBaseHelmetHidden ||
+               !avianDiag.avianHelmetVisible ||
+               !avianDiag.avianBeak ||
+               !avianDiag.avianEyeL || !avianDiag.avianEyeR ||
+               avianDiag.avianCrestCount!==5 ||
+               avianDiag.avianTrimCount<5 ||
+               avianDiag.avianParts<20)
+              throw new Error('AVIAN PASS1 helmet gate failed: '+JSON.stringify(avianDiag));
+            await page.click('#helmetFocusBtn');
+            await page.waitForTimeout(350);
+            await page.screenshot({ path:'visual-artifacts/avian-knight-pass1-helmet-focus.png', fullPage:true });
+            await page.click('#baseBtn');
+            await page.waitForTimeout(250);
 
             await page.click('#blackBtn');
             await page.waitForTimeout(1200);
@@ -182,7 +204,7 @@ jobs:
 
             require('fs').writeFileSync(
               'visual-artifacts/visual-gate.txt',
-              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nPAINTER PRO v1.1 READY\nAUTO BLACK AURA default preset OK\nHelmet visor painted by helmet role OK\nStudio metal environment OK\nSword black-body + clean emissive cutting trim OK\nShield solid-body + restrained silver rim OK\nWeapon wireframe suppressed OK\nPREMIUM AUTHORING v2 geometry-UV + selective 3D rails OK\nHERO SWORD gunmetal bevel + silver cutting rails OK\nShield premium rim rails OK\nHelmet/armor/shield structural trims OK\nSubtle violet cosmetic aura OK\n5 independent paint pieces OK\nPalette + finish controls OK\nDirect UV brush engine OK\nPreset recipe pipeline OK\n25/25 authored clips exercised OK\n'
+              'GREEN\nRig_Medium OK\nhandslot.r -> handslotr OK\nhandslot.l -> handslotl OK\nSword grip/parent OK\nShield grip/parent OK\nPAINTER PRO v1.1 READY\nAUTO BLACK AURA default preset OK\nHelmet visor painted by helmet role OK\nStudio metal environment OK\nSword black-body + clean emissive cutting trim OK\nShield solid-body + restrained silver rim OK\nWeapon wireframe suppressed OK\nAVIAN LEGENDARY PASS1 modular helmet/head attachment OK\nAVIAN beak + eyes + 5-crest + metal trims OK\nPREMIUM AUTHORING v2 geometry-UV + selective 3D rails OK\nHERO SWORD gunmetal bevel + silver cutting rails OK\nShield premium rim rails OK\nHelmet/armor/shield structural trims OK\nSubtle violet cosmetic aura OK\n5 independent paint pieces OK\nPalette + finish controls OK\nDirect UV brush engine OK\nPreset recipe pipeline OK\n25/25 authored clips exercised OK\n'
             );
             await browser.close();
           })().catch(err => { console.error(err); process.exit(1); });
