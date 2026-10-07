@@ -81,16 +81,37 @@ jobs:
           set -euo pipefail
           npm init -y >/dev/null 2>&1
           npm install @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer --no-save
-          node scripts/skin_lab/extract_bind_reference.mjs --src skinlab-v2/assets/warrior_modular.glb --out skinlab-v2/assets/bind --list > /tmp/skinlab-joints.json
-          grep -F '"head"' /tmp/skinlab-joints.json
-          grep -F '"hips"' /tmp/skinlab-joints.json
-          grep -F '"chest"' /tmp/skinlab-joints.json
-          for bone in head hips chest hand.r hand.l upper_arm.r upper_arm.l lowerleg.r lowerleg.l foot.r foot.l; do
-            node scripts/skin_lab/extract_bind_reference.mjs --src skinlab-v2/assets/warrior_modular.glb --out skinlab-v2/assets/bind --bone "$bone"
-          done
+          mkdir -p skinlab-v2/assets/bind
+          node scripts/skin_lab/extract_bind_reference.mjs --src skinlab-v2/assets/warrior_modular.glb --out skinlab-v2/assets/bind --list > skinlab-v2/assets/bind/joints.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const j=JSON.parse(fs.readFileSync('skinlab-v2/assets/bind/joints.json','utf8')).joints;
+          const need=(label,re,min=1)=>{
+            const hits=j.filter(n=>re.test(n));
+            if(hits.length<min)throw new Error(label+' missing in REAL GLB joints: '+j.join(', '));
+            console.log(label+': '+hits.join(', '));
+          };
+          need('HEAD',/^head$/i);
+          need('CHEST',/^chest$/i);
+          need('HIPS',/^hips$/i);
+          need('HANDS',/^hand[._]?[rl]$/i,2);
+          need('ARMS',/^(upper|lower)?arm[._]?[rl]$/i,2);
+          need('LEGS',/^(upper|lower)?leg[._]?[rl]$/i,2);
+          need('FEET',/^foot[._]?[rl]$/i,2);
+          need('TORSO_BACK',/^(spine|chest)$/i,1);
+          NODE
+          node scripts/skin_lab/extract_bind_reference.mjs --src skinlab-v2/assets/warrior_modular.glb --out skinlab-v2/assets/bind --all
           test -s skinlab-v2/assets/bind/reference_head.glb
           test -s skinlab-v2/assets/bind/reference_hips.glb
           test -s skinlab-v2/assets/bind/reference_chest.glb
+          node - <<'NODE'
+          const fs=require('fs');
+          const path=require('path');
+          const j=JSON.parse(fs.readFileSync('skinlab-v2/assets/bind/joints.json','utf8')).joints;
+          const missing=j.filter(n=>!fs.existsSync(path.join('skinlab-v2/assets/bind','reference_'+n.replace(/[^A-Za-z0-9_.-]/g,'_')+'.glb')));
+          if(missing.length)throw new Error('missing generated real-joint refs: '+missing.join(', '));
+          console.log('REAL_BIND_REFERENCE_COUNT='+j.length);
+          NODE
           echo "REAL_BIND_REFERENCES_GREEN=1"
 
       - name: Browser gate
