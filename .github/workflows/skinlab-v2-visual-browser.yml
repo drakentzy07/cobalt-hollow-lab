@@ -94,6 +94,23 @@ jobs:
             if(!d.wearableLabReady||!d.nativeWearableSourceIdentity||!d.donorAuditReady||!d.sourceJointManifestReady||d.sourceJointCount<10)
               throw new Error('Native wearable/bind modules incomplete '+JSON.stringify(d));
             await page.screenshot({path:'visual-artifacts/unified-boot.png',fullPage:true});
+            if(!d.simpleModeReady||d.technicalMode)throw new Error('Simple mode boot failed '+JSON.stringify(d));
+            await page.selectOption('#simpleSetSelect','knight');
+            await page.selectOption('#simpleSlotSelect','head');
+            await page.click('#simplePutBtn');await page.waitForTimeout(160);
+            let simple=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(simple.anatomySlot!=='head')throw new Error('Simple piece selection failed '+JSON.stringify(simple));
+            await page.click('#simpleSizePlus');await page.waitForTimeout(160);
+            simple=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(simple.molderChangedVertices<1||!simple.molderSkinPreserved)throw new Error('Simple shape edit failed '+JSON.stringify(simple));
+            await page.locator('#simpleColor').evaluate(el=>{el.value='#5b21b6';el.dispatchEvent(new Event('input',{bubbles:true}))});
+            await page.click('#simplePaintBtn');await page.waitForTimeout(160);
+            simple=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(simple.painterPreset!=='custom'||simple.painterScope!=='slot'||simple.painterMeshes<1)throw new Error('Simple paint failed '+JSON.stringify(simple));
+            await page.click('#simpleSaveBtn');
+            simple=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(!simple.simpleSaved)throw new Error('Simple save failed '+JSON.stringify(simple));
+            await page.screenshot({path:'visual-artifacts/simple-mode-v1.png',fullPage:true});
 
             const runtimeHead=d.realBoneNames.find(n=>String(n).toLowerCase().replace(/[^a-z0-9]/g,'')==='head');
             if(!runtimeHead)throw new Error('Runtime head bone missing '+JSON.stringify(d.realBoneNames));
@@ -136,6 +153,17 @@ jobs:
             await page.selectOption('#animSelect','Walking_A'); await page.waitForTimeout(350);
             await page.selectOption('#animSelect','Idle'); await page.waitForTimeout(250);
 
+            await page.setViewportSize({width:1365,height:768}); await page.waitForTimeout(260);
+            await page.click('#simpleFullBtn');await page.waitForTimeout(220);await page.click('#resetBtn');await page.waitForTimeout(220);
+            const desktop=await page.evaluate(()=>{
+              const panel=document.querySelector('.panel')?.getBoundingClientRect(),canvas=document.querySelector('#stage canvas')?.getBoundingClientRect(),d=window.__SKIN_FACTORY_DIAG__||{};
+              return {panelW:panel?.width||0,canvasW:canvas?.width||0,canvasH:canvas?.height||0,safe:d.safeViewport||null,framing:d.mobileFraming||null,precise:d.framePrecise||false};
+            });
+            if(!desktop.precise||!desktop.safe||desktop.safe.stageOffset<420||desktop.canvasW<850||desktop.canvasH<650||
+               !desktop.framing||desktop.framing.insetLeft<20||desktop.framing.insetRight<20||desktop.framing.insetTop<18||desktop.framing.insetBottom<18)
+              throw new Error('PC centered usable-stage failed '+JSON.stringify(desktop));
+            await page.screenshot({path:'visual-artifacts/pc-centered-character.png',fullPage:true});
+
             await page.setViewportSize({width:823,height:384}); await page.waitForTimeout(260);
             await page.click('#resetBtn'); await page.waitForTimeout(260);
             const mobile=await page.evaluate(()=>{
@@ -163,7 +191,7 @@ jobs:
             if(errors.length) throw new Error(errors.join(' | '));
 
             require('fs').writeFileSync('visual-artifacts/visual-gate.txt',
-              'GREEN\nUNIFIED /skinlab-v2/ READY\nHARBORMASTER TRICORNE HEAD GREEN\nHARBORMASTER SPYGLASS HIPS GREEN\nREAL BIND REFERENCE HEAD GREEN\nNO WEARABLE DRIFT GREEN\n7 DONOR SETS READY\nARMOR ANATOMY READY\nMOLDER PHASE 2 CHEST VERIFIED\nSKIN WEIGHTS PRESERVED\nPAINTER V2 RAVEN VERIFIED\n22 CLIPS READY\nS23 PHYSICAL STAGE VERIFIED\nS23 CHARACTER CENTERED + UNCROPPED VERIFIED\n');
+              'GREEN\nUNIFIED /skinlab-v2/ READY\nHARBORMASTER TRICORNE HEAD GREEN\nHARBORMASTER SPYGLASS HIPS GREEN\nREAL BIND REFERENCE HEAD GREEN\nNO WEARABLE DRIFT GREEN\n7 DONOR SETS READY\nARMOR ANATOMY READY\nMOLDER PHASE 2 CHEST VERIFIED\nSKIN WEIGHTS PRESERVED\nPAINTER V2 RAVEN VERIFIED\n22 CLIPS READY\nS23 PHYSICAL STAGE VERIFIED\nPC CHARACTER CENTERED + UNCROPPED VERIFIED\nSIMPLE MODE V1 VERIFIED\nS23 CHARACTER CENTERED + UNCROPPED VERIFIED\n');
             await browser.close();
           })().catch(err=>{console.error(err);process.exit(1)});
           NODE

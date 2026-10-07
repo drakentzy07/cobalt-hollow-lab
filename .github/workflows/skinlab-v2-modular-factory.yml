@@ -34,21 +34,24 @@ jobs:
           grep -F "Rig_Medium" skinlab-v2/modular-factory.html
           grep -F "handslot.r" skinlab-v2/modular-factory.html
           grep -F "handslot.l" skinlab-v2/modular-factory.html
-          grep -F "CLEAN MANNEQUIN" skinlab-v2/modular-factory.html
+          grep -F "CREAR SKIN · MODO SIMPLE" skinlab-v2/modular-factory.html
           ! grep -F "HF AVIAN v1" skinlab-v2/modular-factory.html
           grep -F "setDesignMode" skinlab-v2/modular-factory.html
-          grep -F "ARMOR ANATOMY / DONOR LAB" skinlab-v2/modular-factory.html
-          grep -F "HF ARMOR MOLDER · PHASE 2" skinlab-v2/modular-factory.html
-          grep -F "STYLE / PAINTER · DONOR ARMOR" skinlab-v2/modular-factory.html
+          grep -F "ANATOMÍA DE ARMADURA / PIEZAS DONANTES" skinlab-v2/modular-factory.html
+          grep -F "MOLDEADOR DE ARMADURA · FASE 2" skinlab-v2/modular-factory.html
+          grep -F "ESTILO / PINTURA · ARMADURA DONANTE" skinlab-v2/modular-factory.html
           grep -F "molderPhase:2" skinlab-v2/modular-factory.html
           grep -F "paintArmorPreset" skinlab-v2/modular-factory.html
           grep -F "Armor_knight_Head" skinlab-v2/modular-factory.html
           grep -F "molderSkinPreserved" skinlab-v2/modular-factory.html
-          grep -F "WEARABLE / BONE ATTACH LAB" skinlab-v2/modular-factory.html
+          grep -F "ACCESORIOS / ANCLAJE A HUESO" skinlab-v2/modular-factory.html
           grep -F "HARBORMASTER TRICORNE" skinlab-v2/modular-factory.html
           grep -F "HARBORMASTER SPYGLASS" skinlab-v2/modular-factory.html
           grep -F "runNativeWearableProof" skinlab-v2/modular-factory.html
-          grep -F "DONOR INSPECTOR" skinlab-v2/modular-factory.html
+          grep -F "INSPECTOR DE PIEZAS EXTERNAS" skinlab-v2/modular-factory.html
+          grep -F "PINTAR CON CLIC" skinlab-v2/modular-factory.html
+          grep -F "GUARDAR DISEÑO" skinlab-v2/modular-factory.html
+          grep -F "simpleModeReady:true" skinlab-v2/modular-factory.html
           grep -F "inverseBindMatrix" scripts/skin_lab/extract_bind_reference.mjs
           test -s skinlab-v2/donors/audits.json
           grep -F '"skeleton": "game_rig"' skinlab-v2/donors/audits.json
@@ -140,6 +143,7 @@ jobs:
             if(d.clips!==22)throw new Error('Expected 22 clips '+JSON.stringify(d));
             if(d.missingCore.length||d.visibleCount!==15||d.armorVisible!==0)throw new Error('Male base visibility gate failed '+JSON.stringify(d));
             if(!d.cleanReady||!d.legacyPrototypeRemoved||d.designMode!=='clean')throw new Error('Clean factory design-mode gate failed '+JSON.stringify(d));
+            if(!d.simpleModeReady||d.technicalMode)throw new Error('Simple editor boot gate failed '+JSON.stringify(d));
             if(!d.armorAnatomyReady||d.armorSetCount!==7||d.knightHeadParts!==2||!d.molderReady||!d.molderSkinPreserved)
               throw new Error('Armor anatomy/molder boot gate failed '+JSON.stringify(d));
             if(!d.wearableLabReady||!d.nativeWearableSourceIdentity||d.realBoneCount<10||!d.donorAuditReady||d.donorAuditCount<4)

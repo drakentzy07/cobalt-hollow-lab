@@ -23,6 +23,13 @@ button:hover{background:#1d1d29}button.active{border-color:var(--violet);backgro
 .paintgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.paintfield{display:grid;gap:4px;font-size:9px;color:#bbb}.paintfield input[type="color"]{width:100%;height:32px;padding:2px;border:1px solid #373744;border-radius:8px;background:#16161f}.paintfield input[type="range"]{width:100%;accent-color:var(--violet)}
 .weargrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.wearfield{display:grid;gap:4px;font-size:9px;color:#bbb}.wearfield select,.wearfield input[type="file"]{width:100%;min-width:0}.wearfield input[type="file"]{font-size:9px;border:1px solid #373744;background:#16161f;color:#bbb;border-radius:9px;padding:6px}.toggleline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.toggle{display:flex;gap:6px;align-items:center;border:1px solid #30303c;background:#12121a;border-radius:9px;padding:6px 7px;font-size:9px;color:#ccc}.toggle input{accent-color:var(--violet)}.status-good{color:var(--ok)}.status-warn{color:#f6c76b}
 .badge{display:inline-block;margin-left:5px;font-size:8px;padding:2px 5px;border-radius:999px;border:1px solid #3b3b49;color:#999}
+.simplehero{border:1px solid #5b3aa4;background:linear-gradient(145deg,rgba(46,27,79,.72),rgba(14,14,23,.94));border-radius:14px;padding:11px;margin-bottom:10px;box-shadow:0 0 35px #6d28d933}
+.simplehero h2{font-size:12px;color:#f1eaff}.simplegrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.simplefield{display:grid;gap:4px;font-size:9px;color:#c9c5d7}.simplefield select,.simplefield input[type="color"]{width:100%}
+.simplefield input[type="color"]{height:34px;border:1px solid #454152;border-radius:9px;background:#11111a;padding:2px}
+.simpleactions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:7px}.simpleactions button{width:100%}
+.simpleactions .wide{grid-column:1/-1}.simple-status{margin-top:8px;padding:8px;border:1px solid #373344;border-radius:10px;background:#0d0d14;font-size:9px;line-height:1.4;color:#bdb8cc}
+.paintpick.active{border-color:#f0abfc;background:#4a194e;box-shadow:0 0 20px #d946ef55}
+.tech-only{display:none}body.tech-mode .tech-only{display:block}.tech-toggle{width:100%;margin-top:8px;border-color:#4b4560}
 .footer{position:absolute;right:14px;bottom:14px;padding:9px 12px;border:1px solid #2b2b36;border-radius:12px;background:rgba(10,10,15,.78);font-size:10px;color:#aaa}
 .lab-actions{position:absolute;right:10px;top:10px;z-index:8;display:flex;gap:6px}.lab-actions button{padding:7px 9px;font-size:10px;background:rgba(16,16,24,.92);backdrop-filter:blur(10px)}
 .panel{transition:transform .18s ease,opacity .18s ease}.panel.ui-hidden{transform:translateX(calc(-100% - 24px));opacity:0;pointer-events:none}
@@ -47,142 +54,196 @@ body.fullscreen-lab #app{grid-template-rows:1fr}body.fullscreen-lab header{displ
 <body>
 <div id="app">
 <header>
-  <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN FACTORY</h1><div class="sub">UNIFIED LAB · DONORS · MOLDER · PAINTER · warrior_modular.glb</div></div></div>
+  <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN FACTORY</h1><div class="sub">LAB UNIFICADO · PIEZAS · MOLDE · PINTURA · warrior_modular.glb</div></div></div>
   <div class="nav">
-    <span class="pill ok">UNIFIED FACTORY</span>
+    <span class="pill ok">FÁBRICA UNIFICADA</span>
     <span class="pill" id="rigPill">Rig_Medium …</span>
-    <span class="pill" id="socketPill">sockets …</span>
-    <span class="pill" id="clipPill">clips …</span>
+    <span class="pill" id="socketPill">anclajes …</span>
+    <span class="pill" id="clipPill">animaciones …</span>
   </div>
 </header>
 <main>
 <div id="stage"></div>
 <section class="panel">
-  <h2>MALE BASE REAL <span class="badge">NO ARMOR</span></h2>
+  <h2>PERSONAJE BASE REAL <span class="badge">SIN ARMADURA</span></h2>
   <div class="note">Fuente congelada ClaudeCraft · blob <b>e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2</b> · 3.477.500 bytes. Sólo cuerpo M_* + M_Loin + una cara.</div>
-  <div class="group">
+  <div class="simplehero" id="simpleEditor">
+    <h2>CREAR SKIN · MODO SIMPLE <span class="badge">RECOMENDADO</span></h2>
+    <div class="note">Elegí una familia, una parte y diseñala. La fábrica usa por debajo el Rig_Medium, Molder y Painter reales; vos no necesitás tocar huesos ni pesos.</div>
+    <div class="simplegrid" style="margin-top:8px">
+      <label class="simplefield">FAMILIA BASE
+        <select id="simpleSetSelect">
+          <option value="knight">CABALLERO</option><option value="paladin">PALADÍN</option>
+          <option value="barbarian">BÁRBARO</option><option value="ranger">EXPLORADOR</option>
+          <option value="rogue">PÍCARO</option><option value="mage">MAGO</option><option value="druid">DRUIDA</option>
+        </select>
+      </label>
+      <label class="simplefield">PARTE
+        <select id="simpleSlotSelect">
+          <option value="head">CABEZA</option><option value="chest">TORSO</option><option value="arms">BRAZOS</option>
+          <option value="hands">MANOS</option><option value="legs">PIERNAS</option><option value="feet">BOTAS</option><option value="back">ESPALDA</option>
+        </select>
+      </label>
+    </div>
+    <div class="simpleactions">
+      <button id="simplePutBtn">➕ PONER PIEZA</button><button id="simpleRemoveBtn">➖ QUITAR PIEZA</button>
+      <button id="simpleFullBtn">🛡 SET COMPLETO</button><button id="simpleBaseBtn">👤 CUERPO LIMPIO</button>
+    </div>
+    <div class="group" style="margin-top:9px;padding-top:9px">
+      <h2>FORMA</h2>
+      <div class="simpleactions">
+        <button id="simpleSizeMinus">− TAMAÑO</button><button id="simpleSizePlus">+ TAMAÑO</button>
+        <button id="simpleWidthMinus">− ANCHO</button><button id="simpleWidthPlus">+ ANCHO</button>
+        <button id="simpleLongMinus">− LARGO</button><button id="simpleLongPlus">+ LARGO</button>
+      </div>
+    </div>
+    <div class="group" style="margin-top:9px;padding-top:9px">
+      <h2>COLOR Y MATERIAL</h2>
+      <div class="simplegrid">
+        <label class="simplefield">COLOR <input id="simpleColor" type="color" value="#171821"></label>
+        <label class="simplefield">MATERIAL
+          <select id="simpleMaterial"><option value="mate">MATE</option><option value="metal">METAL</option><option value="leather">CUERO</option><option value="magic">MÁGICO</option></select>
+        </label>
+      </div>
+      <div class="simpleactions">
+        <button id="simplePaintBtn">🎨 PINTAR PIEZA</button><button id="simplePickPaintBtn" class="paintpick">🖌 PINTAR CON CLIC</button>
+        <button id="simpleBlackBtn">⚫ NEGRO AURA</button><button id="simpleVioletBtn">🟣 VIOLETA CUERVO</button>
+      </div>
+      <div class="note">“Pintar con clic”: elegí color y tocá directamente una parte de la armadura. Volvé a tocar el botón para rotar el personaje otra vez.</div>
+    </div>
+    <div class="group" style="margin-top:9px;padding-top:9px">
+      <h2>PRUEBA Y GUARDADO</h2>
+      <div class="simpleactions">
+        <button id="simpleMotionBtn">▶ PROBAR MOVIMIENTOS</button><button id="simpleStopBtn">■ DETENER</button>
+        <button id="simpleSaveBtn">💾 GUARDAR DISEÑO</button><button id="simpleLoadBtn">↩ CARGAR DISEÑO</button>
+      </div>
+    </div>
+    <div id="simpleStatus" class="simple-status">Listo. Elegí una familia y una parte para empezar.</div>
+    <button id="techModeBtn" class="tech-toggle">⚙ ABRIR MODO TÉCNICO</button>
+  </div>
+  <div class="group tech-only">
     <h2>MODO DE DISEÑO</h2>
     <div class="row">
-      <button id="rawBtn">RAW</button>
-      <button id="cleanBtn" class="active">CLEAN MANNEQUIN</button>
+      <button id="rawBtn">FUENTE ORIGINAL</button>
+      <button id="cleanBtn" class="active">MANIQUÍ LIMPIO</button>
     </div>
-    <div class="note">RAW = fuente intacta · CLEAN = maniquí de trabajo. Las skins nuevas se construyen con donors, Molder, Painter y Wearable/Bone Attach.</div>
+    <div class="note">FUENTE ORIGINAL = materiales de origen · MANIQUÍ LIMPIO = base de trabajo. Las skins nuevas se construyen con piezas donantes, Moldeador, Pintura y Anclaje a Hueso.</div>
   </div>
-  <div class="group">
-    <h2>ARMOR ANATOMY / DONOR LAB</h2>
+  <div class="group tech-only">
+    <h2>ANATOMÍA DE ARMADURA / PIEZAS DONANTES</h2>
     <div class="row">
       <select id="donorSetSelect">
-        <option value="knight">KNIGHT</option>
-        <option value="paladin">PALADIN</option>
-        <option value="barbarian">BARBARIAN</option>
-        <option value="ranger">RANGER</option>
-        <option value="rogue">ROGUE</option>
-        <option value="mage">MAGE</option>
-        <option value="druid">DRUID</option>
+        <option value="knight">CABALLERO</option>
+        <option value="paladin">PALADÍN</option>
+        <option value="barbarian">BÁRBARO</option>
+        <option value="ranger">EXPLORADOR</option>
+        <option value="rogue">PÍCARO</option>
+        <option value="mage">MAGO</option>
+        <option value="druid">DRUIDA</option>
       </select>
       <button id="anatomyBaseBtn">BASE</button>
-      <button id="anatomyFullBtn">FULL SET</button>
-      <button id="anatomyExplodedBtn">EXPLODED</button>
+      <button id="anatomyFullBtn">SET COMPLETO</button>
+      <button id="anatomyExplodedBtn">DESPIECE</button>
     </div>
     <div class="row">
-      <button data-anatomy-slot="head">HEAD</button><button data-anatomy-slot="chest">CHEST</button>
-      <button data-anatomy-slot="arms">ARMS</button><button data-anatomy-slot="hands">HANDS</button>
-      <button data-anatomy-slot="legs">LEGS</button><button data-anatomy-slot="feet">FEET</button>
-      <button data-anatomy-slot="back">BACK</button>
+      <button data-anatomy-slot="head">CABEZA</button><button data-anatomy-slot="chest">TORSO</button>
+      <button data-anatomy-slot="arms">BRAZOS</button><button data-anatomy-slot="hands">MANOS</button>
+      <button data-anatomy-slot="legs">PIERNAS</button><button data-anatomy-slot="feet">BOTAS</button>
+      <button data-anatomy-slot="back">ESPALDA</button>
     </div>
     <div class="note">Donors reales del mismo warrior_modular.glb. La armadura conserva su skinning al Rig_Medium; el cuerpo permanece debajo para inspeccionar encaje.</div>
-    <div id="anatomyDiag" class="diag">Armor Anatomy listo al cargar…</div>
+    <div id="anatomyDiag" class="diag">Anatomía de armadura lista al cargar…</div>
   </div>
-  <div class="group">
-    <h2>HF ARMOR MOLDER · PHASE 2</h2>
+  <div class="group tech-only">
+    <h2>MOLDEADOR DE ARMADURA · FASE 2</h2>
     <div class="row">
       <select id="moldSlotSelect">
-        <option value="head">HEAD</option><option value="chest">CHEST</option><option value="arms">ARMS</option>
-        <option value="hands">HANDS</option><option value="legs">LEGS</option><option value="feet">FEET</option><option value="back">BACK</option>
+        <option value="head">CABEZA</option><option value="chest">TORSO</option><option value="arms">BRAZOS</option>
+        <option value="hands">MANOS</option><option value="legs">PIERNAS</option><option value="feet">BOTAS</option><option value="back">ESPALDA</option>
       </select>
-      <button id="moldApplyBtn">APLICAR MOLDER</button><button id="moldResetBtn">RESET MOLDER</button>
+      <button id="moldApplyBtn">APLICAR MOLDER</button><button id="moldResetBtn">REINICIAR MOLDE</button>
     </div>
     <div class="moldergrid">
-      <label class="moldrow">WIDTH <input id="moldWidth" type="range" min="-50" max="50" value="0"><span id="moldWidthVal" class="moldval">0</span></label>
-      <label class="moldrow">LENGTH <input id="moldCrown" type="range" min="-50" max="50" value="0"><span id="moldCrownVal" class="moldval">0</span></label>
-      <label class="moldrow">DEPTH <input id="moldFront" type="range" min="-50" max="50" value="0"><span id="moldFrontVal" class="moldval">0</span></label>
-      <label class="moldrow">TAPER <input id="moldTaper" type="range" min="-50" max="50" value="0"><span id="moldTaperVal" class="moldval">0</span></label>
+      <label class="moldrow">ANCHO <input id="moldWidth" type="range" min="-50" max="50" value="0"><span id="moldWidthVal" class="moldval">0</span></label>
+      <label class="moldrow">LARGO <input id="moldCrown" type="range" min="-50" max="50" value="0"><span id="moldCrownVal" class="moldval">0</span></label>
+      <label class="moldrow">PROFUNDIDAD <input id="moldFront" type="range" min="-50" max="50" value="0"><span id="moldFrontVal" class="moldval">0</span></label>
+      <label class="moldrow">AFINADO <input id="moldTaper" type="range" min="-50" max="50" value="0"><span id="moldTaperVal" class="moldval">0</span></label>
     </div>
     <div class="note">Deforma POSITION del slot donor elegido. No toca skinIndex, skinWeight, Skeleton ni clips. Sirve para casco, torso, brazos, manos, piernas, botas y espalda.</div>
   </div>
-  <div class="group">
-    <h2>STYLE / PAINTER · DONOR ARMOR</h2>
+  <div class="group tech-only">
+    <h2>ESTILO / PINTURA · ARMADURA DONANTE</h2>
     <div class="row">
-      <select id="paintScopeSelect"><option value="full">FULL SET</option><option value="slot">CURRENT SLOT</option></select>
-      <button id="paintSourceBtn">SOURCE</button>
-      <button id="paintBlackBtn">BLACK AURA</button>
-      <button id="paintRavenBtn">RAVEN VIOLET</button>
-      <button id="paintCustomBtn">CUSTOM</button>
+      <select id="paintScopeSelect"><option value="full">SET COMPLETO</option><option value="slot">CURRENT SLOT</option></select>
+      <button id="paintSourceBtn">ORIGINAL</button>
+      <button id="paintBlackBtn">NEGRO AURA</button>
+      <button id="paintRavenBtn">VIOLETA CUERVO</button>
+      <button id="paintCustomBtn">PERSONALIZADO</button>
     </div>
     <div class="paintgrid">
-      <label class="paintfield">PRIMARY <input id="armorPrimary" type="color" value="#171821"></label>
-      <label class="paintfield">ACCENT <input id="armorAccent" type="color" value="#7c3aed"></label>
+      <label class="paintfield">COLOR PRINCIPAL <input id="armorPrimary" type="color" value="#171821"></label>
+      <label class="paintfield">ACENTO <input id="armorAccent" type="color" value="#7c3aed"></label>
       <label class="paintfield">METAL <input id="armorMetal" type="range" min="0" max="1" step="0.01" value="0.55"></label>
-      <label class="paintfield">ROUGH <input id="armorRough" type="range" min="0.05" max="1" step="0.01" value="0.35"></label>
+      <label class="paintfield">RUGOSIDAD <input id="armorRough" type="range" min="0.05" max="1" step="0.01" value="0.35"></label>
     </div>
     <div class="note">Pinta el donor actual sin alterar geometría ni pesos. SOURCE restaura materiales originales. BLACK AURA y RAVEN VIOLET son presets de producción.</div>
   </div>
-  <div class="group" id="wearableLabPanel">
-    <h2>WEARABLE / BONE ATTACH LAB <span class="badge">CLAUDECRAFT NATIVE</span></h2>
+  <div class="group tech-only" id="wearableLabPanel">
+    <h2>ACCESORIOS / ANCLAJE A HUESO <span class="badge">NATIVO CLAUDECRAFT</span></h2>
     <div class="weargrid">
       <label class="wearfield">BASE
-        <select id="wearBaseSelect"><option value="male">MALE · REAL</option><option value="female" disabled>FEMALE · NEXT PHASE</option></select>
+        <select id="wearBaseSelect"><option value="male">HOMBRE · REAL</option><option value="female" disabled>MUJER · PRÓXIMA FASE</option></select>
       </label>
       <label class="wearfield">MODE
-        <select id="wearModeSelect"><option value="native">NATIVE</option><option value="bone">BONE ATTACH</option><option value="skinned">SKINNED · LOCKED</option></select>
+        <select id="wearModeSelect"><option value="native">NATIVO</option><option value="bone">ANCLAR A HUESO</option><option value="skinned">DEFORMABLE · BLOQUEADO</option></select>
       </label>
       <label class="wearfield">BONE
         <select id="wearBoneSelect"></select>
       </label>
       <label class="wearfield">DONOR
-        <select id="wearDonorSelect"><option value="tricorne">HARBORMASTER TRICORNE</option><option value="spyglass">HARBORMASTER SPYGLASS</option><option value="local">LOCAL GLB / GLTF</option></select>
+        <select id="wearDonorSelect"><option value="tricorne">HARBORMASTER TRICORNE</option><option value="spyglass">HARBORMASTER SPYGLASS</option><option value="local">GLB / GLTF LOCAL</option></select>
       </label>
     </div>
     <div class="row" style="margin-top:7px">
-      <button id="nativeTricorneBtn">🎩 TRICORNE → HEAD</button>
-      <button id="nativeSpyglassBtn">🔭 SPYGLASS → HIPS</button>
+      <button id="nativeTricorneBtn">🎩 TRICORNIO → CABEZA</button>
+      <button id="nativeSpyglassBtn">🔭 CATALEJO → CADERA</button>
     </div>
     <label class="wearfield">DONOR LOCAL
       <input id="donorFileInput" type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json">
     </label>
     <div class="toggleline" style="margin-top:7px">
-      <label class="toggle"><input id="toggleBaseBody" type="checkbox" checked>Base Body</label>
-      <label class="toggle"><input id="toggleArmor" type="checkbox">Armor</label>
-      <label class="toggle"><input id="toggleDonor" type="checkbox" checked>Donor</label>
-      <label class="toggle"><input id="toggleSkeleton" type="checkbox">Skeleton</label>
-      <label class="toggle"><input id="toggleBindRef" type="checkbox">Bind Reference</label>
-      <label class="toggle"><input id="toggleBounds" type="checkbox">Bounding Box</label>
+      <label class="toggle"><input id="toggleBaseBody" type="checkbox" checked>Cuerpo base</label>
+      <label class="toggle"><input id="toggleArmor" type="checkbox">Armadura</label>
+      <label class="toggle"><input id="toggleDonor" type="checkbox" checked>Pieza</label>
+      <label class="toggle"><input id="toggleSkeleton" type="checkbox">Esqueleto</label>
+      <label class="toggle"><input id="toggleBindRef" type="checkbox">Referencia de unión</label>
+      <label class="toggle"><input id="toggleBounds" type="checkbox">Caja límite</label>
     </div>
     <div class="row" style="margin-top:7px">
-      <button id="fitPreviewBtn">FIT PREVIEW</button><button id="attachDonorBtn">ATTACH</button><button id="detachDonorBtn">DETACH</button><button id="wearResetBtn">RESET</button>
+      <button id="fitPreviewBtn">AJUSTE PREVIO</button><button id="attachDonorBtn">ANCLAR</button><button id="detachDonorBtn">SOLTAR</button><button id="wearResetBtn">REINICIAR</button>
     </div>
     <div class="row">
-      <button id="wearPlayBtn">▶ PLAY PROOF</button><button id="wearStopBtn">■ STOP</button><button id="wearNextBtn">NEXT ANIMATION</button>
+      <button id="wearPlayBtn">▶ PROBAR MOVIMIENTO</button><button id="wearStopBtn">■ DETENER</button><button id="wearNextBtn">SIGUIENTE ANIMACIÓN</button>
     </div>
     <div class="note">Harbormaster usa el pipeline real: bind-frame por inverseBindMatrices + root identidad + parent al bone. SKINNED/weight transfer queda bloqueado hasta que este proof sea GREEN.</div>
-    <div id="wearableDiag" class="diag">Preparando pipeline nativo…</div>
+    <div id="wearableDiag" class="diag">Preparando sistema nativo…</div>
   </div>
-  <div class="group">
-    <h2>DONOR INSPECTOR</h2>
-    <div id="donorDiag" class="diag">Sin donor externo cargado. GLB recomendado; glTF debe ser autocontenido para inspección local.</div>
+  <div class="group tech-only">
+    <h2>INSPECTOR DE PIEZAS EXTERNAS</h2>
+    <div id="donorDiag" class="diag">Sin pieza externa cargada. Se recomienda GLB; un glTF debe incluir todos sus recursos.</div>
   </div>
-  <div class="group">
+  <div class="group tech-only">
     <h2>VISTAS</h2>
     <div class="row">
       <button data-view="front">FRENTE</button><button data-view="profile">PERFIL</button><button data-view="back">ESPALDA</button><button data-view="three">3/4</button><button id="freeBtn" class="active">LIBRE</button>
     </div>
   </div>
-  <div class="group">
+  <div class="group tech-only">
     <h2>INSPECCIÓN</h2>
-    <div class="row"><button id="bonesBtn">HUESOS</button><button id="socketsBtn">SOCKETS</button><button id="spinBtn">ROTACIÓN</button><button id="resetBtn">RESET</button></div>
+    <div class="row"><button id="bonesBtn">HUESOS</button><button id="socketsBtn">ANCLAJES</button><button id="spinBtn">ROTACIÓN</button><button id="resetBtn">REINICIAR</button></div>
   </div>
-  <div class="group">
-    <h2>SLOTS BASE</h2>
+  <div class="group tech-only">
+    <h2>PARTES DEL CUERPO</h2>
     <div class="slotgrid">
       <label class="slot">HEAD <input data-slot="Head" type="checkbox" checked></label>
       <label class="slot">CHEST <input data-slot="Chest" type="checkbox" checked></label>
@@ -193,17 +254,17 @@ body.fullscreen-lab #app{grid-template-rows:1fr}body.fullscreen-lab header{displ
       <label class="slot">BACK <input data-slot="Back" type="checkbox" checked></label>
     </div>
   </div>
-  <div class="group">
+  <div class="group tech-only">
     <h2>ANIMACIÓN ORIGINAL</h2>
-    <div class="row"><select id="animSelect"></select><button id="playBtn">REPLAY</button></div>
+    <div class="row"><select id="animSelect"></select><button id="playBtn">REPETIR</button></div>
   </div>
-  <div class="group">
+  <div class="group tech-only">
     <h2>DIAGNÓSTICO</h2>
     <div id="diag" class="diag">Cargando warrior_modular.glb real…</div>
   </div>
 </section>
-<div class="lab-actions"><button id="uiToggleBtn">☰ UI</button><button id="fullscreenBtn">⛶ FULL</button></div>
-<div class="footer">Arrastrar: rotación libre · rueda/pinch: zoom · sin retarget · sin gameplay changes</div>
+<div class="lab-actions"><button id="uiToggleBtn">☰ UI</button><button id="fullscreenBtn">⛶ PANTALLA COMPLETA</button></div>
+<div class="footer">Arrastrar: rotación libre · rueda/pinch: zoom · sin retarget · sin cambios de gameplay</div>
 <div id="error"></div>
 </main>
 </div>
@@ -219,7 +280,7 @@ const UPSTREAM='9b57e49c9676d75962700f828cc00a50a9a988b5';
 const MODEL='./assets/warrior_modular.glb';
 const SOURCE_BLOB='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2';
 const SOURCE_BYTES=3477500;
-const DESIGN_REV='native-wearable-pipeline+real-joints-p3+android-frame-p1+no-avian';
+const DESIGN_REV='skin-factory-v1-simple-es+native-wearable+real-joints+responsive';
 const NATIVE_WEARABLES={
   tricorne:{url:'./assets/harbormaster_tricorne.glb',bone:'head',label:'TRICORNE'},
   spyglass:{url:'./assets/harbormaster_spyglass.glb',bone:'hips',label:'SPYGLASS'}
@@ -334,13 +395,14 @@ function visibleBox(precise=mobileLandscapeLab()){
   return b;
 }
 function mobileLandscapeLab(){return matchMedia('(orientation: landscape) and (max-height: 600px)').matches}
+function reserveSidePanel(){return matchMedia('(orientation: landscape)').matches&&innerWidth>=760}
 function syncStageSafeArea(){
   const main=document.querySelector('main'),p=document.querySelector('.panel');
   let left=0;
-  if(mobileLandscapeLab()&&main&&p&&!p.classList.contains('ui-hidden')&&getComputedStyle(p).display!=='none'){
+  if(reserveSidePanel()&&main&&p&&!p.classList.contains('ui-hidden')&&getComputedStyle(p).display!=='none'){
     const mr=main.getBoundingClientRect(),pr=p.getBoundingClientRect();
-    left=Math.max(0,pr.right-mr.left+8);
-    left=Math.min(left,mr.width*.40);
+    left=Math.max(0,pr.right-mr.left+(mobileLandscapeLab()?8:12));
+    left=Math.min(left,mr.width*(mobileLandscapeLab()?.40:.42));
   }
   stage.style.left=Math.round(left)+'px';
   stage.style.right='0px';
@@ -368,7 +430,7 @@ function fitDistance(size){
   const hfov=2*Math.atan(Math.tan(vfov*.5)*(m.safeW/m.h));
   const dy=(size.y*.5)/Math.tan(vfov*.5);
   const dx=(Math.max(size.x,size.z)*.62)/Math.max(.05,Math.tan(hfov*.5));
-  const margin=mobileLandscapeLab()?1.56:1.30;
+  const margin=mobileLandscapeLab()?1.56:1.42;
   return Math.max(dy,dx,.9)*margin;
 }
 function projectedBoxMetrics(box){
@@ -389,9 +451,8 @@ function recordFraming(box){
   return f;
 }
 function enforceMobileFraming(box,center,dir,distance){
-  if(!mobileLandscapeLab())return distance;
   let f=recordFraming(box);if(!f)return distance;
-  const mx=Math.max(18,f.w*.055),my=Math.max(14,f.h*.045);
+  const mx=Math.max(mobileLandscapeLab()?18:28,f.w*(mobileLandscapeLab()?.055:.065)),my=Math.max(mobileLandscapeLab()?14:24,f.h*(mobileLandscapeLab()?.045:.055));
   const availW=Math.max(1,f.w-2*mx),availH=Math.max(1,f.h-2*my);
   const scale=Math.max(1,f.width/availW,f.height/availH);
   if(scale>1.001){
@@ -403,18 +464,18 @@ function enforceMobileFraming(box,center,dir,distance){
 }
 function frameVisible(){
   if(!actor)return;
-  const b=visibleBox(mobileLandscapeLab()),c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);
+  const b=visibleBox(true),c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);
   let d=fitDistance(s);
-  const dir=(mobileLandscapeLab()?new THREE.Vector3(.32,.045,1):new THREE.Vector3(.72,.10,1)).normalize();
+  const dir=(mobileLandscapeLab()?new THREE.Vector3(.32,.045,1):new THREE.Vector3(.30,.045,1)).normalize();
   controls.target.copy(c);camera.position.copy(c).add(dir.clone().multiplyScalar(d));applySafeProjection();controls.update();
   d=enforceMobileFraming(b,c,dir,d);recordFraming(b);
   if(window.__MODULAR_FACTORY_DIAG__)Object.assign(window.__MODULAR_FACTORY_DIAG__,{
-    frameBoxSize:s.toArray(),frameDistance:d,framePreciseMobile:mobileLandscapeLab()
+    frameBoxSize:s.toArray(),frameDistance:d,framePreciseMobile:mobileLandscapeLab(),framePrecise:true
   });
 }
 function fixedView(kind){
   if(!actor)return;
-  const b=visibleBox(mobileLandscapeLab()),c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);
+  const b=visibleBox(true),c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);
   let d=fitDistance(s);
   const dir={
     front:new THREE.Vector3(0,0,1),
@@ -1042,7 +1103,116 @@ function setDesignMode(mode){
   Object.assign(window.__MODULAR_FACTORY_DIAG__,{designMode:mode,cleanReady:true,legacyPrototypeRemoved:true});
   updateDiag();frameVisible();
 }
-window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,designRev:DESIGN_REV,unifiedFactory:true,canonicalRoute:'/skinlab-v2/',rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null,designMode:'clean',cleanReady:false,legacyPrototypeRemoved:true,armorAnatomyReady:false,armorSetCount:0,knightHeadParts:0,molderReady:false,molderPhase:2,molderSkinPreserved:false,molderChangedVertices:0,painterReady:true,painterVersion:2,wearableLabReady:false,nativeWearableProof:false,nativeWearableSourceIdentity:false,tricorneAttached:false,spyglassAttached:false,wearableDriftMax:0,nativeWearableNoNaN:true,realBoneCount:0,realBoneNames:[],bindReferenceLoaded:false,donorInspectorReady:true,donorAuditReady:false,sourceJointManifestReady:false,sourceJointCount:0,mobileFraming:null,framePreciseMobile:false,frameDistance:0};
+
+const SIMPLE_SAVE_KEY='highfly_skin_factory_simple_v1';
+let simplePaintPick=false,simpleMotionTimer=null;
+function simpleStatus(msg){const el=document.getElementById('simpleStatus');if(el)el.textContent=msg}
+function simpleSet(){return document.getElementById('simpleSetSelect').value}
+function simpleSlot(){return document.getElementById('simpleSlotSelect').value}
+function syncSimpleToTechnical(){
+  document.getElementById('donorSetSelect').value=simpleSet();
+  document.getElementById('moldSlotSelect').value=simpleSlot();
+}
+function simplePutPiece(){
+  syncSimpleToTechnical();showSlotForFactory(simpleSet(),simpleSlot());frameVisible();
+  simpleStatus('Pieza colocada: '+document.getElementById('simpleSlotSelect').selectedOptions[0].text+' · '+document.getElementById('simpleSetSelect').selectedOptions[0].text+'.');
+  return true;
+}
+function simpleRemovePiece(){
+  restoreArmorTransforms();hideAllArmor();showAllBase();frameVisible();
+  simpleStatus('Pieza retirada. El cuerpo base queda intacto.');return true;
+}
+function simpleFullSet(){
+  syncSimpleToTechnical();showAnatomy('full');frameVisible();
+  simpleStatus('Set completo aplicado para revisar la silueta general.');return true;
+}
+function simpleBase(){
+  syncSimpleToTechnical();showAnatomy('base');setDesignMode('clean');frameVisible();
+  simpleStatus('Maniquí limpio listo para diseñar.');return true;
+}
+function clampSlider(id,v){const el=document.getElementById(id);el.value=Math.max(+el.min,Math.min(+el.max,v));document.getElementById(id+'Val').textContent=el.value}
+function simpleMold(deltaSize=0,deltaWidth=0,deltaLength=0){
+  syncSimpleToTechnical();simplePutPiece();
+  clampSlider('moldWidth',+document.getElementById('moldWidth').value+deltaSize+deltaWidth);
+  clampSlider('moldCrown',+document.getElementById('moldCrown').value+deltaSize+deltaLength);
+  clampSlider('moldFront',+document.getElementById('moldFront').value+deltaSize);
+  const ok=moldCurrentSlot();
+  simpleStatus(ok?'Forma actualizada. Probá movimientos para revisar el encaje.':'Esta familia no tiene esa parte.');
+  return ok;
+}
+function simpleMaterialParams(){
+  const kind=document.getElementById('simpleMaterial').value;
+  return {
+    mate:{metal:.08,rough:.84},metal:{metal:.82,rough:.22},leather:{metal:.12,rough:.62},magic:{metal:.52,rough:.24}
+  }[kind]||{metal:.1,rough:.7};
+}
+function simplePaint(){
+  syncSimpleToTechnical();simplePutPiece();
+  const color=document.getElementById('simpleColor').value,p=simpleMaterialParams();
+  document.getElementById('paintScopeSelect').value='slot';
+  document.getElementById('armorPrimary').value=color;document.getElementById('armorAccent').value=color;
+  document.getElementById('armorMetal').value=p.metal;document.getElementById('armorRough').value=p.rough;
+  const ok=paintArmorPreset('custom');
+  simpleStatus(ok?'Pieza pintada. Podés seguir cambiando color o material.':'No se encontró una pieza para pintar.');
+  return ok;
+}
+function armorOwnerName(o){
+  let p=o;while(p&&p!==actor){if(String(p.name||'').startsWith('Armor_'))return p.name;p=p.parent}return null;
+}
+const simpleRaycaster=new THREE.Raycaster(),simplePointer=new THREE.Vector2();
+function setSimplePaintPick(on){
+  simplePaintPick=!!on;controls.enabled=!simplePaintPick;
+  document.getElementById('simplePickPaintBtn')?.classList.toggle('active',simplePaintPick);
+  simpleStatus(simplePaintPick?'PINTAR CON CLIC activo: tocá directamente una pieza de armadura.':'Modo rotación activo.');
+}
+function paintArmorAtPointer(ev){
+  if(!simplePaintPick||!actor)return false;
+  const rect=renderer.domElement.getBoundingClientRect();
+  simplePointer.x=((ev.clientX-rect.left)/rect.width)*2-1;simplePointer.y=-((ev.clientY-rect.top)/rect.height)*2+1;
+  simpleRaycaster.setFromCamera(simplePointer,camera);
+  const candidates=[];actor.traverse(o=>{if((o.isMesh||o.isSkinnedMesh)&&effectiveVisible(o)&&armorOwnerName(o))candidates.push(o)});
+  const hit=simpleRaycaster.intersectObjects(candidates,false)[0];if(!hit)return false;
+  const color=new THREE.Color(document.getElementById('simpleColor').value),p=simpleMaterialParams(),o=hit.object;
+  const mats=(Array.isArray(o.material)?o.material:[o.material]).map(src=>{const m=src.clone();if(m.color)m.color.copy(color);if('metalness'in m)m.metalness=p.metal;if('roughness'in m)m.roughness=p.rough;m.needsUpdate=true;return m});
+  o.material=Array.isArray(o.material)?mats:mats[0];
+  simpleStatus('Pintado con clic: '+(armorOwnerName(o)||o.name||'pieza')+'.');
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{simplePaintPick:true,simplePaintHit:armorOwnerName(o)||o.name||'mesh'});
+  return true;
+}
+renderer.domElement.addEventListener('pointerdown',paintArmorAtPointer,{passive:true});
+function simpleMotionClips(){
+  const names=actor?.userData?.clips?.map(c=>c.name)||[];
+  const pick=(...rx)=>names.find(n=>rx.some(r=>r.test(n)))||null;
+  return [...new Set([pick(/^Idle$/i,/idle/i),pick(/walk/i),pick(/run/i),pick(/jump/i),pick(/attack/i)].filter(Boolean))];
+}
+function stopSimpleMotion(){if(simpleMotionTimer)clearInterval(simpleMotionTimer);simpleMotionTimer=null;mixer?.stopAllAction();const idle=simpleMotionClips()[0];if(idle)play(idle);simpleStatus('Prueba detenida.')}
+function runSimpleMotion(){
+  const clips=simpleMotionClips();if(!clips.length)return false;stopSimpleMotion();let i=0;play(clips[0]);
+  simpleMotionTimer=setInterval(()=>{i=(i+1)%clips.length;play(clips[i])},900);
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{simpleMotionReady:true,simpleMotionClips:clips});
+  simpleStatus('Probando '+clips.length+' movimientos: mirá si la pieza clippea o se despega.');return true;
+}
+function currentSimpleRecipe(){
+  return {version:1,set:simpleSet(),slot:simpleSlot(),color:document.getElementById('simpleColor').value,material:document.getElementById('simpleMaterial').value,
+    mold:{width:+document.getElementById('moldWidth').value,length:+document.getElementById('moldCrown').value,depth:+document.getElementById('moldFront').value,taper:+document.getElementById('moldTaper').value}};
+}
+function saveSimpleRecipe(){
+  const r=currentSimpleRecipe();localStorage.setItem(SIMPLE_SAVE_KEY,JSON.stringify(r));
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{simpleSaved:true,simpleRecipe:r});simpleStatus('Diseño guardado en este navegador.');return r;
+}
+function loadSimpleRecipe(){
+  let r;try{r=JSON.parse(localStorage.getItem(SIMPLE_SAVE_KEY)||'null')}catch{}if(!r){simpleStatus('Todavía no hay un diseño guardado.');return false}
+  document.getElementById('simpleSetSelect').value=r.set||'knight';document.getElementById('simpleSlotSelect').value=r.slot||'head';
+  document.getElementById('simpleColor').value=r.color||'#171821';document.getElementById('simpleMaterial').value=r.material||'mate';
+  syncSimpleToTechnical();for(const [id,key] of [['moldWidth','width'],['moldCrown','length'],['moldFront','depth'],['moldTaper','taper']])clampSlider(id,+r.mold?.[key]||0);
+  simplePutPiece();moldCurrentSlot();simplePaint();simpleStatus('Diseño guardado restaurado.');return true;
+}
+function toggleTechMode(){
+  const on=!document.body.classList.contains('tech-mode');document.body.classList.toggle('tech-mode',on);
+  document.getElementById('techModeBtn').textContent=on?'⚙ CERRAR MODO TÉCNICO':'⚙ ABRIR MODO TÉCNICO';
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{simpleModeReady:true,technicalMode:on});setTimeout(resize,80);return on;
+}
+window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,designRev:DESIGN_REV,unifiedFactory:true,canonicalRoute:'/skinlab-v2/',rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null,designMode:'clean',cleanReady:false,legacyPrototypeRemoved:true,armorAnatomyReady:false,armorSetCount:0,knightHeadParts:0,molderReady:false,molderPhase:2,molderSkinPreserved:false,molderChangedVertices:0,painterReady:true,painterVersion:2,wearableLabReady:false,nativeWearableProof:false,nativeWearableSourceIdentity:false,tricorneAttached:false,spyglassAttached:false,wearableDriftMax:0,nativeWearableNoNaN:true,realBoneCount:0,realBoneNames:[],bindReferenceLoaded:false,donorInspectorReady:true,donorAuditReady:false,sourceJointManifestReady:false,sourceJointCount:0,mobileFraming:null,framePreciseMobile:false,framePrecise:true,frameDistance:0,simpleModeReady:true,technicalMode:false,simplePaintPick:false,simpleSaved:false};
 window.__SKINLAB_DIAG__=window.__MODULAR_FACTORY_DIAG__;
 window.__SKIN_FACTORY_DIAG__=window.__MODULAR_FACTORY_DIAG__;
 
@@ -1078,6 +1248,7 @@ loader.load(MODEL,g=>{
     window.__ARMOR_MOLDER__={showAnatomy,moldCurrentSlot,resetMolder,library:ARMOR_LIBRARY,stats:anatomyStats,paintArmorPreset};
     window.__SKIN_FACTORY_API__=window.__MODULAR_FACTORY_API__;
     pill('rigPill',true,'Rig_Medium ✓');pill('socketPill',true,'handslot L/R ✓');pill('clipPill',actor.userData.clips.length===22,actor.userData.clips.length+' clips ✓');
+    syncSimpleToTechnical();simpleBase();simpleStatus('Listo. Elegí una familia y una parte para empezar.');
     frameVisible();updateDiag();updateDonorDiag();updateWearableDiag();
     loadNativeWearables().catch(err=>{window.__MODULAR_FACTORY_DIAG__.wearableError=String(err?.message||err);updateWearableDiag()});
   }catch(err){throw err}
@@ -1085,6 +1256,28 @@ loader.load(MODEL,g=>{
   console.error(err);window.__MODULAR_FACTORY_DIAG__.error=String(err?.message||err);
   const e=document.getElementById('error');e.style.display='block';e.textContent='Carga fallida: '+(err?.message||err);
 });
+
+document.getElementById('simpleSetSelect').onchange=()=>{syncSimpleToTechnical();simplePutPiece()};
+document.getElementById('simpleSlotSelect').onchange=()=>{syncSimpleToTechnical();simplePutPiece()};
+document.getElementById('simplePutBtn').onclick=simplePutPiece;
+document.getElementById('simpleRemoveBtn').onclick=simpleRemovePiece;
+document.getElementById('simpleFullBtn').onclick=simpleFullSet;
+document.getElementById('simpleBaseBtn').onclick=simpleBase;
+document.getElementById('simpleSizeMinus').onclick=()=>simpleMold(-6,0,0);
+document.getElementById('simpleSizePlus').onclick=()=>simpleMold(6,0,0);
+document.getElementById('simpleWidthMinus').onclick=()=>simpleMold(0,-7,0);
+document.getElementById('simpleWidthPlus').onclick=()=>simpleMold(0,7,0);
+document.getElementById('simpleLongMinus').onclick=()=>simpleMold(0,0,-7);
+document.getElementById('simpleLongPlus').onclick=()=>simpleMold(0,0,7);
+document.getElementById('simplePaintBtn').onclick=simplePaint;
+document.getElementById('simplePickPaintBtn').onclick=()=>setSimplePaintPick(!simplePaintPick);
+document.getElementById('simpleBlackBtn').onclick=()=>{syncSimpleToTechnical();document.getElementById('paintScopeSelect').value='slot';simplePutPiece();paintArmorPreset('black');simpleStatus('Preset Negro Aura aplicado.')};
+document.getElementById('simpleVioletBtn').onclick=()=>{syncSimpleToTechnical();document.getElementById('paintScopeSelect').value='slot';simplePutPiece();paintArmorPreset('raven');simpleStatus('Preset Violeta Cuervo aplicado.')};
+document.getElementById('simpleMotionBtn').onclick=runSimpleMotion;
+document.getElementById('simpleStopBtn').onclick=stopSimpleMotion;
+document.getElementById('simpleSaveBtn').onclick=saveSimpleRecipe;
+document.getElementById('simpleLoadBtn').onclick=loadSimpleRecipe;
+document.getElementById('techModeBtn').onclick=toggleTechMode;
 
 document.getElementById('rawBtn').onclick=()=>setDesignMode('raw');
 document.getElementById('cleanBtn').onclick=()=>setDesignMode('clean');
@@ -1152,7 +1345,7 @@ async function toggleFullscreen(){
     labFullscreen=false;
     document.body.classList.remove('fullscreen-lab');
     panelEl.classList.remove('ui-hidden');
-    fullscreenBtn.textContent='⛶ FULL';
+    fullscreenBtn.textContent='⛶ PANTALLA COMPLETA';
     if(document.fullscreenElement){try{await document.exitFullscreen()}catch(_){}}
   }
   setTimeout(resize,60);
@@ -1169,7 +1362,7 @@ function syncFullscreen(){
     labFullscreen=false;
     document.body.classList.remove('fullscreen-lab');
     panelEl.classList.remove('ui-hidden');
-    fullscreenBtn.textContent='⛶ FULL';
+    fullscreenBtn.textContent='⛶ PANTALLA COMPLETA';
   }
   setTimeout(resize,60);
 }
@@ -1185,6 +1378,6 @@ function loop(){
   renderer.render(scene,camera);
 }loop();
 </script>
-<!-- skin-factory-run-stamp: no-avian-clean-factory-r1 -->
+<!-- skin-factory-run-stamp: simple-mode-v1-es-responsive -->
 </body>
 </html>
