@@ -1343,7 +1343,6 @@ async function boot(){
     window.__SKINLAB_API__={setMode,playClip,runFactoryTest,stopFactoryTest,applyPainterPiece,paintAt:paintUvInternal,setBrushEnabled,copyPainterRecipe,applyAutoBlackAura,applyPremiumAuthoring,buildAvianHelmet,applyAvianLegendaryPass1,focusAvianHelmet};
     syncPainterUi();
     applyAutoBlackAura();
-    await scanAvianDonor();
     buildAvianHelmet();
     setMode('avian');
   }catch(err){
