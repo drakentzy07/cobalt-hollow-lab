@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HIGHFLY · CREATOR LAB</title>
+<style>
+:root{font-family:Inter,system-ui,sans-serif;color-scheme:dark;--panel:#101019;--panel2:#171725;--line:#343145;--color:#eeeaff;--muted:#9a96b0;--violet:#a789ff;--good:#88e7ae}
+*{box-sizing:border-box}body{margin:0;background:#090a10;color:var(--color);height:100dvh;overflow:hidden}button,select,input{font:inherit}
+#app{height:100%;display:grid;grid-template-rows:62px minmax(0,1fr)}
+header{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:10px 16px;background:#0d0d15;border-bottom:1px solid #272537}
+h1{font-size:16px;letter-spacing:.12em;margin:0}.sub{font-size:10px;color:var(--muted);margin-top:3px}.name{display:flex;align-items:center;gap:12px}.glyph{width:13px;height:33px;border-radius:6px;background:linear-gradient(#c5acff,#5630a3);box-shadow:0 0 24px #9c65ff55}.pill{border:1px solid #3b344e;border-radius:22px;padding:7px 11px;font-size:10px;color:#d3c4f3}
+main{min-height:0;position:relative}.stage{position:absolute;inset:0 0 0 342px}#stage canvas{display:block}
+aside{position:absolute;left:0;top:0;bottom:0;width:342px;overflow-y:auto;background:linear-gradient(180deg,#13121e,#0d0d16);border-right:1px solid #29253b;padding:15px;z-index:3;scrollbar-color:#5b4c77 transparent}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.13em;margin:0 0 10px}section{padding:13px 0;border-bottom:1px solid #302a3d}p,.hint{font-size:11px;color:var(--muted);line-height:1.5;margin:5px 0 9px}
+button,select{background:#211e30;color:#f1ebff;border:1px solid #484157;border-radius:9px;padding:8px 10px;cursor:pointer;font-size:11px}
+button:hover{background:#322744}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #b294ff}
+button.primary{background:linear-gradient(120deg,#6338bc,#392469);border-color:#8c6ed2}button.active{border-color:#bb9dff;box-shadow:0 0 15px #8a5cf655}button:disabled{opacity:.5;cursor:wait}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}.row>*{flex:1}#parts{display:grid;grid-template-columns:1fr 1fr;gap:5px}#parts button{text-align:left;font-size:10px;min-height:32px}
+label{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;margin:9px 0;color:#d4cadf}
+label input[type=range]{flex:1;max-width:142px;accent-color:#9b73ed}label input[type=color]{width:46px;height:31px;padding:2px;border-radius:7px;border:1px solid #574c6d;background:#191624}label select{max-width:145px}
+input[type=checkbox]{accent-color:#9b73ed}.value{width:30px;text-align:right;color:#b4a4d7;font-size:10px}
+.status{padding:11px;border:1px solid #403852;border-radius:11px;background:#191422;font-size:10px;line-height:1.5;color:#cbbdeb;white-space:pre-wrap;min-height:53px}
+.stageFooter{position:absolute;right:12px;bottom:12px;z-index:2;display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.stageFooter button{background:#0d0e19dd;backdrop-filter:blur(8px)}
+.legend{position:absolute;right:14px;top:13px;z-index:2;padding:9px 12px;background:#12121bcc;border:1px solid #363042;border-radius:10px;font-size:10px;color:#bdb3cb;max-width:220px}
+#error{display:none;position:absolute;left:350px;right:14px;bottom:66px;padding:13px;background:#481820;color:#fbb2bd;border:1px solid #95384d;z-index:6}
+@media(max-width:760px){#app{grid-template-rows:46px minmax(0,1fr)}header{padding:6px 10px}h1{font-size:11px}.sub{font-size:8px}.pill{font-size:8px;padding:4px}.stage{left:258px}aside{width:258px;padding:9px}h2{font-size:10px}section{padding:8px 0}label{font-size:9px;margin:6px 0}label input[type=range]{max-width:96px}.row button{font-size:9px;padding:6px 5px}.legend{display:none}.stageFooter{right:5px;bottom:5px}.stageFooter button{font-size:9px;padding:6px}#error{left:265px;bottom:50px}}
+@media(max-width:630px) and (orientation:portrait){.stage{inset:0 0 40% 0}aside{top:60%;bottom:0;width:100%;border-right:0;border-top:1px solid #29253b}.stageFooter{bottom:41%}#error{left:10px;bottom:41%}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/"}}</script>
+</head><body><div id="app"><header><div class="name"><span class="glyph"></span><div><h1>HIGHFLY · CREATOR LAB</h1><div class="sub">CAJA MÁGICA · FORJA 3D · PERSONAJE REAL</div></div></div><div class="pill" id="rigPill">Rig_Medium cargando…</div></header>
+<main><div class="stage" id="stage"></div><aside>
+<section><h2>01 · Taller profesional</h2><p>Diseñamos sobre el Warrior auténtico. Las plumas son geometría curva propia, no imágenes. Todo queda aislado del juego.</p>
+<div class="status" id="status">Preparando la forja…</div></section>
+<section><h2>02 · Seleccionar y crear</h2><div id="parts"></div>
+<div class="row"><button id="addBtn" class="primary">+ Nueva pluma</button><button id="duplicateBtn">Duplicar</button><button id="deleteBtn">Eliminar</button></div>
+<label>Simetría <input id="symmetry" type="checkbox" checked></label></section>
+<section><h2>03 · Esculpido por curvas</h2>
+<label>Largo <input id="length" type="range" min="18" max="190" step="1"><span class="value" id="lengthValue"></span></label>
+<label>Ancho <input id="width" type="range" min="4" max="50" step="1"><span class="value" id="widthValue"></span></label>
+<label>Curvatura <input id="bend" type="range" min="-100" max="100" step="1"><span class="value" id="bendValue"></span></label>
+<label>Apertura <input id="tilt" type="range" min="-120" max="120" step="1"><span class="value" id="tiltValue"></span></label>
+<label>Torsión <input id="twist" type="range" min="-75" max="75" step="1"><span class="value" id="twistValue"></span></label>
+<div class="hint">Cada pluma tiene superficie suavizada, volumen y nervadura central. Podés editar cada una por separado.</div></section>
+<section><h2>04 · Pintura por detalle</h2>
+<label>Superficie <input id="color" type="color"></label><label>Nervadura <input id="accent" type="color"></label>
+<label>Material <select id="material"><option value="graphite">Acero grafito</option><option value="silver">Acero frío</option><option value="leather">Cuero</option><option value="arcane">Arcano</option></select></label>
+<div class="hint">Elegí una pluma con un clic en el personaje o desde la lista. Pintar no une ni destruye las otras piezas.</div></section>
+<section><h2>05 · Historial y guardado</h2>
+<div class="row"><button id="undoBtn">↶ Deshacer</button><button id="redoBtn">↷ Rehacer</button><button id="resetBtn">⟲ Reiniciar</button></div>
+<div class="row"><button id="saveBtn">💾 Guardar</button><button id="loadBtn">↩ Cargar</button></div>
+<div class="row"><button id="recipeBtn">Exportar receta JSON</button><button id="exportBtn" class="primary">Exportar pieza GLB</button></div>
+<p>El GLB contiene el accesorio rígido para anclarlo al hueso <b>head</b>. No reemplaza el rig, no reescribe el personaje ni es todavía una armadura completa con skinning.</p></section>
+</aside>
+<div class="legend">Orbitar: arrastrar · Zoom: rueda/pinch · Clic: seleccionar pluma<br><span id="diag">Cargando modelo original…</span></div>
+<div class="stageFooter"><button id="frontBtn">Frente</button><button id="sideBtn">Perfil</button><button id="backBtn">Espalda</button><button id="moveBtn">Animación</button></div><div id="error" role="alert"></div>
+</main></div><script type="module" src="./creator.mjs"></script></body></html>
