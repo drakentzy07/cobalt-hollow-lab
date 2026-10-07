@@ -518,7 +518,7 @@ jobs:
           grep -F "clip-path: circle(50% at 50% 50%) !important;" upstream/src/styles/hf_game_c1.css
           grep -F "body.mobile-touch.hf-game-c25 #mobile-consumable-seat," upstream/src/styles/hf_game_c1.css
           grep -F "body.mobile-touch.hf-game-c25 #mobile-stance-anchor {" upstream/src/styles/hf_game_c1.css
-          grep -F "C2.7-human-red-repair" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "const HIGHFLY_GAME_C22_BUILD =" upstream/src/highfly/game_c1_runtime.ts
           grep -F "HIGHFLY_GAME_C27_HUMAN_RED_REPAIR_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C27_HUMAN_RED_REPAIR_APPLIED=1')")
           grep -F "window.dispatchEvent(new CustomEvent('highfly:mobile-settings'));" upstream/src/game/mobile_controls.ts
           grep -F 'id="mobile-bar-editor" title="Ajustes" aria-label="Ajustes"' upstream/index.html
