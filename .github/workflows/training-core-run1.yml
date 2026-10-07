@@ -2649,8 +2649,8 @@ jobs:
           // must say Ajustes, open native Options, never the native action-bar editor,
           // and expose Interfaz > Frames > EDITAR HUD MÓVIL.
           await page.locator('#mobile-menu-anchor').click({ force: true });
-          await page.locator('#mobile-more').waitFor({ state: 'visible', timeout: 10000 });
-          await page.locator('#mobile-more').click({ force: true });
+          // HIGHFLY RUN0.9.1 intentionally removed the donor's intermediate
+          // ten-item gesture strip: the three-dot anchor opens More directly.
           await page.locator('#mobile-extra-controls').waitFor({ state: 'visible', timeout: 10000 });
           const settingsLabel = await page.locator('#mobile-bar-editor .mobile-label').textContent();
           if ((settingsLabel ?? '').trim().toLocaleUpperCase('es') !== 'AJUSTES') {
