@@ -1,0 +1,65 @@
+name: HIGHFLY Creator Lab — Native Forge Gate
+on:
+  push:
+    branches: [highfly-creator-lab]
+    paths:
+      - 'creator-lab/**'
+      - '.github/workflows/creator-lab-native-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  studio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static contract and module syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s creator-lab/index.html
+          test -s creator-lab/creator.mjs
+          test -s creator-lab/geometry.mjs
+          grep -F "<title>HIGHFLY · CREATOR LAB</title>" creator-lab/index.html
+          grep -F "HIGHFLY_CREATOR_LAB" creator-lab/creator.mjs
+          ! grep -F "HF AVIAN v1" creator-lab/index.html
+          node --check creator-lab/creator.mjs
+          node --check creator-lab/geometry.mjs
+          test -f scripts/skin_lab/extract_bind_reference.mjs
+      - name: Download frozen real source, verify identity, generate head bind reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public"
+          mkdir -p creator-lab/assets/bind
+          curl -fsSL "$BASE/models/chars/modular/warrior_modular.glb" -o creator-lab/assets/warrior_modular.glb
+          test "$(stat -c%s creator-lab/assets/warrior_modular.glb)" = "3477500"
+          test "$(git hash-object creator-lab/assets/warrior_modular.glb)" = "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2"
+          npm init -y >/dev/null 2>&1
+          npm install @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer playwright@1.55.0 --no-save
+          node scripts/skin_lab/extract_bind_reference.mjs --src creator-lab/assets/warrior_modular.glb --out creator-lab/assets/bind --list > creator-lab/assets/bind/joints.json
+          node scripts/skin_lab/extract_bind_reference.mjs --src creator-lab/assets/warrior_modular.glb --out creator-lab/assets/bind --bone head
+          test -s creator-lab/assets/bind/reference_head.glb
+          test -s creator-lab/assets/bind/joints.json
+      - name: Install Chromium
+        shell: bash
+        run: npx playwright install --with-deps chromium
+      - name: Start isolated preview server
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/creator-http.log 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:4173/creator-lab/ >/dev/null
+      - name: Browser verification on native rig
+        shell: bash
+        run: |
+          mkdir -p creator-proof
+          node creator-lab/verify.cjs
+      - name: Upload visual and 3D verification proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: creator-lab-native-forge-proof
+          path: creator-proof/
+          if-no-files-found: warn
