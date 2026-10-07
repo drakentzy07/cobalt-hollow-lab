@@ -35,17 +35,6 @@ jobs:
       - name: Checkout lab overlay
         uses: actions/checkout@v4
 
-      - name: Checkout gated Skin Factory
-        uses: actions/checkout@v4
-        with:
-          repository: drakentzy07/cobalt-hollow-lab
-          ref: c72696fd73b0fd2a2375790586d73ea680f19947
-          path: skinlab-source
-          sparse-checkout: |
-            skinlab-v2
-            scripts/skin_lab
-          sparse-checkout-cone-mode: true
-
       - name: Checkout frozen ClaudeCraft code slice
         uses: actions/checkout@v4
         with:
@@ -2972,57 +2961,14 @@ jobs:
           await browser.close();
           NODE
 
-      - name: Merge gated Skin Factory + native wearable assets into GAME-C2 Pages
+      - name: Assert HIGHFLY GAME artifact is lab-free
         if: success()
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C skinlab-source rev-parse HEAD)" = "c72696fd73b0fd2a2375790586d73ea680f19947"
-          test -s skinlab-source/skinlab-v2/index.html
-          test -s skinlab-source/skinlab-v2/legacy-warrior.html
-          test -s skinlab-source/skinlab-v2/modular-factory.html
-          test -s skinlab-source/scripts/skin_lab/extract_bind_reference.mjs
-
-          rm -rf upstream/dist/skinlab-v2
-          mkdir -p upstream/dist/skinlab-v2/assets/bind
-          cp -a skinlab-source/skinlab-v2/. upstream/dist/skinlab-v2/
-
-          cp upstream/public/models/chars/modular/warrior_modular.glb upstream/dist/skinlab-v2/assets/warrior_modular.glb
-          cp upstream/public/models/chars/npc_gear/harbormaster_tricorne.glb upstream/dist/skinlab-v2/assets/harbormaster_tricorne.glb
-          cp upstream/public/models/chars/npc_gear/harbormaster_spyglass.glb upstream/dist/skinlab-v2/assets/harbormaster_spyglass.glb
-
-          test "$(stat -c%s upstream/dist/skinlab-v2/assets/warrior_modular.glb)" = "3477500"
-          test "$(git hash-object upstream/dist/skinlab-v2/assets/warrior_modular.glb)" = "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2"
-          test "$(stat -c%s upstream/dist/skinlab-v2/assets/harbormaster_tricorne.glb)" = "40512"
-          test "$(sha256sum upstream/dist/skinlab-v2/assets/harbormaster_tricorne.glb | cut -d' ' -f1)" = "c02cc2676b5ec85cc050a3a9cb044760b670b8f5040b35caa252f841536acba5"
-          test "$(stat -c%s upstream/dist/skinlab-v2/assets/harbormaster_spyglass.glb)" = "11024"
-          test "$(sha256sum upstream/dist/skinlab-v2/assets/harbormaster_spyglass.glb | cut -d' ' -f1)" = "74aa429a1aed82725ab54ce8c9409f67075b213698b5277bc38c8fdc8e4f8df7"
-
-          rm -rf /tmp/highfly-skin-bind
-          mkdir -p /tmp/highfly-skin-bind
-          cp skinlab-source/scripts/skin_lab/extract_bind_reference.mjs /tmp/highfly-skin-bind/extract_bind_reference.mjs
-          (
-            cd /tmp/highfly-skin-bind
-            npm init -y >/dev/null 2>&1
-            npm install @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer --no-save >/dev/null
-            node extract_bind_reference.mjs               --src "$GITHUB_WORKSPACE/upstream/dist/skinlab-v2/assets/warrior_modular.glb"               --out "$GITHUB_WORKSPACE/upstream/dist/skinlab-v2/assets/bind"               --list > "$GITHUB_WORKSPACE/upstream/dist/skinlab-v2/assets/bind/joints.json"
-            node extract_bind_reference.mjs               --src "$GITHUB_WORKSPACE/upstream/dist/skinlab-v2/assets/warrior_modular.glb"               --out "$GITHUB_WORKSPACE/upstream/dist/skinlab-v2/assets/bind"               --all
-          )
-
           test -s upstream/dist/index.html
-          test -s upstream/dist/skinlab-v2/index.html
-          test -s upstream/dist/skinlab-v2/legacy-warrior.html
-          test -s upstream/dist/skinlab-v2/modular-factory.html
-          test -s upstream/dist/skinlab-v2/assets/bind/joints.json
-          test -s upstream/dist/skinlab-v2/assets/bind/reference_head.glb
-          test -s upstream/dist/skinlab-v2/assets/bind/reference_hips.glb
-          test -s upstream/dist/skinlab-v2/assets/bind/reference_chest.glb
-          grep -F "<title>HIGHFLY · SKIN FACTORY</title>" upstream/dist/skinlab-v2/index.html
-          grep -F "<title>HIGHFLY · SKIN FACTORY</title>" upstream/dist/skinlab-v2/modular-factory.html
-          grep -F '"head"' upstream/dist/skinlab-v2/assets/bind/joints.json
-          grep -F '"hips"' upstream/dist/skinlab-v2/assets/bind/joints.json
-          grep -F '"chest"' upstream/dist/skinlab-v2/assets/bind/joints.json
-          echo "PAGES_BUNDLE_OK=GAME_C2_PLUS_SKIN_FACTORY_NATIVE_WEARABLES"
+          test ! -e upstream/dist/skinlab-v2
+          echo "HIGHFLY_GAME_DEPLOY_ISOLATED=1"
 
       - name: Configure GitHub Pages for GAME-C2 playtest
         if: success()
@@ -3088,4 +3034,3 @@ jobs:
         with:
           artifact_name: github-pages
 
-# skinlab-v2-pages-release: c72696f native-wearables + real-bind-refs
