@@ -829,3 +829,243 @@ body.mobile-touch.hf-game-c1 #loading-screen {
   background-size: cover, cover, cover !important;
   background-repeat: no-repeat, no-repeat, no-repeat !important;
 }
+
+
+/* ==========================================================================
+   HIGHFLY GAME-C2.8 — MOBILE HUD EDITOR + PERSISTENT LOADING BRAND
+   ========================================================================== */
+
+/* Every rotating world-loading backdrop keeps HIGHFLY identity as a separate
+   composited layer. The backdrop may change; the brand never disappears. */
+body.mobile-touch.hf-game-c1 #loading-screen::after {
+  content: "" !important;
+  position: absolute !important;
+  top: max(10px, env(safe-area-inset-top)) !important;
+  left: 50% !important;
+  width: min(172px, 29vw) !important;
+  height: min(112px, 24vh) !important;
+  transform: translateX(-50%) !important;
+  background: url("/highfly/highfly-logo-full.webp") center / contain no-repeat !important;
+  opacity: .96 !important;
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,.72)) drop-shadow(0 0 16px rgba(150,72,255,.30)) !important;
+  pointer-events: none !important;
+  z-index: 4 !important;
+}
+body.mobile-touch.hf-game-c1 #loading-screen .ls-progress {
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+/* HIGHFLY mobile settings replaces the desktop-first donor Options entry. */
+#hf-c28-mobile-settings[hidden],
+#hf-c28-hud-editor[hidden] {
+  display: none !important;
+}
+#hf-c28-mobile-settings {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: grid;
+  place-items: center;
+  padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  box-sizing: border-box;
+  background: rgba(4, 3, 10, .62);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+.hf-c28-mobile-settings__panel {
+  width: min(620px, 82vw);
+  max-height: min(340px, 88vh);
+  overflow: auto;
+  box-sizing: border-box;
+  border: 1px solid rgba(201, 169, 255, .42);
+  border-radius: 16px;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(18,13,31,.985), rgba(8,7,17,.985));
+  box-shadow: 0 22px 60px rgba(0,0,0,.66), inset 0 1px 0 rgba(255,255,255,.05);
+  color: #f4edff;
+}
+.hf-c28-mobile-settings__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.hf-c28-mobile-settings__head small,
+.hf-c28-mobile-settings__eyebrow {
+  color: rgba(221,196,255,.72);
+  font-weight: 900;
+  letter-spacing: .16em;
+}
+.hf-c28-mobile-settings__head h2,
+.hf-c28-mobile-settings__section h3 {
+  margin: 2px 0 0;
+  color: #fff7ff;
+}
+.hf-c28-mobile-settings__head button {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.05);
+  color: #fff;
+  font-size: 24px;
+}
+.hf-c28-mobile-settings__section {
+  border: 1px solid rgba(170,126,235,.28);
+  border-radius: 12px;
+  padding: 14px;
+  background: rgba(111,68,170,.09);
+}
+.hf-c28-mobile-settings__section p,
+.hf-c28-mobile-settings__note {
+  color: rgba(235,226,245,.78);
+  line-height: 1.4;
+}
+.hf-c28-mobile-settings__customize {
+  min-height: 46px;
+  width: 100%;
+  border: 1px solid rgba(232,198,112,.72);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(112,61,174,.98), rgba(68,35,122,.98));
+  color: #fff7d9;
+  font-weight: 950;
+  letter-spacing: .06em;
+}
+.hf-c28-mobile-settings__note {
+  margin-top: 10px;
+  font-size: 11px;
+}
+
+/* Gameplay remains visible while editing, Mobile-Legends style. */
+#hf-c28-hud-editor {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 1400;
+  width: min(560px, 66vw);
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  border: 1px solid rgba(211,180,255,.46);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, rgba(15,11,27,.96), rgba(7,6,15,.94));
+  box-shadow: 0 14px 38px rgba(0,0,0,.56), inset 0 1px 0 rgba(255,255,255,.05);
+  color: #f7f0ff;
+}
+.hf-c28-hud-editor__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.hf-c28-hud-editor__head small {
+  display: block;
+  color: rgba(218,191,255,.66);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+.hf-c28-hud-editor__head b {
+  display: block;
+  margin-top: 2px;
+  color: #fff;
+  font-size: 14px;
+}
+.hf-c28-hud-editor__close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(231,202,128,.58);
+  background: rgba(111,67,173,.44);
+  color: #fff5cf;
+  font-size: 18px;
+  font-weight: 950;
+}
+.hf-c28-hud-editor__sliders {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.hf-c28-hud-editor__sliders label {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.hf-c28-hud-editor__sliders span {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  color: rgba(235,226,246,.72);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .04em;
+}
+.hf-c28-hud-editor__sliders input[type="range"] {
+  width: 100%;
+  accent-color: #a968ff;
+}
+.hf-c28-hud-editor__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.hf-c28-hud-editor__actions button {
+  min-height: 30px;
+  flex: 1 1 auto;
+  border: 1px solid rgba(196,167,235,.28);
+  border-radius: 8px;
+  padding: 0 9px;
+  background: rgba(255,255,255,.045);
+  color: rgba(245,238,252,.88);
+  font-size: 9px;
+  font-weight: 900;
+}
+.hf-c28-hud-editor__actions button.primary {
+  border-color: rgba(232,198,112,.62);
+  background: linear-gradient(180deg, rgba(109,60,170,.94), rgba(65,34,119,.94));
+  color: #fff5d3;
+}
+.hf-c28-hud-editor__hint {
+  display: block;
+  margin-top: 6px;
+  text-align: center;
+  color: rgba(224,211,237,.58);
+  font-size: 8px;
+  letter-spacing: .06em;
+}
+
+body.hf-c28-hud-editing #game-canvas {
+  pointer-events: none !important;
+}
+body.hf-c28-hud-editing [data-hf-hud-target] {
+  outline: 1px dashed rgba(192,149,255,.44) !important;
+  outline-offset: 3px !important;
+}
+body.hf-c28-hud-editing .hf-c28-hud-selected {
+  outline: 2px solid rgba(242,205,111,.98) !important;
+  outline-offset: 4px !important;
+  filter: drop-shadow(0 0 8px rgba(183,113,255,.60));
+}
+
+@media (orientation: landscape) and (max-height: 430px) {
+  #hf-c28-hud-editor {
+    width: min(600px, 72vw);
+    padding: 8px 10px;
+  }
+  .hf-c28-hud-editor__actions {
+    margin-top: 5px;
+  }
+  .hf-c28-hud-editor__actions button {
+    min-height: 27px;
+    font-size: 8px;
+  }
+  .hf-c28-hud-editor__hint {
+    margin-top: 4px;
+    font-size: 7px;
+  }
+}
