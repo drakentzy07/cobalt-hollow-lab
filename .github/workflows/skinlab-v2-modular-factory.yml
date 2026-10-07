@@ -24,7 +24,7 @@ jobs:
         run: |
           set -euo pipefail
           test -s skinlab-v2/modular-factory.html
-          grep -F "HIGHFLY · SKIN LAB v2 — MODULAR FACTORY" skinlab-v2/modular-factory.html
+          grep -F "HIGHFLY · SKIN FACTORY" skinlab-v2/modular-factory.html\n          cmp -s skinlab-v2/index.html skinlab-v2/modular-factory.html
           grep -F "warrior_modular.glb" skinlab-v2/modular-factory.html
           grep -F "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2" skinlab-v2/modular-factory.html
           for p in M_Head M_Torso M_ArmL M_ArmR M_HandL M_HandR M_LegL M_LegR M_FootL M_FootR M_Loin M_Ear_round M_Eye_almond M_Brow_soft M_Mouth_neutral; do grep -F "$p" skinlab-v2/modular-factory.html >/dev/null; done
@@ -35,7 +35,7 @@ jobs:
           grep -F "HF AVIAN v1" skinlab-v2/modular-factory.html
           grep -F "setDesignMode" skinlab-v2/modular-factory.html
           grep -F "ARMOR ANATOMY / DONOR LAB" skinlab-v2/modular-factory.html
-          grep -F "HF ARMOR MOLDER" skinlab-v2/modular-factory.html
+          grep -F "HF ARMOR MOLDER · PHASE 2" skinlab-v2/modular-factory.html\n          grep -F "STYLE / PAINTER · DONOR ARMOR" skinlab-v2/modular-factory.html\n          grep -F "molderPhase:2" skinlab-v2/modular-factory.html\n          grep -F "paintArmorPreset" skinlab-v2/modular-factory.html
           grep -F "Armor_knight_Head" skinlab-v2/modular-factory.html
           grep -F "molderSkinPreserved" skinlab-v2/modular-factory.html
           echo "MODULAR FACTORY static contract: GREEN"
@@ -96,6 +96,20 @@ jobs:
             if(!molded.molderReady||!molded.molderSkinPreserved||molded.molderChangedVertices<1)
               throw new Error('Helmet molder deformation/skin preservation failed '+JSON.stringify(molded));
             await page.click('#moldResetBtn');await page.waitForTimeout(120);
+            await page.selectOption('#moldSlotSelect','chest');
+            await page.click('[data-anatomy-slot="chest"]');await page.waitForTimeout(120);
+            await page.locator('#moldWidth').evaluate(el=>{el.value='18';el.dispatchEvent(new Event('input',{bubbles:true}))});
+            await page.locator('#moldCrown').evaluate(el=>{el.value='10';el.dispatchEvent(new Event('input',{bubbles:true}))});
+            await page.waitForTimeout(180);
+            const phase2=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
+            if(phase2.molderPhase!==2||phase2.molderSlot!=='chest'||phase2.molderChangedVertices<1||!phase2.molderSkinPreserved)
+              throw new Error('Molder Phase2 chest gate failed '+JSON.stringify(phase2));
+            await page.selectOption('#paintScopeSelect','full');
+            await page.click('#paintBlackBtn');await page.waitForTimeout(180);
+            const paint=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
+            if(!paint.painterReady||paint.painterVersion!==2||paint.painterPreset!=='black'||paint.painterMeshes<1)
+              throw new Error('Painter v2 black preset failed '+JSON.stringify(paint));
+            await page.click('#paintSourceBtn');await page.waitForTimeout(100);
             await page.click('#avianBtn');await page.waitForTimeout(250);
             const avian=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
             const slots=avian.avianSlots||{};
