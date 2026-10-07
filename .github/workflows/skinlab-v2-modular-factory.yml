@@ -154,7 +154,8 @@ jobs:
             const techOpen=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
             if(!techOpen.technicalMode)throw new Error('Technical mode did not open '+JSON.stringify(techOpen));
             await page.selectOption('#wearBoneSelect','head');
-            await page.locator('#toggleBindRef').check();await page.waitForTimeout(350);
+            await page.locator('#toggleBindRef').check();
+            await page.waitForFunction(()=>window.__MODULAR_FACTORY_DIAG__?.bindReferenceLoaded===true,null,{timeout:30000});
             let wear=await page.evaluate(()=>window.__MODULAR_FACTORY_DIAG__);
             if(!wear.bindReferenceLoaded||wear.bindReferenceBone!=='head')
               throw new Error('Native head bind reference failed '+JSON.stringify(wear));
