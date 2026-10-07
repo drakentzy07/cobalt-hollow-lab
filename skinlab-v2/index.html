@@ -1,172 +1,168 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>HIGHFLY Skin Lab v2 — Warrior Black</title>
-  <style>
-    :root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
-    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07070a;color:#f5f5f7}
-    #app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr}
-    header{display:flex;gap:14px;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(8,8,12,.92);border-bottom:1px solid #252531;backdrop-filter:blur(12px);z-index:5}
-    .brand{display:flex;align-items:center;gap:10px;min-width:0}.mark{width:11px;height:28px;border-radius:8px;background:linear-gradient(#8b5cf6,#3b0764);box-shadow:0 0 24px #7c3aed88}
-    h1{font-size:14px;margin:0;letter-spacing:.12em}.sub{font-size:11px;color:#aaaabb;margin-top:3px}
-    .status{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.pill{font-size:10px;padding:5px 8px;border:1px solid #30303c;border-radius:999px;background:#111119;color:#b8b8c6}.pill.ok{border-color:#315d45;color:#93e6b0}
-    main{position:relative;min-height:0}#stage{position:absolute;inset:0}
-    .panel{position:absolute;left:14px;top:14px;width:min(430px,calc(100vw - 28px));max-height:calc(100% - 28px);overflow:auto;padding:13px;border:1px solid #2b2b36;border-radius:16px;background:rgba(10,10,15,.90);backdrop-filter:blur(14px);box-shadow:0 18px 60px #0008}
-    .panel h2{font-size:12px;letter-spacing:.12em;margin:0 0 10px;color:#d9d9e3}.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-    button,select,input{border:1px solid #343442;background:#15151d;color:#eee;border-radius:10px;padding:9px 11px;font:inherit;font-size:12px}
-    input[type="color"]{width:100%;height:36px;padding:3px;cursor:pointer}
-    input[type="range"]{width:100%;padding:0;accent-color:#8b5cf6}
-    details.painter{margin:12px 0 10px;border:1px solid #343442;border-radius:13px;background:#0d0d14}
-    details.painter>summary{cursor:pointer;padding:11px 12px;font-size:11px;font-weight:800;letter-spacing:.08em;color:#eee;list-style:none}
-    details.painter>summary::-webkit-details-marker{display:none}
-    .painter-body{padding:0 11px 11px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.field{display:grid;gap:4px;margin-bottom:8px}
-    .field label,.range-head{font-size:9px;color:#aaa}.range-head{display:flex;justify-content:space-between;gap:8px}
-    .paint-note{font-size:9px;line-height:1.35;color:#8f8fa0;margin:6px 0 10px}
-    .chip{font-size:9px;padding:4px 7px;border-radius:999px;border:1px solid #3b3b48;color:#aaa}
-    .chip.live{border-color:#4f8a61;color:#9beab2;background:#102018}
-    .painter-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px}
-    .painter-row button{padding:7px 9px;font-size:10px}
-    button{cursor:pointer}button:hover{background:#1c1c27}button.active{border-color:#8b5cf6;background:#261942;box-shadow:0 0 22px #7c3aed33}
-    .small{font-size:10px;color:#9b9baa;line-height:1.4}.legend{display:grid;grid-template-columns:auto 1fr;gap:5px 8px;font-size:10px;color:#aaa}
-    .legend b{color:#ddd}.footer{position:absolute;right:14px;bottom:14px;padding:9px 12px;border:1px solid #2b2b36;border-radius:12px;background:rgba(10,10,15,.75);font-size:10px;color:#aaa}
-    .lab-actions{position:absolute;right:10px;top:10px;z-index:8;display:flex;gap:6px}.lab-actions button{padding:7px 9px;font-size:10px;background:rgba(16,16,24,.92);backdrop-filter:blur(10px)}
-    .panel.ui-hidden{transform:translateX(calc(-100% - 24px));opacity:0;pointer-events:none}
-    .panel{transition:transform .18s ease,opacity .18s ease}
-    body.fullscreen-lab #app{grid-template-rows:1fr}body.fullscreen-lab header{display:none}
-    #error{display:none;position:absolute;inset:auto 14px 14px 14px;background:#3a1016;border:1px solid #7f1d1d;color:#fecaca;padding:10px;border-radius:12px;z-index:9;font-size:11px}
-    @media(max-width:700px){header{align-items:flex-start}.status{display:none}.panel{top:auto;bottom:12px}.footer{display:none}}
-    @media(orientation:landscape) and (max-height:600px){
-      header{padding:6px 9px;min-height:36px}.mark{height:22px}.brand h1{font-size:11px}.sub{font-size:8px}.status{display:none}
-      .panel{left:7px;top:7px;bottom:auto;width:min(300px,32vw);max-height:calc(100% - 14px);padding:9px;border-radius:12px}
-      .panel h2{font-size:9px;margin-bottom:6px}.row{gap:5px;margin-bottom:6px}
-      button,select,input{font-size:9px;padding:6px 7px}.small,.legend{font-size:8px}
-      details.painter{margin:7px 0}.footer{display:none}
-      .lab-actions{top:6px;right:max(8px,env(safe-area-inset-right))}
-    }
-  </style>
-  <script type="importmap">
-    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
-  </script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HIGHFLY · SKIN FACTORY</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;--bg:#07070a;--panel:#101018;--line:#30303d;--txt:#f5f5f7;--muted:#a1a1b2;--violet:#8b5cf6;--ok:#91e6ad}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--txt)}
+#app{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 15px;border-bottom:1px solid #252531;background:rgba(8,8,12,.95);z-index:5}
+.brand{display:flex;gap:10px;align-items:center;min-width:0}.mark{width:11px;height:30px;border-radius:8px;background:linear-gradient(#a78bfa,#4c1d95);box-shadow:0 0 25px #7c3aed88}
+h1{font-size:14px;letter-spacing:.11em;margin:0}.sub{font-size:10px;color:var(--muted);margin-top:3px}
+.nav{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.pill,.nav a{font-size:10px;padding:6px 9px;border:1px solid var(--line);border-radius:999px;background:#13131b;color:#c8c8d4;text-decoration:none}.pill.ok{color:var(--ok);border-color:#315d45}
+main{position:relative;min-height:0}#stage{position:absolute;inset:0}
+.panel{position:absolute;left:14px;top:14px;width:min(430px,calc(100vw - 28px));max-height:calc(100% - 28px);overflow:auto;padding:13px;border:1px solid #2b2b36;border-radius:16px;background:rgba(10,10,15,.91);backdrop-filter:blur(14px);box-shadow:0 18px 60px #0008;z-index:3}
+.panel h2{font-size:11px;letter-spacing:.12em;margin:0 0 9px;color:#dedee8}.group{border-top:1px solid #292936;padding-top:11px;margin-top:11px}
+.row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px}button,select{border:1px solid #373744;background:#16161f;color:#eee;border-radius:10px;padding:8px 10px;font:inherit;font-size:11px;cursor:pointer}
+button:hover{background:#1d1d29}button.active{border-color:var(--violet);background:#291b45;box-shadow:0 0 20px #7c3aed33}
+.slotgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.slot{display:flex;justify-content:space-between;align-items:center;border:1px solid #30303c;background:#12121a;border-radius:10px;padding:8px 9px;font-size:10px}.slot input{accent-color:var(--violet)}
+.note,.diag{font-size:10px;line-height:1.42;color:var(--muted)}.diag{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}
+.moldergrid{display:grid;grid-template-columns:1fr;gap:6px}.moldrow{display:grid;grid-template-columns:92px 1fr 38px;gap:7px;align-items:center;font-size:9px;color:#c8c8d4}.moldrow input{width:100%;accent-color:var(--violet)}.moldval{font-family:ui-monospace,monospace;text-align:right;color:#a78bfa}
+.paintgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.paintfield{display:grid;gap:4px;font-size:9px;color:#bbb}.paintfield input[type="color"]{width:100%;height:32px;padding:2px;border:1px solid #373744;border-radius:8px;background:#16161f}.paintfield input[type="range"]{width:100%;accent-color:var(--violet)}
+.badge{display:inline-block;margin-left:5px;font-size:8px;padding:2px 5px;border-radius:999px;border:1px solid #3b3b49;color:#999}
+.footer{position:absolute;right:14px;bottom:14px;padding:9px 12px;border:1px solid #2b2b36;border-radius:12px;background:rgba(10,10,15,.78);font-size:10px;color:#aaa}
+.lab-actions{position:absolute;right:10px;top:10px;z-index:8;display:flex;gap:6px}.lab-actions button{padding:7px 9px;font-size:10px;background:rgba(16,16,24,.92);backdrop-filter:blur(10px)}
+.panel{transition:transform .18s ease,opacity .18s ease}.panel.ui-hidden{transform:translateX(calc(-100% - 24px));opacity:0;pointer-events:none}
+body.fullscreen-lab #app{grid-template-rows:1fr}body.fullscreen-lab header{display:none}
+#error{display:none;position:absolute;left:14px;right:14px;bottom:14px;background:#3a1016;border:1px solid #7f1d1d;color:#fecaca;padding:10px;border-radius:12px;z-index:9;font-size:11px}
+@media(max-width:760px) and (orientation:portrait){header{align-items:flex-start}.nav .pill{display:none}.panel{top:auto;bottom:10px;max-height:52vh}.footer{display:none}}
+@media(orientation:landscape) and (max-height:600px){
+  header{padding:7px 10px;gap:8px}
+  h1{font-size:11px}.sub{font-size:8px}.mark{height:24px}
+  .nav{gap:4px}.nav a,.nav .pill{font-size:8px;padding:4px 6px}
+  .panel{left:8px;top:8px;width:min(320px,36vw);max-height:calc(100% - 16px);padding:9px;border-radius:12px}
+  .panel h2{font-size:9px;margin-bottom:6px}.group{padding-top:7px;margin-top:7px}
+  button,select{font-size:9px;padding:6px 7px}.row{gap:5px;margin-bottom:5px}
+  .slotgrid{gap:5px}.slot{font-size:8px;padding:6px 7px}
+  .note,.diag{font-size:8px;line-height:1.3}
+  .footer{display:none}
+  .lab-actions{top:6px;right:max(8px,env(safe-area-inset-right))}
+}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/"}}</script>
 </head>
 <body>
 <div id="app">
-  <header>
-    <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN LAB v2</h1><div class="sub">SKIN FACTORY · PREMIUM AUTHORING v2 · BLACK AURA</div></div></div>
-    <div class="status">
-      <span class="pill" id="rigPill">Rig_Medium …</span>
-      <span class="pill" id="rPill">handslot.r …</span>
-      <span class="pill" id="lPill">handslot.l …</span>
-      <span class="pill" id="animPill">animations …</span>
-      <span class="pill" id="factoryPill">factory …</span>
+<header>
+  <div class="brand"><div class="mark"></div><div><h1>HIGHFLY · SKIN FACTORY</h1><div class="sub">UNIFIED LAB · DONORS · MOLDER · PAINTER · warrior_modular.glb</div></div></div>
+  <div class="nav">
+    <span class="pill ok">UNIFIED FACTORY</span>
+    <span class="pill" id="rigPill">Rig_Medium …</span>
+    <span class="pill" id="socketPill">sockets …</span>
+    <span class="pill" id="clipPill">clips …</span>
+  </div>
+</header>
+<main>
+<div id="stage"></div>
+<section class="panel">
+  <h2>MALE BASE REAL <span class="badge">NO ARMOR</span></h2>
+  <div class="note">Fuente congelada ClaudeCraft · blob <b>e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2</b> · 3.477.500 bytes. Sólo cuerpo M_* + M_Loin + una cara.</div>
+  <div class="group">
+    <h2>MODO DE DISEÑO</h2>
+    <div class="row">
+      <button id="rawBtn">RAW</button>
+      <button id="cleanBtn" class="active">CLEAN MANNEQUIN</button>
+      <button id="avianBtn">⚡ HF AVIAN v1</button>
     </div>
-  </header>
-  <main>
-    <div id="stage"></div>
-    <section class="panel">
-      <h2>WARRIOR VISUAL</h2>
-      <div class="row">
-        <button id="baseBtn" class="active">BASE</button>
-        <button id="blackBtn">WARRIOR BLACK AURA</button>
-        <button id="autoAuraBtn">⚡ AUTO · BLACK AURA</button>
-        <button id="authorBtn">💎 PREMIUM V2</button>
-        <button id="modularFactoryBtn">🧩 MODULAR REAL</button>
-      </div>
-      <div class="row">
-        <select id="animSelect"></select>
-        <button id="playBtn">REPLAY</button>
-      </div>
-      <div class="row">
-        <button id="testAllBtn">TEST 25 CLIPS</button>
-        <button id="stopTestBtn">STOP</button>
-      </div>
-      <div id="testStatus" class="small" style="margin:-2px 0 10px">Factory test: listo.</div>
-
-      <details class="painter" id="painterPanel">
-        <summary>🎨 PAINTER PRO v1 <span class="chip live" id="painterLive">LIVE</span></summary>
-        <div class="painter-body">
-          <div class="grid2">
-            <div class="field"><label>PIEZA</label>
-              <select id="pieceSelect">
-                <option value="helmet">CASCO</option>
-                <option value="armor">ARMADURA</option>
-                <option value="cape">CAPA</option>
-                <option value="sword">ESPADA</option>
-                <option value="shield">ESCUDO</option>
-              </select>
-            </div>
-            <div class="field"><label>ACABADO</label>
-              <select id="finishSelect">
-                <option value="matte">MATE</option>
-                <option value="satin">SATINADO</option>
-                <option value="gloss">BRILLANTE</option>
-                <option value="darkMetal">METAL OSCURO</option>
-                <option value="chrome">CROMO</option>
-              </select>
-            </div>
-          </div>
-          <div class="grid3">
-            <div class="field"><label>PRIMARY</label><input id="primaryColor" type="color"></div>
-            <div class="field"><label>SECONDARY</label><input id="secondaryColor" type="color"></div>
-            <div class="field"><label>ACCENT</label><input id="accentColor" type="color"></div>
-          </div>
-          <div class="field"><div class="range-head"><span>BRILLO</span><b id="brightnessOut">1.00</b></div><input id="brightnessRange" type="range" min="0.45" max="1.55" step="0.01"></div>
-          <div class="field"><div class="range-head"><span>CONTRASTE</span><b id="contrastOut">1.00</b></div><input id="contrastRange" type="range" min="0.55" max="1.75" step="0.01"></div>
-          <div class="grid2">
-            <div class="field"><div class="range-head"><span>METAL</span><b id="metalnessOut">0.50</b></div><input id="metalnessRange" type="range" min="0" max="1" step="0.01"></div>
-            <div class="field"><div class="range-head"><span>RUGOSIDAD</span><b id="roughnessOut">0.30</b></div><input id="roughnessRange" type="range" min="0.03" max="1" step="0.01"></div>
-          </div>
-          <div class="field"><div class="range-head"><span>DETALLE / TRIM</span><b id="detailOut">0.72</b></div><input id="detailRange" type="range" min="0" max="1" step="0.01"></div>
-          <div class="painter-row">
-            <button id="applyPainterBtn">APLICAR PIEZA</button>
-            <button id="brushBtn">🖌 PINCEL 3D</button>
-            <button id="resetPieceBtn">RESET PIEZA</button>
-          </div>
-          <div class="grid2" style="margin-top:9px">
-            <div class="field"><label>CANAL PINCEL</label>
-              <select id="brushChannel">
-                <option value="primary">PRIMARY</option>
-                <option value="secondary">SECONDARY</option>
-                <option value="accent">ACCENT</option>
-                <option value="custom">CUSTOM</option>
-              </select>
-            </div>
-            <div class="field"><label>COLOR CUSTOM</label><input id="brushColor" type="color" value="#ffffff"></div>
-          </div>
-          <div class="grid2">
-            <div class="field"><div class="range-head"><span>TAMAÑO</span><b id="brushSizeOut">26</b></div><input id="brushSizeRange" type="range" min="3" max="96" step="1" value="26"></div>
-            <div class="field"><div class="range-head"><span>INTENSIDAD</span><b id="brushOpacityOut">0.85</b></div><input id="brushOpacityRange" type="range" min="0.05" max="1" step="0.05" value="0.85"></div>
-          </div>
-          <div class="painter-row">
-            <button id="savePresetBtn">GUARDAR CUSTOM</button>
-            <button id="loadPresetBtn">CARGAR CUSTOM</button>
-            <button id="copyRecipeBtn">COPIAR RECETA</button>
-          </div>
-          <div class="paint-note" id="painterStatus">Elegí una pieza. Con PINCEL 3D activo, pintá directamente sobre el modelo.</div>
-        </div>
-      </details>
-
-      <div class="row">
-        <button id="bonesBtn">HUESOS</button>
-        <button id="rotateBtn">ROTACIÓN</button>
-        <button id="resetBtn">RESET CÁMARA</button>
-      </div>
-      <div class="legend">
-        <b>Base</b><span>ClaudeCraft Warrior real: knight.glb</span>
-        <b>Rig</b><span>Rig_Medium original, sin retarget</span>
-        <b>Arma</b><span>Espada + escudo en sockets originales</span>
-        <b>Auto</b><span>BLACK AURA oficial aplicado al abrir · Painter queda editable</span>
-      </div>
-      <p class="small">PAINTER PRO modifica sólo la capa cosmética. Rig, pesos, clips, sockets, hitboxes y gameplay permanecen intactos.</p>
-    </section>
-    <div class="lab-actions"><button id="uiToggleBtn">☰ UI</button><button id="fullscreenBtn">⛶ FULL</button></div>
-    <div class="footer">Arrastrar: rotar · rueda/pinch: zoom · botón HUESOS: inspección</div>
-    <div id="error"></div>
-  </main>
+    <div class="note">RAW = fuente intacta · CLEAN = maniquí de trabajo · HF AVIAN = prototipo original HIGHFLY sobre el rig real.</div>
+  </div>
+  <div class="group">
+    <h2>ARMOR ANATOMY / DONOR LAB</h2>
+    <div class="row">
+      <select id="donorSetSelect">
+        <option value="knight">KNIGHT</option>
+        <option value="paladin">PALADIN</option>
+        <option value="barbarian">BARBARIAN</option>
+        <option value="ranger">RANGER</option>
+        <option value="rogue">ROGUE</option>
+        <option value="mage">MAGE</option>
+        <option value="druid">DRUID</option>
+      </select>
+      <button id="anatomyBaseBtn">BASE</button>
+      <button id="anatomyFullBtn">FULL SET</button>
+      <button id="anatomyExplodedBtn">EXPLODED</button>
+    </div>
+    <div class="row">
+      <button data-anatomy-slot="head">HEAD</button><button data-anatomy-slot="chest">CHEST</button>
+      <button data-anatomy-slot="arms">ARMS</button><button data-anatomy-slot="hands">HANDS</button>
+      <button data-anatomy-slot="legs">LEGS</button><button data-anatomy-slot="feet">FEET</button>
+      <button data-anatomy-slot="back">BACK</button>
+    </div>
+    <div class="note">Donors reales del mismo warrior_modular.glb. La armadura conserva su skinning al Rig_Medium; el cuerpo permanece debajo para inspeccionar encaje.</div>
+    <div id="anatomyDiag" class="diag">Armor Anatomy listo al cargar…</div>
+  </div>
+  <div class="group">
+    <h2>HF ARMOR MOLDER · PHASE 2</h2>
+    <div class="row">
+      <select id="moldSlotSelect">
+        <option value="head">HEAD</option><option value="chest">CHEST</option><option value="arms">ARMS</option>
+        <option value="hands">HANDS</option><option value="legs">LEGS</option><option value="feet">FEET</option><option value="back">BACK</option>
+      </select>
+      <button id="moldApplyBtn">APLICAR MOLDER</button><button id="moldResetBtn">RESET MOLDER</button>
+    </div>
+    <div class="moldergrid">
+      <label class="moldrow">WIDTH <input id="moldWidth" type="range" min="-50" max="50" value="0"><span id="moldWidthVal" class="moldval">0</span></label>
+      <label class="moldrow">LENGTH <input id="moldCrown" type="range" min="-50" max="50" value="0"><span id="moldCrownVal" class="moldval">0</span></label>
+      <label class="moldrow">DEPTH <input id="moldFront" type="range" min="-50" max="50" value="0"><span id="moldFrontVal" class="moldval">0</span></label>
+      <label class="moldrow">TAPER <input id="moldTaper" type="range" min="-50" max="50" value="0"><span id="moldTaperVal" class="moldval">0</span></label>
+    </div>
+    <div class="note">Deforma POSITION del slot donor elegido. No toca skinIndex, skinWeight, Skeleton ni clips. Sirve para casco, torso, brazos, manos, piernas, botas y espalda.</div>
+  </div>
+  <div class="group">
+    <h2>STYLE / PAINTER · DONOR ARMOR</h2>
+    <div class="row">
+      <select id="paintScopeSelect"><option value="full">FULL SET</option><option value="slot">CURRENT SLOT</option></select>
+      <button id="paintSourceBtn">SOURCE</button>
+      <button id="paintBlackBtn">BLACK AURA</button>
+      <button id="paintRavenBtn">RAVEN VIOLET</button>
+      <button id="paintCustomBtn">CUSTOM</button>
+    </div>
+    <div class="paintgrid">
+      <label class="paintfield">PRIMARY <input id="armorPrimary" type="color" value="#171821"></label>
+      <label class="paintfield">ACCENT <input id="armorAccent" type="color" value="#7c3aed"></label>
+      <label class="paintfield">METAL <input id="armorMetal" type="range" min="0" max="1" step="0.01" value="0.55"></label>
+      <label class="paintfield">ROUGH <input id="armorRough" type="range" min="0.05" max="1" step="0.01" value="0.35"></label>
+    </div>
+    <div class="note">Pinta el donor actual sin alterar geometría ni pesos. SOURCE restaura materiales originales. BLACK AURA y RAVEN VIOLET son presets de producción.</div>
+  </div>
+  <div class="group">
+    <h2>VISTAS</h2>
+    <div class="row">
+      <button data-view="front">FRENTE</button><button data-view="profile">PERFIL</button><button data-view="back">ESPALDA</button><button data-view="three">3/4</button><button id="freeBtn" class="active">LIBRE</button>
+    </div>
+  </div>
+  <div class="group">
+    <h2>INSPECCIÓN</h2>
+    <div class="row"><button id="bonesBtn">HUESOS</button><button id="socketsBtn">SOCKETS</button><button id="spinBtn">ROTACIÓN</button><button id="resetBtn">RESET</button></div>
+  </div>
+  <div class="group">
+    <h2>SLOTS BASE</h2>
+    <div class="slotgrid">
+      <label class="slot">HEAD <input data-slot="Head" type="checkbox" checked></label>
+      <label class="slot">CHEST <input data-slot="Chest" type="checkbox" checked></label>
+      <label class="slot">ARMS <input data-slot="Arms" type="checkbox" checked></label>
+      <label class="slot">HANDS <input data-slot="Hands" type="checkbox" checked></label>
+      <label class="slot">LEGS <input data-slot="Legs" type="checkbox" checked></label>
+      <label class="slot">FEET <input data-slot="Feet" type="checkbox" checked></label>
+      <label class="slot">BACK <input data-slot="Back" type="checkbox" checked></label>
+    </div>
+  </div>
+  <div class="group">
+    <h2>ANIMACIÓN ORIGINAL</h2>
+    <div class="row"><select id="animSelect"></select><button id="playBtn">REPLAY</button></div>
+  </div>
+  <div class="group">
+    <h2>DIAGNÓSTICO</h2>
+    <div id="diag" class="diag">Cargando warrior_modular.glb real…</div>
+  </div>
+</section>
+<div class="lab-actions"><button id="uiToggleBtn">☰ UI</button><button id="fullscreenBtn">⛶ FULL</button></div>
+<div class="footer">Arrastrar: rotación libre · rueda/pinch: zoom · sin retarget · sin gameplay changes</div>
+<div id="error"></div>
+</main>
 </div>
-
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -176,101 +172,91 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const UPSTREAM='9b57e49c9676d75962700f828cc00a50a9a988b5';
-const RAW='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/'+UPSTREAM+'/public/';
-const URLS={
-  warrior:RAW+'models/chars/players/knight.glb',
-  sword:RAW+'models/weapons/sword_1handed.glb',
-  shield:RAW+'models/weapons/shield_round.glb',
-  warriorBaseAtlas:RAW+'textures/skins/knight/base.png'
+const MODEL='./assets/warrior_modular.glb';
+const SOURCE_BLOB='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2';
+const SOURCE_BYTES=3477500;
+const DESIGN_REV='unified-factory+molder-phase2+painter-p3';
+const FACE=['M_Ear_round','M_Eye_almond','M_Brow_soft','M_Mouth_neutral'];
+const CORE=['M_Head','M_Torso','M_ArmL','M_ArmR','M_HandL','M_HandR','M_LegL','M_LegR','M_FootL','M_FootR','M_Loin',...FACE];
+const SLOT_MAP={
+  Head:['M_Head',...FACE],
+  Chest:['M_Torso'],
+  Arms:['M_ArmL','M_ArmR'],
+  Hands:['M_HandL','M_HandR'],
+  Legs:['M_LegL','M_LegR','M_Loin'],
+  Feet:['M_FootL','M_FootR'],
+  Back:[]
 };
-
-// Mirrors the frozen ClaudeCraft player_warrior manifest instead of inventing
-// a second assembly contract inside the lab.
-const WARRIOR_DEF={
-  show:['Knight_Helmet','Knight_Cape'],
-  rightSocket:'handslot.r',
-  leftSocket:'handslot.l',
-  sword:{
-    url:URLS.sword,
-    accessory:'1H_Sword',
-    grip:{position:[0,0.555174,0],quaternion:[0,1,0,0],scale:0.8876}
+const ARMOR_LIBRARY={
+  knight:{
+    head:['Armor_knight_Head','Armor_knight_Head1'],chest:['Armor_knight_Chest'],
+    arms:['Armor_knight_ArmL','Armor_knight_ArmR'],hands:['Armor_knight_HandL','Armor_knight_HandR'],
+    legs:['Armor_knight_LegL','Armor_knight_LegR'],feet:['Armor_knight_FootL','Armor_knight_FootR'],back:['Armor_knight_Back']
   },
-  shield:{
-    url:URLS.shield,
-    accessory:'Round_Shield',
-    grip:{position:[0,0.017,0.1771],quaternion:[0,0,0,1],scale:0.4413}
+  barbarian:{
+    head:['Armor_barbarian_Head'],chest:['Armor_barbarian_Chest'],
+    arms:['Armor_barbarian_ArmL','Armor_barbarian_ArmR'],hands:['Armor_barbarian_HandL','Armor_barbarian_HandR'],
+    legs:['Armor_barbarian_LegL','Armor_barbarian_LegR'],feet:['Armor_barbarian_FootL','Armor_barbarian_FootR'],back:[]
+  },
+  druid:{
+    head:[],chest:['Armor_druid_Chest'],
+    arms:['Armor_druid_ArmL','Armor_druid_ArmR'],hands:['Armor_druid_HandL','Armor_druid_HandR'],
+    legs:['Armor_druid_LegL','Armor_druid_LegR'],feet:['Armor_druid_FootL','Armor_druid_FootR'],back:['Armor_druid_Back']
+  },
+  mage:{
+    head:['Armor_mage_Head'],chest:['Armor_mage_Chest'],
+    arms:['Armor_mage_ArmL','Armor_mage_ArmR'],hands:[],
+    legs:['Armor_mage_LegL','Armor_mage_LegR'],feet:['Armor_mage_FootL','Armor_mage_FootR'],back:['Armor_mage_Back']
+  },
+  paladin:{
+    head:['Armor_paladin_Head'],chest:['Armor_paladin_Chest'],
+    arms:['Armor_paladin_ArmL','Armor_paladin_ArmR'],hands:['Armor_paladin_HandL','Armor_paladin_HandR'],
+    legs:['Armor_paladin_LegL','Armor_paladin_LegR'],feet:['Armor_paladin_FootL','Armor_paladin_FootR'],back:['Armor_paladin_Back']
+  },
+  ranger:{
+    head:[],chest:['Armor_ranger_Chest'],
+    arms:['Armor_ranger_ArmL','Armor_ranger_ArmR'],hands:['Armor_ranger_HandL','Armor_ranger_HandR'],
+    legs:['Armor_ranger_LegL','Armor_ranger_LegR'],feet:['Armor_ranger_FootL','Armor_ranger_FootR'],back:['Armor_ranger_Back','Armor_ranger_Back1']
+  },
+  rogue:{
+    head:[],chest:['Armor_rogue_Chest'],
+    arms:['Armor_rogue_ArmL','Armor_rogue_ArmR'],hands:['Armor_rogue_HandL','Armor_rogue_HandR'],
+    legs:['Armor_rogue_LegL','Armor_rogue_LegR'],feet:['Armor_rogue_FootL','Armor_rogue_FootR'],back:['Armor_rogue_Back']
   }
 };
-
-const SKIN_FACTORY={
-  warrior_base_gold:{
-    id:'warrior_base_gold',
-    label:'BASE',
-    classId:'warrior',
-    gameplayChanges:false
-  },
-  warrior_black_final:{
-    id:'warrior_black_final',
-    label:'WARRIOR BLACK FINAL',
-    classId:'warrior',
-    productionIndex:'SKIN_001',
-    gameplayChanges:false,
-    palette:{
-      armor:0x101118,
-      armorAlt:0x171821,
-      helmet:0x08090d,
-      cape:0x08070d,
-      sword:0x0c0d13,
-      shield:0x0d0e15,
-      silver:0xe8efff,
-      violet:0x24113f
-    }
-  }
-};
+const ARMOR_SLOTS=['head','chest','arms','hands','legs','feet','back'];
 
 const stage=document.getElementById('stage');
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.08;
+renderer.toneMappingExposure=1.12;
 stage.appendChild(renderer.domElement);
-
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x07080c);
-scene.fog=new THREE.Fog(0x07080c,7,18);
-const pmremGenerator=new THREE.PMREMGenerator(renderer);
-scene.environment=pmremGenerator.fromScene(new RoomEnvironment(),0.04).texture;
-scene.environmentIntensity=.92;
-pmremGenerator.dispose();
+scene.background=new THREE.Color(0x080910);
+const pmrem=new THREE.PMREMGenerator(renderer);
+scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;pmrem.dispose();
+scene.add(new THREE.HemisphereLight(0xdde3ff,0x171522,1.75));
+const key=new THREE.DirectionalLight(0xffffff,3.3);key.position.set(4,7,5);scene.add(key);
+const rim=new THREE.DirectionalLight(0x8b5cf6,3.2);rim.position.set(-4,3,-4);scene.add(rim);
+const floor=new THREE.Mesh(new THREE.CircleGeometry(4.5,96),new THREE.MeshStandardMaterial({color:0x0b0c12,roughness:.92}));
+floor.rotation.x=-Math.PI/2;scene.add(floor);
 
 const camera=new THREE.PerspectiveCamera(35,1,.01,100);
-camera.position.set(3.55,2.15,4.35);
-const controls=new OrbitControls(camera,renderer.domElement);
-controls.target.set(0,1.15,0);
-controls.enableDamping=true;
-controls.minDistance=2.4;
-controls.maxDistance=10;
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.minDistance=1.6;controls.maxDistance=8;
+let actor=null,mixer=null,skeleton=null,socketHelpers=[],autoRotate=false;
+const meshByName=new Map();
 
-scene.add(new THREE.HemisphereLight(0xbcc7ff,0x14121d,1.55));
-const key=new THREE.DirectionalLight(0xffffff,3.6); key.position.set(3.5,6,4); scene.add(key);
-const rim=new THREE.DirectionalLight(0x8b5cf6,4.4); rim.position.set(-4,3,-3); scene.add(rim);
-const fill=new THREE.PointLight(0x7c3aed,14,8,2); fill.position.set(0,1.8,-2); scene.add(fill);
-const front=new THREE.SpotLight(0xf8fbff,38,12,.48,.55,1.3);front.position.set(1.2,4.2,5.4);front.target.position.set(0,1.25,0);scene.add(front,front.target);
-const edgeKey=new THREE.DirectionalLight(0xdce7ff,2.0);edgeKey.position.set(-2,2.6,4.5);scene.add(edgeKey);
-
-const floor=new THREE.Mesh(new THREE.CircleGeometry(4.5,96),new THREE.MeshStandardMaterial({color:0x090a10,roughness:.94,metalness:.02}));
-floor.rotation.x=-Math.PI/2; floor.position.y=0; scene.add(floor);
-const ring=new THREE.Mesh(new THREE.RingGeometry(1.15,1.19,96),new THREE.MeshBasicMaterial({color:0x4c1d95,transparent:true,opacity:.65,side:THREE.DoubleSide}));
-ring.rotation.x=-Math.PI/2; ring.position.y=.006; scene.add(ring);
-
-let actor=null,mixer=null,skeletonHelper=null,autoRotate=false,currentMode='base';
-const armorNames=new Set(['Knight_ArmLeft','Knight_ArmRight','Knight_Body','Knight_Cape','Knight_Helmet','Knight_LegLeft','Knight_LegRight']);
-function effectiveVisible(o){let p=o;while(p){if(p.visible===false)return false;p=p.parent}return true}
-function actorVisibleBox(){
+function runtimeName(name){return name.replace(/[[\].:/]/g,'')}
+function resolveNode(root,name){return root.getObjectByName(name)||root.getObjectByName(runtimeName(name))||null}
+function effectiveVisible(o){
+  let p=o;while(p){if(p.visible===false)return false;p=p.parent}return true;
+}
+function visibleBox(){
   const b=new THREE.Box3();let any=false;
   actor?.traverse(o=>{if((o.isMesh||o.isSkinnedMesh)&&effectiveVisible(o)){b.expandByObject(o,true);any=true}});
-  if(!any)b.setFromCenterAndSize(new THREE.Vector3(0,1.1,0),new THREE.Vector3(1,2.2,1));
+  if(!any)b.setFromCenterAndSize(new THREE.Vector3(0,1.2,0),new THREE.Vector3(1,2.4,1));
   return b;
 }
 function mobileLandscapeLab(){return matchMedia('(orientation: landscape) and (max-height: 600px)').matches}
@@ -284,12 +270,13 @@ function syncStageSafeArea(){
   }
   stage.style.left=Math.round(left)+'px';
   stage.style.right='0px';
-  if(window.__SKINLAB_DIAG__)window.__SKINLAB_DIAG__.mobileStageOffset=Math.round(left);
+  if(window.__MODULAR_FACTORY_DIAG__)window.__MODULAR_FACTORY_DIAG__.mobileStageOffset=Math.round(left);
   return left;
 }
 function safeViewportMetrics(){
+  const stageOffset=syncStageSafeArea();
   const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
-  return {w,h,covered:0,safeW:w,stageOffset:syncStageSafeArea()};
+  return {w,h,covered:0,safeW:w,stageOffset};
 }
 function applySafeProjection(){
   const m=safeViewportMetrics();
@@ -298,877 +285,628 @@ function applySafeProjection(){
   camera.updateProjectionMatrix();
   renderer.setScissorTest(false);
   renderer.setViewport(0,0,m.w,m.h);
-  if(window.__SKINLAB_DIAG__)window.__SKINLAB_DIAG__.safeViewport={covered:0,safeW:m.w,w:m.w,h:m.h,stageOffset:Math.round(m.stageOffset)};
+  if(window.__MODULAR_FACTORY_DIAG__)window.__MODULAR_FACTORY_DIAG__.safeViewport={covered:0,safeW:m.w,w:m.w,h:m.h,stageOffset:Math.round(m.stageOffset)};
   return m;
 }
-function fitActor(){
+function fitDistance(size){
+  const m=safeViewportMetrics();
+  const vfov=THREE.MathUtils.degToRad(camera.fov);
+  const hfov=2*Math.atan(Math.tan(vfov*.5)*(m.safeW/m.h));
+  const dy=(size.y*.5)/Math.tan(vfov*.5);
+  const dx=(Math.max(size.x,size.z)*.62)/Math.max(.05,Math.tan(hfov*.5));
+  return Math.max(dy,dx,.9)*1.30;
+}
+function frameVisible(){
   if(!actor)return;
-  const b=actorVisibleBox(),center=new THREE.Vector3(),size=new THREE.Vector3();b.getCenter(center);b.getSize(size);
-  const m=safeViewportMetrics(),vfov=THREE.MathUtils.degToRad(camera.fov),hfov=2*Math.atan(Math.tan(vfov*.5)*(m.safeW/m.h));
-  const dy=(size.y*.5)/Math.tan(vfov*.5),dx=(Math.max(size.x,size.z)*.62)/Math.max(.05,Math.tan(hfov*.5));
-  const d=Math.max(dy,dx,1)*1.28,dir=new THREE.Vector3(.66,.10,1).normalize();
-  controls.target.copy(center);camera.position.copy(center).add(dir.multiplyScalar(d));applySafeProjection();controls.update();
+  const b=visibleBox(),c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);
+  const d=fitDistance(s),dir=new THREE.Vector3(.72,.10,1).normalize();
+  controls.target.copy(c);camera.position.copy(c).add(dir.multiplyScalar(d));applySafeProjection();controls.update();
 }
-const originalMat=new Map();
-
-function cloneMaterialTree(root,group='body'){
-  root.traverse(o=>{
-    if(!o.isMesh)return;
-    const mats=Array.isArray(o.material)?o.material:[o.material];
-    const cloned=mats.map(m=>m.clone());
-    o.material=Array.isArray(o.material)?cloned:cloned[0];
-    originalMat.set(o.uuid,{group,name:o.name,materials:cloned.map(m=>({
-      color:m.color?.clone(),
-      emissive:m.emissive?.clone(),
-      map:m.map ?? null,
-      emissiveMap:m.emissiveMap ?? null,
-      metalness:m.metalness,
-      roughness:m.roughness,
-      emissiveIntensity:m.emissiveIntensity
-    }))});
-  });
-}
-function restoreMaterials(){
+function fixedView(kind){
   if(!actor)return;
-  actor.traverse(o=>{
-    if(!o.isMesh)return;
-    const rec=originalMat.get(o.uuid); if(!rec)return;
-    const mats=Array.isArray(o.material)?o.material:[o.material];
-    mats.forEach((m,i)=>{
-      const s=rec.materials[i]; if(!s)return;
-      if(m.color&&s.color)m.color.copy(s.color);
-      if(m.emissive&&s.emissive)m.emissive.copy(s.emissive);
-      if(s.metalness!==undefined)m.metalness=s.metalness;
-      if(s.roughness!==undefined)m.roughness=s.roughness;
-      if(s.emissiveIntensity!==undefined)m.emissiveIntensity=s.emissiveIntensity;
-      m.map=s.map ?? null;
-      m.emissiveMap=s.emissiveMap ?? null;
-      m.needsUpdate=true;
-    });
-  });
+  const b=visibleBox(),c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);
+  const d=fitDistance(s);
+  const dir={
+    front:new THREE.Vector3(0,0,1),
+    profile:new THREE.Vector3(1,0,0),
+    back:new THREE.Vector3(0,0,-1),
+    three:new THREE.Vector3(.78,.10,.78).normalize()
+  }[kind];
+  camera.position.copy(c).add(dir.multiplyScalar(d));controls.target.copy(c);applySafeProjection();controls.update();document.getElementById('freeBtn').classList.remove('active');
 }
-let accentRoots=[];
-const PAINTER_PIECES=['helmet','armor','cape','sword','shield'];
-const FINISHES={
-  matte:{metalness:.08,roughness:.84},
-  satin:{metalness:.28,roughness:.46},
-  gloss:{metalness:.54,roughness:.16},
-  darkMetal:{metalness:.72,roughness:.22},
-  chrome:{metalness:1.0,roughness:.07}
-};
-const DEFAULT_PAINTER={
-  helmet:{primary:'#070910',secondary:'#edf3ff',accent:'#5b21b6',finish:'darkMetal',brightness:.92,contrast:1.22,metalness:.72,roughness:.22,detail:.76},
-  armor:{primary:'#070910',secondary:'#e9efff',accent:'#4c1d95',finish:'darkMetal',brightness:.94,contrast:1.18,metalness:.58,roughness:.28,detail:.70},
-  cape:{primary:'#05060a',secondary:'#cad2e6',accent:'#32105d',finish:'matte',brightness:.82,contrast:1.08,metalness:.06,roughness:.82,detail:.34},
-  sword:{primary:'#04060b',secondary:'#ffffff',accent:'#6d28d9',finish:'gloss',brightness:1.02,contrast:1.30,metalness:.88,roughness:.11,detail:.82},
-  shield:{primary:'#060810',secondary:'#f4f7ff',accent:'#5b21b6',finish:'darkMetal',brightness:.96,contrast:1.22,metalness:.76,roughness:.18,detail:.74}
-};
-const AUTO_BLACK_AURA={
-  id:'warrior_black_aura_premium_v2',
-  label:'AUTO · BLACK AURA PREMIUM V2',
-  pieces:{
-    helmet:{primary:'#020409',secondary:'#f7f9ff',accent:'#4b176f',finish:'darkMetal',brightness:.86,contrast:1.50,metalness:.82,roughness:.15,detail:.58},
-    armor:{primary:'#03050a',secondary:'#f4f7ff',accent:'#2f104d',finish:'darkMetal',brightness:.95,contrast:1.46,metalness:.74,roughness:.17,detail:.92},
-    cape:{primary:'#020308',secondary:'#c2cbe0',accent:'#2b0f48',finish:'matte',brightness:.72,contrast:1.18,metalness:.03,roughness:.88,detail:.24},
-    sword:{primary:'#010208',secondary:'#ffffff',accent:'#6d28d9',finish:'gloss',brightness:1.08,contrast:1.58,metalness:.98,roughness:.045,detail:.92},
-    shield:{primary:'#02040a',secondary:'#f8fbff',accent:'#4c1d95',finish:'darkMetal',brightness:.94,contrast:1.48,metalness:.88,roughness:.11,detail:.86}
-  }
-};
-const deepClone=o=>JSON.parse(JSON.stringify(o));
-let painterState=deepClone(DEFAULT_PAINTER);
-let painterTextures={};
-let painterSourceBitmap=null;
-let paintOps={helmet:[],armor:[],cape:[],sword:[],shield:[]};
-let brushEnabled=false;
-let brushDragging=false;
-
-function hexRgb(hex){
-  const n=parseInt(hex.slice(1),16);
-  return [(n>>16)&255,(n>>8)&255,n&255];
+function partNodes(name){
+  const exact=resolveNode(actor,name);
+  if(exact)return [exact];
+  const found=[];
+  actor.traverse(o=>{if(o.name===name||o.name.startsWith(name+'_'))found.push(o)});
+  return found;
 }
-function clamp01(v){return Math.max(0,Math.min(1,v))}
-function shadeColor(hex,sourceLum,brightness,contrast,channel){
-  const c=hexRgb(hex);
-  const centered=(sourceLum-.5)*contrast+.5;
-  const channelLift=channel==='secondary'?(.90+.18*centered):channel==='accent'?(.78+.30*centered):(.48+.72*centered);
-  const mul=Math.max(.18,Math.min(1.55,channelLift*brightness));
-  return c.map(v=>Math.max(0,Math.min(255,Math.round(v*mul))));
-}
-function channelForPixel(r,g,b,piece,detail){
-  const max=Math.max(r,g,b),min=Math.min(r,g,b);
-  const chroma=max-min;
-  const lum=.2126*r+.7152*g+.0722*b;
-  const d=clamp01(detail);
-
-  if(piece==='helmet'){
-    // Premium V2: keep the shell black, but preserve more of the authored neutral ridges.
-    if(lum>.26 && lum<(.44+.10*d) && chroma<.18)return ['secondary',lum];
-    if(chroma>(.32-.10*d) && lum>.18 && lum<.48)return ['accent',lum];
-    return ['primary',lum];
-  }
-  if(piece==='cape'){
-    if(chroma>(.42-.18*d) && lum>.22)return ['accent',lum];
-    if(lum>(.96-.12*d))return ['secondary',lum];
-    return ['primary',lum];
-  }
-  if(piece==='armor'){
-    if(lum>(.88-.24*d) && chroma<.27)return ['secondary',lum];
-    if(chroma>(.38-.12*d) && lum>.26)return ['accent',lum];
-    return ['primary',lum];
-  }
-  if(piece==='sword'){
-    // Premium V2 lets the source bevel contribute before the selective 3D cutting rails.
-    if(lum>(.88-.08*d) && chroma<.18)return ['secondary',lum];
-    if(chroma>(.34-.10*d) && lum>.24 && lum<.78)return ['accent',lum];
-    return ['primary',lum];
-  }
-  if(piece==='shield'){
-    // Stronger authored rim/details while the central plate remains black.
-    if(lum>(.92-.08*d) && chroma<.16)return ['secondary',lum];
-    if(chroma>(.38-.08*d) && lum>.25 && lum<.72)return ['accent',lum];
-    return ['primary',lum];
-  }
-  if(lum>(.96-.19*d))return ['secondary',lum];
-  if(chroma>(.40-.21*d) && lum>.27)return ['accent',lum];
-  return ['primary',lum];
-}
-
-function clearRigidAccents(){
-  for(const accent of accentRoots)accent.visible=false;
-}
-function ensureRigidEdgeAccent(root,name,color,opacity=.5,threshold=24){
-  const targets=[];
-  root.traverse(o=>{if(o.isMesh&&!o.isSkinnedMesh&&o.geometry&&!o.userData?.skinAccentOverlay)targets.push(o)});
-  let count=0;
-  for(const o of targets){
-    let line=o.children.find(c=>c.userData?.skinAccentName===name);
-    if(!line){
-      line=new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry,threshold),new THREE.LineBasicMaterial({
-        color:new THREE.Color(color),transparent:true,opacity,depthWrite:false,toneMapped:false
-      }));
-      line.renderOrder=5;line.userData.skinAccentName=name;line.userData.skinAccentOverlay=true;o.add(line);accentRoots.push(line);
-    }
-    line.material.color.set(color);line.material.opacity=opacity;line.visible=true;count++;
-  }
-  return count;
-}
-function ensureRigidSilhouette(root,name,color,scale=1.035,opacity=.65){
-  const targets=[];
-  root.traverse(o=>{if(o.isMesh&&!o.isSkinnedMesh&&o.geometry&&!o.userData?.skinAccentOverlay)targets.push(o)});
-  let count=0;
-  for(const o of targets){
-    let shell=o.children.find(c=>c.userData?.skinAccentName===name);
-    if(!shell){
-      shell=new THREE.Mesh(o.geometry,new THREE.MeshBasicMaterial({
-        color:new THREE.Color(color),side:THREE.BackSide,transparent:true,opacity,depthWrite:false,toneMapped:false
-      }));
-      shell.renderOrder=4;shell.userData.skinAccentName=name;shell.userData.skinAccentOverlay=true;o.add(shell);accentRoots.push(shell);
-    }
-    shell.material.color.set(color);shell.material.opacity=opacity;shell.scale.setScalar(scale);shell.visible=true;count++;
-  }
-  return count;
-}
-
-
-function ensureRigidFeatureRails(root,name,color,{threshold=26,minLenRatio=.08,maxSegments=8,radiusRatio=.0045,opacity=1,emissiveIntensity=.18}={}){
-  const targets=[];
-  root.traverse(o=>{if(o.isMesh&&!o.isSkinnedMesh&&o.geometry&&!o.userData?.skinAccentOverlay)targets.push(o)});
-  let total=0;
-  for(const o of targets){
-    let group=o.children.find(c=>c.userData?.skinAccentName===name);
-    if(!group){
-      group=new THREE.Group();
-      group.userData.skinAccentName=name;group.userData.skinAccentOverlay=true;
-      const edges=new THREE.EdgesGeometry(o.geometry,threshold);
-      const pos=edges.getAttribute('position');
-      if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();
-      const size=new THREE.Vector3();o.geometry.boundingBox.getSize(size);
-      const diag=Math.max(.0001,size.length());
-      const candidates=[];
-      const a=new THREE.Vector3(),b=new THREE.Vector3();
-      for(let i=0;i<pos.count;i+=2){
-        a.fromBufferAttribute(pos,i);b.fromBufferAttribute(pos,i+1);
-        const len=a.distanceTo(b);
-        if(len/diag>=minLenRatio)candidates.push({a:a.clone(),b:b.clone(),len});
-      }
-      candidates.sort((x,y)=>y.len-x.len);
-      const mat=new THREE.MeshStandardMaterial({
-        color:new THREE.Color(color),metalness:1,roughness:.07,
-        emissive:new THREE.Color(color),emissiveIntensity,
-        transparent:opacity<1,opacity,depthWrite:true
-      });
-      const yAxis=new THREE.Vector3(0,1,0),mid=new THREE.Vector3(),dir=new THREE.Vector3();
-      for(const seg of candidates.slice(0,maxSegments)){
-        mid.copy(seg.a).add(seg.b).multiplyScalar(.5);
-        dir.copy(seg.b).sub(seg.a).normalize();
-        const tube=new THREE.Mesh(
-          new THREE.CylinderGeometry(diag*radiusRatio,diag*radiusRatio,seg.len*1.01,8,1,false),
-          mat
-        );
-        tube.position.copy(mid);
-        tube.quaternion.setFromUnitVectors(yAxis,dir);
-        tube.userData.skinAccentOverlay=true;
-        group.add(tube);total++;
-      }
-      o.add(group);accentRoots.push(group);
-    }else{
-      group.visible=true;
-      total+=group.children.length;
-    }
-  }
-  return total;
-}
-function ensurePremiumAura(root){
-  let light=root.children.find(c=>c.userData?.skinAccentName==='premium-violet-aura');
-  if(!light){
-    root.updateWorldMatrix(true,true);
-    const box=new THREE.Box3().setFromObject(root);
-    const center=box.getCenter(new THREE.Vector3());
-    root.worldToLocal(center);
-    light=new THREE.PointLight(0x6d28d9,.72,1.45,2);
-    light.position.copy(center);
-    light.userData.skinAccentName='premium-violet-aura';
-    light.userData.skinAccentOverlay=true;
-    root.add(light);accentRoots.push(light);
-  }
-  light.visible=true;
+function setPartVisible(name,on=true){
+  const nodes=partNodes(name);if(!nodes.length)return false;
+  nodes.forEach(o=>{if(o.isMesh||o.isSkinnedMesh)o.visible=on;o.traverse(x=>{if(x.isMesh||x.isSkinnedMesh)x.visible=on})});
   return true;
 }
-
-function buildPieceTexture(piece){
-  if(!painterSourceBitmap)throw new Error('Painter source atlas unavailable');
-  const s=painterState[piece];
-  const canvas=document.createElement('canvas');
-  canvas.width=painterSourceBitmap.width;canvas.height=painterSourceBitmap.height;
-  const ctx=canvas.getContext('2d',{willReadFrequently:true});
-  ctx.drawImage(painterSourceBitmap,0,0);
-  const image=ctx.getImageData(0,0,canvas.width,canvas.height),d=image.data;
-  const glowCanvas=document.createElement('canvas');glowCanvas.width=canvas.width;glowCanvas.height=canvas.height;
-  const glowCtx=glowCanvas.getContext('2d',{willReadFrequently:true});
-  const glowImage=glowCtx.createImageData(canvas.width,canvas.height),g=glowImage.data;
-  let primary=0,secondary=0,accent=0,total=0;
-  for(let i=0;i<d.length;i+=4){
-    if(d[i+3]===0)continue;
-    const [channel,lum]=channelForPixel(d[i]/255,d[i+1]/255,d[i+2]/255,piece,s.detail);
-    const rgb=shadeColor(s[channel],lum,s.brightness,s.contrast,channel);
-    d[i]=rgb[0];d[i+1]=rgb[1];d[i+2]=rgb[2];
-    const glow=channel==='secondary'?255:channel==='accent'?32:0;
-    g[i]=glow;g[i+1]=glow;g[i+2]=glow;g[i+3]=d[i+3];
-    if(channel==='primary')primary++; else if(channel==='secondary')secondary++; else accent++;
-    total++;
+function setBaseVisibility(){
+  if(!actor)return;
+  actor.traverse(o=>{if(o.isMesh||o.isSkinnedMesh)o.visible=false});
+  for(const [slot,names] of Object.entries(SLOT_MAP)){
+    const input=document.querySelector('[data-slot="'+slot+'"]');
+    if(!input?.checked)continue;
+    names.forEach(n=>setPartVisible(n,true));
   }
-  ctx.putImageData(image,0,0);
-  glowCtx.putImageData(glowImage,0,0);
-  const texture=new THREE.CanvasTexture(canvas);
-  texture.colorSpace=THREE.SRGBColorSpace;texture.flipY=false;texture.needsUpdate=true;
-  texture.name='HIGHFLY_PAINTER_'+piece;
-  const emissiveTexture=new THREE.CanvasTexture(glowCanvas);
-  emissiveTexture.colorSpace=THREE.SRGBColorSpace;emissiveTexture.flipY=false;emissiveTexture.needsUpdate=true;
-  emissiveTexture.name='HIGHFLY_PAINTER_GLOW_'+piece;
-  painterTextures[piece]={canvas,ctx,texture,glowCanvas,glowCtx,emissiveTexture,ratios:{primary:primary/total,secondary:secondary/total,accent:accent/total}};
-  for(const op of paintOps[piece])paintUvInternal(piece,op.uv,op.color,op.size,op.opacity,false);
-  return painterTextures[piece];
+  updateDiag();
 }
-function rebuildPainterTextures(){
-  for(const piece of PAINTER_PIECES)buildPieceTexture(piece);
-  window.__SKINLAB_DIAG__.painterTextures=Object.keys(painterTextures).length;
-}
-async function loadPainterSource(){
-  const response=await fetch(URLS.warriorBaseAtlas,{cache:'force-cache'});
-  if(!response.ok)throw new Error('No se pudo cargar atlas Warrior base: '+response.status);
-  painterSourceBitmap=await createImageBitmap(await response.blob());
-  rebuildPainterTextures();
+function updateDiag(){
+  if(!actor)return;
+  const missing=CORE.filter(n=>partNodes(n).length===0);
+  const visible=CORE.filter(n=>partNodes(n).some(o=>effectiveVisible(o)));
+  let armorVisible=0;
+  actor.traverse(o=>{if((o.isMesh||o.isSkinnedMesh)&&o.name.startsWith('Armor_')&&effectiveVisible(o))armorVisible++});
+  const diag=window.__MODULAR_FACTORY_DIAG__;
+  diag.visible=visible;diag.visibleCount=visible.length;diag.armorVisible=armorVisible;diag.missingCore=missing;
+  document.getElementById('diag').textContent=
+    'SOURCE '+SOURCE_BLOB.slice(0,8)+'…\n'+
+    'MALE CORE '+(missing.length?'MISSING '+missing.join(', '):'15/15 ✓')+'\n'+
+    'ARMOR VISIBLE '+armorVisible+'\n'+
+    'VISIBLE '+visible.join(', ');
 }
 
-function applyPaintMaterial(m,role){
-  const p=painterTextures[role];const s=painterState[role];
-  if(!p||!s)return;
-  m.map=p.texture;
-  if(m.color)m.color.set(0xffffff);
-  if(m.emissive){
-    m.emissive.set(role==='sword'?0xffffff:role==='shield'?0xeef4ff:0xdce7ff);
-    m.emissiveMap=p.emissiveTexture;
-    m.emissiveIntensity=role==='sword'?.78:role==='shield'?.10:role==='helmet'?.07:.05;
-  }
-  if('metalness'in m)m.metalness=s.metalness;
-  if('roughness'in m)m.roughness=s.roughness;
-  m.needsUpdate=true;
-}
-function roleForMesh(o){
-  let n=o;
-  while(n){
-    if(n.name==='Warrior_Sword')return 'sword';
-    if(n.name==='Warrior_Shield')return 'shield';
-    n=n.parent;
-  }
-  if(o.name==='Knight_Helmet'||o.name==='Knight_HelmetVisor')return 'helmet';
-  if(o.name==='Knight_Cape')return 'cape';
-  if(['Knight_ArmLeft','Knight_ArmRight','Knight_Body','Knight_LegLeft','Knight_LegRight'].includes(o.name))return 'armor';
-  return null;
-}
+const armorTransformOriginal=new Map(),armorGeometryOriginal=new Map(),armorSkinFingerprint=new Map();
+let anatomySet='knight',anatomyMode='base';
 
-function qPos(attr,i){
-  return [
-    Math.round(attr.getX(i)*10000),
-    Math.round(attr.getY(i)*10000),
-    Math.round(attr.getZ(i)*10000)
-  ].join(',');
+function armorNames(set=anatomySet,slot=null){
+  const def=ARMOR_LIBRARY[set]||ARMOR_LIBRARY.knight;
+  return slot ? [...(def[slot]||[])] : ARMOR_SLOTS.flatMap(s=>def[s]||[]);
 }
-function authorEdgeKey(attr,a,b){
-  const A=qPos(attr,a),B=qPos(attr,b);
-  return A<B?A+'|'+B:B+'|'+A;
-}
-function uvOf(attr,i){return {x:attr.getX(i),y:attr.getY(i)}}
-function collectFeatureSegments(mesh,minAngleDeg=35,minLenRatio=.04){
-  const geo=mesh.geometry, pos=geo?.attributes?.position, uv=geo?.attributes?.uv;
-  if(!geo||!pos||!uv)return [];
-  if(!geo.boundingBox)geo.computeBoundingBox();
-  const size=new THREE.Vector3();geo.boundingBox.getSize(size);
-  const diag=Math.max(.0001,size.length());
-  const index=geo.index;
-  const triCount=Math.floor((index?index.count:pos.count)/3);
-  const map=new Map();
-  const P0=new THREE.Vector3(),P1=new THREE.Vector3(),P2=new THREE.Vector3();
-  const A=new THREE.Vector3(),B=new THREE.Vector3(),N=new THREE.Vector3();
-  const idxAt=k=>index?index.getX(k):k;
-  for(let t=0;t<triCount;t++){
-    const ia=idxAt(t*3),ib=idxAt(t*3+1),ic=idxAt(t*3+2);
-    P0.fromBufferAttribute(pos,ia);P1.fromBufferAttribute(pos,ib);P2.fromBufferAttribute(pos,ic);
-    A.subVectors(P1,P0);B.subVectors(P2,P0);N.crossVectors(A,B).normalize();
-    const ids=[[ia,ib],[ib,ic],[ic,ia]];
-    for(const [i0,i1] of ids){
-      const key=authorEdgeKey(pos,i0,i1);
-      const a=new THREE.Vector3().fromBufferAttribute(pos,i0);
-      const b=new THREE.Vector3().fromBufferAttribute(pos,i1);
-      const use={uv0:uvOf(uv,i0),uv1:uvOf(uv,i1),normal:N.clone(),len:a.distanceTo(b)/diag};
-      const list=map.get(key)||[];list.push(use);map.set(key,list);
-    }
-  }
-  const out=[];
-  const minAngle=THREE.MathUtils.degToRad(minAngleDeg);
-  for(const uses of map.values()){
-    if(uses.length<2)continue;
-    let angle=0;
-    for(let i=0;i<uses.length;i++)for(let j=i+1;j<uses.length;j++){
-      angle=Math.max(angle,uses[i].normal.angleTo(uses[j].normal));
-    }
-    if(angle<minAngle)continue;
-    for(const u of uses){
-      if(u.len<minLenRatio)continue;
-      out.push({uv0:u.uv0,uv1:u.uv1,angle,len:u.len});
-    }
+function armorRootNodes(set=anatomySet,slot=null){
+  const seen=new Set(),out=[];
+  for(const n of armorNames(set,slot))for(const root of partNodes(n)){
+    if(!seen.has(root.uuid)){seen.add(root.uuid);out.push(root)}
   }
   return out;
 }
-function collectRoleFeatureSegments(role,minAngleDeg,minLenRatio){
-  const all=[];
-  actor?.traverse(o=>{
-    if(!o.isMesh||o.userData?.skinAccentOverlay)return;
-    const rec=originalMat.get(o.uuid);
-    const resolved=rec?.group==='sword'?'sword':rec?.group==='shield'?'shield':roleForMesh(o);
-    if(resolved===role)all.push(...collectFeatureSegments(o,minAngleDeg,minLenRatio));
-  });
-  return all;
+function cacheArmorDonors(){
+  for(const set of Object.keys(ARMOR_LIBRARY))for(const slot of ARMOR_SLOTS)for(const root of armorRootNodes(set,slot)){
+    if(!armorTransformOriginal.has(root.uuid))armorTransformOriginal.set(root.uuid,{
+      position:root.position.clone(),rotation:root.rotation.clone(),scale:root.scale.clone()
+    });
+    root.traverse(o=>{
+      if(!(o.isMesh||o.isSkinnedMesh)||!o.geometry?.attributes?.position)return;
+      if(!armorGeometryOriginal.has(o.uuid)){
+        armorGeometryOriginal.set(o.uuid,new Float32Array(o.geometry.attributes.position.array));
+        armorSkinFingerprint.set(o.uuid,skinFingerprint(o));
+      }
+    });
+  }
 }
-function strokeUvSegments(piece,segments,color,width,alpha=1,glowAlpha=0){
-  const pack=painterTextures[piece];if(!pack||!segments.length)return 0;
-  const draw=(ctx,w,h,stroke,a,lineWidth)=>{
-    ctx.save();ctx.strokeStyle=stroke;ctx.globalAlpha=a;ctx.lineWidth=lineWidth;
-    ctx.lineCap='round';ctx.lineJoin='round';
-    for(const s of segments){
-      const x0=clamp01(s.uv0.x)*w,y0=(1-clamp01(s.uv0.y))*h;
-      const x1=clamp01(s.uv1.x)*w,y1=(1-clamp01(s.uv1.y))*h;
-      // Avoid atlas-wrap chords that would slash across unrelated islands.
-      if(Math.abs(s.uv0.x-s.uv1.x)>.35||Math.abs(s.uv0.y-s.uv1.y)>.35)continue;
-      ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();
-    }
-    ctx.restore();
+function skinFingerprint(mesh){
+  const idx=mesh.geometry?.attributes?.skinIndex,wt=mesh.geometry?.attributes?.skinWeight;
+  if(!idx||!wt)return 'none';
+  let a=0,b=0;
+  for(let i=0;i<idx.count;i++){
+    a=(a + idx.getX(i)*3 + idx.getY(i)*5 + idx.getZ(i)*7 + idx.getW(i)*11) % 1000000007;
+    b=(b + Math.round((wt.getX(i)+wt.getY(i)*2+wt.getZ(i)*3+wt.getW(i)*4)*100000)) % 1000000007;
+  }
+  return a+':'+b+':'+idx.count;
+}
+function restoreArmorGeometry(set=null,slot=null){
+  const roots=set?armorRootNodes(set,slot):Object.values(ARMOR_LIBRARY).flatMap((_,i)=>[]);
+  const targets=set?roots:(()=>{
+    const out=[],seen=new Set();
+    for(const s of Object.keys(ARMOR_LIBRARY))for(const r of armorRootNodes(s)){if(!seen.has(r.uuid)){seen.add(r.uuid);out.push(r)}}
+    return out;
+  })();
+  for(const root of targets)root.traverse(o=>{
+    const src=armorGeometryOriginal.get(o.uuid),pos=o.geometry?.attributes?.position;
+    if(!src||!pos)return;
+    pos.array.set(src);pos.needsUpdate=true;o.geometry.computeBoundingBox();o.geometry.computeBoundingSphere();o.geometry.computeVertexNormals?.();
+  });
+}
+function restoreArmorTransforms(){
+  for(const set of Object.keys(ARMOR_LIBRARY))for(const root of armorRootNodes(set)){
+    const src=armorTransformOriginal.get(root.uuid);if(!src)continue;
+    root.position.copy(src.position);root.rotation.copy(src.rotation);root.scale.copy(src.scale);
+  }
+}
+function hideAllArmor(){
+  for(const set of Object.keys(ARMOR_LIBRARY))for(const n of armorNames(set))setPartVisible(n,false);
+}
+function showAllBase(){
+  for(const n of CORE)setPartVisible(n,true);
+}
+function showArmorNames(names,on=true){for(const n of names)setPartVisible(n,on)}
+function anatomyStats(set,slot=null){
+  const names=armorNames(set,slot),meshes=[],seen=new Set(),materials=new Set(),bones=new Set();
+  for(const root of armorRootNodes(set,slot))root.traverse(o=>{
+    if(!(o.isMesh||o.isSkinnedMesh)||seen.has(o.uuid))return;seen.add(o.uuid);meshes.push(o);
+    const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats)if(m?.name)materials.add(m.name);
+    const si=o.geometry?.attributes?.skinIndex,sw=o.geometry?.attributes?.skinWeight;
+    if(si&&sw&&o.skeleton)for(let i=0;i<si.count;i++)for(const [idx,w] of [[si.getX(i),sw.getX(i)],[si.getY(i),sw.getY(i)],[si.getZ(i),sw.getZ(i)],[si.getW(i),sw.getW(i)]])if(w>.001&&o.skeleton.bones[idx])bones.add(o.skeleton.bones[idx].name);
+  });
+  const vertices=meshes.reduce((n,m)=>n+(m.geometry?.attributes?.position?.count||0),0);
+  const triangles=meshes.reduce((n,m)=>n+Math.floor((m.geometry?.index?.count||m.geometry?.attributes?.position?.count||0)/3),0);
+  return {names,meshes:meshes.length,vertices,triangles,materials:[...materials],bones:[...bones]};
+}
+function writeAnatomyDiag(slot=null){
+  const d=anatomyStats(anatomySet,slot);
+  const label=slot||anatomyMode;
+  document.getElementById('anatomyDiag').textContent=
+    anatomySet.toUpperCase()+' · '+String(label).toUpperCase()+'\n'+
+    'PARTS '+(d.names.length?d.names.join(', '):'— SLOT VACÍO —')+'\n'+
+    'MESHES '+d.meshes+' · VERTS '+d.vertices+' · TRIS '+d.triangles+'\n'+
+    'MATERIALS '+(d.materials.join(', ')||'—')+'\n'+
+    'BONES '+(d.bones.slice(0,16).join(', ')||'—')+(d.bones.length>16?'…':'');
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{
+    armorAnatomyReady:true,armorSetCount:Object.keys(ARMOR_LIBRARY).length,anatomySet,anatomyMode,
+    anatomySlot:slot,anatomyParts:d.names,anatomyMeshes:d.meshes,anatomyVertices:d.vertices,anatomyBones:d.bones.length,
+    knightHeadParts:ARMOR_LIBRARY.knight.head.length
+  });
+}
+function explodeArmor(set){
+  const slotOffset={
+    head:new THREE.Vector3(0,.36,0),chest:new THREE.Vector3(0,.05,0),
+    arms:new THREE.Vector3(.30,.02,0),hands:new THREE.Vector3(.46,-.04,0),
+    legs:new THREE.Vector3(.22,-.22,0),feet:new THREE.Vector3(.28,-.38,.02),
+    back:new THREE.Vector3(0,.02,-.42)
   };
-  draw(pack.ctx,pack.canvas.width,pack.canvas.height,color,alpha,width);
-  if(glowAlpha>0)draw(pack.glowCtx,pack.glowCanvas.width,pack.glowCanvas.height,'#ffffff',glowAlpha,Math.max(2,width*.72));
-  pack.texture.needsUpdate=true;pack.emissiveTexture.needsUpdate=true;
-  return segments.length;
-}
-function applyPremiumAuthoring(){
-  if(!actor||Object.keys(painterTextures).length!==5)return false;
-
-  // V2: geometry -> UV authoring is deliberately bold enough to survive a mobile view.
-  const swordBevel=collectRoleFeatureSegments('sword',16,.070);
-  const swordEdge=collectRoleFeatureSegments('sword',42,.085);
-  const shieldTrim=collectRoleFeatureSegments('shield',34,.020);
-  const helmetTrim=collectRoleFeatureSegments('helmet',40,.016);
-  const armorTrim=collectRoleFeatureSegments('armor',48,.018);
-
-  // Hero sword: broad gunmetal bevel, then a much narrower luminous silver cutting edge.
-  strokeUvSegments('sword',swordBevel,'#7f899f',18,.90,.10);
-  strokeUvSegments('sword',swordEdge,'#ffffff',10,1,.98);
-
-  // Global trim language: visible at gameplay distance, still subordinate to black.
-  strokeUvSegments('shield',shieldTrim,'#f3f6ff',11,.95,.24);
-  strokeUvSegments('helmet',helmetTrim,'#f4f7ff',8,.90,.14);
-  strokeUvSegments('armor',armorTrim,'#dfe6f5',6,.80,.07);
-
-  Object.assign(window.__SKINLAB_DIAG__,{
-    premiumAuthoringReady:true,
-    premiumAuthoringVersion:2,
-    premiumAuthoringMode:'geometry-uv-plus-selective-3d-rails',
-    swordBevelSegments:swordBevel.length,
-    swordEdgeSegments:swordEdge.length,
-    shieldTrimSegments:shieldTrim.length,
-    helmetTrimSegments:helmetTrim.length,
-    armorTrimSegments:armorTrim.length
-  });
-  authorBtn?.classList.add('active');
-  return swordBevel.length>0&&swordEdge.length>0;
-}
-
-function applyWarriorBlackFinal(){
-  restoreMaterials();clearRigidAccents();
-  if(Object.keys(painterTextures).length!==5)throw new Error('Painter textures incompletas');
-  let affected=0,edgeAccents=0,silhouetteAccents=0;
-  actor.traverse(o=>{
-    if(!o.isMesh||o.userData?.skinAccentOverlay)return;
-    const rec=originalMat.get(o.uuid);if(!rec)return;
-    const role=rec.group==='sword'?'sword':rec.group==='shield'?'shield':roleForMesh(o);
-    if(!role)return;
-    const mats=Array.isArray(o.material)?o.material:[o.material];
-    mats.forEach(m=>applyPaintMaterial(m,role));affected++;
-  });
-  let heroSwordBevelRails=0,heroSwordEdgeRails=0,shieldPremiumRails=0,premiumCosmeticFx=false;
-  const sword=actor.getObjectByName('Warrior_Sword');
-  if(sword){
-    const c=painterState.sword.secondary;
-    // Clean outer silhouette + SELECTIVE physical rails. This is not a polygon wireframe.
-    silhouetteAccents+=ensureRigidSilhouette(sword,'painter-sword-silhouette',c,1.024,.82);
-    heroSwordBevelRails+=ensureRigidFeatureRails(sword,'premium-sword-gunmetal-bevel','#7f899f',{
-      threshold:14,minLenRatio:.065,maxSegments:10,radiusRatio:.0060,opacity:.96,emissiveIntensity:.05
-    });
-    heroSwordEdgeRails+=ensureRigidFeatureRails(sword,'premium-sword-silver-edge','#ffffff',{
-      threshold:30,minLenRatio:.090,maxSegments:6,radiusRatio:.0038,opacity:1,emissiveIntensity:.34
-    });
-    premiumCosmeticFx=ensurePremiumAura(sword);
+  for(const slot of ARMOR_SLOTS)for(const root of armorRootNodes(set,slot)){
+    const src=armorTransformOriginal.get(root.uuid);if(!src)continue;
+    const off=slotOffset[slot].clone();
+    const n=root.name.toLowerCase();
+    if(n.endsWith('l'))off.x*=-1;
+    if(slot==='back')off.x=0;
+    root.position.copy(src.position).add(off);
   }
-  const shield=actor.getObjectByName('Warrior_Shield');
-  if(shield){
-    const c=painterState.shield.secondary;
-    silhouetteAccents+=ensureRigidSilhouette(shield,'painter-shield-silhouette',c,1.017,.46);
-    shieldPremiumRails+=ensureRigidFeatureRails(shield,'premium-shield-rim','#eef3ff',{
-      threshold:34,minLenRatio:.030,maxSegments:14,radiusRatio:.0034,opacity:.95,emissiveIntensity:.14
-    });
-  }
-  Object.assign(window.__SKINLAB_DIAG__,{
-    finalAffectedMeshes:affected,atlasAccentMaterials:affected,rigidEdgeAccents:edgeAccents,
-    rigidSilhouetteAccents:silhouetteAccents,rigidEdgeAccentExpected:0,
-    weaponPolishVersion:2,weaponOutlineMode:'authored-bevel-selective-3d-rails',wireframeSuppressed:true,
-    helmetAccentMode:'premium-author-v2',skinId:'warrior_black_aura_premium_v2',refinementPass:6,
-    heroSwordBevelRails,heroSwordEdgeRails,shieldPremiumRails,premiumCosmeticFx,
-    painterReady:true,painterVersion:1,painterPieces:5,brushOps:Object.values(paintOps).reduce((a,v)=>a+v.length,0)
-  });
-  return affected;
 }
-function paintUvInternal(piece,uv,color,size,opacity,record=true){
-  const pack=painterTextures[piece];if(!pack)return false;
-  const x=clamp01(uv.x)*pack.canvas.width;
-  const y=(1-clamp01(uv.y))*pack.canvas.height;
-  pack.ctx.save();pack.ctx.globalAlpha=opacity;pack.ctx.fillStyle=color;
-  pack.ctx.beginPath();pack.ctx.arc(x,y,size,0,Math.PI*2);pack.ctx.fill();pack.ctx.restore();
-  pack.texture.needsUpdate=true;
-  if(record)paintOps[piece].push({uv:{x:uv.x,y:uv.y},color,size,opacity});
-  window.__SKINLAB_DIAG__.brushOps=Object.values(paintOps).reduce((a,v)=>a+v.length,0);
-  return true;
-}
-
-const raycaster=new THREE.Raycaster(),paintPointer=new THREE.Vector2();
-function currentBrushColor(){
-  const piece=pieceSelect.value,channel=brushChannel.value;
-  return channel==='custom'?brushColor.value:painterState[piece][channel];
-}
-function paintFromPointer(ev){
-  if(!brushEnabled||!actor)return;
-  const rect=renderer.domElement.getBoundingClientRect();
-  paintPointer.x=((ev.clientX-rect.left)/rect.width)*2-1;
-  paintPointer.y=-((ev.clientY-rect.top)/rect.height)*2+1;
-  raycaster.setFromCamera(paintPointer,camera);
-  const wanted=pieceSelect.value;
-  const hit=raycaster.intersectObject(actor,true).find(h=>h.uv&&roleForMesh(h.object)===wanted);
-  if(!hit)return;
-  paintUvInternal(wanted,hit.uv,currentBrushColor(),Number(brushSizeRange.value),Number(brushOpacityRange.value),true);
-  painterStatus.textContent='Pintando '+wanted.toUpperCase()+' · '+currentBrushColor();
-}
-function setBrushEnabled(on){
-  brushEnabled=!!on;brushBtn.classList.toggle('active',brushEnabled);
-  if(brushEnabled){autoRotate=false;rotateBtn.classList.remove('active');controls.enabled=false}
-  else{controls.enabled=true;brushDragging=false}
-  window.__SKINLAB_DIAG__.brushEnabled=brushEnabled;
-  painterStatus.textContent=brushEnabled?'PINCEL 3D ACTIVO · arrastrá sobre la pieza seleccionada.':'Pincel 3D desactivado.';
-}
-renderer.domElement.addEventListener('pointerdown',ev=>{
-  if(!brushEnabled)return;brushDragging=true;renderer.domElement.setPointerCapture?.(ev.pointerId);paintFromPointer(ev);ev.preventDefault();
-});
-renderer.domElement.addEventListener('pointermove',ev=>{if(brushEnabled&&brushDragging){paintFromPointer(ev);ev.preventDefault()}});
-renderer.domElement.addEventListener('pointerup',ev=>{if(brushEnabled){brushDragging=false;renderer.domElement.releasePointerCapture?.(ev.pointerId);ev.preventDefault()}});
-
-function syncPainterUi(){
-  const s=painterState[pieceSelect.value];
-  primaryColor.value=s.primary;secondaryColor.value=s.secondary;accentColor.value=s.accent;finishSelect.value=s.finish;
-  brightnessRange.value=s.brightness;contrastRange.value=s.contrast;metalnessRange.value=s.metalness;roughnessRange.value=s.roughness;detailRange.value=s.detail;
-  brightnessOut.textContent=Number(s.brightness).toFixed(2);contrastOut.textContent=Number(s.contrast).toFixed(2);
-  metalnessOut.textContent=Number(s.metalness).toFixed(2);roughnessOut.textContent=Number(s.roughness).toFixed(2);detailOut.textContent=Number(s.detail).toFixed(2);
-}
-function readPainterUi(){
-  const s=painterState[pieceSelect.value];
-  Object.assign(s,{
-    primary:primaryColor.value,secondary:secondaryColor.value,accent:accentColor.value,finish:finishSelect.value,
-    brightness:Number(brightnessRange.value),contrast:Number(contrastRange.value),metalness:Number(metalnessRange.value),
-    roughness:Number(roughnessRange.value),detail:Number(detailRange.value)
-  });
-}
-function applyPainterPiece(){
-  readPainterUi();buildPieceTexture(pieceSelect.value);setMode('black');
-  window.__SKINLAB_DIAG__.lastPainterPiece=pieceSelect.value;
-  painterStatus.textContent='APLICADO · '+pieceSelect.value.toUpperCase();
-}
-function resetPainterPiece(){
-  const p=pieceSelect.value;painterState[p]=deepClone(DEFAULT_PAINTER[p]);paintOps[p]=[];buildPieceTexture(p);syncPainterUi();setMode('black');
-  painterStatus.textContent='RESET · '+p.toUpperCase();
-}
-function savePainterPreset(){
-  localStorage.setItem('highfly_skin_painter_custom_v1',JSON.stringify({state:painterState,paintOps}));
-  painterStatus.textContent='CUSTOM guardado en este navegador.';
-}
-function loadPainterPreset(){
-  const raw=localStorage.getItem('highfly_skin_painter_custom_v1');
-  if(!raw){painterStatus.textContent='No hay CUSTOM guardado todavía.';return}
-  try{
-    const data=JSON.parse(raw);painterState=data.state||deepClone(DEFAULT_PAINTER);paintOps=data.paintOps||{helmet:[],armor:[],cape:[],sword:[],shield:[]};
-    rebuildPainterTextures();syncPainterUi();setMode('black');painterStatus.textContent='CUSTOM cargado.';
-  }catch{painterStatus.textContent='CUSTOM inválido.'}
-}
-async function copyPainterRecipe(){
-  const recipe=JSON.stringify({version:1,name:'HIGHFLY_CUSTOM_SKIN',pieces:painterState,paintOps},null,2);
-  try{await navigator.clipboard.writeText(recipe);painterStatus.textContent='RECETA copiada al portapapeles.'}
-  catch{painterStatus.textContent='No se pudo copiar; receta disponible en window.__SKINLAB_RECIPE__.'}
-  window.__SKINLAB_RECIPE__=recipe;
-}
-function applyAutoBlackAura(){
-  painterState=deepClone(AUTO_BLACK_AURA.pieces);
-  paintOps={helmet:[],armor:[],cape:[],sword:[],shield:[]};
-  rebuildPainterTextures();
-  pieceSelect.value='helmet';
-  syncPainterUi();
-  applyPremiumAuthoring();
-  setMode('black');
-  const visor=actor?.getObjectByName('Knight_HelmetVisor');
-  Object.assign(window.__SKINLAB_DIAG__,{
-    autoPresetApplied:true,
-    autoPresetId:AUTO_BLACK_AURA.id,
-    helmetVisorFound:!!visor,
-    helmetVisorPainted:!!visor && roleForMesh(visor)==='helmet',
-    swordEmissiveTrim:!!painterTextures.sword?.emissiveTexture,
-    studioEnvironment:!!scene.environment
-  });
-  autoAuraBtn.classList.add('active');
-  painterStatus.textContent='BLACK AURA PREMIUM V2 · HERO SWORD con bisel + filo 3D selectivo · trims globales reforzados · aura violeta sutil.';
-  return true;
-}
-function setMode(mode){
-  currentMode=mode;
-  let affected=0;
-  if(mode==='black'){
-    affected=applyWarriorBlackFinal();
-  }else{
-    restoreMaterials();
-    clearRigidAccents();
-    window.__SKINLAB_DIAG__.skinId='warrior_base_gold';
-  }
-  window.__SKINLAB_DIAG__.mode=mode;
-  window.__SKINLAB_DIAG__.blackAffectedMeshes=affected;
-  baseBtn.classList.toggle('active',mode==='base');
-  blackBtn.classList.toggle('active',mode==='black');
-}
-function pill(id,ok,label){const el=document.getElementById(id);el.textContent=label;el.classList.toggle('ok',!!ok)}
-
-const ktx2Loader=new KTX2Loader()
-  .setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/libs/basis/')
-  .detectSupport(renderer);
-const loader=new GLTFLoader();
-loader.setKTX2Loader(ktx2Loader);
-loader.setMeshoptDecoder(MeshoptDecoder);
-const load=u=>new Promise((resolve,reject)=>loader.load(u,resolve,undefined,reject));
-
-// IMPORTANT: this is the same rule used by ClaudeCraft's resolveBone().
-// GLTFLoader strips reserved characters like "." from node names used by
-// PropertyBinding, so authored "handslot.r" is runtime "handslotr".
-function sanitizeAuthoredNodeName(name){
-  return name.replace(/[[\].:/]/g,'');
-}
-function resolveNode(root,authoredName){
-  return root.getObjectByName(authoredName) ??
-    root.getObjectByName(sanitizeAuthoredNodeName(authoredName)) ??
-    null;
-}
-
-// ClaudeCraft KayKit assembly: only the manifest-listed non-skinned accessories
-// survive. Do not hand-toggle individual meshes in the lab.
-function applyShowRule(root,show){
-  const keep=new Set(show);
-  root.traverse(o=>{
-    if(o.isMesh && !o.isSkinnedMesh && !keep.has(o.name)) o.visible=false;
-  });
-}
-
-// Matches ClaudeCraft flattenWeaponScene: held GLBs often carry one transformed
-// child, while the grip contract expects a neutral payload root.
-function flattenWeaponScene(src){
-  if(src.children.length!==1)return src;
-  const holder=new THREE.Group();
-  const child=src.children[0];
-  holder.scale.copy(child.scale);
-  child.scale.set(1,1,1);
-  child.position.set(0,0,0);
-  child.rotation.set(0,0,0);
-  src.remove(child);
-  holder.add(child);
-  return holder;
-}
-function applyGrip(payload,grip){
-  payload.position.set(...grip.position);
-  payload.quaternion.set(...grip.quaternion);
-  payload.scale.setScalar(grip.scale);
-}
-function attachHeldAsset(root,authoredBone,gltf,label,grip,materialGroup){
-  const bone=resolveNode(root,authoredBone);
-  if(!bone)throw new Error('Socket faltante: '+authoredBone+' (runtime esperado '+sanitizeAuthoredNodeName(authoredBone)+')');
-  const payload=flattenWeaponScene(gltf.scene);
-  payload.name=label;
-  cloneMaterialTree(payload,materialGroup);
-  applyGrip(payload,grip);
-  bone.add(payload);
-  return {payload,bone};
-}
-
-function normalizeBody(root,targetHeight=2.45){
-  // Intentionally BEFORE held props, matching the concept of body normalization:
-  // a sword/shield must never change character scale.
-  const box=new THREE.Box3().setFromObject(root);
-  const h=Math.max(.001,box.max.y-box.min.y);
-  const scale=targetHeight/h;
-  root.scale.setScalar(scale);
-  const grounded=new THREE.Box3().setFromObject(root);
-  root.position.y-=grounded.min.y;
-  return {scale,height:h};
-}
-
-window.__SKINLAB_DIAG__={
-  ready:false,
-  error:null,
-  upstream:UPSTREAM,
-  rig:false,
-  rightSocket:false,
-  leftSocket:false,
-  rightSocketRuntime:null,
-  leftSocketRuntime:null,
-  clips:0,
-  swordAttached:false,
-  shieldAttached:false,
-  blackAffectedMeshes:0,
-  finalAffectedMeshes:0,
-  atlasAccentMaterials:0,
-  rigidEdgeAccents:0,
-  rigidEdgeAccentExpected:2,
-  helmetAccentMode:null,
-  skinId:'warrior_base_gold',
-  factoryReady:false,
-  testedClips:0,
-  testableClips:0,
-  lastClip:null,
-  mode:'base',
-  painterReady:false,
-  painterVersion:1,
-  painterPieces:0,
-  painterTextures:0,
-  brushEnabled:false,
-  brushOps:0,
-  lastPainterPiece:null,
-  autoPresetApplied:false,
-  autoPresetId:null,
-  helmetVisorFound:false,
-  helmetVisorPainted:false,
-  swordEmissiveTrim:false,
-  studioEnvironment:false,
-  premiumAuthoringReady:false,
-  premiumAuthoringVersion:0,
-  premiumAuthoringMode:null,
-  swordBevelSegments:0,
-  swordEdgeSegments:0,
-  shieldTrimSegments:0,
-  helmetTrimSegments:0,
-  armorTrimSegments:0,
-  heroSwordBevelRails:0,
-  heroSwordEdgeRails:0,
-  shieldPremiumRails:0,
-  premiumCosmeticFx:false
-};
-function playClip(name){
-  if(!mixer||!actor)return false;
-  const clip=THREE.AnimationClip.findByName(actor.userData.clips,name);
-  if(!clip)return false;
-  mixer.stopAllAction();
-  const a=mixer.clipAction(clip); a.reset().fadeIn(.12).play();
-  window.__SKINLAB_DIAG__.lastClip=name;
-  return true;
-}
-let factoryTestToken=0;
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function runFactoryTest(){
+function showAnatomy(mode,slot=null){
   if(!actor)return;
-  const token=++factoryTestToken;
-  const clips=actor.userData.clips;
-  const select=document.getElementById('animSelect');
-  const status=document.getElementById('testStatus');
-  testAllBtn.classList.add('active');
-  let passed=0;
-  for(let i=0;i<clips.length;i++){
-    if(token!==factoryTestToken)break;
-    const clip=clips[i];
-    select.value=clip.name;
-    const ok=playClip(clip.name);
-    status.textContent='Factory test '+(i+1)+'/'+clips.length+' · '+clip.name;
-    if(ok)passed++;
-    const dwell=Math.max(650,Math.min(1350,clip.duration*520));
-    await sleep(dwell);
-  }
-  if(token===factoryTestToken){
-    window.__SKINLAB_DIAG__.testedClips=passed;
-    status.textContent='Factory test GREEN · '+passed+'/'+clips.length+' clips reproducidos.';
-    playClip('Idle');
-  }
-  testAllBtn.classList.remove('active');
+  anatomyMode=slot?('slot:'+slot):mode;anatomySet=document.getElementById('donorSetSelect').value;
+  setAvianVisible(false);restoreArmorTransforms();hideAllArmor();showAllBase();
+  const slots=slot?[slot]:(mode==='base'?[]:ARMOR_SLOTS);
+  for(const s of slots)showArmorNames(ARMOR_LIBRARY[anatomySet][s]||[],true);
+  if(slots.includes('legs')&&(ARMOR_LIBRARY[anatomySet].legs||[]).length)setPartVisible('M_Loin',false);
+  if(mode==='exploded')explodeArmor(anatomySet);
+  for(const id of ['rawBtn','cleanBtn','avianBtn'])document.getElementById(id).classList.remove('active');
+  document.querySelectorAll('[data-anatomy-slot]').forEach(b=>b.classList.toggle('active',b.dataset.anatomySlot===slot));
+  document.getElementById('anatomyBaseBtn').classList.toggle('active',mode==='base'&&!slot);
+  document.getElementById('anatomyFullBtn').classList.toggle('active',mode==='full'&&!slot);
+  document.getElementById('anatomyExplodedBtn').classList.toggle('active',mode==='exploded'&&!slot);
+  writeAnatomyDiag(slot);updateDiag();frameVisible();
 }
-function stopFactoryTest(){
-  factoryTestToken++;
-  testAllBtn.classList.remove('active');
-  document.getElementById('testStatus').textContent='Factory test detenido.';
-  playClip('Idle');
+function smooth01(x){x=Math.max(0,Math.min(1,x));return x*x*(3-2*x)}
+function currentMoldSlot(){return document.getElementById('moldSlotSelect')?.value||'head'}
+function showSlotForFactory(set,slot){
+  setAvianVisible(false);restoreArmorTransforms();hideAllArmor();showAllBase();
+  showArmorNames(ARMOR_LIBRARY[set]?.[slot]||[],true);
+  if(slot==='legs'&&(ARMOR_LIBRARY[set]?.legs||[]).length)setPartVisible('M_Loin',false);
+  anatomySet=set;anatomyMode='slot:'+slot;
+  document.querySelectorAll('[data-anatomy-slot]').forEach(b=>b.classList.toggle('active',b.dataset.anatomySlot===slot));
+  writeAnatomyDiag(slot);updateDiag();
 }
-
-async function boot(){
-  try{
-    const [warrior,sword,shield]=await Promise.all([
-      load(URLS.warrior),
-      load(URLS.sword),
-      load(URLS.shield),
-      loadPainterSource()
-    ]);
-    actor=warrior.scene;
-    actor.userData.clips=warrior.animations;
-
-    // 1) Assemble the body exactly from the frozen Warrior manifest contract.
-    applyShowRule(actor,WARRIOR_DEF.show);
-    cloneMaterialTree(actor,'body');
-    scene.add(actor);
-
-    // 2) Normalize BODY only. Held props are attached afterwards so they can
-    // never influence avatar scale/grounding.
-    normalizeBody(actor);
-
-    // 3) Resolve sanitized runtime sockets and apply the same KayKit fallback
-    // grips used by ClaudeCraft for 1H sword + round shield.
-    const right=resolveNode(actor,WARRIOR_DEF.rightSocket);
-    const left=resolveNode(actor,WARRIOR_DEF.leftSocket);
-    if(!right||!left){
-      const runtimeNames=[];
-      actor.traverse(o=>{if(o.name)runtimeNames.push(o.name)});
-      throw new Error('Sockets Warrior inválidos. Buscados '+WARRIOR_DEF.rightSocket+' / '+WARRIOR_DEF.leftSocket+
-        '. Runtime: '+runtimeNames.join(', '));
+function moldCurrentSlot(){
+  if(!actor)return false;
+  const set=document.getElementById('donorSetSelect').value,slot=currentMoldSlot();
+  const names=ARMOR_LIBRARY[set]?.[slot]||[];
+  if(!names.length){
+    showSlotForFactory(set,slot);
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{molderSet:set,molderSlot:slot,molderChangedVertices:0,molderEmptySlot:true});
+    return false;
+  }
+  restoreArmorGeometry(set,slot);
+  showSlotForFactory(set,slot);
+  const width=+document.getElementById('moldWidth').value/50;
+  const length=+document.getElementById('moldCrown').value/50;
+  const depth=+document.getElementById('moldFront').value/50;
+  const taper=+document.getElementById('moldTaper').value/50;
+  let changed=0,skinSafe=true,meshCount=0;
+  for(const root of armorRootNodes(set,slot))root.traverse(o=>{
+    if(!(o.isMesh||o.isSkinnedMesh)||!o.geometry?.attributes?.position)return;
+    const pos=o.geometry.attributes.position,src=armorGeometryOriginal.get(o.uuid);if(!src)return;
+    meshCount++;
+    let minX=Infinity,minY=Infinity,minZ=Infinity,maxX=-Infinity,maxY=-Infinity,maxZ=-Infinity;
+    for(let i=0;i<src.length;i+=3){
+      const x=src[i],y=src[i+1],z=src[i+2];
+      minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);minZ=Math.min(minZ,z);maxZ=Math.max(maxZ,z);
     }
-    const swordMount=attachHeldAsset(actor,WARRIOR_DEF.rightSocket,sword,'Warrior_Sword',WARRIOR_DEF.sword.grip,'sword');
-    const shieldMount=attachHeldAsset(actor,WARRIOR_DEF.leftSocket,shield,'Warrior_Shield',WARRIOR_DEF.shield.grip,'shield');
-
-    mixer=new THREE.AnimationMixer(actor);
-    const names=warrior.animations.map(a=>a.name);
-    const preferred=[
-      'Idle','Walking_A','Running_A','Running_Strafe_Left','Running_Strafe_Right','Walking_Backwards','Jump_Idle',
-      '1H_Melee_Attack_Chop','1H_Melee_Attack_Slice_Diagonal','1H_Melee_Attack_Slice_Horizontal',
-      'Block','Shield_Bash','Hit_A','Death_A','Punch_A','Cheer'
-    ];
-    const select=document.getElementById('animSelect');
-    preferred.filter(n=>names.includes(n)).forEach(n=>{const op=document.createElement('option');op.value=n;op.textContent=n;select.appendChild(op)});
-    names.filter(n=>!preferred.includes(n)).forEach(n=>{const op=document.createElement('option');op.value=n;op.textContent=n;select.appendChild(op)});
-    playClip('Idle');
-
-    const rig=!!resolveNode(actor,'Rig_Medium');
-    const rh=!!right,lh=!!left;
-    pill('rigPill',rig,rig?'Rig_Medium ✓':'Rig_Medium ✕');
-    pill('rPill',rh,rh?'handslot.r ✓':'handslot.r ✕');
-    pill('lPill',lh,lh?'handslot.l ✓':'handslot.l ✕');
-    pill('animPill',names.length===25,names.length+' clips ✓');
-    pill('factoryPill',names.length===25,'FACTORY '+(names.length===25?'✓':'✕'));
-
-    skeletonHelper=new THREE.SkeletonHelper(actor);
-    skeletonHelper.visible=false;
-    scene.add(skeletonHelper);
-
-    Object.assign(window.__SKINLAB_DIAG__,{
-      ready:true,
-      error:null,
-      rig,
-      rightSocket:rh,
-      leftSocket:lh,
-      rightSocketRuntime:right.name,
-      leftSocketRuntime:left.name,
-      clips:names.length,
-      swordAttached:swordMount.payload.parent===right,
-      shieldAttached:shieldMount.payload.parent===left,
-      factoryReady:names.length===25,
-      testableClips:names.length
+    const cx=(minX+maxX)/2,cy=(minY+maxY)/2,cz=(minZ+maxZ)/2;
+    const h=Math.max(1e-5,maxY-minY),w=Math.max(1e-5,maxX-minX),d=Math.max(1e-5,maxZ-minZ);
+    for(let i=0;i<pos.count;i++){
+      let x=src[i*3],y=src[i*3+1],z=src[i*3+2];
+      const ny=(y-minY)/h,top=smooth01((ny-.38)/.62),low=1-smooth01((ny-.12)/.58);
+      const widthScale=1+width*.28*(.62+.38*top)-taper*.22*low;
+      x=cx+(x-cx)*widthScale;
+      y=cy+(y-cy)*(1+length*.26);
+      z=cz+(z-cz)*(1+depth*.26);
+      // Head keeps a little more forward personality; back/capes get extra length.
+      if(slot==='head'&&z>cz)z+=(z-cz)*depth*.18*(.55+.45*top);
+      if(slot==='back')y=cy+(y-cy)*(1+length*.36);
+      if(slot==='arms'||slot==='hands'||slot==='feet')x=cx+(x-cx)*(1+width*.20-taper*.12*low);
+      pos.setXYZ(i,x,y,z);changed++;
+    }
+    pos.needsUpdate=true;o.geometry.computeBoundingBox();o.geometry.computeBoundingSphere();o.geometry.computeVertexNormals?.();
+    skinSafe=skinSafe&&skinFingerprint(o)===armorSkinFingerprint.get(o.uuid);
+  });
+  for(const id of ['moldWidth','moldCrown','moldFront','moldTaper'])document.getElementById(id+'Val').textContent=document.getElementById(id).value;
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{
+    molderReady:true,molderPhase:2,molderSet:set,molderSlot:slot,molderMeshCount:meshCount,
+    molderChangedVertices:changed,molderSkinPreserved:skinSafe,molderEmptySlot:false,
+    molderValues:{width,length,depth,taper}
+  });
+  frameVisible();return changed>0;
+}
+function resetMolder(){
+  for(const id of ['moldWidth','moldCrown','moldFront','moldTaper']){
+    document.getElementById(id).value=0;document.getElementById(id+'Val').textContent='0';
+  }
+  restoreArmorGeometry();
+  const set=document.getElementById('donorSetSelect').value,slot=currentMoldSlot();
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{
+    molderReady:true,molderPhase:2,molderSet:set,molderSlot:slot,molderChangedVertices:0,
+    molderSkinPreserved:true,molderValues:{width:0,length:0,depth:0,taper:0}
+  });
+  showSlotForFactory(set,slot);frameVisible();
+}
+function restoreArmorMaterials(set,slot=null){
+  for(const root of armorRootNodes(set,slot))root.traverse(o=>{
+    if(!(o.isMesh||o.isSkinnedMesh))return;
+    const src=cleanSourceMaterials.get(o.uuid);if(!src)return;
+    o.material=Array.isArray(o.material)?src.map(m=>m.clone()):src[0].clone();
+  });
+}
+function paintArmorPreset(preset='custom'){
+  if(!actor)return false;
+  const set=document.getElementById('donorSetSelect').value;
+  const scope=document.getElementById('paintScopeSelect')?.value||'full';
+  const slot=scope==='slot'?currentMoldSlot():null;
+  restoreArmorMaterials(set,slot);
+  let primary=document.getElementById('armorPrimary').value;
+  let accent=document.getElementById('armorAccent').value;
+  let metal=+document.getElementById('armorMetal').value;
+  let rough=+document.getElementById('armorRough').value;
+  if(preset==='source'){
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{painterReady:true,painterPreset:'source',painterSet:set,painterScope:scope,painterMeshes:0});
+    showAnatomy(scope==='slot'?'slot':'full',scope==='slot'?currentMoldSlot():null);return true;
+  }
+  if(preset==='black'){primary='#101118';accent='#5b21b6';metal=.72;rough=.24}
+  if(preset==='raven'){primary='#19141f';accent='#8b5cf6';metal=.58;rough=.32}
+  const pColor=new THREE.Color(primary),aColor=new THREE.Color(accent);
+  let meshes=0,materials=0;
+  for(const root of armorRootNodes(set,slot))root.traverse(o=>{
+    if(!(o.isMesh||o.isSkinnedMesh))return;meshes++;
+    const mats=Array.isArray(o.material)?o.material:[o.material];
+    const next=mats.map((src,i)=>{
+      const m=src.clone();materials++;
+      if(m.color)m.color.copy(pColor).lerp(aColor,(i%3===1)?0.28:0.04);
+      if(m.emissive)m.emissive.copy(aColor).multiplyScalar(preset==='black'?.10:.07);
+      m.emissiveIntensity=preset==='black'?.55:.35;
+      if('metalness' in m)m.metalness=metal;
+      if('roughness' in m)m.roughness=rough;
+      m.needsUpdate=true;return m;
     });
-    window.__SKINLAB_CLIPS__=names.slice();
-    window.__SKINLAB_API__={setMode,playClip,runFactoryTest,stopFactoryTest,applyPainterPiece,paintAt:paintUvInternal,setBrushEnabled,copyPainterRecipe,applyAutoBlackAura,applyPremiumAuthoring};
-    syncPainterUi();
-    applyAutoBlackAura();
-    fitActor();
-  }catch(err){
-    console.error(err);
-    window.__SKINLAB_DIAG__.error=String(err?.message||err);
-    const e=document.getElementById('error');
-    e.style.display='block';
-    e.textContent='Carga fallida: '+(err?.message||err);
+    o.material=Array.isArray(o.material)?next:next[0];
+  });
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{
+    painterReady:true,painterVersion:2,painterPreset:preset,painterSet:set,painterScope:scope,
+    painterMeshes:meshes,painterMaterials:materials,painterPrimary:primary,painterAccent:accent
+  });
+  if(scope==='full')showAnatomy('full');else showSlotForFactory(set,currentMoldSlot());
+  frameVisible();return meshes>0;
+}
+function addSocketHelper(node,label,color){
+  const g=new THREE.Group();g.name='HF_'+label;const axes=new THREE.AxesHelper(.18);g.add(axes);
+  const dot=new THREE.Mesh(new THREE.SphereGeometry(.035,14,10),new THREE.MeshBasicMaterial({color}));g.add(dot);
+  node.add(g);g.visible=false;socketHelpers.push(g);return g;
+}
+function pill(id,ok,text){const el=document.getElementById(id);el.textContent=text;el.classList.toggle('ok',!!ok)}
+function play(name){
+  if(!mixer||!actor)return false;
+  const clip=THREE.AnimationClip.findByName(actor.userData.clips,name);if(!clip)return false;
+  mixer.stopAllAction();mixer.clipAction(clip).reset().fadeIn(.1).play();window.__MODULAR_FACTORY_DIAG__.lastClip=name;return true;
+}
+
+const cleanSourceMaterials=new Map();
+let designMode='clean',avianPieces=[],avianReady=false;
+
+function rememberBaseMaterials(){
+  actor?.traverse(o=>{
+    if(!(o.isMesh||o.isSkinnedMesh)||cleanSourceMaterials.has(o.uuid))return;
+    const mats=Array.isArray(o.material)?o.material:[o.material];
+    cleanSourceMaterials.set(o.uuid,mats.map(m=>m.clone()));
+  });
+}
+function restoreRawMaterials(){
+  actor?.traverse(o=>{
+    const src=cleanSourceMaterials.get(o.uuid);if(!src)return;
+    o.material=Array.isArray(o.material)?src.map(m=>m.clone()):src[0].clone();
+  });
+}
+function cleanMatFor(nodeName,src){
+  const m=src.clone();m.map=null;m.emissiveMap=null;m.metalness=0;m.roughness=.82;
+  const n=nodeName.toLowerCase(),mn=(m.name||'').toLowerCase();
+  if(n.includes('eye'))m.color.setHex(0x243047);
+  else if(n.includes('brow'))m.color.setHex(0x5a4033);
+  else if(n.includes('loin')){m.color.setHex(0x2a3040);m.roughness=.94}
+  else if(n.includes('mouth')&&mn.includes('tooth'))m.color.setHex(0xf3eadb);
+  else if(n.includes('mouth')&&(mn.includes('mouth')||mn.includes('line'))){m.color.setHex(0x4b3132);m.roughness=.9}
+  else m.color.setHex(0xd8ab8f);
+  if(m.emissive)m.emissive.setHex(0x000000);m.needsUpdate=true;return m;
+}
+function applyCleanMaterials(){
+  restoreRawMaterials();
+  for(const core of CORE){
+    for(const root of partNodes(core)){
+      root.traverse(o=>{
+        if(!(o.isMesh||o.isSkinnedMesh))return;
+        const mats=Array.isArray(o.material)?o.material:[o.material];
+        const next=mats.map(m=>cleanMatFor(core,m));
+        o.material=Array.isArray(o.material)?next:next[0];
+      });
+    }
   }
 }
-
-baseBtn.onclick=()=>setMode('base');
-blackBtn.onclick=()=>{setMode('black');autoAuraBtn.classList.remove('active')};
-autoAuraBtn.onclick=()=>applyAutoBlackAura();
-authorBtn.onclick=()=>{applyPremiumAuthoring();setMode('black');painterStatus.textContent='PREMIUM V2 reaplicada · HERO SWORD + GLOBAL TRIM + COSMETIC FX.'};
-document.getElementById('modularFactoryBtn').onclick=()=>{location.href='./modular-factory.html'};
-document.getElementById('playBtn').onclick=()=>playClip(document.getElementById('animSelect').value);
-testAllBtn.onclick=()=>runFactoryTest();
-stopTestBtn.onclick=()=>stopFactoryTest();
-document.getElementById('animSelect').onchange=e=>playClip(e.target.value);
-pieceSelect.onchange=()=>syncPainterUi();
-finishSelect.onchange=()=>{
-  const f=FINISHES[finishSelect.value];metalnessRange.value=f.metalness;roughnessRange.value=f.roughness;
-  metalnessOut.textContent=f.metalness.toFixed(2);roughnessOut.textContent=f.roughness.toFixed(2);
-};
-for(const [input,out] of [[brightnessRange,brightnessOut],[contrastRange,contrastOut],[metalnessRange,metalnessOut],[roughnessRange,roughnessOut],[detailRange,detailOut]]){
-  input.oninput=()=>out.textContent=Number(input.value).toFixed(2);
+function findBone(re){
+  let hit=null;actor?.traverse(o=>{if(!hit&&o.isBone&&re.test(o.name))hit=o});return hit;
 }
-brushSizeRange.oninput=()=>brushSizeOut.textContent=brushSizeRange.value;
-brushOpacityRange.oninput=()=>brushOpacityOut.textContent=Number(brushOpacityRange.value).toFixed(2);
-applyPainterBtn.onclick=()=>applyPainterPiece();
-brushBtn.onclick=()=>setBrushEnabled(!brushEnabled);
-resetPieceBtn.onclick=()=>resetPainterPiece();
-savePresetBtn.onclick=()=>savePainterPreset();
-loadPresetBtn.onclick=()=>loadPainterPreset();
-copyRecipeBtn.onclick=()=>copyPainterRecipe();
-bonesBtn.onclick=()=>{if(!skeletonHelper)return;skeletonHelper.visible=!skeletonHelper.visible;bonesBtn.classList.toggle('active',skeletonHelper.visible)};
-rotateBtn.onclick=()=>{autoRotate=!autoRotate;rotateBtn.classList.toggle('active',autoRotate)};
-resetBtn.onclick=()=>fitActor();
+function boneKey(name){return String(name||'').toLowerCase().replace(/[^a-z0-9]/g,'')}
+function findBoneKey(...keys){
+  const wanted=new Set(keys.map(boneKey));let hit=null;
+  actor?.traverse(o=>{if(!hit&&o.isBone&&wanted.has(boneKey(o.name)))hit=o});
+  return hit;
+}
+function addAvian(parent,obj){
+  if(!parent||!obj)return null;parent.add(obj);avianPieces.push(obj);obj.visible=false;return obj;
+}
+function mat(hex,opts={}){
+  return new THREE.MeshStandardMaterial({color:hex,roughness:opts.roughness??.66,metalness:opts.metalness??.06,flatShading:true,emissive:opts.emissive??0x000000,emissiveIntensity:opts.emissiveIntensity??0});
+}
+function headMetrics(){
+  const b=new THREE.Box3();for(const n of partNodes('M_Head'))b.expandByObject(n,true);
+  const c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);return {b,c,s};
+}
+function torsoMetrics(){
+  const b=new THREE.Box3();for(const n of partNodes('M_Torso'))b.expandByObject(n,true);
+  const c=new THREE.Vector3(),s=new THREE.Vector3();b.getCenter(c);b.getSize(s);return {b,c,s};
+}
+function buildAvianPrototype(){
+  if(avianReady||!actor)return;
+  actor.updateWorldMatrix(true,true);
+  const headBone=findBoneKey('head')||findBone(/head/i);
+  const chestBone=findBoneKey('chest','spine2','spine1','spine')||findBone(/chest|spine/i);
+  const hipsBone=findBoneKey('hips','pelvis')||findBone(/hip|pelvis/i);
+  const right=resolveNode(actor,'handslot.r'),left=resolveNode(actor,'handslot.l');
+  if(!headBone||!chestBone||!hipsBone||!right||!left)return;
+
+  const hm=headMetrics(),tm=torsoMetrics();
+  const hc=headBone.worldToLocal(hm.c.clone()),tc=chestBone.worldToLocal(tm.c.clone());
+
+  // Original HIGHFLY avian hood: faceted shell, split crest, amber wedge beak, violet eye fins.
+  const hood=new THREE.Group();hood.name='HF_Avian_Head';
+  hood.position.copy(hc);
+  const shell=new THREE.Mesh(new THREE.IcosahedronGeometry(1,2),mat(0x3e8edb,{roughness:.72}));
+  shell.scale.set(hm.s.x*.62,hm.s.y*.62,Math.max(hm.s.z*.62,hm.s.x*.55));hood.add(shell);
+  const browMat=mat(0xd7ecff,{roughness:.6});
+  const eyeMat=mat(0x6f1d8c,{roughness:.32,emissive:0x300030,emissiveIntensity:.55});
+  for(const side of [-1,1]){
+    const brow=new THREE.Mesh(new THREE.ConeGeometry(hm.s.x*.115,hm.s.x*.34,3),browMat);
+    brow.rotation.set(Math.PI/2,0,side*.48);brow.position.set(side*hm.s.x*.20,hm.s.y*.06,hm.s.z*.48);hood.add(brow);
+    const eye=new THREE.Mesh(new THREE.OctahedronGeometry(hm.s.x*.075,0),eyeMat);
+    eye.scale.set(1.05,.72,.36);eye.position.set(side*hm.s.x*.19,-hm.s.y*.015,hm.s.z*.55);hood.add(eye);
+  }
+  const beak=new THREE.Mesh(new THREE.ConeGeometry(hm.s.x*.22,hm.s.z*.72,4),mat(0xf0ad35,{roughness:.74}));
+  beak.rotation.x=Math.PI/2;beak.position.set(0,-hm.s.y*.07,hm.s.z*.72);hood.add(beak);
+  const crestMat=mat(0x69bdf0,{roughness:.76});
+  [-.16,0,.16].forEach((x,i)=>{
+    const spike=new THREE.Mesh(new THREE.ConeGeometry(hm.s.x*(.085+i*.012),hm.s.y*(.34+i*.06),4),crestMat);
+    spike.position.set(hm.s.x*x,hm.s.y*(.54+i*.045),-hm.s.z*.02);spike.rotation.z=x*.9;hood.add(spike);
+  });
+  addAvian(headBone,hood);
+
+  // Asymmetric chest straps / hunter harness, deliberately not Sunraku's pattern.
+  const harness=new THREE.Group();harness.name='HF_Avian_Chest';harness.position.copy(tc);
+  const strapMat=mat(0x23273a,{roughness:.94});
+  for(const zrot of [-.58,.58]){
+    const strap=new THREE.Mesh(new THREE.BoxGeometry(tm.s.x*.12,tm.s.y*.92,tm.s.z*.20),strapMat);
+    strap.rotation.z=zrot;strap.position.z=tm.s.z*.34;harness.add(strap);
+  }
+  const clasp=new THREE.Mesh(new THREE.OctahedronGeometry(tm.s.x*.10,0),mat(0x7a3fd1,{metalness:.28,roughness:.38}));
+  clasp.position.set(0,-tm.s.y*.02,tm.s.z*.47);harness.add(clasp);
+  addAvian(chestBone,harness);
+
+  // Feathered waist: short, mobile, original split-tail silhouette.
+  const hipsWorld=hipsBone.getWorldPosition(new THREE.Vector3()),hipsLocal=hipsBone.worldToLocal(hipsWorld.clone());
+  const skirt=new THREE.Group();skirt.name='HF_Avian_Legs';skirt.position.copy(hipsLocal);skirt.position.y-=tm.s.y*.34;
+  const featherColors=[0x355f9e,0x446fb1,0x5c7fcc,0x7a3fd1,0x263b66];
+  for(let i=0;i<9;i++){
+    const a=(i/9)*Math.PI*2;
+    const feather=new THREE.Mesh(new THREE.ConeGeometry(tm.s.x*.095,tm.s.y*.42,3),mat(featherColors[i%featherColors.length],{roughness:.9}));
+    feather.position.set(Math.cos(a)*tm.s.x*.31,-tm.s.y*.11,Math.sin(a)*tm.s.z*.42);
+    feather.rotation.z=Math.sin(a)*.38;feather.rotation.x=Math.cos(a)*.22;skirt.add(feather);
+  }
+  const sash=new THREE.Mesh(new THREE.BoxGeometry(tm.s.x*.62,tm.s.y*.08,tm.s.z*.62),mat(0x9b343e,{roughness:.88}));
+  skirt.add(sash);addAvian(hipsBone,skirt);
+
+  // v1 complete blockout: bracers, claw-hand plates, shin wraps, talon boots and back feathers.
+  const armR=findBoneKey('upper_arm.r','upperarm.r','upperarmr'),armL=findBoneKey('upper_arm.l','upperarm.l','upperarml');
+  const handR=findBoneKey('hand.r','handr'),handL=findBoneKey('hand.l','handl');
+  const shinR=findBoneKey('lowerleg.r','lower_leg.r','lowerlegr'),shinL=findBoneKey('lowerleg.l','lower_leg.l','lowerlegl');
+  const footR=findBoneKey('foot.r','footr'),footL=findBoneKey('foot.l','footl');
+  const cyanMat=mat(0x4ebfd5,{roughness:.48,metalness:.18});
+  const navyMat=mat(0x20283b,{roughness:.92});
+  const violetMat=mat(0x7240b8,{roughness:.58,metalness:.16});
+
+  const buildBracer=(side)=>{
+    const g=new THREE.Group();g.name=side<0?'HF_Avian_Arm_L':'HF_Avian_Arm_R';
+    const cuff=new THREE.Mesh(new THREE.CylinderGeometry(tm.s.x*.085,tm.s.x*.10,tm.s.y*.24,6),navyMat.clone());
+    cuff.rotation.z=Math.PI/2;g.add(cuff);
+    const fin=new THREE.Mesh(new THREE.ConeGeometry(tm.s.x*.07,tm.s.y*.24,3),cyanMat.clone());
+    fin.position.set(0,0,-tm.s.z*.15);fin.rotation.x=-.25;g.add(fin);
+    return g;
+  };
+  if(armR)addAvian(armR,buildBracer(1));
+  if(armL)addAvian(armL,buildBracer(-1));
+
+  const buildHandPlate=(side)=>{
+    const g=new THREE.Group();g.name=side<0?'HF_Avian_Hand_L':'HF_Avian_Hand_R';
+    const plate=new THREE.Mesh(new THREE.BoxGeometry(tm.s.x*.18,tm.s.y*.075,tm.s.z*.20),violetMat.clone());
+    plate.position.z=tm.s.z*.08;g.add(plate);
+    const claw=new THREE.Mesh(new THREE.ConeGeometry(tm.s.x*.045,tm.s.z*.28,3),cyanMat.clone());
+    claw.rotation.x=Math.PI/2;claw.position.set(side*tm.s.x*.04,0,tm.s.z*.20);g.add(claw);
+    return g;
+  };
+  if(handR)addAvian(handR,buildHandPlate(1));
+  if(handL)addAvian(handL,buildHandPlate(-1));
+
+  const buildShin=(side)=>{
+    const g=new THREE.Group();g.name=side<0?'HF_Avian_Leg_L':'HF_Avian_Leg_R';
+    const wrap=new THREE.Mesh(new THREE.CylinderGeometry(tm.s.x*.09,tm.s.x*.105,tm.s.y*.30,6),navyMat.clone());
+    g.add(wrap);
+    for(let i=0;i<2;i++){
+      const band=new THREE.Mesh(new THREE.TorusGeometry(tm.s.x*.10,tm.s.x*.018,4,8),violetMat.clone());
+      band.rotation.x=Math.PI/2;band.position.y=(i?1:-1)*tm.s.y*.09;g.add(band);
+    }
+    return g;
+  };
+  if(shinR)addAvian(shinR,buildShin(1));
+  if(shinL)addAvian(shinL,buildShin(-1));
+
+  const buildFoot=(side)=>{
+    const g=new THREE.Group();g.name=side<0?'HF_Avian_Foot_L':'HF_Avian_Foot_R';
+    const boot=new THREE.Mesh(new THREE.BoxGeometry(tm.s.x*.22,tm.s.y*.11,tm.s.z*.32),navyMat.clone());
+    boot.position.z=tm.s.z*.06;g.add(boot);
+    const talon=new THREE.Mesh(new THREE.ConeGeometry(tm.s.x*.055,tm.s.z*.26,3),cyanMat.clone());
+    talon.rotation.x=Math.PI/2;talon.position.set(side*tm.s.x*.03,-tm.s.y*.01,tm.s.z*.25);g.add(talon);
+    return g;
+  };
+  if(footR)addAvian(footR,buildFoot(1));
+  if(footL)addAvian(footL,buildFoot(-1));
+
+  const back=new THREE.Group();back.name='HF_Avian_Back';back.position.copy(tc);
+  back.position.z-=tm.s.z*.42;back.position.y+=tm.s.y*.08;
+  for(let i=-2;i<=2;i++){
+    const feather=new THREE.Mesh(new THREE.ConeGeometry(tm.s.x*.075,tm.s.y*(.38-Math.abs(i)*.035),3),mat(i===0?0x7240b8:0x355f9e,{roughness:.86}));
+    feather.position.set(i*tm.s.x*.11,-Math.abs(i)*tm.s.y*.035,0);
+    feather.rotation.z=-i*.12;feather.rotation.x=Math.PI;back.add(feather);
+  }
+  addAvian(chestBone,back);
+
+  // Dual crystalline hunter daggers attached to the real hand sockets.
+  const buildDagger=(side)=>{
+    const g=new THREE.Group();g.name=side<0?'HF_Avian_Dagger_L':'HF_Avian_Dagger_R';
+    const handle=new THREE.Mesh(new THREE.CylinderGeometry(.035,.04,.26,6),mat(0x351e2d,{roughness:.92}));handle.position.y=.12;g.add(handle);
+    const guard=new THREE.Mesh(new THREE.BoxGeometry(.22,.045,.07),mat(0x7a3fd1,{metalness:.35,roughness:.36}));guard.position.y=.27;g.add(guard);
+    const blade=new THREE.Mesh(new THREE.ConeGeometry(.105,.62,4),mat(0x55d9df,{metalness:.22,roughness:.28,emissive:0x0b5660,emissiveIntensity:.75}));
+    blade.position.y=.59;blade.rotation.y=Math.PI/4;g.add(blade);
+    g.rotation.z=side<0?.18:-.18;return g;
+  };
+  addAvian(right,buildDagger(1));addAvian(left,buildDagger(-1));
+  avianReady=true;
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{
+    avianReady:true,
+    avianPieces:avianPieces.length,
+    avianVersion:1,
+    avianSlots:{
+      head:!!headBone,chest:!!chestBone,arms:!!(armR&&armL),hands:!!(handR&&handL),
+      legs:!!(shinR&&shinL),feet:!!(footR&&footL),back:true,weapons:!!(right&&left)
+    }
+  });
+}
+function setAvianVisible(on){
+  avianPieces.forEach(o=>o.visible=on);
+  // Hood replaces the visible face/head only in prototype mode.
+  ['M_Head',...FACE].forEach(n=>setPartVisible(n,!on));
+}
+function setDesignMode(mode){
+  if(!actor)return;
+  designMode=mode;
+  document.getElementById('rawBtn').classList.toggle('active',mode==='raw');
+  document.getElementById('cleanBtn').classList.toggle('active',mode==='clean');
+  document.getElementById('avianBtn').classList.toggle('active',mode==='avian');
+  setAvianVisible(false);
+  if(mode==='raw')restoreRawMaterials();
+  else{
+    applyCleanMaterials();
+    if(mode==='avian'){buildAvianPrototype();setAvianVisible(true)}
+  }
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{designMode:mode,cleanReady:true,avianReady});
+  updateDiag();frameVisible();
+}
+window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,designRev:DESIGN_REV,unifiedFactory:true,canonicalRoute:'/skinlab-v2/',rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null,designMode:'clean',cleanReady:false,avianReady:false,avianPieces:0,armorAnatomyReady:false,armorSetCount:0,knightHeadParts:0,molderReady:false,molderPhase:2,molderSkinPreserved:false,molderChangedVertices:0,painterReady:true,painterVersion:2};
+window.__SKINLAB_DIAG__=window.__MODULAR_FACTORY_DIAG__;
+window.__SKIN_FACTORY_DIAG__=window.__MODULAR_FACTORY_DIAG__;
+
+const ktx2=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/libs/basis/').detectSupport(renderer);
+const loader=new GLTFLoader();loader.setKTX2Loader(ktx2);loader.setMeshoptDecoder(MeshoptDecoder);
+loader.load(MODEL,g=>{
+  try{
+    actor=g.scene;actor.userData.clips=g.animations||[];scene.add(actor);
+    actor.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){meshByName.set(o.name,o);o.castShadow=true;o.receiveShadow=true;o.visible=false}});
+    rememberBaseMaterials();
+    setBaseVisibility();
+    applyCleanMaterials();
+    cacheArmorDonors();
+    const rig=resolveNode(actor,'Rig_Medium'),right=resolveNode(actor,'handslot.r'),left=resolveNode(actor,'handslot.l');
+    if(!rig||!right||!left)throw new Error('Rig_Medium o sockets faltantes');
+    addSocketHelper(right,'Socket_R',0x69f0ae);addSocketHelper(left,'Socket_L',0x8b5cf6);
+    skeleton=new THREE.SkeletonHelper(actor);skeleton.visible=false;scene.add(skeleton);
+    mixer=new THREE.AnimationMixer(actor);
+    const select=document.getElementById('animSelect');actor.userData.clips.forEach(c=>{const op=document.createElement('option');op.value=c.name;op.textContent=c.name;select.appendChild(op)});
+    select.value=actor.userData.clips.some(c=>c.name==='Idle')?'Idle':actor.userData.clips[0]?.name||'';play(select.value);
+    buildAvianPrototype();
+    setAvianVisible(false);
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{
+      ready:true,rig:true,rightSocket:true,leftSocket:true,rightSocketRuntime:right.name,leftSocketRuntime:left.name,
+      clips:actor.userData.clips.length,cleanReady:true,avianReady,avianPieces:avianPieces.length,designMode:'clean',
+      armorAnatomyReady:true,armorSetCount:Object.keys(ARMOR_LIBRARY).length,knightHeadParts:ARMOR_LIBRARY.knight.head.length,
+      molderReady:true,molderPhase:2,molderSkinPreserved:true,molderChangedVertices:0,
+      painterReady:true,painterVersion:2,unifiedFactory:true,canonicalRoute:'/skinlab-v2/'
+    });
+    window.__MODULAR_FACTORY_API__={setDesignMode,frameVisible,fixedView,showAnatomy,moldCurrentSlot,resetMolder,anatomyStats,paintArmorPreset};
+    window.__ARMOR_MOLDER__={showAnatomy,moldCurrentSlot,resetMolder,library:ARMOR_LIBRARY,stats:anatomyStats,paintArmorPreset};
+    window.__SKIN_FACTORY_API__=window.__MODULAR_FACTORY_API__;
+    pill('rigPill',true,'Rig_Medium ✓');pill('socketPill',true,'handslot L/R ✓');pill('clipPill',actor.userData.clips.length===22,actor.userData.clips.length+' clips ✓');
+    frameVisible();updateDiag();
+  }catch(err){throw err}
+},undefined,err=>{
+  console.error(err);window.__MODULAR_FACTORY_DIAG__.error=String(err?.message||err);
+  const e=document.getElementById('error');e.style.display='block';e.textContent='Carga fallida: '+(err?.message||err);
+});
+
+document.getElementById('rawBtn').onclick=()=>setDesignMode('raw');
+document.getElementById('cleanBtn').onclick=()=>setDesignMode('clean');
+document.getElementById('avianBtn').onclick=()=>setDesignMode('avian');
+document.getElementById('donorSetSelect').onchange=()=>{restoreArmorGeometry();resetMolder();showAnatomy('full')};
+document.getElementById('anatomyBaseBtn').onclick=()=>showAnatomy('base');
+document.getElementById('anatomyFullBtn').onclick=()=>showAnatomy('full');
+document.getElementById('anatomyExplodedBtn').onclick=()=>showAnatomy('exploded');
+document.querySelectorAll('[data-anatomy-slot]').forEach(b=>b.onclick=()=>{
+  document.getElementById('moldSlotSelect').value=b.dataset.anatomySlot;
+  showAnatomy('slot',b.dataset.anatomySlot);
+});
+document.getElementById('moldSlotSelect').onchange=()=>{
+  for(const id of ['moldWidth','moldCrown','moldFront','moldTaper']){document.getElementById(id).value=0;document.getElementById(id+'Val').textContent='0'}
+  showSlotForFactory(document.getElementById('donorSetSelect').value,currentMoldSlot());frameVisible();
+};
+for(const id of ['moldWidth','moldCrown','moldFront','moldTaper'])document.getElementById(id).oninput=moldCurrentSlot;
+document.getElementById('moldApplyBtn').onclick=moldCurrentSlot;
+document.getElementById('moldResetBtn').onclick=resetMolder;
+document.getElementById('paintSourceBtn').onclick=()=>paintArmorPreset('source');
+document.getElementById('paintBlackBtn').onclick=()=>paintArmorPreset('black');
+document.getElementById('paintRavenBtn').onclick=()=>paintArmorPreset('raven');
+document.getElementById('paintCustomBtn').onclick=()=>paintArmorPreset('custom');
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>fixedView(b.dataset.view));
+document.getElementById('freeBtn').onclick=()=>{document.getElementById('freeBtn').classList.add('active')};
+document.getElementById('bonesBtn').onclick=e=>{if(!skeleton)return;skeleton.visible=!skeleton.visible;e.currentTarget.classList.toggle('active',skeleton.visible)};
+document.getElementById('socketsBtn').onclick=e=>{const on=!socketHelpers[0]?.visible;socketHelpers.forEach(h=>h.visible=on);e.currentTarget.classList.toggle('active',on)};
+document.getElementById('spinBtn').onclick=e=>{autoRotate=!autoRotate;e.currentTarget.classList.toggle('active',autoRotate)};
+document.getElementById('resetBtn').onclick=()=>frameVisible();
+document.querySelectorAll('[data-slot]').forEach(i=>i.onchange=()=>{setBaseVisibility();frameVisible()});
+document.getElementById('animSelect').onchange=e=>play(e.target.value);
+document.getElementById('playBtn').onclick=()=>play(document.getElementById('animSelect').value);
+
 const panelEl=document.querySelector('.panel');
 const uiToggleBtn=document.getElementById('uiToggleBtn');
 const fullscreenBtn=document.getElementById('fullscreenBtn');
-uiToggleBtn.onclick=()=>{panelEl.classList.toggle('ui-hidden');uiToggleBtn.classList.toggle('active',!panelEl.classList.contains('ui-hidden'));setTimeout(resize,220)};
+uiToggleBtn.onclick=()=>{panelEl.classList.toggle('ui-hidden');uiToggleBtn.classList.toggle('active',!panelEl.classList.contains('ui-hidden'));setTimeout(resize,190)};
 let labFullscreen=false;
 async function toggleFullscreen(){
   if(!labFullscreen){
@@ -1207,18 +945,14 @@ function syncFullscreen(){
 document.addEventListener('fullscreenchange',syncFullscreen);
 
 const clock=new THREE.Clock();
-function resize(){syncStageSafeArea();const w=stage.clientWidth,h=stage.clientHeight;renderer.setScissorTest(false);renderer.setSize(w,h,false);applySafeProjection();if(actor)fitActor()}
+function resize(){syncStageSafeArea();const w=stage.clientWidth,h=stage.clientHeight;renderer.setScissorTest(false);renderer.setSize(w,h,false);applySafeProjection();if(actor)frameVisible()}
 addEventListener('resize',resize);visualViewport?.addEventListener?.('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,120));resize();
-function frame(){
-  requestAnimationFrame(frame);
-  const dt=Math.min(.05,clock.getDelta());
-  mixer?.update(dt);
-  if(actor&&autoRotate)actor.rotation.y+=dt*.28;
-  controls.update();
+function loop(){
+  requestAnimationFrame(loop);
+  const dt=Math.min(.05,clock.getDelta());mixer?.update(dt);if(actor&&autoRotate)actor.rotation.y+=dt*.28;controls.update();
   renderer.setScissorTest(false);renderer.setViewport(0,0,stage.clientWidth,stage.clientHeight);renderer.clear();
   renderer.render(scene,camera);
-}
-boot();frame();
+}loop();
 </script>
 </body>
 </html>
