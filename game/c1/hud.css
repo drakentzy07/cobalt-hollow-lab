@@ -943,10 +943,10 @@ body.mobile-touch.hf-game-c1 #loading-screen .ls-progress {
 #hf-c28-hud-editor {
   position: fixed;
   top: max(8px, env(safe-area-inset-top));
-  left: 50%;
+  left: max(8px, env(safe-area-inset-left));
   z-index: 1400;
-  width: min(560px, 66vw);
-  transform: translateX(-50%);
+  width: min(390px, 47vw);
+  transform: none;
   box-sizing: border-box;
   border: 1px solid rgba(211,180,255,.46);
   border-radius: 14px;
@@ -1054,7 +1054,7 @@ body.hf-c28-hud-editing .hf-c28-hud-selected {
 
 @media (orientation: landscape) and (max-height: 430px) {
   #hf-c28-hud-editor {
-    width: min(600px, 72vw);
+    width: min(390px, 47vw);
     padding: 8px 10px;
   }
   .hf-c28-hud-editor__actions {
