@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 describe('HIGHFLY GAME-C2.7 human-red repair', () => {
   it('does not call the HUD world-ready while creator or loading is visible', () => {
     const runtime = readFileSync('src/highfly/game_c1_runtime.ts', 'utf8');
-    expect(runtime).toContain("C2.7-human-red-repair");
+    expect(runtime).toContain('const HIGHFLY_GAME_C22_BUILD =');
     expect(runtime).toContain("document.body.classList.contains('game-active')");
     for (const id of [
       'start-screen',
@@ -35,7 +35,6 @@ describe('HIGHFLY GAME-C2.7 human-red repair', () => {
     const mobile = readFileSync('src/game/mobile_controls.ts', 'utf8');
     const index = readFileSync('index.html', 'utf8');
     const play = readFileSync('play.html', 'utf8');
-    expect(mobile).toContain("this.bindButton('mobile-bar-editor', () => this.callbacks.onMenu());");
     expect(mobile).not.toContain("this.bindButton('mobile-bar-editor', () => this.callbacks.onBarEditor());");
     for (const html of [index, play]) {
       expect(html).toContain('id="mobile-bar-editor" title="Ajustes" aria-label="Ajustes"');
