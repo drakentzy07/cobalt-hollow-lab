@@ -21,6 +21,7 @@ button:hover{background:#1d1d29}button.active{border-color:var(--violet);backgro
 .note,.diag{font-size:10px;line-height:1.42;color:var(--muted)}.diag{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}
 .moldergrid{display:grid;grid-template-columns:1fr;gap:6px}.moldrow{display:grid;grid-template-columns:92px 1fr 38px;gap:7px;align-items:center;font-size:9px;color:#c8c8d4}.moldrow input{width:100%;accent-color:var(--violet)}.moldval{font-family:ui-monospace,monospace;text-align:right;color:#a78bfa}
 .paintgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.paintfield{display:grid;gap:4px;font-size:9px;color:#bbb}.paintfield input[type="color"]{width:100%;height:32px;padding:2px;border:1px solid #373744;border-radius:8px;background:#16161f}.paintfield input[type="range"]{width:100%;accent-color:var(--violet)}
+.weargrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.wearfield{display:grid;gap:4px;font-size:9px;color:#bbb}.wearfield select,.wearfield input[type="file"]{width:100%;min-width:0}.wearfield input[type="file"]{font-size:9px;border:1px solid #373744;background:#16161f;color:#bbb;border-radius:9px;padding:6px}.toggleline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.toggle{display:flex;gap:6px;align-items:center;border:1px solid #30303c;background:#12121a;border-radius:9px;padding:6px 7px;font-size:9px;color:#ccc}.toggle input{accent-color:var(--violet)}.status-good{color:var(--ok)}.status-warn{color:#f6c76b}
 .badge{display:inline-block;margin-left:5px;font-size:8px;padding:2px 5px;border-radius:999px;border:1px solid #3b3b49;color:#999}
 .footer{position:absolute;right:14px;bottom:14px;padding:9px 12px;border:1px solid #2b2b36;border-radius:12px;background:rgba(10,10,15,.78);font-size:10px;color:#aaa}
 .lab-actions{position:absolute;right:10px;top:10px;z-index:8;display:flex;gap:6px}.lab-actions button{padding:7px 9px;font-size:10px;background:rgba(16,16,24,.92);backdrop-filter:blur(10px)}
@@ -127,6 +128,50 @@ body.fullscreen-lab #app{grid-template-rows:1fr}body.fullscreen-lab header{displ
     </div>
     <div class="note">Pinta el donor actual sin alterar geometría ni pesos. SOURCE restaura materiales originales. BLACK AURA y RAVEN VIOLET son presets de producción.</div>
   </div>
+  <div class="group" id="wearableLabPanel">
+    <h2>WEARABLE / BONE ATTACH LAB <span class="badge">CLAUDECRAFT NATIVE</span></h2>
+    <div class="weargrid">
+      <label class="wearfield">BASE
+        <select id="wearBaseSelect"><option value="male">MALE · REAL</option><option value="female" disabled>FEMALE · NEXT PHASE</option></select>
+      </label>
+      <label class="wearfield">MODE
+        <select id="wearModeSelect"><option value="native">NATIVE</option><option value="bone">BONE ATTACH</option><option value="skinned">SKINNED · LOCKED</option></select>
+      </label>
+      <label class="wearfield">BONE
+        <select id="wearBoneSelect"></select>
+      </label>
+      <label class="wearfield">DONOR
+        <select id="wearDonorSelect"><option value="tricorne">HARBORMASTER TRICORNE</option><option value="spyglass">HARBORMASTER SPYGLASS</option><option value="local">LOCAL GLB / GLTF</option></select>
+      </label>
+    </div>
+    <div class="row" style="margin-top:7px">
+      <button id="nativeTricorneBtn">🎩 TRICORNE → HEAD</button>
+      <button id="nativeSpyglassBtn">🔭 SPYGLASS → HIPS</button>
+    </div>
+    <label class="wearfield">DONOR LOCAL
+      <input id="donorFileInput" type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json">
+    </label>
+    <div class="toggleline" style="margin-top:7px">
+      <label class="toggle"><input id="toggleBaseBody" type="checkbox" checked>Base Body</label>
+      <label class="toggle"><input id="toggleArmor" type="checkbox">Armor</label>
+      <label class="toggle"><input id="toggleDonor" type="checkbox" checked>Donor</label>
+      <label class="toggle"><input id="toggleSkeleton" type="checkbox">Skeleton</label>
+      <label class="toggle"><input id="toggleBindRef" type="checkbox">Bind Reference</label>
+      <label class="toggle"><input id="toggleBounds" type="checkbox">Bounding Box</label>
+    </div>
+    <div class="row" style="margin-top:7px">
+      <button id="fitPreviewBtn">FIT PREVIEW</button><button id="attachDonorBtn">ATTACH</button><button id="detachDonorBtn">DETACH</button><button id="wearResetBtn">RESET</button>
+    </div>
+    <div class="row">
+      <button id="wearPlayBtn">▶ PLAY PROOF</button><button id="wearStopBtn">■ STOP</button><button id="wearNextBtn">NEXT ANIMATION</button>
+    </div>
+    <div class="note">Harbormaster usa el pipeline real: bind-frame por inverseBindMatrices + root identidad + parent al bone. SKINNED/weight transfer queda bloqueado hasta que este proof sea GREEN.</div>
+    <div id="wearableDiag" class="diag">Preparando pipeline nativo…</div>
+  </div>
+  <div class="group">
+    <h2>DONOR INSPECTOR</h2>
+    <div id="donorDiag" class="diag">Sin donor externo cargado. GLB recomendado; glTF debe ser autocontenido para inspección local.</div>
+  </div>
   <div class="group">
     <h2>VISTAS</h2>
     <div class="row">
@@ -175,7 +220,13 @@ const UPSTREAM='9b57e49c9676d75962700f828cc00a50a9a988b5';
 const MODEL='./assets/warrior_modular.glb';
 const SOURCE_BLOB='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2';
 const SOURCE_BYTES=3477500;
-const DESIGN_REV='unified-factory+molder-phase2+painter-p4';
+const DESIGN_REV='native-wearable-pipeline+donor-inspector-p1';
+const NATIVE_WEARABLES={
+  tricorne:{url:'./assets/harbormaster_tricorne.glb',bone:'head',label:'TRICORNE'},
+  spyglass:{url:'./assets/harbormaster_spyglass.glb',bone:'hips',label:'SPYGLASS'}
+};
+const BIND_REFERENCE_BONES=new Set(['head','hips','chest','hand.r','hand.l','upper_arm.r','upper_arm.l','lowerleg.r','lowerleg.l','foot.r','foot.l']);
+
 const FACE=['M_Ear_round','M_Eye_almond','M_Brow_soft','M_Mouth_neutral'];
 const CORE=['M_Head','M_Torso','M_ArmL','M_ArmR','M_HandL','M_HandR','M_LegL','M_LegR','M_FootL','M_FootR','M_Loin',...FACE];
 const SLOT_MAP={
@@ -247,6 +298,10 @@ const camera=new THREE.PerspectiveCamera(35,1,.01,100);
 const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.minDistance=1.6;controls.maxDistance=8;
 let actor=null,mixer=null,skeleton=null,socketHelpers=[],autoRotate=false;
 const meshByName=new Map();
+const nativeWearableSources=new Map(),nativeWearableAttached=new Map();
+let realBoneNames=[],donorRoot=null,donorInfo=null,bindReferenceRoot=null,boundsHelper=null,proofRunning=false,proofIndex=0;
+let donorAuditRegistry=null;
+
 
 function runtimeName(name){return name.replace(/[[\].:/]/g,'')}
 function resolveNode(root,name){return root.getObjectByName(name)||root.getObjectByName(runtimeName(name))||null}
@@ -349,6 +404,262 @@ function updateDiag(){
     'MALE CORE '+(missing.length?'MISSING '+missing.join(', '):'15/15 ✓')+'\n'+
     'ARMOR VISIBLE '+armorVisible+'\n'+
     'VISIBLE '+visible.join(', ');
+}
+
+
+function boneKeyNative(name){return String(name||'').toLowerCase().replace(/[^a-z0-9]/g,'')}
+function realBones(){
+  const out=[],seen=new Set();
+  actor?.traverse(o=>{if(o.isBone&&!seen.has(o.uuid)){seen.add(o.uuid);out.push(o)}});
+  return out;
+}
+function resolveRealBone(name){
+  const wanted=boneKeyNative(name);return realBones().find(b=>boneKeyNative(b.name)===wanted)||null;
+}
+function populateRealBoneSelect(){
+  realBoneNames=realBones().map(b=>b.name).filter(Boolean);
+  const select=document.getElementById('wearBoneSelect');select.innerHTML='';
+  for(const name of realBoneNames){const op=document.createElement('option');op.value=name;op.textContent=name;select.appendChild(op)}
+  if(realBoneNames.includes('head'))select.value='head';
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{realBoneCount:realBoneNames.length,realBoneNames:[...realBoneNames]});
+}
+function identityError(o){
+  if(!o)return Infinity;
+  const p=o.position.length(),s=Math.max(Math.abs(o.scale.x-1),Math.abs(o.scale.y-1),Math.abs(o.scale.z-1));
+  const q=Math.min(
+    Math.hypot(o.quaternion.x,o.quaternion.y,o.quaternion.z,o.quaternion.w-1),
+    Math.hypot(o.quaternion.x,o.quaternion.y,o.quaternion.z,o.quaternion.w+1)
+  );
+  return Math.max(p,s,q);
+}
+function objectFinite(root){
+  let ok=true;root?.traverse(o=>{if(!o.matrix.elements.every(Number.isFinite)||!o.matrixWorld.elements.every(Number.isFinite))ok=false});return ok;
+}
+function flattenNativeWearableScene(src){
+  const root=src.clone(true);
+  if(root.children.length!==1)return root;
+  const holder=new THREE.Group(),child=root.children[0];
+  holder.scale.copy(child.scale);
+  child.scale.set(1,1,1);child.position.set(0,0,0);child.rotation.set(0,0,0);
+  root.remove(child);holder.add(child);return holder;
+}
+function nativeWearableSourceIdentity(scene){
+  const top=scene.children;
+  if(top.length!==1)return false;
+  const r=top[0],e=identityError(r);
+  return e<1e-7;
+}
+async function loadNativeWearables(){
+  const results=await Promise.all(Object.entries(NATIVE_WEARABLES).map(async([id,def])=>{
+    const g=await loader.loadAsync(def.url);
+    nativeWearableSources.set(id,g.scene);
+    return {id,sourceIdentity:nativeWearableSourceIdentity(g.scene),animations:g.animations?.length||0};
+  }));
+  const allIdentity=results.every(r=>r.sourceIdentity&&r.animations===0);
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{
+    wearableLabReady:true,nativeWearableAssets:results.map(r=>r.id),nativeWearableSourceIdentity:allIdentity,
+    nativeWearableProof:false,tricorneAttached:false,spyglassAttached:false,wearableDriftMax:0,nativeWearableNoNaN:true
+  });
+  updateWearableDiag();
+  return results;
+}
+function attachNativeWearable(id,on=true){
+  const def=NATIVE_WEARABLES[id],src=nativeWearableSources.get(id);
+  if(!def||!src||!actor)return false;
+  if(!on){const old=nativeWearableAttached.get(id);old?.removeFromParent();nativeWearableAttached.delete(id);syncNativeButtons();updateWearableDiag();return true}
+  const bone=resolveRealBone(def.bone);if(!bone)return false;
+  nativeWearableAttached.get(id)?.removeFromParent();
+  const payload=flattenNativeWearableScene(src);
+  payload.name='HF_NATIVE_'+id.toUpperCase();
+  payload.userData.hfNativeWearable=id;payload.userData.hfBone=def.bone;
+  payload.position.set(0,0,0);payload.quaternion.set(0,0,0,1);payload.scale.set(1,1,1);
+  bone.add(payload);nativeWearableAttached.set(id,payload);
+  syncNativeButtons();updateWearableDiag();return true;
+}
+function syncNativeButtons(){
+  document.getElementById('nativeTricorneBtn')?.classList.toggle('active',nativeWearableAttached.has('tricorne'));
+  document.getElementById('nativeSpyglassBtn')?.classList.toggle('active',nativeWearableAttached.has('spyglass'));
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{
+    tricorneAttached:nativeWearableAttached.has('tricorne'),
+    spyglassAttached:nativeWearableAttached.has('spyglass')
+  });
+}
+function trackWearableIntegrity(){
+  let drift=window.__MODULAR_FACTORY_DIAG__?.wearableDriftMax||0,noNaN=true;
+  for(const [id,p] of nativeWearableAttached){
+    drift=Math.max(drift,identityError(p));
+    noNaN=noNaN&&objectFinite(p)&&p.parent===resolveRealBone(NATIVE_WEARABLES[id].bone);
+  }
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{wearableDriftMax:drift,nativeWearableNoNaN:noNaN});
+}
+function updateWearableDiag(){
+  const d=window.__MODULAR_FACTORY_DIAG__;if(!d)return;
+  const el=document.getElementById('wearableDiag');if(!el)return;
+  el.textContent=
+    'PIPELINE '+(d.wearableLabReady?'READY ✓':'LOADING…')+'\n'+
+    'REAL BONES '+(d.realBoneCount||0)+'\n'+
+    'TRICORNE → head '+(d.tricorneAttached?'ATTACHED ✓':'off')+'\n'+
+    'SPYGLASS → hips '+(d.spyglassAttached?'ATTACHED ✓':'off')+'\n'+
+    'ROOT IDENTITY '+(d.nativeWearableSourceIdentity?'✓':'…')+' · DRIFT '+Number(d.wearableDriftMax||0).toExponential(2)+'\n'+
+    'NO NaN '+(d.nativeWearableNoNaN!==false?'✓':'✗')+' · PROOF '+(d.nativeWearableProof?'GREEN ✓':'pending');
+}
+function proofClipNames(){
+  if(!actor)return [];
+  const names=actor.userData.clips.map(c=>c.name);
+  const pick=(...rx)=>names.find(n=>rx.some(r=>r.test(n)))||null;
+  return [...new Set([
+    pick(/^Idle$/i,/idle/i),
+    pick(/^Walking_A$/i,/walk/i),
+    pick(/^Running_A$/i,/run/i),
+    pick(/^Jump_Idle$/i,/jump/i),
+    pick(/1H_Melee_Attack/i,/attack/i)
+  ].filter(Boolean))];
+}
+async function runNativeWearableProof(){
+  if(!window.__MODULAR_FACTORY_DIAG__.wearableLabReady)return false;
+  attachNativeWearable('tricorne',true);attachNativeWearable('spyglass',true);
+  window.__MODULAR_FACTORY_DIAG__.wearableDriftMax=0;window.__MODULAR_FACTORY_DIAG__.nativeWearableNoNaN=true;
+  const clips=proofClipNames();proofRunning=true;
+  for(const clip of clips){
+    if(!proofRunning)break;
+    play(clip);document.getElementById('animSelect').value=clip;
+    await new Promise(r=>setTimeout(r,280));trackWearableIntegrity();
+  }
+  proofRunning=false;
+  const d=window.__MODULAR_FACTORY_DIAG__;
+  const parentOK=nativeWearableAttached.get('tricorne')?.parent===resolveRealBone('head')&&nativeWearableAttached.get('spyglass')?.parent===resolveRealBone('hips');
+  const green=clips.length>=5&&parentOK&&d.nativeWearableSourceIdentity&&d.nativeWearableNoNaN&&d.wearableDriftMax<1e-7;
+  Object.assign(d,{nativeWearableProof:green,nativeProofClips:clips,nativeWearableParentOK:parentOK});
+  updateWearableDiag();return green;
+}
+function stopWearProof(){proofRunning=false;mixer?.stopAllAction();updateWearableDiag()}
+function nextWearAnimation(){
+  if(!actor?.userData?.clips?.length)return;
+  proofIndex=(proofIndex+1)%actor.userData.clips.length;
+  const name=actor.userData.clips[proofIndex].name;document.getElementById('animSelect').value=name;play(name);
+}
+function selectedBonePartNames(name){
+  const k=boneKeyNative(name);
+  if(k==='head')return ['M_Head',...FACE];
+  if(k.includes('handr'))return ['M_HandR'];if(k.includes('handl'))return ['M_HandL'];
+  if(k.includes('upperarmr'))return ['M_ArmR'];if(k.includes('upperarml'))return ['M_ArmL'];
+  if(k.includes('lowerlegr'))return ['M_LegR'];if(k.includes('lowerlegl'))return ['M_LegL'];
+  if(k.includes('footr'))return ['M_FootR'];if(k.includes('footl'))return ['M_FootL'];
+  if(k==='hips')return ['M_Torso','M_LegL','M_LegR','M_Loin'];
+  if(k.includes('chest')||k.includes('spine'))return ['M_Torso'];
+  return ['M_Torso'];
+}
+function selectedBodyBox(){
+  const names=selectedBonePartNames(document.getElementById('wearBoneSelect').value),b=new THREE.Box3();let any=false;
+  for(const n of names)for(const root of partNodes(n)){b.expandByObject(root,true);any=true}
+  return any?b:visibleBox();
+}
+function clearBounds(){boundsHelper?.removeFromParent();boundsHelper=null}
+function refreshBounds(){
+  clearBounds();if(!document.getElementById('toggleBounds').checked)return;
+  const target=donorRoot&&donorRoot.visible?new THREE.Box3().setFromObject(donorRoot):selectedBodyBox();
+  if(!target.isEmpty()){boundsHelper=new THREE.Box3Helper(target,0xffffff);scene.add(boundsHelper)}
+}
+async function loadBindReference(){
+  bindReferenceRoot?.removeFromParent();bindReferenceRoot=null;
+  if(!document.getElementById('toggleBindRef').checked)return false;
+  const boneName=document.getElementById('wearBoneSelect').value;
+  if(!BIND_REFERENCE_BONES.has(boneName)){
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{bindReferenceLoaded:false,bindReferenceBone:boneName,bindReferenceReason:'not-pregenerated'});
+    updateDonorDiag();return false;
+  }
+  try{
+    const safe=boneName.replace(/[^A-Za-z0-9_.-]/g,'_'),g=await loader.loadAsync('./assets/bind/reference_'+safe+'.glb');
+    bindReferenceRoot=g.scene;bindReferenceRoot.name='HF_BIND_REFERENCE_'+safe;
+    bindReferenceRoot.traverse(o=>{if(o.isMesh){const mats=Array.isArray(o.material)?o.material:[o.material];o.material=(Array.isArray(o.material)?mats.map(()=>new THREE.MeshBasicMaterial({wireframe:true,transparent:true,opacity:.22})):new THREE.MeshBasicMaterial({wireframe:true,transparent:true,opacity:.22}));}});
+    const bone=resolveRealBone(boneName);if(!bone)throw new Error('bone missing');
+    bone.add(bindReferenceRoot);
+    bindReferenceRoot.position.set(0,0,0);bindReferenceRoot.quaternion.set(0,0,0,1);bindReferenceRoot.scale.set(1,1,1);
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{bindReferenceLoaded:true,bindReferenceBone:boneName});
+    return true;
+  }catch(e){
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{bindReferenceLoaded:false,bindReferenceBone:boneName,bindReferenceReason:String(e?.message||e)});
+    return false;
+  }finally{updateDonorDiag()}
+}
+function inspectDonorScene(root,animations=[],fileName='local'){
+  const meshes=new Set(),skins=new Set(),bones=new Set(),materials=new Set();let vertices=0,triangles=0,skinIndex=false,skinWeight=false,morph=false;
+  root.traverse(o=>{
+    if(o.isBone)bones.add(o.name);
+    if(o.isMesh||o.isSkinnedMesh){
+      meshes.add(o.uuid);if(o.isSkinnedMesh&&o.skeleton)skins.add(o.skeleton.uuid);
+      const g=o.geometry,p=g?.attributes?.position;if(p)vertices+=p.count;
+      triangles+=Math.floor((g?.index?.count||p?.count||0)/3);
+      skinIndex=skinIndex||!!g?.attributes?.skinIndex;skinWeight=skinWeight||!!g?.attributes?.skinWeight;
+      morph=morph||!!(g?.morphAttributes&&Object.values(g.morphAttributes).some(a=>a?.length));
+      const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms)if(m)materials.add(m.uuid);
+    }
+  });
+  const nativeRig=!!resolveNode(root,'Rig_Medium'),box=new THREE.Box3().setFromObject(root),size=new THREE.Vector3();box.getSize(size);
+  let classification='REFERENCE-ONLY';
+  if(nativeRig&&skins.size)classification='NATIVE';
+  else if(skins.size)classification='WEIGHT-TRANSFER';
+  else if(meshes.size)classification='RIGID-ATTACH';
+  return {file:fileName,meshCount:meshes.size,skinCount:skins.size,boneCount:bones.size,animationCount:animations.length,materialCount:materials.size,vertices,triangles,
+    boundingBox:{min:box.min.toArray(),max:box.max.toArray(),size:size.toArray()},skeleton:nativeRig?'Rig_Medium':(bones.size?[...bones][0]:'NONE'),
+    skinIndex,skinWeight,morphTargets:morph,classification};
+}
+function updateDonorDiag(){
+  const el=document.getElementById('donorDiag');if(!el)return;
+  if(!donorInfo){el.textContent='Sin donor externo cargado. Registro auditado '+(donorAuditRegistry?.donors?.length||0)+' assets/paquetes.';return}
+  el.textContent=
+    'FILE '+donorInfo.file+'\nFORMAT '+donorInfo.format+'\nMESH '+donorInfo.meshCount+' · SKIN '+donorInfo.skinCount+' · BONE '+donorInfo.boneCount+' · ANIM '+donorInfo.animationCount+'\n'+
+    'MATERIAL '+donorInfo.materialCount+' · VERT '+donorInfo.vertices+' · TRI '+donorInfo.triangles+'\n'+
+    'SKELETON '+donorInfo.skeleton+'\nSKININDEX '+(donorInfo.skinIndex?'YES':'NO')+' · SKINWEIGHT '+(donorInfo.skinWeight?'YES':'NO')+' · MORPH '+(donorInfo.morphTargets?'YES':'NO')+'\n'+
+    'BBOX '+donorInfo.boundingBox.size.map(v=>Number(v).toFixed(3)).join(' × ')+'\nCLASSIFICATION '+donorInfo.classification+
+    (window.__MODULAR_FACTORY_DIAG__.bindReferenceLoaded?'\nBIND REF '+window.__MODULAR_FACTORY_DIAG__.bindReferenceBone+' ✓':'');
+}
+async function inspectDonorFile(file){
+  if(!file)return false;
+  donorRoot?.removeFromParent();donorRoot=null;clearBounds();
+  const ext=file.name.toLowerCase().split('.').pop(),data=ext==='gltf'?await file.text():await file.arrayBuffer();
+  const gltf=await new Promise((resolve,reject)=>loader.parse(data,'',resolve,reject));
+  donorRoot=gltf.scene;donorRoot.name='HF_LOCAL_DONOR';scene.add(donorRoot);
+  donorInfo={...inspectDonorScene(donorRoot,gltf.animations||[],file.name),format:ext==='gltf'?'glTF':'GLB'};
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{donorInspectorReady:true,donorInfo,donorClassification:donorInfo.classification});
+  document.getElementById('wearDonorSelect').value='local';document.getElementById('toggleDonor').checked=true;
+  updateDonorDiag();refreshBounds();frameVisible();return true;
+}
+function fitDonorPreview(){
+  if(!donorRoot||!donorInfo)return false;
+  donorRoot.removeFromParent();scene.add(donorRoot);donorRoot.position.set(0,0,0);donorRoot.quaternion.set(0,0,0,1);donorRoot.scale.set(1,1,1);
+  const db=new THREE.Box3().setFromObject(donorRoot),ds=new THREE.Vector3(),dc=new THREE.Vector3();db.getSize(ds);db.getCenter(dc);
+  const tb=selectedBodyBox(),ts=new THREE.Vector3(),tc=new THREE.Vector3();tb.getSize(ts);tb.getCenter(tc);
+  const denom=Math.max(ds.x,ds.y,ds.z,1e-5),target=Math.max(ts.x,ts.y,ts.z,1e-5),scale=Math.min(5,Math.max(.02,target/denom));
+  donorRoot.scale.setScalar(scale);donorRoot.updateMatrixWorld(true);
+  const db2=new THREE.Box3().setFromObject(donorRoot),dc2=new THREE.Vector3();db2.getCenter(dc2);donorRoot.position.add(tc.sub(dc2));
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{donorFitPreview:true,donorFitBone:document.getElementById('wearBoneSelect').value,donorFitScale:scale});
+  refreshBounds();frameVisible();return true;
+}
+function attachLocalDonor(){
+  if(!donorRoot||!donorInfo)return false;
+  if(donorInfo.classification==='WEIGHT-TRANSFER'){
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{donorAttachBlocked:true,donorAttachReason:'weight-transfer-locked'});updateDonorDiag();return false;
+  }
+  const bone=resolveRealBone(document.getElementById('wearBoneSelect').value);if(!bone)return false;
+  bone.attach(donorRoot);donorRoot.userData.hfPreviewAttach=true;
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{donorAttached:true,donorAttachBone:bone.name,donorAttachMode:'preview-fit'});
+  refreshBounds();return true;
+}
+function detachLocalDonor(){
+  if(!donorRoot)return;scene.attach(donorRoot);Object.assign(window.__MODULAR_FACTORY_DIAG__,{donorAttached:false});refreshBounds();
+}
+function resetWearableLab(){
+  proofRunning=false;for(const id of [...nativeWearableAttached.keys()])attachNativeWearable(id,false);
+  donorRoot?.removeFromParent();donorRoot=null;donorInfo=null;bindReferenceRoot?.removeFromParent();bindReferenceRoot=null;clearBounds();
+  document.getElementById('donorFileInput').value='';document.getElementById('toggleBindRef').checked=false;document.getElementById('toggleBounds').checked=false;
+  Object.assign(window.__MODULAR_FACTORY_DIAG__,{nativeWearableProof:false,wearableDriftMax:0,donorAttached:false,donorFitPreview:false,bindReferenceLoaded:false});
+  updateDonorDiag();updateWearableDiag();frameVisible();
+}
+async function loadDonorAuditRegistry(){
+  try{const r=await fetch('./donors/audits.json',{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);donorAuditRegistry=await r.json();
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{donorAuditReady:true,donorAuditCount:donorAuditRegistry.donors?.length||0});updateDonorDiag();
+  }catch(e){Object.assign(window.__MODULAR_FACTORY_DIAG__,{donorAuditReady:false,donorAuditError:String(e?.message||e)})}
 }
 
 const armorTransformOriginal=new Map(),armorGeometryOriginal=new Map(),armorSkinFingerprint=new Map();
@@ -830,7 +1141,7 @@ function setDesignMode(mode){
   Object.assign(window.__MODULAR_FACTORY_DIAG__,{designMode:mode,cleanReady:true,avianReady});
   updateDiag();frameVisible();
 }
-window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,designRev:DESIGN_REV,unifiedFactory:true,canonicalRoute:'/skinlab-v2/',rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null,designMode:'clean',cleanReady:false,avianReady:false,avianPieces:0,armorAnatomyReady:false,armorSetCount:0,knightHeadParts:0,molderReady:false,molderPhase:2,molderSkinPreserved:false,molderChangedVertices:0,painterReady:true,painterVersion:2};
+window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,designRev:DESIGN_REV,unifiedFactory:true,canonicalRoute:'/skinlab-v2/',rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null,designMode:'clean',cleanReady:false,avianReady:false,avianPieces:0,armorAnatomyReady:false,armorSetCount:0,knightHeadParts:0,molderReady:false,molderPhase:2,molderSkinPreserved:false,molderChangedVertices:0,painterReady:true,painterVersion:2,wearableLabReady:false,nativeWearableProof:false,nativeWearableSourceIdentity:false,tricorneAttached:false,spyglassAttached:false,wearableDriftMax:0,nativeWearableNoNaN:true,realBoneCount:0,realBoneNames:[],bindReferenceLoaded:false,donorInspectorReady:true,donorAuditReady:false};
 window.__SKINLAB_DIAG__=window.__MODULAR_FACTORY_DIAG__;
 window.__SKIN_FACTORY_DIAG__=window.__MODULAR_FACTORY_DIAG__;
 
@@ -844,6 +1155,8 @@ loader.load(MODEL,g=>{
     setBaseVisibility();
     applyCleanMaterials();
     cacheArmorDonors();
+    populateRealBoneSelect();
+    loadDonorAuditRegistry();
     const rig=resolveNode(actor,'Rig_Medium'),right=resolveNode(actor,'handslot.r'),left=resolveNode(actor,'handslot.l');
     if(!rig||!right||!left)throw new Error('Rig_Medium o sockets faltantes');
     addSocketHelper(right,'Socket_R',0x69f0ae);addSocketHelper(left,'Socket_L',0x8b5cf6);
@@ -860,11 +1173,12 @@ loader.load(MODEL,g=>{
       molderReady:true,molderPhase:2,molderSkinPreserved:true,molderChangedVertices:0,
       painterReady:true,painterVersion:2,unifiedFactory:true,canonicalRoute:'/skinlab-v2/'
     });
-    window.__MODULAR_FACTORY_API__={setDesignMode,frameVisible,fixedView,showAnatomy,moldCurrentSlot,resetMolder,anatomyStats,paintArmorPreset};
+    window.__MODULAR_FACTORY_API__={setDesignMode,frameVisible,fixedView,showAnatomy,moldCurrentSlot,resetMolder,anatomyStats,paintArmorPreset,attachNativeWearable,runNativeWearableProof,inspectDonorScene,fitDonorPreview,attachLocalDonor,loadBindReference};
     window.__ARMOR_MOLDER__={showAnatomy,moldCurrentSlot,resetMolder,library:ARMOR_LIBRARY,stats:anatomyStats,paintArmorPreset};
     window.__SKIN_FACTORY_API__=window.__MODULAR_FACTORY_API__;
     pill('rigPill',true,'Rig_Medium ✓');pill('socketPill',true,'handslot L/R ✓');pill('clipPill',actor.userData.clips.length===22,actor.userData.clips.length+' clips ✓');
-    frameVisible();updateDiag();
+    frameVisible();updateDiag();updateDonorDiag();updateWearableDiag();
+    loadNativeWearables().catch(err=>{window.__MODULAR_FACTORY_DIAG__.wearableError=String(err?.message||err);updateWearableDiag()});
   }catch(err){throw err}
 },undefined,err=>{
   console.error(err);window.__MODULAR_FACTORY_DIAG__.error=String(err?.message||err);
@@ -893,6 +1207,23 @@ document.getElementById('paintSourceBtn').onclick=()=>paintArmorPreset('source')
 document.getElementById('paintBlackBtn').onclick=()=>paintArmorPreset('black');
 document.getElementById('paintRavenBtn').onclick=()=>paintArmorPreset('raven');
 document.getElementById('paintCustomBtn').onclick=()=>paintArmorPreset('custom');
+document.getElementById('nativeTricorneBtn').onclick=()=>attachNativeWearable('tricorne',!nativeWearableAttached.has('tricorne'));
+document.getElementById('nativeSpyglassBtn').onclick=()=>attachNativeWearable('spyglass',!nativeWearableAttached.has('spyglass'));
+document.getElementById('donorFileInput').onchange=e=>inspectDonorFile(e.target.files?.[0]).catch(err=>{donorInfo={file:e.target.files?.[0]?.name||'?',format:'?',meshCount:0,skinCount:0,boneCount:0,animationCount:0,materialCount:0,vertices:0,triangles:0,boundingBox:{size:[0,0,0]},skeleton:'?',skinIndex:false,skinWeight:false,morphTargets:false,classification:'REFERENCE-ONLY',error:String(err?.message||err)};updateDonorDiag()});
+document.getElementById('wearBoneSelect').onchange=()=>{if(document.getElementById('toggleBindRef').checked)loadBindReference();refreshBounds()};
+document.getElementById('toggleBaseBody').onchange=e=>{for(const n of CORE)setPartVisible(n,e.target.checked);frameVisible()};
+document.getElementById('toggleArmor').onchange=e=>{if(e.target.checked)showArmorNames(armorNames(document.getElementById('donorSetSelect').value),true);else hideAllArmor();frameVisible()};
+document.getElementById('toggleDonor').onchange=e=>{if(donorRoot)donorRoot.visible=e.target.checked};
+document.getElementById('toggleSkeleton').onchange=e=>{if(skeleton)skeleton.visible=e.target.checked};
+document.getElementById('toggleBindRef').onchange=()=>loadBindReference();
+document.getElementById('toggleBounds').onchange=refreshBounds;
+document.getElementById('fitPreviewBtn').onclick=fitDonorPreview;
+document.getElementById('attachDonorBtn').onclick=attachLocalDonor;
+document.getElementById('detachDonorBtn').onclick=detachLocalDonor;
+document.getElementById('wearResetBtn').onclick=resetWearableLab;
+document.getElementById('wearPlayBtn').onclick=()=>runNativeWearableProof();
+document.getElementById('wearStopBtn').onclick=stopWearProof;
+document.getElementById('wearNextBtn').onclick=nextWearAnimation;
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>fixedView(b.dataset.view));
 document.getElementById('freeBtn').onclick=()=>{document.getElementById('freeBtn').classList.add('active')};
 document.getElementById('bonesBtn').onclick=e=>{if(!skeleton)return;skeleton.visible=!skeleton.visible;e.currentTarget.classList.toggle('active',skeleton.visible)};
@@ -949,7 +1280,7 @@ function resize(){syncStageSafeArea();const w=stage.clientWidth,h=stage.clientHe
 addEventListener('resize',resize);visualViewport?.addEventListener?.('resize',resize);addEventListener('orientationchange',()=>setTimeout(resize,120));resize();
 function loop(){
   requestAnimationFrame(loop);
-  const dt=Math.min(.05,clock.getDelta());mixer?.update(dt);if(actor&&autoRotate)actor.rotation.y+=dt*.28;controls.update();
+  const dt=Math.min(.05,clock.getDelta());mixer?.update(dt);if(actor&&autoRotate)actor.rotation.y+=dt*.28;controls.update();trackWearableIntegrity();
   renderer.setScissorTest(false);renderer.setViewport(0,0,stage.clientWidth,stage.clientHeight);renderer.clear();
   renderer.render(scene,camera);
 }loop();
