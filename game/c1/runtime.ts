@@ -25,7 +25,7 @@ let enabled = mode !== 'base';
 let lastElementSignature = '';
 let toastTimer = 0;
 
-const HIGHFLY_GAME_C22_BUILD = 'C2.8-mobile-hud-editor';
+const HIGHFLY_GAME_C22_BUILD = 'C2.8.1-s23-hud-default';
 let coachSuppressTimer = 0;
 
 function game(): any {
@@ -407,7 +407,39 @@ const HIGHFLY_HUD_TARGETS: HighflyHudTarget[] = [
   { id: 'debuffs', label: 'DEBUFFS', selectors: ['#debuff-bar'] },
 ];
 
-const HIGHFLY_HUD_STORE_PREFIX = 'highfly:c23:hud:';
+const HIGHFLY_HUD_STORE_PREFIX = 'highfly:c281:hud:';
+
+const HIGHFLY_HUD_DEFAULTS: Record<string, HighflyHudTransform> = {
+  s1: { x: 9, y: 15, scale: 1, opacity: 1 },
+  s2: { x: 15, y: 13, scale: 1, opacity: 1 },
+  s3: { x: 51, y: 3, scale: 1, opacity: 1 },
+  s4: { x: 62, y: -4, scale: 1, opacity: 1 },
+  s5: { x: 47, y: -11, scale: 1, opacity: 1 },
+  s6: { x: -3, y: 17, scale: 1, opacity: 1 },
+  s7: { x: 16, y: 1, scale: 1, opacity: 1 },
+  s8: { x: 53, y: -14, scale: 1, opacity: 1 },
+  s9: { x: 64, y: -19, scale: 1, opacity: 1 },
+  s10: { x: 49, y: -24, scale: 1, opacity: 1 },
+  esp1: { x: 46, y: 15, scale: 1, opacity: 1 },
+  esp2: { x: 60, y: 4, scale: 1, opacity: 1 },
+  ult: { x: 48, y: -7, scale: 1, opacity: 1 },
+  target: { x: 0, y: 23, scale: 1, opacity: 1 },
+  attack: { x: 1, y: 8, scale: 1.08, opacity: 1 },
+  evade: { x: 43, y: 18, scale: 1, opacity: 1 },
+  jump: { x: -86, y: 14, scale: 1, opacity: 1 },
+  move: { x: 0, y: 0, scale: 1, opacity: 1 },
+  menu: { x: 0, y: 0, scale: 1, opacity: 1 },
+  gem: { x: 0, y: 0, scale: 1, opacity: 1 },
+  potion: { x: 0, y: 0, scale: 1, opacity: 1 },
+  stance: { x: 0, y: 0, scale: 1, opacity: 1 },
+  buffs: { x: 0, y: 0, scale: 1, opacity: 1 },
+  debuffs: { x: 0, y: 0, scale: 1, opacity: 1 },
+};
+
+function highflyHudDefault(targetId: string): HighflyHudTransform {
+  const value = HIGHFLY_HUD_DEFAULTS[targetId];
+  return value ? { ...value } : { x: 0, y: 0, scale: 1, opacity: 1 };
+}
 let highflyHudEditing = false;
 let highflyHudSelected = 's1';
 let highflyHudDrag:
@@ -428,22 +460,23 @@ function highflyHudElements(target: HighflyHudTarget): HTMLElement[] {
 }
 
 function highflyHudRead(targetId: string): HighflyHudTransform {
+  const fallback = highflyHudDefault(targetId);
   try {
     const raw = localStorage.getItem(HIGHFLY_HUD_STORE_PREFIX + targetId);
-    if (!raw) return { x: 0, y: 0, scale: 1, opacity: 1 };
+    if (!raw) return fallback;
     const parsed = JSON.parse(raw) as Partial<HighflyHudTransform>;
     return {
-      x: Number.isFinite(parsed.x) ? highflyHudClampOffset(Number(parsed.x)) : 0,
-      y: Number.isFinite(parsed.y) ? highflyHudClampOffset(Number(parsed.y)) : 0,
+      x: Number.isFinite(parsed.x) ? highflyHudClampOffset(Number(parsed.x)) : fallback.x,
+      y: Number.isFinite(parsed.y) ? highflyHudClampOffset(Number(parsed.y)) : fallback.y,
       scale: Number.isFinite(parsed.scale)
         ? Math.min(1.45, Math.max(0.65, Number(parsed.scale)))
-        : 1,
+        : fallback.scale,
       opacity: Number.isFinite(parsed.opacity)
         ? Math.min(1, Math.max(0.35, Number(parsed.opacity)))
-        : 1,
+        : fallback.opacity,
     };
   } catch {
-    return { x: 0, y: 0, scale: 1, opacity: 1 };
+    return fallback;
   }
 }
 
@@ -549,7 +582,7 @@ function highflyHudPresetPayload(): string {
   const targets: Record<string, HighflyHudTransform> = {};
   for (const target of HIGHFLY_HUD_TARGETS) targets[target.id] = highflyHudRead(target.id);
   return JSON.stringify({
-    version: 2,
+    version: 3,
     build: HIGHFLY_GAME_C22_BUILD,
     viewport: { width: window.innerWidth, height: window.innerHeight },
     targets,
