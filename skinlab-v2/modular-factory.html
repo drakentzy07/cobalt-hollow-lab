@@ -248,21 +248,39 @@ const panelEl=document.querySelector('.panel');
 const uiToggleBtn=document.getElementById('uiToggleBtn');
 const fullscreenBtn=document.getElementById('fullscreenBtn');
 uiToggleBtn.onclick=()=>{panelEl.classList.toggle('ui-hidden');uiToggleBtn.classList.toggle('active',!panelEl.classList.contains('ui-hidden'))};
+let labFullscreen=false;
 async function toggleFullscreen(){
-  if(!document.fullscreenElement){
+  if(!labFullscreen){
+    labFullscreen=true;
+    document.body.classList.add('fullscreen-lab');
+    panelEl.classList.add('ui-hidden');
+    fullscreenBtn.textContent='⤢ SALIR';
     try{await document.documentElement.requestFullscreen({navigationUI:'hide'})}
     catch(_){try{await document.documentElement.requestFullscreen()}catch(__){}}
     try{await screen.orientation?.lock?.('landscape')}catch(_){}
-    panelEl.classList.add('ui-hidden');
   }else{
-    try{await document.exitFullscreen()}catch(_){}
+    labFullscreen=false;
+    document.body.classList.remove('fullscreen-lab');
+    panelEl.classList.remove('ui-hidden');
+    fullscreenBtn.textContent='⛶ FULL';
+    if(document.fullscreenElement){try{await document.exitFullscreen()}catch(_){}}
   }
+  setTimeout(resize,60);
 }
 fullscreenBtn.onclick=toggleFullscreen;
 function syncFullscreen(){
-  const on=!!document.fullscreenElement;
-  document.body.classList.toggle('fullscreen-lab',on);
-  fullscreenBtn.textContent=on?'⤢ SALIR':'⛶ FULL';
+  if(document.fullscreenElement){
+    labFullscreen=true;
+    document.body.classList.add('fullscreen-lab');
+    panelEl.classList.add('ui-hidden');
+    fullscreenBtn.textContent='⤢ SALIR';
+  }else if(labFullscreen && document.visibilityState==='visible'){
+    // The browser/user backed out of native fullscreen. Return to normal lab UI.
+    labFullscreen=false;
+    document.body.classList.remove('fullscreen-lab');
+    panelEl.classList.remove('ui-hidden');
+    fullscreenBtn.textContent='⛶ FULL';
+  }
   setTimeout(resize,60);
 }
 document.addEventListener('fullscreenchange',syncFullscreen);
