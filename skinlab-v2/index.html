@@ -59,7 +59,7 @@
         <button id="baseBtn" class="active">BASE</button>
         <button id="blackBtn">WARRIOR BLACK AURA</button>
         <button id="autoAuraBtn">⚡ AUTO · BLACK AURA</button>
-        <button id="authorBtn">💎 PREMIUM V2</button>
+        <button id="authorBtn">💎 PREMIUM V2</button>\n        <button id="modularFactoryBtn">🧩 MODULAR REAL</button>
       </div>
       <div class="row">
         <select id="animSelect"></select>
@@ -1082,7 +1082,7 @@ async function boot(){
 baseBtn.onclick=()=>setMode('base');
 blackBtn.onclick=()=>{setMode('black');autoAuraBtn.classList.remove('active')};
 autoAuraBtn.onclick=()=>applyAutoBlackAura();
-authorBtn.onclick=()=>{applyPremiumAuthoring();setMode('black');painterStatus.textContent='PREMIUM V2 reaplicada · HERO SWORD + GLOBAL TRIM + COSMETIC FX.'};
+authorBtn.onclick=()=>{applyPremiumAuthoring();setMode('black');painterStatus.textContent='PREMIUM V2 reaplicada · HERO SWORD + GLOBAL TRIM + COSMETIC FX.'};\ndocument.getElementById('modularFactoryBtn').onclick=()=>{location.href='./modular-factory.html'};
 document.getElementById('playBtn').onclick=()=>playClip(document.getElementById('animSelect').value);
 testAllBtn.onclick=()=>runFactoryTest();
 stopTestBtn.onclick=()=>stopFactoryTest();
