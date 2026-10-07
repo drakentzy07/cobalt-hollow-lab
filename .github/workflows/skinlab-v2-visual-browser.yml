@@ -69,6 +69,13 @@ jobs:
             }
 
             const diag = await page.evaluate(() => window.__SKINLAB_DIAG__);
+            console.log('AVIAN_DONOR_SCAN='+JSON.stringify({
+              loaded:diag.avianDonorLoaded,
+              nodes:diag.avianDonorNodes,
+              meshes:diag.avianDonorMeshes,
+              interesting:diag.avianDonorInteresting,
+              topMeshes:diag.avianDonorTopMeshes
+            }));
             if (diag.error) throw new Error('Skin Lab boot error: '+diag.error);
             if (!diag.rig) throw new Error('Rig_Medium gate missing');
             if (!diag.rightSocket || diag.rightSocketRuntime !== 'handslotr') throw new Error('Right socket resolver mismatch: '+JSON.stringify(diag));
@@ -99,6 +106,11 @@ jobs:
             await page.click('#helmetFocusBtn');
             await page.waitForTimeout(350);
             await page.screenshot({ path:'visual-artifacts/avian-knight-pass1-helmet-focus.png', fullPage:true });
+            await page.setViewportSize({width:844,height:390});
+            await page.waitForTimeout(300);
+            await page.screenshot({ path:'visual-artifacts/avian-knight-s23u-landscape.png', fullPage:true });
+            await page.setViewportSize({width:1440,height:900});
+            await page.waitForTimeout(200);
             await page.click('#baseBtn');
             await page.waitForTimeout(250);
 

@@ -33,7 +33,18 @@
     .small{font-size:10px;color:#9b9baa;line-height:1.4}.legend{display:grid;grid-template-columns:auto 1fr;gap:5px 8px;font-size:10px;color:#aaa}
     .legend b{color:#ddd}.footer{position:absolute;right:14px;bottom:14px;padding:9px 12px;border:1px solid #2b2b36;border-radius:12px;background:rgba(10,10,15,.75);font-size:10px;color:#aaa}
     #error{display:none;position:absolute;inset:auto 14px 14px 14px;background:#3a1016;border:1px solid #7f1d1d;color:#fecaca;padding:10px;border-radius:12px;z-index:9;font-size:11px}
-    @media(max-width:700px){header{align-items:flex-start}.status{display:none}.panel{top:auto;bottom:12px}.footer{display:none}}
+    @media(max-width:950px), (max-height:520px){
+      #app{grid-template-rows:auto 1fr}
+      header{align-items:center;padding:5px 8px;min-height:34px}
+      .mark{width:7px;height:20px}.brand{gap:6px}h1{font-size:10px}.sub{font-size:7px;margin-top:1px}
+      .status{display:none}
+      .panel{left:7px;right:7px;top:auto;bottom:7px;width:auto;max-height:30vh;padding:7px 8px;border-radius:10px;background:rgba(8,8,13,.78)}
+      .panel h2{display:none}.row{gap:4px;margin-bottom:4px}
+      button,select{padding:5px 7px;font-size:9px;border-radius:7px}
+      details.painter,.legend,.footer,#testStatus{display:none!important}
+      #stage{inset:0}
+    }
+    @media(max-width:700px){header{align-items:flex-start}.status{display:none}.panel{top:auto;bottom:7px}.footer{display:none}}
   </style>
   <script type="importmap">
     {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
@@ -169,6 +180,7 @@ const URLS={
   warrior:RAW+'models/chars/players/knight.glb',
   sword:RAW+'models/weapons/sword_1handed.glb',
   shield:RAW+'models/weapons/shield_round.glb',
+  avianDonor:RAW+'models/mounts/avian_strider.glb',
   warriorBaseAtlas:RAW+'textures/skins/knight/base.png'
 };
 
@@ -656,6 +668,43 @@ function setOriginalHelmetVisible(on){
   const h=actor?.getObjectByName('Knight_Helmet'),v=actor?.getObjectByName('Knight_HelmetVisor');
   if(h)h.visible=on;if(v)v.visible=on;
 }
+
+async function scanAvianDonor(){
+  const gltf=await load(URLS.avianDonor);
+  const root=gltf.scene;
+  root.updateWorldMatrix(true,true);
+  const full=new THREE.Box3().setFromObject(root);
+  const fullSize=full.getSize(new THREE.Vector3());
+  const nodes=[],meshes=[];
+  root.traverse(o=>{
+    if(o.name)nodes.push(o.name);
+    if(o.isMesh){
+      const box=new THREE.Box3().setFromObject(o);
+      const size=box.getSize(new THREE.Vector3());
+      const center=box.getCenter(new THREE.Vector3());
+      meshes.push({
+        name:o.name||'(unnamed)',
+        skinned:!!o.isSkinnedMesh,
+        vertices:o.geometry?.attributes?.position?.count||0,
+        size:[size.x,size.y,size.z],
+        center:[center.x,center.y,center.z]
+      });
+    }
+  });
+  const interesting=nodes.filter(n=>/head|beak|bill|crest|neck|eye|feather|skull|face|jaw|mask/i.test(n));
+  const topMeshes=meshes.filter(m=>m.center[1]>(full.min.y+fullSize.y*.58))
+    .sort((a,b)=>b.center[1]-a.center[1]).slice(0,30);
+  window.__AVIAN_DONOR__=gltf;
+  Object.assign(window.__SKINLAB_DIAG__,{
+    avianDonorLoaded:true,
+    avianDonorNodes:nodes.length,
+    avianDonorMeshes:meshes.length,
+    avianDonorInteresting:interesting.slice(0,100),
+    avianDonorTopMeshes:topMeshes
+  });
+  return gltf;
+}
+
 function buildAvianHelmet(){
   if(avianHelmetRoot)return avianHelmetRoot;
   const headBone=resolveNode(actor,'head');
@@ -1118,7 +1167,12 @@ window.__SKINLAB_DIAG__={
   avianBaseHelmetHidden:false,
   avianHelmetVisible:false,
   avianPass:0,
-  avianAnchorSize:null
+  avianAnchorSize:null,
+  avianDonorLoaded:false,
+  avianDonorNodes:0,
+  avianDonorMeshes:0,
+  avianDonorInteresting:[],
+  avianDonorTopMeshes:[]
 };
 function playClip(name){
   if(!mixer||!actor)return false;
@@ -1238,6 +1292,7 @@ async function boot(){
     window.__SKINLAB_API__={setMode,playClip,runFactoryTest,stopFactoryTest,applyPainterPiece,paintAt:paintUvInternal,setBrushEnabled,copyPainterRecipe,applyAutoBlackAura,applyPremiumAuthoring,buildAvianHelmet,applyAvianLegendaryPass1,focusAvianHelmet};
     syncPainterUi();
     applyAutoBlackAura();
+    await scanAvianDonor();
     buildAvianHelmet();
     setMode('avian');
   }catch(err){
