@@ -1,0 +1,120 @@
+{
+  "schema": "highfly-skin-donor-audit-v1",
+  "authoritative": {
+    "repo": "levy-street/world-of-claudecraft",
+    "commit": "9b57e49c9676d75962700f828cc00a50a9a988b5",
+    "model": "public/models/chars/modular/warrior_modular.glb",
+    "rig": "Rig_Medium",
+    "policy": [
+      "REUSE FIRST",
+      "NO PROXY",
+      "NO RIG REPLACEMENT",
+      "NO GAMEPLAY CHANGES"
+    ]
+  },
+  "donors": [
+    {
+      "id": "chosan_modular_warrior_glb",
+      "file": "ModularWarior1.glb",
+      "sha256": "4de1a15b2637e614ea70ebe6fcb2d3d738360bd6beb338fbae2c289920735ff1",
+      "bytes": 30212296,
+      "format": "GLB 2.0",
+      "generator": "Khronos glTF Blender I/O v5.2.39",
+      "meshCount": 281,
+      "skinCount": 1,
+      "boneCount": 80,
+      "animationCount": 0,
+      "materialCount": 1,
+      "vertexCount": 567952,
+      "triangleCount": 216890,
+      "skeleton": "game_rig",
+      "skinIndex": true,
+      "skinWeight": true,
+      "morphTargets": false,
+      "compatibility": "NOT_NATIVE_RIG",
+      "classification": "WEIGHT-TRANSFER",
+      "categories": {
+        "headgear": 25,
+        "shoulder": 25,
+        "chestplate": 26,
+        "gauntlets": 25,
+        "belt": 25,
+        "beltAttach": 2,
+        "legguards": 25,
+        "boots": 25,
+        "weaponsAndShieldsRigid": 60,
+        "baseBody": 15,
+        "hair": 5,
+        "headAttach": 5
+      },
+      "firstExperiment": {
+        "piece": "Headgear.B.001",
+        "strategy": "RIGID-ATTACH after geometry extraction + fit against Rig_Medium head bind reference"
+      },
+      "notes": [
+        "Do not import game_rig.",
+        "Rigid weapons/shields can use ClaudeCraft grip pipeline after family mapping.",
+        "Flexible armor remains donor geometry until weight-transfer phase."
+      ]
+    },
+    {
+      "id": "chosan_modular_warrior_fbx",
+      "file": "Modular_Warrior.fbx",
+      "sha256": "77baf2685b258ad3caee589e62b0d31792202e886624dafa145c04978761b846",
+      "bytes": 27841420,
+      "format": "FBX 7400",
+      "skeleton": "game_rig",
+      "classification": "REFERENCE-ONLY",
+      "notes": [
+        "Names and rig family match the GLB audit.",
+        "GLB remains preferred donor source; FBX retained as authoring/reference source."
+      ]
+    },
+    {
+      "id": "chosan_unitypackage",
+      "file": "Modular Hero.unitypackage",
+      "sha256": "487090dddfd14f98018935477de73047c7c5afa2516d98ea600cbf4d0de9a588",
+      "bytes": 21791381,
+      "format": "UnityPackage",
+      "assetPathCount": 46,
+      "classification": "REFERENCE-ONLY",
+      "licenseStatus": "UNVERIFIED_IN_PACKAGE",
+      "notes": [
+        "Customizer swaps SkinnedMeshRenderer.sharedMesh on a shared CH0SAN skeleton.",
+        "Package README explicitly warns not to mix rigs.",
+        "Contains Hero.fbx, Armor Parts.fbx, prefabs, scripts, demo poses and material textures."
+      ]
+    },
+    {
+      "id": "kaykit_fantasy_weapons_bits_free",
+      "file": "KayKit_FantasyWeaponsBits_1.0_FREE(1).zip",
+      "sha256": "1017144f85a994f405b731befa71ced360f5b60ed0b9c00c72e711c1633ce2d2",
+      "bytes": 3375694,
+      "format": "ZIP / glTF+FBX",
+      "gltfCount": 31,
+      "classification": "RIGID-ATTACH",
+      "license": "CC0 1.0",
+      "author": "Kay Lousberg",
+      "skinCount": 0,
+      "animationCount": 0,
+      "families": [
+        "ARROW",
+        "AXE",
+        "BOW",
+        "DAGGER",
+        "FIST",
+        "HALBERD",
+        "HAMMER",
+        "SHIELD",
+        "SPEAR",
+        "STAFF",
+        "SWORD",
+        "WAND"
+      ],
+      "notes": [
+        "High visual/grip compatibility candidate.",
+        "Must route through ClaudeCraft KAYKIT_WEAPON_ACCESSORY/KAYKIT_HAND_GRIPS/VARIANT_GRIPS rather than a parallel grip system."
+      ]
+    }
+  ]
+}
