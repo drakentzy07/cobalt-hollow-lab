@@ -2744,12 +2744,16 @@ jobs:
           test -s skinlab-source/skinlab-v2/modular-factory.html
           rm -rf upstream/dist/skinlab-v2
           cp -R skinlab-source/skinlab-v2 upstream/dist/skinlab-v2
+          mkdir -p upstream/dist/skinlab-v2/assets
+          cp upstream/public/models/chars/modular/warrior_modular.glb upstream/dist/skinlab-v2/assets/warrior_modular.glb
           test -s upstream/dist/index.html
           test -s upstream/dist/skinlab-v2/index.html
           test -s upstream/dist/skinlab-v2/modular-factory.html
+          test "$(stat -c%s upstream/dist/skinlab-v2/assets/warrior_modular.glb)" = "3477500"
+          test "$(git -C upstream hash-object dist/skinlab-v2/assets/warrior_modular.glb)" = "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2"
           grep -F "HIGHFLY · SKIN LAB v2" upstream/dist/skinlab-v2/index.html
           grep -F "HIGHFLY · SKIN LAB v2 — MODULAR FACTORY" upstream/dist/skinlab-v2/modular-factory.html
-          echo "PAGES_BUNDLE_OK=GAME_C2_PLUS_SKINLAB_MODULAR_FACTORY"
+          echo "PAGES_BUNDLE_OK=GAME_C2_PLUS_SKINLAB_MODULAR_FACTORY_SAME_ORIGIN_GLB"
 
       - name: Configure GitHub Pages for GAME-C2 playtest
         if: success()
