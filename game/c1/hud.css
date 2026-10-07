@@ -794,3 +794,38 @@ body.mobile-touch #mobile-bar-editor {
 body.mobile-touch #mobile-bar-editor .mobile-label {
   color: rgba(255, 238, 182, .96) !important;
 }
+
+
+/* ==========================================================================
+   HIGHFLY GAME-C2.7 — HUMAN RED REPAIR
+   Pregame/loading are hard HUD blockers and loading art always has a warm
+   static fallback while the dynamic backdrop is still arriving.
+   ========================================================================== */
+
+body.mobile-touch.hf-game-c25.hf-c27-pregame #actionbar,
+body.mobile-touch.hf-game-c25.hf-c27-pregame #mobile-action-attack,
+body.mobile-touch.hf-game-c25.hf-c27-pregame #mobile-target-cycle,
+body.mobile-touch.hf-game-c25.hf-c27-pregame #mobile-jump,
+body.mobile-touch.hf-game-c25.hf-c27-pregame #mobile-evade,
+body.mobile-touch.hf-game-c25.hf-c27-pregame #hf-c1-special-seats,
+body.mobile-touch.hf-game-c25.hf-c27-pregame #hf-c1-utility-lane,
+body.mobile-touch.hf-game-c25.hf-c27-pregame #buff-bar,
+body.mobile-touch.hf-game-c25.hf-c27-pregame #debuff-bar,
+body.mobile-touch.hf-game-c25.hf-c27-pregame #mobile-move-zone {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* The dynamic donor backdrop can arrive later on a cold connection. Keep a
+   guaranteed authored loading image underneath it so the user never sees the
+   black "0/707" gap from the HUMAN RED video. */
+body.mobile-touch.hf-game-c1 #loading-screen {
+  background-image:
+    linear-gradient(180deg, rgba(2, 3, 11, .60), rgba(3, 4, 14, .25) 48%, rgba(2, 3, 10, .82)),
+    var(--loading-backdrop-image, none),
+    url("/textures/loading/eastbrook-square.webp") !important;
+  background-position: center, center, center !important;
+  background-size: cover, cover, cover !important;
+  background-repeat: no-repeat, no-repeat, no-repeat !important;
+}
