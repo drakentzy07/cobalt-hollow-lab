@@ -19,7 +19,7 @@ describe('HIGHFLY GAME-C2.6 mobile HUD editor menu baseline', () => {
     expect(runtime).toContain('navigator.clipboard.writeText(payload)');
     expect(runtime).toContain('EXPORTAR PRESET');
     expect(runtime).toContain('GUARDAR');
-    expect(runtime).toContain("highfly:c281:hud:");
+    expect(runtime).toContain("highfly:c282:hud:");
   });
 
   it('hard-stops native S11 from leaking into the HIGHFLY S1-S10 HUD', () => {

@@ -520,11 +520,11 @@ jobs:
           grep -F "highfly/highfly-loading.avif" upstream/src/styles/hf_game_c1.css
           grep -F "data-hotbar-slot=\"11\"" upstream/src/styles/hf_game_c1.css
           grep -F "z-index: 1000 !important;" upstream/src/styles/hf_game_c1.css
-          grep -F "C2.8.1-s23-hud-default" upstream/src/highfly/game_c1_runtime.ts
-          grep -F "s5: { x: 47, y: -11, scale: 1, opacity: 1 }" upstream/src/highfly/game_c1_runtime.ts
-          grep -F "s10: { x: 49, y: -24, scale: 1, opacity: 1 }" upstream/src/highfly/game_c1_runtime.ts
-          grep -F "ult: { x: 48, y: -7, scale: 1, opacity: 1 }" upstream/src/highfly/game_c1_runtime.ts
-          grep -F "highfly:c281:hud:" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "C2.8.2-s23-camera-clear" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "s5: { x: 59, y: -11, scale: 1, opacity: 1 }" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "s10: { x: 61, y: -24, scale: 1, opacity: 1 }" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "ult: { x: 60, y: -7, scale: 1, opacity: 1 }" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "highfly:c282:hud:" upstream/src/highfly/game_c1_runtime.ts
           grep -F "HIGHFLY_GAME_C28_MOBILE_HUD_EDITOR_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C28_MOBILE_HUD_EDITOR_APPLIED=1')")
           grep -F "PERSONALIZAR HUD" upstream/src/highfly/game_c1_runtime.ts
           grep -F "id: 'move', label: 'JOYSTICK'" upstream/src/highfly/game_c1_runtime.ts
@@ -2695,7 +2695,27 @@ jobs:
             return { editorRight: editorRect.right, topLeft };
           });
           if (!editorClearance || editorClearance.editorRight > editorClearance.topLeft - 16) {
-            throw new Error('C2.8.1: editor still blocks S5/S10/ULT: ' + JSON.stringify(editorClearance));
+            throw new Error('C2.8.2: editor still blocks S5/S10/ULT: ' + JSON.stringify(editorClearance));
+          }
+
+          const combatHudBounds = await page.evaluate(() => {
+            const selectors = [
+              ...Array.from({ length: 10 }, (_, i) => '#actionbar [data-hotbar-slot="' + (i + 1) + '"]'),
+              '#hf-c1-esp1', '#hf-c1-esp2', '#hf-c1-ult',
+              '#mobile-target-cycle', '#mobile-action-attack', '#mobile-evade', '#mobile-jump',
+            ];
+            return selectors.map((selector) => {
+              const el = document.querySelector(selector);
+              if (!(el instanceof HTMLElement)) return { selector, missing: true };
+              const r = el.getBoundingClientRect();
+              return { selector, left: r.left, right: r.right, top: r.top, bottom: r.bottom, missing: false };
+            });
+          });
+          const badHudBounds = combatHudBounds.filter((r) =>
+            r.missing || r.left < -2 || r.right > 825 || r.top < -2 || r.bottom > 386
+          );
+          if (badHudBounds.length) {
+            throw new Error('C2.8.2: shifted combat HUD escaped S23 viewport: ' + JSON.stringify(badHudBounds));
           }
 
           await page.evaluate(() => {
@@ -2719,7 +2739,7 @@ jobs:
           const editorState = await page.evaluate(() => ({
             selected: document.body.dataset.hfHudSelected ?? null,
             label: document.querySelector('[data-hf-hud-label]')?.textContent ?? '',
-            stored: localStorage.getItem('highfly:c281:hud:target'),
+            stored: localStorage.getItem('highfly:c282:hud:target'),
             hasJoystick: Boolean(document.querySelector('#mobile-move-zone[data-hf-hud-target="move"]')),
             hasMenu: Boolean(document.querySelector('#mobile-menu-anchor[data-hf-hud-target="menu"]')),
           }));
@@ -2735,7 +2755,7 @@ jobs:
           }
           await page.locator('#hf-c28-hud-editor [data-hf-hud-done].primary').click({ force: true });
           await page.locator('#hf-c28-hud-editor').waitFor({ state: 'hidden', timeout: 10000 });
-          await page.evaluate(() => localStorage.removeItem('highfly:c281:hud:target'));
+          await page.evaluate(() => localStorage.removeItem('highfly:c282:hud:target'));
 
           // Training is intentionally inside the large HIGHFLY More menu, so it
           // must be hidden at world boot. Exercise the real user path instead of

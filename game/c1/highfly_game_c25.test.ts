@@ -65,7 +65,7 @@ describe('HIGHFLY GAME-C2.5 HUD + target polish', () => {
     const runtime = readFileSync('src/highfly/game_c1_runtime.ts', 'utf8');
     const options = readFileSync('src/ui/options_window.ts', 'utf8');
     expect(runtime).toContain("highfly:mobile-hud-editor");
-    expect(runtime).toContain("highfly:c281:hud:");
+    expect(runtime).toContain("highfly:c282:hud:");
     expect(options).toContain('EDITAR HUD MÓVIL');
   });
 });
