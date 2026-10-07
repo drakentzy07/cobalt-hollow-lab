@@ -220,12 +220,11 @@ const UPSTREAM='9b57e49c9676d75962700f828cc00a50a9a988b5';
 const MODEL='./assets/warrior_modular.glb';
 const SOURCE_BLOB='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2';
 const SOURCE_BYTES=3477500;
-const DESIGN_REV='native-wearable-pipeline+donor-inspector-p1';
+const DESIGN_REV='native-wearable-pipeline+real-joints-p2';
 const NATIVE_WEARABLES={
   tricorne:{url:'./assets/harbormaster_tricorne.glb',bone:'head',label:'TRICORNE'},
   spyglass:{url:'./assets/harbormaster_spyglass.glb',bone:'hips',label:'SPYGLASS'}
 };
-const BIND_REFERENCE_BONES=new Set(['head','hips','chest','hand.r','hand.l','upper_arm.r','upper_arm.l','lowerleg.r','lowerleg.l','foot.r','foot.l']);
 
 const FACE=['M_Ear_round','M_Eye_almond','M_Brow_soft','M_Mouth_neutral'];
 const CORE=['M_Head','M_Torso','M_ArmL','M_ArmR','M_HandL','M_HandR','M_LegL','M_LegR','M_FootL','M_FootR','M_Loin',...FACE];
@@ -299,7 +298,7 @@ const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamp
 let actor=null,mixer=null,skeleton=null,socketHelpers=[],autoRotate=false;
 const meshByName=new Map();
 const nativeWearableSources=new Map(),nativeWearableAttached=new Map();
-let realBoneNames=[],donorRoot=null,donorInfo=null,bindReferenceRoot=null,boundsHelper=null,proofRunning=false,proofIndex=0;
+let realBoneNames=[],sourceJointNames=[],donorRoot=null,donorInfo=null,bindReferenceRoot=null,boundsHelper=null,proofRunning=false,proofIndex=0;
 let donorAuditRegistry=null;
 
 
@@ -420,8 +419,22 @@ function populateRealBoneSelect(){
   realBoneNames=realBones().map(b=>b.name).filter(Boolean);
   const select=document.getElementById('wearBoneSelect');select.innerHTML='';
   for(const name of realBoneNames){const op=document.createElement('option');op.value=name;op.textContent=name;select.appendChild(op)}
-  if(realBoneNames.includes('head'))select.value='head';
+  const head=realBoneNames.find(n=>boneKeyNative(n)===boneKeyNative('head'));if(head)select.value=head;
   Object.assign(window.__MODULAR_FACTORY_DIAG__,{realBoneCount:realBoneNames.length,realBoneNames:[...realBoneNames]});
+}
+async function loadSourceJointManifest(){
+  try{
+    const r=await fetch('./assets/bind/joints.json',{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();sourceJointNames=Array.isArray(data.joints)?data.joints:[];
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{sourceJointManifestReady:true,sourceJointCount:sourceJointNames.length,sourceJointNames:[...sourceJointNames]});
+    return true;
+  }catch(e){
+    sourceJointNames=[];Object.assign(window.__MODULAR_FACTORY_DIAG__,{sourceJointManifestReady:false,sourceJointManifestError:String(e?.message||e)});return false;
+  }
+}
+function sourceBoneNameForRuntime(runtime){
+  const k=boneKeyNative(runtime);
+  return sourceJointNames.find(n=>boneKeyNative(n)===k)||runtime;
 }
 function identityError(o){
   if(!o)return Infinity;
@@ -563,22 +576,19 @@ function refreshBounds(){
 async function loadBindReference(){
   bindReferenceRoot?.removeFromParent();bindReferenceRoot=null;
   if(!document.getElementById('toggleBindRef').checked)return false;
-  const boneName=document.getElementById('wearBoneSelect').value;
-  if(!BIND_REFERENCE_BONES.has(boneName)){
-    Object.assign(window.__MODULAR_FACTORY_DIAG__,{bindReferenceLoaded:false,bindReferenceBone:boneName,bindReferenceReason:'not-pregenerated'});
-    updateDonorDiag();return false;
-  }
+  const runtimeBone=document.getElementById('wearBoneSelect').value;
+  const sourceBone=sourceBoneNameForRuntime(runtimeBone);
   try{
-    const safe=boneName.replace(/[^A-Za-z0-9_.-]/g,'_'),g=await loader.loadAsync('./assets/bind/reference_'+safe+'.glb');
+    const safe=sourceBone.replace(/[^A-Za-z0-9_.-]/g,'_'),g=await loader.loadAsync('./assets/bind/reference_'+safe+'.glb');
     bindReferenceRoot=g.scene;bindReferenceRoot.name='HF_BIND_REFERENCE_'+safe;
     bindReferenceRoot.traverse(o=>{if(o.isMesh){const mats=Array.isArray(o.material)?o.material:[o.material];o.material=(Array.isArray(o.material)?mats.map(()=>new THREE.MeshBasicMaterial({wireframe:true,transparent:true,opacity:.22})):new THREE.MeshBasicMaterial({wireframe:true,transparent:true,opacity:.22}));}});
-    const bone=resolveRealBone(boneName);if(!bone)throw new Error('bone missing');
+    const bone=resolveRealBone(runtimeBone);if(!bone)throw new Error('bone missing');
     bone.add(bindReferenceRoot);
     bindReferenceRoot.position.set(0,0,0);bindReferenceRoot.quaternion.set(0,0,0,1);bindReferenceRoot.scale.set(1,1,1);
-    Object.assign(window.__MODULAR_FACTORY_DIAG__,{bindReferenceLoaded:true,bindReferenceBone:boneName});
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{bindReferenceLoaded:true,bindReferenceBone:sourceBone,bindReferenceRuntimeBone:runtimeBone});
     return true;
   }catch(e){
-    Object.assign(window.__MODULAR_FACTORY_DIAG__,{bindReferenceLoaded:false,bindReferenceBone:boneName,bindReferenceReason:String(e?.message||e)});
+    Object.assign(window.__MODULAR_FACTORY_DIAG__,{bindReferenceLoaded:false,bindReferenceBone:sourceBone,bindReferenceRuntimeBone:runtimeBone,bindReferenceReason:String(e?.message||e)});
     return false;
   }finally{updateDonorDiag()}
 }
@@ -1141,7 +1151,7 @@ function setDesignMode(mode){
   Object.assign(window.__MODULAR_FACTORY_DIAG__,{designMode:mode,cleanReady:true,avianReady});
   updateDiag();frameVisible();
 }
-window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,designRev:DESIGN_REV,unifiedFactory:true,canonicalRoute:'/skinlab-v2/',rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null,designMode:'clean',cleanReady:false,avianReady:false,avianPieces:0,armorAnatomyReady:false,armorSetCount:0,knightHeadParts:0,molderReady:false,molderPhase:2,molderSkinPreserved:false,molderChangedVertices:0,painterReady:true,painterVersion:2,wearableLabReady:false,nativeWearableProof:false,nativeWearableSourceIdentity:false,tricorneAttached:false,spyglassAttached:false,wearableDriftMax:0,nativeWearableNoNaN:true,realBoneCount:0,realBoneNames:[],bindReferenceLoaded:false,donorInspectorReady:true,donorAuditReady:false};
+window.__MODULAR_FACTORY_DIAG__={ready:false,error:null,upstream:UPSTREAM,sourceBlob:SOURCE_BLOB,sourceBytes:SOURCE_BYTES,designRev:DESIGN_REV,unifiedFactory:true,canonicalRoute:'/skinlab-v2/',rig:false,rightSocket:false,leftSocket:false,clips:0,coreExpected:CORE.length,visibleCount:0,armorVisible:-1,missingCore:[],lastClip:null,designMode:'clean',cleanReady:false,avianReady:false,avianPieces:0,armorAnatomyReady:false,armorSetCount:0,knightHeadParts:0,molderReady:false,molderPhase:2,molderSkinPreserved:false,molderChangedVertices:0,painterReady:true,painterVersion:2,wearableLabReady:false,nativeWearableProof:false,nativeWearableSourceIdentity:false,tricorneAttached:false,spyglassAttached:false,wearableDriftMax:0,nativeWearableNoNaN:true,realBoneCount:0,realBoneNames:[],bindReferenceLoaded:false,donorInspectorReady:true,donorAuditReady:false,sourceJointManifestReady:false,sourceJointCount:0};
 window.__SKINLAB_DIAG__=window.__MODULAR_FACTORY_DIAG__;
 window.__SKIN_FACTORY_DIAG__=window.__MODULAR_FACTORY_DIAG__;
 
@@ -1156,6 +1166,7 @@ loader.load(MODEL,g=>{
     applyCleanMaterials();
     cacheArmorDonors();
     populateRealBoneSelect();
+    loadSourceJointManifest();
     loadDonorAuditRegistry();
     const rig=resolveNode(actor,'Rig_Medium'),right=resolveNode(actor,'handslot.r'),left=resolveNode(actor,'handslot.l');
     if(!rig||!right||!left)throw new Error('Rig_Medium o sockets faltantes');
