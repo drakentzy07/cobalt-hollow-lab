@@ -37,7 +37,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: drakentzy07/cobalt-hollow-lab
-          ref: highfly-skinlab-v2-warrior-black
+          ref: highfly-skinlab-avian-knight-legendary-01
           path: skinlab-source
           sparse-checkout: |
             skinlab-v2
