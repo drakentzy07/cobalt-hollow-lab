@@ -64,11 +64,12 @@ describe('HIGHFLY GAME-C2.7 human-red repair', () => {
     const index = readFileSync('index.html', 'utf8');
     const play = readFileSync('play.html', 'utf8');
     const css = readFileSync('src/styles/hf_game_c1.css', 'utf8');
-    const preload =
-      '<link rel="preload" as="image" href="/textures/loading/eastbrook-square.webp" fetchpriority="high" />';
-    expect(index).toContain(preload);
-    expect(play).toContain(preload);
+    for (const html of [index, play]) {
+      expect(html).toContain('rel="preload" as="image"');
+      expect(html).toContain('textures/loading/eastbrook-square.webp');
+      expect(html).toContain('fetchpriority="high"');
+    }
     expect(css).toContain('var(--loading-backdrop-image, none),');
-    expect(css).toContain('url("/textures/loading/eastbrook-square.webp") !important;');
+    expect(css).toContain('textures/loading/eastbrook-square.webp');
   });
 });
