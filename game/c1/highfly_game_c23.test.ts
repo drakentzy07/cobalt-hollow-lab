@@ -11,7 +11,7 @@ describe('HIGHFLY GAME-C2.3 human mobile fix', () => {
     expect(runtime).toContain("id: 'target'");
     expect(runtime).toContain("id: 'attack'");
     expect(runtime).toContain("id: 'buffs'");
-    expect(runtime).toContain('highflyHudScale');
+    expect(runtime).toContain('highflyHudUpdateSelected');
     expect(runtime).toContain('highflyHudResetAll');
     expect(options).toContain('EDITAR HUD MÓVIL');
     expect(options).toContain("new CustomEvent('highfly:mobile-hud-editor')");
