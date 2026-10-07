@@ -3176,7 +3176,6 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test ! -e clean/canonical/HIGHFLY_CLEAN_V1.patch
           test -s clean-v1-evidence/highfly-clean-v1.patch
           test -s clean-v1-evidence/sha256.txt
           expected="$(cut -d ' ' -f1 clean-v1-evidence/sha256.txt)"
@@ -3190,6 +3189,15 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p clean/canonical
+          if test -e clean/canonical/HIGHFLY_CLEAN_V1.patch; then
+            # This is immutable: matching source bytes are an idempotent no-op.
+            cmp -s clean/canonical/HIGHFLY_CLEAN_V1.patch clean-v1-evidence/highfly-clean-v1.patch || {
+              echo "::error::Canonical source drift detected; manual equivalence review required."
+              exit 1
+            }
+            echo "CLEAN_V1_CANONICAL_ALREADY_PERSISTED=1"
+            exit 0
+          fi
           cp clean-v1-evidence/highfly-clean-v1.patch clean/canonical/HIGHFLY_CLEAN_V1.patch
           cp clean-v1-evidence/sha256.txt clean/canonical/source-sha256.txt
           cp clean-v1-evidence/changed-paths.txt clean/canonical/changed-paths.txt
@@ -3197,7 +3205,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add clean/canonical/
-          git diff --cached --check
+          # The .patch is immutable data and legitimately contains whitespace from
+          # existing upstream sources. Lint metadata only; never rewrite patch bytes.
+          git diff --cached --check -- clean/canonical/source-sha256.txt clean/canonical/changed-paths.txt clean/canonical/provenance.txt
           git commit -m "CLEAN V1 phase 2 archive byte-equivalent canonical source"
           git push origin HEAD:refs/heads/highfly-main-clean-v1
           echo "CLEAN_V1_CANONICAL_PERSISTED=1"
