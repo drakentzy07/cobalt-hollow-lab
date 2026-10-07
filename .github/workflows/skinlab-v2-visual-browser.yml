@@ -218,7 +218,20 @@ jobs:
                corvus.corvusClips!==22)
               throw new Error('Corvus original REAL-rig helmet failed '+JSON.stringify(corvus));
             await page.screenshot({path:'visual-artifacts/corvus-original-native-skin.png',fullPage:true});
+            // Regression gate: working painting must never unequip the native helmet.
+            await page.click('#simplePaintBtn');
+            let corvusPaint=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(!corvusPaint.corvusReady||!corvusPaint.corvusPaintPreserved||corvusPaint.painterMeshes<1)
+              throw new Error('Simple paint removed Corvus skin '+JSON.stringify(corvusPaint));
+            await page.selectOption('#simpleSlotSelect','arms');
+            await page.click('#simpleVioletBtn');
+            corvusPaint=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__);
+            if(!corvusPaint.corvusAttached||!corvusPaint.corvusPaintPreserved)
+              throw new Error('Palette paint removed Corvus skin '+JSON.stringify(corvusPaint));
             await page.click('#simpleSaveBtn');
+            const saved=await page.evaluate(()=>window.__SKIN_FACTORY_DIAG__?.simpleRecipe);
+            if(saved?.specialSkin!=='corvus'||Object.keys(saved.corvusColors||{}).length<1)
+              throw new Error('Corvus special paint recipe was not saved');
             await page.click('#simpleBaseBtn');
             await page.click('#simpleLoadBtn');
             await page.waitForFunction(()=>window.__SKIN_FACTORY_DIAG__?.corvusReady===true,null,{timeout:45000});
