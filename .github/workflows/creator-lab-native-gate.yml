@@ -44,7 +44,7 @@ jobs:
           test -s creator-lab/assets/bind/joints.json
       - name: Install Chromium
         shell: bash
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
       - name: Start isolated preview server
         shell: bash
         run: |
