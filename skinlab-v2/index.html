@@ -286,11 +286,14 @@ function safeViewportMetrics(){
 }
 function applySafeProjection(){
   const m=safeViewportMetrics();
-  camera.aspect=m.w/m.h;
+  const x=Math.round(m.covered),vw=Math.max(1,Math.round(m.safeW)),vh=Math.max(1,Math.round(m.h));
   camera.clearViewOffset();
-  if(m.covered>1)camera.setViewOffset(m.w,m.h,-m.covered*.5,0,m.w,m.h);
-  else camera.updateProjectionMatrix();
-  if(window.__SKINLAB_DIAG__)window.__SKINLAB_DIAG__.safeViewport={covered:Math.round(m.covered),safeW:Math.round(m.safeW),w:m.w,h:m.h};
+  camera.aspect=vw/vh;
+  camera.updateProjectionMatrix();
+  renderer.setViewport(x,0,vw,vh);
+  renderer.setScissor(x,0,vw,vh);
+  renderer.setScissorTest(true);
+  if(window.__SKINLAB_DIAG__)window.__SKINLAB_DIAG__.safeViewport={covered:x,safeW:vw,w:m.w,h:m.h};
   return m;
 }
 function fitActor(){
@@ -1199,14 +1202,17 @@ function syncFullscreen(){
 document.addEventListener('fullscreenchange',syncFullscreen);
 
 const clock=new THREE.Clock();
-function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);applySafeProjection()}
-addEventListener('resize',resize);resize();
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setScissorTest(false);renderer.setSize(w,h,false);applySafeProjection();if(actor)fitActor()}
+addEventListener('resize',resize);visualViewport?.addEventListener?.('resize',resize);resize();
 function frame(){
   requestAnimationFrame(frame);
   const dt=Math.min(.05,clock.getDelta());
   mixer?.update(dt);
   if(actor&&autoRotate)actor.rotation.y+=dt*.28;
-  controls.update(); renderer.render(scene,camera);
+  controls.update();
+  const w=stage.clientWidth,h=stage.clientHeight;
+  renderer.setScissorTest(false);renderer.setViewport(0,0,w,h);renderer.clear();
+  applySafeProjection();renderer.render(scene,camera);
 }
 boot();frame();
 </script>
