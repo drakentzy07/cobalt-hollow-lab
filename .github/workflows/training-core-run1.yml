@@ -15,6 +15,7 @@ on:
       - highfly-game-c2-5-1-hud-visual-fix
       - highfly-game-c2-6-hud-editor-menu
       - highfly-game-c2-7-human-red-repair
+      - highfly-game-c2-8-mobile-hud-editor
   workflow_dispatch:
 
 permissions:
@@ -160,6 +161,7 @@ jobs:
           python ../overlays/highfly_game_c24_human_closure.py
           python ../overlays/highfly_game_c25_hud_target_polish.py
           python ../overlays/highfly_game_c27_human_red_repair.py
+          python ../overlays/highfly_game_c28_mobile_hud_editor.py
           cp ../game/c1/highfly_game_c1.test.ts tests/highfly_game_c1.test.ts
           cp ../game/c1/highfly_game_c21.test.ts tests/highfly_game_c21.test.ts
           cp ../game/c1/highfly_game_c22.test.ts tests/highfly_game_c22.test.ts
@@ -169,6 +171,7 @@ jobs:
           cp ../game/c1/highfly_game_c251.test.ts tests/highfly_game_c251.test.ts
           cp ../game/c1/highfly_game_c26.test.ts tests/highfly_game_c26.test.ts
           cp ../game/c1/highfly_game_c27.test.ts tests/highfly_game_c27.test.ts
+          cp ../game/c1/highfly_game_c28.test.ts tests/highfly_game_c28.test.ts
           python ../overlays/rewrite_source_public_paths.py
           python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
           git diff --check
@@ -301,6 +304,8 @@ jobs:
           test -s game/c1/highfly_game_c26.test.ts
           test -s game/c1/highfly_game_c27.test.ts
           test -s overlays/highfly_game_c27_human_red_repair.py
+          test -s game/c1/highfly_game_c28.test.ts
+          test -s overlays/highfly_game_c28_mobile_hud_editor.py
           test -s game/c1/runtime.ts
           test -s game/c1/elemental_basic.ts
           test -s game/c1/elemental_weapon_vfx.ts
@@ -515,7 +520,7 @@ jobs:
           grep -F "body.mobile-touch.hf-game-c25 #mobile-stance-anchor {" upstream/src/styles/hf_game_c1.css
           grep -F "C2.7-human-red-repair" upstream/src/highfly/game_c1_runtime.ts
           grep -F "HIGHFLY_GAME_C27_HUMAN_RED_REPAIR_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C27_HUMAN_RED_REPAIR_APPLIED=1')")
-          grep -F "this.bindButton('mobile-bar-editor', () => this.callbacks.onMenu());" upstream/src/game/mobile_controls.ts
+          grep -F "window.dispatchEvent(new CustomEvent('highfly:mobile-settings'));" upstream/src/game/mobile_controls.ts
           grep -F 'id="mobile-bar-editor" title="Ajustes" aria-label="Ajustes"' upstream/index.html
           grep -F "EXPORTAR PRESET" upstream/src/highfly/game_c1_runtime.ts
           grep -F "new MutationObserver(syncHighflyWorldReady)" upstream/src/highfly/game_c1_runtime.ts
@@ -525,6 +530,14 @@ jobs:
           grep -F "highfly/highfly-loading.avif" upstream/src/styles/hf_game_c1.css
           grep -F "data-hotbar-slot=\"11\"" upstream/src/styles/hf_game_c1.css
           grep -F "z-index: 1000 !important;" upstream/src/styles/hf_game_c1.css
+          grep -F "C2.8-mobile-hud-editor" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "HIGHFLY_GAME_C28_MOBILE_HUD_EDITOR_APPLIED=1" <(python -c "print('HIGHFLY_GAME_C28_MOBILE_HUD_EDITOR_APPLIED=1')")
+          grep -F "PERSONALIZAR HUD" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "id: 'move', label: 'JOYSTICK'" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "id: 'menu', label: 'MENÚ'" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "data-hf-hud-opacity" upstream/src/highfly/game_c1_runtime.ts
+          grep -F "#loading-screen::after" upstream/src/styles/hf_game_c1.css
+          grep -F 'highfly-logo-full.webp") center / contain no-repeat' upstream/src/styles/hf_game_c1.css
           grep -F "PREPARANDO HUNTER…" upstream/src/styles/hf_game_c1.css
           grep -F "softTargetLocked?: () => boolean;" upstream/src/game/pad_target_pick.ts
           grep -F "let highflyManualTargetId: number | null = null;" upstream/src/main.ts
@@ -542,7 +555,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts tests/highfly_game_c21.test.ts tests/highfly_game_c22.test.ts tests/highfly_game_c23.test.ts tests/highfly_game_c24.test.ts tests/highfly_game_c25.test.ts tests/highfly_game_c251.test.ts tests/highfly_game_c26.test.ts tests/highfly_game_c27.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts tests/highfly_game_c21.test.ts tests/highfly_game_c22.test.ts tests/highfly_game_c23.test.ts tests/highfly_game_c24.test.ts tests/highfly_game_c25.test.ts tests/highfly_game_c251.test.ts tests/highfly_game_c26.test.ts tests/highfly_game_c27.test.ts tests/highfly_game_c28.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
@@ -2465,6 +2478,7 @@ jobs:
             return {
               src: logo.getAttribute('src'),
               background: getComputedStyle(screen).backgroundImage,
+              brandLayer: getComputedStyle(screen, '::after').backgroundImage,
               natural: [logo.naturalWidth, logo.naturalHeight],
               screen: { left: sr.left, top: sr.top, right: sr.right, bottom: sr.bottom, width: sr.width, height: sr.height },
               logo: { left: lr.left, top: lr.top, right: lr.right, bottom: lr.bottom, width: lr.width, height: lr.height },
@@ -2481,6 +2495,9 @@ jobs:
           }
           if (!loadingVisual.background?.includes('highfly-loading')) {
             throw new Error('C2.7: warm loading fallback art missing under dynamic backdrop: ' + loadingVisual.background);
+          }
+          if (!loadingVisual.brandLayer?.includes('highfly-logo-full.webp')) {
+            throw new Error('C2.8: persistent HIGHFLY loading brand missing: ' + loadingVisual.brandLayer);
           }
           if (!loadingVisual.src?.endsWith('/highfly/highfly-logo-full.webp')) {
             throw new Error('J4: loading HIGHFLY logo source mismatch: ' + loadingVisual.src);
@@ -2645,31 +2662,65 @@ jobs:
             throw new Error('C1: contextual ATK/USAR state missing: ' + c1Hud.attackMode);
           }
 
-          // C2.7 HUMAN gate: use the real touch path. The More tray's first tile
-          // must say Ajustes, open native Options, never the native action-bar editor,
-          // and expose Interfaz > Frames > EDITAR HUD MÓVIL.
+          // C2.8 HUMAN gate: exact S23 path requested by the player.
+          // More -> Ajustes -> PERSONALIZAR HUD must edit the REAL mobile HUD,
+          // never ClaudeCraft's desktop-first Options/bar-editor surface.
           await page.locator('#mobile-menu-anchor').click({ force: true });
-          // HIGHFLY RUN0.9.1 intentionally removed the donor's intermediate
-          // ten-item gesture strip: the three-dot anchor opens More directly.
           await page.locator('#mobile-extra-controls').waitFor({ state: 'visible', timeout: 10000 });
           const settingsLabel = await page.locator('#mobile-bar-editor .mobile-label').textContent();
           if ((settingsLabel ?? '').trim().toLocaleUpperCase('es') !== 'AJUSTES') {
-            throw new Error('C2.7: More first tile is not AJUSTES: ' + settingsLabel);
+            throw new Error('C2.8: More first tile is not AJUSTES: ' + settingsLabel);
           }
           await page.locator('#mobile-bar-editor').click({ force: true });
-          await page.locator('#options-menu').waitFor({ state: 'visible', timeout: 10000 });
+          await page.locator('#hf-c28-mobile-settings').waitFor({ state: 'visible', timeout: 10000 });
+          const donorOptionsVisible = await page.locator('#options-menu').isVisible().catch(() => false);
           const barEditorVisible = await page.locator('#bar-editor').isVisible().catch(() => false);
-          if (barEditorVisible) throw new Error('C2.7: Ajustes still opened native bar editor');
+          if (donorOptionsVisible || barEditorVisible) {
+            throw new Error('C2.8: Ajustes leaked into donor desktop editor/options');
+          }
+          await page.locator('[data-hf-settings-customize]').click({ force: true });
+          await page.locator('#hf-c28-hud-editor').waitFor({ state: 'visible', timeout: 10000 });
+          const editing = await page.evaluate(() => document.body.classList.contains('hf-c28-hud-editing'));
+          if (!editing) throw new Error('C2.8: mobile HUD editor mode did not activate');
 
-          const interfaceButton = page.locator('#options-menu .opt-btn[data-menu-action="interface"]');
-          await interfaceButton.waitFor({ state: 'visible', timeout: 10000 });
-          await interfaceButton.click({ force: true });
-          const tabs = page.locator('#options-menu .opt-tab');
-          if ((await tabs.count()) < 2) throw new Error('C2.7: Options Interfaz tabs missing');
-          await tabs.nth(1).click({ force: true });
-          await page.getByRole('button', { name: 'EDITAR HUD MÓVIL', exact: true })
-            .waitFor({ state: 'visible', timeout: 10000 });
-          await page.evaluate(() => window.__game?.hud?.toggleOptionsMenu?.());
+          await page.evaluate(() => {
+            const target = document.getElementById('mobile-target-cycle');
+            if (!(target instanceof HTMLElement)) throw new Error('TARGET missing');
+            const down = new PointerEvent('pointerdown', {
+              bubbles: true, cancelable: true, pointerType: 'touch',
+              pointerId: 828, isPrimary: true, clientX: 20, clientY: 20,
+            });
+            const up = new PointerEvent('pointerup', {
+              bubbles: true, cancelable: true, pointerType: 'touch',
+              pointerId: 828, isPrimary: true, clientX: 20, clientY: 20,
+            });
+            target.dispatchEvent(down);
+            target.dispatchEvent(up);
+            const opacity = document.querySelector('[data-hf-hud-opacity]');
+            if (!(opacity instanceof HTMLInputElement)) throw new Error('opacity slider missing');
+            opacity.value = '80';
+            opacity.dispatchEvent(new Event('input', { bubbles: true }));
+          });
+          const editorState = await page.evaluate(() => ({
+            selected: document.body.dataset.hfHudSelected ?? null,
+            label: document.querySelector('[data-hf-hud-label]')?.textContent ?? '',
+            stored: localStorage.getItem('highfly:c23:hud:target'),
+            hasJoystick: Boolean(document.querySelector('#mobile-move-zone[data-hf-hud-target="move"]')),
+            hasMenu: Boolean(document.querySelector('#mobile-menu-anchor[data-hf-hud-target="menu"]')),
+          }));
+          if (editorState.selected !== 'target' || !editorState.label.includes('TARGET')) {
+            throw new Error('C2.8: TARGET selection failed: ' + JSON.stringify(editorState));
+          }
+          const storedTarget = editorState.stored ? JSON.parse(editorState.stored) : null;
+          if (!storedTarget || Math.abs(Number(storedTarget.opacity) - 0.8) > 0.001) {
+            throw new Error('C2.8: target opacity did not persist: ' + editorState.stored);
+          }
+          if (!editorState.hasJoystick || !editorState.hasMenu) {
+            throw new Error('C2.8: joystick/menu not registered in mobile editor: ' + JSON.stringify(editorState));
+          }
+          await page.locator('#hf-c28-hud-editor [data-hf-hud-done].primary').click({ force: true });
+          await page.locator('#hf-c28-hud-editor').waitFor({ state: 'hidden', timeout: 10000 });
+          await page.evaluate(() => localStorage.removeItem('highfly:c23:hud:target'));
 
           // Training is intentionally inside the large HIGHFLY More menu, so it
           // must be hidden at world boot. Exercise the real user path instead of
@@ -2959,7 +3010,7 @@ jobs:
 
   deploy-game-c2:
     name: Deploy HIGHFLY GAME-C2 Mobile Feel
-    if: github.ref_name == 'highfly-game-c2-mobile-feel' || github.ref_name == 'highfly-game-c2-1-s23-feedback' || github.ref_name == 'highfly-game-c2-2-mobile-polish' || github.ref_name == 'highfly-game-c2-3-human-fix' || github.ref_name == 'highfly-game-c2-4-human-closure' || github.ref_name == 'highfly-game-c2-5-hud-target-polish' || github.ref_name == 'highfly-game-c2-5-1-hud-visual-fix' || github.ref_name == 'highfly-game-c2-6-hud-editor-menu' || github.ref_name == 'highfly-game-c2-7-human-red-repair'
+    if: github.ref_name == 'highfly-game-c2-mobile-feel' || github.ref_name == 'highfly-game-c2-1-s23-feedback' || github.ref_name == 'highfly-game-c2-2-mobile-polish' || github.ref_name == 'highfly-game-c2-3-human-fix' || github.ref_name == 'highfly-game-c2-4-human-closure' || github.ref_name == 'highfly-game-c2-5-hud-target-polish' || github.ref_name == 'highfly-game-c2-5-1-hud-visual-fix' || github.ref_name == 'highfly-game-c2-6-hud-editor-menu' || github.ref_name == 'highfly-game-c2-7-human-red-repair' || github.ref_name == 'highfly-game-c2-8-mobile-hud-editor'
     needs: thin-offline
     runs-on: ubuntu-latest
     timeout-minutes: 30
