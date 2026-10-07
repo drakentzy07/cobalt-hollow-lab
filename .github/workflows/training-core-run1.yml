@@ -521,8 +521,8 @@ jobs:
           grep -F "new MutationObserver(syncHighflyWorldReady)" upstream/src/highfly/game_c1_runtime.ts
           grep -F "hf-c27-pregame #actionbar" upstream/src/styles/hf_game_c1.css
           grep -F "(profile.iosMemoryProfile || profile.constrainedMemory) &&" upstream/src/render/characters/assets.ts
-          grep -F "textures/loading/eastbrook-square.webp" upstream/index.html
-          grep -F "textures/loading/eastbrook-square.webp" upstream/src/styles/hf_game_c1.css
+          grep -F "highfly/highfly-loading.avif" upstream/index.html
+          grep -F "highfly/highfly-loading.avif" upstream/src/styles/hf_game_c1.css
           grep -F "data-hotbar-slot=\"11\"" upstream/src/styles/hf_game_c1.css
           grep -F "z-index: 1000 !important;" upstream/src/styles/hf_game_c1.css
           grep -F "PREPARANDO HUNTER…" upstream/src/styles/hf_game_c1.css
@@ -2479,7 +2479,7 @@ jobs:
           if (!loadingVisual.background?.includes('highfly-loading.avif')) {
             throw new Error('RUN117: original HIGHFLY loading artwork is not the effective loading background: ' + loadingVisual.background);
           }
-          if (!loadingVisual.background?.includes('eastbrook-square')) {
+          if (!loadingVisual.background?.includes('highfly-loading')) {
             throw new Error('C2.7: warm loading fallback art missing under dynamic backdrop: ' + loadingVisual.background);
           }
           if (!loadingVisual.src?.endsWith('/highfly/highfly-logo-full.webp')) {
