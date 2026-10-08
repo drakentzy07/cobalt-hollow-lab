@@ -27,6 +27,7 @@ pre{font:12px monospace;white-space:pre-wrap;word-wrap:break-word}
 <script type="module">
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from '/node_modules/meshoptimizer/meshopt_decoder.module.js';
 const diag={ready:false,error:null,loaded:[],records:[]};
 window.__HF_SKIN3_DYNAMIC__=diag;
@@ -37,7 +38,8 @@ scene.add(new THREE.HemisphereLight(0xffffff,0x4b5077,2.4));
 for(const v of [[4,6,5],[-4,3,-5]]){const light=new THREE.DirectionalLight(0xffffff,2.8);light.position.set(...v);scene.add(light);}
 const renderer=new THREE.WebGLRenderer({antialias:false,preserveDrawingBuffer:true});
 renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);
-const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
+const ktx2=new KTX2Loader().setTranscoderPath('/node_modules/three/examples/jsm/libs/basis/').detectSupport(renderer);
+const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);loader.setKTX2Loader(ktx2);
 const names=['warrior_modular','knight','knight_hit_variety_anims','warrior_ability_anims','warrior_fury_anims','warrior_contact_anims'];
 const assets={};let active=null;
 const baseNames=new Set(['Head','Torso','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR','Loin','Top','Eye_almond','Brow_soft','Ear_round','Mouth_neutral']);
