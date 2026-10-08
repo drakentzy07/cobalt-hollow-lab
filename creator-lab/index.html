@@ -15,7 +15,7 @@ button:hover{background:#322744}button:focus-visible,input:focus-visible,select:
 button.primary{background:linear-gradient(120deg,#6338bc,#392469);border-color:#8c6ed2}button.active{border-color:#bb9dff;box-shadow:0 0 15px #8a5cf655}button:disabled{opacity:.5;cursor:wait}
 .row{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}.row>*{flex:1}#parts{display:grid;grid-template-columns:1fr 1fr;gap:5px}#parts button{text-align:left;font-size:10px;min-height:32px}
 label{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;margin:9px 0;color:#d4cadf}
-label input[type=range]{flex:1;max-width:142px;accent-color:#9b73ed}label input[type=color]{width:46px;height:31px;padding:2px;border-radius:7px;border:1px solid #574c6d;background:#191624}label select{max-width:145px}
+label input[type=range]{flex:1;max-width:142px;min-width:40px;accent-color:#9b73ed}.precise{width:57px;padding:6px 4px;border-radius:7px;border:1px solid #54436e;background:#13101e;color:#fff;text-align:right;flex:none}.mini{padding:5px 7px;flex:none;font-size:12px}#transformControls label{margin:7px 0}label input[type=color]{width:46px;height:31px;padding:2px;border-radius:7px;border:1px solid #574c6d;background:#191624}label select{max-width:145px}
 input[type=checkbox]{accent-color:#9b73ed}.value{width:30px;text-align:right;color:#b4a4d7;font-size:10px}
 .status{padding:11px;border:1px solid #403852;border-radius:11px;background:#191422;font-size:10px;line-height:1.5;color:#cbbdeb;white-space:pre-wrap;min-height:53px}
 .stageFooter{position:absolute;right:12px;bottom:12px;z-index:2;display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
@@ -27,30 +27,45 @@ input[type=checkbox]{accent-color:#9b73ed}.value{width:30px;text-align:right;col
 @media(max-width:630px) and (orientation:portrait){.stage{inset:0 0 40% 0}aside{top:60%;bottom:0;width:100%;border-right:0;border-top:1px solid #29253b}.stageFooter{bottom:41%}#error{left:10px;bottom:41%}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/"}}</script>
-</head><body><div id="app"><header><div class="name"><span class="glyph"></span><div><h1>HIGHFLY · CREATOR LAB</h1><div class="sub">CAJA MÁGICA · FORJA 3D · PERSONAJE REAL</div></div></div><div class="pill" id="rigPill">Rig_Medium cargando…</div></header>
+</head><body><div id="app"><header><div class="name"><span class="glyph"></span><div><h1>HIGHFLY · CREATOR LAB V0.2</h1><div class="sub">CAJA MÁGICA · FORJA 3D · PERSONAJE REAL</div></div></div><div class="pill" id="rigPill">Rig_Medium cargando…</div></header>
 <main><div class="stage" id="stage"></div><aside>
 <section><h2>01 · Taller profesional</h2><p>Diseñamos sobre el Warrior auténtico. Las plumas son geometría curva propia, no imágenes. Todo queda aislado del juego.</p>
 <div class="status" id="status">Preparando la forja…</div></section>
-<section><h2>02 · Seleccionar y crear</h2><div id="parts"></div>
+<section><h2>02 · Casco Aviar Legendario</h2><p>Máscara esculpida sobre la referencia craneal real. Cada zona tiene color y material propio; se ancla al hueso <b>head</b>.</p>
+<div class="row"><button id="helmetOnBtn" class="primary">🪶 APLICAR CASCO</button><button id="helmetOffBtn">Ocultar casco</button><button id="headViewBtn">Ver casco</button></div>
+<label>Detalle del casco <select id="helmetPartSelect"></select></label>
+<label>Color de detalle <input type="color" id="helmetPartColor" value="#191d2a"></label>
+<label>Longitud del pico <input id="helmetBeak" type="range" min="70" max="140" value="106" step="1">
+<input id="helmetBeakNumber" type="number" min="70" max="140" step="1" value="106" class="precise"></label>
+<label>Altura plumaje <input id="helmetCrest" type="range" min="50" max="165" value="110" step="1">
+<input id="helmetCrestNumber" type="number" min="50" max="165" step="1" value="110" class="precise"></label>
+<label>Luz violeta <input id="helmetGlow" type="range" min="0" max="200" value="90" step="1">
+<input id="helmetGlowNumber" type="number" min="0" max="200" step="1" value="90" class="precise"></label>
+<label>Mostrar plumas de prueba <input type="checkbox" id="showFeathers"></label>
+<div class="hint">La máscara tiene piezas individuales: carcasa, pico, ojos, rebordes, mejillas, plumas y cristal.</div></section>
+<section><h2>03 · Seleccionar y crear plumas</h2><div id="parts"></div>
 <div class="row"><button id="addBtn" class="primary">+ Nueva pluma</button><button id="duplicateBtn">Duplicar</button><button id="deleteBtn">Eliminar</button></div>
 <label>Simetría <input id="symmetry" type="checkbox" checked></label></section>
-<section><h2>03 · Esculpido por curvas</h2>
-<label>Largo <input id="length" type="range" min="18" max="190" step="1"><span class="value" id="lengthValue"></span></label>
-<label>Ancho <input id="width" type="range" min="4" max="50" step="1"><span class="value" id="widthValue"></span></label>
-<label>Curvatura <input id="bend" type="range" min="-100" max="100" step="1"><span class="value" id="bendValue"></span></label>
-<label>Apertura <input id="tilt" type="range" min="-120" max="120" step="1"><span class="value" id="tiltValue"></span></label>
-<label>Torsión <input id="twist" type="range" min="-75" max="75" step="1"><span class="value" id="twistValue"></span></label>
-<div class="hint">Cada pluma tiene superficie suavizada, volumen y nervadura central. Podés editar cada una por separado.</div></section>
-<section><h2>04 · Pintura por detalle</h2>
+<section><h2>04 · Curvas y precisión numérica</h2>
+<label>Largo <input id="length" type="range" min="18" max="190" step="1"><input class="precise" type="number" id="lengthNumber"><button class="mini" id="lengthReset" title="Restaurar este parámetro">↺</button></label>
+<label>Ancho <input id="width" type="range" min="4" max="50" step="1"><input class="precise" type="number" id="widthNumber"><button class="mini" id="widthReset" title="Restaurar este parámetro">↺</button></label>
+<label>Curvatura <input id="bend" type="range" min="-100" max="100" step="1"><input class="precise" type="number" id="bendNumber"><button class="mini" id="bendReset" title="Restaurar este parámetro">↺</button></label>
+<label>Apertura <input id="tilt" type="range" min="-120" max="120" step="1"><input class="precise" type="number" id="tiltNumber"><button class="mini" id="tiltReset" title="Restaurar este parámetro">↺</button></label>
+<label>Torsión <input id="twist" type="range" min="-75" max="75" step="1"><input class="precise" type="number" id="twistNumber"><button class="mini" id="twistReset" title="Restaurar este parámetro">↺</button></label>
+<div class="hint">Arrastrá el slider o escribí exactamente el número. ↺ restaura sólo ese valor.</div></section>
+<section><h2>05 · Transformación individual</h2>
+<div class="hint">Posición X/Y/Z · Rotación grados X/Y/Z · Escala por pieza, sin alterar la armadura ni el esqueleto.</div>
+<div id="transformControls"></div></section>
+<section><h2>06 · Pintura por detalle</h2>
 <label>Superficie <input id="color" type="color"></label><label>Nervadura <input id="accent" type="color"></label>
 <label>Material <select id="material"><option value="graphite">Acero grafito</option><option value="silver">Acero frío</option><option value="leather">Cuero</option><option value="arcane">Arcano</option></select></label>
 <div class="hint">Elegí una pluma con un clic en el personaje o desde la lista. Pintar no une ni destruye las otras piezas.</div></section>
-<section><h2>05 · Historial y guardado</h2>
+<section><h2>07 · Historial y exportación</h2>
 <div class="row"><button id="undoBtn">↶ Deshacer</button><button id="redoBtn">↷ Rehacer</button><button id="resetBtn">⟲ Reiniciar</button></div>
 <div class="row"><button id="saveBtn">💾 Guardar</button><button id="loadBtn">↩ Cargar</button></div>
 <div class="row"><button id="recipeBtn">Exportar receta JSON</button><button id="exportBtn" class="primary">Exportar pieza GLB</button></div>
-<p>El GLB contiene el accesorio rígido para anclarlo al hueso <b>head</b>. No reemplaza el rig, no reescribe el personaje ni es todavía una armadura completa con skinning.</p></section>
+<p>Exporta casco y plumas como accesorios rígidos para <b>head</b>. No exporta el Warrior ni transforma piezas corporales en skinned meshes.</p></section>
 </aside>
-<div class="legend">Orbitar: arrastrar · Zoom: rueda/pinch · Clic: seleccionar pluma<br><span id="diag">Cargando modelo original…</span></div>
+<div class="legend">Orbitar: arrastrar · Zoom: rueda/pinch · Clic: seleccionar pieza<br><span id="diag">Cargando modelo original…</span></div>
 <div class="stageFooter"><button id="frontBtn">Frente</button><button id="sideBtn">Perfil</button><button id="backBtn">Espalda</button><button id="moveBtn">Animación</button></div><div id="error" role="alert"></div>
 </main></div><script type="module" src="./creator.mjs"></script></body></html>
