@@ -54,7 +54,8 @@ jobs:
           cd character-truth/pf6-site
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/skin3-phase6-http.log 2>&1 &
           sleep 3
-          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/ | grep -q '<html'
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/ -o /tmp/skin3-pf6-index.html
+          grep -q '<html' /tmp/skin3-pf6-index.html
       - name: Test 8 native M/F creator previews and enter real game
         timeout-minutes: 11
         shell: bash
