@@ -22,7 +22,7 @@ export function normalizeHelmet(input={}){
    colors[key]=typeof c==='string'&&/^#[0-9a-fA-F]{6}$/.test(c)?c:def.color;
  }
  return {enabled:src.enabled!==false,beak:clamp(src.beak,.7,1.4,1.06),
- crest:clamp(src.crest,.5,1.65,1.10),glow:clamp(src.glow,0,2,.90),
+ crest:clamp(src.crest,.5,1.65,1.10),glow:clamp(src.glow,0,2,.90),eyeOffset:clamp(src.eyeOffset,-.35,.35,0),
  colors};
 }
 const face=(verts,triangles,mat,name,part)=>{
@@ -178,13 +178,21 @@ function makeGem(c,w,h,d,mat,name){
  m.scale.set(w*.075,h*.13,d*.054);m.rotation.z=Math.PI/4;m.rotation.y=.25;m.castShadow=true;
  return m;
 }
-export function buildLegendaryHelmet(bounds,input){
+export function buildLegendaryHelmet(bounds,input,landmarks=null){
  const options=normalizeHelmet(input);const root=new THREE.Group();root.name='HIGHFLY_LEGENDARY_AVIAN_HELMET';
  root.userData.hfAttachBone='head';root.userData.rig='Rig_Medium';root.userData.nonSkinnedRigidHeadwear=true;
  if(!options.enabled)return root;
  const c=bounds.center,w=bounds.size.x,h=bounds.size.y,d=bounds.size.z;
  if(![w,h,d,c.x,c.y,c.z].every(Number.isFinite)||Math.min(w,h,d)<.02)throw Error('Native M_Head bind dimensions invalid');
  const mats=Object.fromEntries(Object.keys(HELMET_PARTS).map(k=>[k,material(k,options)]));
+ // Align visor and brow to REAL M_Eye_almond in Rig_Medium head bind coordinates.
+ const eyeDelta=landmarks?.verified
+    ?THREE.MathUtils.clamp(landmarks.eyeY-(c.y+h*.17),-h*.35,h*.35)+options.eyeOffset*h
+    :options.eyeOffset*h;
+ root.userData.facialAlignment={
+   verified:landmarks?.verified===true,offset:eyeDelta,
+   nativeY:landmarks?.eyeY??null,absoluteVisorY:c.y+h*.17+eyeDelta
+ };
  const add=(o)=>{root.add(o);return o};
  add(shellBands(c,w,h,d,mats.shell));
  add(faceFeatherChevron(c,w,h,d,mats.trim));
@@ -194,14 +202,15 @@ export function buildLegendaryHelmet(bounds,input){
  add(beakForge(c,w,h,d,mats.beak,options.beak));
  add(makeGem(c,w,h,d,mats.gem,'HIGHFLY_Avian_ForeheadCrystal'));
  for(const side of [-1,1]){
-   add(eyeSocket(c,w,h,d,side,mats.mask));
-   add(visorShape(c,w,h,d,side,mats.visor));
+   const socket=eyeSocket(c,w,h,d,side,mats.mask);socket.position.y+=eyeDelta;add(socket);
+   const visor=visorShape(c,w,h,d,side,mats.visor);visor.position.y+=eyeDelta;add(visor);
    for(let row=0;row<5;row++)add(templePlumage(c,w,h,d,side,row,row%2?mats.crest:mats.nape));
-   add(ribbonSurface([
+   const browGuard=ribbonSurface([
      new THREE.Vector3(c.x+side*w*.13,c.y+h*.22,c.z+d*.55),
      new THREE.Vector3(c.x+side*w*.32,c.y+h*.25,c.z+d*.515),
      new THREE.Vector3(c.x+side*w*.46,c.y+h*.20,c.z+d*.35)
-   ],[w*.026,w*.006],mats.trim,side<0?'LeftIvoryBrow':'RightIvoryBrow','trim'));
+   ],[w*.026,w*.006],mats.trim,side<0?'LeftIvoryBrow':'RightIvoryBrow','trim');
+   browGuard.position.y+=eyeDelta;add(browGuard);
    add(ribbonSurface([
      new THREE.Vector3(c.x+side*w*.40,c.y-h*.13,c.z+d*.35),
      new THREE.Vector3(c.x+side*w*.50,c.y-h*.33,c.z+d*.08),
