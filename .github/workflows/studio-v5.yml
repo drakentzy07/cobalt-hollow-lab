@@ -1,0 +1,231 @@
+name: HIGHFLY SKIN STUDIO V5 — REAL HUNTER EDITOR SAFETY + BROWSER GATE
+on:
+  push:
+    branches: [highfly-skinfactory-studio-v5]
+    paths:
+      - 'character-truth/integration-modules/**'
+      - 'character-truth/integration-safety/guard.py'
+      - '.github/workflows/studio-v5.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  source-real-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse prior original 7-slot GREEN evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: highfly-skin3-original-7-slot-mixed-armor-proof
+          run-id: 37825143482
+          github-token: ${{ github.token }}
+          path: character-truth/phase8-prior
+      - name: Download exact six official GLB + original sim, items and compositor
+        shell: bash
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,pathlib,urllib.request,time,re
+          rev='9b57e49c9676d75962700f828cc00a50a9a988b5'
+          base='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/'+rev+'/'
+          original={
+            'src/render/characters/modular.ts':'d2ad732114b01a0aa9de5a882e0a6980d54225fb',
+            'src/render/characters/underhair.generated.ts':'630408c0ffbffb61d06e1a398f28b0d89f820dfe',
+            'src/sim/types.ts':'615266ac42c5dc71d0f1f02deef2bd8cddf826bc',
+            'src/sim/loot_quality/types.ts':'ecac0870d9f08d026b15dd405527aa693e81961e',
+            'src/sim/material_payload_identity.ts':'d705b7c4ec4b24c9caa691af8a2db642638324b8',
+            'src/sim/equipment_rules.ts':'f60a1423c05318eb8a422cdf3d8bcbcb51f6b61d',
+            'src/sim/content/items.ts':'7fa4bd4e0864df8eb85e3070c0c1e5aac2579674'
+          }
+          for model,sha in json.loads(pathlib.Path('character-truth/official-asset-shas.json').read_text()).items():
+            folder='modular' if model=='warrior_modular.glb' else 'players'
+            original['public/models/chars/'+folder+'/'+model]=sha
+          downloaded={}
+          for name,pin in original.items():
+            for attempt in range(3):
+              try:
+                req=urllib.request.Request(base+name,headers={'User-Agent':'HIGHFLY-SKIN3-PHASE10-ORIGINAL-AUDIT'})
+                with urllib.request.urlopen(req,timeout=55) as res:data=res.read()
+                break
+              except Exception:
+                if attempt==2:raise
+                time.sleep(2)
+            actual=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+            if actual!=pin:raise RuntimeError('PINNED_ORIGINAL_MISMATCH '+name)
+            if name.endswith('.glb'):
+              dest=pathlib.Path('character-truth/inputs')/pathlib.Path(name).name
+            elif name.startswith('src/render/'):
+              dest=pathlib.Path('character-truth/generated')/pathlib.Path(name).name
+            else:
+              dest=pathlib.Path('character-truth/phase10-source')/name
+            dest.parent.mkdir(parents=True,exist_ok=True)
+            dest.write_bytes(data)
+            downloaded[name]=data.decode('utf8') if name.endswith('.ts') else None
+            print('HIGHFLY_SOURCE_PIN_GREEN',name,actual)
+          prior=json.loads(pathlib.Path('character-truth/phase8-prior/seven-slot-results.json').read_text())
+          assert prior['green'] and len(prior['cases'])==116, 'phase8 proven source missing'
+          text=downloaded['src/sim/content/items.ts']
+          names=['militia_vest','shadow_jerkin','woven_robe','oiled_boots','greyjaw_hide_boots','quilted_trousers','worn_sword']
+          for name in names:
+            assert re.search(r'(?m)^\s*'+re.escape(name)+r':\s*\{\s*\n\s*id:\s*'+repr(name),text), 'Pilot item is not real original '+name
+          print('HIGHFLY_SKIN3_PHASE10_NATIVE_ITEM_DEFINITIONS_GREEN',len(names))
+          PY
+      - name: Compile true original equipment rules and original character compositor
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false three@0.180.0 playwright@1.55.0 meshoptimizer@0.23.0 esbuild@0.25.12
+          npx esbuild character-truth/phase10-source/src/sim/equipment_rules.ts \
+            --bundle --format=esm --platform=browser \
+            --outfile=character-truth/phase10-generated/equipment_rules.mjs
+          npx esbuild character-truth/generated/modular.ts \
+            --bundle --format=esm --platform=browser \
+            --outfile=character-truth/phase10-generated/modular.mjs
+          cp character-truth/phase10-generated/modular.mjs character-truth/generated/modular-runtime.mjs
+          node --check character-truth/phase10-item-visual-adapter.mjs
+          node --check character-truth/integration-modules/factory-v4-gate.cjs
+          node --check character-truth/integration-modules/factory-recipe-v4.mjs
+          node --check character-truth/integration-modules/native-molder-v3.mjs
+          node --check character-truth/integration-modules/paint-recipe-v3.mjs
+          node --input-type=module - <<'JS'
+          import assert from 'node:assert/strict';
+          import {initialPilot,visualPilot,equipPilot,unequipPilot,savePilot,loadPilot,PILOT_CATALOG} from './character-truth/phase10-item-visual-adapter.mjs';
+          let s=initialPilot('male');
+          assert.equal(Object.keys(PILOT_CATALOG).length,7);
+          assert(visualPilot(s).nodes.includes('M_Torso'));
+          const t=equipPilot(s,s.inventory[0].copyId,'chest');
+          assert(t.ok);
+          assert.equal(visualPilot(t.state).worn.chest,'knight');
+          const restored=loadPilot(savePilot(t.state));
+          assert.equal(restored.equipment.chest.itemId,'militia_vest');
+          const u=unequipPilot(restored,'chest');
+          assert(u.ok);assert.equal(u.state.inventory.length,7);
+          console.log('HIGHFLY_PHASE10_PURE_NATIVE_EQUIP_SAVE_GREEN=1');
+          JS
+      - name: Prove old V2 painter donor SHA and V3 schema-migration safety
+        shell: bash
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin highfly-skinlab-v2-warrior-black
+          test "$(git rev-parse FETCH_HEAD)" = "cd6d60c7e445534b5425e6e84192b07aa9ac4ee9"
+          test "$(git rev-parse FETCH_HEAD:skinlab-v2/index.html)" = "ef2f4148dfa7de3a358bc26b74a0be145a68bc59"
+          git show FETCH_HEAD:skinlab-v2/index.html | grep -F "function paintArmorPreset(" >/dev/null
+          git show FETCH_HEAD:skinlab-v2/index.html | grep -F "function saveSimpleRecipe(" >/dev/null
+          node --input-type=module - <<'NODE'
+          import assert from 'node:assert/strict';
+          import {
+            emptyDesign,withPart,withoutPart,withGender,migrateSinglePartV2,
+            saveDesign,readDesign,loadoutOf,paintPreset,PARTS
+          } from './character-truth/integration-modules/paint-recipe-v3.mjs';
+          let d=emptyDesign('male');
+          for(const slot of PARTS)d=withPart(d,slot,'knight',paintPreset('raven'));
+          assert.equal(Object.keys(d.parts).length,7);
+          d=withPart(d,'chest','rogue',paintPreset('graphite'));
+          assert.equal(loadoutOf(d).chest,'rogue');
+          assert.equal(loadoutOf(d).head,'knight');
+          d=withoutPart(d,'chest');
+          assert.equal(Object.keys(d.parts).length,6);
+          assert.equal(loadoutOf(d).chest,null);
+          assert.deepEqual(readDesign(saveDesign(d)),d);
+          assert.equal(withGender(d,'female').gender,'female');
+          const legacy={version:2,set:'mage',slot:'head',color:'#121314',material:'mate',specialSkin:null};
+          const migrated=migrateSinglePartV2(legacy,'female');
+          assert.equal(migrated.gender,'female');
+          assert.deepEqual(Object.keys(migrated.parts),['head']);
+          assert.throws(()=>readDesign('{"schemaVersion":7}'));
+          assert.throws(()=>withPart(emptyDesign(),'secret','rogue'));
+          assert.throws(()=>migrateSinglePartV2({...legacy,specialSkin:'corvus'}));
+          const unsafe=JSON.parse('{"schemaVersion":3,"rig":"Rig_Medium","sourceRevision":"'+
+            d.sourceRevision+'","gender":"male","parts":{"__proto__":{"set":"knight"}}}');
+          assert.throws(()=>readDesign(unsafe),/UNKNOWN_PART/);
+          console.log('HIGHFLY_SKIN3_V3_RECIPE_7_PARTS_MIGRATION_GREEN=1 LEGACY_ORIGINAL_SHA_PINNED=1');
+          NODE
+      - name: Test strict shape rejection and per-slot independent no mutation data
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'JS'
+          import assert from 'node:assert/strict';
+          import {validShape,shapeZero,shapeProfile,SHAPE_SLOTS,ZERO_SHAPE} from './character-truth/integration-modules/native-molder-v3.mjs';
+          assert.equal(SHAPE_SLOTS.length,7);
+          assert(shapeZero(ZERO_SHAPE));
+          assert.equal(shapeProfile({width:.6,length:-.3,depth:0,taper:.2},'chest').slot,'chest');
+          assert.throws(()=>validShape({width:NaN,length:0,depth:0,taper:0}),/SAFE_BOUNDS/);
+          assert.throws(()=>validShape({width:20,length:0,depth:0,taper:0}),/SAFE_BOUNDS/);
+          assert.throws(()=>validShape({width:0,length:0,depth:0}),/INVALID_SHAPE_KEYS/);
+          assert.throws(()=>shapeProfile(ZERO_SHAPE,'neck'),/UNKNOWN_SOURCE_SLOT/);
+          console.log('HIGHFLY_SKIN3_V3_MOLDER_STATIC_BOUNDS_GREEN=1');
+          JS
+      - name: Verify full V4 schema safety seven slots and explicit legacy upgrades
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'JS'
+          import assert from 'node:assert/strict';
+          import {emptyDesign,withPart,paintPreset,PARTS,saveDesign} from './character-truth/integration-modules/paint-recipe-v3.mjs';
+          import {ZERO_SHAPE} from './character-truth/integration-modules/native-molder-v3.mjs';
+          import {factoryV4,readFactoryV4,saveFactoryV4,upgradePaintV3,upgradeOnePartV2,exportFactoryBoundary} from './character-truth/integration-modules/factory-recipe-v4.mjs';
+          let paint=emptyDesign('female');
+          for(const slot of PARTS)paint=withPart(paint,slot,'knight',paintPreset('graphite'));
+          const shapes={chest:{width:.6,length:.2,depth:-.3,taper:.1},
+            feet:{width:0,length:0,depth:.4,taper:0}};
+          const v4=factoryV4(paint,shapes);
+          assert.equal(v4.schemaVersion,4);assert.equal(Object.keys(v4.design.parts).length,7);
+          assert.deepEqual(readFactoryV4(saveFactoryV4(v4)),v4);
+          assert.deepEqual(upgradePaintV3(saveDesign(paint)).shapes,{});
+          assert.deepEqual(Object.keys(upgradeOnePartV2({version:2,set:'rogue',slot:'head',color:'#aabbcc',material:'mate'},'female').design.parts),['head']);
+          const deny=(fn,why)=>assert.throws(fn,undefined,why);
+          deny(()=>factoryV4(paint,{helmet:shapes.chest}),'unknown mold key forbidden');
+          deny(()=>factoryV4(emptyDesign(),{chest:shapes.chest}),'orphan mold forbidden');
+          deny(()=>factoryV4(paint,{chest:{...shapes.chest,width:50}}),'unsafe 50x mold denied');
+          deny(()=>readFactoryV4({schemaVersion:9,rig:'Rig_Medium',sourceRevision:v4.sourceRevision,design:paint,shapes:{}}),'unknown schema denied');
+          deny(()=>readFactoryV4('{"__proto__":true}'),'prototype keys invalid');
+          deny(()=>readFactoryV4({schemaVersion:4,rig:'Rig_Medium',sourceRevision:v4.sourceRevision,design:paint,shapes:{},actorPermission:'admin'}),'unexpected fields denied');
+          assert.equal(exportFactoryBoundary(v4).gameSaveWritten,false);
+          assert.equal(exportFactoryBoundary(v4).trainingStatsTouched,false);
+          console.log('HIGHFLY_SKIN3_FACTORY_V4_FULL_DESIGN_SCHEMA_GREEN=1');
+          JS
+      - name: Boot untouched original character GLB and original Playwright viewer
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/highfly-phase10-http.log 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:4173/character-truth/integration-modules/factory-v4-camera-stable.html >/dev/null
+          npx playwright install --with-deps chromium
+      - name: Prove stable original Hunter camera across helmet on/off, gender swap, paint, mold, reload
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/camera-lock-v4-gate.cjs
+          test -s character-truth/stable-camera-proof/helmet-camera-lock.json
+          git diff --exit-code -- .
+          echo "HIGHFLY_SKIN3_PHASE10_FROZEN_PF6_MAIN_AND_NATIVE_SOURCE_UNMODIFIED=1"
+      - name: Prove SKIN STUDIO V5 interface on authentic male/female Hunter with touch orbit and full edit history
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/studio-v5-gate.cjs
+          node character-truth/integration-modules/studio-v5-gate.cjs
+          test -s character-truth/studio-v5-proof/report.json
+          git diff --exit-code -- .
+          echo "HIGHFLY_V5_SOURCE_ONLY_PF6_UNCHANGED=1"
+      - name: Archive screenshot comparison real native helmet ON/OFF with exact camera invariants
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-skin-studio-v5-browser-REAL-original-source
+          path: |
+            character-truth/stable-camera-proof/
+            character-truth/studio-v5-proof/
+          retention-days: 30
+          if-no-files-found: warn
