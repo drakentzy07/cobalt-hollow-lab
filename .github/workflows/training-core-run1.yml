@@ -5,6 +5,7 @@ on:
     branches:
       - highfly-main-clean-v1
       - highfly-clean-v1-direct-validation
+      - highfly-pf6-xp-lv99-isolated
   workflow_dispatch:
 
 permissions:
@@ -198,6 +199,16 @@ jobs:
           test -f upstream/src/main.ts
           test -f upstream/src/highfly/game_c1_runtime.ts
           echo "CLEAN_V1_CANONICAL_SOURCE_SELECTED=1"
+
+      - name: Stage isolated PF-6 curve for TS + unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s training/runtime/pf6_xp_curve.ts
+          test -s training/tests/highfly_pf6_xp_curve.test.ts
+          cp training/runtime/pf6_xp_curve.ts upstream/src/highfly/training/pf6_xp_curve.ts
+          cp training/tests/highfly_pf6_xp_curve.test.ts upstream/tests/highfly_pf6_xp_curve.test.ts
+          echo "PF6_XP_CURVE_ISOLATED_TEST_FIXTURE=1"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -521,7 +532,7 @@ jobs:
       - name: Training Core RUN1-I unit tests
         working-directory: upstream
         shell: bash
-        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts tests/highfly_game_c21.test.ts tests/highfly_game_c22.test.ts tests/highfly_game_c23.test.ts tests/highfly_game_c24.test.ts tests/highfly_game_c25.test.ts tests/highfly_game_c251.test.ts tests/highfly_game_c26.test.ts tests/highfly_game_c27.test.ts tests/highfly_game_c28.test.ts
+        run: pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts tests/highfly_game_c21.test.ts tests/highfly_game_c22.test.ts tests/highfly_game_c23.test.ts tests/highfly_game_c24.test.ts tests/highfly_game_c25.test.ts tests/highfly_game_c251.test.ts tests/highfly_game_c26.test.ts tests/highfly_game_c27.test.ts tests/highfly_game_c28.test.ts tests/highfly_pf6_xp_curve.test.ts
 
       - name: Official ClaudeCraft bundle build
         working-directory: upstream
