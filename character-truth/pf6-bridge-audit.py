@@ -58,14 +58,22 @@ def main():
  check(rep.get('gameplay',{}).get('combat',{}).get('passed')==True,'PF6 combat failed')
  check(not rep.get('static404s'),'PF6 static 404 present')
  check(not rep.get('doubleBaseRequests'),'PF6 path duplicate')
- bad=rep.get('badRequests',[]);errors=rep.get('consoleErrors',[])
- warnings=[str(e)[:180] for e in errors if 'character visual unavailable' in str(e)]
+ provenance=rep.get('diagnosticProvenance',{})
+ if provenance:
+  check(provenance.get('sourceRun')==37770166898,'Wrong PF6 browser diagnostic source')
+  check(provenance.get('sourceArtifact')==11548356251,'Wrong PF6 browser artifact')
+  check(provenance.get('originalSha256')=='f1a3cba4cd40d34e969a2273e72d7a5e7dd3b0577121ef2473dd92c6cf987111','PF6 browser digest not anchored')
+  check(provenance.get('sanitizedSnapshot') is True,'PF6 diagnostic unexpectedly changed representation')
+ bad_count=provenance.get('badRequestEvents',len(rep.get('badRequests',[])))
+ error_count=provenance.get('consoleErrorsCount',len(rep.get('consoleErrors',[])))
+ warnings=provenance.get('characterVisualWarnings',[str(e)[:180] for e in rep.get('consoleErrors',[]) if 'character visual unavailable' in str(e)])
  result={'run':37770166898,'pf6Head':'312fe2e67219415a73a56303fcbd3b0bd9f62273',
  'upstream':'9b57e49c9676d75962700f828cc00a50a9a988b5','canonicalClean':'7e2e5d3a3f8cf6c708ddb5a5a39571b6cf493d63',
  'changedPaths':len(changed),'untouchedInCLEANOnly':critical,'verifiedOriginalModules':pins,
  'cleanPreviewHooksPresent':True,'cleanCombatAnimationAliasesPresent':True,
+ 'pf6DiagnosticDigestAnchored':bool(provenance), 'rawBrowserReportRefetchedThisRun':not bool(provenance),
  'pf6BrowserEntry':{'gameBooted':True,'movement':True,'combat':True,'static404s':0,
-                    'requestFailuresAndAnomalies':len(bad),'consoleErrors':len(errors),
+                    'requestFailuresAndAnomalies':bad_count,'consoleErrors':error_count,
                     'missingVisualWarnings':warnings},
  'limits':{'thisCleanPatchIsNotTheFinalPF6Build':True,'inGameCreatorRendererNotProvenEquivalent':True,
   'weaponSocketsNeedLiveGameplayTesting':True,'fullNineClassesAndBothBodiesPending':True,
@@ -85,6 +93,6 @@ def main():
  '- Real M/F in-game creator, equipped weapons, sockets, all classes and S23 landscape still require testing.',
  '','Result: PF6_FROZEN_SOURCE_BRIDGE_GREEN_RUNTIME_EQUIVALENCE_PENDING']
  (a.out/'PF6_BRIDGE_REPORT.md').write_text('\n'.join(md)+'\n')
- print('HIGHFLY_SKIN3_PF6_SOURCE_BRIDGE_GREEN=1 PATHS='+str(len(changed))+' ERRORS_RETAINED='+str(len(errors)))
+ print('HIGHFLY_SKIN3_PF6_SOURCE_BRIDGE_GREEN=1 PATHS='+str(len(changed))+' ERRORS_RETAINED='+str(error_count))
  print('PF6_BROWSER_MOVEMENT_COMBAT_VERIFIED=1 RUNTIME_VISUAL_EQUIVALENCE_PENDING=1')
 if __name__=='__main__':main()
