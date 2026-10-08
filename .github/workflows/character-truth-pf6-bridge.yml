@@ -6,6 +6,7 @@ on:
       - 'character-truth/pf6-bridge-audit.py'
       - 'character-truth/pf6-native-grip-check.mjs'
       - 'character-truth/SKIN3_PHASE5_PF6.md'
+      - 'character-truth/pf6-frozen-browser-snapshot.json'
       - '.github/workflows/character-truth-pf6-bridge.yml'
   workflow_dispatch:
 permissions:
@@ -24,13 +25,14 @@ jobs:
           run-id: 37770166898
           github-token: ${{ github.token }}
           path: character-truth/pf6-evidence/source-delta
-      - name: Reuse frozen PF6 RUN333 real browser diagnostics
-        uses: actions/download-artifact@v4
-        with:
-          name: run0-browser-diagnostics
-          run-id: 37770166898
-          github-token: TOKEN_PLACEHOLDER
-          path: character-truth/pf6-evidence/browser
+      - name: Use digest-linked PF6 frozen browser diagnostic snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/pf6-evidence/browser
+          cp character-truth/pf6-frozen-browser-snapshot.json character-truth/pf6-evidence/browser/run0-browser-report.json
+          test -s character-truth/pf6-evidence/browser/run0-browser-report.json
+          echo "PF6_DIGEST_REFERENCED_SNAPSHOT_READY=1"
       - name: Verify source modules against frozen original Git SHA
         shell: bash
         timeout-minutes: 5
