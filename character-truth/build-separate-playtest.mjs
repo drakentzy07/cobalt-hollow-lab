@@ -34,6 +34,8 @@ fs.mkdirSync(path.join(dist,'phase10-generated'),{recursive:true});
 fs.copyFileSync(path.join(src,'phase10-item-visual-adapter.mjs'),path.join(dist,'phase10-item-visual-adapter.mjs'));
 fs.copyFileSync(path.join(src,'generated/modular-runtime.mjs'),path.join(dist,'generated/modular-runtime.mjs'));
 fs.copyFileSync(path.join(src,'phase10-generated/equipment_rules.mjs'),path.join(dist,'phase10-generated/equipment_rules.mjs'));
+fs.copyFileSync(path.join(src,'phase10-generated/modular.mjs'),path.join(dist,'phase10-generated/modular.mjs'));
+
 fs.cpSync('node_modules/three/build',path.join(dist,'vendor/three/build'),{recursive:true});
 fs.cpSync('node_modules/three/examples/jsm',path.join(dist,'vendor/three/examples/jsm'),{recursive:true});
 fs.copyFileSync('node_modules/three/LICENSE',path.join(dist,'vendor/three/LICENSE'));
@@ -70,7 +72,7 @@ fs.writeFileSync(path.join(dist,'README.txt'),[
  ''
 ].join('\n'));
 const names=['index.html','phase10-item-visual-adapter.mjs','generated/modular-runtime.mjs',
- 'phase10-generated/equipment_rules.mjs','vendor/meshopt_decoder.module.js',
+ 'phase10-generated/equipment_rules.mjs','phase10-generated/modular.mjs','vendor/meshopt_decoder.module.js',
  'vendor/three/build/three.module.js','vendor/three/examples/jsm/loaders/GLTFLoader.js',
  'vendor/three/examples/jsm/loaders/KTX2Loader.js'];
 for(const n of names){assert(fs.statSync(path.join(dist,n)).size>100,'File missing '+n);}
