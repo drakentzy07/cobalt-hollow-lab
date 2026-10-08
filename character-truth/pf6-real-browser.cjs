@@ -77,6 +77,8 @@ function write(){fs.writeFileSync(path.join(dest,'pf6-real-browser.json'),JSON.s
    document.querySelector('#offline-appearance .ac-tab')?.click();
    const choice=[...document.querySelectorAll('#offline-appearance .ac-seg .ac-seg-btn')][1];
    choice?.click();
+   const input=document.querySelector('#char-name');
+   if(input){input.value='Skin3WarriorF';input.dispatchEvent(new Event('input',{bubbles:true}));}
   });
   await page.waitForFunction(()=>{
    const c=document.querySelector('#char-preview-canvas');
@@ -90,19 +92,26 @@ function write(){fs.writeFileSync(path.join(dest,'pf6-real-browser.json'),JSON.s
   const ingame=await page.evaluate(()=>{
    const g=window.__game,p=g?.sim?.player,renderer=g?.renderer;
    const canvases=[...document.querySelectorAll('canvas')].map(c=>({id:c.id,width:c.width,height:c.height,visible:(()=>{const b=c.getBoundingClientRect();return b.width>4&&b.height>4})()}));
-   return {hasSim:!!p,hasRenderer:!!renderer,name:p?.name||'',level:p?.level||null,characterClass:p?.class||p?.cls||p?.classId||null,
+   return {hasSim:!!p,hasRenderer:!!renderer,name:p?.name||'',level:p?.level||null,characterClass:g?.sim?.cfg?.playerClass||p?.cls||p?.classId||null,
+    playerClassSources:{simConfig:g?.sim?.cfg?.playerClass||null,playerCls:p?.cls||null},
     looksRenderKeys:Object.keys(renderer||{}).filter(x=>/char|visual|player|scene|model|rig|world/i.test(x)).slice(0,40),
     canvases,playerPosition:p?.pos?{x:p.pos.x,z:p.pos.z}:null};
   });
   assert(ingame.hasSim&&ingame.hasRenderer,'PF6 game did not construct player and renderer');
+  assert.equal(ingame.name,'Skin3WarriorF','PF6 player name did not match freshly entered original Hunter');
+  assert.equal(ingame.characterClass,'warrior','PF6 actual playable class is not Warrior: '+JSON.stringify(ingame.playerClassSources));
   report.inGame.push(ingame);
   await page.screenshot({path:path.join(dest,'pf6-warrior-female-inworld.png'),fullPage:true});
   report.creatorVisualGate='PF6_NATIVE_CREATOR_WEBGL_RENDERED_8';
   report.worldBootGate='PF6_NATIVE_WARRIOR_ENTERED_REAL_WORLD';
-  const badStatic=report.failedRequests.filter(x=>x.reason==='HTTP404');
+  const api404=report.failedRequests.filter(x=>x.reason==='HTTP404'&&x.url.includes('/api/'));
+  const badStatic=report.failedRequests.filter(x=>x.reason==='HTTP404'&&!x.url.includes('/api/'));
+  report.expectedLocalApi404Count=api404.length;
   report.static404Count=badStatic.length;
-  if(badStatic.length)report.skippedOrUnverified.push('Observed 404 URLs; review diagnostically');
-  console.log('HIGHFLY_SKIN3_PF6_REAL_CREATOR_GREEN='+report.previews.length+' INGAME='+report.inGame.length+' STATIC404='+report.static404Count);
+  report.cancelledAudioCount=report.failedRequests.filter(x=>x.reason==='net::ERR_ABORTED'&&x.url.includes('/audio/')).length;
+  if(badStatic.length)report.skippedOrUnverified.push('Unexpected static 404: '+JSON.stringify(badStatic));
+  assert.equal(badStatic.length,0,'Original PF6 public game has missing static resources');
+  console.log('HIGHFLY_SKIN3_PF6_REAL_CREATOR_GREEN='+report.previews.length+' INGAME='+report.inGame.length+' VERIFIED_CLASS='+ingame.characterClass+' STATIC404='+report.static404Count+' OPTIONAL_API404='+report.expectedLocalApi404Count);
   await context.close();
  }catch(err){
   report.failure=String(err.stack||err);
