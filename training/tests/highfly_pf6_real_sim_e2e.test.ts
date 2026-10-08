@@ -137,7 +137,7 @@ describe('HIGHFLY PF-6 D: real donor XP, gameplay events and persistence', () =>
     expect(sim.xp).toBe(25);
     const events = sim.drainEvents();
     expect(events.filter(ev => ev.type === 'xp' && ev.pid === pid)).toHaveLength(1);
-    expect(events.filter(ev => ev.type === 'levelup' && ev.pid === pid).map(ev => ev.level))
+    expect(events.flatMap(ev => ev.type === 'levelup' && ev.pid === pid ? [ev.level] : []))
       .toEqual([2, 3]);
     project(sim, pid);
     expect(getActiveHighflyHunterProfile()?.hunter).toMatchObject({ level: 3, xp: 25 });
