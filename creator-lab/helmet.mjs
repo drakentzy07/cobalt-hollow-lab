@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {fitEntireHelmet} from './anatomy-fit.mjs';
 
 // HIGHFLY original avian-helmet forge. Coordinates: authentic M_Head bind frame.
 // No synthetic skeleton, no donor character, and no mutations to base GLB.
@@ -185,14 +186,9 @@ export function buildLegendaryHelmet(bounds,input,landmarks=null){
  const c=bounds.center,w=bounds.size.x,h=bounds.size.y,d=bounds.size.z;
  if(![w,h,d,c.x,c.y,c.z].every(Number.isFinite)||Math.min(w,h,d)<.02)throw Error('Native M_Head bind dimensions invalid');
  const mats=Object.fromEntries(Object.keys(HELMET_PARTS).map(k=>[k,material(k,options)]));
- // Align visor and brow to REAL M_Eye_almond in Rig_Medium head bind coordinates.
- const eyeDelta=landmarks?.verified
-    ?THREE.MathUtils.clamp(landmarks.eyeY-(c.y+h*.17),-h*.35,h*.35)+options.eyeOffset*h
-    :options.eyeOffset*h;
- root.userData.facialAlignment={
-   verified:landmarks?.verified===true,offset:eyeDelta,
-   nativeY:landmarks?.eyeY??null,absoluteVisorY:c.y+h*.17+eyeDelta
- };
+ // Full-face fit is applied AFTER building all helmet pieces.
+ // Eyes, brows, cheeks, beak, mouth and ear feathers follow native GLB anchors.
+ root.userData.facialAlignment={verified:false,nativeY:landmarks?.eyeY??null};
  const add=(o)=>{root.add(o);return o};
  add(shellBands(c,w,h,d,mats.shell));
  add(faceFeatherChevron(c,w,h,d,mats.trim));
@@ -202,15 +198,15 @@ export function buildLegendaryHelmet(bounds,input,landmarks=null){
  add(beakForge(c,w,h,d,mats.beak,options.beak));
  add(makeGem(c,w,h,d,mats.gem,'HIGHFLY_Avian_ForeheadCrystal'));
  for(const side of [-1,1]){
-   const socket=eyeSocket(c,w,h,d,side,mats.mask);socket.position.y+=eyeDelta;add(socket);
-   const visor=visorShape(c,w,h,d,side,mats.visor);visor.position.y+=eyeDelta;add(visor);
+   add(eyeSocket(c,w,h,d,side,mats.mask));
+   add(visorShape(c,w,h,d,side,mats.visor));
    for(let row=0;row<5;row++)add(templePlumage(c,w,h,d,side,row,row%2?mats.crest:mats.nape));
    const browGuard=ribbonSurface([
      new THREE.Vector3(c.x+side*w*.13,c.y+h*.22,c.z+d*.55),
      new THREE.Vector3(c.x+side*w*.32,c.y+h*.25,c.z+d*.515),
      new THREE.Vector3(c.x+side*w*.46,c.y+h*.20,c.z+d*.35)
    ],[w*.026,w*.006],mats.trim,side<0?'LeftIvoryBrow':'RightIvoryBrow','trim');
-   browGuard.position.y+=eyeDelta;add(browGuard);
+   add(browGuard);
    add(ribbonSurface([
      new THREE.Vector3(c.x+side*w*.40,c.y-h*.13,c.z+d*.35),
      new THREE.Vector3(c.x+side*w*.50,c.y-h*.33,c.z+d*.08),
@@ -228,5 +224,15 @@ export function buildLegendaryHelmet(bounds,input,landmarks=null){
  root.userData.helmetParts=Object.keys(HELMET_PARTS);
  root.userData.sourceHead='M_Head';
  root.userData.kind='original_HIGHFLY_legendary';
+ if(landmarks?.verified){
+   const fit=fitEntireHelmet(root,bounds,landmarks,{eyeOffset:options.eyeOffset});
+   root.userData.facialAlignment={
+     verified:true,nativeY:landmarks.eyeY,absoluteVisorY:fit.eyeTargetY,
+     fullMask:true,coverage:fit.coverage,moved:fit.meshMoves
+   };
+ }else{
+   root.userData.facialAlignment={verified:false,nativeY:null,fullMask:false,
+     warning:'Falta referencia ocular real. No se aplicó ajuste anatómico.'};
+ }
  return root;
 }
