@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+"""PR-5: safe Smith overlay — independent weaponcrafting/armorcrafting trials.
+
+Runs on PR-4 green replay, never on public branch. Validates all anchors.
+Every default/unenrolled character keeps previous Claude/PR4 behavior.
+"""
+from pathlib import Path
+
+changes = []
+def splice(path, old, new, label):
+    p = Path(path)
+    src = p.read_text(encoding='utf-8')
+    if src.count(old) != 1 or new in src:
+        raise SystemExit(f'PR5 REFUSED {label}: upstream drift count={src.count(old)}')
+    changes.append((p,src.replace(old,new,1),label))
+
+c='src/sim/professions/crafting.ts'
+splice(c,
+  "import { cookingTrialIsPending, cookingTrialXpFrozen, recordCookingTrialProof, trialLimitedCookingGain } from './highfly_profession_trials';",
+  "import { cookingTrialIsPending, cookingTrialXpFrozen, recordCookingTrialProof, trialLimitedCookingGain } from './highfly_profession_trials';\n"
+  "import { smithTrialPending, smithTrialXpFrozen, smithTrialLimitedGain, recordSmithTrialProof } from './highfly_smith_pilot';",
+  "crafting Smith imports")
+splice(c,
+  """    gainCraftSkill(meta.craftSkills, recipe.professionId, allowedSkillGain);
+    const skillLearned = (meta.craftSkills[recipe.professionId] ?? 0) - skillBefore;""",
+  """    const smithAllowedSkillGain = smithTrialLimitedGain(
+      meta.highflyProfessions, recipe.professionId, skillBefore, allowedSkillGain,
+    );
+    gainCraftSkill(meta.craftSkills, recipe.professionId, smithAllowedSkillGain);
+    const skillLearned = (meta.craftSkills[recipe.professionId] ?? 0) - skillBefore;""",
+  "smith raw gain")
+splice(c,
+  """    const potentialCredit = pendingCookingTrial
+      ? (cookingTrialXpFrozen(meta.highflyProfessions) ? 0 : Math.min(
+          rawSkillGain, Math.max(0, 125 - skillBefore),
+        ))
+      : skillLearned;""",
+  """    const pendingSmithTrial = smithTrialPending(meta.highflyProfessions, recipe.professionId);
+    const potentialCredit = pendingSmithTrial
+      ? (smithTrialXpFrozen(meta.highflyProfessions, recipe.professionId) ? 0 : Math.min(
+          rawSkillGain, Math.max(0, 125 - skillBefore),
+        ))
+      : pendingCookingTrial
+        ? (cookingTrialXpFrozen(meta.highflyProfessions) ? 0 : Math.min(
+            rawSkillGain, Math.max(0, 125 - skillBefore),
+          ))
+        : skillLearned;""",
+  "smith profession XP pending credit")
+splice(c,
+  """      meta.highflyProfessions = recordCookingTrialProof(
+        hfCareer.state, recipe.professionId, recipe.id,
+      );""",
+  """      meta.highflyProfessions = recordSmithTrialProof(recordCookingTrialProof(
+        hfCareer.state, recipe.professionId, recipe.id,
+      ), recipe.professionId, recipe.id);""",
+  "smith proof on real successful craft")
+
+b='src/sim/professions/battlefield_xp.ts'
+splice(b,
+  "import { trialLimitedCookingGain } from './highfly_profession_trials';",
+  "import { trialLimitedCookingGain } from './highfly_profession_trials';\n"
+  "import { smithTrialLimitedGain } from './highfly_smith_pilot';",
+  "battlefield smith import")
+splice(b,
+  """  gainCraftSkill(craftSkills, recipe.professionId, permitted);
+  return permitted;""",
+  """  const smithPermitted = smithTrialLimitedGain(
+    highflyCareer, recipe.professionId, craftSkills[recipe.professionId] ?? 0, permitted,
+  );
+  gainCraftSkill(craftSkills, recipe.professionId, smithPermitted);
+  return smithPermitted;""",
+  "battlefield smith cap")
+
+s='src/sim/sim.ts'
+splice(s,
+  "import { enrollCookingTrialPilot, claimCookingTrialPilot, cookingTrialStatus } from './professions/highfly_profession_trials';",
+  "import { enrollCookingTrialPilot, claimCookingTrialPilot, cookingTrialStatus } from './professions/highfly_profession_trials';\n"
+  "import { highflySmithSnapshot, smithCraftId, smithPilotEnroll, smithPilotClaim } from './professions/highfly_smith_pilot';",
+  "Sim smith import")
+splice(s,
+  "  serializeCharacter(pid: number): CharacterState | null {",
+  """  /** PR-5 LAB only: opt-in independent weapon or armor trial, no public command. */
+  enrollHighflySmithTrialPilot(professionId: string, pid = this.playerId): boolean {
+    if (!smithCraftId(professionId)) return false;
+    const meta = this.players.get(pid);
+    if (!meta) return false;
+    const next = smithPilotEnroll(meta.highflyProfessions, professionId,
+      meta.craftSkills[professionId] ?? 0);
+    if (!next) return false;
+    meta.highflyProfessions = next;
+    return true;
+  }
+
+  /** Independent, explicit claim; does NOT attune the existing Smith archetype. */
+  claimHighflySmithTrialPilot(professionId: string, pid = this.playerId): boolean {
+    if (!smithCraftId(professionId)) return false;
+    const meta = this.players.get(pid);
+    if (!meta) return false;
+    const next = smithPilotClaim(meta.highflyProfessions, professionId,
+      meta.craftSkills[professionId] ?? 0);
+    if (!next) return false;
+    meta.highflyProfessions = next;
+    return true;
+  }
+
+  /** LAB read model; all canonical skill and title data stays Claude-owned. */
+  highflySmithPilotStatus(pid = this.playerId) {
+    const meta = this.players.get(pid);
+    return meta ? highflySmithSnapshot(
+      meta.craftSkills, meta.archetype, meta.highflyProfessions,
+    ) : null;
+  }
+
+  serializeCharacter(pid: number): CharacterState | null {""",
+  "Sim Smith pilot facade")
+
+# All target snippets are non-overlapping across independent files.
+# Apply in memory sequentially first and check the entire plan before writes.
+pending={}
+for p,full,label in changes:
+    if p in pending:
+        src=pending[p]
+        original=p.read_text(encoding='utf-8')
+        # Re-apply the operation to the running version using original->new diff.
+        # Instead perform all known splices in order via replay below.
+for p in {p for p,_,_ in changes}:
+    text=p.read_text(encoding='utf-8')
+    for path,new,label in changes:
+        if path!=p: continue
+        orig=path.read_text(encoding='utf-8')
+        # Each stored edit is a single unique insertion/replacement against
+        # the ORIGINAL. Derive unchanged prefix/suffix by common boundaries.
+        lead=0
+        while lead<min(len(orig),len(new)) and orig[lead]==new[lead]: lead+=1
+        tail=0
+        while (tail < len(orig)-lead and tail < len(new)-lead and
+               orig[len(orig)-1-tail]==new[len(new)-1-tail]): tail+=1
+        old_span=orig[lead:len(orig)-tail] if tail else orig[lead:]
+        new_span=new[lead:len(new)-tail] if tail else new[lead:]
+        if text.count(old_span)!=1:
+            raise SystemExit(f'PR5 REFUSED staged edit {label}')
+        text=text.replace(old_span,new_span,1)
+    pending[p]=text
+for p,text in pending.items():
+    p.write_text(text,encoding='utf-8')
+print('HIGHFLY_PR5_WEAPON_ARMOR_INDEPENDENT_TRIAL_HOOKS=1')
+print('HIGHFLY_PR5_NO_NEW_SKILL_WALLET_NO_NEW_RNG=1')
