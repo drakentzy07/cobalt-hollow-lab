@@ -135,8 +135,7 @@ export function highflyLeatherTextileStatus(
       basicTechniqueKnown:k.includes('technique.basic_tailoring'),
       bagConstructionKnown:k.includes('technique.bag_construction'),
     },
-    materialsUsed:Object.fromEntries(MATERIALS.map(id=>[id,count(`textile.material_used.${id}`)]))
-      as Record<Material,number>,
+    materialsUsed:Object.fromEntries(MATERIALS.map(id=>[id,count(`textile.material_used.${id}`)])) as Record<Material,number>,
     extraBagCapacityGranted:0,newEquipmentVisualsGranted:false,
   };
 }
