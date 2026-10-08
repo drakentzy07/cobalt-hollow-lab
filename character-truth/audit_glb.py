@@ -25,6 +25,7 @@ class Reader:
         self.buffers={}
         # GLB binary chunk is buffer[0]; additional buffers are permitted in
         # our legacy donor only when embedded as data URIs. NEVER fetch URLs.
+        print("GLB_BUFFER_METADATA",[(i,b.get("byteLength"),str(b.get("uri","<none>"))[:90]) for i,b in enumerate(doc.get("buffers",[]))],flush=True)
         for i,item in enumerate(doc.get("buffers",[])):
             uri=item.get("uri")
             if uri is None and i==0:
