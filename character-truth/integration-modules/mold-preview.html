@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>HIGHFLY · SKIN3 · Moldeador Nativo V3</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#10111e;color:#f3efff}
+*{box-sizing:border-box}body{margin:0}header{padding:7px 15px;border-bottom:1px solid #48315f}
+header strong{font-size:16px;color:#dbc8ff}header p{margin:3px 0;font-size:11px;color:#acacc5}
+main{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,330px);min-height:300px}
+#scene{position:relative;min-width:0;height:calc(100dvh - 60px);min-height:300px;overflow:hidden}
+#scene canvas{display:block;width:100%;height:100%}
+#scene .notice{position:absolute;left:10px;bottom:10px;background:#161223c9;padding:6px;border-radius:8px;font-size:10px;pointer-events:none}
+aside{height:calc(100dvh - 60px);min-height:300px;overflow:auto;padding:10px 12px;background:#191a2e}
+label{display:block;font-size:12px;margin:7px 0 3px}
+select,input,button{width:100%;border:1px solid #765da7;border-radius:7px;background:#29213e;color:#f9f6ff;font-size:13px;padding:8px}
+input[type=color]{height:38px;padding:3px}button{background:#473173;cursor:pointer}
+button:active{background:#7656ac}.buttonrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
+#checks{white-space:pre-wrap;word-break:break-word;font-size:10px;color:#bfb8d8;max-height:100px;overflow:auto}
+h2{font-size:14px;color:#d9b9fd}
+small{font-size:10px;color:#b2aac9}
+@media(max-width:700px) and (orientation:portrait){
+main{display:block}#scene{height:52dvh;min-height:275px}aside{height:auto;min-height:0}
+}
+@media (orientation:landscape) and (max-height:530px){
+header{padding:3px 10px}header strong{font-size:13px}
+main{grid-template-columns:minmax(0,1fr) minmax(230px,32%)}
+#scene,aside{height:calc(100dvh - 40px);min-height:0}
+aside{padding:5px 8px}label{margin:4px 0 2px}select,input,button{padding:5px}
+}
+</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script></head>
+<body>
+<header><strong>HIGHFLY · SKIN3 · MOLDEADOR REAL V3</strong>
+<p>Laboratorio aislado · Pintor GREEN + geometrías clonadas para moldeado · No toca PF-6</p></header>
+<main><div id="scene"><div class="notice">Pintura de muestra sobre piezas originales · No es una skin fabricada definitiva</div></div>
+<aside><h2>Diseñar armadura</h2>
+<label>Hunter</label><select id="gender"><option value="male">Masculino</option><option value="female">Femenino</option></select>
+<label>Pieza</label><select id="slot"><option value="head">Casco</option><option value="chest" selected>Pecho</option><option value="arms">Brazos</option><option value="hands">Manos</option><option value="legs">Piernas</option><option value="feet">Botas</option><option value="back">Espalda</option></select>
+<label>Conjunto donante original</label><select id="family">
+<option value="knight">Knight</option><option value="barbarian">Barbarian</option>
+<option value="druid">Druid</option><option value="mage">Mage</option>
+<option value="paladin">Paladin</option><option value="ranger">Ranger</option><option value="rogue">Rogue</option></select>
+<label>Pintura</label><select id="style"><option value="raven">Raven violeta</option><option value="graphite">Grafito / aura</option><option value="custom">Personalizado</option><option value="source">Material original</option></select>
+<div class="buttonrow"><label>Primario<input type="color" id="primary" value="#19141f"/></label><label>Detalle<input type="color" id="accent" value="#8b5cf6"/></label></div>
+<div class="buttonrow"><button id="apply">Aplicar a pieza</button><button id="remove">Quitar pieza</button></div>
+<div class="buttonrow"><button id="save">Guardar diseño</button><button id="load">Cargar diseño</button></div>
+<div class="buttonrow"><button id="reset">Reiniciar pintura</button><button id="view">Girar cámara</button></div>
+<h2>Moldeador seguro · Pieza elegida</h2>
+<small>Prototipo geométrico con límites conservadores. Copiamos cada malla: huesos, pesos y cuerpo originales no se modifican.</small>
+<label>Anchura <span id="mwidthValue">0</span></label><input type="range" id="mwidth" min="-60" max="60" step="10" value="0">
+<label>Longitud <span id="mlengthValue">0</span></label><input type="range" id="mlength" min="-60" max="60" step="10" value="0">
+<label>Volumen / profundidad <span id="mdepthValue">0</span></label><input type="range" id="mdepth" min="-60" max="60" step="10" value="0">
+<label>Conicidad <span id="mtaperValue">0</span></label><input type="range" id="mtaper" min="-60" max="60" step="10" value="0">
+<div class="buttonrow"><button id="mold">Moldear copia</button><button id="unmold">Restaurar pieza</button></div>
+<button id="unmoldall">Restaurar TODA la geometría</button>
+<label>Animación original</label><select id="clip"><option>Idle</option><option>Walking_A</option><option>Running_A</option><option>Block</option><option>1H_Melee_Attack_Chop</option></select>
+<small>La receta V3 guarda las siete ranuras sin modificar los originales. El diseño no altera atributos RPG ni los cinco stats del entrenamiento.</small>
+<pre id="checks">Cargando personaje original...</pre>
+</aside></main>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
+import {MeshoptDecoder} from '/node_modules/meshoptimizer/meshopt_decoder.module.js';
+import {
+ ARMOR_SLOTS,ARMOR_SETS,DEFAULT_APPEARANCE,modularPartNames,normalizeAppearance
+} from '../generated/modular-runtime.mjs';
+import {
+ emptyDesign,withPart,withoutPart,withGender,paintPreset,paintInstructions,
+ makePainter,readDesign,saveDesign,migrateSinglePartV2,PARTS
+} from './paint-recipe-v3.mjs';
+import {createNativeMolder,validShape,SHAPE_SLOTS,ZERO_SHAPE} from './native-molder-v3.mjs';
+const $=s=>document.getElementById(s);
+const panel=$('scene');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x252637);
+scene.add(new THREE.HemisphereLight(0xffffff,0x4d3e63,2.5));
+for(const [p,power] of [[[4,8,7],3],[[-4,4,-2],2.1]]){
+ const light=new THREE.DirectionalLight(0xffffff,power);light.position.set(...p);scene.add(light);
+}
+const camera=new THREE.PerspectiveCamera(36,1,0.01,120);
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.18;
+renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));panel.prepend(renderer.domElement);
+const ktx=new KTX2Loader().setTranscoderPath('/node_modules/three/examples/jsm/libs/basis/').detectSupport(renderer);
+const loader=new GLTFLoader().setKTX2Loader(ktx).setMeshoptDecoder(MeshoptDecoder);
+const sources=['warrior_modular','knight','knight_hit_variety_anims','warrior_ability_anims','warrior_fury_anims','warrior_contact_anims'];
+const state={ready:false,error:null,modelIdentity:'warrior_modular.glb',sourceOnly:true,
+ trainingStatsTouched:false,PF6Modified:false,oldLabModified:false,
+ migrationRun:false,appliedPaint:null,draws:0};
+window.__HF_SKIN3_PAINT_V3_PROOF__=Object.freeze({
+ state:()=>({...state,design:readDesign(design)}),
+ nodes:()=>selectionNodes(),
+ apply:(slot,set,style)=>{design=withPart(design,slot,set,paintPreset(style));return updateModel()},
+ remove:slot=>{design=withoutPart(design,slot);return updateModel()},
+ gender:g=>{design=withGender(design,g);return updateModel()},
+ migrate:legacy=>{design=migrateSinglePartV2(legacy,design.gender);state.migrationRun=true;return updateModel()},
+ save:()=>saveDesign(design),
+ restore:x=>{design=readDesign(x);return updateModel()},
+ meshInfo:()=>paintedMeshes(),
+ model:()=>({originalGLB:state.modelIdentity,rigRoot:!!root?.getObjectByName('Rig_Medium'),clips:[...clips.keys()]})
+});
+let root=null,painter=null,molder=null,mixer=null,design=withPart(emptyDesign(), 'chest','knight',paintPreset('raven'));
+const deformations={};
+const clips=new Map(),originals=new Map(),meshes=[];
+let viewIndex=0;
+function actualName(m,names){
+ for(let o=m;o;o=o.parent){
+  if(names.has(o.name))return o.name;
+  if(o===root)break;
+ }return null;
+}
+function selectionNodes(){
+ const app=normalizeAppearance({...DEFAULT_APPEARANCE,gender:design.gender});
+ return modularPartNames(app,Object.fromEntries(ARMOR_SLOTS.map(slot=>[slot,design.parts[slot]?.set??null])));
+}
+function paintedMeshes(){
+ return meshes.filter(m=>m.visible&&m.material!==originals.get(m)).map(m=>({
+  name:m.name,matColor:Array.isArray(m.material)?m.material[0]?.color?.getHexString():m.material?.color?.getHexString(),
+  skinFingerprint:!!m.isSkinnedMesh&&m.skeleton.bones.length,
+  geometryId:m.geometry?.uuid,
+  sourceMaterialPreserved:originals.has(m)
+ }));
+}
+function setCamera(){
+ const box=new THREE.Box3().makeEmpty();
+ for(const m of meshes)if(m.visible)box.expandByObject(m,true);
+ if(box.isEmpty())throw Error('NO_VISIBLE_SOURCE_CHARACTER');
+ const center=box.getCenter(new THREE.Vector3()),extent=Math.max(.75,box.getSize(new THREE.Vector3()).length());
+ const vectors=[[0.55,0.18,1.7],[0,0.2,1.7],[1.7,0.2,0],[0,0.2,-1.7]];
+ camera.position.copy(center).add(new THREE.Vector3(...vectors[viewIndex%vectors.length]).multiplyScalar(extent));
+ camera.lookAt(center);
+}
+function updateModel(){
+ if(!root)return null;
+ design=readDesign(design);
+ const wanted=new Set(selectionNodes());
+ const seen=new Set();
+ for(const m of meshes){
+  const node=actualName(m,wanted);m.visible=!!node;m.frustumCulled=false;
+  if(node)seen.add(node);
+ }
+ const missing=[...wanted].filter(x=>!seen.has(x));
+ if(missing.length)throw Error('ORIGINAL_NODE_NOT_FOUND '+missing.join(','));
+ const app=normalizeAppearance({...DEFAULT_APPEARANCE,gender:design.gender});
+ const plan=paintInstructions(design,modularPartNames,x=>normalizeAppearance({...DEFAULT_APPEARANCE,...x}));
+ const paints=painter.apply(plan);
+ state.appliedPaint=paints;
+ const shapePlan=plan.map(p=>({...p,shape:deformations[p.slot]||ZERO_SHAPE}));
+ state.appliedMold=molder.apply(shapePlan);
+ state.worn=Object.fromEntries(PARTS.map(s=>[s,design.parts[s]?.set||null]));
+ state.parts=plan.map(p=>({slot:p.slot,set:p.set,paint:p.paint,meshCount:p.nodes.length}));
+ $('gender').value=design.gender;
+ const selectedSlot=$('slot').value;
+ if(design.parts[selectedSlot]){
+  $('family').value=design.parts[selectedSlot].set;
+  const p=design.parts[selectedSlot].paint;
+  if(p){$('primary').value=p.color;$('accent').value=p.accent}
+ }
+ setCamera();render();
+ $('checks').textContent=JSON.stringify({hunter:design.gender,equipped:Object.keys(design.parts),
+  paintedMeshes:paints.totalMeshes,originalNodes:seen.size,all7Slots:ARMOR_SLOTS.length,
+  materialOnly:true},null,2);
+ return {...paints,geometryStillOriginal:true,gameUnchanged:true};
+}
+function render(){
+ const w=Math.max(300,panel.clientWidth),h=Math.max(220,panel.clientHeight);
+ renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+ renderer.render(scene,camera);state.draws++;
+}
+$('apply').onclick=()=>{
+ try{
+  const s=$('style').value;
+  const paint=s==='source'?null:s==='custom'?{
+   color:$('primary').value,accent:$('accent').value,metalness:0.52,roughness:0.36
+  }:paintPreset(s);
+  design=withPart(design,$('slot').value,$('family').value,paint);updateModel();
+ }catch(e){$('checks').textContent=String(e);state.error=String(e)}
+};
+$('remove').onclick=()=>{design=withoutPart(design,$('slot').value);updateModel()};
+$('gender').onchange=()=>{design=withGender(design,$('gender').value);updateModel()};
+$('save').onclick=()=>{localStorage.setItem('HIGHFLY_SKIN3_DESIGN_V3_PAINT_LAB',saveDesign(design));$('checks').textContent='Diseño V3 guardado sin afectar el inventario'};
+$('load').onclick=()=>{
+ try{
+  const raw=localStorage.getItem('HIGHFLY_SKIN3_DESIGN_V3_PAINT_LAB');
+  if(!raw)throw Error('SIN_DISEÑO_GUARDADO');
+  design=readDesign(raw);updateModel();
+ }catch(e){$('checks').textContent=String(e)}
+};
+$('reset').onclick=()=>{design=emptyDesign($('gender').value);updateModel()};
+$('view').onclick=()=>{viewIndex++;setCamera();render()};
+$('clip').onchange=()=>{
+ if(!root)return;
+ const clip=clips.get($('clip').value);
+ if(!clip){$('checks').textContent='La animación original no existe';return}
+ if(mixer){mixer.stopAllAction();mixer.uncacheRoot(root)}
+ mixer=new THREE.AnimationMixer(root);mixer.clipAction(clip).reset().play();
+ mixer.update(Math.min(clip.duration*0.2,0.17));render();
+};
+
+function inputsShape(){
+ const shape={};
+ for(const k of ['width','length','depth','taper']){
+  const x=+$('m'+k).value/100;
+  shape[k]=x;$('m'+k+'Value').textContent=String(x);
+ }
+ return validShape(shape);
+}
+function showSliders(){
+ const shape=deformations[$('slot').value]??ZERO_SHAPE;
+ for(const k of ['width','length','depth','taper']){
+  $('m'+k).value=Math.round(shape[k]*100);
+  $('m'+k+'Value').textContent=String(shape[k]);
+ }
+}
+for(const key of ['width','length','depth','taper'])
+ $('m'+key).oninput=()=>{
+  $('m'+key+'Value').textContent=String(+$('m'+key).value/100)
+ };
+$('mold').onclick=()=>{
+ try{deformations[$('slot').value]=inputsShape();updateModel();}
+ catch(e){state.error=String(e);$('checks').textContent=String(e)}
+};
+$('unmold').onclick=()=>{
+ delete deformations[$('slot').value];showSliders();updateModel();
+};
+$('unmoldall').onclick=()=>{
+ for(const s of SHAPE_SLOTS)delete deformations[s];showSliders();updateModel();
+};
+function getGeometryAudit(){
+ if(!molder)return null;
+ const fnv=array=>{
+  if(!array)return null;
+  const bytes=new Uint8Array(array.buffer,array.byteOffset,array.byteLength);
+  let h=2166136261;
+  for(const b of bytes){h^=b;h=Math.imul(h,16777619)}
+  return h>>>0;
+ };
+ const audit=[];
+ for(const [m,source] of molder.baselineEntries()){
+  if(!m.isSkinnedMesh)continue;
+  const original=source.getAttribute('position'),live=m.geometry.getAttribute('position');
+  audit.push({name:m.name,visible:m.visible,changed:m.geometry!==source,
+   sourceGeometryId:source.uuid,liveGeometryId:m.geometry.uuid,
+   sourcePositions:fnv(original.array),livePositions:fnv(live.array),
+   sourceSkinWeight:fnv(source.getAttribute('skinWeight')?.array),
+   liveSkinWeight:fnv(m.geometry.getAttribute('skinWeight')?.array),
+   sourceSkinIndex:fnv(source.getAttribute('skinIndex')?.array),
+   liveSkinIndex:fnv(m.geometry.getAttribute('skinIndex')?.array),
+   boneCount:m.skeleton?.bones?.length||0});
+ }
+ return audit;
+}
+window.__HF_SKIN3_MOLDER_V3_PROOF__=Object.freeze({
+ state:()=>({...state,shapes:JSON.parse(JSON.stringify(deformations)),
+  design:readDesign(design),molder:molder?.state()}),
+ applyShape:(slot,shape)=>{
+  if(!SHAPE_SLOTS.includes(slot))throw Error('INVALID_SHAPE_SLOT');
+  deformations[slot]=validShape(shape);return updateModel();
+ },
+ restoreShape:slot=>{
+  if(!SHAPE_SLOTS.includes(slot))throw Error('INVALID_SHAPE_SLOT');
+  delete deformations[slot];return updateModel();
+ },
+ resetAll:()=>{for(const slot of SHAPE_SLOTS)delete deformations[slot];return updateModel()},
+ setGender:gender=>{design=withGender(design,gender);return updateModel()},
+ put:(slot,set)=>{design=withPart(design,slot,set,paintPreset('graphite'));return updateModel()},
+ geometryAudit:getGeometryAudit,
+ rigInfo:()=>({realRoot:!!root?.getObjectByName('Rig_Medium'),partCount:meshes.length,
+  originals:!!molder?.state(),knightSource:true})
+});
+$('slot').onchange=()=>{showSliders();
+ const x=design.parts[$('slot').value];
+ if(x){$('family').value=x.set;if(x.paint){$('primary').value=x.paint.color;$('accent').value=x.paint.accent}}
+};
+new ResizeObserver(()=>{if(state.ready)render()}).observe(panel);
+(async()=>{
+ try{
+  await MeshoptDecoder.ready;
+  const list={};for(const stem of sources)
+   list[stem]=await loader.loadAsync('/character-truth/inputs/'+stem+'.glb');
+  root=list.warrior_modular.scene;
+  scene.add(root);
+  root.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){meshes.push(o);originals.set(o,o.material);o.visible=false}});
+  painter=makePainter(root);
+  molder=createNativeMolder(root);
+  for(const stem of sources)for(const clip of list[stem].animations)if(!clips.has(clip.name))clips.set(clip.name,clip);
+  if(!root.getObjectByName('Rig_Medium'))throw Error('ORIGINAL_RIG_MISSING');
+  if(meshes.length<20)throw Error('SOURCE_MESHES_MISSING');
+  state.ready=true;updateModel();
+ }catch(e){state.error=String(e.stack||e);$('checks').textContent=state.error;console.error(e)}
+})();
+</script></body></html>
