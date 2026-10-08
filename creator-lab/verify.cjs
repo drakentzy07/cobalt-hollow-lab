@@ -79,13 +79,17 @@ const gltfValidator=require('gltf-validator');
   await page.click('#helmetOnBtn');
   await page.screenshot({path:'creator-proof/avian-helmet-painted.png'});
   d=await page.evaluate(()=>window.__CREATOR_DIAG__);
-  if(!d.blenderAssetAvailable||!d.blenderNativeHeadMounted||d.blenderMeshCount!==7)
-    throw Error('Real Blender GLB not mounted on native head: '+JSON.stringify(d));
+  if(!d.blenderAssetAvailable||!d.blenderNativeHeadMounted||d.blenderMeshCount!==7||
+    !d.blenderSemanticAligned||!d.blenderBeakLocalBounds)
+    throw Error('GLB is misaligned, upright rabbit tooth, or not native-head-mounted: '+JSON.stringify(d));
   await page.click('#blenderPreviewBtn');
   d=await page.evaluate(()=>window.__CREATOR_DIAG__);
   if(!d.blenderPreviewActive)throw Error('Blender 7-mesh comparison unavailable');
   await page.click('#sideBtn');await page.waitForTimeout(250);
   await page.screenshot({path:'creator-proof/blender-forged-beak-profile.png'});
+  const aligned=await page.evaluate(()=>window.__CREATOR_DIAG__);
+  if(!aligned.blenderSemanticAligned||aligned.blenderSemanticReason.includes('"forward":false'))
+    throw Error('Preview turns forward beak into an upward rabbit horn');
   await page.click('#frontBtn');await page.waitForTimeout(250);
   await page.screenshot({path:'creator-proof/blender-forged-beak-front.png'});
   await page.click('#blenderOffBtn');

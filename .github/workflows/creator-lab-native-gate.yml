@@ -55,12 +55,12 @@ jobs:
           path: creator-lab/assets/blender
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: drakentzy07/cobalt-hollow-lab
-          run-id: 37773820855
+          run-id: 37784954876
       - name: Check genuine Blender artifact before browser startup
         run: |
           set -euo pipefail
           test -s creator-lab/assets/blender/highfly-blender-forge.glb
-          echo "69b07b1b3e7f4a515745c81b99c65b3c22a65d8802870f1f5cbd3511aecd4927  creator-lab/assets/blender/highfly-blender-forge.glb" | sha256sum --check
+          echo "36bd673c9153f77a732a189c9bc71c45a799a0eebd09ffab51669954a3d5e412  creator-lab/assets/blender/highfly-blender-forge.glb" | sha256sum --check
           test -s creator-lab/assets/blender/highfly-blender-forge.json
       - name: Install Chromium
         shell: bash

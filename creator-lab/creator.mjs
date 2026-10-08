@@ -46,7 +46,8 @@ const DIAG=window.__CREATOR_DIAG__={ready:false,error:null,product:'HIGHFLY_CREA
   helmetReady:false,helmetAttached:false,helmetMeshCount:0,helmetPartCount:0,helmetVisible:false,helmetSelectedPart:'beak',fullFaceFitted:false,faceFitParts:0,faceFitCoverage:null,faceFitWarnings:[],
   faceLandmarksVerified:false,landmarkCount:0,nativeEyeY:null,eyeYResult:null,gizmoAttached:false,gizmoMode:null,
   quality:null,toolboxVersion:3,blenderAssetAvailable:false,blenderNativeHeadMounted:false,
-  blenderPreviewActive:false,blenderMeshCount:0,exportContainsBlender:false};
+  blenderPreviewActive:false,blenderMeshCount:0,exportContainsBlender:false,
+  blenderSemanticAligned:false,blenderSemanticReason:'not-loaded',blenderBeakLocalBounds:null};
 
 function report(msg,isError=false){
   byId('status').textContent=msg;if(isError){DIAG.error=msg;byId('error').style.display='block';byId('error').textContent=msg}
@@ -114,6 +115,31 @@ updateGizmoSnap();
 for(const [btn,mode] of [['gizmoMove','translate'],['gizmoRotate','rotate'],['gizmoScale','scale'],['gizmoOff',null]])
   byId(btn).onclick=()=>setGizmoMode(mode);
 byId('gizmoSnap').onchange=updateGizmoSnap;
+function inspectBlenderForgePose(){
+  if(!blenderForge||!headBone||!bounds)
+    return {valid:false,reason:'No GLB, head bone or genuine head bounds'};
+  headBone.updateWorldMatrix(true,false);
+  blenderForge.updateWorldMatrix(true,true);
+  const fromWorld=new THREE.Matrix4().copy(headBone.matrixWorld).invert();
+  const parts={beak:null,plumes:[]};
+  blenderForge.traverse(o=>{
+    if(!o.isMesh||!o.geometry?.attributes?.position)return;
+    o.geometry.computeBoundingBox();
+    const relative=new THREE.Matrix4().multiplyMatrices(fromWorld,o.matrixWorld);
+    const localBox=o.geometry.boundingBox.clone().applyMatrix4(relative);
+    if(o.name.includes('HF_BLENDER_CurvedRavenBeak'))parts.beak=localBox;
+    if(o.name.includes('HF_BezierPlume_'))parts.plumes.push(localBox);
+  });
+  const {center:c,size:s}=bounds,b=parts.beak;
+  const forward=!!b&&b.max.z>c.z+s.z*.84&&b.min.z>c.z+s.z*.36;
+  const below=!!b&&b.max.y<c.y+s.y*.38&&b.min.y<c.y-s.y*.15;
+  const backwards=parts.plumes.length===6&&parts.plumes.every(p=>
+    p.min.z<c.z-s.z*.22&&p.max.y<c.y+s.y*.86);
+  return {valid:forward&&below&&backwards,forward,below,backwards,
+    plumeCount:parts.plumes.length,
+    beakLocalBounds:b?{min:b.min.toArray(),max:b.max.toArray()}:null,
+    headCenter:c.toArray(),headSize:s.toArray()};
+}
 function syncBlenderPreview(){
   const active=!!(blenderPreview&&blenderForge&&recipe.helmet.enabled);
   if(blenderForge)blenderForge.visible=active;
@@ -535,6 +561,11 @@ async function boot(){
       blenderForge.traverse(o=>{if(o.isMesh){blenderMeshes++;o.castShadow=true;o.receiveShadow=true}});
       if(blenderMeshes!==7)throw Error('Artefacto Blender incompleto: '+blenderMeshes+' mallas');
       headBone.add(blenderForge);blenderForge.visible=false;
+      const pose=inspectBlenderForgePose();
+      DIAG.blenderSemanticAligned=pose.valid;
+      DIAG.blenderSemanticReason=JSON.stringify({forward:pose.forward,below:pose.below,backwards:pose.backwards});
+      DIAG.blenderBeakLocalBounds=pose.beakLocalBounds;
+      if(!pose.valid)throw Error('GLB rechazado: cuerno vertical o plumas mal orientadas: '+JSON.stringify(pose));
       DIAG.blenderAssetAvailable=true;
       DIAG.blenderNativeHeadMounted=blenderForge.parent===headBone;
       DIAG.blenderMeshCount=blenderMeshes;
@@ -542,7 +573,7 @@ async function boot(){
     }catch(err){
       if(blenderForge){blenderForge.removeFromParent();blenderForge=null}
       DIAG.blenderAssetAvailable=false;
-      byId('blenderReport').textContent='Forja Blender no incluida en este build: '+err.message;
+      byId('blenderReport').textContent='Forja Blender no válida: '+err.message;
     }
     mixer=new THREE.AnimationMixer(actor);
     const idle=THREE.AnimationClip.findByName(clips,'Idle');if(idle)mixer.clipAction(idle).play();
