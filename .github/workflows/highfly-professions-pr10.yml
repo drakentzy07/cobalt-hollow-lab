@@ -42,6 +42,10 @@ jobs:
             /tests/archetype_ceiling.test.ts
             /tests/professions_crafting.test.ts
             /tests/professions_crafting_hub.test.ts
+            /tests/professions_enchanting.test.ts
+            /tests/professions_typed_reagents.test.ts
+            /tests/professions_enchant_family_cast.test.ts
+            /tests/professions_enchant_salvage_edges.test.ts
             /tests/recipe_economy.test.ts
             /tests/jewelcrafting_catalog.test.ts
             /tests/jewelcrafting_flow.test.ts
@@ -87,6 +91,16 @@ jobs:
             /editor.html
             /play.html
             /wallet-handoff.html
+
+      - name: Assert native enchanting regression suites present (no silent skip)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f upstream/tests/professions_enchanting.test.ts
+          test -f upstream/tests/professions_typed_reagents.test.ts
+          test -f upstream/tests/professions_enchant_family_cast.test.ts
+          test -f upstream/tests/professions_enchant_salvage_edges.test.ts
+          echo "PR10_NATIVE_ENCHANT_SUITES_SPARSE_PRESENT=1"
 
       - name: Verify pinned donor and immutable CLEAN V1
         shell: bash
