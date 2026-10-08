@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import {ALL_EQUIP_SLOTS,isEquipSlot} from './phase9-original/sim/types.mjs';
+// Membership copied ONLY by parsing the pinned original ALL_EQUIP_SLOTS source; do not reinvent slots.
 import {slotAcceptsItem,resolveEquipSlot} from './phase9-original/sim/equipment_rules.mjs';
 import {
  ARMOR_SLOTS,ARMOR_SETS,DEFAULT_APPEARANCE,
@@ -22,6 +22,14 @@ const source=Object.fromEntries([
  'src/render/characters/assets.ts','src/net/weapon_skin_optimistic.ts',
  'src/sim/content/weapon_skins.ts','src/world_api/inventory.ts'
 ].map(p=>[p,read(p)]));
+
+const listSource=source['src/sim/types.ts'];
+const liveDecl=/export const ALL_EQUIP_SLOTS:\s*readonly EquipSlot\[\]\s*=\s*\[([\s\S]*?)\];/.exec(listSource);
+assert(liveDecl,'Missing upstream authoritative ALL_EQUIP_SLOTS declaration');
+const ALL_EQUIP_SLOTS=[...liveDecl[1].matchAll(/'([^']+)'/g)].map(m=>m[1]);
+assert.match(listSource,/export function isEquipSlot\(value:\s*string\): value is EquipSlot/);
+assert.match(listSource,/return \(ALL_EQUIP_SLOTS as readonly string\[\]\)\.includes\(value\)/);
+const isEquipSlot=value=>ALL_EQUIP_SLOTS.includes(value);
 
 const need=(file,re,meaning)=>{
  assert.match(source[file],re,'Missing native bridge '+meaning+' in '+file);

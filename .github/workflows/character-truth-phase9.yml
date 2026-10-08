@@ -74,10 +74,9 @@ jobs:
           set -euo pipefail
           npm install --no-save --package-lock=false esbuild@0.25.12
           mkdir -p character-truth/phase9-original/sim character-truth/phase9-original/render/characters
-          for name in types equipment_rules; do
-            npx esbuild "character-truth/phase9-original/src/sim/$name.ts" --bundle --format=esm --platform=node \
-              --outfile="character-truth/phase9-original/sim/$name.mjs"
-          done
+          npx esbuild character-truth/phase9-original/src/sim/equipment_rules.ts \
+            --bundle --format=esm --platform=node \
+            --outfile=character-truth/phase9-original/sim/equipment_rules.mjs
           npx esbuild character-truth/phase9-original/src/render/characters/modular.ts \
             --bundle --format=esm --platform=node \
             --outfile=character-truth/phase9-original/render/characters/modular.mjs
