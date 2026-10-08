@@ -1,0 +1,113 @@
+name: HIGHFLY SKIN3 — NATIVE SEVEN SLOT DRESSING
+on:
+  push:
+    branches: [highfly-character-truth-audit-01]
+    paths:
+      - 'character-truth/phase8-dressing.html'
+      - 'character-truth/phase8-dressing-gate.cjs'
+      - 'character-truth/SKIN3_PHASE8_DRESSING.md'
+      - '.github/workflows/character-truth-phase8.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original-seven-slot-mix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 19
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse green REAL PF6 Creator proof from Phase7
+        uses: actions/download-artifact@v4
+        with:
+          name: highfly-skin3-seven-native-kits-male-female-pf6
+          run-id: 37821747438
+          github-token: ${{ github.token }}
+          path: character-truth/phase7-prior
+      - name: Retrieve six pinned official GLBs and exact original modular compositor
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,hashlib,pathlib,time,urllib.request
+          ref='9b57e49c9676d75962700f828cc00a50a9a988b5'
+          origin='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/'+ref+'/'
+          pins=json.loads(pathlib.Path('character-truth/official-asset-shas.json').read_text())
+          rows=[('src/render/characters/modular.ts','d2ad732114b01a0aa9de5a882e0a6980d54225fb'),
+                ('src/render/characters/underhair.generated.ts','630408c0ffbffb61d06e1a398f28b0d89f820dfe')]
+          for name,sha in pins.items():
+            folder='modular' if name=='warrior_modular.glb' else 'players'
+            rows.append(('public/models/chars/'+folder+'/'+name,sha))
+          for name,pin in rows:
+            for attempt in range(3):
+              try:
+                req=urllib.request.Request(origin+name,headers={'User-Agent':'HIGHFLY-skin3-dressing-original'})
+                with urllib.request.urlopen(req,timeout=48) as fd:data=fd.read()
+                break
+              except Exception:
+                if attempt==2:raise
+                time.sleep(2)
+            actual=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+            if actual!=pin:raise ValueError('Pinned original source changed '+name)
+            root=pathlib.Path('character-truth/generated' if name.endswith('.ts') else 'character-truth/inputs')
+            root.mkdir(parents=True,exist_ok=True)
+            (root/pathlib.Path(name).name).write_bytes(data)
+            print('SOURCE_SHA_GREEN',name,actual)
+          proof=json.loads(pathlib.Path('character-truth/phase7-prior/phase7-creator-matrix.json').read_text())
+          assert proof['success'] and len(proof['screenshotEvidence'])==14
+          print('FROZEN_PF6_CREATOR_14_PROOFS_REUSED_GREEN=1')
+          PY
+      - name: Compile original source picker with no rewritten rig or topology
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false three@0.180.0 playwright@1.55.0 meshoptimizer@0.23.0 esbuild@0.25.12
+          npx esbuild character-truth/generated/modular.ts --bundle --format=esm --platform=browser --outfile=character-truth/generated/modular-runtime.mjs
+          node --check character-truth/phase8-dressing-gate.cjs
+          node --input-type=module - <<'JS'
+          import assert from 'node:assert/strict';
+          import {ARMOR_SETS,ARMOR_SLOTS,DEFAULT_APPEARANCE,modularPartNames,fullSet} from './character-truth/generated/modular-runtime.mjs';
+          assert.equal(ARMOR_SETS.length,7);assert.equal(ARMOR_SLOTS.length,7);
+          for(const gender of ['male','female']){
+            const app={...DEFAULT_APPEARANCE,gender};
+            for(const kit of ARMOR_SETS){
+              assert(modularPartNames(app,fullSet(kit)).some(x=>x.startsWith('Armor_'+kit+'_')));
+            }
+            for(const slot of ARMOR_SLOTS)for(const kit of ARMOR_SETS){
+              const actual=modularPartNames(app,{[slot]:kit});
+              assert(actual.includes(gender==='male'?'M_Torso':'F_Torso'),
+               'Original visible body preserved beneath kit');
+              assert(actual.includes(gender==='male'?'M_Head':'F_Head'));
+            }
+          }
+          console.log('NATIVE_ORIGINAL_SEVEN_SLOT_SELECTOR_GREEN=1');
+          JS
+      - name: Serve original GLB dressing lab and install browser
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/highfly-skin3-phase8.log 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:4173/character-truth/phase8-dressing.html >/dev/null
+          npx playwright install --with-deps chromium
+      - name: Validate source-original 116 mixed gender and armor combinations
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          node character-truth/phase8-dressing-gate.cjs
+          test -s character-truth/phase8-proof/seven-slot-results.json
+          test -s character-truth/phase8-proof/REVIEW_GATE.md
+          git diff --exit-code -- .
+          echo "HIGHFLY_FROZEN_PF6_FOUNDATION_AND_ORIGINAL_GLBS_UNMODIFIED=1"
+      - name: Archive genuine original armor kit mixer (not gameplay equip approval)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-skin3-original-7-slot-mixed-armor-proof
+          path: character-truth/phase8-proof/
+          if-no-files-found: warn
+          retention-days: 30
