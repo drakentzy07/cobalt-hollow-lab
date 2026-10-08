@@ -28,10 +28,15 @@ fs.mkdirSync(out+'/assets',{recursive:true});
 fs.mkdirSync(out+'/vendor/three',{recursive:true});
 fs.writeFileSync(out+'/index.html',html);
 fs.copyFileSync(src+'/generated/modular-runtime.mjs',out+'/generated/modular-runtime.mjs');
-for(const file of ['paint-recipe-v3.mjs','native-molder-v3.mjs','factory-recipe-v4.mjs','native-forge-v6.mjs']){
+for(const file of ['paint-recipe-v3.mjs','native-molder-v3.mjs','factory-recipe-v4.mjs']){
  fs.copyFileSync(src+'/integration-modules/'+file,out+'/'+file);
 }
 fs.copyFileSync(src+'/integration-modules/assets/HIGHFLY-KAGE-ONI-head.glb',out+'/assets/HIGHFLY-KAGE-ONI-head.glb');
+const forgeSource=fs.readFileSync(src+'/integration-modules/native-forge-v6.mjs','utf8');
+const ABSOLUTE_FORGE="'/character-truth/integration-modules/assets/HIGHFLY-KAGE-ONI-head.glb'";
+assert.equal(forgeSource.split(ABSOLUTE_FORGE).length,2,'SOURCE_ASSET_REF_MISSING');
+fs.writeFileSync(out+'/native-forge-v6.mjs',
+ forgeSource.replace(ABSOLUTE_FORGE,"'./assets/HIGHFLY-KAGE-ONI-head.glb'"));
 fs.cpSync('node_modules/three/build',out+'/vendor/three/build',{recursive:true});
 fs.cpSync('node_modules/three/examples/jsm',out+'/vendor/three/examples/jsm',{recursive:true});
 fs.copyFileSync('node_modules/three/LICENSE',out+'/vendor/three/LICENSE');
