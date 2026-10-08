@@ -34,3 +34,7 @@ del COMPOSITOR Y ASSETS ORIGINALES para preparar la fabrica de skins.
 
 Siguiente gate: comprobar la UI de inventario/equipamiento real y el
 conexion entre equipamiento visual, estado persistente y animaciones jugables.
+
+## Criterio de fallo
+Si falta una malla que el kit oficial SI define, falla el gate. Si el kit no incluye esa
+ranura, se registra como AUSENTE_ORIGINAL, nunca se genera un mesh sustituto.
