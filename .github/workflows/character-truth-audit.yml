@@ -91,12 +91,27 @@ jobs:
           print("RUNTIME_UPSTREAM_AND_PF6_PIN_VERIFIED=1")
           PY
 
+      - name: Decode native Meshopt compressed GLB virtual buffers (read only)
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false meshoptimizer@0.23.0
+          mkdir -p character-truth/decoded
+          for file in character-truth/inputs/*.glb; do
+            base="$(basename "$file" .glb)"
+            node character-truth/decode_meshopt.mjs "$file" "character-truth/decoded/$base"
+          done
+          test -s character-truth/decoded/warrior_modular/decoded-buffer-1.bin
+          test -s character-truth/decoded/warrior_modular/meshopt-decoding-evidence.json
+
       - name: Inventory every original mesh node material joint weight and clip
         shell: bash
         run: |
           set -euo pipefail
           python3 character-truth/audit_glb.py \
             --source character-truth/inputs \
+            --decoded-root character-truth/decoded \
             --manifest character-truth/official-asset-shas.json \
             --out character-truth/out
           grep -q "runtime" character-truth/out/TRUTH_REPORT.md
@@ -125,5 +140,6 @@ jobs:
             character-truth/out/*.csv
             character-truth/out/*.json
             character-truth/out/*.md
+            character-truth/decoded/*/meshopt-decoding-evidence.json
           if-no-files-found: warn
           retention-days: 30
