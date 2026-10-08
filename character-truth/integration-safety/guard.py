@@ -11,6 +11,7 @@ allowed={
 ".github/workflows/skin3-integration-painter-v3.yml",
 ".github/workflows/skin3-integration-molder-v3.yml",
 ".github/workflows/skin3-integration-factory-v4.yml",
+".github/workflows/skin3-integration-factory-v4-package.yml",
 "character-truth/integration-safety/guard.py",
 }
 prefixes=("character-truth/integration-safety/","character-truth/integration-modules/")
