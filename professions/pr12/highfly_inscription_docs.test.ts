@@ -151,7 +151,7 @@ describe('HIGHFLY PR-12 — verified Inscription items, Deed authority, Knowledg
     expect(next.evidence?.['inscription.tome.silverleaf']).toBe(2);
     expect(next.craftXp).toEqual({inscription:198});
     expect(next.knowledge??[]).not.toContain('technique.basic_inscription');
-    expect(a.evidence).toBeUndefined();
+    expect(Object.keys(a)).not.toContain('evidence');
   });
 
   it('real save/load keeps two document histories without mutating equipped or known Recipes',()=>{
