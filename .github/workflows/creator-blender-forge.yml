@@ -1,0 +1,71 @@
+name: HIGHFLY Creator — Blender CPU Forge Proof
+on:
+  push:
+    branches: [highfly-creator-lab]
+    paths:
+      - 'creator-lab/blender/**'
+      - '.github/workflows/creator-blender-forge.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  forge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install free Blender CPU engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender
+          blender --version | head -n 2
+      - name: Recreate authentic head bind from frozen source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p creator-blender-proof/native
+          SRC="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb"
+          curl --retry 3 -fsSL "$SRC" -o creator-blender-proof/native/warrior_modular.glb
+          test "$(git hash-object creator-blender-proof/native/warrior_modular.glb)" = "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2"
+          npm init -y >/dev/null 2>&1
+          npm install --no-save @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer gltf-validator
+          node scripts/skin_lab/extract_bind_reference.mjs --src creator-blender-proof/native/warrior_modular.glb --out creator-blender-proof/native --bone head
+          test -s creator-blender-proof/native/reference_head.glb
+      - name: Make actual original Blender bevel + Bézier GLB
+        shell: bash
+        run: |
+          set -euo pipefail
+          blender --background --factory-startup --python creator-lab/blender/headless_forge.py -- \
+            --native creator-blender-proof/native/reference_head.glb \
+            --out creator-blender-proof/highfly-blender-forge.glb
+          test -s creator-blender-proof/highfly-blender-forge.glb
+          test -s creator-blender-proof/highfly-blender-forge.json
+      - name: Independently validate exported Blender GLB
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'JS'
+          const fs=require('fs');
+          const validator=require('gltf-validator');
+          (async()=>{
+            const raw=fs.readFileSync('creator-blender-proof/highfly-blender-forge.glb');
+            const proof=JSON.parse(fs.readFileSync('creator-blender-proof/highfly-blender-forge.json','utf8'));
+            if(!proof.native_reference||proof.native_reference!=='M_Head'||proof.geometry_objects<7||!proof.bevel_applied||!proof.bezier_curves_converted)throw Error('Not a genuine native Blender geometry proof');
+            const report=await validator.validateBytes(new Uint8Array(raw),{uri:'highfly-blender-forge.glb',maxIssues:70});
+            fs.writeFileSync('creator-blender-proof/gltf-validation.json',JSON.stringify(report,null,2));
+            if(report.issues.numErrors)throw Error('GLTF validation failed: '+JSON.stringify(report.issues.messages.slice(0,5)));
+            console.log('HIGHFLY_BLENDER_FORGE_GREEN native + true Blender + GLB bytes '+raw.length+' warnings='+report.issues.numWarnings);
+          })().catch(err=>{console.error(err);process.exitCode=1});
+          JS
+      - name: Upload real Blender output and provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: creator-blender-forge-native-proof
+          path: |
+            creator-blender-proof/highfly-blender-forge.glb
+            creator-blender-proof/highfly-blender-forge.json
+            creator-blender-proof/gltf-validation.json
+          if-no-files-found: warn
