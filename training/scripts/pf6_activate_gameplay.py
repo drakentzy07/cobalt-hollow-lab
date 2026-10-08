@@ -33,7 +33,7 @@ text = text.replace(old_table, """// Single authoritative gameplay XP curve; don
 export const XP_TABLE = HIGHFLY_PF6_XP_TABLE;""", 1)
 text = text.replace(
     "export const MAX_LEVEL = 20;",
-    "export const MAX_LEVEL = HIGHFLY_PF6_NORMAL_MAX_LEVEL;",
+    "export const MAX_LEVEL: number = HIGHFLY_PF6_NORMAL_MAX_LEVEL;",
     1,
 )
 text = text.replace(
@@ -43,6 +43,6 @@ text = text.replace(
 )
 types.write_text(text, encoding="utf-8")
 
-assert text.count("export const MAX_LEVEL = HIGHFLY_PF6_NORMAL_MAX_LEVEL;") == 1
+assert text.count("export const MAX_LEVEL: number = HIGHFLY_PF6_NORMAL_MAX_LEVEL;") == 1
 assert text.count("export const XP_TABLE = HIGHFLY_PF6_XP_TABLE;") == 1
 print("HIGHFLY_PF6_DONOR_REAL_LEVEL_CAP_99_ACTIVATED=1")
