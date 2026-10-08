@@ -4,13 +4,13 @@ import * as THREE from 'three';
 // No synthetic skeleton, no donor character, and no mutations to base GLB.
 export const HELMET_PARTS=Object.freeze({
  shell:{name:'01 · Carcasa',color:'#161b29',metal:.64,rough:.48},
- mask:{name:'02 · Máscara facial',color:'#242836',metal:.69,rough:.46},
+ mask:{name:'02 · Máscara facial',color:'#191d2a',metal:.66,rough:.52},
  beak:{name:'03 · Pico marfil',color:'#c2b7a3',metal:.62,rough:.40},
- visor:{name:'04 · Visor violeta',color:'#642de2',metal:.32,rough:.23,emissive:1.60},
+ visor:{name:'04 · Visor violeta',color:'#4f17d2',metal:.12,rough:.24,emissive:1.2},
  trim:{name:'05 · Bordes marfil',color:'#b8a992',metal:.75,rough:.39},
  cheeks:{name:'06 · Mejillas',color:'#323b50',metal:.70,rough:.34},
- crest:{name:'07 · Penacho plumado',color:'#322344',metal:.36,rough:.55},
- nape:{name:'08 · Plumaje de nuca',color:'#52316b',metal:.29,rough:.58},
+ crest:{name:'07 · Penacho plumado',color:'#2b2240',metal:.31,rough:.62},
+ nape:{name:'08 · Plumaje de nuca',color:'#3e295d',metal:.30,rough:.63},
  gem:{name:'09 · Cristal frontal',color:'#a46aff',metal:.3,rough:.15,emissive:1.2}
 });
 const clamp=(v,min,max,fallback)=>Number.isFinite(+v)?Math.min(max,Math.max(min,+v)):fallback;
@@ -129,13 +129,35 @@ function beakForge(c,w,h,d,mat,lengthFactor){
 function visorShape(c,w,h,d,side,mat){
  const s=side,x=c.x,yy=c.y,zz=c.z;
  const v=[
- [x+s*w*.115,yy+h*.15,zz+d*.551],
- [x+s*w*.43,yy+h*.19,zz+d*.477],
- [x+s*w*.37,yy+h*.10,zz+d*.506],
- [x+s*w*.21,yy+h*.065,zz+d*.562],
- [x+s*w*.13,yy+h*.12,zz+d*.564]
+ [x+s*w*.165,yy+h*.17,zz+d*.555],
+ [x+s*w*.42,yy+h*.21,zz+d*.477],
+ [x+s*w*.36,yy+h*.125,zz+d*.522],
+ [x+s*w*.215,yy+h*.11,zz+d*.578],
+ [x+s*w*.18,yy+h*.14,zz+d*.575]
  ];
  return face(v,[[0,1,2],[0,2,3],[0,3,4]],mat,side<0?'EyeLeft':'EyeRight','visor');
+}
+
+function faceFeatherChevron(c,w,h,d,mat){
+ return face([
+  [c.x,c.y+h*.34,c.z+d*.535],[c.x-w*.22,c.y+h*.43,c.z+d*.43],
+  [c.x-w*.35,c.y+h*.32,c.z+d*.37],[c.x,c.y+h*.18,c.z+d*.58],
+  [c.x+w*.35,c.y+h*.32,c.z+d*.37],[c.x+w*.22,c.y+h*.43,c.z+d*.43]
+ ],[[0,1,2],[0,2,3],[0,3,4],[0,4,5]],mat,'ForeheadAvianChevron','trim');
+}
+function eyeSocket(c,w,h,d,side,mat){
+ const x=c.x,y=c.y,z=c.z,s=side;
+ return face([
+  [x+s*w*.115,y+h*.22,z+d*.55],[x+s*w*.47,y+h*.265,z+d*.42],
+  [x+s*w*.48,y+h*.070,z+d*.47],[x+s*w*.21,y+h*.055,z+d*.578]
+ ],[[0,1,2],[0,2,3]],mat,'RecessedSocket_'+(s<0?'L':'R'),'mask');
+}
+function templePlumage(c,w,h,d,side,row,mat){
+ const s=side;
+ const start=new THREE.Vector3(c.x+s*w*(.39+row*.018),c.y+h*(.37-row*.125),c.z+d*(.25-row*.030));
+ const middle=new THREE.Vector3(c.x+s*w*(.50+row*.015),c.y+h*(.25-row*.12),c.z-d*(.14+row*.025));
+ const tip=new THREE.Vector3(c.x+s*w*(.43+row*.025),c.y+h*(.10-row*.12),c.z-d*(.44+row*.04));
+ return ribbonSurface([start,middle,tip],[w*.122,w*.008],mat,'TempleFeather_'+(s<0?'L':'R')+'_'+row,'nape',w*.012);
 }
 function tipQuill(c,w,h,d,side,layer,kind,mat,part,factor=1){
  const s=side,back=kind==='crest';
@@ -165,13 +187,16 @@ export function buildLegendaryHelmet(bounds,input){
  const mats=Object.fromEntries(Object.keys(HELMET_PARTS).map(k=>[k,material(k,options)]));
  const add=(o)=>{root.add(o);return o};
  add(shellBands(c,w,h,d,mats.shell));
+ add(faceFeatherChevron(c,w,h,d,mats.trim));
  add(crescentBand(c,w,h,d,-.30,.90,.115,.54,mats.mask,'LowerMask','mask'));
- add(crescentBand(c,w,h,d,.355,.74,.018,.50,mats.trim,'ForeheadIvoryArc','trim'));
+ // Replaced the wide horizontal forehead band with a subtle V-chevron.
  add(crescentBand(c,w,h,d,-.38,.82,.025,.535,mats.trim,'ChinEdge','trim'));
  add(beakForge(c,w,h,d,mats.beak,options.beak));
  add(makeGem(c,w,h,d,mats.gem,'HIGHFLY_Avian_ForeheadCrystal'));
  for(const side of [-1,1]){
+   add(eyeSocket(c,w,h,d,side,mats.mask));
    add(visorShape(c,w,h,d,side,mats.visor));
+   for(let row=0;row<5;row++)add(templePlumage(c,w,h,d,side,row,row%2?mats.crest:mats.nape));
    add(ribbonSurface([
      new THREE.Vector3(c.x+side*w*.13,c.y+h*.22,c.z+d*.55),
      new THREE.Vector3(c.x+side*w*.32,c.y+h*.25,c.z+d*.515),
