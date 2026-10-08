@@ -80,7 +80,7 @@ const worldIdentity=new THREE.Matrix4();
 
 function testTriangleIntersector(){
  const fromCoords=(coords)=>{const geom=new THREE.BufferGeometry();
-  geom.setAttribute('position',new THREE.Float32BufferAttribute(coords,3));geom.computeBoundingBox();return geom;};
+  geom.setAttribute('position',new THREE.Float32BufferAttribute(coords,3));geom.setIndex([0,1,2]);geom.computeBoundingBox();return geom;};
  const a=fromCoords([-1,-1,0, 1,-1,0, 0,1,0]);
  const b=fromCoords([0,-1,-1, 0,1,1, 0,-1,1]);
  const separated=b.clone();separated.translate(5,0,0);separated.computeBoundingBox();
