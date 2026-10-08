@@ -10,6 +10,7 @@ import {
   getActiveHighflyHunterProfile,
   updateActiveHighflyHunterProfile,
 } from './profile_store';
+import { isBoundHighflyLocalStatAuthority } from './stat_authority';
 
 export interface HighflyPf6GameplaySnapshot {
   localEntityId: number;
@@ -43,4 +44,23 @@ export function syncHighflyPf6FromGameplay(
       classId: snapshot.classId,
     }),
   );
+}
+
+/** Deterministic level-up seam: refresh the local Hunter's Core before Claude's
+ * single derived-stat recalculation. Never touches unbound/remote players.
+ * Subsequent HUD event processing is an idempotent visual/save synchronization. */
+export function syncHighflyPf6BeforeStatRecalc(
+  entityId: number,
+  level: number,
+  barXp: number,
+  classId: string,
+): HighflyHunterProfile | null {
+  if (!isBoundHighflyLocalStatAuthority(entityId)) return null;
+  return syncHighflyPf6FromGameplay({
+    localEntityId: entityId,
+    eventEntityId: entityId,
+    level,
+    barXp,
+    classId,
+  });
 }
