@@ -77,6 +77,21 @@ function viewCage(box,parts){
 }
 
 const worldIdentity=new THREE.Matrix4();
+
+function testTriangleIntersector(){
+ const fromCoords=(coords)=>{const geom=new THREE.BufferGeometry();
+  geom.setAttribute('position',new THREE.Float32BufferAttribute(coords,3));geom.computeBoundingBox();return geom;};
+ const a=fromCoords([-1,-1,0, 1,-1,0, 0,1,0]);
+ const b=fromCoords([0,-1,-1, 0,1,1, 0,-1,1]);
+ const separated=b.clone();separated.translate(5,0,0);separated.computeBoundingBox();
+ const tree=new MeshBVH(a,{maxLeafTris:1});
+ const crossing=tree.intersectsGeometry(b,worldIdentity);
+ const separate=tree.intersectsGeometry(separated,worldIdentity);
+ a.dispose();b.dispose();separated.dispose();
+ if(!crossing||separate)throw Error('TRIANGLE_DETECTOR_SELF_TEST_FAILED '+JSON.stringify({crossing,separate}));
+ return {intersectingControl:true,nonIntersectingControl:false,method:'synthetic intersecting and disjoint triangles',sourceModelModified:false};
+}
+
 function currentWorldTriangleGeometry(mesh){
  const attr=mesh.geometry.getAttribute('position'),coords=new Float32Array(attr.count*3),p=new THREE.Vector3();
  for(let i=0;i<attr.count;i++){
@@ -174,7 +189,7 @@ document.querySelector('#go').onclick=()=>{try{measure({gender:document.querySel
  root.traverse(o=>rest.push({o,p:o.position.clone(),q:o.quaternion.clone(),s:o.scale.clone()}));
  for(const s of setnames)for(const c of all[s].animations)if(!clips.has(c.name))clips.set(c.name,c);
  api.names={sets:[...ARMOR_SETS],slots:[...ARMOR_SLOTS],body:[...BODY_SLIDERS],face:[...FACE_SLIDERS],glbs:setnames};
- api.ready=true;measure({gender:'male',kit:'knight'});
+ api.surfaceDetectorSelfTest=testTriangleIntersector();api.ready=true;measure({gender:'male',kit:'knight'});
  }catch(e){api.error=String(e.stack||e);document.querySelector('#diag').textContent=api.error;console.error(e)}
 })();
 </script></body></html>

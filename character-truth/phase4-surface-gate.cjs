@@ -11,9 +11,11 @@ const {chromium}=require('playwright');
   const errors=[];page.on('pageerror',e=>errors.push('pageerror '+e.message));page.on('requestfailed',r=>errors.push('request '+r.url()));
   await page.goto('http://127.0.0.1:4173/character-truth/phase4-surface.html',{waitUntil:'domcontentloaded',timeout:120000});
   await page.waitForFunction(()=>window.__HF_SKIN3_CAGE__?.ready||window.__HF_SKIN3_CAGE__?.error,null,{timeout:120000});
-  const start=await page.evaluate(()=>({ready:window.__HF_SKIN3_CAGE__.ready,error:window.__HF_SKIN3_CAGE__.error,names:window.__HF_SKIN3_CAGE__.names}));
+  const start=await page.evaluate(()=>({ready:window.__HF_SKIN3_CAGE__.ready,error:window.__HF_SKIN3_CAGE__.error,names:window.__HF_SKIN3_CAGE__.names,selfTest:window.__HF_SKIN3_CAGE__.surfaceDetectorSelfTest}));
   assert(start.ready,start.error||'Source model not ready');
   assert.equal(start.names.sets.length,7);assert.equal(start.names.glbs.length,6);
+  assert.equal(start.selfTest.intersectingControl,true,'BVH positive contact control failed');
+  assert.equal(start.selfTest.nonIntersectingControl,false,'BVH negative disjoint control failed');
   const cases=[],csv=['case,sex,kit,clip,phase,morph,value,mesh_a,mesh_b,pair_type,aabb_overlap_volume,triangle_contact'];
   const totals={testedPairs:0,contacts:0,armorBodyContacts:0,armorArmorContacts:0,perNativeKit:{}};
   async function sample(spec,id,screenshot){
