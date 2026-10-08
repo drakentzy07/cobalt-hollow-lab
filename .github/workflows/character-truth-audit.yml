@@ -1,0 +1,129 @@
+name: HIGHFLY OFFICIAL CHARACTER TRUTH — READ ONLY
+on:
+  push:
+    branches: [highfly-character-truth-audit-01]
+    paths:
+      - 'character-truth/**'
+      - '.github/workflows/character-truth-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  official-character-inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download and verify six original ClaudeCraft binaries and source modules
+        shell: bash
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,hashlib,time,urllib.request,pathlib
+          ref="9b57e49c9676d75962700f828cc00a50a9a988b5"
+          base="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/"+ref+"/"
+          out=pathlib.Path("character-truth/inputs");out.mkdir(parents=True,exist_ok=True)
+          names=json.loads(pathlib.Path("character-truth/official-asset-shas.json").read_text())
+          src={
+           "modular.ts":"d2ad732114b01a0aa9de5a882e0a6980d54225fb",
+           "manifest.ts":"0cb0b39fde840a5555318ffe30747a74d51544bd",
+           "assets.ts":"836769f9ccd5db9ea5d076a2181a0354318a203d",
+           "rig_merge.ts":"1549989ba34a45c3bb78f5842784e2906a7c0cd0"}
+          def fetch(path,expected,dest):
+            body=None
+            for attempt in range(3):
+              try:
+                request=urllib.request.Request(base+path,headers={"User-Agent":"HIGHFLY-ReadOnly-Audit/1.0"})
+                with urllib.request.urlopen(request,timeout=50) as response:body=response.read()
+                break
+              except Exception:
+                if attempt==2:raise
+                time.sleep(3)
+            sha=hashlib.sha1(b"blob "+str(len(body)).encode()+b"\0"+body).hexdigest()
+            if sha!=expected:raise ValueError("Original upstream identity mismatch: "+path+" "+sha)
+            dest.write_bytes(body)
+            print("ORIGINAL_SOURCE_SHA_VERIFIED",path,len(body),sha)
+          for name,expected in names.items():
+            part="modular" if name=="warrior_modular.glb" else "players"
+            fetch("public/models/chars/"+part+"/"+name,expected,out/name)
+          source_dir=out/"code";source_dir.mkdir(exist_ok=True)
+          for name,expected in src.items():
+            fetch("src/render/characters/"+name,expected,source_dir/name)
+          PY
+
+      - name: Cross-check PF-6 game workflow against official runtime composition
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import urllib.request,json,re
+          src=Path("character-truth/inputs/code")
+          pf="312fe2e67219415a73a56303fcbd3b0bd9f62273"
+          url="https://raw.githubusercontent.com/drakentzy07/cobalt-hollow-lab/"+pf+"/.github/workflows/training-core-run1.yml"
+          with urllib.request.urlopen(urllib.request.Request(url,headers={"User-Agent":"HIGHFLY-ReadOnly-Audit/1.0"}),timeout=55) as r: workflow=r.read().decode("utf-8")
+          assert "9b57e49c9676d75962700f828cc00a50a9a988b5" in workflow,"PF6 no longer pins frozen ClaudeCraft"
+          modular=(src/"modular.ts").read_text()
+          manifest=(src/"manifest.ts").read_text()
+          assets=(src/"assets.ts").read_text()
+          for expected in ("head","chest","arms","hands","legs","feet","back"):
+            assert "'"+expected+"'" in modular,"Missing original armor slot "+expected
+          for term in ("modularPartNames","mergeSkinnedParts"):
+            assert term in assets,"Native runtime composition missing "+term
+          for term in ("modularVisualKey","player_warrior: swims({","knight.glb",
+            "warrior_ability_anims.glb","knight_hit_variety_anims.glb",
+            "warrior_contact_anims.glb","warrior_fury_anims.glb"):
+            assert term in manifest,"Native runtime source missing "+term
+          data={
+            "pf6_sha":pf,"pf6_upstream_pinned":True,
+            "upstream_frozen_commit":"9b57e49c9676d75962700f828cc00a50a9a988b5",
+            "runtime_warrior_source":"knight.glb (VisualDef player_warrior)",
+            "modular_warrior_source":"warrior_modular.glb (selection by modularVisualKey)",
+            "four_external_warrior_animation_sources":True,
+            "seven_native_armor_slots":["head","chest","arms","hands","legs","feet","back"],
+            "composition_functions":["modularPartNames","mergeSkinnedParts"],
+            "CAVEAT":"PF6 build pipeline references same upstream but overlays transform final runtime; scene-level player look is NOT certified without running produced PF6 build."
+          }
+          report=Path("character-truth/out");report.mkdir(parents=True,exist_ok=True)
+          (report/"runtime_provenance.json").write_text(json.dumps(data,indent=2))
+          print("RUNTIME_UPSTREAM_AND_PF6_PIN_VERIFIED=1")
+          PY
+
+      - name: Inventory every original mesh node material joint weight and clip
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 character-truth/audit_glb.py \
+            --source character-truth/inputs \
+            --manifest character-truth/official-asset-shas.json \
+            --out character-truth/out
+          grep -q "runtime" character-truth/out/TRUTH_REPORT.md
+          test -s character-truth/out/all_meshes.csv
+          test -s character-truth/out/all_nodes.csv
+          test -s character-truth/out/all_joints.csv
+          test -s character-truth/out/all_animation_channels.csv
+          test -s character-truth/out/all_materials.csv
+          test -s character-truth/out/joint_diff.json
+
+      - name: Ensure audit has not modified any donor asset or published source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- .
+          git status --short | head -n 35
+          test ! -e character-truth/out/created_character.glb
+          echo "OFFICIAL_CHARACTER_AUDIT_NO_SOURCE_MUTATION_GREEN=1"
+
+      - name: Upload full factual manifest and compatibility limitations, no GLBs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-character-truth-native-inventory
+          path: |
+            character-truth/out/*.csv
+            character-truth/out/*.json
+            character-truth/out/*.md
+          if-no-files-found: warn
+          retention-days: 30
