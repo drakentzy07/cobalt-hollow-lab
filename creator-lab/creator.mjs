@@ -5,6 +5,9 @@ import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {TransformControls} from 'three/addons/controls/TransformControls.js';
+import {nativeFacialLandmarks,facialOverlay} from './facial.mjs';
+import {inspectAccessory} from './quality.mjs';
 import {defaultRecipe,sanitizeRecipe,buildFeatherSet,checkGeometry} from './geometry.mjs';
 import {buildLegendaryHelmet,HELMET_PARTS} from './helmet.mjs';
 
@@ -33,11 +36,14 @@ camera.position.set(2.8,2.3,5.8);
 const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.maxDistance=12;controls.minDistance=.55;
 
 let actor=null,headBone=null,bounds=null,mixer=null,clips=[],accessory=null,helmetRoot=null,headSurfaceMeshes=[],selectedId='crown',selectedHelmetPart='beak',activeClip='Idle';
+let landmarks=null,faceGuideRoot=null,showGuides=false,gizmoMode=null,gizmoBaseline=null,applyingGizmo=false;
 let recipe=defaultRecipe(),undo=[],redo=[],dragBaseline=null,uid=0,requestCount=0;
 const DIAG=window.__CREATOR_DIAG__={ready:false,error:null,product:'HIGHFLY_CREATOR_LAB',sourceBlob:SOURCE.blob,sourceBytes:SOURCE.bytes,
   isolated:true,nativeRig:false,realHead:false,clips:0,bones:0,geometries:0,vertices:0,nonfinite:0,version:1,undoDepth:0,redoDepth:0,
   exportedBytes:0,saved:false,headReferenceReal:false,selectedId,featherCount:0,sourceOriginalIntact:true,
-  helmetReady:false,helmetAttached:false,helmetMeshCount:0,helmetPartCount:0,helmetVisible:false,helmetSelectedPart:'beak'};
+  helmetReady:false,helmetAttached:false,helmetMeshCount:0,helmetPartCount:0,helmetVisible:false,helmetSelectedPart:'beak',
+  faceLandmarksVerified:false,landmarkCount:0,nativeEyeY:null,eyeYResult:null,gizmoAttached:false,gizmoMode:null,
+  quality:null,toolboxVersion:3};
 
 function report(msg,isError=false){
   byId('status').textContent=msg;if(isError){DIAG.error=msg;byId('error').style.display='block';byId('error').textContent=msg}
@@ -53,18 +59,68 @@ function transact(fn){
 }
 function selected(){return recipe.pieces.find(p=>p.id===selectedId)||recipe.pieces[0]||null}
 function setSelected(id){if(!recipe.pieces.some(x=>x.id===id))return;
-  selectedId=id;renderControls();renderParts();markSelection();persistStatus();
+  selectedId=id;renderControls();renderParts();markSelection();syncGizmo();persistStatus();
 }
 function dispose(root){root?.traverse(o=>{if(o.geometry)o.geometry.dispose();const m=o.material;if(Array.isArray(m))m.forEach(x=>x.dispose());else m?.dispose()});root?.removeFromParent()}
+const gizmo=new TransformControls(camera,renderer.domElement);
+gizmo.setSize(.70);gizmo.setSpace('local');
+scene.add(gizmo.getHelper());
+gizmo.detach();gizmo.getHelper().visible=false;
+gizmo.addEventListener('dragging-changed',e=>{controls.enabled=!e.value;});
+gizmo.addEventListener('mouseDown',()=>{gizmoBaseline=snap()});
+gizmo.addEventListener('mouseUp',()=>{
+  if(!gizmo.object||!bounds||!selected()||!gizmoBaseline)return;
+  const p=selected(),ob=gizmo.object;
+  const side=ob.name.endsWith('_L')?-1:1;
+  p.x=side*(ob.position.x-bounds.center.x)/(bounds.size.x*.8);
+  p.y=(ob.position.y-bounds.center.y)/bounds.size.y;
+  p.z=(ob.position.z-bounds.center.z)/bounds.size.z;
+  p.rx=THREE.MathUtils.radToDeg(ob.rotation.x);p.ry=THREE.MathUtils.radToDeg(ob.rotation.y)*side;
+  p.rz=THREE.MathUtils.radToDeg(ob.rotation.z)*side;
+  p.scale=(ob.scale.x+ob.scale.y+ob.scale.z)/3;
+  recipe=sanitizeRecipe(recipe);pushHistory(gizmoBaseline);gizmoBaseline=null;refresh();
+  report('Pieza transformada: valores exactos guardados y deshacer disponible.');
+});
+function syncGizmo(){
+  gizmo.detach();gizmo.getHelper().visible=false;
+  if(!accessory||!gizmoMode||!recipe.showFeathers)return;
+  const featherRoot=accessory.getObjectByName('HIGHFLY_CREATOR_HEAD_ACCESSORIES');
+  if(!featherRoot)return;
+  const matches=featherRoot.children.filter(o=>o.userData.creatorPieceId===selectedId);
+  const candidate=matches.find(o=>o.name.endsWith('_R'))||matches[0];
+  if(!candidate)return;
+  gizmo.attach(candidate);gizmo.getHelper().visible=true;gizmo.setMode(gizmoMode);
+  DIAG.gizmoAttached=true;
+}
+function setGizmoMode(mode){
+  gizmoMode=mode;
+  if(mode&&!recipe.showFeathers)transact(()=>{recipe.showFeathers=true});
+  syncGizmo();DIAG.gizmoMode=mode;DIAG.gizmoAttached=!!gizmo.object;
+  for(const [btn,m] of [['gizmoMove','translate'],['gizmoRotate','rotate'],['gizmoScale','scale']])
+    byId(btn).classList.toggle('active',mode===m);
+  byId('gizmoOff').classList.toggle('active',mode===null);
+  report(mode?'Manipulador '+({translate:'mover',rotate:'rotar',scale:'escalar'}[mode])+' activo para '+selected()?.name+'.':'Manipulador desactivado.');
+}
+function updateGizmoSnap(){
+  const on=byId('gizmoSnap').checked;
+  gizmo.setTranslationSnap(on?.04:null);
+  gizmo.setRotationSnap(on?THREE.MathUtils.degToRad(15):null);
+  gizmo.setScaleSnap(on?.1:null);
+}
+updateGizmoSnap();
+for(const [btn,mode] of [['gizmoMove','translate'],['gizmoRotate','rotate'],['gizmoScale','scale'],['gizmoOff',null]])
+  byId(btn).onclick=()=>setGizmoMode(mode);
+byId('gizmoSnap').onchange=updateGizmoSnap;
 function rebuild(){
   if(!headBone||!bounds)return;
+  gizmo.detach();gizmo.getHelper().visible=false;
   dispose(accessory);
   accessory=new THREE.Group();accessory.name='HIGHFLY_CREATOR_HEADWEAR';
   accessory.userData.hfAttachBone='head';
   const feathers=buildFeatherSet(recipe,bounds);
   feathers.visible=recipe.showFeathers;
   accessory.add(feathers);
-  helmetRoot=buildLegendaryHelmet(bounds,recipe.helmet);
+  helmetRoot=buildLegendaryHelmet(bounds,recipe.helmet,landmarks);
   accessory.add(helmetRoot);
   headBone.add(accessory); // true native head-bone local frame, no proxy rig.
   for(const o of headSurfaceMeshes)o.visible=!recipe.helmet.enabled;
@@ -83,7 +139,13 @@ function rebuild(){
     helmetVisible:recipe.helmet.enabled,helmetMeshCount:helmetMeshes,helmetPartCount:uniqueParts.size,
     helmetColorCount:helmetColors.size,helmetSelectedPart:selectedHelmetPart,headFacesHidden:recipe.helmet.enabled&&headSurfaceMeshes.length>0&&headSurfaceMeshes.every(o=>o.visible===false),
     sourceOriginalIntact:true,featherCount:recipe.pieces.length,selectedId});
-  markSelection();return ck;
+  const qa=inspectAccessory(accessory);
+  DIAG.quality=qa;
+  DIAG.eyeYResult=helmetRoot.userData.facialAlignment?.absoluteVisorY??null;
+  byId('qualityReport').textContent=qa.triangles+' triángulos · '+qa.materials+' materiales · '+
+    (qa.mobileBudget?'presupuesto móvil OK':'revisar presupuesto móvil')+
+    (qa.warnings.length?' · '+qa.warnings.join('; '):'');
+  markSelection();syncGizmo();return ck;
 }
 function markSelection(){
   if(!accessory)return;
@@ -140,7 +202,7 @@ function renderControls(){
   byId('showFeathers').checked=recipe.showFeathers;
   helmetPartSelect.value=selectedHelmetPart;
   byId('helmetPartColor').value=recipe.helmet.colors[selectedHelmetPart]||HELMET_PARTS[selectedHelmetPart].color;
-  for(const [prop,key] of [['helmetBeak','beak'],['helmetCrest','crest'],['helmetGlow','glow']]){
+  for(const [prop,key] of [['helmetBeak','beak'],['helmetCrest','crest'],['helmetGlow','glow'],['helmetEye','eyeOffset']]){
     const v=Math.round(recipe.helmet[key]*100);
     byId(prop).value=v;byId(prop+'Number').value=v;
   }
@@ -178,6 +240,7 @@ function redoOp(){
   if(!selected())selectedId=recipe.pieces[0]?.id||null;refresh();report('Cambio restaurado.');
 }
 function reset(){
+  gizmoMode=null;
   transact(()=>{recipe=defaultRecipe();selectedId='crown'});
   report('Reinicio completado. El Warrior original no fue modificado.');
 }
@@ -198,7 +261,8 @@ function load(){
 }
 async function exportGLB(download=true){
   if(!accessory)throw Error('No hay accesorio preparado');
-  const safe=checkGeometry(accessory);if(!safe.valid)throw Error('Geometría no válida para exportar');
+  const safe=inspectAccessory(accessory);
+  if(!safe.valid||!safe.mobileBudget)throw Error('Malla inválida o fuera de presupuesto móvil: '+JSON.stringify(safe));
   // Export accessory only. Native rig and base avatar are intentionally excluded.
   const clone=accessory.clone(true);
   clone.updateMatrixWorld(true);
@@ -243,7 +307,7 @@ byId('helmetPartColor').oninput=e=>{if(dragBaseline===null)dragBaseline=snap();
   recipe.helmet.colors[selectedHelmetPart]=e.target.value;recipe=sanitizeRecipe(recipe);rebuild();
 };
 byId('helmetPartColor').onchange=finishRange;
-for(const [id,key] of [['helmetBeak','beak'],['helmetCrest','crest'],['helmetGlow','glow']]){
+for(const [id,key] of [['helmetBeak','beak'],['helmetCrest','crest'],['helmetGlow','glow'],['helmetEye','eyeOffset']]){
   const change=(value)=>{if(dragBaseline===null)dragBaseline=snap();
     const el=byId(id),v=Math.max(Number(el.min),Math.min(Number(el.max),Number(value)));
     if(!Number.isFinite(v)){renderControls();return}
@@ -255,6 +319,19 @@ for(const [id,key] of [['helmetBeak','beak'],['helmetCrest','crest'],['helmetGlo
   byId(id+'Number').onchange=e=>{change(e.target.value);finishRange();};
 }
 byId('headViewBtn').onclick=()=>cameraHeadView('three');
+byId('guidesBtn').onclick=()=>{
+  if(!faceGuideRoot||!landmarks?.verified){report('Guías no disponibles: falta referencia ocular real.');return}
+  showGuides=!showGuides;faceGuideRoot.visible=showGuides;
+  byId('guidesBtn').classList.toggle('active',showGuides);
+  byId('guidesBtn').textContent=showGuides?'Ocultar guías':'Mostrar guías';
+};
+byId('faceFocusBtn').onclick=()=>{
+  if(!landmarks?.verified){report('No hay coordenadas oculares verificadas.');return}
+  headBone.updateWorldMatrix(true,false);
+  const target=headBone.localToWorld(new THREE.Vector3(0,landmarks.eyeY,landmarks.headCenter.z));
+  camera.position.copy(target).add(new THREE.Vector3(.25,.15,2.7));
+  controls.target.copy(target);controls.update();
+};
 for(const key of ['color','accent']){
   byId(key).addEventListener('input',e=>{const p=selected();if(!p)return;if(dragBaseline===null)dragBaseline=snap();p[key]=e.target.value;rebuild();});
   byId(key).addEventListener('change',finishRange);
@@ -265,6 +342,25 @@ byId('addBtn').onclick=addPiece;byId('duplicateBtn').onclick=duplicate;byId('del
 byId('undoBtn').onclick=undoOp;byId('redoBtn').onclick=redoOp;byId('resetBtn').onclick=reset;
 byId('saveBtn').onclick=save;byId('loadBtn').onclick=load;
 byId('recipeBtn').onclick=()=>{downloadBlob(JSON.stringify(recipe,null,2),'HIGHFLY-CREATOR-recipe.json','application/json');report('Receta descargada como JSON.');};
+byId('importBtn').onclick=()=>byId('importFile').click();
+byId('importFile').onchange=async e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  try{
+    if(file.size>1024*1024)throw Error('Receta demasiado grande: 1 MB máximo');
+    const result=sanitizeRecipe(JSON.parse(await file.text()));
+    transact(()=>{recipe=result;selectedId=recipe.pieces[0]?.id||null});
+    report('Receta importada: casco, plumas y colores restaurados.');
+  }catch(err){report('Error al importar receta: '+err.message,true)}
+  finally{e.target.value=''}
+};
+byId('qualityBtn').onclick=()=>{
+  if(!accessory){report('Primero debe cargarse el modelo original.');return}
+  const qa=inspectAccessory(accessory);DIAG.quality=qa;
+  report('AUDITORÍA: '+qa.triangles+' triángulos · '+qa.vertices+' vértices · '+
+    qa.materials+' materiales · '+qa.degenerate+' degenerados · '+
+    (qa.valid&&qa.mobileBudget?'apto para esta prueba móvil.':'requiere revisión.')+
+    (qa.warnings.length?' '+qa.warnings.join(' / '):''));
+};
 byId('exportBtn').onclick=async()=>{
   const btn=byId('exportBtn');btn.disabled=true;try{await exportGLB(true)}catch(e){report('Exportación fallida: '+e.message,true)}finally{btn.disabled=false}
 };
@@ -282,7 +378,7 @@ renderer.domElement.addEventListener('pointerup',event=>{
   const delta=pressStart?Math.hypot(pressStart.x-event.clientX,pressStart.y-event.clientY):Infinity;
   pressStart=null;
   // Dragging rotates the camera; only a genuine short tap picks a mesh.
-  if(!accessory||delta>7)return;
+  if(!accessory||delta>7||gizmo.dragging)return;
   const rect=renderer.domElement.getBoundingClientRect();
   pointer.x=(event.clientX-rect.left)/rect.width*2-1;pointer.y=-(event.clientY-rect.top)/rect.height*2+1;
   ray.setFromCamera(pointer,camera);
@@ -358,13 +454,24 @@ async function boot(){
     const size=new THREE.Vector3(),center=new THREE.Vector3();box.getSize(size);box.getCenter(center);
     if(![size.x,size.y,size.z].every(v=>v>0.02&&Number.isFinite(v)))throw Error('Dimensiones craneales inválidas');
     bounds={size,center};
+    landmarks=nativeFacialLandmarks(reference.scene);
+    DIAG.faceLandmarksVerified=landmarks.verified;
+    DIAG.landmarkCount=[landmarks.leftEye,landmarks.rightEye,landmarks.brow,landmarks.mouth].filter(Boolean).length;
+    DIAG.nativeEyeY=landmarks.eyeY;
+    faceGuideRoot=facialOverlay(landmarks);
+    headBone.add(faceGuideRoot);
+    byId('faceReport').textContent=landmarks.verified
+      ?'Ojos reales encontrados: '+landmarks.samples.left+' / '+landmarks.samples.right+
+       ' vértices. Guías vinculadas a Rig_Medium.'
+      :'REFERENCIA INCOMPLETA: falta M_Eye_almond bilateral; no se simularon ojos.';
+    if(!landmarks.verified)throw Error('Se requiere referencia ocular izquierda/derecha auténtica; no se acepta proxy');
     mixer=new THREE.AnimationMixer(actor);
     const idle=THREE.AnimationClip.findByName(clips,'Idle');if(idle)mixer.clipAction(idle).play();
     Object.assign(DIAG,{ready:true,nativeRig:true,headReferenceReal:true,bones,clips:clips.length,realHead:true,
       headSize:size.toArray(),sourceOriginalIntact:true,sourceHeadBoneName:headBone.name});
     const pill=byId('rigPill');pill.textContent='Rig_Medium · '+bones+' huesos · '+clips.length+' animaciones ✓';
     pill.style.color='#8ae8ac';
-    refresh();cameraHeadView('three');
+    refresh();cameraHeadView('three');DIAG.gizmoAttached=!!gizmo.object;
     report('CASCO AVIAR LEGENDARIO REAL montado. Seleccioná un detalle y pintalo; podés usar los controles numéricos.');
     const s=checkGeometry(accessory);if(!s.valid)throw Error('Geometría no finita');
     byId('diag').textContent=s.meshCount+' mallas · '+s.vertices+' vértices · M_Head REAL';
@@ -372,7 +479,13 @@ async function boot(){
 }
 window.__CREATOR_API__={getRecipe:()=>structuredClone(recipe),getSelected:()=>selected()?structuredClone(selected()):null,
   addPiece,duplicate,erase,undo:undoOp,redo:redoOp,reset,save,load,exportGLB,check:()=>accessory?checkGeometry(accessory):null,
-  cameraView,cameraHeadView,applyHelmet:()=>transact(()=>{recipe.helmet.enabled=true}),
+  cameraView,cameraHeadView,
+  getLandmarks:()=>landmarks?{verified:landmarks.verified,
+    leftEye:landmarks.leftEye?.toArray()||null,rightEye:landmarks.rightEye?.toArray()||null,
+    eyeY:landmarks.eyeY,samples:landmarks.samples}:null,
+  getQuality:()=>accessory?inspectAccessory(accessory):null,
+  setGizmoMode,importRecipe:r=>transact(()=>{recipe=sanitizeRecipe(r);selectedId=recipe.pieces[0]?.id||null}),
+  applyHelmet:()=>transact(()=>{recipe.helmet.enabled=true}),
   hideHelmet:()=>transact(()=>{recipe.helmet.enabled=false}),
   selectHelmetPart:key=>{if(!HELMET_PARTS[key])return false;selectedHelmetPart=key;renderControls();return true},
   loadRecipe:r=>transact(()=>{recipe=sanitizeRecipe(r);selectedId=recipe.pieces[0]?.id||null})};
