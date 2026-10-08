@@ -11,16 +11,26 @@ permissions:
 jobs:
   forge:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
-      - name: Install free Blender CPU engine
+      - name: Install OFFICIAL Blender 4.2 LTS portable (no apt, verified checksum)
         shell: bash
+        timeout-minutes: 9
         run: |
           set -euo pipefail
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends blender
-          blender --version | head -n 2
+          VERSION="4.2.23"
+          NAME="blender-${VERSION}-linux-x64.tar.xz"
+          BASE="https://download.blender.org/release/Blender4.2"
+          mkdir -p "$RUNNER_TEMP/highfly-blender" "$RUNNER_TEMP/highfly-download"
+          cd "$RUNNER_TEMP/highfly-download"
+          curl --fail --show-error --location --retry 2 --retry-delay 2 --connect-timeout 15 --max-time 390 "$BASE/$NAME" -o "$NAME"
+          curl --fail --show-error --location --retry 2 --connect-timeout 15 --max-time 35 "$BASE/blender-${VERSION}.sha256" -o SHA256SUMS
+          grep -F "$NAME" SHA256SUMS | head -n 1 | sha256sum --check
+          tar -xJf "$NAME" --strip-components=1 -C "$RUNNER_TEMP/highfly-blender"
+          test -x "$RUNNER_TEMP/highfly-blender/blender"
+          echo "$RUNNER_TEMP/highfly-blender" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/highfly-blender/blender" --version | head -n 2
       - name: Recreate authentic head bind from frozen source
         shell: bash
         run: |
