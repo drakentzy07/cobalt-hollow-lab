@@ -1,0 +1,37 @@
+name: HIGHFLY CHARACTER TRUTH — PHASE 2 EVIDENCE REUSE
+on:
+  push:
+    branches: [highfly-character-truth-audit-01]
+    paths:
+      - 'character-truth/phase2_from_inventory.py'
+      - '.github/workflows/character-truth-phase2.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  character-truth-phase2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse original GREEN audit artifact, do not regenerate inventory
+        uses: actions/download-artifact@v4
+        with:
+          name: highfly-character-truth-native-inventory
+          run-id: 37803666522
+          github-token: ${{ github.token }}
+          path: character-truth/prior
+      - name: Validate existing source inventory and establish dynamic gates
+        run: |
+          python3 character-truth/phase2_from_inventory.py --inventory character-truth/prior/out --out character-truth/phase2-out
+          test -s character-truth/phase2-out/phase2_truth_baseline.json
+          grep -q DYNAMIC_GATE_PENDING character-truth/phase2-out/PHASE2_GATE.md
+      - name: Verify untouched tracked sources
+        run: git diff --exit-code -- .
+      - name: Save stage 2 evidence (not an animation certification)
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-character-truth-phase2-baseline
+          path: character-truth/phase2-out/
+          retention-days: 30
