@@ -1,0 +1,32 @@
+{
+  "offlineSelectorVisible": true,
+  "gameBooted": true,
+  "static404s": [],
+  "doubleBaseRequests": [],
+  "navigationError": null,
+  "offlineEntryError": null,
+  "gameplay": {
+    "movement": {
+      "passed": true
+    },
+    "combat": {
+      "passed": true
+    }
+  },
+  "diagnosticProvenance": {
+    "sourceRun": 37770166898,
+    "sourceArtifact": 11548356251,
+    "entry": "run0-browser-report.json",
+    "originalByteLength": 36221,
+    "originalSha256": "f1a3cba4cd40d34e969a2273e72d7a5e7dd3b0577121ef2473dd92c6cf987111",
+    "badRequestEvents": 173,
+    "consoleErrorsCount": 3,
+    "characterVisualWarnings": [
+      "npc_modular_walking_staff: original model weapons/brasscrown_walking_staff.glb not preloaded",
+      "mob_training_dummy: original model creatures/training_dummy.glb not preloaded"
+    ],
+    "sourceArtifactUrl": "https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/37770166898/artifacts/11548356251",
+    "sanitizedSnapshot": true,
+    "fullArtifactRevalidatedInThisCI": false
+  }
+}
