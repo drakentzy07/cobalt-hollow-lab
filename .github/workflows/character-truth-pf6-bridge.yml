@@ -1,0 +1,104 @@
+name: HIGHFLY SKIN3 — PF6 ORIGINAL SOURCE BRIDGE
+on:
+  push:
+    branches: [highfly-character-truth-audit-01]
+    paths:
+      - 'character-truth/pf6-bridge-audit.py'
+      - 'character-truth/pf6-native-grip-check.mjs'
+      - 'character-truth/SKIN3_PHASE5_PF6.md'
+      - '.github/workflows/character-truth-pf6-bridge.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  pf6-readonly-provenance-and-grips:
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse frozen PF6 RUN333 CLEAN source delta without rebuilding game
+        uses: actions/download-artifact@v4
+        with:
+          name: highfly-clean-v1-source-delta
+          run-id: 37770166898
+          github-token: ${{ github.token }}
+          path: character-truth/pf6-evidence/source-delta
+      - name: Reuse frozen PF6 RUN333 real browser diagnostics
+        uses: actions/download-artifact@v4
+        with:
+          name: run0-browser-diagnostics
+          run-id: 37770166898
+          github-token: TOKEN_PLACEHOLDER
+          path: character-truth/pf6-evidence/browser
+      - name: Verify source modules against frozen original Git SHA
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,pathlib,time,urllib.request
+          pins={
+            'modular.ts':'d2ad732114b01a0aa9de5a882e0a6980d54225fb',
+            'underhair.generated.ts':'630408c0ffbffb61d06e1a398f28b0d89f820dfe',
+            'rig_shared_skeleton.ts':'f65ede57d226f7c134976341e539fc2c1c990248',
+            'weapon_grip.ts':'dc6cfb3f28164722415ddd8b80e9a80deddf09a6',
+            'held_item_grips.ts':'06ea93d00490b1c397dcb14442de98ed8a730dbf',
+            'back_grips.ts':'a3a3672c86cbdaefe98d17f28d8c4263586aa30a',
+            'player_look_core.ts':'c20da88f6c9e56c1df5d452fb88a76c5b2721666',
+            'preview_appearance.ts':'574c4ded4a8df3261ca8708dd625cf43ebaf0868',
+            'assets.ts':'836769f9ccd5db9ea5d076a2181a0354318a203d',
+            'manifest.ts':'0cb0b39fde840a5555318ffe30747a74d51544bd',
+          }
+          revision='9b57e49c9676d75962700f828cc00a50a9a988b5'
+          origin='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/'+revision+'/src/render/characters/'
+          root=pathlib.Path('character-truth/pf6-original')
+          root.mkdir(parents=True,exist_ok=True)
+          for name,expected in pins.items():
+            for attempt in range(3):
+              try:
+                request=urllib.request.Request(origin+name,headers={'User-Agent':'HIGHFLY-PF6-bridge'})
+                with urllib.request.urlopen(request,timeout=40) as response:data=response.read()
+                break
+              except Exception:
+                if attempt==2:raise
+                time.sleep(2)
+            actual=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+            if actual!=expected:raise RuntimeError('Original source changed '+name+' '+actual)
+            (root/name).write_bytes(data)
+            print('ORIGINAL_SOURCE_SHA_GREEN',name,actual)
+          PY
+      - name: Check frozen PF6 source delta and browser proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/phase5-proof
+          python3 character-truth/pf6-bridge-audit.py \
+            --delta character-truth/pf6-evidence/source-delta \
+            --browser character-truth/pf6-evidence/browser \
+            --source character-truth/pf6-original \
+            --out character-truth/phase5-proof
+          test -s character-truth/phase5-proof/pf6-bridge.json
+      - name: Check original class appearance and native weapons plus back carrying
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false esbuild@0.25.12
+          for stem in modular weapon_grip back_grips held_item_grips; do
+            npx esbuild "character-truth/pf6-original/$stem.ts" \
+              --bundle --format=esm --platform=node \
+              --outfile="character-truth/pf6-original/$stem.mjs"
+          done
+          node character-truth/pf6-native-grip-check.mjs
+          test -s character-truth/phase5-proof/creator-grip-matrix.json
+          git diff --exit-code -- .
+          echo "PF6_AND_NATIVE_CHARACTER_UNMODIFIED=1"
+      - name: Upload verifiable PF6 bridge evidence (not final creator approval)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-skin3-pf6-frozen-original-composer-grip-bridge
+          path: character-truth/phase5-proof/
+          if-no-files-found: warn
+          retention-days: 30
