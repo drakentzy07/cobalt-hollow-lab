@@ -37,7 +37,7 @@ export function sanitizeRecipe(input){
     }))
   };
 }
-export function makeFeather(spec,dims,side=1,matType='graphite'){
+export function makeFeather(spec,dims,side=1,matType='graphite',shared=null){
   // C1 continuous Catmull-Rom spine, ridge + layered ribbon closed as a true mesh.
   const s=spec,headW=dims.x,headH=dims.y,headD=dims.z;
   const w=headW*s.width,L=headH*s.length,curve=new THREE.CatmullRomCurve3([
@@ -79,7 +79,7 @@ export function makeFeather(spec,dims,side=1,matType='graphite'){
   geom.setAttribute('position',new THREE.Float32BufferAttribute(v,3));
   geom.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geom.setIndex(indices);geom.computeVertexNormals();
   const params=MATERIALS[matType]||MATERIALS.graphite;
-  const body=new THREE.Mesh(geom,new THREE.MeshStandardMaterial({color:s.color,...params,side:THREE.DoubleSide}));
+  const body=new THREE.Mesh(geom,shared?.body||new THREE.MeshStandardMaterial({color:s.color,...params,side:THREE.DoubleSide}));
   body.name='HF_Feather_'+s.id+(side<0?'_L':'_R');
   body.userData.creatorPieceId=s.id;body.castShadow=true;body.receiveShadow=true;
   // Raised center quill and a thin bright gradient-like edge, both independent meshes.
@@ -87,7 +87,7 @@ export function makeFeather(spec,dims,side=1,matType='graphite'){
     const p=curve.getPoint(t);p.z+=headD*.012;return p;
   }));
   const quill=new THREE.Mesh(new THREE.TubeGeometry(quillPath,20,Math.max(.0025,headW*.008),5,false),
-    new THREE.MeshStandardMaterial({color:s.accent,metalness:.68,roughness:.30}));
+    shared?.quill||new THREE.MeshStandardMaterial({color:s.accent,metalness:.68,roughness:.30}));
   quill.name='HF_Quill_'+s.id+(side<0?'_L':'_R');quill.userData.creatorPieceId=s.id;quill.castShadow=true;
   return [body,quill];
 }
@@ -96,6 +96,13 @@ export function buildFeatherSet(recipe,bounds){
   group.userData.hfAttachBone='head';group.userData.hfSource='Rig_Medium';
   const center=bounds.center,dims=bounds.size;
   for(const s of recipe.pieces){
+    // The two mirrored geometries of one editable piece share exactly 2 materials.
+    // Each separate piece keeps independent paint/selection; visual color is unchanged.
+    const params=MATERIALS[recipe.material]||MATERIALS.graphite;
+    const shared={
+      body:new THREE.MeshStandardMaterial({color:s.color,...params,side:THREE.DoubleSide}),
+      quill:new THREE.MeshStandardMaterial({color:s.accent,metalness:.68,roughness:.30})
+    };
     const sides=s.mirror&&recipe.symmetry?[-1,1]:[s.x<0?-1:1];
     for(const side of sides){
       const pivot=new THREE.Group();pivot.name='HF_Piece_'+s.id+(side<0?'_L':'_R');
@@ -103,7 +110,7 @@ export function buildFeatherSet(recipe,bounds){
       pivot.position.set(center.x+side*Math.abs(s.x)*dims.x*.8,center.y+s.y*dims.y,center.z+s.z*dims.z);
       pivot.rotation.set(THREE.MathUtils.degToRad(s.rx||0),THREE.MathUtils.degToRad((s.ry||0)*side),THREE.MathUtils.degToRad((s.rz||0)*side));
       pivot.scale.setScalar(s.scale||1);
-      for(const mesh of makeFeather(s,dims,side,recipe.material))pivot.add(mesh);
+      for(const mesh of makeFeather(s,dims,side,recipe.material,shared))pivot.add(mesh);
       group.add(pivot);
     }
   }
