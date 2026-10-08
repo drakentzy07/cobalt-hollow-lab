@@ -20,8 +20,9 @@ def parse(path):
     document=json.loads(chunks[0x4e4f534a].decode("utf-8"))
     return document,chunks.get(0x004e4942,b""),data
 class Reader:
-    def __init__(self,doc,buffer):
+    def __init__(self,doc,buffer,decoded_dir):
         self.doc=doc;self.cache={}
+        self.decoded_dir=decoded_dir
         self.buffers={}
         # GLB binary chunk is buffer[0]; additional buffers are permitted in
         # our legacy donor only when embedded as data URIs. NEVER fetch URLs.
@@ -34,6 +35,11 @@ class Reader:
                 header,_,encoded=uri.partition(",")
                 if ";base64" in header.lower():payload=base64.b64decode(encoded,validate=True)
                 else:payload=urllib.parse.unquote_to_bytes(encoded)
+            elif uri is None and i>0:
+                decoded=decoded_dir/("decoded-buffer-"+str(i)+".bin")
+                if not decoded.is_file():
+                    raise ValueError("Compressed GLB virtual buffer not decoded: "+str(i))
+                payload=decoded.read_bytes()
             else:
                 raise ValueError("External network/file buffer forbidden: index="+str(i))
             if len(payload)<item.get("byteLength",0):
@@ -95,11 +101,11 @@ def group(name):
     if any(x in n for x in ["eye","ear","brow","mouth"]):return "face_candidate"
     if any(x in n for x in ["head","body","chest","torso","leg","arm","hand","foot"]):return "body_candidate"
     return "other_or_unclassified"
-def audit_asset(file,expected):
+def audit_asset(file,expected,decoded_root):
     doc,buffer,raw=parse(file)
     gitsha=hashlib.sha1(b"blob "+str(len(raw)).encode()+b"\0"+raw).hexdigest()
     if gitsha!=expected:raise ValueError("SOURCE IDENTITY FAILURE "+str(file)+" "+gitsha)
-    R=Reader(doc,buffer);nodes=doc.get("nodes",[]);meshes=doc.get("meshes",[])
+    R=Reader(doc,buffer,decoded_root/file.stem);nodes=doc.get("nodes",[]);meshes=doc.get("meshes",[])
     skins=doc.get("skins",[]);mats=doc.get("materials",[]);anims=doc.get("animations",[])
     pmap=parents_for(nodes);alljoints=set()
     parts=[];node_rows=[];joint_rows=[];anim_rows=[];mat_rows=[];issues=[]
@@ -196,11 +202,12 @@ def main():
     ap.add_argument("--source",type=pathlib.Path,required=True)
     ap.add_argument("--out",type=pathlib.Path,required=True)
     ap.add_argument("--manifest",type=pathlib.Path,required=True)
+    ap.add_argument("--decoded-root",type=pathlib.Path,required=True)
     ar=ap.parse_args();ar.out.mkdir(parents=True,exist_ok=True)
     manifest=json.loads(ar.manifest.read_text());summaries=[]
     collections_all=[[],[],[],[],[]]
     for name,gitsha in manifest.items():
-        s,*groups=audit_asset(ar.source/name,gitsha);summaries.append(s)
+        s,*groups=audit_asset(ar.source/name,gitsha,ar.decoded_root);summaries.append(s)
         for b,new in zip(collections_all,groups):b.extend(new)
         print("OFFICIAL_ASSET_VERIFIED",name,"meshes",s["mesh_primitives"],
           "joints",s["unique_joint_nodes"],"clips",s["clips"],
