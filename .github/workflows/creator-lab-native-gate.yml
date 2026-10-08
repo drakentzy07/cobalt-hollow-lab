@@ -28,6 +28,7 @@ jobs:
           node --check creator-lab/geometry.mjs
           node --check creator-lab/helmet.mjs
           node --check creator-lab/anatomy-fit.mjs
+          node --check creator-lab/command-engine.mjs
           node --check creator-lab/facial.mjs
           node --check creator-lab/quality.mjs
           test -f scripts/skin_lab/extract_bind_reference.mjs

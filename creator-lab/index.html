@@ -68,7 +68,12 @@ input[type=checkbox]{accent-color:#9b73ed}.value{width:30px;text-align:right;col
 <label>Superficie <input id="color" type="color"></label><label>Nervadura <input id="accent" type="color"></label>
 <label>Material <select id="material"><option value="graphite">Acero grafito</option><option value="silver">Acero frío</option><option value="leather">Cuero</option><option value="arcane">Arcano</option></select></label>
 <div class="hint">Elegí una pluma con un clic en el personaje o desde la lista. Pintar no une ni destruye las otras piezas.</div></section>
-<section><h2>08 · QA y guardado</h2>
+<section><h2>08 · Órdenes rápidas de forja</h2>
+<p>Primer protocolo de automatización local, sin IA de pago conectada. Sólo acepta acciones seguras, visibles y reversibles.</p>
+<div class="row"><input id="forgeCommand" type="text" maxlength="200" placeholder="Ej.: pintar visor #a56eff" aria-label="Orden de forja" style="min-width:0;background:#161326;border:1px solid #54436e;border-radius:8px;padding:8px;color:#fff">
+<button id="forgeRunBtn" class="primary">Ejecutar</button></div>
+<div class="hint">Probá: «pico 120», «ojos -10», «plumaje 130», «pintar visor #a56eff», «auditar». Todavía NO hay modelo de IA conectado; es nuestra interfaz segura para conectarlo más adelante.</div></section>
+<section><h2>09 · QA y guardado</h2>
 <div class="row"><button id="undoBtn">↶ Deshacer</button><button id="redoBtn">↷ Rehacer</button><button id="resetBtn">⟲ Reiniciar</button></div>
 <div class="row"><button id="saveBtn">💾 Guardar</button><button id="loadBtn">↩ Cargar</button></div>
 <div class="row"><button id="recipeBtn">Exportar receta JSON</button><button id="importBtn">Importar receta JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>

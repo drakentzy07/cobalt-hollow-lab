@@ -118,6 +118,17 @@ const gltfValidator=require('gltf-validator');
   const imported=await page.evaluate(()=>window.__CREATOR_API__.getRecipe());
   if(imported.helmet.colors.visor!=='#ff65dd'||imported.pieces.length!==5)
     throw Error('Recipe upload failed');
+  await page.locator('#forgeCommand').fill('pintar visor #a56eff');
+  await page.click('#forgeRunBtn');
+  const aiReady=await page.evaluate(()=>window.__CREATOR_API__.getRecipe());
+  if(aiReady.helmet.colors.visor!=='#a56eff')throw Error('Safe typed paint command not executed');
+  await page.click('#undoBtn');
+  if((await page.evaluate(()=>window.__CREATOR_API__.getRecipe())).helmet.colors.visor!=='#ff65dd')
+    throw Error('Guided command not undoable');
+  await page.locator('#forgeCommand').fill('rm -rf /');
+  await page.click('#forgeRunBtn');
+  if((await page.evaluate(()=>window.__CREATOR_API__.getRecipe())).helmet.colors.visor!=='#ff65dd')
+    throw Error('Unsupported freeform command executed');
   await page.click('#qualityBtn');
   const q=await page.evaluate(()=>window.__CREATOR_API__.getQuality());
   if(!q.valid||!q.mobileBudget||q.triangles<=100||q.invalid!==0)

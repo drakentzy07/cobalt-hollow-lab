@@ -10,6 +10,7 @@ import {nativeFacialLandmarks,facialOverlay} from './facial.mjs';
 import {inspectAccessory} from './quality.mjs';
 import {defaultRecipe,sanitizeRecipe,buildFeatherSet,checkGeometry} from './geometry.mjs';
 import {buildLegendaryHelmet,HELMET_PARTS} from './helmet.mjs';
+import {parseGuidedCommand,applyGuidedCommand} from './command-engine.mjs';
 
 const SOURCE={sha:'9b57e49c9676d75962700f828cc00a50a9a988b5',blob:'e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2',bytes:3477500};
 const STORE_KEY='HIGHFLY_CREATOR_LAB_V1';
@@ -365,6 +366,24 @@ byId('qualityBtn').onclick=()=>{
     (qa.valid&&qa.mobileBudget?'apto para esta prueba móvil.':'requiere revisión.')+
     (qa.warnings.length?' '+qa.warnings.join(' / '):''));
 };
+function executeForgeCommand(raw){
+  try{
+    const plan=parseGuidedCommand(raw);
+    if(plan.action==='inspect'){
+      byId('qualityBtn').click();return true;
+    }
+    const applied=transact(()=>{recipe=applyGuidedCommand(recipe,plan).recipe});
+    report(applied?'Orden de forja ejecutada y guardada en historial.':'La orden no cambió la pieza.');
+    return true;
+  }catch(error){
+    report('Orden no ejecutada: '+error.message);
+    return false;
+  }
+}
+byId('forgeRunBtn').onclick=()=>executeForgeCommand(byId('forgeCommand').value);
+byId('forgeCommand').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();executeForgeCommand(e.target.value);}
+});
 byId('exportBtn').onclick=async()=>{
   const btn=byId('exportBtn');btn.disabled=true;try{await exportGLB(true)}catch(e){report('Exportación fallida: '+e.message,true)}finally{btn.disabled=false}
 };
@@ -496,6 +515,7 @@ window.__CREATOR_API__={getRecipe:()=>structuredClone(recipe),getSelected:()=>se
     browVerified:landmarks.browVerified,mouthVerified:landmarks.mouthVerified,
     earVerified:landmarks.earVerified,samples:landmarks.samples}:null,
   getQuality:()=>accessory?inspectAccessory(accessory):null,
+  runCommand:executeForgeCommand,
   setGizmoMode,importRecipe:r=>transact(()=>{recipe=sanitizeRecipe(r);selectedId=recipe.pieces[0]?.id||null}),
   applyHelmet:()=>transact(()=>{recipe.helmet.enabled=true}),
   hideHelmet:()=>transact(()=>{recipe.helmet.enabled=false}),
