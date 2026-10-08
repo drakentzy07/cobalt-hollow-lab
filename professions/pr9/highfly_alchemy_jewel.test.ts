@@ -91,7 +91,7 @@ describe('HIGHFLY PR-9: genuine Alchemy + Jewelcrafting Catalyst/Prismglass brid
     const sim=make(903),pid=sim.playerId;
     expect(craft(sim,'recipe_hammered_copper_band').ok).toBe(true);
     expect(sim.highflyAlchemyJewelPilotStatus().jewelcrafting.copperBands).toBe(1);
-    expect(sim.serializeCharacter(pid)!.highflyProfessions?.knowledge)
+    expect(sim.serializeCharacter(pid)!.highflyProfessions?.knowledge ?? [])
       .not.toContain('technique.copper_jewelry');
     expect(craft(sim,'recipe_polished_copper_loop').ok).toBe(true);
     expect(sim.serializeCharacter(pid)!.highflyProfessions?.knowledge)
@@ -145,8 +145,17 @@ describe('HIGHFLY PR-9: genuine Alchemy + Jewelcrafting Catalyst/Prismglass brid
     expect(after.highflyProfessions?.evidence?.['alchemy.catalyst.quickening_crafted']).toBe(1);
     expect(after.highflyProfessions?.evidence?.['jewelcrafting.prismglass.setting_crafted']).toBe(1);
     expect(after.highflyProfessions?.knowledge).toContain('technique.prismglass_setting');
-    expect(after.highflyProfessions?.craftXp?.alchemy).toBeGreaterThan(0);
-    expect(after.highflyProfessions?.craftXp?.jewelcrafting).toBeGreaterThan(0);
+    // The frozen donor may grant ZERO raw craft skill at this high skill band.
+    // PR-3 deliberately awards NO extra career XP when Claude awards no skill.
+    // Never invent XP just to make an advanced recipe appear to progress.
+    expect(after.highflyProfessions?.craftXp?.alchemy)
+      .toBe(before.highflyProfessions?.craftXp?.alchemy);
+    const actualJewelSkillGain=(after.craftSkills?.jewelcrafting??0) -
+      (before.craftSkills?.jewelcrafting??0);
+    const expectedJewelXp=Math.round(1500*Math.max(0,Math.min(1,actualJewelSkillGain)));
+    expect((after.highflyProfessions?.craftXp?.jewelcrafting??0) -
+      (before.highflyProfessions?.craftXp?.jewelcrafting??0)).toBe(expectedJewelXp);
+    expect(after.highflyProfessions?.practice?.['recipe:recipe_prismglass_setting']).toBe(1);
     expect(after.craftSkills?.alchemy).toBe(before.craftSkills?.alchemy);
     expect(sim.highflyAlchemyJewelPilotStatus().gemCoreImplemented).toBe(false);
     expect(sim.highflyAlchemyJewelPilotStatus().socketEngineImplemented).toBe(false);
