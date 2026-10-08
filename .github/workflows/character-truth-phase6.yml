@@ -1,0 +1,74 @@
+name: HIGHFLY SKIN3 — REAL PF6 CREATOR RUNTIME
+on:
+  push:
+    branches: [highfly-character-truth-audit-01]
+    paths:
+      - 'character-truth/pf6-real-browser.cjs'
+      - 'character-truth/SKIN3_PHASE6_PF6_RUNTIME.md'
+      - '.github/workflows/character-truth-phase6.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  test-immutable-PF6-playable-character:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse exact frozen PF6 RUN333 Pages game artifact (not live newer Pages)
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          run-id: 37770166898
+          github-token: ${{ github.token }}
+          path: character-truth/pf6-deploy-archive
+      - name: Inspect immutable deploy and serve it at original Pages base
+        shell: bash
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          find character-truth/pf6-deploy-archive -maxdepth 2 -type f -printf '%p (%s bytes)\n' | head -20
+          mkdir -p character-truth/pf6-site/cobalt-hollow-lab
+          tar_file="$(find character-truth/pf6-deploy-archive -type f -name '*.tar' -print -quit)"
+          if [ -z "$tar_file" ]; then
+            echo "PF6_DEPLOY_TAR_NOT_FOUND"
+            exit 1
+          fi
+          tar -tf "$tar_file" | head -n 12 || true
+          tar -xf "$tar_file" -C character-truth/pf6-site/cobalt-hollow-lab
+          test -s character-truth/pf6-site/cobalt-hollow-lab/index.html
+          echo "EXACT_IMMUTABLE_PF6_ARTIFACT_READY=1"
+      - name: Install browser for isolated source-faithful PF6 checks
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+          node --check character-truth/pf6-real-browser.cjs
+      - name: Launch PF6 artifact browser without deploying anywhere
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd character-truth/pf6-site
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/skin3-phase6-http.log 2>&1 &
+          sleep 3
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/ | grep -q '<html'
+      - name: Test 8 native M/F creator previews and enter real game
+        timeout-minutes: 11
+        shell: bash
+        run: |
+          set -euo pipefail
+          node character-truth/pf6-real-browser.cjs
+          test -s character-truth/phase6-proof/pf6-real-browser.json
+          git diff --exit-code -- .
+          echo "SKIN3_FROZEN_PF6_AND_OFFICIAL_MODELS_UNMODIFIED=1"
+      - name: Upload actual frozen PF6 browser screenshots and truthful diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-skin3-immutable-pf6-real-browser-proof
+          path: character-truth/phase6-proof/
+          if-no-files-found: warn
+          retention-days: 30
