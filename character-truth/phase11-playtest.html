@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HIGHFLY SKIN3 · PLAYTEST READY LAB</title>
+<style>
+body{margin:0;background:#151523;color:#ece9fa;font:14px system-ui}header{padding:12px 16px;border-bottom:1px solid #685481}
+h1{font-size:17px;margin:0}p{color:#aeb4cd}main{display:grid;grid-template-columns:1fr 285px}
+#stage{height:770px}aside{padding:16px;max-height:770px;overflow-y:auto}label{display:block;margin-top:10px}select,button{width:100%;padding:9px;color:white;background:#302a48;border:1px solid #8973a1}
+pre{white-space:pre-wrap;font:11px monospace}@media(max-width:750px){main{grid-template-columns:1fr}#stage{height:420px}}
+
+/* Phase11 real-mobility preview, not source game HUD. Landscape priority. */
+*{box-sizing:border-box}
+html,body{max-width:100%;min-width:0}
+header{padding:7px 12px}
+header h1{font-size:15px;line-height:1.15}
+header p{margin:4px 0 0;font-size:11px}
+main{grid-template-columns:minmax(0,1fr) minmax(250px,330px);min-width:0}
+#stage{height:calc(100dvh - 72px);min-height:260px;min-width:0;overflow:hidden}
+aside{height:calc(100dvh - 72px);max-height:none;min-height:260px;overflow-y:auto;overscroll-behavior:contain;padding:10px 13px}
+#skin3-easy{border:1px solid #64538c;border-radius:12px;padding:10px;background:#1e1a31}
+#skin3-easy h2{font-size:13px;margin:0 0 8px;color:#e9d5ff}
+#skin3-easy p{margin:6px 0;font-size:11px;line-height:1.3}
+#skin3-easy label{margin-top:7px;font-size:11px}
+#skin3-easy button,#skin3-easy select{min-height:38px;font-size:13px;margin-bottom:4px}
+#p10-state{max-height:90px;overflow:auto;white-space:pre-wrap;word-break:break-word;font-size:9px}
+#skin3-advanced{border:1px solid #39344a;padding:8px;border-radius:9px;margin-top:10px}
+#skin3-advanced summary{cursor:pointer;font-size:12px;font-weight:650;color:#c6b0e9}
+#skin3-advanced label{font-size:11px}
+@media (max-width:700px) and (orientation:portrait){
+ main{grid-template-columns:1fr}
+ #stage{height:46dvh;min-height:260px}
+ aside{height:auto;max-height:none;overflow:visible}
+}
+@media (orientation:landscape) and (max-height:520px){
+ main{grid-template-columns:minmax(0,1fr) minmax(245px,33%)}
+ #stage,aside{height:calc(100dvh - 67px);min-height:0}
+ aside{padding:7px 9px}
+ header h1{font-size:14px}
+ header p{font-size:10px}
+}
+</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head><body><header><h1>HIGHFLY · SKIN 3 — Probador de equipamiento</h1>
+<p>PRUEBA TÉCNICA · Hunter y piezas 3D originales. Las apariencias de los objetos son vistas previas de conjuntos oficiales. No modifica el juego público.</p></header>
+<main><div id="stage"></div><aside><section id="skin3-easy" aria-label="Equipamiento rápido"><h2>EQUIPAR · HUNTER ORIGINAL</h2>
+<p>Equipa un objeto original y comprobá su representación usando piezas oficiales del modelo. No es aún la integración de PF-6.</p>
+<label>Objeto del bolso</label><select id="p10-item"></select>
+<button id="p10-equip">Equipar objeto elegido</button>
+<label>Ranura para desequipar</label><select id="p10-unequip-slot"></select>
+<button id="p10-unequip">Desequipar objeto</button>
+<button id="p10-gender">Alternar Hunter masculino / femenino</button>
+<button id="p10-save">Guardar sesión de prueba</button>
+<button id="p10-load">Cargar sesión de prueba</button>
+<button id="p10-reset">Restablecer inventario de ensayo</button>
+<pre id="p10-state">Preparando Hunter auténtico...</pre>
+</section><details id="skin3-advanced"><summary>Apariencia y opciones avanzadas</summary>
+<label>Cuerpo</label><select id="gender"><option value="male">Masculino</option><option value="female">Femenino</option></select>
+<label>Conjunto completo (preset)</label><select id="kit"><option value="none">Sin armadura</option><option>knight</option><option>barbarian</option><option>druid</option><option>mage</option><option>paladin</option><option>ranger</option><option>rogue</option></select>
+<label>Animación original</label><select id="clip"><option>Idle</option><option>Walking_A</option><option>Running_A</option><option>Block</option><option>Hit_A</option><option>1H_Melee_Attack_Chop</option></select>
+<label>Camara</label><select id="view"><option value="three">3/4</option><option value="front">Frente</option><option value="side">Perfil</option><option value="back">Espalda</option></select><p>Piezas por ranura</p><div id="slot-pickers"></div><button id="go">Equipar sobre Hunter original</button><button id="bare">Quitar armaduras</button><pre id="diag">Cargando modelo real...</pre>
+</details></aside></main>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
+import {MeshoptDecoder} from '/node_modules/meshoptimizer/meshopt_decoder.module.js';
+import {ARMOR_SETS,ARMOR_SLOTS,BODY_SLIDERS,FACE_SLIDERS,DEFAULT_APPEARANCE,NEUTRAL_BODY,NEUTRAL_FACE,fullSet,modularPartNames,morphInfluences} from './generated/modular-runtime.mjs';
+const api={ready:false,error:null,sourceRevision:'9b57e49c9676d75962700f828cc00a50a9a988b5'};
+window.__HF_SKIN3_CAGE__=api;
+const host=document.querySelector('#stage'),scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(40,1,.01,100);
+scene.background=new THREE.Color(0x262638);scene.add(new THREE.HemisphereLight(0xffffff,0x3a3551,3));
+for(const p of [[3,7,5],[-4,3,-3]]){const light=new THREE.DirectionalLight(0xffffff,2.2);light.position.set(...p);scene.add(light)}
+const render=new THREE.WebGLRenderer({antialias:false,preserveDrawingBuffer:true});render.setPixelRatio(1);host.appendChild(render.domElement);
+const ktx=new KTX2Loader().setTranscoderPath('/node_modules/three/examples/jsm/libs/basis/').detectSupport(render);
+const loader=new GLTFLoader().setKTX2Loader(ktx).setMeshoptDecoder(MeshoptDecoder);
+let root,rest=[],clips=new Map(),drawn=[];const point=new THREE.Vector3();
+const setnames=['warrior_modular','knight','knight_hit_variety_anims','warrior_ability_anims','warrior_fury_anims','warrior_contact_anims'];
+const zones=['head','chest','arms','hands','legs','feet','back','other'];
+const clean=n=>n.toLowerCase().replace(/[^a-z0-9]/g,'');
+function zone(n){
+ n=clean(n);
+ if(/head|eye|brow|hair|ear|mouth|beard|lash/.test(n))return 'head';
+ if(/chest|torso|top/.test(n))return 'chest';
+ if(/hand/.test(n))return 'hands';
+ if(/arm/.test(n))return 'arms';
+ if(/foot/.test(n))return 'feet';
+ if(/leg|loin/.test(n))return 'legs';
+ if(/back/.test(n))return 'back';
+ return 'other';
+}
+function reset(){
+ for(const s of rest){s.o.position.copy(s.p);s.o.quaternion.copy(s.q);s.o.scale.copy(s.s)}
+ root.traverse(o=>{if(o.isMesh&&o.morphTargetInfluences)o.morphTargetInfluences.fill(0)});
+ root.updateMatrixWorld(true);
+}
+function contains(mesh,names){
+ let obj=mesh;while(obj){if(names.has(obj.name))return obj.name;if(obj===root)break;obj=obj.parent}
+ return null;
+}
+const finite=a=>a.every(Number.isFinite),round=a=>a.map(x=>+x.toFixed(5));
+const packed=b=>({min:round(b.min.toArray()),max:round(b.max.toArray()),size:round(b.getSize(new THREE.Vector3()).toArray())});
+function vertexBox(mesh){
+ const b=new THREE.Box3().makeEmpty(),pos=mesh.geometry.getAttribute('position');
+ if(!pos)throw Error('Position missing '+mesh.name);
+ for(let v=0;v<pos.count;v++){
+  mesh.getVertexPosition(v,point);mesh.localToWorld(point);
+  if(!finite(point.toArray()))throw Error('Invalid animated vertex '+mesh.name);
+  b.expandByPoint(point);
+ }
+ return b;
+}
+function viewCage(box,parts,view='three'){
+ for(const o of drawn)scene.remove(o);drawn=[];
+ const colors=[0xd7adfc,0x9b8bfa,0x6ad8eb,0x86d7aa,0xf2c273,0xe6bd81,0xda8dab,0xaaaaaa];
+ zones.forEach((n,i)=>{if(parts[n].isEmpty())return;let o=new THREE.Box3Helper(parts[n],colors[i]);scene.add(o);drawn.push(o)});
+ const center=box.getCenter(new THREE.Vector3()),length=Math.max(.8,box.getSize(new THREE.Vector3()).length());
+ const directions={three:[.42,.08,1.6],front:[0,.08,1.65],side:[1.65,.08,0],back:[0,.08,-1.65]};
+ cam.position.copy(center).add(new THREE.Vector3(...(directions[view]||directions.three)).multiplyScalar(length));cam.lookAt(center);
+ const w=Math.max(500,host.clientWidth),h=Math.max(380,host.clientHeight);
+ render.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix();render.render(scene,cam);
+}
+function measure(spec={}){
+ if(!api.ready)throw Error('Viewer not ready');
+ const gender=spec.gender||'male',kit=spec.kit||'none',clipName=spec.clip||'Idle',phase=spec.phase??0.33;
+ if(!['male','female'].includes(gender)||!['none',...ARMOR_SETS].includes(kit)||phase<0||phase>1)throw Error('Invalid original look');
+ reset();
+ const worn=spec.worn?Object.fromEntries(ARMOR_SLOTS.map(slot=>[slot,spec.worn[slot]??null]))
+  :(kit==='none'?{}:fullSet(kit));
+ for(const [slot,value] of Object.entries(worn)){
+  if(!ARMOR_SLOTS.includes(slot)||!(value===null||ARMOR_SETS.includes(value)))throw Error('Invalid original armor loadout '+slot+': '+value);
+ }
+ const app={...DEFAULT_APPEARANCE,gender,lashes:gender==='female',body:{...NEUTRAL_BODY},face:{...NEUTRAL_FACE}};
+ if(spec.feature){
+  if(BODY_SLIDERS.includes(spec.feature))app.body[spec.feature]=spec.value;
+  else if(FACE_SLIDERS.includes(spec.feature))app.face[spec.feature]=spec.value;
+  else throw Error('Not a native morph '+spec.feature);
+ }
+ const originalNames=modularPartNames(app,worn);
+ const expected=new Set(originalNames),found=new Set(),meshes=[];
+ root.traverse(m=>{if(!m.isMesh)return;const key=contains(m,expected);m.visible=!!key;m.frustumCulled=false;
+  if(key){found.add(key);meshes.push(m)}
+ });
+ const missing=[...expected].filter(x=>!found.has(x));
+ if(missing.length)throw Error('Authored original compositor node absent '+missing.join(','));
+ const selectedMorph=morphInfluences(app),morphHits={};
+ for(const m of meshes)if(m.morphTargetDictionary&&m.morphTargetInfluences){
+  for(const [name,value] of selectedMorph){
+   const idx=m.morphTargetDictionary[name];
+   if(idx!==undefined){m.morphTargetInfluences[idx]=value;morphHits[name]=(morphHits[name]||0)+1}
+  }
+ }
+ const clip=clips.get(clipName);if(!clip)throw Error('Native animation not present '+clipName);
+ const mixer=new THREE.AnimationMixer(root);mixer.clipAction(clip).reset().play();mixer.setTime(clip.duration*phase);
+ root.updateMatrixWorld(true);for(const m of meshes)if(m.isSkinnedMesh)m.skeleton.update();
+ const whole=new THREE.Box3().makeEmpty(),regions=Object.fromEntries(zones.map(n=>[n,new THREE.Box3().makeEmpty()]));
+ const parts=[];let verts=0;
+ for(const m of meshes){
+  const b=vertexBox(m),area=zone(m.name),n=m.geometry.getAttribute('position').count;
+  whole.union(b);regions[area].union(b);verts+=n;
+  parts.push({name:m.name,zone:area,vertices:n,skinned:!!m.isSkinnedMesh,bounds:packed(b),
+   materials:(Array.isArray(m.material)?m.material:[m.material]).map(x=>x?.name||'')});
+ }
+ const bones=[];root.traverse(o=>{if(o.isBone){const v=o.getWorldPosition(new THREE.Vector3()).toArray();
+  if(!finite(v))throw Error('Invalid original bone '+o.name);bones.push({name:o.name,xyz:round(v)})}});
+ if(verts<100||bones.length<23||whole.isEmpty())throw Error('Empty native cage');
+ viewCage(whole,regions,spec.view||'three');
+ const armorBySlot=Object.fromEntries(ARMOR_SLOTS.map(slot=>[slot,worn[slot]
+   ?modularPartNames(app,{[slot]:worn[slot]}).filter(n=>n.startsWith('Armor_')):[]]));
+ const report={gender,kit,worn,originalNames,armorBySlot,bodyAlwaysPresent:true,
+  originalSourceOnly:true,PF6PerSlotEquipProven:false,
+  clip:clipName,phase,feature:spec.feature||null,value:spec.value||0,
+  sourceOnly:true,PF6Verified:false,clippingCertified:false,bones:bones.length,vertices:verts,meshes:parts.length,
+  morphHits,expectedNodes:expected.size,full:packed(whole),
+  zones:Object.fromEntries(zones.filter(n=>!regions[n].isEmpty()).map(n=>[n,packed(regions[n])])),
+  joints:bones,parts};
+ mixer.stopAllAction();mixer.uncacheRoot(root);
+ api.last=report;document.querySelector('#diag').textContent=JSON.stringify({gender,kit,clip:clipName,meshes:parts.length,vertices:verts,full:report.full},null,2);
+ return report;
+}
+api.measure=measure;
+api.choose=(gender,worn,clip='Idle')=>measure({gender,kit:'none',worn,clip});
+const partNames={head:'Casco',chest:'Pecho',arms:'Brazos',hands:'Manos',legs:'Piernas',feet:'Botas',back:'Espalda'};
+const fields={};const pane=document.getElementById('slot-pickers');
+for(const slot of ARMOR_SLOTS){
+ const label=document.createElement('label');label.textContent=partNames[slot]||slot;
+ const sel=document.createElement('select');sel.appendChild(new Option('Ninguna','none'));
+ for(const set of ARMOR_SETS)sel.appendChild(new Option(set,set));
+ sel.value='knight';fields[slot]=sel;label.appendChild(sel);pane.appendChild(label);
+}
+function preset(v){for(const s of ARMOR_SLOTS)fields[s].value=v}
+document.getElementById('kit').addEventListener('change',e=>preset(e.target.value));
+function show(){try{
+ const worn=Object.fromEntries(ARMOR_SLOTS.map(s=>[s,fields[s].value==='none'?null:fields[s].value]));
+ measure({gender:document.getElementById('gender').value,kit:'none',worn,
+  clip:document.getElementById('clip').value,view:document.getElementById('view').value});
+}catch(e){document.getElementById('diag').textContent=String(e.stack||e)}}
+document.getElementById('go').onclick=show;
+document.getElementById('bare').onclick=()=>{document.getElementById('kit').value='none';preset('none');show()};
+(async()=>{try{
+ await MeshoptDecoder.ready;
+ const all={};for(const stem of setnames)all[stem]=await loader.loadAsync('/character-truth/inputs/'+stem+'.glb');
+ root=all.warrior_modular.scene;scene.add(root);
+ root.traverse(o=>rest.push({o,p:o.position.clone(),q:o.quaternion.clone(),s:o.scale.clone()}));
+ for(const s of setnames)for(const c of all[s].animations)if(!clips.has(c.name))clips.set(c.name,c);
+ api.names={sets:[...ARMOR_SETS],slots:[...ARMOR_SLOTS],body:[...BODY_SLIDERS],face:[...FACE_SLIDERS],glbs:setnames};
+ api.ready=true;measure({gender:'male',kit:'knight'});
+ }catch(e){api.error=String(e.stack||e);document.querySelector('#diag').textContent=api.error;console.error(e)}
+})();
+</script><script type="module">
+import {
+ PILOT_CATALOG,initialPilot,equipPilot,unequipPilot,setPilotGender,visualPilot,
+ savePilot,loadPilot,documentPilotLimits
+} from './phase10-item-visual-adapter.mjs';
+let state=initialPilot('male');
+const storageKey='HIGHFLY_SKIN3_PHASE10_SOURCE_LAB_V1';
+const status=document.querySelector('#p10-state'),items=document.querySelector('#p10-item'),
+ unequipSlot=document.querySelector('#p10-unequip-slot');
+const slots=['mainhand','chest','legs','feet'];
+for(const slot of slots)unequipSlot.appendChild(new Option(slot,slot));
+const diagnostics={initial:false,lastAction:'boot',errors:[],renderCount:0};
+const api={ready:false,limits:documentPilotLimits(),actions:[],lastLook:null,
+ getState:()=>JSON.parse(JSON.stringify(state)),
+ getVisual:()=>visualPilot(state),
+ getDiagnostics:()=>JSON.parse(JSON.stringify(diagnostics))
+};
+window.__HF_SKIN3_P10__=api;
+function redraw(action){
+ const look=visualPilot(state),opt=items.value;
+ items.innerHTML='';
+ for(const copy of state.inventory)items.add(new Option(
+   PILOT_CATALOG[copy.itemId].name+' ['+copy.copyId+']',copy.copyId));
+ if([...items.options].some(x=>x.value===opt))items.value=opt;
+ const worn=look.worn;
+ const view=window.__HF_SKIN3_CAGE__.measure({
+  gender:state.gender,kit:'none',worn,clip:'Idle',
+  view:document.getElementById('view').value
+ });
+ document.getElementById('gender').value=state.gender;
+ diagnostics.lastAction=action;diagnostics.renderCount++;
+ status.textContent=JSON.stringify({
+  body:state.gender,bag:state.inventory.map(x=>x.itemId),
+  equipped:state.equipment,visual:look.mapped,
+  selectedNative3DMeshes:view.parts.filter(x=>x.name.startsWith('Armor_')).map(x=>x.name),
+  weapon3DRendered:false,
+  next:'Probar dentro del PF-6 real y asociar objetos fabricados con sus propias mallas'
+ },null,2);
+ api.lastLook=look;
+ return look;
+}
+function action(name,fn){
+ const result=fn(state);
+ api.actions.push({name,ok:result.ok,code:result.code||null});
+ if(result.ok){state=result.state;redraw(name)}
+ else status.textContent='Acción rechazada por regla original: '+result.code;
+ return result;
+}
+document.getElementById('p10-equip').onclick=()=>{
+ const copy=state.inventory.find(x=>x.copyId===items.value);
+ if(!copy)return status.textContent='Bolso vacío';
+ const slot=PILOT_CATALOG[copy.itemId].slot;
+ action('equip:'+copy.itemId,()=>equipPilot(state,copy.copyId,slot));
+};
+document.getElementById('p10-unequip').onclick=()=>{
+ action('unequip:'+unequipSlot.value,()=>unequipPilot(state,unequipSlot.value));
+};
+document.getElementById('p10-gender').onclick=()=>{
+ action('gender',()=>setPilotGender(state,state.gender==='male'?'female':'male'));
+};
+document.getElementById('p10-save').onclick=()=>{
+ localStorage.setItem(storageKey,savePilot(state));api.actions.push({name:'save',ok:true});
+};
+document.getElementById('p10-load').onclick=()=>{
+ const raw=localStorage.getItem(storageKey);
+ try{if(!raw)throw Error('NO_SAVED_LAB_STATE');state=loadPilot(raw);
+ api.actions.push({name:'load',ok:true});redraw('load');}
+ catch(e){diagnostics.errors.push(String(e));status.textContent=String(e)}
+};
+document.getElementById('p10-reset').onclick=()=>{
+ state=initialPilot(state.gender);api.actions.push({name:'reset',ok:true});redraw('reset');
+};
+api.equip=(copyId,slot)=>{
+ const r=action('equip-api:'+copyId,()=>equipPilot(state,copyId,slot));
+ return {ok:r.ok,code:r.code||null,visual:r.ok?api.lastLook:null};
+};
+api.unequip=(slot)=>{
+ const r=action('unequip-api:'+slot,()=>unequipPilot(state,slot));
+ return {ok:r.ok,code:r.code||null,visual:r.ok?api.lastLook:null};
+};
+api.gender=(g)=>{
+ const r=action('gender-api',()=>setPilotGender(state,g));
+ return {ok:r.ok,code:r.code||null};
+};
+api.save=()=>{localStorage.setItem(storageKey,savePilot(state));return localStorage.getItem(storageKey)};
+api.load=()=>{state=loadPilot(localStorage.getItem(storageKey));redraw('load-api');return api.getState()};
+api.reset=()=>{state=initialPilot(state.gender);redraw('reset-api')};
+api.clear=()=>localStorage.removeItem(storageKey);
+(async()=>{
+ for(let i=0;i<100;i++){
+  if(window.__HF_SKIN3_CAGE__?.error)throw Error(window.__HF_SKIN3_CAGE__.error);
+  if(window.__HF_SKIN3_CAGE__?.ready)break;
+  await new Promise(done=>setTimeout(done,250));
+ }
+ if(!window.__HF_SKIN3_CAGE__?.ready)throw Error('Original source GLB not loaded');
+ redraw('initial');
+ diagnostics.initial=true;api.ready=true;
+})().catch(e=>{diagnostics.errors.push(String(e));status.textContent=String(e);console.error(e)});
+</script></body></html>
