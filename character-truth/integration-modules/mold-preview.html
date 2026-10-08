@@ -162,7 +162,7 @@ function updateModel(){
  $('checks').textContent=JSON.stringify({hunter:design.gender,equipped:Object.keys(design.parts),
   paintedMeshes:paints.totalMeshes,originalNodes:seen.size,all7Slots:ARMOR_SLOTS.length,
   materialOnly:true},null,2);
- return {...paints,geometryStillOriginal:true,gameUnchanged:true};
+ return {...state.appliedMold,paintReport:paints,geometryStillOriginal:state.appliedMold.changedMeshes===0,gameUnchanged:true};
 }
 function render(){
  const w=Math.max(300,panel.clientWidth),h=Math.max(220,panel.clientHeight);
