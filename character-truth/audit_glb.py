@@ -3,7 +3,7 @@
 Reports every mesh primitive, node, material, skin joint, weight and animation channel.
 Static tests are NOT proof of skinned runtime animation or visual clipping.
 """
-import argparse,csv,collections,hashlib,json,struct,pathlib
+import argparse,csv,collections,hashlib,json,struct,pathlib,base64,urllib.parse
 TYPES={"SCALAR":1,"VEC2":2,"VEC3":3,"VEC4":4,"MAT2":4,"MAT3":9,"MAT4":16}
 COMP={5120:("b",1,127),5121:("B",1,255),5122:("h",2,32767),5123:("H",2,65535),5125:("I",4,4294967295),5126:("f",4,1)}
 def rnd(x):return round(float(x),5)
@@ -20,7 +20,26 @@ def parse(path):
     document=json.loads(chunks[0x4e4f534a].decode("utf-8"))
     return document,chunks.get(0x004e4942,b""),data
 class Reader:
-    def __init__(self,doc,buffer):self.doc=doc;self.buffer=buffer;self.cache={}
+    def __init__(self,doc,buffer):
+        self.doc=doc;self.cache={}
+        self.buffers={}
+        # GLB binary chunk is buffer[0]; additional buffers are permitted in
+        # our legacy donor only when embedded as data URIs. NEVER fetch URLs.
+        for i,item in enumerate(doc.get("buffers",[])):
+            uri=item.get("uri")
+            if uri is None and i==0:
+                payload=buffer
+            elif isinstance(uri,str) and uri.startswith("data:"):
+                header,_,encoded=uri.partition(",")
+                if ";base64" in header.lower():payload=base64.b64decode(encoded,validate=True)
+                else:payload=urllib.parse.unquote_to_bytes(encoded)
+            else:
+                raise ValueError("External network/file buffer forbidden: index="+str(i))
+            if len(payload)<item.get("byteLength",0):
+                raise ValueError("GLB buffer smaller than declared byteLength "+str(i))
+            self.buffers[i]=payload
+        if not self.buffers:self.buffers[0]=buffer
+        print("GLTF_BUFFER_LAYOUT",[(i,len(v)) for i,v in sorted(self.buffers.items())])
     def read(self,index):
         if index in self.cache:return self.cache[index]
         a=self.doc["accessors"][index];n=a["count"];dimension=TYPES[a["type"]];comp=a["componentType"]
@@ -29,24 +48,29 @@ class Reader:
         if "bufferView" not in a:result=[(0,)*dimension for _ in range(n)]
         else:
             view=self.doc["bufferViews"][a["bufferView"]]
-            if view.get("buffer",0)!=0:raise ValueError("External buffer reference")
+            bufidx=view.get("buffer",0)
+            if bufidx not in self.buffers:raise ValueError("GLB buffer index not present "+str(bufidx))
+            blob=self.buffers[bufidx]
             start=view.get("byteOffset",0)+a.get("byteOffset",0)
             stride=view.get("byteStride",size*dimension)
             for j in range(n):
                 p=start+j*stride
-                if p+size*dimension>len(self.buffer):raise ValueError("Accessor out of range")
-                values=struct.unpack_from("<"+fmt*dimension,self.buffer,p)
+                if p+size*dimension>len(blob):raise ValueError("Accessor out of range")
+                values=struct.unpack_from("<"+fmt*dimension,blob,p)
                 if norm and comp!=5126:
                     values=tuple(max(-1,x/div) if comp in (5120,5122) else x/div for x in values)
                 result.append(values)
         if "sparse" in a:
             sp=a["sparse"];ind=sp["indices"];vals=sp["values"]
             iv=self.doc["bufferViews"][ind["bufferView"]];vv=self.doc["bufferViews"][vals["bufferView"]]
-            if iv.get("buffer",0) or vv.get("buffer",0):raise ValueError("Unsupported sparse external buffer")
+            if iv.get("buffer",0) not in self.buffers or vv.get("buffer",0) not in self.buffers:
+                raise ValueError("Sparse references unavailable buffer")
+            ib=self.buffers[iv.get("buffer",0)]
+            vb=self.buffers[vv.get("buffer",0)]
             inf,isize,_=COMP[ind["componentType"]]
             for j in range(sp["count"]):
-                idx=struct.unpack_from("<"+inf,self.buffer,iv.get("byteOffset",0)+ind.get("byteOffset",0)+j*isize)[0]
-                result[idx]=struct.unpack_from("<"+fmt*dimension,self.buffer,vv.get("byteOffset",0)+vals.get("byteOffset",0)+j*size*dimension)
+                idx=struct.unpack_from("<"+inf,ib,iv.get("byteOffset",0)+ind.get("byteOffset",0)+j*isize)[0]
+                result[idx]=struct.unpack_from("<"+fmt*dimension,vb,vv.get("byteOffset",0)+vals.get("byteOffset",0)+j*size*dimension)
         self.cache[index]=result
         return result
 def parents_for(nodes):
