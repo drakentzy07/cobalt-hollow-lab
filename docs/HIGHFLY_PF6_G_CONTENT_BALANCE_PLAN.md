@@ -1,5 +1,5 @@
 # HIGHFLY PF-6 G — RUTA DE CONTENIDO Y BALANCE LV21–99
-Status: AUDITED GAP + PROPOSED TIER PLAN; NOT YET GAMEPLAY-READY
+Status: BACKLOG PAUSADO POR DECISION DEL USUARIO (08 OCT 2026); DOCUMENTACION DE BRECHA, SIN IMPLEMENTACION NI DEPLOY
 Source: GREEN PF-6 F RUN #333 SHA 312fe2e67219415a73a56303fcbd3b0bd9f62273
 Safety: isolated proposal; CLEAN V1, public Pages and frozen Skill/Skin/Profession labs untouched.
 
@@ -45,8 +45,9 @@ G5 — Expandir tramos sucesivamente; tests de clases MAIN+HERITAGE, contenido, 
 G6 — Simulacion de economia 1–99 basada en actividades REALES, test de sesion humana, tune calibrado.
 G7 — Release-candidate aislado, nunca desplegar Pages sin confirmacion y revision humana Android S23/PC.
 
-## Puente con PF-7
-Empezar PF-7 A en paralelo (solo diseño/schemas), porque Segundo Despertar no requiere que todas las zonas 99 esten listas para dibujar candidatos. Sin embargo los desbloqueos jugables requieren niveles, rangos, maestria, misiones y entrenamientos con evidencia; ningun gate numerico debe inventarse. No modificar Skill Lab frozen ni sustituir HUD GOLDEN.
+## Puente con PF-7 — CORRECCION 08 OCT 2026
+NO hay clases HERITAGE ni Segundo Despertar-subclase. El personaje y la clase original se conservan. Las siguientes tareas priorizadas por el usuario son skills propias, EVO/MUT de algunas skills y gemas en armas con afinidades elementales que agregan riders solo a skills compatibles. Contrato corregido: https://github.com/drakentzy07/cobalt-hollow-lab/blob/highfly-pf7-original-skills-gems/docs/HIGHFLY_PF7_ORIGINAL_CHARACTER_SKILLS_GEMS.md.
+Este bloque de contenido LV21–99 y escenarios especiales queda aparcado para OTRA ETAPA, sin generar monstruos ni escenarios ahora.
 
 ## Gate de cierre
 **No dar VERDE de BALANCE hasta que existan enemigos/escenarios/quests adecuados, cobertura hasta LV99, curva de XP + tiempos de sesion probados, equilibrio MAIN+HERITAGE, Android humano y guardado cross-save.**
