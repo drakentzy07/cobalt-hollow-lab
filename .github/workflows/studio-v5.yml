@@ -219,6 +219,38 @@ jobs:
           test -s character-truth/studio-v5-proof/report.json
           git diff --exit-code -- .
           echo "HIGHFLY_V5_SOURCE_ONLY_PF6_UNCHANGED=1"
+      - name: Build and locally validate portable Skin Studio V5 website
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/package-studio-v5.mjs
+          node --check character-truth/integration-modules/studio-v5-site-gate.cjs
+          node character-truth/integration-modules/package-studio-v5.mjs
+          test -s highfly-skinfactory-v5-preview/index.html
+          test -s highfly-skinfactory-v5-preview/NOTICE.txt
+          test -z "$(find highfly-skinfactory-v5-preview -type f -name '*.glb' -print -quit)"
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory highfly-skinfactory-v5-preview >/tmp/highfly-v5-site-http.log 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:4174/ >/dev/null
+          node character-truth/integration-modules/studio-v5-site-gate.cjs
+          echo "HIGHFLY_V5_PORTABLE_NOT_PUBLIC=1 ORIGINAL_GLBS_NOT_BUNDLED=1"
+      - name: Archive portable offline-source V5 web app (NOT DEPLOY)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-skin-studio-v5-standalone-site-DO-NOT-DEPLOY
+          path: highfly-skinfactory-v5-preview/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Archive portable V5 browser screenshots + real native evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-skin-studio-v5-standalone-browser-proof
+          path: highfly-skinfactory-v5-site-proof/
+          retention-days: 30
+          if-no-files-found: warn
       - name: Archive screenshot comparison real native helmet ON/OFF with exact camera invariants
         if: always()
         uses: actions/upload-artifact@v4
