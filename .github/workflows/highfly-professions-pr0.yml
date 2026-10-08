@@ -36,7 +36,29 @@ jobs:
             /public/
             /android/
             /capacitor.config.ts
-            /tests/
+            /tests/global_setup.ts
+            /tests/professions.test.ts
+            /tests/professions_archetype.test.ts
+            /tests/archetype_ceiling.test.ts
+            /tests/professions_crafting.test.ts
+            /tests/professions_crafting_hub.test.ts
+            /tests/recipe_economy.test.ts
+            /tests/jewelcrafting_catalog.test.ts
+            /tests/jewelcrafting_flow.test.ts
+            /tests/gathering.test.ts
+            /tests/gather_rare_events.test.ts
+            /tests/farming_anti_chore.test.ts
+            /tests/fishing_zones.test.ts
+            /tests/corpse_harvest_grant.test.ts
+            /tests/harvest_preference.test.ts
+            /tests/perfecting.test.ts
+            /tests/character_state_backcompat.test.ts
+            /tests/character_state_module.test.ts
+            /tests/professions_blob_roundtrip.test.ts
+            /tests/professions_commissions.test.ts
+            /tests/highfly_pf6_xp_curve.test.ts
+            /tests/highfly_pf6_progression_sync.test.ts
+            /tests/highfly_pf6_real_sim_e2e.test.ts
             /tests/svelte_testing_setup.ts
             /tests/jsdom_local_storage_setup.ts
             /package.json
