@@ -41,7 +41,7 @@ let recipe=defaultRecipe(),undo=[],redo=[],dragBaseline=null,uid=0,requestCount=
 const DIAG=window.__CREATOR_DIAG__={ready:false,error:null,product:'HIGHFLY_CREATOR_LAB',sourceBlob:SOURCE.blob,sourceBytes:SOURCE.bytes,
   isolated:true,nativeRig:false,realHead:false,clips:0,bones:0,geometries:0,vertices:0,nonfinite:0,version:1,undoDepth:0,redoDepth:0,
   exportedBytes:0,saved:false,headReferenceReal:false,selectedId,featherCount:0,sourceOriginalIntact:true,
-  helmetReady:false,helmetAttached:false,helmetMeshCount:0,helmetPartCount:0,helmetVisible:false,helmetSelectedPart:'beak',
+  helmetReady:false,helmetAttached:false,helmetMeshCount:0,helmetPartCount:0,helmetVisible:false,helmetSelectedPart:'beak',fullFaceFitted:false,faceFitParts:0,faceFitCoverage:null,faceFitWarnings:[],
   faceLandmarksVerified:false,landmarkCount:0,nativeEyeY:null,eyeYResult:null,gizmoAttached:false,gizmoMode:null,
   quality:null,toolboxVersion:3};
 
@@ -137,7 +137,11 @@ function rebuild(){
     geometries:ck.meshCount,vertices:ck.vertices,nonfinite:ck.nonfinite,
     helmetReady:recipe.helmet.enabled&&helmetMeshes>=30,helmetAttached:helmetRoot.parent===accessory&&accessory.parent===headBone,
     helmetVisible:recipe.helmet.enabled,helmetMeshCount:helmetMeshes,helmetPartCount:uniqueParts.size,
-    helmetColorCount:helmetColors.size,helmetSelectedPart:selectedHelmetPart,headFacesHidden:recipe.helmet.enabled&&headSurfaceMeshes.length>0&&headSurfaceMeshes.every(o=>o.visible===false),
+    helmetColorCount:helmetColors.size,helmetSelectedPart:selectedHelmetPart,
+    fullFaceFitted:helmetRoot.userData.facialFit?.verified===true,
+    faceFitParts:helmetRoot.userData.facialFit?.partTypes?.length||0,
+    faceFitCoverage:helmetRoot.userData.facialFit?.coverage||null,
+    faceFitWarnings:helmetRoot.userData.facialFit?.warnings||[],headFacesHidden:recipe.helmet.enabled&&headSurfaceMeshes.length>0&&headSurfaceMeshes.every(o=>o.visible===false),
     sourceOriginalIntact:true,featherCount:recipe.pieces.length,selectedId});
   const qa=inspectAccessory(accessory);
   DIAG.quality=qa;
@@ -461,8 +465,11 @@ async function boot(){
     faceGuideRoot=facialOverlay(landmarks);
     headBone.add(faceGuideRoot);
     byId('faceReport').textContent=landmarks.verified
-      ?'Ojos reales encontrados: '+landmarks.samples.left+' / '+landmarks.samples.right+
-       ' vértices. Guías vinculadas a Rig_Medium.'
+      ?'Ojos: '+landmarks.samples.left+' / '+landmarks.samples.right+
+        ' vértices · Cejas: '+(landmarks.browVerified?'OK':'sin bilateral')+
+        ' · Boca: '+(landmarks.mouthVerified?'OK':'sin referencia')+
+        ' · Orejas: '+(landmarks.earVerified?'OK':'sin bilateral')+
+        ' · Ajuste conjunto del casco, no sólo del visor.'
       :'REFERENCIA INCOMPLETA: falta M_Eye_almond bilateral; no se simularon ojos.';
     if(!landmarks.verified)throw Error('Se requiere referencia ocular izquierda/derecha auténtica; no se acepta proxy');
     mixer=new THREE.AnimationMixer(actor);
@@ -482,7 +489,12 @@ window.__CREATOR_API__={getRecipe:()=>structuredClone(recipe),getSelected:()=>se
   cameraView,cameraHeadView,
   getLandmarks:()=>landmarks?{verified:landmarks.verified,
     leftEye:landmarks.leftEye?.toArray()||null,rightEye:landmarks.rightEye?.toArray()||null,
-    eyeY:landmarks.eyeY,samples:landmarks.samples}:null,
+    eyeY:landmarks.eyeY,
+    leftBrow:landmarks.leftBrow?.toArray()||null,rightBrow:landmarks.rightBrow?.toArray()||null,
+    mouth:landmarks.mouth?.toArray()||null,
+    leftEar:landmarks.leftEar?.toArray()||null,rightEar:landmarks.rightEar?.toArray()||null,
+    browVerified:landmarks.browVerified,mouthVerified:landmarks.mouthVerified,
+    earVerified:landmarks.earVerified,samples:landmarks.samples}:null,
   getQuality:()=>accessory?inspectAccessory(accessory):null,
   setGizmoMode,importRecipe:r=>transact(()=>{recipe=sanitizeRecipe(r);selectedId=recipe.pieces[0]?.id||null}),
   applyHelmet:()=>transact(()=>{recipe.helmet.enabled=true}),

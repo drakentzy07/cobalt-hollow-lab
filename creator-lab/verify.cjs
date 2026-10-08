@@ -28,6 +28,10 @@ const gltfValidator=require('gltf-validator');
     throw Error('Rig, asset or geometry contract '+JSON.stringify(d));
   if(!d.faceLandmarksVerified||d.landmarkCount<2||!Number.isFinite(d.nativeEyeY))
     throw Error('Real facial mesh landmarks missing '+JSON.stringify(d));
+  if(!d.fullFaceFitted||d.faceFitParts<7||!d.faceFitCoverage?.eyes)
+    throw Error('Whole-mask anatomy fit missing '+JSON.stringify({
+      fullFaceFitted:d.fullFaceFitted,parts:d.faceFitParts,coverage:d.faceFitCoverage
+    }));
   if(!d.quality?.valid||!d.quality?.mobileBudget||d.quality.invalid>0)
     throw Error('Native helmet geometry QA '+JSON.stringify(d.quality));
   const landmarks=await page.evaluate(()=>window.__CREATOR_API__.getLandmarks());
@@ -140,7 +144,9 @@ const gltfValidator=require('gltf-validator');
   if(!d.helmetReady||d.helmetPartCount!==9||d.nonfinite!==0)
     throw Error('Post-edit helmet lost validity: '+JSON.stringify(d));
   fs.writeFileSync('creator-proof/verify.json',JSON.stringify({
-    green:true,nativeHead:true,clips:22,facialLandmarksVerified:d.faceLandmarksVerified,triangleCount:d.quality?.triangles,helmetParts:d.helmetPartCount,helmetMeshes:d.helmetMeshCount,
+    green:true,nativeHead:true,clips:22,facialLandmarksVerified:d.faceLandmarksVerified,
+    fullFaceFitted:d.fullFaceFitted,faceFitParts:d.faceFitParts,faceFitCoverage:d.faceFitCoverage,
+    triangleCount:d.quality?.triangles,helmetParts:d.helmetPartCount,helmetMeshes:d.helmetMeshCount,
     helmetColors:d.helmetColorCount,exportedBytes:size,mobile
   },null,2));
   await browser.close();
