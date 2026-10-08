@@ -1,0 +1,91 @@
+name: HIGHFLY SKIN3 — TRIANGLE SURFACE AUDIT
+on:
+  push:
+    branches: [highfly-character-truth-audit-01]
+    paths:
+      - 'character-truth/phase4-surface.html'
+      - 'character-truth/phase4-surface-gate.cjs'
+      - 'character-truth/SKIN3_PHASE4_SURFACE_GATE.md'
+      - '.github/workflows/character-truth-phase4.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native-deformed-triangles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 19
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse last GREEN cage evidence, not another static inventory
+        uses: actions/download-artifact@v4
+        with:
+          name: highfly-character-native-full-body-cage
+          run-id: 37808537212
+          github-token: ${{ github.token }}
+          path: character-truth/phase3-evidence
+      - name: Retrieve the six frozen source GLBs and original composition modules
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,hashlib,urllib.request,pathlib,time
+          commit='9b57e49c9676d75962700f828cc00a50a9a988b5'
+          origin='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/'+commit+'/'
+          pins=json.loads(pathlib.Path('character-truth/official-asset-shas.json').read_text())
+          files=[('src/render/characters/modular.ts','d2ad732114b01a0aa9de5a882e0a6980d54225fb'),
+           ('src/render/characters/underhair.generated.ts','630408c0ffbffb61d06e1a398f28b0d89f820dfe')]
+          for name,expected in pins.items():
+           folder='modular' if name=='warrior_modular.glb' else 'players'
+           files.append(('public/models/chars/'+folder+'/'+name,expected))
+          for relative,expected in files:
+           for attempt in range(3):
+            try:
+             req=urllib.request.Request(origin+relative,headers={'User-Agent':'Highfly-SKIN3-Phase4-SourceProof'})
+             with urllib.request.urlopen(req,timeout=48) as stream:data=stream.read()
+             break
+            except Exception:
+             if attempt==2:raise
+             time.sleep(2)
+           sha=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+           if sha!=expected:raise RuntimeError('Modified original source '+relative)
+           dest=pathlib.Path('character-truth/generated' if relative.endswith('.ts') else 'character-truth/inputs')
+           dest.mkdir(parents=True,exist_ok=True);(dest/pathlib.Path(relative).name).write_bytes(data)
+           print('FROZEN_NATIVE_SOURCE_OK',relative,sha)
+          assert pathlib.Path('character-truth/phase3-evidence/cage-summary.json').is_file()
+          PY
+      - name: Bundle original compositor and tested triangle BVH
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false three@0.180.0 playwright@1.55.0 meshoptimizer@0.23.0 esbuild@0.25.12 three-mesh-bvh@0.9.1
+          npx esbuild character-truth/generated/modular.ts --bundle --format=esm --platform=browser --outfile=character-truth/generated/modular-runtime.mjs
+          node --check character-truth/phase4-surface-gate.cjs
+          npx playwright install --with-deps chromium
+      - name: Serve real model in source-only local browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/highfly-phase4.log 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:4173/character-truth/phase4-surface.html >/dev/null
+      - name: Check exact deformed mesh surface contacts over 38 original appearances
+        shell: bash
+        timeout-minutes: 9
+        run: |
+          set -euo pipefail
+          node character-truth/phase4-surface-gate.cjs
+          test -s character-truth/phase4-proof/surface-intersections.json
+          test -s character-truth/phase4-proof/pair-verdicts.csv
+          git diff --exit-code -- .
+          echo "SKIN3_PHASE4_NATIVE_ASSETS_AND_FROZEN_PF6_UNCHANGED=1"
+      - name: Upload original triangle contact review (not a skin quality approval)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-skin3-original-surface-triangle-audit
+          path: character-truth/phase4-proof/
+          if-no-files-found: warn
+          retention-days: 30
