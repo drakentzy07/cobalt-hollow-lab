@@ -26,6 +26,7 @@ jobs:
           ! grep -F "HF AVIAN v1" creator-lab/index.html
           node --check creator-lab/creator.mjs
           node --check creator-lab/geometry.mjs
+          node --check creator-lab/helmet.mjs
           test -f scripts/skin_lab/extract_bind_reference.mjs
       - name: Download frozen real source, verify identity, generate head bind reference
         shell: bash

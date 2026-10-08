@@ -6,7 +6,16 @@ const fs=require('fs');
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
   await page.goto('http://127.0.0.1:4173/creator-lab/',{waitUntil:'domcontentloaded',timeout:120000});
-  await page.waitForFunction(()=>window.__CREATOR_DIAG__?.ready||window.__CREATOR_DIAG__?.error,null,{timeout:120000});
+  await page.waitForFunction(()=>window.__CREATOR_DIAG__?.ready||window.__CREATOR_DIAG__?.error,null,{timeout:25000}).catch(async err=>{
+    const state=await page.evaluate(()=>({
+      location:location.href,readyState:document.readyState,
+      diagnostic:window.__CREATOR_DIAG__||null,
+      body:document.querySelector('#status')?.textContent,
+      scripts:[...document.querySelectorAll('script')].map(s=>s.src).filter(Boolean)
+    }));
+    fs.writeFileSync('creator-proof/bootstrap-error.json',JSON.stringify({state,errors},null,2));
+    throw Error('Creator bootstrap failed: '+JSON.stringify({message:err.message,errors,state}));
+  });
   let d=await page.evaluate(()=>window.__CREATOR_DIAG__);
   if(d.error)throw Error('Bootstrap '+JSON.stringify(d));
   if(!d.nativeRig||!d.headReferenceReal||!d.realHead||!d.headParentOK||
