@@ -19,7 +19,10 @@ for path in ('src/sim/professions/gathering.ts','src/sim/professions/farming.ts'
     if idx<0:raise SystemExit(f'PR13 REFUSED missing imports {path}')
     ins="import { recordHighflyGatheringOutcome } from './highfly_gathering_knowledge';\n"
     if ins in s:raise SystemExit(f'PR13 duplicate import {path}')
-    ops.append((p,s[idx:idx+len(anchor)],ins+s[idx:idx+len(anchor)],
+    # Guard on the whole prefix before the first import, not the common
+    # "import " token that correctly appears dozens of times in the donor.
+    prefix=s[:idx+len(anchor)]
+    ops.append((p,prefix,s[:idx]+ins+s[idx:idx+len(anchor)],
                 'insert success proof import '+path,1))
 
 add('src/sim/professions/gathering.ts',
