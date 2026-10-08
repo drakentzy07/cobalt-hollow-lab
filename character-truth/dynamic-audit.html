@@ -61,14 +61,14 @@ function drawSize(){
 function inspect(x={}){
  const model=x.model||'modular',gender=x.gender||'male',set=x.set||'none',clipName=x.clip||'Idle',view=x.view||'front';
  if(active)scene.remove(active);
- active=assets[model].scene;scene.add(active);
+ active=assets[model==='modular'?'warrior_modular':'knight'].scene;scene.add(active);
  let meshes=0,armors=0,body=false;
  active.traverse(o=>{if(!o.isMesh)return;o.visible=partVisible(o.name,gender,set,model);o.frustumCulled=false;
   if(o.visible){meshes++;if(o.name.startsWith('Armor_'))armors++;if(o.name===(gender==='male'?'M_Head':'F_Head'))body=true;}});
  if(model==='modular'&&(!body||(set!=='none'&&!armors)))throw Error('Source male/female kit nodes missing: '+gender+' '+set);
  const boneMap=[];active.traverse(o=>{if(o.isBone)boneMap.push(o)});
  const before=boneMap.map(b=>({p:b.position.clone(),q:b.quaternion.clone(),s:b.scale.clone()}));
- const clips=[...assets[model].animations,...names.slice(2).flatMap(s=>assets[s].animations)];
+ const clips=[...assets[model==='modular'?'warrior_modular':'knight'].animations,...names.slice(2).flatMap(s=>assets[s].animations)];
  const clip=clips.find(a=>a.name===clipName);if(!clip)throw Error('Native source clip missing '+clipName);
  const mixer=new THREE.AnimationMixer(active),action=mixer.clipAction(clip);action.reset().play();
  const t=Math.min(clip.duration*0.45,0.5);mixer.update(t);active.updateMatrixWorld(true);
