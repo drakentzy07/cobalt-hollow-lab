@@ -1,5 +1,6 @@
 const {chromium}=require('playwright');
 const fs=require('fs');
+const gltfValidator=require('gltf-validator');
 (async()=>{
   const browser=await chromium.launch({headless:true,args:['--enable-unsafe-swiftshader']});
   const page=await browser.newPage({viewport:{width:1365,height:768},acceptDownloads:true});
@@ -25,6 +26,20 @@ const fs=require('fs');
     !d.helmetReady||!d.helmetAttached||!d.helmetVisible||d.helmetMeshCount<28||
     d.helmetPartCount!==9||d.helmetColorCount<6||!d.headFacesHidden)
     throw Error('Rig, asset or geometry contract '+JSON.stringify(d));
+  if(!d.faceLandmarksVerified||d.landmarkCount<2||!Number.isFinite(d.nativeEyeY))
+    throw Error('Real facial mesh landmarks missing '+JSON.stringify(d));
+  if(!d.quality?.valid||!d.quality?.mobileBudget||d.quality.invalid>0)
+    throw Error('Native helmet geometry QA '+JSON.stringify(d.quality));
+  const landmarks=await page.evaluate(()=>window.__CREATOR_API__.getLandmarks());
+  if(!landmarks.verified||!landmarks.leftEye||!landmarks.rightEye||landmarks.samples.left<7)
+    throw Error('Derived native bilateral eyes invalid '+JSON.stringify(landmarks));
+  const observed=await page.evaluate(()=>window.__CREATOR_DIAG__.eyeYResult);
+  if(!Number.isFinite(observed)||Math.abs(observed-landmarks.eyeY)>.35)
+    throw Error('Visor not mapped to anatomical eye '+JSON.stringify({landmarks,observed}));
+  await page.click('#guidesBtn');
+  const guideState=await page.locator('#guidesBtn').textContent();
+  if(!guideState.includes('Ocultar'))throw Error('Native anatomical guide control failed');
+  await page.click('#guidesBtn');
   await page.screenshot({path:'creator-proof/creator-desktop.png',fullPage:true});
   // The helmet must be inspectable from every principal viewpoint, with separate materials.
   await page.click('#frontBtn');await page.waitForTimeout(250);
@@ -60,6 +75,16 @@ const fs=require('fs');
   await page.click('#helmetOnBtn');
   await page.screenshot({path:'creator-proof/avian-helmet-painted.png'});
 
+  await page.click('#gizmoMove');
+  d=await page.evaluate(()=>window.__CREATOR_DIAG__);
+  if(!d.gizmoAttached||d.gizmoMode!=='translate')throw Error('3D gizmo not attached to real feather '+JSON.stringify(d));
+  await page.click('#gizmoRotate');
+  d=await page.evaluate(()=>window.__CREATOR_DIAG__);
+  if(d.gizmoMode!=='rotate')throw Error('Gizmo rotate unavailable');
+  await page.click('#gizmoScale');
+  d=await page.evaluate(()=>window.__CREATOR_DIAG__);
+  if(d.gizmoMode!=='scale')throw Error('Gizmo scale unavailable');
+  await page.click('#gizmoOff');
   await page.click('#addBtn');
   d=await page.evaluate(()=>window.__CREATOR_DIAG__);
   if(d.featherCount!==5||d.undoDepth<1)throw Error('Add feather failed '+JSON.stringify(d));
@@ -83,8 +108,28 @@ const fs=require('fs');
   if(d.featherCount!==5)throw Error('Load failed');
   const paint=await page.evaluate(()=>window.__CREATOR_API__.getRecipe().pieces.some(p=>p.color==='#b565f5'));
   if(!paint)throw Error('Paint persistence failed');
+  // A copied recipe must roundtrip through an actual user-selected JSON file.
+  const fromCurrent=await page.evaluate(()=>JSON.stringify(window.__CREATOR_API__.getRecipe()));
+  await page.locator('#importFile').setInputFiles({name:'creator-recipe.json',mimeType:'application/json',buffer:Buffer.from(fromCurrent)});
+  const imported=await page.evaluate(()=>window.__CREATOR_API__.getRecipe());
+  if(imported.helmet.colors.visor!=='#ff65dd'||imported.pieces.length!==5)
+    throw Error('Recipe upload failed');
+  await page.click('#qualityBtn');
+  const q=await page.evaluate(()=>window.__CREATOR_API__.getQuality());
+  if(!q.valid||!q.mobileBudget||q.triangles<=100||q.invalid!==0)
+    throw Error('Geometry quality inspector failed '+JSON.stringify(q));
   const size=await page.evaluate(()=>window.__CREATOR_API__.exportGLB(false));
   if(size<1500)throw Error('GLB export incomplete '+size);
+  const [download]=await Promise.all([
+    page.waitForEvent('download',{timeout:45000}),page.click('#exportBtn')
+  ]);
+  await download.saveAs('creator-proof/helmet-real.glb');
+  const bytes=fs.readFileSync('creator-proof/helmet-real.glb');
+  if(bytes.length<1500)throw Error('Downloaded GLB file is empty');
+  const report=await gltfValidator.validateBytes(new Uint8Array(bytes),{uri:'helmet-real.glb',maxIssues:80});
+  fs.writeFileSync('creator-proof/glb-validator-report.json',JSON.stringify(report,null,2));
+  if(report.issues.numErrors!==0)throw Error('Khronos GLB validation errors: '+JSON.stringify(report.issues.messages.slice(0,8)));
+  console.log('KHRONOS_GLB_VALIDATION_GREEN bytes='+bytes.length+' warnings='+report.issues.numWarnings);
   await page.screenshot({path:'creator-proof/creator-painted-desktop.png',fullPage:true});
   await page.setViewportSize({width:823,height:384});await page.waitForTimeout(300);
   const mobile=await page.evaluate(()=>({canvas:document.querySelector('#stage canvas').getBoundingClientRect().toJSON(),panel:document.querySelector('aside').getBoundingClientRect().toJSON()}));
@@ -95,7 +140,7 @@ const fs=require('fs');
   if(!d.helmetReady||d.helmetPartCount!==9||d.nonfinite!==0)
     throw Error('Post-edit helmet lost validity: '+JSON.stringify(d));
   fs.writeFileSync('creator-proof/verify.json',JSON.stringify({
-    green:true,nativeHead:true,clips:22,helmetParts:d.helmetPartCount,helmetMeshes:d.helmetMeshCount,
+    green:true,nativeHead:true,clips:22,facialLandmarksVerified:d.faceLandmarksVerified,triangleCount:d.quality?.triangles,helmetParts:d.helmetPartCount,helmetMeshes:d.helmetMeshCount,
     helmetColors:d.helmetColorCount,exportedBytes:size,mobile
   },null,2));
   await browser.close();

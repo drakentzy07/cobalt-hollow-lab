@@ -103,9 +103,9 @@ function setGizmoMode(mode){
 }
 function updateGizmoSnap(){
   const on=byId('gizmoSnap').checked;
-  gizmo.setTranslationSnap(on?.04:null);
+  gizmo.setTranslationSnap(on ? .04 : null);
   gizmo.setRotationSnap(on?THREE.MathUtils.degToRad(15):null);
-  gizmo.setScaleSnap(on?.1:null);
+  gizmo.setScaleSnap(on ? .1 : null);
 }
 updateGizmoSnap();
 for(const [btn,mode] of [['gizmoMove','translate'],['gizmoRotate','rotate'],['gizmoScale','scale'],['gizmoOff',null]])

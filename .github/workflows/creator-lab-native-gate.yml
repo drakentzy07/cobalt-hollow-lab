@@ -27,6 +27,8 @@ jobs:
           node --check creator-lab/creator.mjs
           node --check creator-lab/geometry.mjs
           node --check creator-lab/helmet.mjs
+          node --check creator-lab/facial.mjs
+          node --check creator-lab/quality.mjs
           test -f scripts/skin_lab/extract_bind_reference.mjs
       - name: Download frozen real source, verify identity, generate head bind reference
         shell: bash
@@ -38,7 +40,7 @@ jobs:
           test "$(stat -c%s creator-lab/assets/warrior_modular.glb)" = "3477500"
           test "$(git hash-object creator-lab/assets/warrior_modular.glb)" = "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2"
           npm init -y >/dev/null 2>&1
-          npm install @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer playwright@1.55.0 --no-save
+          npm install @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer playwright@1.55.0 gltf-validator --no-save
           node scripts/skin_lab/extract_bind_reference.mjs --src creator-lab/assets/warrior_modular.glb --out creator-lab/assets/bind --list > creator-lab/assets/bind/joints.json
           node scripts/skin_lab/extract_bind_reference.mjs --src creator-lab/assets/warrior_modular.glb --out creator-lab/assets/bind --bone head
           test -s creator-lab/assets/bind/reference_head.glb
