@@ -12,7 +12,7 @@ def splice(path, old, new, label):
     src = p.read_text(encoding='utf-8')
     if src.count(old) != 1 or new in src:
         raise SystemExit(f'PR5 REFUSED {label}: upstream drift count={src.count(old)}')
-    changes.append((p,src.replace(old,new,1),label))
+    changes.append((p,old,new,label))
 
 c='src/sim/professions/crafting.ts'
 splice(c,
@@ -114,34 +114,15 @@ splice(s,
   serializeCharacter(pid: number): CharacterState | null {""",
   "Sim Smith pilot facade")
 
-# All target snippets are non-overlapping across independent files.
-# Apply in memory sequentially first and check the entire plan before writes.
+# Apply every operation to a staged buffer and write only if EVERY guard passes.
 pending={}
-for p,full,label in changes:
-    if p in pending:
-        src=pending[p]
-        original=p.read_text(encoding='utf-8')
-        # Re-apply the operation to the running version using original->new diff.
-        # Instead perform all known splices in order via replay below.
-for p in {p for p,_,_ in changes}:
-    text=p.read_text(encoding='utf-8')
-    for path,new,label in changes:
-        if path!=p: continue
-        orig=path.read_text(encoding='utf-8')
-        # Each stored edit is a single unique insertion/replacement against
-        # the ORIGINAL. Derive unchanged prefix/suffix by common boundaries.
-        lead=0
-        while lead<min(len(orig),len(new)) and orig[lead]==new[lead]: lead+=1
-        tail=0
-        while (tail < len(orig)-lead and tail < len(new)-lead and
-               orig[len(orig)-1-tail]==new[len(new)-1-tail]): tail+=1
-        old_span=orig[lead:len(orig)-tail] if tail else orig[lead:]
-        new_span=new[lead:len(new)-tail] if tail else new[lead:]
-        if text.count(old_span)!=1:
-            raise SystemExit(f'PR5 REFUSED staged edit {label}')
-        text=text.replace(old_span,new_span,1)
-    pending[p]=text
-for p,text in pending.items():
-    p.write_text(text,encoding='utf-8')
+for p,old,new,label in changes:
+    src=pending.get(p)
+    if src is None: src=p.read_text(encoding='utf-8')
+    if src.count(old)!=1 or new in src:
+        raise SystemExit(f'PR5 REFUSED staged edit {label}')
+    pending[p]=src.replace(old,new,1)
+for p,updated in pending.items():
+    p.write_text(updated,encoding='utf-8')
 print('HIGHFLY_PR5_WEAPON_ARMOR_INDEPENDENT_TRIAL_HOOKS=1')
 print('HIGHFLY_PR5_NO_NEW_SKILL_WALLET_NO_NEW_RNG=1')
