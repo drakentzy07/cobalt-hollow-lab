@@ -1,3 +1,4 @@
+import { MAX_LEVEL, XP_TABLE, xpForLevel, xpToReachLevel } from '../src/sim/types';
 import { describe, expect, it } from 'vitest';
 import {
   HIGHFLY_DONOR_XP_1_TO_20,
@@ -63,5 +64,18 @@ describe('HIGHFLY PF-6 isolated XP curve and hard LV99 cap', () => {
     expect(highflyPf6ResolveLevelAfterXp(1, 0, Number.POSITIVE_INFINITY))
       .toEqual({ level: 1, barXp: 0 });
     expect(highflyPf6CumulativeXpToLevel(Number.NaN)).toBe(0);
+  });
+});
+
+describe('HIGHFLY PF-6 actual donor Sim XP integration', () => {
+  it('reuses the real game level and XP authority rather than a second counter', () => {
+    expect(MAX_LEVEL).toBe(99);
+    expect(XP_TABLE).toBe(HIGHFLY_PF6_XP_TABLE);
+    expect(xpForLevel(1)).toBe(400);
+    expect(xpForLevel(20)).toBe(23200);
+    expect(xpForLevel(21)).toBe(highflyPf6XpForLevel(21));
+    expect(xpForLevel(98)).toBe(highflyPf6XpForLevel(98));
+    expect(xpForLevel(99)).toBe(highflyPf6XpForLevel(99));
+    expect(xpToReachLevel(99)).toBe(highflyPf6CumulativeXpToLevel(99));
   });
 });
