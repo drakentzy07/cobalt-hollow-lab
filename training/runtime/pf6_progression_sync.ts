@@ -13,7 +13,8 @@ import {
 
 export interface HighflyPf6GameplaySnapshot {
   localEntityId: number;
-  eventEntityId: number;
+  /** The donor event PID may be omitted; an unaddressed event never changes a Hunter. */
+  eventEntityId?: number;
   level: number;
   barXp: number;
   classId: string;
