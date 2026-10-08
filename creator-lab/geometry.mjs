@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {normalizeHelmet} from './helmet.mjs';
 
 /** Procedural low-poly-to-smooth feather studio, native HEAD-bone local coordinates. */
 export const RECIPE_VERSION = 1;
@@ -9,7 +10,7 @@ export const MATERIALS = Object.freeze({
   arcane:{metalness:.43,roughness:.32}
 });
 export function defaultRecipe(){
-  return {version:1,theme:'CORVUS',material:'graphite',symmetry:true,
+  return {version:1,theme:'CORVUS',material:'graphite',symmetry:true,showFeathers:false,helmet:normalizeHelmet(),
     pieces:[
       {id:'crown',name:'Corona central',x:0,y:.26,z:-.25,length:.82,width:.18,bend:.32,tilt:-.12,twist:0,color:'#718396',accent:'#a8b6cb',mirror:false},
       {id:'temple',name:'Plumas laterales',x:.51,y:.13,z:-.23,length:.74,width:.17,bend:.46,tilt:.38,twist:18,color:'#1a1e2a',accent:'#7766bc',mirror:true},
@@ -24,11 +25,13 @@ export function sanitizeRecipe(input){
   const range=(v,min,max,alt)=>Number.isFinite(+v)?Math.max(min,Math.min(max,+v)):alt;
   const color=v=>/^#[0-9a-fA-F]{6}$/.test(String(v))?String(v):'#718396';
   return {version:1,theme:String(input.theme||'CORVUS').slice(0,60),material:MATERIALS[input.material]?input.material:'graphite',symmetry:input.symmetry!==false,
+    showFeathers:input.showFeathers===true,helmet:normalizeHelmet(input.helmet),
     pieces:input.pieces.map((p,i)=>({
       id:String(p.id||'f'+i).replace(/[^a-zA-Z0-9_-]/g,'').slice(0,42)||'f'+i,
       name:String(p.name||'Pluma '+(i+1)).slice(0,50),
       x:range(p.x,-1.6,1.6,0),y:range(p.y,-1.6,1.6,0),z:range(p.z,-1.6,1.6,0),
       length:range(p.length,.18,1.9,.65),width:range(p.width,.04,.5,.13),
+      rx:range(p.rx,-180,180,0),ry:range(p.ry,-180,180,0),rz:range(p.rz,-180,180,0),scale:range(p.scale,.3,2.5,1),
       bend:range(p.bend,-1,1,.3),tilt:range(p.tilt,-1.2,1.2,0),twist:range(p.twist,-75,75,0),
       color:color(p.color),accent:color(p.accent),mirror:p.mirror===true
     }))
@@ -98,6 +101,8 @@ export function buildFeatherSet(recipe,bounds){
       const pivot=new THREE.Group();pivot.name='HF_Piece_'+s.id+(side<0?'_L':'_R');
       pivot.userData.creatorPieceId=s.id;
       pivot.position.set(center.x+side*Math.abs(s.x)*dims.x*.8,center.y+s.y*dims.y,center.z+s.z*dims.z);
+      pivot.rotation.set(THREE.MathUtils.degToRad(s.rx||0),THREE.MathUtils.degToRad((s.ry||0)*side),THREE.MathUtils.degToRad((s.rz||0)*side));
+      pivot.scale.setScalar(s.scale||1);
       for(const mesh of makeFeather(s,dims,side,recipe.material))pivot.add(mesh);
       group.add(pivot);
     }
