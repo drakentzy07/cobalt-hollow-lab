@@ -16,8 +16,15 @@ import {
   setActiveHighflyHunterProfile,
 } from '../src/highfly/training/profile_store';
 import { syncHighflyPf6FromGameplay } from '../src/highfly/training/pf6_progression_sync';
+import {
+  bindHighflyLocalStatAuthority,
+  clearHighflyLocalStatAuthority,
+} from '../src/highfly/training/stat_authority';
 
-afterEach(() => clearActiveHighflyHunterProfile());
+afterEach(() => {
+  clearActiveHighflyHunterProfile();
+  clearHighflyLocalStatAuthority();
+});
 
 function makeSim(): Sim {
   return new Sim({ seed: 61627, playerClass: 'warrior', autoEquip: true });
@@ -143,4 +150,40 @@ describe('HIGHFLY PF-6 D: real donor XP, gameplay events and persistence', () =>
     expect(getActiveHighflyHunterProfile()?.hunter).toMatchObject({ level: 3, xp: 25 });
     expect(getActiveHighflyHunterProfile()?.training.points.earned).toBe(0);
   });
+  it('synchronizes a bound Hunter DURING real grantXp before recalc and with no HUD processing', () => {
+    const sim = makeSim();
+    const pid = sim.player.id;
+    setActiveHighflyHunterProfile(createHighflyHunterProfile({
+      profileId: 'pf6-pre-recalc', classId: 'warrior', level: 1,
+    }));
+    bindHighflyLocalStatAuthority(pid);
+    sim.setPlayerLevel(1);
+    sim.drainEvents();
+    grantXp(sim.ctx, xpForLevel(1) + xpForLevel(2) + 37, sim.players.get(pid)!);
+    // No drainEvents(), HUD or manual project() call here: the actual donor
+    // level-up loop must synchronize the Hunter before it recalcPlayerStats.
+    expect(sim.player.level).toBe(3);
+    expect(getActiveHighflyHunterProfile()?.hunter).toMatchObject({ level: 3, xp: 37 });
+    expect(getActiveHighflyHunterProfile()?.training.points.earned).toBe(0);
+    const h = getActiveHighflyHunterProfile()!;
+    expect(h.training.core.STR.current).toBeCloseTo(
+      h.training.core.STR.awakeningBase + h.training.core.STR.naturalLevelGrowth, 8,
+    );
+  });
+
+  it('never syncs remote unbound players even if they gain levels', () => {
+    const sim = makeSim();
+    const localPid = sim.player.id;
+    setActiveHighflyHunterProfile(createHighflyHunterProfile({
+      profileId: 'pf6-no-remote-leak', classId: 'warrior', level: 1,
+    }));
+    bindHighflyLocalStatAuthority(localPid);
+    const remotePid = sim.addPlayer('warrior', 'Remote Hunter');
+    const before = getActiveHighflyHunterProfile();
+    grantXp(sim.ctx, xpForLevel(1) + 1, sim.players.get(remotePid)!);
+    expect(sim.entities.get(remotePid)?.level).toBeGreaterThan(1);
+    expect(getActiveHighflyHunterProfile()).toBe(before);
+    expect(before?.hunter).toMatchObject({ level: 1, xp: 0 });
+  });
+
 });
