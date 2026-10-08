@@ -89,7 +89,7 @@ def main():
  '- PF6 browser evidence booted, entered game, moved and fought.',
  '','## Limitations',
  '- The CLEAN delta precedes other steps in the PF6 workflow; no final bundle equivalence certified.',
- '- Original browser warning counts retained: '+str(len(bad))+' anomalous requests, '+str(len(errors))+' console entries, '+str(len(warnings))+' missing-visual warnings.',
+ '- Original browser warning counts retained: '+str(bad_count)+' anomalous requests, '+str(error_count)+' console entries, '+str(len(warnings))+' missing-visual warnings.',
  '- Real M/F in-game creator, equipped weapons, sockets, all classes and S23 landscape still require testing.',
  '','Result: PF6_FROZEN_SOURCE_BRIDGE_GREEN_RUNTIME_EQUIVALENCE_PENDING']
  (a.out/'PF6_BRIDGE_REPORT.md').write_text('\n'.join(md)+'\n')
