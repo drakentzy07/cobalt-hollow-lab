@@ -3,11 +3,11 @@ import * as THREE from 'three';
 // HIGHFLY original avian-helmet forge. Coordinates: authentic M_Head bind frame.
 // No synthetic skeleton, no donor character, and no mutations to base GLB.
 export const HELMET_PARTS=Object.freeze({
- shell:{name:'01 · Carcasa',color:'#191d2a',metal:.78,rough:.30},
- mask:{name:'02 · Máscara facial',color:'#34384b',metal:.83,rough:.29},
- beak:{name:'03 · Pico marfil',color:'#c9c7ad',metal:.69,rough:.32},
- visor:{name:'04 · Visor violeta',color:'#9d62ff',metal:.34,rough:.20,emissive:.84},
- trim:{name:'05 · Bordes marfil',color:'#d5c5a4',metal:.89,rough:.22},
+ shell:{name:'01 · Carcasa',color:'#161b29',metal:.64,rough:.48},
+ mask:{name:'02 · Máscara facial',color:'#242836',metal:.69,rough:.46},
+ beak:{name:'03 · Pico marfil',color:'#c2b7a3',metal:.62,rough:.40},
+ visor:{name:'04 · Visor violeta',color:'#642de2',metal:.32,rough:.23,emissive:1.60},
+ trim:{name:'05 · Bordes marfil',color:'#b8a992',metal:.75,rough:.39},
  cheeks:{name:'06 · Mejillas',color:'#323b50',metal:.70,rough:.34},
  crest:{name:'07 · Penacho plumado',color:'#322344',metal:.36,rough:.55},
  nape:{name:'08 · Plumaje de nuca',color:'#52316b',metal:.29,rough:.58},
@@ -70,7 +70,7 @@ function ribbonSurface(points,widths,mat,name,part,thickness=.013){
 }
 function shellBands(c,w,h,d,mat,part='shell'){
  const rings=[
-  [-.60,.33,.33],[-.49,.49,.48],[-.27,.55,.56],[.02,.59,.60],[.33,.55,.54],[.51,.42,.40],[.62,.18,.20],[.65,.03,.035]
+  [-.56,.27,.27],[-.46,.39,.40],[-.27,.47,.49],[.02,.51,.53],[.33,.49,.50],[.51,.39,.38],[.62,.18,.18],[.65,.025,.032]
  ];
  const sectors=24,v=[],idx=[];
  rings.forEach(([y,rx,rz])=>{
@@ -103,17 +103,17 @@ function crescentBand(c,w,h,d,atY,halfAngle,radY,radZ,mat,name,part){
 function beakForge(c,w,h,d,mat,lengthFactor){
  // Tapered and hooked central ridge built from smooth Catmull-Rom cross sections.
  const L=lengthFactor,centerline=new THREE.CatmullRomCurve3([
-  new THREE.Vector3(c.x,c.y+h*.06,c.z+d*.57),
-  new THREE.Vector3(c.x,c.y-h*.035,c.z+d*.70),
-  new THREE.Vector3(c.x,c.y-h*.17,c.z+d*(.94+L*.13)),
-  new THREE.Vector3(c.x,c.y-h*.34,c.z+d*(1.02+L*.20)),
-  new THREE.Vector3(c.x,c.y-h*.40,c.z+d*(1.07+L*.25))
+  new THREE.Vector3(c.x,c.y+h*.09,c.z+d*.53),
+  new THREE.Vector3(c.x,c.y+h*.01,c.z+d*.66),
+  new THREE.Vector3(c.x,c.y-h*.10,c.z+d*(.76+L*.07)),
+  new THREE.Vector3(c.x,c.y-h*.24,c.z+d*(.83+L*.10)),
+  new THREE.Vector3(c.x,c.y-h*.30,c.z+d*(.86+L*.12))
  ],false,'centripetal');
  const rings=24,seg=12,v=[],idx=[];
  for(let i=0;i<=rings;i++){
   const t=i/rings,p=centerline.getPoint(t);
-  const width=w*.24*Math.pow(1-t,.72)+w*.008;
-  const height=h*.21*Math.pow(1-t,.58)+h*.006;
+  const width=w*.145*Math.pow(1-t,.86)+w*.004;
+  const height=h*.12*Math.pow(1-t,.66)+h*.005;
   for(let j=0;j<seg;j++){
     const a=2*Math.PI*j/seg,ny=Math.sin(a),nx=Math.cos(a);
     v.push([p.x+width*nx,p.y+height*ny,p.z+height*.14*(1-nx*nx)])
@@ -129,25 +129,25 @@ function beakForge(c,w,h,d,mat,lengthFactor){
 function visorShape(c,w,h,d,side,mat){
  const s=side,x=c.x,yy=c.y,zz=c.z;
  const v=[
- [x+s*w*.075,yy+h*.15,zz+d*.595],
- [x+s*w*.47,yy+h*.23,zz+d*.47],
- [x+s*w*.42,yy+h*.065,zz+d*.518],
- [x+s*w*.19,yy+h*.03,zz+d*.601],
- [x+s*w*.105,yy+h*.12,zz+d*.622]
+ [x+s*w*.115,yy+h*.15,zz+d*.551],
+ [x+s*w*.43,yy+h*.19,zz+d*.477],
+ [x+s*w*.37,yy+h*.10,zz+d*.506],
+ [x+s*w*.21,yy+h*.065,zz+d*.562],
+ [x+s*w*.13,yy+h*.12,zz+d*.564]
  ];
  return face(v,[[0,1,2],[0,2,3],[0,3,4]],mat,side<0?'EyeLeft':'EyeRight','visor');
 }
 function tipQuill(c,w,h,d,side,layer,kind,mat,part,factor=1){
  const s=side,back=kind==='crest';
  const start=back
-  ?new THREE.Vector3(c.x+s*w*(.14+layer*.09),c.y+h*(.45-layer*.05),c.z-d*(.12+layer*.05))
-  :new THREE.Vector3(c.x+s*w*(.39+layer*.026),c.y+h*(.24-layer*.115),c.z-d*(.16+layer*.105));
+  ?new THREE.Vector3(c.x+s*w*(.07+layer*.065),c.y+h*(.43-layer*.035),c.z-d*(.10+layer*.062))
+  :new THREE.Vector3(c.x+s*w*(.34+layer*.018),c.y+h*(.15-layer*.084),c.z-d*(.13+layer*.078));
  const dst=back
-  ?new THREE.Vector3(c.x+s*w*(.34+layer*.17),c.y+h*(.90+layer*.045),c.z-d*(.62+layer*.12))
-  :new THREE.Vector3(c.x+s*w*(.67+layer*.065),c.y-h*(.07+layer*.12),c.z-d*(.68+layer*.13));
+  ?new THREE.Vector3(c.x+s*w*(.20+layer*.10),c.y+h*(.70-layer*.01),c.z-d*(.43+layer*.060))
+  :new THREE.Vector3(c.x+s*w*(.43+layer*.055),c.y-h*(.08+layer*.10),c.z-d*(.52+layer*.06));
  dst.sub(start).multiplyScalar(factor).add(start);
  const middle=start.clone().lerp(dst,.43).add(new THREE.Vector3(s*w*.04,h*.12,0));
- return ribbonSurface([start,middle,dst],[w*(back?.14:.19),w*.008],mat,(back?'Crest':'CheekFeather')+'_'+(s<0?'L':'R')+'_'+layer,part,w*.011);
+ return ribbonSurface([start,middle,dst],[w*(back?.12:.125),w*.006],mat,(back?'Crest':'CheekFeather')+'_'+(s<0?'L':'R')+'_'+layer,part,w*.011);
 }
 function makeGem(c,w,h,d,mat,name){
  const g=new THREE.OctahedronGeometry(1,0),m=new THREE.Mesh(g,mat);
@@ -165,30 +165,30 @@ export function buildLegendaryHelmet(bounds,input){
  const mats=Object.fromEntries(Object.keys(HELMET_PARTS).map(k=>[k,material(k,options)]));
  const add=(o)=>{root.add(o);return o};
  add(shellBands(c,w,h,d,mats.shell));
- add(crescentBand(c,w,h,d,-.38,1.22,.20,.586,mats.mask,'LowerMask','mask'));
- add(crescentBand(c,w,h,d,.27,1.10,.10,.587,mats.trim,'ForeheadIvoryArc','trim'));
- add(crescentBand(c,w,h,d,-.39,1.10,.050,.575,mats.trim,'ChinEdge','trim'));
+ add(crescentBand(c,w,h,d,-.30,.90,.115,.54,mats.mask,'LowerMask','mask'));
+ add(crescentBand(c,w,h,d,.355,.74,.018,.50,mats.trim,'ForeheadIvoryArc','trim'));
+ add(crescentBand(c,w,h,d,-.38,.82,.025,.535,mats.trim,'ChinEdge','trim'));
  add(beakForge(c,w,h,d,mats.beak,options.beak));
  add(makeGem(c,w,h,d,mats.gem,'HIGHFLY_Avian_ForeheadCrystal'));
  for(const side of [-1,1]){
    add(visorShape(c,w,h,d,side,mats.visor));
    add(ribbonSurface([
-     new THREE.Vector3(c.x+side*w*.10,c.y+h*.295,c.z+d*.596),
-     new THREE.Vector3(c.x+side*w*.34,c.y+h*.33,c.z+d*.535),
-     new THREE.Vector3(c.x+side*w*.58,c.y+h*.245,c.z+d*.35)
+     new THREE.Vector3(c.x+side*w*.13,c.y+h*.22,c.z+d*.55),
+     new THREE.Vector3(c.x+side*w*.32,c.y+h*.25,c.z+d*.515),
+     new THREE.Vector3(c.x+side*w*.46,c.y+h*.20,c.z+d*.35)
    ],[w*.026,w*.006],mats.trim,side<0?'LeftIvoryBrow':'RightIvoryBrow','trim'));
    add(ribbonSurface([
-     new THREE.Vector3(c.x+side*w*.45,c.y-h*.16,c.z+d*.40),
-     new THREE.Vector3(c.x+side*w*.61,c.y-h*.31,c.z+d*.12),
-     new THREE.Vector3(c.x+side*w*.47,c.y-h*.55,c.z-d*.18)
-   ],[w*.14,w*.012],mats.cheeks,'CheekArmor_'+side,'cheeks'));
-   for(let layer=0;layer<4;layer++)add(tipQuill(c,w,h,d,side,layer,'crest',mats.crest,'crest',options.crest));
-   for(let layer=0;layer<4;layer++)add(tipQuill(c,w,h,d,side,layer,'nape',mats.nape,'nape'));
+     new THREE.Vector3(c.x+side*w*.40,c.y-h*.13,c.z+d*.35),
+     new THREE.Vector3(c.x+side*w*.50,c.y-h*.33,c.z+d*.08),
+     new THREE.Vector3(c.x+side*w*.39,c.y-h*.49,c.z-d*.18)
+   ],[w*.09,w*.008],mats.cheeks,'CheekArmor_'+side,'cheeks'));
+   for(let layer=0;layer<5;layer++)add(tipQuill(c,w,h,d,side,layer,'crest',mats.crest,'crest',options.crest));
+   for(let layer=0;layer<5;layer++)add(tipQuill(c,w,h,d,side,layer,'nape',mats.nape,'nape'));
  }
  const points=[
-  new THREE.Vector3(c.x,c.y-h*.41,c.z+d*.585),
-  new THREE.Vector3(c.x,c.y-h*.44,c.z+d*.67),
-  new THREE.Vector3(c.x,c.y-h*.30,c.z+d*.76)
+  new THREE.Vector3(c.x,c.y-h*.30,c.z+d*.545),
+  new THREE.Vector3(c.x,c.y-h*.33,c.z+d*.61),
+  new THREE.Vector3(c.x,c.y-h*.26,c.z+d*.69)
  ];
  add(ribbonSurface(points,[w*.035,w*.008],mats.trim,'BeakSeam','trim'));
  root.userData.helmetParts=Object.keys(HELMET_PARTS);

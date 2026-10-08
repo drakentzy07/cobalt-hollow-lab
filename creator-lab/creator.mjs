@@ -79,9 +79,9 @@ function rebuild(){
   Object.assign(DIAG,{nativeRig:!!headBone,realHead:true,headParentOK:accessory.parent===headBone,
     rootIdentity:accessory.position.lengthSq()===0&&[accessory.rotation.x,accessory.rotation.y,accessory.rotation.z].every(v=>v===0)&&accessory.scale.toArray().every(v=>v===1),
     geometries:ck.meshCount,vertices:ck.vertices,nonfinite:ck.nonfinite,
-    helmetReady:recipe.helmet.enabled&&helmetMeshes>=28,helmetAttached:helmetRoot.parent===accessory&&accessory.parent===headBone,
+    helmetReady:recipe.helmet.enabled&&helmetMeshes>=30,helmetAttached:helmetRoot.parent===accessory&&accessory.parent===headBone,
     helmetVisible:recipe.helmet.enabled,helmetMeshCount:helmetMeshes,helmetPartCount:uniqueParts.size,
-    helmetColorCount:helmetColors.size,helmetSelectedPart:selectedHelmetPart,headFacesHidden:headSurfaceMeshes.every(o=>o.visible!==recipe.helmet.enabled),
+    helmetColorCount:helmetColors.size,helmetSelectedPart:selectedHelmetPart,headFacesHidden:recipe.helmet.enabled&&headSurfaceMeshes.length>0&&headSurfaceMeshes.every(o=>o.visible===false),
     sourceOriginalIntact:true,featherCount:recipe.pieces.length,selectedId});
   markSelection();return ck;
 }
@@ -315,7 +315,7 @@ function cameraHeadView(view='three'){
   const target=headBone.localToWorld(bounds.center.clone());
   const dir={front:new THREE.Vector3(0,.02,1),side:new THREE.Vector3(1,.02,0),
     back:new THREE.Vector3(0,.02,-1),three:new THREE.Vector3(.52,.12,1)}[view]||new THREE.Vector3(.52,.12,1);
-  const d=Math.max(1.55,bounds.size.length()*1.30);
+  const d=Math.max(2.6,bounds.size.length()*2.05);
   camera.position.copy(target).add(dir.normalize().multiplyScalar(d));
   controls.target.copy(target);controls.update();
 }
