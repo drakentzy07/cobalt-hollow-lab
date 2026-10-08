@@ -1,7 +1,7 @@
 name: HIGHFLY SKIN3 — ORIGINAL RIG PAINTER V3 (NO OVERLAP)
 on:
   push:
-    branches: [highfly-character-truth-audit-01]
+    branches: [highfly-skinfactory-integration-00]
     paths:
       - 'character-truth/integration-modules/**'
       - 'character-truth/integration-safety/guard.py'
@@ -139,8 +139,9 @@ jobs:
           assert.throws(()=>readDesign('{"schemaVersion":7}'));
           assert.throws(()=>withPart(emptyDesign(),'secret','rogue'));
           assert.throws(()=>migrateSinglePartV2({...legacy,specialSkin:'corvus'}));
-          assert.throws(()=>readDesign({schemaVersion:3,rig:'Rig_Medium',
-            sourceRevision:d.sourceRevision,gender:'male',parts:{__proto__:{set:'knight'}}}),/|/);
+          const unsafe=JSON.parse('{"schemaVersion":3,"rig":"Rig_Medium","sourceRevision":"'+
+            d.sourceRevision+'","gender":"male","parts":{"__proto__":{"set":"knight"}}}');
+          assert.throws(()=>readDesign(unsafe),/UNKNOWN_PART/);
           console.log('HIGHFLY_SKIN3_V3_RECIPE_7_PARTS_MIGRATION_GREEN=1 LEGACY_ORIGINAL_SHA_PINNED=1');
           NODE
       - name: Boot untouched original character GLB and original Playwright viewer
