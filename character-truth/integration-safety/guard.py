@@ -9,6 +9,7 @@ allowed={
 "character-truth/SKIN3_FACTORY_INTEGRATION_DECISION.md",
 ".github/workflows/skin3-integration-zero-overlap.yml",
 ".github/workflows/skin3-integration-painter-v3.yml",
+".github/workflows/skin3-integration-molder-v3.yml",
 "character-truth/integration-safety/guard.py",
 }
 prefixes=("character-truth/integration-safety/","character-truth/integration-modules/")
