@@ -59,6 +59,16 @@ jobs:
             /tests/highfly_pf6_xp_curve.test.ts
             /tests/highfly_pf6_progression_sync.test.ts
             /tests/highfly_pf6_real_sim_e2e.test.ts
+            /tests/helpers/defined.ts
+            /tests/helpers/enchant_family_cast.ts
+            /tests/helpers/harvest_spot.ts
+            /tests/helpers/open_field.ts
+            /tests/helpers/reagent_unit_value.ts
+            /tests/helpers/scan_guard_self_audit.ts
+            /tests/helpers/strip_comments.ts
+            /tests/helpers/ts_files_under.ts
+            /tests/helpers/unmapped_family.ts
+            /tests/sim_shared.ts
             /tests/svelte_testing_setup.ts
             /tests/jsdom_local_storage_setup.ts
             /package.json
