@@ -6,6 +6,13 @@ import bpy, sys, json, math, hashlib, os
 from pathlib import Path
 from mathutils import Vector
 
+# Blender is Z-up, Three.js/glTF is Y-up. These are inverse rotations:
+# glTF(x,y,z) -> Blender(x,-z,y) -> export_yup=True -> glTF(x,y,z).
+def gltf_to_blender(v):
+    return Vector((v.x,-v.z,v.y))
+def blender_to_gltf(v):
+    return Vector((v.x,v.z,-v.y))
+
 def arg(name, fallback=None):
     args=sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else []
     if name in args and args.index(name)+1<len(args): return args[args.index(name)+1]
@@ -23,7 +30,7 @@ def material(name, rgba, metallic, rough):
 
 def mesh_object(name,vertices,faces,mat):
     mesh=bpy.data.meshes.new(name)
-    mesh.from_pydata(vertices,[],faces)
+    mesh.from_pydata([gltf_to_blender(Vector(v))[:] for v in vertices],[],faces)
     mesh.update()
     obj=bpy.data.objects.new(name,mesh)
     bpy.context.collection.objects.link(obj)
@@ -87,7 +94,7 @@ def curve_feather(name,center,size,side,layer,mat):
                 center.z-d*(.50+.07*layer)))
     ]
     for bp,co in zip(spline.bezier_points,points):
-        bp.co=co
+        bp.co=gltf_to_blender(co)
         bp.handle_left_type="AUTO";bp.handle_right_type="AUTO"
     ob=bpy.data.objects.new(name,curve);bpy.context.collection.objects.link(ob)
     ob.data.materials.append(mat)
@@ -105,7 +112,9 @@ def main():
     bpy.ops.import_scene.gltf(filepath=str(source))
     target=next((o for o in bpy.data.objects if o.name=="M_Head" and o.type=="MESH"),None)
     if target is None: raise ValueError("No TRUE M_Head mesh in provided GLB (NO PROXY ALLOWED)")
-    corners=[target.matrix_world@Vector(v) for v in target.bound_box]
+    # Importer has already rotated the native glTF to Blender's Z-up.
+    # Convert native bbox corners BACK to glTF Y-up before head measurement.
+    corners=[blender_to_gltf(target.matrix_world@Vector(v)) for v in target.bound_box]
     minima=Vector((min(x[i] for x in corners) for i in range(3)))
     maxima=Vector((max(x[i] for x in corners) for i in range(3)))
     size=maxima-minima
@@ -142,6 +151,27 @@ def main():
     drift=max(drift,max(abs(original_max[i]-recovered_max[i]) for i in range(3)))
     if drift>max(size)*.02:
         raise ValueError(f"Blender/GLB Y-up roundtrip drift {drift:.6f} > tolerance")
+    # Independent semantic gate: roundtrip may be perfect while an exported
+    # bird beak is a HORN. Check against ORIGINAL GLTF head coordinates.
+    beak_in=next((o for o in imported if o.name.startswith('HF_BLENDER_CurvedRavenBeak')),None)
+    if beak_in is None: raise ValueError("Export lost native-forward raven beak")
+    beak_gl=[blender_to_gltf(beak_in.matrix_world @ Vector(v)) for v in beak_in.bound_box]
+    beak_lo=Vector((min(p[k] for p in beak_gl) for k in range(3)))
+    beak_hi=Vector((max(p[k] for p in beak_gl) for k in range(3)))
+    if (beak_lo.z<center.z+size.z*.40 or
+        beak_hi.z<center.z+size.z*.85 or
+        beak_hi.y>center.y+size.y*.35 or
+        beak_lo.y>center.y-size.y*.19):
+        raise ValueError("ORIENTATION_GATE: beak is not below eye and pointing forward in glTF Y-up: "+
+          str({"min":list(beak_lo),"max":list(beak_hi),"head_center":list(center)}))
+    plumes=[o for o in imported if o.name.startswith('HF_BezierPlume_')]
+    if len(plumes)!=6: raise ValueError("Fewer than six real Blender plume meshes")
+    for plume in plumes:
+        bb=[blender_to_gltf(plume.matrix_world @ Vector(v)) for v in plume.bound_box]
+        if min(p.z for p in bb)>=center.z-size.z*.22 or max(p.y for p in bb)>center.y+size.y*.85:
+            raise ValueError("ORIENTATION_GATE: plume is not flowing toward rear of native head: "+plume.name)
+    print("HIGHFLY_GLTF_SEMANTIC_ORIENTATION_GREEN forward_beak="+str(round(beak_hi.z-center.z,4))+
+          " beak_low="+str(round(beak_lo.y-center.y,4))+" six_backward_plumes=TRUE")
     output_data=output.read_bytes()
     if len(output_data)<1000: raise ValueError("Blender wrote an empty model")
     report={
@@ -156,6 +186,11 @@ def main():
       "bezier_curves_converted":True,
       "gltf_y_up_export":True,
       "roundtrip_world_space_error":drift,
+      "semantic_forward_beak_checked":True,
+      "beak_gltf_bbox_min":list(beak_lo),
+      "beak_gltf_bbox_max":list(beak_hi),
+      "head_bounds_space":"gltf_y_up",
+      "six_backward_plumes_checked":True,
       "glb_bytes":len(output_data),
       "glb_sha256":hashlib.sha256(output_data).hexdigest(),
       "output":"RIGID HEAD ACCESSORY ONLY — not skinned clothing, no imported native figure"
