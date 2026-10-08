@@ -1,0 +1,227 @@
+name: HIGHFLY PROFESSIONS PR-3A — XP Practice Core
+on:
+  push:
+    branches:
+      - highfly-professions-pr3-xp-core
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-professions-pr3-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  professions-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout isolated HIGHFLY PR overlay
+        uses: actions/checkout@v4
+      - name: Checkout frozen ClaudeCraft code slice
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /android/
+            /capacitor.config.ts
+            /tests/global_setup.ts
+            /tests/professions.test.ts
+            /tests/professions_archetype.test.ts
+            /tests/archetype_ceiling.test.ts
+            /tests/professions_crafting.test.ts
+            /tests/professions_crafting_hub.test.ts
+            /tests/recipe_economy.test.ts
+            /tests/jewelcrafting_catalog.test.ts
+            /tests/jewelcrafting_flow.test.ts
+            /tests/gathering.test.ts
+            /tests/gather_rare_events.test.ts
+            /tests/farming_anti_chore.test.ts
+            /tests/fishing_zones.test.ts
+            /tests/corpse_harvest_grant.test.ts
+            /tests/harvest_preference.test.ts
+            /tests/perfecting.test.ts
+            /tests/character_state_backcompat.test.ts
+            /tests/character_state_module.test.ts
+            /tests/professions_blob_roundtrip.test.ts
+            /tests/professions_commissions.test.ts
+            /tests/highfly_pf6_xp_curve.test.ts
+            /tests/highfly_pf6_progression_sync.test.ts
+            /tests/highfly_pf6_real_sim_e2e.test.ts
+            /tests/helpers/defined.ts
+            /tests/helpers/enchant_family_cast.ts
+            /tests/helpers/harvest_spot.ts
+            /tests/helpers/open_field.ts
+            /tests/helpers/reagent_unit_value.ts
+            /tests/helpers/scan_guard_self_audit.ts
+            /tests/helpers/strip_comments.ts
+            /tests/helpers/ts_files_under.ts
+            /tests/helpers/unmapped_family.ts
+            /tests/sim_shared.ts
+            /tests/svelte_testing_setup.ts
+            /tests/jsdom_local_storage_setup.ts
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+
+      - name: Verify pinned donor and immutable CLEAN V1
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          test -s clean/canonical/HIGHFLY_CLEAN_V1.patch
+          expected="$(cut -d' ' -f1 clean/canonical/source-sha256.txt)"
+          actual="$(sha256sum clean/canonical/HIGHFLY_CLEAN_V1.patch | cut -d' ' -f1)"
+          test "$actual" = "$expected"
+          test "$(sha256sum clean/canonical/HIGHFLY_CLEAN_V1.patch | cut -d' ' -f1)" = "b78ba81e52b10b2ddba7c6fa829d436f59ad4594ec2a0d0d5f0341ce26773cb9"
+          git -C upstream apply --check ../clean/canonical/HIGHFLY_CLEAN_V1.patch
+          git -C upstream apply --binary ../clean/canonical/HIGHFLY_CLEAN_V1.patch
+          git -C upstream diff --check HEAD
+          test -f upstream/src/highfly/training/core.ts
+          test -f upstream/src/sim/professions/wheel.ts
+          test -f upstream/src/sim/professions/crafting.ts
+          test -f upstream/src/sim/professions/archetype.ts
+          echo "PR0_PINNED_DONOR_CLEAN_SHA_GREEN=1"
+
+      - name: Apply isolated PF-6 runtime exactly as certified
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmp training/runtime/core.ts upstream/src/highfly/training/core.ts
+          test -s training/runtime/pf6_xp_curve.ts
+          test -s training/runtime/pf6_progression_sync.ts
+          cp training/runtime/pf6_xp_curve.ts upstream/src/highfly/training/pf6_xp_curve.ts
+          cp training/runtime/pf6_progression_sync.ts upstream/src/highfly/training/pf6_progression_sync.ts
+          cp training/runtime/stat_authority.ts upstream/src/highfly/training/stat_authority.ts
+          cp training/tests/highfly_pf6_xp_curve.test.ts upstream/tests/highfly_pf6_xp_curve.test.ts
+          cp training/tests/highfly_pf6_progression_sync.test.ts upstream/tests/highfly_pf6_progression_sync.test.ts
+          cp training/tests/highfly_pf6_real_sim_e2e.test.ts upstream/tests/highfly_pf6_real_sim_e2e.test.ts
+          (cd upstream && python ../training/scripts/pf6_activate_gameplay.py)
+          (cd upstream && python ../training/scripts/pf6_sync_hud.py)
+          (cd upstream && python ../training/scripts/pf6_sync_before_recalc.py)
+          (cd upstream && git diff --check HEAD)
+          echo "PR0_PF6_LV99_REUSED=1"
+
+      - name: Guard professions and GAME-C2 freeze invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "export type GatheringProfessionId" upstream/src/sim/content/professions.ts
+          grep -q "CRAFT_RING" upstream/src/sim/content/professions.ts
+          grep -q "archetypeCeilingFor" upstream/src/sim/professions/archetype.ts
+          grep -q "gainCraftSkill" upstream/src/sim/professions/wheel.ts
+          grep -q "JEWELCRAFTING_RECIPES" upstream/src/sim/content/recipes.ts
+          grep -q "HIGHFLY_NORMAL_MAX_LEVEL = 99" upstream/src/highfly/training/core.ts
+          test -f upstream/tests/highfly_game_c28.test.ts
+          test -f upstream/src/highfly/game_c1_runtime.ts
+          test -f upstream/src/sim/professions/corpse_harvest_grant.ts
+          echo "PR0_PROFESSION_REUSE_NO_PARALLEL_ENGINE=1"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Enable pinned pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+      - name: Install unchanged donor lockfile
+        working-directory: upstream
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Activate PR-1 optional HIGHFLY profession state (no gameplay hooks)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr1/highfly_profession_state.ts
+          test -f professions/pr1/highfly_profession_state.test.ts
+          cp professions/pr1/highfly_profession_state.ts upstream/src/sim/professions/highfly_profession_state.ts
+          cp professions/pr1/highfly_profession_state.test.ts upstream/tests/highfly_profession_state.test.ts
+          (cd upstream && python ../professions/pr1/activate_pr1.py)
+          git -C upstream diff --check HEAD
+          echo "PR1_ONLY_ADDITIVE_SPARSE_PROFESSIONS_STATE=1"
+      - name: Activate PR-2 passive legacy profession gain bridge (no new XP)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr2/highfly_progress_bridge.ts
+          test -f professions/pr2/highfly_progress_bridge.test.ts
+          cp professions/pr2/highfly_progress_bridge.ts upstream/src/sim/professions/highfly_progress_bridge.ts
+          cp professions/pr2/highfly_progress_bridge.test.ts upstream/tests/highfly_progress_bridge.test.ts
+          (cd upstream && python ../professions/pr2/activate_pr2.py)
+          git -C upstream diff --check HEAD
+          echo "PR2_CLAUDE_LEGACY_GAIN_PASSIVE_BRIDGE=1"
+      - name: Install PR-3A pure profession XP and practice model
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr3/highfly_profession_xp.ts
+          test -f professions/pr3/highfly_profession_xp.test.ts
+          cp professions/pr3/highfly_profession_xp.ts upstream/src/sim/professions/highfly_profession_xp.ts
+          cp professions/pr3/highfly_profession_xp.test.ts upstream/tests/highfly_profession_xp.test.ts
+          git -C upstream diff --check HEAD
+          echo "PR3A_PROFESSION_XP_PURE_CORE_NO_GAMEPLAY=1"
+      - name: TypeScript all-source baseline
+        working-directory: upstream
+        run: pnpm exec tsc --noEmit --incremental false
+      # The six worn-apex fixtures were authored with ClaudeCraft MAX_LEVEL=20.
+      # Its item_level_req clamps source-25 crafted gear to that old level cap.
+      # PF-6 correctly raises MAX_LEVEL to 99, so source-25 gear now requires 25.
+      # Rebase ONLY those six fixture setup levels; preserve ALL assertions,
+      # all 22 test files, and all production level/equipment/power behavior.
+      - name: Rebase six capped-20 Perfecting fixtures to actual source-25 gate
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/perfecting.test.ts')
+          source = path.read_text(encoding='utf-8')
+          old = 'sim.setPlayerLevel(20);'
+          assert source.count(old) == 6, 'Unexpected frozen donor fixture: refuse to rewrite'
+          assert 'const APEX_NECK = \'wyrmfall_pendant\'' in source
+          assert 'const APEX_RING = \'warhewn_signet\'' in source
+          path.write_text(source.replace(old, 'sim.setPlayerLevel(25);'), encoding='utf-8')
+          print('PR0_PF6_PERFECTING_FIXTURES_REBASED_6=1')
+          PY
+      - name: Profession and PF-6 focused regression tests
+        working-directory: upstream
+        run: pnpm exec vitest run tests/professions.test.ts tests/professions_archetype.test.ts tests/archetype_ceiling.test.ts tests/professions_crafting.test.ts tests/professions_crafting_hub.test.ts tests/recipe_economy.test.ts tests/jewelcrafting_catalog.test.ts tests/jewelcrafting_flow.test.ts tests/gathering.test.ts tests/gather_rare_events.test.ts tests/farming_anti_chore.test.ts tests/fishing_zones.test.ts tests/corpse_harvest_grant.test.ts tests/harvest_preference.test.ts tests/perfecting.test.ts tests/character_state_backcompat.test.ts tests/character_state_module.test.ts tests/professions_blob_roundtrip.test.ts tests/professions_commissions.test.ts tests/highfly_pf6_xp_curve.test.ts tests/highfly_pf6_progression_sync.test.ts tests/highfly_pf6_real_sim_e2e.test.ts tests/highfly_profession_state.test.ts tests/highfly_progress_bridge.test.ts tests/highfly_profession_xp.test.ts
+      - name: Offline bundle baseline
+        working-directory: upstream
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build_bundle_pregen.mjs
+          python ../overlays/rewrite_source_public_paths.py
+          pnpm exec vite build
+          test -s dist/index.html
+          echo "PR3A_PROFESSION_XP_PRACTICE_MODEL_GREEN=1"
