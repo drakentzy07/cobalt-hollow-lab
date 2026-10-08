@@ -208,7 +208,11 @@ jobs:
           test -s training/tests/highfly_pf6_xp_curve.test.ts
           cp training/runtime/pf6_xp_curve.ts upstream/src/highfly/training/pf6_xp_curve.ts
           cp training/tests/highfly_pf6_xp_curve.test.ts upstream/tests/highfly_pf6_xp_curve.test.ts
-          echo "PF6_XP_CURVE_ISOLATED_TEST_FIXTURE=1"
+          # The canonical patch was already byte-verified. Only the PF-6 branch
+          # changes donor progression, using its existing grantXp path.
+          (cd upstream && python ../training/scripts/pf6_activate_gameplay.py)
+          (cd upstream && git diff --check HEAD)
+          echo "PF6_XP_GAMEPLAY_RUNTIME_ACTIVATED=1"
 
       - name: Setup Node
         uses: actions/setup-node@v4
