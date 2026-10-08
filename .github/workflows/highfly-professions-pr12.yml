@@ -343,6 +343,25 @@ jobs:
           path.write_text(source.replace(old, 'sim.setPlayerLevel(25);'), encoding='utf-8')
           print('PR0_PF6_PERFECTING_FIXTURES_REBASED_6=1')
           PY
+      - name: Rebase six original orange-promotion equip fixtures to PF-6 source-25 gate
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('tests/orange_promotion.test.ts')
+          source=path.read_text(encoding='utf-8')
+          old='sim.setPlayerLevel(20);'
+          assert source.count(old)==6, 'Orange promotion donor test fixture drift: REFUSE rewrite'
+          assert "const APEX_NECK = 'wyrmfall_pendant'" in source
+          assert "const APEX_RING = 'warhewn_signet'" in source
+          assert "const APEX_RING2 = 'prismglass_loop'" in source
+          assert "function world(seed = 5)" in source
+          path.write_text(source.replace(old,'sim.setPlayerLevel(25);'),encoding='utf-8')
+          print('PR12_PF6_ORANGE_PROMOTION_6_REAL_EQUIP_FIXTURES_LEVEL25=1')
+          PY
+          git diff --check
       - name: Profession and PF-6 focused regression tests
         working-directory: upstream
         run: pnpm exec vitest run tests/professions.test.ts tests/professions_archetype.test.ts tests/archetype_ceiling.test.ts tests/professions_crafting.test.ts tests/professions_crafting_hub.test.ts tests/recipe_economy.test.ts tests/jewelcrafting_catalog.test.ts tests/jewelcrafting_flow.test.ts tests/gathering.test.ts tests/gather_rare_events.test.ts tests/farming_anti_chore.test.ts tests/fishing_zones.test.ts tests/corpse_harvest_grant.test.ts tests/harvest_preference.test.ts tests/perfecting.test.ts tests/character_state_backcompat.test.ts tests/character_state_module.test.ts tests/professions_blob_roundtrip.test.ts tests/professions_commissions.test.ts tests/highfly_pf6_xp_curve.test.ts tests/highfly_pf6_progression_sync.test.ts tests/highfly_pf6_real_sim_e2e.test.ts tests/highfly_profession_state.test.ts tests/highfly_progress_bridge.test.ts tests/highfly_profession_progress.test.ts tests/highfly_profession_trials.test.ts tests/highfly_smith_pilot.test.ts tests/highfly_cooking_evidence.test.ts tests/professions_feast.test.ts tests/feast_lifecycle.test.ts tests/professions_farming.test.ts tests/highfly_knowledge_core.test.ts tests/highfly_discovery_core.test.ts tests/highfly_alchemy_jewel.test.ts tests/highfly_enchant_engineering.test.ts tests/professions_enchanting.test.ts tests/professions_typed_reagents.test.ts tests/professions_enchant_family_cast.test.ts tests/professions_enchant_salvage_edges.test.ts tests/highfly_leather_textile.test.ts tests/bags.test.ts tests/highfly_inscription_docs.test.ts tests/inscription_catalog.test.ts tests/inscription_scroll_exclusivity.test.ts tests/orange_promotion.test.ts
