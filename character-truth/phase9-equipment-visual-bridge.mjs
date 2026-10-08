@@ -12,7 +12,7 @@ import {
  modularPartNames,modularGeometryKey,fullSet
 } from './phase9-original/render/characters/modular.mjs';
 
-const read=p=>fs.readFileSync(path.join('character-truth/phase9-original/src',p),'utf8');
+const read=p=>fs.readFileSync(path.join('character-truth/phase9-original',p),'utf8');
 const dest=path.join('character-truth','phase9-proof');
 fs.mkdirSync(dest,{recursive:true});
 const source=Object.fromEntries([
