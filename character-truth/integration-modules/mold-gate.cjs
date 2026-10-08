@@ -90,7 +90,7 @@ const shape=(width,length,depth,taper)=>({width,length,depth,taper});
   await page.locator('#slot').selectOption('chest');
   await page.locator('#family').selectOption('knight');
   await page.locator('#apply').click();
-  await page.locator('#mwidth').fill('50');
+  await page.locator('#mwidth').evaluate(el=>{el.value='50';el.dispatchEvent(new Event('input',{bubbles:true}))});
   await page.locator('#mold').click();
   const button=await read();
   pass(button.state.shapes.chest?.width===.5,'mobile HTML touch button activates actual geometry transform');
