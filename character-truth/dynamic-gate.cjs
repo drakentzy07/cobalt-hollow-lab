@@ -37,4 +37,4 @@ const {chromium}=require('playwright');
  assert.equal(errors.length,0,errors.join('\n'));
  console.log('HIGHFLY_SKIN3_REAL_SOURCE_BROWSER_GREEN='+all.length+' NO_CLIPPING_APPROVAL=1');
  await browser.close();
-})().catch(e=>{console.error(e.stack||e);process.exitCode=1});
+})().catch(e=>{console.error(e.stack||e);fs.mkdirSync('character-truth/dynamic-proof',{recursive:true});fs.writeFileSync('character-truth/dynamic-proof/failure.txt',String(e.stack||e));process.exit(1)});
