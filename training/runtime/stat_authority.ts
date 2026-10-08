@@ -70,6 +70,12 @@ export function clearHighflyLocalStatAuthority(): void {
   boundEntityId = null;
 }
 
+/** Read-only local Hunter guard for progression hooks: never claim an unbound
+ * entity or turn another player's level-up into a Training profile update. */
+export function isBoundHighflyLocalStatAuthority(entityId: number): boolean {
+  return Number.isFinite(entityId) && boundEntityId !== null && boundEntityId === entityId;
+}
+
 export function highflyCoreVectorAtLevel(
   profile: HighflyHunterProfile,
   classId: HighflyAwakeningClassId,
