@@ -60,7 +60,7 @@ def forge_beak(center, size, graphite, ivory):
     bevel=obj.modifiers.new("REAL_BEVEL","BEVEL")
     bevel.width=min(w,h,d)*.008
     bevel.segments=2
-    bevel.affect="EDGES" if hasattr(bevel,"affect") else None
+    if hasattr(bevel,"affect"): bevel.affect="EDGES"
     bpy.context.view_layer.objects.active=obj
     obj.select_set(True)
     bpy.ops.object.modifier_apply(modifier=bevel.name)
