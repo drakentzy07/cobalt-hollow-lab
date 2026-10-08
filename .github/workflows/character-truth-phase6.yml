@@ -4,6 +4,7 @@ on:
     branches: [highfly-character-truth-audit-01]
     paths:
       - 'character-truth/pf6-real-browser.cjs'
+      - 'character-truth/pf6-world-entry.cjs'
       - 'character-truth/SKIN3_PHASE6_PF6_RUNTIME.md'
       - '.github/workflows/character-truth-phase6.yml'
   workflow_dispatch:
@@ -46,7 +47,7 @@ jobs:
           set -euo pipefail
           npm install --no-save --package-lock=false playwright@1.55.0
           npx playwright install --with-deps chromium
-          node --check character-truth/pf6-real-browser.cjs
+          node --check character-truth/pf6-world-entry.cjs
       - name: Launch PF6 artifact browser without deploying anywhere
         shell: bash
         run: |
@@ -56,20 +57,20 @@ jobs:
           sleep 3
           curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/ -o /tmp/skin3-pf6-index.html
           grep -q '<html' /tmp/skin3-pf6-index.html
-      - name: Test 8 native M/F creator previews and enter real game
+      - name: Check new Warrior female avatar identity in actual PF6 game
         timeout-minutes: 11
         shell: bash
         run: |
           set -euo pipefail
-          node character-truth/pf6-real-browser.cjs
-          test -s character-truth/phase6-proof/pf6-real-browser.json
+          node character-truth/pf6-world-entry.cjs
+          test -s character-truth/phase6-world-proof/actual-world-identity.json
           git diff --exit-code -- .
           echo "SKIN3_FROZEN_PF6_AND_OFFICIAL_MODELS_UNMODIFIED=1"
-      - name: Upload actual frozen PF6 browser screenshots and truthful diagnostics
+      - name: Upload direct frozen PF6 world identity and screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: highfly-skin3-immutable-pf6-real-browser-proof
-          path: character-truth/phase6-proof/
+          name: highfly-skin3-immutable-pf6-world-identity-proof
+          path: character-truth/phase6-world-proof/
           if-no-files-found: warn
           retention-days: 30
