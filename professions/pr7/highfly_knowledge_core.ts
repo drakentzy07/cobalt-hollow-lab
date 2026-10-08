@@ -43,8 +43,9 @@ export const KNOWLEDGE_CRAFT_PROOF_IDS = [
   'recipe_eastbrook_chain_vest',
   'recipe_eastbrook_warded_leggings',
 ] as const;
-const KEYS = Object.fromEntries(KNOWLEDGE_CRAFT_PROOF_IDS.map(id=>[id,`${PREFIX}${id}`]))
-  as Record<string,string>;
+const KEYS: Record<string,string> = Object.fromEntries(
+  KNOWLEDGE_CRAFT_PROOF_IDS.map(id=>[id,`${PREFIX}${id}`]),
+);
 
 export const HIGHFLY_KNOWLEDGE_PILOT: readonly KnowledgeDefinition[] = [
   {
