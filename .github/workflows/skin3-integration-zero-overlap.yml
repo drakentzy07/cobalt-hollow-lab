@@ -1,0 +1,26 @@
+name: HIGHFLY SKIN3 — ZERO OVERLAP INTEGRATION GUARD
+on:
+  push:
+    branches: [highfly-skinfactory-integration-00]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preserve-source-authority:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Enforce untouched SKIN3 base and no V2 merges
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=b3fb7f43a917f05d93c3dbb3787c1f4911ef9700
+          LEGACY=cd6d60c7e445534b5425e6e84192b07aa9ac4ee9
+          test "$(git ls-remote origin refs/heads/highfly-character-truth-audit-01 | cut -f1)" = "$BASE"
+          test "$(git ls-remote origin refs/heads/highfly-skinlab-v2-warrior-black | cut -f1)" = "$LEGACY"
+          git merge-base --is-ancestor "$BASE" HEAD
+          python3 character-truth/integration-safety/guard.py "$BASE" "$LEGACY"
+          echo 'HIGHFLY_SKIN3_INTEGRATION_ZERO_OVERLAP_GREEN=1 ORIGINALS_UNTOUCHED=1'
