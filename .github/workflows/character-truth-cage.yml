@@ -1,0 +1,113 @@
+name: HIGHFLY SKIN3 — NATIVE FULL BODY CAGE
+on:
+  push:
+    branches: [highfly-character-truth-audit-01]
+    paths:
+      - 'character-truth/cage.html'
+      - 'character-truth/cage-gate.cjs'
+      - 'character-truth/SKIN3_CAGE_CONTRACT.md'
+      - '.github/workflows/character-truth-cage.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original-full-body-cage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse GREEN original inventory artifact (do not rebuild)
+        uses: actions/download-artifact@v4
+        with:
+          name: highfly-character-truth-native-inventory
+          run-id: 37803666522
+          github-token: ${{ github.token }}
+          path: character-truth/prior
+      - name: Download real frozen ClaudeCraft models and exact native compositor
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,hashlib,urllib.request,pathlib,time
+          revision='9b57e49c9676d75962700f828cc00a50a9a988b5'
+          base='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/'+revision+'/'
+          inputs=pathlib.Path('character-truth/inputs')
+          generated=pathlib.Path('character-truth/generated')
+          inputs.mkdir(parents=True,exist_ok=True);generated.mkdir(parents=True,exist_ok=True)
+          pins=json.loads(pathlib.Path('character-truth/official-asset-shas.json').read_text())
+          original=[('src/render/characters/modular.ts','d2ad732114b01a0aa9de5a882e0a6980d54225fb'),
+           ('src/render/characters/underhair.generated.ts','630408c0ffbffb61d06e1a398f28b0d89f820dfe')]
+          for name,expected in pins.items():
+           part='modular' if name=='warrior_modular.glb' else 'players'
+           original.append(('public/models/chars/'+part+'/'+name,expected))
+          for relative,expected in original:
+           for attempt in range(3):
+            try:
+             request=urllib.request.Request(base+relative,headers={'User-Agent':'HIGHFLY-native-cage-source-audit'})
+             with urllib.request.urlopen(request,timeout=45) as response:data=response.read()
+             break
+            except Exception:
+             if attempt==2:raise
+             time.sleep(3)
+           sha=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+           if sha!=expected:raise RuntimeError('Original source identity mismatch '+relative)
+           dest=(generated if relative.endswith('.ts') else inputs)/pathlib.Path(relative).name
+           dest.write_bytes(data)
+           print('FROZEN_ORIGINAL_VERIFIED',relative,len(data),sha)
+          assert (pathlib.Path('character-truth/prior/out/all_meshes.csv')).is_file()
+          assert (pathlib.Path('character-truth/prior/out/joint_diff.json')).is_file()
+          PY
+      - name: Compile existing ClaudeCraft modularPartNames instead of rewriting it
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false three@0.180.0 playwright@1.55.0 meshoptimizer@0.23.0 esbuild@0.25.12
+          npx esbuild character-truth/generated/modular.ts --bundle --format=esm --platform=browser --outfile=character-truth/generated/modular-runtime.mjs
+          node --input-type=module - <<'JS'
+          import assert from 'node:assert/strict';
+          import {ARMOR_SETS,ARMOR_SLOTS,DEFAULT_APPEARANCE,fullSet,modularPartNames,BODY_SLIDERS,FACE_SLIDERS} from './character-truth/generated/modular-runtime.mjs';
+          assert.equal(ARMOR_SETS.length,7);
+          assert.equal(ARMOR_SLOTS.length,7);
+          assert.equal(BODY_SLIDERS.length,7);
+          assert.equal(FACE_SLIDERS.length,8);
+          for (const gender of ['male','female']) {
+           const app={...DEFAULT_APPEARANCE,gender};
+           for(const kit of ARMOR_SETS){
+            const parts=modularPartNames(app,fullSet(kit));
+            assert(parts.includes(gender==='male'?'M_Head':'F_Head'));
+            assert(parts.some(x=>x.startsWith('Armor_'+kit+'_')));
+           }
+          }
+          console.log('ORIGINAL_MODULAR_PART_NAMES_GREEN=1');
+          JS
+          node --check character-truth/cage-gate.cjs
+      - name: Start isolated real character inspection browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/highfly-cage-server.log 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:4173/character-truth/cage.html >/dev/null
+          npx playwright install --with-deps chromium
+      - name: Measure exact skinned body vertices and 60 real morph extremes
+        shell: bash
+        timeout-minutes: 9
+        run: |
+          set -euo pipefail
+          node character-truth/cage-gate.cjs
+          test -s character-truth/cage-proof/cage-summary.json
+          test -s character-truth/cage-proof/per-mesh-cages.csv
+          test ! -f character-truth/inputs/edited-warrior.glb
+          git diff --exit-code -- .
+          echo "NO_NATIVE_OR_PF6_SOURCE_MUTATION_GREEN=1"
+      - name: Upload full-body native cage report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-character-native-full-body-cage
+          path: character-truth/cage-proof/
+          if-no-files-found: warn
+          retention-days: 30
