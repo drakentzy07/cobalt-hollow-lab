@@ -182,5 +182,5 @@ export function highflyAlchemyJewelCatalogValid():boolean {
     setting.resultItemId==='prismglass_setting' &&
     setting.skillReq===75 &&
     setting.reagents.some(r=>r.itemId==='quickening_catalyst'&&r.count===1) &&
-    loop?.reagents.some(r=>r.itemId==='prismglass_setting'&&r.count===3);
+    loop?.reagents.some(r=>r.itemId==='prismglass_setting'&&r.count===3) === true;
 }
