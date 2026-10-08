@@ -139,7 +139,6 @@ function visorShape(c,w,h,d,side,mat){
 }
 function tipQuill(c,w,h,d,side,layer,kind,mat,part){
  const s=side,back=kind==='crest';
- const bx=back?.05*w:*.0;
  const start=back
   ?new THREE.Vector3(c.x+s*w*(.14+layer*.09),c.y+h*(.45-layer*.05),c.z-d*(.12+layer*.05))
   :new THREE.Vector3(c.x+s*w*(.39+layer*.026),c.y+h*(.24-layer*.115),c.z-d*(.16+layer*.105));
