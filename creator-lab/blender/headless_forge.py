@@ -122,7 +122,26 @@ def main():
     for ob in result: ob.select_set(True)
     bpy.context.view_layer.objects.active=result[0]
     bpy.ops.export_scene.gltf(filepath=str(output),export_format="GLB",
-        use_selection=True,export_apply=True,export_yup=False)
+        use_selection=True,export_apply=True,export_yup=True)
+    # The target glTF/Three.js coordinate system is Y-up. Blender's Z-up
+    # internal edit space must be exported with the GLTF Y-up conversion.
+    # Roundtrip check: imported exported GLB must occupy the same Blender
+    # world region as the original generated geometry.
+    def world_bounds(objects):
+        corners=[ob.matrix_world@Vector(v) for ob in objects for v in ob.bound_box if ob.type=="MESH"]
+        lo=Vector((min(q[i] for q in corners) for i in range(3)))
+        hi=Vector((max(q[i] for q in corners) for i in range(3)))
+        return lo,hi
+    original_min,original_max=world_bounds(result)
+    existing=set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=str(output))
+    imported=[o for o in bpy.data.objects if o not in existing and o.type=="MESH"]
+    if len(imported)<7: raise ValueError("Blender exported geometry lost parts on GLB reload")
+    recovered_min,recovered_max=world_bounds(imported)
+    drift=max(abs(original_min[i]-recovered_min[i]) for i in range(3))
+    drift=max(drift,max(abs(original_max[i]-recovered_max[i]) for i in range(3)))
+    if drift>max(size)*.02:
+        raise ValueError(f"Blender/GLB Y-up roundtrip drift {drift:.6f} > tolerance")
     output_data=output.read_bytes()
     if len(output_data)<1000: raise ValueError("Blender wrote an empty model")
     report={
@@ -135,6 +154,8 @@ def main():
       "geometry_objects":len(result),
       "bevel_applied":True,
       "bezier_curves_converted":True,
+      "gltf_y_up_export":True,
+      "roundtrip_world_space_error":drift,
       "glb_bytes":len(output_data),
       "glb_sha256":hashlib.sha256(output_data).hexdigest(),
       "output":"RIGID HEAD ACCESSORY ONLY — not skinned clothing, no imported native figure"
