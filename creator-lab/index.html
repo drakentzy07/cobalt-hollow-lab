@@ -18,7 +18,7 @@ label{display:flex;justify-content:space-between;align-items:center;gap:8px;font
 label input[type=range]{flex:1;max-width:142px;min-width:40px;accent-color:#9b73ed}.precise{width:57px;padding:6px 4px;border-radius:7px;border:1px solid #54436e;background:#13101e;color:#fff;text-align:right;flex:none}.mini{padding:5px 7px;flex:none;font-size:12px}#transformControls label{margin:7px 0}label input[type=color]{width:46px;height:31px;padding:2px;border-radius:7px;border:1px solid #574c6d;background:#191624}label select{max-width:145px}
 input[type=checkbox]{accent-color:#9b73ed}.value{width:30px;text-align:right;color:#b4a4d7;font-size:10px}
 .status{padding:11px;border:1px solid #403852;border-radius:11px;background:#191422;font-size:10px;line-height:1.5;color:#cbbdeb;white-space:pre-wrap;min-height:53px}
-.stageFooter{position:absolute;right:12px;bottom:12px;z-index:2;display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.stageFooter{position:absolute;right:12px;bottom:12px;z-index:2;display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}#gizmoBar button{font-size:9px;padding:7px 4px}#gizmoBar button.active{border-color:#bb9dff;background:#3a2861}
 .stageFooter button{background:#0d0e19dd;backdrop-filter:blur(8px)}
 .legend{position:absolute;right:14px;top:13px;z-index:2;padding:9px 12px;background:#12121bcc;border:1px solid #363042;border-radius:10px;font-size:10px;color:#bdb3cb;max-width:220px}
 #error{display:none;position:absolute;left:350px;right:14px;bottom:66px;padding:13px;background:#481820;color:#fbb2bd;border:1px solid #95384d;z-index:6}
@@ -27,7 +27,7 @@ input[type=checkbox]{accent-color:#9b73ed}.value{width:30px;text-align:right;col
 @media(max-width:630px) and (orientation:portrait){.stage{inset:0 0 40% 0}aside{top:60%;bottom:0;width:100%;border-right:0;border-top:1px solid #29253b}.stageFooter{bottom:41%}#error{left:10px;bottom:41%}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.185.0/examples/jsm/"}}</script>
-</head><body><div id="app"><header><div class="name"><span class="glyph"></span><div><h1>HIGHFLY · CREATOR LAB V0.2</h1><div class="sub">CAJA MÁGICA · FORJA 3D · PERSONAJE REAL</div></div></div><div class="pill" id="rigPill">Rig_Medium cargando…</div></header>
+</head><body><div id="app"><header><div class="name"><span class="glyph"></span><div><h1>HIGHFLY · CREATOR LAB V0.3 · TOOLBOX</h1><div class="sub">CAJA MÁGICA · FORJA 3D · PERSONAJE REAL</div></div></div><div class="pill" id="rigPill">Rig_Medium cargando…</div></header>
 <main><div class="stage" id="stage"></div><aside>
 <section><h2>01 · Taller profesional</h2><p>Diseñamos sobre el Warrior auténtico. Las plumas son geometría curva propia, no imágenes. Todo queda aislado del juego.</p>
 <div class="status" id="status">Preparando la forja…</div></section>
@@ -41,29 +41,39 @@ input[type=checkbox]{accent-color:#9b73ed}.value{width:30px;text-align:right;col
 <input id="helmetCrestNumber" type="number" min="50" max="165" step="1" value="110" class="precise"></label>
 <label>Luz violeta <input id="helmetGlow" type="range" min="0" max="200" value="90" step="1">
 <input id="helmetGlowNumber" type="number" min="0" max="200" step="1" value="90" class="precise"></label>
+<label>Ojos: ajuste fino <input id="helmetEye" type="range" min="-35" max="35" value="0" step="1"><input id="helmetEyeNumber" type="number" min="-35" max="35" value="0" class="precise"></label>
 <label>Mostrar plumas de prueba <input type="checkbox" id="showFeathers"></label>
 <div class="hint">La máscara tiene piezas individuales: carcasa, pico, ojos, rebordes, mejillas, plumas y cristal.</div></section>
-<section><h2>03 · Seleccionar y crear plumas</h2><div id="parts"></div>
+<section><h2>03 · Guías de anatomía real</h2>
+<p>Marcas calculadas desde <b>M_Eye_almond</b>, M_Brow_soft y M_Mouth_neutral del modelo real, no dibujadas a ojo.</p>
+<div class="row"><button id="guidesBtn">Mostrar guías</button><button id="faceFocusBtn">Enfocar ojos</button></div>
+<div id="faceReport" class="hint">Buscando referencias anatómicas…</div></section>
+<section><h2>04 · Seleccionar y crear plumas</h2><div id="parts"></div>
 <div class="row"><button id="addBtn" class="primary">+ Nueva pluma</button><button id="duplicateBtn">Duplicar</button><button id="deleteBtn">Eliminar</button></div>
-<label>Simetría <input id="symmetry" type="checkbox" checked></label></section>
-<section><h2>04 · Curvas y precisión numérica</h2>
+<label>Simetría <input id="symmetry" type="checkbox" checked></label>
+<div class="row" id="gizmoBar"><button id="gizmoMove">Mover 3D</button><button id="gizmoRotate">Girar 3D</button><button id="gizmoScale">Escalar 3D</button><button id="gizmoOff">Sin gizmo</button></div>
+<label>Snapping (pasos exactos) <input id="gizmoSnap" type="checkbox" checked></label>
+<div class="hint">Manipulador de la pluma seleccionada, con posición, rotación y escala. El casco no cambia.</div></section>
+<section><h2>05 · Curvas y precisión numérica</h2>
 <label>Largo <input id="length" type="range" min="18" max="190" step="1"><input class="precise" type="number" id="lengthNumber"><button class="mini" id="lengthReset" title="Restaurar este parámetro">↺</button></label>
 <label>Ancho <input id="width" type="range" min="4" max="50" step="1"><input class="precise" type="number" id="widthNumber"><button class="mini" id="widthReset" title="Restaurar este parámetro">↺</button></label>
 <label>Curvatura <input id="bend" type="range" min="-100" max="100" step="1"><input class="precise" type="number" id="bendNumber"><button class="mini" id="bendReset" title="Restaurar este parámetro">↺</button></label>
 <label>Apertura <input id="tilt" type="range" min="-120" max="120" step="1"><input class="precise" type="number" id="tiltNumber"><button class="mini" id="tiltReset" title="Restaurar este parámetro">↺</button></label>
 <label>Torsión <input id="twist" type="range" min="-75" max="75" step="1"><input class="precise" type="number" id="twistNumber"><button class="mini" id="twistReset" title="Restaurar este parámetro">↺</button></label>
 <div class="hint">Arrastrá el slider o escribí exactamente el número. ↺ restaura sólo ese valor.</div></section>
-<section><h2>05 · Transformación individual</h2>
+<section><h2>06 · Transformación individual</h2>
 <div class="hint">Posición X/Y/Z · Rotación grados X/Y/Z · Escala por pieza, sin alterar la armadura ni el esqueleto.</div>
 <div id="transformControls"></div></section>
-<section><h2>06 · Pintura por detalle</h2>
+<section><h2>07 · Pintura por detalle</h2>
 <label>Superficie <input id="color" type="color"></label><label>Nervadura <input id="accent" type="color"></label>
 <label>Material <select id="material"><option value="graphite">Acero grafito</option><option value="silver">Acero frío</option><option value="leather">Cuero</option><option value="arcane">Arcano</option></select></label>
 <div class="hint">Elegí una pluma con un clic en el personaje o desde la lista. Pintar no une ni destruye las otras piezas.</div></section>
-<section><h2>07 · Historial y exportación</h2>
+<section><h2>08 · QA y guardado</h2>
 <div class="row"><button id="undoBtn">↶ Deshacer</button><button id="redoBtn">↷ Rehacer</button><button id="resetBtn">⟲ Reiniciar</button></div>
 <div class="row"><button id="saveBtn">💾 Guardar</button><button id="loadBtn">↩ Cargar</button></div>
-<div class="row"><button id="recipeBtn">Exportar receta JSON</button><button id="exportBtn" class="primary">Exportar pieza GLB</button></div>
+<div class="row"><button id="recipeBtn">Exportar receta JSON</button><button id="importBtn">Importar receta JSON</button><input type="file" id="importFile" accept=".json,application/json" hidden></div>
+<div class="row"><button id="qualityBtn">Auditar malla</button><button id="exportBtn" class="primary">Exportar pieza GLB</button></div>
+<div id="qualityReport" class="hint">Verificación geométrica en preparación.</div>
 <p>Exporta casco y plumas como accesorios rígidos para <b>head</b>. No exporta el Warrior ni transforma piezas corporales en skinned meshes.</p></section>
 </aside>
 <div class="legend">Orbitar: arrastrar · Zoom: rueda/pinch · Clic: seleccionar pieza<br><span id="diag">Cargando modelo original…</span></div>
