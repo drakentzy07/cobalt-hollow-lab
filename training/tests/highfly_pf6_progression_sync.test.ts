@@ -69,6 +69,7 @@ describe('HIGHFLY PF-6 C: single-authority gameplay progression projection', () 
     }));
     const before = getActiveHighflyHunterProfile();
     expect(syncHighflyPf6FromGameplay(local(50, 50, 999))).toBeNull();
+    expect(syncHighflyPf6FromGameplay({ ...local(50, 50), eventEntityId: undefined })).toBeNull();
     expect(syncHighflyPf6FromGameplay({ ...local(50, 50), classId: 'mage' })).toBeNull();
     expect(syncHighflyPf6FromGameplay(local(100, 2))).toBeNull();
     expect(syncHighflyPf6FromGameplay(local(1.5, 2))).toBeNull();
