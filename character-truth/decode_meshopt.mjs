@@ -59,7 +59,7 @@ for(let i=0;i<(model.bufferViews||[]).length;i++){
   destination.ranges.push([targetStart,targetStart+decompressedLen]);
   views++;
 }
-if(!views)throw Error('No EXT_meshopt_compression views were found despite virtual buffers');
+if(!views&&byIndex.size)throw Error('No EXT_meshopt_compression views were found despite virtual buffers');
 fs.mkdirSync(dest,{recursive:true});
 for(const [i,item] of byIndex.entries()){
   if(item.ranges.length===0)throw Error('Unpopulated virtual buffer '+i);
