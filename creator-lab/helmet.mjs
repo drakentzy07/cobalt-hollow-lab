@@ -137,7 +137,7 @@ function visorShape(c,w,h,d,side,mat){
  ];
  return face(v,[[0,1,2],[0,2,3],[0,3,4]],mat,side<0?'EyeLeft':'EyeRight','visor');
 }
-function tipQuill(c,w,h,d,side,layer,kind,mat,part){
+function tipQuill(c,w,h,d,side,layer,kind,mat,part,factor=1){
  const s=side,back=kind==='crest';
  const start=back
   ?new THREE.Vector3(c.x+s*w*(.14+layer*.09),c.y+h*(.45-layer*.05),c.z-d*(.12+layer*.05))
@@ -145,6 +145,7 @@ function tipQuill(c,w,h,d,side,layer,kind,mat,part){
  const dst=back
   ?new THREE.Vector3(c.x+s*w*(.34+layer*.17),c.y+h*(.90+layer*.045),c.z-d*(.62+layer*.12))
   :new THREE.Vector3(c.x+s*w*(.67+layer*.065),c.y-h*(.07+layer*.12),c.z-d*(.68+layer*.13));
+ dst.sub(start).multiplyScalar(factor).add(start);
  const middle=start.clone().lerp(dst,.43).add(new THREE.Vector3(s*w*.04,h*.12,0));
  return ribbonSurface([start,middle,dst],[w*(back?.14:.19),w*.008],mat,(back?'Crest':'CheekFeather')+'_'+(s<0?'L':'R')+'_'+layer,part,w*.011);
 }
@@ -181,7 +182,7 @@ export function buildLegendaryHelmet(bounds,input){
      new THREE.Vector3(c.x+side*w*.61,c.y-h*.31,c.z+d*.12),
      new THREE.Vector3(c.x+side*w*.47,c.y-h*.55,c.z-d*.18)
    ],[w*.14,w*.012],mats.cheeks,'CheekArmor_'+side,'cheeks'));
-   for(let layer=0;layer<4;layer++)add(tipQuill(c,w,h,d,side,layer,'crest',mats.crest,'crest'));
+   for(let layer=0;layer<4;layer++)add(tipQuill(c,w,h,d,side,layer,'crest',mats.crest,'crest',options.crest));
    for(let layer=0;layer<4;layer++)add(tipQuill(c,w,h,d,side,layer,'nape',mats.nape,'nape'));
  }
  const points=[
