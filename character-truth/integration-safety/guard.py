@@ -8,6 +8,7 @@ changed=[p for p in run("diff","--name-only",base,head).splitlines() if p]
 allowed={
 "character-truth/SKIN3_FACTORY_INTEGRATION_DECISION.md",
 ".github/workflows/skin3-integration-zero-overlap.yml",
+".github/workflows/skin3-integration-painter-v3.yml",
 "character-truth/integration-safety/guard.py",
 }
 prefixes=("character-truth/integration-safety/","character-truth/integration-modules/")
