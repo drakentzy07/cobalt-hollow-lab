@@ -78,8 +78,9 @@ function inspect(x={}){
    if(b.position.distanceTo(start.p)>0.00003||1-Math.abs(b.quaternion.dot(start.q))>0.00001)moved++;
    if(!b.matrixWorld.elements.every(Number.isFinite))finite=false;
  }
- const head=boneMap.find(b=>b.name==='head'),foot=boneMap.find(b=>b.name==='foot.l');
- if(!head||!foot)throw Error('Original head/foot bones missing');
+ const canonical=(n)=>n.toLowerCase().replace(/[^a-z0-9]/g,'');
+ const head=boneMap.find(b=>canonical(b.name)==='head'),foot=boneMap.find(b=>canonical(b.name)==='footl');
+ if(!head||!foot)throw Error('Original head/foot bones missing. Observed: '+boneMap.map(b=>b.name).join(','));
  const centre=head.getWorldPosition(new THREE.Vector3()).add(foot.getWorldPosition(new THREE.Vector3())).multiplyScalar(0.5);
  const height=Math.max(0.8,head.getWorldPosition(new THREE.Vector3()).distanceTo(foot.getWorldPosition(new THREE.Vector3()))*1.5);
  const v={front:[0,0,1],profile:[1,0,0],back:[0,0,-1],threequarter:[0.8,0,1]};
