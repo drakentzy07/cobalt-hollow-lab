@@ -84,7 +84,6 @@ describe('HIGHFLY PR-7: verified Smith+Cooking Knowledge separate from recipes',
 
   it('real fishing and monster cooking teach source Knowledge, not Recipe acquisition',()=>{
     const sim=create(704),pid=sim.playerId;
-    const initial=sim.serializeCharacter(pid)!;
     expect(craft(sim,'recipe_pan_seared_perch').ok).toBe(true);
     expect(craft(sim,'recipe_tough_jerky').ok).toBe(true);
     const got=sim.highflyKnowledgeStatus().learned.map(k=>k.id);
@@ -92,11 +91,10 @@ describe('HIGHFLY PR-7: verified Smith+Cooking Knowledge separate from recipes',
     expect(got).toContain('source.monster_provisions');
     expect(got).not.toContain('source.farm_produce');
     expect(got).not.toContain('technique.diverse_provisions');
-    expect(sim.serializeCharacter(pid)!.knownRecipes).toEqual(
-      sim.players.get(pid)!.knownRecipes instanceof Set
-        ? [...sim.players.get(pid)!.knownRecipes].sort()
-        : initial.knownRecipes,
-    );
+    const saved=sim.serializeCharacter(pid)!;
+    expect(saved.knownRecipes).toContain('recipe_pan_seared_perch');
+    expect(saved.highflyProfessions?.knowledge).toContain('source.river_perch');
+    expect(saved.knownRecipes).not.toContain('recipe_laden_hearth');
   });
 
   it('real farm cooking completes deterministic three-source provisioning Knowledge',()=>{
