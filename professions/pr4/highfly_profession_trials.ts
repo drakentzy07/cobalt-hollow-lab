@@ -101,7 +101,7 @@ export function recordCookingTrialProof(
   professionId: string,
   recipeId: string,
 ): SavedHighflyProfessionStateV1 | undefined {
-  if (professionId !== 'cooking' || !cookingTrialIsPending(s)) return s;
+  if (!s || professionId !== 'cooking' || !cookingTrialIsPending(s)) return s;
   const proof = COOKING_PROOFS[recipeId];
   if (!proof || s?.evidence?.[proof] === 1) return s;
   const evidence = { ...(s?.evidence ?? {}) };
