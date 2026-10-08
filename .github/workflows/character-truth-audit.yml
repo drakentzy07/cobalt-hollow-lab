@@ -143,3 +143,37 @@ jobs:
             character-truth/decoded/*/meshopt-decoding-evidence.json
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Install source-only browser renderer
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false three@0.180.0 playwright@1.55.0 meshoptimizer@0.23.0
+          npx playwright install --with-deps chromium
+          node --check character-truth/dynamic-gate.cjs
+          test -s character-truth/inputs/warrior_modular.glb
+
+      - name: Serve original sources in isolated local viewer
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/skin3-http.log 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:4173/character-truth/dynamic-audit.html > /dev/null
+
+      - name: Render and capture genuine male female kits and clips
+        shell: bash
+        timeout-minutes: 9
+        run: |
+          set -euo pipefail
+          node character-truth/dynamic-gate.cjs
+          test -s character-truth/dynamic-proof/dynamic-report.json
+          git diff --exit-code -- .
+
+      - name: Upload native pose screenshots — NOT a clipping certification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-character-truth-dynamic-source-frames
+          path: character-truth/dynamic-proof/
+          if-no-files-found: warn
+          retention-days: 30

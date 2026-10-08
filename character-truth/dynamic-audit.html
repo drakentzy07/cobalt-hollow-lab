@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HIGHFLY SKIN3 — Original GLB Motion Evidence</title>
+<style>
+body{margin:0;background:#14111e;color:#e9e5fa;font:14px system-ui}
+header{padding:14px 20px;border-bottom:1px solid #56436d}h1{margin:0;font-size:18px}
+p{margin:5px 0;color:#baa9cd}main{display:grid;grid-template-columns:1fr 280px}
+#viewport{height:740px}aside{padding:16px;border-left:1px solid #56436d}
+label{display:block;margin:12px 0 4px}select,button{width:100%;padding:8px;background:#302840;color:white;border:1px solid #76618f}
+pre{font:12px monospace;white-space:pre-wrap;word-wrap:break-word}
+@media(max-width:750px){main{grid-template-columns:1fr}#viewport{height:440px}}
+</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head>
+<body>
+<header><h1>HIGHFLY · SKIN 3 — CHARACTER TRUTH</h1>
+<p>GLB oficiales intactos · Animaciones reales · Evidencia de laboratorio, NO aprobación de clipping ni de PF-6</p></header>
+<main><div id="viewport"></div><aside>
+<label>Origen</label><select id="model"><option value="modular">warrior_modular.glb</option><option value="knight">knight.glb</option></select>
+<label>Anatomía</label><select id="gender"><option value="male">Masculina</option><option value="female">Femenina</option></select>
+<label>Conjunto</label><select id="set"><option value="none">Sin armadura</option><option value="knight">Knight</option><option value="barbarian">Barbarian</option><option value="druid">Druid</option><option value="mage">Mage</option><option value="paladin">Paladin</option><option value="ranger">Ranger</option><option value="rogue">Rogue</option></select>
+<label>Clip</label><select id="clip"><option>Idle</option><option>Walking_A</option><option>Running_A</option><option>Jump_Idle</option><option>1H_Melee_Attack_Chop</option><option>Block</option><option>Hit_A</option><option>Shield_Bash</option><option>Warrior_Heroic_Leap</option></select>
+<label>Cámara</label><select id="view"><option value="front">Frente</option><option value="profile">Perfil</option><option value="back">Espalda</option><option value="threequarter">3/4</option></select>
+<button id="apply">Inspeccionar original</button><pre id="diagnostics">Cargando fuentes auténticas…</pre>
+</aside></main>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {MeshoptDecoder} from '/node_modules/meshoptimizer/meshopt_decoder.module.js';
+const diag={ready:false,error:null,loaded:[],records:[]};
+window.__HF_SKIN3_DYNAMIC__=diag;
+const host=document.querySelector('#viewport');
+const scene=new THREE.Scene();scene.background=new THREE.Color('#232234');
+const camera=new THREE.PerspectiveCamera(37,1,0.05,200);
+scene.add(new THREE.HemisphereLight(0xffffff,0x4b5077,2.4));
+for(const v of [[4,6,5],[-4,3,-5]]){const light=new THREE.DirectionalLight(0xffffff,2.8);light.position.set(...v);scene.add(light);}
+const renderer=new THREE.WebGLRenderer({antialias:false,preserveDrawingBuffer:true});
+renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);
+const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
+const names=['warrior_modular','knight','knight_hit_variety_anims','warrior_ability_anims','warrior_fury_anims','warrior_contact_anims'];
+const assets={};let active=null;
+const baseNames=new Set(['Head','Torso','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR','Loin','Top','Eye_almond','Brow_soft','Ear_round','Mouth_neutral']);
+function partVisible(name,gender,set,model){
+ if(model==='knight')return true;
+ if(name.startsWith('Armor_'))return set!=='none'&&name.startsWith('Armor_'+set+'_');
+ const g=gender==='female'?'F_':'M_';
+ if(name.startsWith('F_')||name.startsWith('M_')){
+   if(!name.startsWith(g))return false;
+   const key=name.slice(2).replace(/_\d+$/,'');
+   return baseNames.has(key)&&!(key==='Loin'&&set!=='none');
+ }
+ return false;
+}
+function drawSize(){
+ const w=Math.max(350,host.clientWidth),h=Math.max(350,host.clientHeight);
+ renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+}
+function inspect(x={}){
+ const model=x.model||'modular',gender=x.gender||'male',set=x.set||'none',clipName=x.clip||'Idle',view=x.view||'front';
+ if(active)scene.remove(active);
+ active=assets[model].scene;scene.add(active);
+ let meshes=0,armors=0,body=false;
+ active.traverse(o=>{if(!o.isMesh)return;o.visible=partVisible(o.name,gender,set,model);o.frustumCulled=false;
+  if(o.visible){meshes++;if(o.name.startsWith('Armor_'))armors++;if(o.name===(gender==='male'?'M_Head':'F_Head'))body=true;}});
+ if(model==='modular'&&(!body||(set!=='none'&&!armors)))throw Error('Source male/female kit nodes missing: '+gender+' '+set);
+ const boneMap=[];active.traverse(o=>{if(o.isBone)boneMap.push(o)});
+ const before=boneMap.map(b=>({p:b.position.clone(),q:b.quaternion.clone(),s:b.scale.clone()}));
+ const clips=[...assets[model].animations,...names.slice(2).flatMap(s=>assets[s].animations)];
+ const clip=clips.find(a=>a.name===clipName);if(!clip)throw Error('Native source clip missing '+clipName);
+ const mixer=new THREE.AnimationMixer(active),action=mixer.clipAction(clip);action.reset().play();
+ const t=Math.min(clip.duration*0.45,0.5);mixer.update(t);active.updateMatrixWorld(true);
+ let moved=0,finite=true;
+ for(let i=0;i<boneMap.length;i++){
+   const b=boneMap[i],start=before[i];
+   if(b.position.distanceTo(start.p)>0.00003||1-Math.abs(b.quaternion.dot(start.q))>0.00001)moved++;
+   if(!b.matrixWorld.elements.every(Number.isFinite))finite=false;
+ }
+ const head=boneMap.find(b=>b.name==='head'),foot=boneMap.find(b=>b.name==='foot.l');
+ if(!head||!foot)throw Error('Original head/foot bones missing');
+ const centre=head.getWorldPosition(new THREE.Vector3()).add(foot.getWorldPosition(new THREE.Vector3())).multiplyScalar(0.5);
+ const height=Math.max(0.8,head.getWorldPosition(new THREE.Vector3()).distanceTo(foot.getWorldPosition(new THREE.Vector3()))*1.5);
+ const v={front:[0,0,1],profile:[1,0,0],back:[0,0,-1],threequarter:[0.8,0,1]};
+ camera.position.copy(centre).addScaledVector(new THREE.Vector3(...(v[view]||v.front)).normalize(),height*2.3).add(new THREE.Vector3(0,height*0.12,0));
+ camera.lookAt(centre);drawSize();renderer.render(scene,camera);
+ const result={model,gender,set,clip:clipName,view,movedBones:moved,jointNodes:boneMap.length,finite,visibleMeshes:meshes,
+  visibleArmorMeshes:armors,triangles:renderer.info.render.triangles,sourceOnly:true,PF6RuntimeCertified:false,clippingCertified:false};
+ diag.records.push(result);diag.last=result;document.querySelector('#diagnostics').textContent=JSON.stringify(result,null,2);
+ mixer.stopAllAction();mixer.uncacheRoot(active);
+ // Restore browser-only original bind transforms. Never touch the source GLBs.
+ for(let i=0;i<boneMap.length;i++){boneMap[i].position.copy(before[i].p);boneMap[i].quaternion.copy(before[i].q);boneMap[i].scale.copy(before[i].s);}
+ return result;
+}
+diag.inspect=inspect;
+document.querySelector('#apply').onclick=()=>{try{inspect(Object.fromEntries(['model','gender','set','clip','view'].map(k=>[k,document.getElementById(k).value])));}catch(e){document.querySelector('#diagnostics').textContent=String(e)}};
+window.addEventListener('resize',drawSize);
+(async()=>{try{
+ await MeshoptDecoder.ready;
+ for(const stem of names){assets[stem]=await loader.loadAsync('/character-truth/inputs/'+stem+'.glb');diag.loaded.push({source:stem,clips:assets[stem].animations.map(a=>a.name)});}
+ diag.ready=true;inspect({model:'modular',gender:'male',set:'knight'});
+}catch(e){diag.error=String(e.stack||e);document.querySelector('#diagnostics').textContent=diag.error;console.error(e);}})();
+</script></body></html>
