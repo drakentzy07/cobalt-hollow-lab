@@ -4,7 +4,6 @@ import { MOBS } from '../src/sim/data';
 import { createMob } from '../src/sim/entity';
 import { Sim } from '../src/sim/sim';
 import { MAX_LEVEL, xpForLevel } from '../src/sim/types';
-import type { Entity } from '../src/sim/types';
 import {
   HIGHFLY_TRAINING_SCORING_VERSION,
   allocateTrainingPoints,
@@ -58,8 +57,7 @@ describe('HIGHFLY PF-6 D: real donor XP, gameplay events and persistence', () =>
     );
     expect(xpEvents).toHaveLength(1);
     const credited = xpEvents[0];
-    expect(credited.type).toBe('xp');
-    if (credited.type !== 'xp') throw new Error('Missing XP event');
+    if (!credited || credited.type !== 'xp') throw new Error('Missing XP event');
     expect(credited.amount).toBeGreaterThan(0);
     expect(sim.xp).toBe(beforeXp + credited.amount);
     expect(sim.players.get(player.id)!.lifetimeXp).toBe(beforeLifetime + credited.amount);
