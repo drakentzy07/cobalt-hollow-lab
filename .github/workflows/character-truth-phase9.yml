@@ -1,0 +1,102 @@
+name: HIGHFLY SKIN3 — NATIVE EQUIPMENT VISUAL BRIDGE
+on:
+  push:
+    branches: [highfly-character-truth-audit-01]
+    paths:
+      - 'character-truth/phase9-equipment-visual-bridge.mjs'
+      - 'character-truth/SKIN3_PHASE9_EQUIPMENT.md'
+      - '.github/workflows/character-truth-phase9.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  source-only-inventory-visual-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse existing M F seven-slot native armor proof
+        uses: actions/download-artifact@v4
+        with:
+          name: highfly-skin3-original-7-slot-mixed-armor-proof
+          run-id: 37825143482
+          github-token: ${{ github.token }}
+          path: character-truth/phase8-prior
+      - name: Verify exact source SHA for authoritative gameplay and render files
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,pathlib,urllib.request,time
+          sha='9b57e49c9676d75962700f828cc00a50a9a988b5'
+          pins={
+           'src/sim/types.ts':'615266ac42c5dc71d0f1f02deef2bd8cddf826bc',
+           'src/sim/entity.ts':'43fb9f6e96512fe54d88be36ea945e2746b192be',
+           'src/sim/items.ts':'ec8acb932c0d234d8d40a9aa336d43710b132e98',
+           'src/sim/equipment_rules.ts':'f60a1423c05318eb8a422cdf3d8bcbcb51f6b61d',
+           'src/sim/character_state.ts':'1bf5ca2cd524c1645f4cfefc5373e63ecee6461b',
+           'src/sim/professions/crafting.ts':'8d4a6d340c4be5e8c93b4456d30baeaa7794d963',
+           'src/world_api/inventory.ts':'3e0a25a657acdeb63ceb26e0da5d5626cbd2ccbf',
+           'src/render/characters/player_look_core.ts':'c20da88f6c9e56c1df5d452fb88a76c5b2721666',
+           'src/render/characters/modular.ts':'d2ad732114b01a0aa9de5a882e0a6980d54225fb',
+           'src/render/characters/underhair.generated.ts':'630408c0ffbffb61d06e1a398f28b0d89f820dfe',
+           'src/render/characters/assets.ts':'836769f9ccd5db9ea5d076a2181a0354318a203d',
+           'src/net/weapon_skin_optimistic.ts':'cd7ba8c258b6d6c6c188f411d3b573e18431f779',
+           'src/sim/content/weapon_skins.ts':'b1992499fe73f705346d82878f4d8e287b10bd04'
+          }
+          src=pathlib.Path('character-truth/phase9-original')
+          for file,expected in pins.items():
+           url='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/'+sha+'/'+file
+           for i in range(3):
+            try:
+             req=urllib.request.Request(url,headers={'User-Agent':'HIGHFLY-SKIN3-PF6-readonly-equipment-bridge'})
+             with urllib.request.urlopen(req,timeout=45) as response:content=response.read()
+             break
+            except Exception:
+             if i==2:raise
+             time.sleep(2)
+           digest=hashlib.sha1(b'blob '+str(len(content)).encode()+b'\x00'+content).hexdigest()
+           if digest!=expected:raise RuntimeError('SOURCE_PIN_FAIL '+file)
+           output=src/file
+           output.parent.mkdir(parents=True,exist_ok=True)
+           output.write_bytes(content)
+           print('SOURCE_PIN_GREEN',file,digest)
+          prior=json.loads(pathlib.Path('character-truth/phase8-prior/seven-slot-results.json').read_text())
+          assert prior['green'] and len(prior['cases'])==116
+          print('ORIGINAL_SEVEN_SLOT_EVIDENCE_REUSED_GREEN=116')
+          PY
+      - name: Compile actual untouched upstream sim and visual pure modules
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false esbuild@0.25.12
+          mkdir -p character-truth/phase9-original/sim character-truth/phase9-original/render/characters
+          for name in types equipment_rules; do
+            npx esbuild "character-truth/phase9-original/src/sim/$name.ts" --bundle --format=esm --platform=node \
+              --outfile="character-truth/phase9-original/sim/$name.mjs"
+          done
+          npx esbuild character-truth/phase9-original/src/render/characters/modular.ts \
+            --bundle --format=esm --platform=node \
+            --outfile=character-truth/phase9-original/render/characters/modular.mjs
+          node --check character-truth/phase9-equipment-visual-bridge.mjs
+      - name: Prove 13 real equipment slots, 7 original armor slots, authoritative actions and gaps
+        shell: bash
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          node character-truth/phase9-equipment-visual-bridge.mjs
+          test -s character-truth/phase9-proof/equipment-visual-bridge.json
+          test -s character-truth/phase9-proof/PHASE9_VERDICT.md
+          git diff --exit-code -- .
+          echo "SKIN3_NATIVE_EQUIPMENT_SOURCE_READONLY_PF6_FOUNDATION_SAFE=1"
+      - name: Upload source truth and exact missing integration gates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-skin3-original-13-to-7-equipment-source-bridge
+          path: character-truth/phase9-proof/
+          retention-days: 30
+          if-no-files-found: warn
