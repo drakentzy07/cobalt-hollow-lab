@@ -38,13 +38,15 @@ const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamp
 
 let actor=null,headBone=null,bounds=null,mixer=null,clips=[],accessory=null,helmetRoot=null,headSurfaceMeshes=[],selectedId='crown',selectedHelmetPart='beak',activeClip='Idle';
 let landmarks=null,faceGuideRoot=null,showGuides=false,gizmoMode=null,gizmoBaseline=null,applyingGizmo=false;
+let blenderForge=null,blenderPreview=false,blenderMeshes=0;
 let recipe=defaultRecipe(),undo=[],redo=[],dragBaseline=null,uid=0,requestCount=0;
 const DIAG=window.__CREATOR_DIAG__={ready:false,error:null,product:'HIGHFLY_CREATOR_LAB',sourceBlob:SOURCE.blob,sourceBytes:SOURCE.bytes,
   isolated:true,nativeRig:false,realHead:false,clips:0,bones:0,geometries:0,vertices:0,nonfinite:0,version:1,undoDepth:0,redoDepth:0,
   exportedBytes:0,saved:false,headReferenceReal:false,selectedId,featherCount:0,sourceOriginalIntact:true,
   helmetReady:false,helmetAttached:false,helmetMeshCount:0,helmetPartCount:0,helmetVisible:false,helmetSelectedPart:'beak',fullFaceFitted:false,faceFitParts:0,faceFitCoverage:null,faceFitWarnings:[],
   faceLandmarksVerified:false,landmarkCount:0,nativeEyeY:null,eyeYResult:null,gizmoAttached:false,gizmoMode:null,
-  quality:null,toolboxVersion:3};
+  quality:null,toolboxVersion:3,blenderAssetAvailable:false,blenderNativeHeadMounted:false,
+  blenderPreviewActive:false,blenderMeshCount:0,exportContainsBlender:false};
 
 function report(msg,isError=false){
   byId('status').textContent=msg;if(isError){DIAG.error=msg;byId('error').style.display='block';byId('error').textContent=msg}
@@ -112,6 +114,34 @@ updateGizmoSnap();
 for(const [btn,mode] of [['gizmoMove','translate'],['gizmoRotate','rotate'],['gizmoScale','scale'],['gizmoOff',null]])
   byId(btn).onclick=()=>setGizmoMode(mode);
 byId('gizmoSnap').onchange=updateGizmoSnap;
+function syncBlenderPreview(){
+  const active=!!(blenderPreview&&blenderForge&&recipe.helmet.enabled);
+  if(blenderForge)blenderForge.visible=active;
+  if(helmetRoot)helmetRoot.traverse(o=>{
+    if(!o.isMesh)return;
+    if(o.name.includes('CurvedAvianBeak')||o.name.startsWith('HIGHFLY_Avian_Crest_'))
+      o.visible=!active;
+  });
+  DIAG.blenderPreviewActive=active;
+  DIAG.blenderNativeHeadMounted=!!blenderForge&&blenderForge.parent===headBone;
+  DIAG.blenderMeshCount=blenderMeshes;
+  byId('blenderPreviewBtn').classList.toggle('active',active);
+  if(blenderForge&&blenderPreview){
+    byId('blenderReport').textContent=active
+      ?'Pico y 6 plumas Blender visibles · montaje rígido head · comparación experimental.'
+      :'Pieza Blender oculta porque el casco está desactivado.';
+  }else if(blenderForge){
+    byId('blenderReport').textContent='Pieza Blender lista: '+blenderMeshes+
+      ' mallas. Activá comparación para verla sin modificar el GLB original.';
+  }
+}
+byId('blenderPreviewBtn').onclick=()=>{
+  if(!blenderForge){report('Primero debe cargarse la pieza GLB validada de Blender.');return;}
+  blenderPreview=true;syncBlenderPreview();cameraHeadView('three');
+  report('Comparación Blender activada: nuevo pico y seis plumas reales. Pieza original preservada.');
+};
+byId('blenderOffBtn').onclick=()=>{blenderPreview=false;syncBlenderPreview();
+  report('Comparación desactivada: restaurada geometría original del casco.');};
 function rebuild(){
   if(!headBone||!bounds)return;
   gizmo.detach();gizmo.getHelper().visible=false;
@@ -150,7 +180,7 @@ function rebuild(){
   byId('qualityReport').textContent=qa.triangles+' triángulos · '+qa.materials+' materiales · '+
     (qa.mobileBudget?'presupuesto móvil OK':'revisar presupuesto móvil')+
     (qa.warnings.length?' · '+qa.warnings.join('; '):'');
-  markSelection();syncGizmo();return ck;
+  markSelection();syncGizmo();syncBlenderPreview();return ck;
 }
 function markSelection(){
   if(!accessory)return;
@@ -266,10 +296,14 @@ function load(){
 }
 async function exportGLB(download=true){
   if(!accessory)throw Error('No hay accesorio preparado');
-  const safe=inspectAccessory(accessory);
-  if(!safe.valid||!safe.mobileBudget)throw Error('Malla inválida o fuera de presupuesto móvil: '+JSON.stringify(safe));
-  // Export accessory only. Native rig and base avatar are intentionally excluded.
+  // Export original helmet with the Blender-forged replacement, if selected.
+  // Native rig and base avatar are intentionally excluded.
   const clone=accessory.clone(true);
+  const withForge=!!(blenderPreview&&blenderForge&&recipe.helmet.enabled);
+  if(withForge)clone.add(blenderForge.clone(true));
+  const safe=inspectAccessory(clone);
+  if(!safe.valid||!safe.mobileBudget)throw Error('Malla inválida o fuera de presupuesto móvil: '+JSON.stringify(safe));
+  DIAG.exportContainsBlender=withForge;
   clone.updateMatrixWorld(true);
   const exporter=new GLTFExporter();
   const data=await exporter.parseAsync(clone,{binary:true,onlyVisible:true,trs:true});
@@ -491,6 +525,25 @@ async function boot(){
         ' · Ajuste conjunto del casco, no sólo del visor.'
       :'REFERENCIA INCOMPLETA: falta M_Eye_almond bilateral; no se simularon ojos.';
     if(!landmarks.verified)throw Error('Se requiere referencia ocular izquierda/derecha auténtica; no se acepta proxy');
+    // Separate validated build artifact, authored by Blender and NOT a replacement
+    // for the authentic Warrior or for the browser-generated helmet.
+    try{
+      const forged=await loader.loadAsync('./assets/blender/highfly-blender-forge.glb');
+      blenderForge=forged.scene;
+      blenderForge.name='HIGHFLY_NATIVE_HEAD_BLENDER_FORGE_PREVIEW';
+      blenderMeshes=0;
+      blenderForge.traverse(o=>{if(o.isMesh){blenderMeshes++;o.castShadow=true;o.receiveShadow=true}});
+      if(blenderMeshes!==7)throw Error('Artefacto Blender incompleto: '+blenderMeshes+' mallas');
+      headBone.add(blenderForge);blenderForge.visible=false;
+      DIAG.blenderAssetAvailable=true;
+      DIAG.blenderNativeHeadMounted=blenderForge.parent===headBone;
+      DIAG.blenderMeshCount=blenderMeshes;
+      byId('blenderPreviewBtn').disabled=false;byId('blenderOffBtn').disabled=false;
+    }catch(err){
+      if(blenderForge){blenderForge.removeFromParent();blenderForge=null}
+      DIAG.blenderAssetAvailable=false;
+      byId('blenderReport').textContent='Forja Blender no incluida en este build: '+err.message;
+    }
     mixer=new THREE.AnimationMixer(actor);
     const idle=THREE.AnimationClip.findByName(clips,'Idle');if(idle)mixer.clipAction(idle).play();
     Object.assign(DIAG,{ready:true,nativeRig:true,headReferenceReal:true,bones,clips:clips.length,realHead:true,
@@ -515,6 +568,8 @@ window.__CREATOR_API__={getRecipe:()=>structuredClone(recipe),getSelected:()=>se
     browVerified:landmarks.browVerified,mouthVerified:landmarks.mouthVerified,
     earVerified:landmarks.earVerified,samples:landmarks.samples}:null,
   getQuality:()=>accessory?inspectAccessory(accessory):null,
+  enableBlenderPreview:()=>{if(!blenderForge)return false;blenderPreview=true;syncBlenderPreview();return true},
+  disableBlenderPreview:()=>{blenderPreview=false;syncBlenderPreview();return true},
   runCommand:executeForgeCommand,
   setGizmoMode,importRecipe:r=>transact(()=>{recipe=sanitizeRecipe(r);selectedId=recipe.pieces[0]?.id||null}),
   applyHelmet:()=>transact(()=>{recipe.helmet.enabled=true}),

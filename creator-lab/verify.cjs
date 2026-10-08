@@ -78,6 +78,20 @@ const gltfValidator=require('gltf-validator');
   if(Math.abs(recipe.pieces[0].x-.30)>1e-5)throw Error('3D position control failed');
   await page.click('#helmetOnBtn');
   await page.screenshot({path:'creator-proof/avian-helmet-painted.png'});
+  d=await page.evaluate(()=>window.__CREATOR_DIAG__);
+  if(!d.blenderAssetAvailable||!d.blenderNativeHeadMounted||d.blenderMeshCount!==7)
+    throw Error('Real Blender GLB not mounted on native head: '+JSON.stringify(d));
+  await page.click('#blenderPreviewBtn');
+  d=await page.evaluate(()=>window.__CREATOR_DIAG__);
+  if(!d.blenderPreviewActive)throw Error('Blender 7-mesh comparison unavailable');
+  await page.click('#sideBtn');await page.waitForTimeout(250);
+  await page.screenshot({path:'creator-proof/blender-forged-beak-profile.png'});
+  await page.click('#frontBtn');await page.waitForTimeout(250);
+  await page.screenshot({path:'creator-proof/blender-forged-beak-front.png'});
+  await page.click('#blenderOffBtn');
+  d=await page.evaluate(()=>window.__CREATOR_DIAG__);
+  if(d.blenderPreviewActive)throw Error('Blender comparison cannot be disabled');
+  await page.click('#blenderPreviewBtn');
 
   await page.click('#gizmoMove');
   d=await page.evaluate(()=>window.__CREATOR_DIAG__);
@@ -135,6 +149,8 @@ const gltfValidator=require('gltf-validator');
     throw Error('Geometry quality inspector failed '+JSON.stringify(q));
   const size=await page.evaluate(()=>window.__CREATOR_API__.exportGLB(false));
   if(size<1500)throw Error('GLB export incomplete '+size);
+  if(!(await page.evaluate(()=>window.__CREATOR_DIAG__.exportContainsBlender)))
+    throw Error('Final GLB missing selected Blender-forged mesh');
   const [download]=await Promise.all([
     page.waitForEvent('download',{timeout:45000}),page.click('#exportBtn')
   ]);
@@ -157,7 +173,9 @@ const gltfValidator=require('gltf-validator');
   fs.writeFileSync('creator-proof/verify.json',JSON.stringify({
     green:true,nativeHead:true,clips:22,facialLandmarksVerified:d.faceLandmarksVerified,
     fullFaceFitted:d.fullFaceFitted,faceFitParts:d.faceFitParts,faceFitCoverage:d.faceFitCoverage,
-    triangleCount:d.quality?.triangles,helmetParts:d.helmetPartCount,helmetMeshes:d.helmetMeshCount,
+    triangleCount:d.quality?.triangles,blenderMounted:d.blenderNativeHeadMounted,
+    blenderMeshes:d.blenderMeshCount,blenderExported:d.exportContainsBlender,
+    helmetParts:d.helmetPartCount,helmetMeshes:d.helmetMeshCount,
     helmetColors:d.helmetColorCount,exportedBytes:size,mobile
   },null,2));
   await browser.close();
