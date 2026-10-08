@@ -1,0 +1,76 @@
+name: HIGHFLY SKIN3 — REAL PF6 SEVEN ARMORS
+on:
+  push:
+    branches: [highfly-character-truth-audit-01]
+    paths:
+      - 'character-truth/phase7-creator-matrix.cjs'
+      - 'character-truth/SKIN3_PHASE7_KIT_GATE.md'
+      - '.github/workflows/character-truth-phase7.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original-seven-kits-genders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse immutable PF6 #333 Pages build, not public modified site
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          run-id: 37770166898
+          github-token: ${{ github.token }}
+          path: character-truth/pf6-deploy-archive
+      - name: Reuse prior GREEN class to source armor and grip matrix
+        uses: actions/download-artifact@v4
+        with:
+          name: highfly-skin3-pf6-frozen-original-composer-grip-bridge
+          run-id: 37811700265
+          github-token: ${{ github.token }}
+          path: character-truth/phase7-prior
+      - name: Extract unmodified frozen PF6 deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/pf6-site/cobalt-hollow-lab
+          tar_file="$(find character-truth/pf6-deploy-archive -type f -name '*.tar' -print -quit)"
+          test -n "$tar_file"
+          tar -xf "$tar_file" -C character-truth/pf6-site/cobalt-hollow-lab
+          test -s character-truth/pf6-site/cobalt-hollow-lab/index.html
+          test -s character-truth/phase7-prior/creator-grip-matrix.json
+          echo "EXACT_FROZEN_PF6_333_EXTRACTED=1"
+      - name: Install diagnostics only, never modify game
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0 pngjs@7.0.0
+          npx playwright install --with-deps chromium
+          node --check character-truth/phase7-creator-matrix.cjs
+      - name: Serve original web runtime on isolated localhost only
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd character-truth/pf6-site
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/skin3-phase7-pf6.log 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/ >/dev/null
+      - name: Prove all seven original armors M F in unmodified Creator WebGL
+        shell: bash
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          node character-truth/phase7-creator-matrix.cjs
+          test -s character-truth/phase7-proof/phase7-creator-matrix.json
+          git diff --exit-code -- .
+          echo "SKIN3_PHASE7_NO_FROZEN_GAME_MODIFICATIONS=1"
+      - name: Save native WebGL 14 screenshots and machine report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-skin3-seven-native-kits-male-female-pf6
+          path: character-truth/phase7-proof/
+          retention-days: 30
+          if-no-files-found: warn
