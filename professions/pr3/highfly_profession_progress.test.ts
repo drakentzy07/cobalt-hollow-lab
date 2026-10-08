@@ -39,7 +39,7 @@ describe('HIGHFLY PR-3: deterministic Profession XP + Practice', () => {
       expect(result.promotionReady).toBe(false);
     }
     expect(awards).toEqual([1500,1000,1000,1000,1000,750,750]);
-    expect(state?.craftXp?.cooking).toBe(6750);
+    expect(state?.craftXp?.cooking).toBe(7000);
     expect(state?.practice?.['recipe:test_jerky']).toBe(7);
   });
 
