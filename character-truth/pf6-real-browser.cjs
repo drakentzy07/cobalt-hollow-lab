@@ -78,7 +78,7 @@ function write(){fs.writeFileSync(path.join(dest,'pf6-real-browser.json'),JSON.s
    const choice=[...document.querySelectorAll('#offline-appearance .ac-seg .ac-seg-btn')][1];
    choice?.click();
    const input=document.querySelector('#char-name');
-   if(input){input.value='Skin3WarriorF';input.dispatchEvent(new Event('input',{bubbles:true}));}
+   if(input){input.value='SkinWarriorF';input.dispatchEvent(new Event('input',{bubbles:true}));}
   });
   await page.waitForFunction(()=>{
    const c=document.querySelector('#char-preview-canvas');
@@ -98,7 +98,7 @@ function write(){fs.writeFileSync(path.join(dest,'pf6-real-browser.json'),JSON.s
     canvases,playerPosition:p?.pos?{x:p.pos.x,z:p.pos.z}:null};
   });
   assert(ingame.hasSim&&ingame.hasRenderer,'PF6 game did not construct player and renderer');
-  assert.equal(ingame.name,'Skin3WarriorF','PF6 player name did not match freshly entered original Hunter');
+  assert.equal(ingame.name,'SkinWarriorF','PF6 player name did not match freshly entered original Hunter');
   assert.equal(ingame.characterClass,'warrior','PF6 actual playable class is not Warrior: '+JSON.stringify(ingame.playerClassSources));
   report.inGame.push(ingame);
   await page.screenshot({path:path.join(dest,'pf6-warrior-female-inworld.png'),fullPage:true});

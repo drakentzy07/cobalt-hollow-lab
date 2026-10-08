@@ -5,7 +5,7 @@ const fs=require('node:fs'),assert=require('node:assert/strict'),path=require('n
 const {chromium}=require('playwright');
 const root=path.resolve('character-truth/phase6-world-proof');fs.mkdirSync(root,{recursive:true});
 const report={sourceRun:37770166898,sourceBuild:'PF6_RUN333_FROZEN_PAGES',creatorGender:'female',intendedClass:'warrior',
- intendedName:'Skin3WarriorF',runtimeGameLoaded:false,playerIdentityVerified:false,API404:[],asset404:[],
+ intendedName:'SkinWarriorF',runtimeGameLoaded:false,playerIdentityVerified:false,API404:[],asset404:[],
  errors:[],requestFailures:[],visualMatchInSceneNotProven:true,realS23NotTested:true};
 async function main(){
  const browser=await chromium.launch({headless:true,args:['--enable-unsafe-swiftshader','--use-angle=swiftshader','--disable-dev-shm-usage']});
@@ -26,7 +26,7 @@ async function main(){
   assert(await page.locator('#offline-select').isVisible(),'Frozen PF6 offline selector failed');
   await page.evaluate(()=>{
    const n=document.querySelector('#char-name');
-   n.value='Skin3WarriorF';n.dispatchEvent(new Event('input',{bubbles:true}));
+   n.value='SkinWarriorF';n.dispatchEvent(new Event('input',{bubbles:true}));
    document.querySelector('#offline-select .mini-class[data-class="warrior"]')?.click();
   });
   await page.waitForFunction(()=>{
