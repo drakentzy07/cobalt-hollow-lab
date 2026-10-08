@@ -25,7 +25,7 @@ const verify=(x,text)=>{assert(x,text);record.checks.push(text)};
   const api=await page.evaluate(()=>{
    const a=window.__HF_SKIN3_PAINT_V3_PROOF__;
    return {state:a.state(),model:a.model(),names:a.nodes(),materials:a.meshInfo(),
-    hasOldGlobals:!!window.__MODULAR_FACTORY_DIAG__||!!window.__SKIN_FACTORY_DIAG__};
+    hasOldGlobals:Object.keys(window).some(k=>k.startsWith('__MODULAR_FACTORY_')||k.startsWith('__SKIN_FACTORY_'))};
   });
   record.baseline={meshCount:api.materials.length,model:api.model,body:api.state.design.gender};
   verify(api.state.ready&&!api.state.error,'real original GLB and painter boot');
