@@ -33,6 +33,8 @@ jobs:
           sha='9b57e49c9676d75962700f828cc00a50a9a988b5'
           pins={
            'src/sim/types.ts':'615266ac42c5dc71d0f1f02deef2bd8cddf826bc',
+           'src/sim/loot_quality/types.ts':'ecac0870d9f08d026b15dd405527aa693e81961e',
+           'src/sim/material_payload_identity.ts':'d705b7c4ec4b24c9caa691af8a2db642638324b8',
            'src/sim/entity.ts':'43fb9f6e96512fe54d88be36ea945e2746b192be',
            'src/sim/items.ts':'ec8acb932c0d234d8d40a9aa336d43710b132e98',
            'src/sim/equipment_rules.ts':'f60a1423c05318eb8a422cdf3d8bcbcb51f6b61d',
