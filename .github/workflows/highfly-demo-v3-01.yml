@@ -440,6 +440,7 @@ jobs:
           path: |
             demo-v3-01-report.json
             demo-v3-01-desktop.png
+            demo-v3-01-failure.png
             demo-v3-01-preview.log
           if-no-files-found: warn
           retention-days: 14
