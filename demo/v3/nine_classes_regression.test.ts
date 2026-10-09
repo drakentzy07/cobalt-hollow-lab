@@ -38,13 +38,13 @@ describe('HIGHFLY DEMO V3: NINE authentic playable classes remain intact', () =>
 
       const sim = new Sim({ seed: 83001, playerClass: cls, autoEquip: true });
       expect(sim.player).toBeDefined();
-      expect(sim.player.cls).toBe(cls);
+      expect(sim.player.templateId).toBe(cls);
       expect(sim.player.level).toBe(1);
       expect(sim.player.hp).toBeGreaterThan(0);
       const saved = JSON.parse(JSON.stringify(sim.serializeCharacter(sim.player.id)));
       const restored = new Sim({ seed: 83002, playerClass: cls, noPlayer: true, autoEquip: true });
       const pid = restored.addPlayer(cls, 'ReturnHunter', { state: saved });
-      expect(restored.entities.get(pid)?.cls).toBe(cls);
+      expect(restored.entities.get(pid)?.templateId).toBe(cls);
       expect(restored.entities.get(pid)?.level).toBe(1);
       expect(restored.entities.get(pid)?.hp).toBeGreaterThan(0);
     });
