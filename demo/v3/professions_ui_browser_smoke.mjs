@@ -146,12 +146,12 @@ try {
   if(result.craftingUi.authenticButtonCount>0 && result.craftingUi.tabsCount===0){
     throw Error('Native recipes exist but no selectable profession tabs');
   }
-  result.phase='passed';
-  result.pass=true;
   result.pageErrors=errors.filter(x=>!x.includes('net::ERR_ABORTED')).slice(-30);
   result.static404=bad.filter(x=>!x.url.includes('/api/'));
   result.doubleBase=bad.filter(x=>x.url.includes('/cobalt-hollow-lab/cobalt-hollow-lab/'));
   if(result.static404.length||result.doubleBase.length)throw Error('Real browser assets returned HTTP 404 or doubled base');
+  result.phase='passed';
+  result.pass=true;
   await page.screenshot({path:'../demo-v3-02-desktop.png',fullPage:true}).catch(()=>{});
 }catch(e){
  result.error=String(e);
