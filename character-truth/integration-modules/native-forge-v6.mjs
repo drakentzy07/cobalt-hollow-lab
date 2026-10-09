@@ -5,6 +5,7 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
  const $=id=>document.getElementById(id);
  const ASSET='/character-truth/integration-modules/assets/HIGHFLY-KAGE-ONI-head.glb';
  let node=null,bytes=null,head=null,headSelection=null,isSample=false,fitState=null;
+ const nativeHeadVisibility=new Map();
  const report=s=>{$('forgeState').textContent=s};
  function realHead(){
   const root=getRoot();
@@ -52,6 +53,25 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
      distance>threshold)throw Error('KAGE_ONI_NOT_ALIGNED_WITH_REAL_HEAD_'+distance.toFixed(3));
   return {source:'M_Head',faceplateToHeadCenter:distance,threshold,
     closeToRealHead:true,nativeHeadSize:refSize.toArray(),sourceMeshCopied:false};
+ }
+ /* A sealed full Oni helmet needs to OCCLUDE source naked scalp/head mesh.
+  * Full-head replacement is standard for full helmets. Do not delete meshes,
+  * alter skinning, or modify the user's saved character design. */
+ function hideNativeScalp(){
+  const root=getRoot();
+  if(!root)return 0;
+  let hidden=0;
+  for(const name of ['M_Head','F_Head']){
+   const mesh=root.getObjectByName(name);
+   if(!mesh?.isSkinnedMesh)throw Error('SOURCE_HEAD_OCCLUSION_TARGET_MISSING_'+name);
+   if(!nativeHeadVisibility.has(mesh))nativeHeadVisibility.set(mesh,mesh.visible);
+   mesh.visible=false;hidden++;
+  }
+  return hidden;
+ }
+ function restoreNativeScalp(){
+  for(const [mesh,wasVisible] of nativeHeadVisibility)mesh.visible=wasVisible;
+  nativeHeadVisibility.clear();
  }
  function inspect(group){
   let meshes=0,vertices=0,triangles=0,skinned=0;
@@ -101,7 +121,9 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
   if(!node){headSelection=removeNativeHelmet()}
   else{node.removeFromParent()}
   node=group;head=native;fitState=verifiedFit;
-  bytes=buffer.slice(0);isSample=sample;redraw();
+  bytes=buffer.slice(0);isSample=sample;
+  hideNativeScalp();
+  redraw();
   report('Kage-Oni V11 alineado al M_Head original · '+quality.meshes+
     ' mallas · ajuste '+verifiedFit.faceplateToHeadCenter.toFixed(3)+
     ' unidades · hueso: '+native.name);
@@ -115,6 +137,7 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
  function clear(){
   if(node){node.removeFromParent();node=null}
   bytes=null;head=null;isSample=false;fitState=null;
+  restoreNativeScalp();
   if(headSelection!==null){restoreNativeHelmet(headSelection);headSelection=null}
   redraw();report('Casco forjado retirado; diseño nativo preservado.');
  }
@@ -143,8 +166,12 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
     realHeadAttached:!!node&&node.parent===head,
     headName:head?.name??null,forgedMeshes:node?inspect(node).meshes:0,
     binaryBytes:bytes?.byteLength??0,sample:isSample,
-    faceFit:fitState?{...fitState}:null,originalHeadBindCorrected:!!fitState,gameUnchanged:true}),
+    faceFit:fitState?{...fitState}:null,originalHeadBindCorrected:!!fitState,
+    sourceHeadOccluded:!!node&&['M_Head','F_Head'].every(n=>getRoot()?.getObjectByName(n)?.visible===false),
+    sourceHeadsPreserved:['M_Head','F_Head'].every(n=>!!getRoot()?.getObjectByName(n)),
+    gameUnchanged:true}),
   sample,importData,remove:clear,download,
+  maintainFullHelmetOcclusion:()=>node?hideNativeScalp():0,
   headWorld:()=>head?(head.updateWorldMatrix(true,false),head.getWorldPosition(new THREE.Vector3()).toArray()):null,
   faceplateWorld:()=>{
    if(!node)return null;
