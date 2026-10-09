@@ -194,6 +194,20 @@ bpy.ops.export_scene.gltf(filepath=str(output),export_format='GLB',
  use_selection=True,export_yup=True,export_apply=False)
 if not output.is_file() or output.stat().st_size<9000:
  raise RuntimeError('V19_REAL_GLB_OUTPUT_EMPTY')
+# For the player-ready design authoring pipeline, also write a single GLB with
+# Nightfall V12 plus the newly authored V19 geometry, while NEVER exporting body meshes.
+if '--full' in args:
+ full=Path(args[args.index('--full')+1]).resolve();full.parent.mkdir(parents=True,exist_ok=True)
+ bpy.ops.object.select_all(action='DESELECT')
+ rig.select_set(True)
+ for o in donors+new_meshes:o.select_set(True)
+ bpy.context.view_layer.objects.active=rig
+ bpy.ops.export_scene.gltf(filepath=str(full),export_format='GLB',
+  use_selection=True,export_yup=True,export_apply=False)
+ if not full.is_file() or full.stat().st_size<output.stat().st_size:
+  raise RuntimeError('V19_COMBINED_GLB_INVALID')
+ print('HIGHFLY_V19_COMBINED_NIGHTFALL_NEW_GEOMETRY_GLB_GREEN=1 BYTES='+str(full.stat().st_size))
+
 report={
  'schema':'HIGHFLY_LEGENDARY_V19_ORIGINAL_GEOMETRY','source':str(source.name),
  'nativeRig':'Rig_Medium','originalJointCount':len(rig.data.bones),
