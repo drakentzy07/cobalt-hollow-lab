@@ -28,6 +28,8 @@ const ok=(x,s)=>{assert(x,s);report.checks.push(s)};
   const fit=await page.evaluate(()=>window.__HF_SKIN_STUDIO_V6__.state());
   console.log('HIGHFLY_V11_HEAD_FIT_DIAGNOSTIC',JSON.stringify({fit,feedback:await page.locator('#forgeState').textContent()}));
   ok(fit.realHeadAttached&&fit.originalHeadBindCorrected,'Real source M_Head inverse bind correction is active');
+  ok(fit.sourceHeadOccluded&&fit.sourceHeadsPreserved,
+   'Fully-sealed Oni masks naked source scalp without removing source character or original rig');
   ok(fit.faceFit?.closeToRealHead&&fit.faceFit?.source==='M_Head','Physical visor-head fit bound green');
   ok(Number.isFinite(fit.faceFit.faceplateToHeadCenter)&&
     fit.faceFit.faceplateToHeadCenter<fit.faceFit.threshold,'3D Oni mask is near authentic head volume');
@@ -63,6 +65,10 @@ const ok=(x,s)=>{assert(x,s);report.checks.push(s)};
   await page.locator('#forgeOff').click();
   ok(!(await page.evaluate(()=>window.__HF_SKIN_STUDIO_V6__.state())).realHeadAttached,
    'Helm reversible after real-world bind correction');
+  ok(await page.evaluate(()=>window.__HF_SKIN3_FACTORY_V4__.state().design.gender==='female'&&
+      document.getElementById('gender').value==='female'&&
+      !!window.__HF_SKIN3_FACTORY_V4__.state().ready),
+   'Full-helmet removal restores original Hunter gender and preserved source model');
   ok(!report.errors.length,'No browser page errors and failed network requests');
   report.fitGreen=true;report.physicalSourceModel=true;
   console.log('HIGHFLY_V11_TRUE_HEAD_FIT_ANIMATION_GREEN=1 CHECKS='+report.checks.length+
