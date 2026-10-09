@@ -1,0 +1,51 @@
+name: HIGHFLY DREAM SKIN V16 — IMAGE REFERENCE TO REAL 3D MATERIAL
+on:
+  push:
+    branches: [highfly-skin-studio-v16-image-to-skin]
+    paths:
+      - 'character-truth/integration-modules/dream-image-v16.mjs'
+      - 'character-truth/integration-modules/dream-v16-ui.mjs'
+      - 'character-truth/integration-modules/dream-v16.test.mjs'
+      - 'character-truth/integration-modules/package-dream-v16.mjs'
+      - '.github/workflows/studio-v16-image-to-skin.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  image-to-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-DREAM-V15-STUDIO-CANDIDATE-NO-DEPLOY
+          run-id: 37974906266
+          github-token: ${{ github.token }}
+          path: character-truth/v15-green-package
+      - name: Assemble on green V15 without altering game or prior studio
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/dream-image-v16.mjs
+          node --check character-truth/integration-modules/dream-v16-ui.mjs
+          node character-truth/integration-modules/package-dream-v16.mjs
+      - name: Assert pixel analysis and actually forge skinned GLB material recipe
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/dream-v16.test.mjs
+          echo HIGHFLY_V16_IMAGE_TO_SKIN_GREEN=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-DREAM-V16-IMAGE-STUDIO-CANDIDATE-NO-DEPLOY
+          path: highfly-dream-v16-preview/
+          retention-days: 30
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-DREAM-V16-IMAGE-TO-REAL-GLB-PROOF
+          path: character-truth/v16-evidence/
+          retention-days: 30
+          if-no-files-found: warn
