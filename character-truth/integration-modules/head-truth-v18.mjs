@@ -9,6 +9,10 @@ const panel=document.createElement('div');panel.id='hf18Panel';
 panel.style.cssText='margin-top:12px;padding:10px;border:1px solid #806ab0;border-radius:10px;background:#1e1835';
 panel.innerHTML=`<h2>✦ SKIN STUDIO SUPREMO · V18 HEAD TRUTH</h2>
  <small>Medición geométrica del cráneo ORIGINAL masculino/femenino y casco REAL. Ajustes solo en Kage-Oni; no reemplazamos rig, pesos ni animaciones. La inspección no certifica clipping de triángulos ni acabado artístico.</small>
+ <label>Personaje original <select id="hf18Gender"><option value="male">Hunter masculino</option><option value="female">Hunter femenino</option></select></label>
+ <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:7px 0">
+  <button id="hf18Front">Frente</button><button id="hf18Side">Perfil</button><button id="hf18Back">Espalda</button>
+ </div>
  <div class="buttonrow"><button id="hf18Load">1 · Vestir casco auténtico</button><button id="hf18Scan">2 · Auditar encastre</button></div>
  <div class="buttonrow"><button id="hf18Suggest">3 · Calcular ajuste</button><button id="hf18Apply" class="primary">4 · Aplicar al casco</button></div>
  <div class="buttonrow"><button id="hf18Poses">Probar animaciones reales</button><button id="hf18Reset">Restaurar Kage-Oni</button></div>
@@ -18,6 +22,17 @@ host.append(panel);
 let last=null,proposed=null,poses=null,lastError=null;
 const note=s=>$('hf18Status').textContent=s;
 const activeGender=()=>$('gender')?.value==='female'?'female':'male';
+$('hf18Gender').value=activeGender();
+$('hf18Gender').onchange=()=>{
+ const native=$('gender');native.value=$('hf18Gender').value;
+ native.dispatchEvent(new Event('change',{bubbles:true}));
+ proposed=null;
+ if(v6().state().realHeadAttached)try{scan()}catch(e){note('Error cambiando Hunter: '+e)}
+};
+$('gender').addEventListener('change',()=>{$('hf18Gender').value=activeGender()});
+for(const [id,original] of [['hf18Front','front'],['hf18Side','profile'],['hf18Back','backview']]){
+ $(id).onclick=()=>$(original).click();
+}
 function scan(){
  const g=v6().geometryTruth(),gender=activeGender(),r=geometryReport(g,gender);
  last={...r,originalJointCount:g.originalJointCount,originalJointNames:g.originalJointNames,
