@@ -346,6 +346,14 @@ jobs:
           (cd upstream && python ../professions/pr13/activate_pr13.py)
           git -C upstream diff --check HEAD
           echo "PR13_REAL_NODE_FARM_FISH_SOURCE_PROOFS=1"
+      - name: V3-01 priority player preview GLBs (preserve all original assets)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../demo/v3/apply_preview_critical_gate.py
+          cp ../demo/v3/preview_critical_gate.test.ts tests/highfly_demo_v3_preview_boot.test.ts
+          test -s tests/highfly_demo_v3_preview_boot.test.ts
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -403,6 +411,10 @@ jobs:
           test -s tests/highfly_training_pf5_stat_authority.test.ts
           pnpm exec vitest run tests/highfly_training_core.test.ts tests/highfly_training_engine.test.ts tests/highfly_training_adaptation.test.ts tests/highfly_training_periodization.test.ts tests/highfly_training_bridge.test.ts tests/highfly_training_persistence.test.ts tests/highfly_training_e2e.test.ts tests/highfly_training_run1i.test.ts tests/highfly_training_j3b.test.ts tests/highfly_training_rm_calibration.test.ts tests/highfly_training_cycle_control.test.ts tests/highfly_training_vit_gate.test.ts tests/highfly_training_routine_rm.test.ts tests/highfly_training_session_core.test.ts tests/highfly_training_accessory_adaptation.test.ts tests/highfly_training_awakening.test.ts tests/highfly_training_pf2_natural_growth.test.ts tests/highfly_training_pf3_wallet.test.ts tests/highfly_training_pf4_respec.test.ts tests/highfly_training_pf5_stat_authority.test.ts tests/highfly_training_progression_schema.test.ts tests/highfly_game_c1.test.ts tests/highfly_game_c21.test.ts tests/highfly_game_c22.test.ts tests/highfly_game_c23.test.ts tests/highfly_game_c24.test.ts tests/highfly_game_c25.test.ts tests/highfly_game_c251.test.ts tests/highfly_game_c26.test.ts tests/highfly_game_c27.test.ts tests/highfly_game_c28.test.ts
           echo "V3_01_HUNTER_TRAINING_GOLDEN_REGRESSIONS_GREEN=1"
+      - name: V3-01 player preview source invariants
+        working-directory: upstream
+        shell: bash
+        run: pnpm exec vitest run tests/highfly_demo_v3_preview_boot.test.ts
       - name: Offline bundle baseline
         working-directory: upstream
         env:
