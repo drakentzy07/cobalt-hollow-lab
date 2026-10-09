@@ -3,7 +3,7 @@
 import { chromium } from 'playwright';
 import fs from 'node:fs';
 const URL='http://127.0.0.1:4173/cobalt-hollow-lab/';
-const result={phase:'boot',url:URL,gameBooted:false,trainingOpen:false,movementMeters:null,combatNearbyProbe:null,static404:[],doubleBase:[],pageErrors:[],previewDiagnostics:null,pass:false};
+const result={phase:'boot',url:URL,gameBooted:false,trainingOpen:false,movementMeters:null,combatNearbyProbe:null,static404:[],doubleBase:[],pageErrors:[],previewDiagnostics:null,trainingDiagnostics:null,pass:false};
 let browser;
 let page;
 let errors=[];
@@ -66,7 +66,17 @@ try {
   await page.evaluate(()=>document.querySelector('#mobile-preflight-continue')?.click());
   result.phase='world-boot';
   await page.waitForFunction(()=>Boolean(window.__game?.sim?.player),null,{timeout:90000});
-  await page.waitForTimeout(2300);
+  // GOLDEN RUN1-J: sim.player exists before the visible loading curtain clears.
+  // Genuine keyboard and menu inputs are not ready until this SAME gate passes.
+  await page.waitForFunction(()=>{
+    const el=document.querySelector('#loading-screen');
+    if(!(el instanceof HTMLElement))return true;
+    const style=getComputedStyle(el);
+    return !el.classList.contains('visible') ||
+      style.display==='none' || style.visibility==='hidden' ||
+      style.pointerEvents==='none';
+  },null,{timeout:90000});
+  await page.waitForTimeout(600);
   result.gameBooted=true;
   await page.evaluate(()=>{
     const wanted=new Set(['Dismiss','Understood','Got it','Skip tutorial']);
@@ -76,17 +86,6 @@ try {
     document.querySelector('button.tut-skip')?.click();
   }).catch(()=>{});
   await page.keyboard.press('Escape').catch(()=>{});
-  result.phase='training-ui';
-  await page.locator('#mm-training').waitFor({state:'visible',timeout:12000});
-  await page.locator('#mm-training').click();
-  await page.locator('#highfly-training-window').waitFor({state:'visible',timeout:12000});
-  result.trainingOpen=await page.evaluate(()=>{
-    const win=document.querySelector('#highfly-training-window');
-    return win instanceof HTMLElement && !win.hasAttribute('hidden') &&
-      (win.textContent??'').includes('CALIBRACIÓN DE FUERZA');
-  });
-  if(!result.trainingOpen)throw Error('Training Core no accesible desde menú real');
-  await page.evaluate(()=>document.querySelector('#highfly-training-close')?.click());
   result.phase='movement';
   const before=await page.evaluate(()=>({x:window.__game.sim.player.pos.x,z:window.__game.sim.player.pos.z}));
   await page.keyboard.down('w');
@@ -103,6 +102,41 @@ try {
     return {playerLevel:p.level,playerHp:p.hp,nearbyWolf:!!wolf,hasSimAttack:typeof g.sim.startAutoAttack==='function'};
   });
   if(!result.combatNearbyProbe.hasSimAttack)throw Error('Runtime carece de ataque básico');
+  result.phase='training-ui';
+  const trainButton=page.locator('#mm-training');
+  await trainButton.waitFor({state:'visible',timeout:15000});
+  // Real user path; retry only when the panel did not open.
+  // No artificial .removeAttribute('hidden') or synthetic success signals.
+  for(let attempt=1;attempt<=3;attempt++){
+    if(await page.locator('#highfly-training-window').isVisible().catch(()=>false))break;
+    await trainButton.click({timeout:10000});
+    await page.waitForTimeout(800);
+  }
+  result.trainingDiagnostics=await page.evaluate(()=>{
+    const win=document.querySelector('#highfly-training-window');
+    const btn=document.querySelector('#mm-training');
+    const loading=document.querySelector('#loading-screen');
+    const computed=win instanceof HTMLElement?getComputedStyle(win):null;
+    return {
+      windowPresent:win instanceof HTMLElement,
+      windowHiddenAttribute:win?.hasAttribute('hidden'),
+      windowDisplay:computed?.display,
+      windowVisibility:computed?.visibility,
+      buttonExists:btn instanceof HTMLElement,
+      buttonText:(btn?.textContent??'').trim().slice(0,100),
+      buttonDisabled:btn instanceof HTMLButtonElement?btn.disabled:null,
+      bodyClasses:document.body.className,
+      loadingVisible:loading instanceof HTMLElement?loading.classList.contains('visible'):null,
+      calibrationText:(win?.textContent??'').includes('CALIBRACIÓN DE FUERZA'),
+    };
+  });
+  result.trainingOpen=await page.locator('#highfly-training-window').isVisible().catch(()=>false);
+  if(!result.trainingOpen||!result.trainingDiagnostics?.calibrationText){
+    throw Error('Training no abrió con clicks reales: '+JSON.stringify(result.trainingDiagnostics));
+  }
+  await page.locator('#highfly-training-close').click({timeout:10000});
+  await page.locator('#highfly-training-window').waitFor({state:'hidden',timeout:10000});
+
   result.static404=bad.filter(x=>!x.url.includes('/api/'));
   result.doubleBase=bad.filter(x=>x.url.includes('/cobalt-hollow-lab/cobalt-hollow-lab/'));
   result.pageErrors=errors.slice(0,25);
