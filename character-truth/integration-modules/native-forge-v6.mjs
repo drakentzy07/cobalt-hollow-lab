@@ -4,7 +4,7 @@
 export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNativeHelmet,redraw,onError}){
  const $=id=>document.getElementById(id);
  const ASSET='/character-truth/integration-modules/assets/HIGHFLY-KAGE-ONI-head.glb';
- let node=null,bytes=null,head=null,headSelection=null,isSample=false;
+ let node=null,bytes=null,head=null,headSelection=null,isSample=false,fitState=null;
  const report=s=>{$('forgeState').textContent=s};
  function realHead(){
   const root=getRoot();
@@ -15,6 +15,43 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
   });
   if(number<20||!bone)throw Error('AUTHENTIC_HEAD_BONE_MISSING');
   return bone;
+ }
+ /** Kage-Oni's GLB was authored in original Hunter BODY/world bind coordinates.
+  * Three.js Bone.add() wrongly interprets that as bone-local, offsetting the
+  * helmet by the whole head-bone translation (~the floating mask in V10).
+  * Derive exact inverse-BIND transform from the original real M_Head skin.
+  * Never use the bone's currently animated inverse matrix: it would only
+  * align correctly for the current pose and slip on subsequent animation. */
+ function originalHeadInverseBind(native){
+  const root=getRoot(),part=root?.getObjectByName('M_Head');
+  if(!part?.isSkinnedMesh||!part.skeleton)throw Error('REAL_ORIGINAL_M_HEAD_SKIN_MISSING');
+  const i=part.skeleton.bones.indexOf(native);
+  if(i<0||i>=part.skeleton.boneInverses.length)throw Error('HEAD_BONE_NOT_IN_ORIGINAL_M_HEAD_SKIN');
+  const inverse=part.skeleton.boneInverses[i].clone();
+  if(!inverse.elements.every(Number.isFinite))throw Error('HEAD_BIND_INVERSE_INVALID');
+  const bind=inverse.clone().invert(),inverseCheck=bind.clone().multiply(inverse);
+  if(inverseCheck.elements.some((v,j)=>Math.abs(v-(j%5===0?1:0))>1e-4))
+   throw Error('AUTHENTIC_HEAD_BIND_NOT_INVERTIBLE');
+  return inverse;
+ }
+ function fitToSourceHead(g){
+  const root=getRoot(),part=root?.getObjectByName('M_Head');
+  if(!part?.isSkinnedMesh)throw Error('M_HEAD_FIT_REFERENCE_MISSING');
+  part.updateWorldMatrix(true,false);
+  const ref=new THREE.Box3().setFromObject(part,true);
+  const visor=g.getObjectByName('KO_08_ONI_FACEPLATE');
+  if(!visor?.isMesh)throw Error('ORIGINAL_ONI_FACEPLATE_MISSING');
+  g.updateWorldMatrix(true,true);
+  const plate=new THREE.Box3().setFromObject(visor,true);
+  if(ref.isEmpty()||plate.isEmpty())throw Error('FIT_BOUNDS_UNAVAILABLE');
+  const faceCenter=plate.getCenter(new THREE.Vector3());
+  const refCenter=ref.getCenter(new THREE.Vector3());
+  const refSize=ref.getSize(new THREE.Vector3());
+  const distance=faceCenter.distanceTo(refCenter),threshold=refSize.length()*.65;
+  if(!Number.isFinite(distance)||!Number.isFinite(threshold)||threshold<.1||
+     distance>threshold)throw Error('KAGE_ONI_NOT_ALIGNED_WITH_REAL_HEAD_'+distance.toFixed(3));
+  return {source:'M_Head',faceplateToHeadCenter:distance,threshold,
+    closeToRealHead:true,nativeHeadSize:refSize.toArray(),sourceMeshCopied:false};
  }
  function inspect(group){
   let meshes=0,vertices=0,triangles=0,skinned=0;
@@ -52,15 +89,23 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
      throw Error('ORIGINAL_KAGE_ONI_FORGE_IDENTITY_INVALID');
    if(quality.meshes<25)throw Error('INCOMPLETE_FORGED_HELMET');
   }
-  // All input validation completes before any mutation to the scene.
-  const native=realHead();
+  // Resolve the original skin's TRUE inverse bind matrix before mutating scene.
+  const native=realHead(),inverseBind=originalHeadInverseBind(native);
+  group.applyMatrix4(inverseBind);
+  native.add(group);group.name='HIGHFLY_KAGE_ONI_RIGID_HEAD_GLB';
+  native.updateWorldMatrix(true,true);
+  let verifiedFit;
+  try{verifiedFit=fitToSourceHead(group)}
+  catch(e){group.removeFromParent();throw e}
+  // Validation has completed. Hide original helmet only now.
   if(!node){headSelection=removeNativeHelmet()}
   else{node.removeFromParent()}
-  native.add(group);group.name='HIGHFLY_KAGE_ONI_RIGID_HEAD_GLB';
-  node=group;head=native;bytes=buffer.slice(0);isSample=sample;redraw();
-  report('Casco 3D real · '+quality.meshes+' mallas · '+quality.vertices+
-    ' vértices · '+quality.triangles+' triángulos · hueso: '+native.name);
-  return quality;
+  node=group;head=native;fitState=verifiedFit;
+  bytes=buffer.slice(0);isSample=sample;redraw();
+  report('Kage-Oni V11 alineado al M_Head original · '+quality.meshes+
+    ' mallas · ajuste '+verifiedFit.faceplateToHeadCenter.toFixed(3)+
+    ' unidades · hueso: '+native.name);
+  return {...quality,fit:verifiedFit};
  }
  async function sample(){
   const resp=await fetch(ASSET,{cache:'no-store'});
@@ -69,7 +114,7 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
  }
  function clear(){
   if(node){node.removeFromParent();node=null}
-  bytes=null;head=null;isSample=false;
+  bytes=null;head=null;isSample=false;fitState=null;
   if(headSelection!==null){restoreNativeHelmet(headSelection);headSelection=null}
   redraw();report('Casco forjado retirado; diseño nativo preservado.');
  }
@@ -97,7 +142,8 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
   state:()=>({ready:!!getRoot(),rigOriginal:!!getRoot()?.getObjectByName('Rig_Medium'),
     realHeadAttached:!!node&&node.parent===head,
     headName:head?.name??null,forgedMeshes:node?inspect(node).meshes:0,
-    binaryBytes:bytes?.byteLength??0,sample:isSample,gameUnchanged:true}),
+    binaryBytes:bytes?.byteLength??0,sample:isSample,
+    faceFit:fitState?{...fitState}:null,originalHeadBindCorrected:!!fitState,gameUnchanged:true}),
   sample,importData,remove:clear,download,
   headWorld:()=>head?(head.updateWorldMatrix(true,false),head.getWorldPosition(new THREE.Vector3()).toArray()):null
  });
