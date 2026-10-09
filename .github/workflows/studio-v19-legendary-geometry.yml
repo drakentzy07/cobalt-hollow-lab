@@ -1,0 +1,115 @@
+name: HIGHFLY V19 LEGENDARY GEOMETRY - REAL BLENDER RIG_MEDIUM (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-skin-studio-v19-legendary-geometry]
+    paths:
+      - 'character-truth/integration-modules/legendary-geometry-v19.py'
+      - 'character-truth/integration-modules/legendary-v19-motion.py'
+      - 'character-truth/integration-modules/legendary-forge-v19.mjs'
+      - 'character-truth/integration-modules/legendary-v19-browser-gate.cjs'
+      - 'character-truth/integration-modules/package-legendary-v19.mjs'
+      - '.github/workflows/studio-v19-legendary-geometry.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  forge-original-premium-geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse EXACT V18 previous frozen GREEN original Hunter
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-SUPREME-V18-HEAD-TRUTH-STUDIO-CANDIDATE-NO-DEPLOY
+          run-id: 37980601585
+          github-token: ${{ github.token }}
+          path: character-truth/v18-green-package
+      - name: Check authentic Nightfall donor, untouched original body and source code
+        run: |
+          set -euo pipefail
+          test -s character-truth/v18-green-package/index.html
+          test -s character-truth/v18-green-package/assets/HIGHFLY-NIGHTFALL-rigged-body.glb
+          node --check character-truth/integration-modules/legendary-forge-v19.mjs
+          node --check character-truth/integration-modules/package-legendary-v19.mjs
+          python3 -m py_compile character-truth/integration-modules/legendary-geometry-v19.py
+          python3 -m py_compile character-truth/integration-modules/legendary-v19-motion.py
+          test ! -d character-truth/inputs
+          echo HIGHFLY_V19_FROZEN_ORIGINAL_NO_PUBLIC_GAME_ASSET_MODIFICATION_GREEN=1
+      - name: Download verified official Blender 4.2.23 LTS for actual NEW geometry
+        run: |
+          set -euo pipefail
+          VERSION='4.2.23'
+          NAME="blender-${VERSION}-linux-x64.tar.xz"
+          BASE="https://download.blender.org/release/Blender4.2"
+          mkdir -p "$RUNNER_TEMP/v19-blender" "$RUNNER_TEMP/v19-down"
+          cd "$RUNNER_TEMP/v19-down"
+          curl -fsSL --retry 3 --connect-timeout 15 --max-time 390 "$BASE/$NAME" -o "$NAME"
+          curl -fsSL --retry 3 --max-time 50 "$BASE/blender-${VERSION}.sha256" -o SHA256SUMS
+          grep -F "$NAME" SHA256SUMS | head -1 | sha256sum --check
+          tar -xJf "$NAME" --strip-components=1 -C "$RUNNER_TEMP/v19-blender"
+          echo "$RUNNER_TEMP/v19-blender" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/v19-blender/blender" --version | head -2
+      - name: Forge original premium NEW mesh overlay and combined Nightfall GLB
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/integration-modules/assets character-truth/v19-evidence
+          blender --background --factory-startup --python-exit-code 99 \
+            --python character-truth/integration-modules/legendary-geometry-v19.py -- \
+            --source character-truth/v18-green-package/assets/HIGHFLY-NIGHTFALL-rigged-body.glb \
+            --out character-truth/integration-modules/assets/HIGHFLY-V19-LEGENDARY-ORNAMENTS.glb \
+            --full character-truth/integration-modules/assets/HIGHFLY-V19-LEGENDARY-COMBINED.glb \
+            | tee /tmp/hf-v19-forge.log
+          grep -F 'HIGHFLY_V19_AUTHORED_NEW_ORIGINAL_WEIGHTED_GEOMETRY_GREEN=1' /tmp/hf-v19-forge.log
+          grep -F 'HIGHFLY_V19_COMBINED_NIGHTFALL_NEW_GEOMETRY_GLB_GREEN=1' /tmp/hf-v19-forge.log
+          cp character-truth/integration-modules/assets/HIGHFLY-V19-LEGENDARY-ORNAMENTS.json character-truth/v19-evidence/blender-forge-report.json
+      - name: Verify all NEW author geometry deforms with original actual bones
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          blender --background --factory-startup --python-exit-code 99 \
+            --python character-truth/integration-modules/legendary-v19-motion.py -- \
+            --source character-truth/integration-modules/assets/HIGHFLY-V19-LEGENDARY-ORNAMENTS.glb \
+            | tee /tmp/hf-v19-motion.log
+          grep -F 'HIGHFLY_V19_REAL_RIG_MEDIUM_ORIGINAL_ANIMATION_AND_WEIGHTS_GREEN=1' /tmp/hf-v19-motion.log
+      - name: Reuse V18 and package full genuine V19 mobile Skin Studio
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/package-legendary-v19.mjs
+          test -s highfly-legendary-v19-preview/legendary-forge-v19.mjs
+          test -s highfly-legendary-v19-preview/assets/HIGHFLY-V19-LEGENDARY-COMBINED.glb
+          test ! -f highfly-legendary-v19-preview/assets/warrior_modular.glb
+      - name: Install Playwright browser and run actual S23 landscape emulation
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify genuine ClaudeCraft animated native Hunter and new Blender GLBs
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4199 --bind 127.0.0.1 \
+            --directory highfly-legendary-v19-preview >/tmp/hf-v19-server.log 2>&1 &
+          sleep 2
+          node character-truth/integration-modules/legendary-v19-browser-gate.cjs
+          grep -F '"green": true' character-truth/v19-evidence/browser-proof.json
+          echo HIGHFLY_V19_NEW_ORIGINAL_GEOMETRY_REAL_MOBILE_BROWSER_GREEN=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-V19-LEGENDARY-BLENDER-ORIGINAL-RIG-STUDIO-NO-DEPLOY
+          path: highfly-legendary-v19-preview/
+          retention-days: 30
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-V19-LEGENDARY-REAL-ARMOR-EVIDENCE
+          path: |
+            character-truth/v19-evidence/
+            character-truth/integration-modules/assets/HIGHFLY-V19-LEGENDARY-ORNAMENTS.glb
+            character-truth/integration-modules/assets/HIGHFLY-V19-LEGENDARY-COMBINED.glb
+          retention-days: 30
+          if-no-files-found: warn
