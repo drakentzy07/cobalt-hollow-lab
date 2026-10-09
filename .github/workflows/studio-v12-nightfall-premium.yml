@@ -150,11 +150,7 @@ jobs:
           test -s character-truth/v10-unified-proof/v10-browser-report.json
           node --check character-truth/integration-modules/studio-v11-fit-gate.cjs
           node character-truth/integration-modules/studio-v11-fit-gate.cjs
-          test -s character-truth/v11-fit-proof/
-            character-truth/v12-premium-proof/
-            character-truth/v12-helmet-proof/
-            character-truth/v8-proof/nightfall-v12*.json
-            character-truth/v8-proof/nightfall-v12*.logv11-head-fit-report.json
+          test -s character-truth/v11-fit-proof/v11-head-fit-report.json
       - name: Setup verified official Blender 4.2.23 LTS — ONLY isolated V12 body development
         shell: bash
         timeout-minutes: 7
