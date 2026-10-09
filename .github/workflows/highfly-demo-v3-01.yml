@@ -1,8 +1,7 @@
 name: HIGHFLY DEMO V3-01 — GOLDEN Hunter Training PF6
+# Browser/preview integration quarantined pending full CLEAN source diagnosis.
+# Run manually after verified diagnosis; do not create repeated red builds on every commit.
 on:
-  push:
-    branches:
-      - highfly-demo-v3-integration
   workflow_dispatch:
 permissions:
   contents: read
