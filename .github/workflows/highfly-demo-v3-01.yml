@@ -354,6 +354,14 @@ jobs:
           python3 ../demo/v3/apply_preview_critical_gate.py
           cp ../demo/v3/preview_critical_gate.test.ts tests/highfly_demo_v3_preview_boot.test.ts
           test -s tests/highfly_demo_v3_preview_boot.test.ts
+      - name: V3-01 nine original classes truly present and runnable
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s ../demo/v3/nine_classes_regression.test.ts
+          cp ../demo/v3/nine_classes_regression.test.ts tests/highfly_demo_v3_nine_classes.test.ts
+          pnpm exec vitest run tests/highfly_demo_v3_nine_classes.test.ts
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
