@@ -1,0 +1,29 @@
+name: HIGHFLY Supreme Skin Lab V9 — Safe Spanish Design Contract
+on:
+  push:
+    branches: [highfly-skin-studio-v9-supreme-lab]
+    paths:
+      - 'character-truth/integration-modules/supreme-recipe-v9.mjs'
+      - 'character-truth/integration-modules/supreme-recipe-v9.test.mjs'
+      - 'character-truth/integration-modules/SUPREME_SKIN_LAB_V9_ARCHITECTURE.md'
+      - '.github/workflows/studio-v9-supreme-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  semantic-safe-intent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate and test STRICT safe Spanish design intent compiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/supreme-recipe-v9.mjs
+          node --check character-truth/integration-modules/supreme-recipe-v9.test.mjs
+          cd character-truth/integration-modules
+          node supreme-recipe-v9.test.mjs
+          cd ../..
+          git diff --exit-code -- .
+          echo HIGHFLY_SUPREME_V9_FROZEN_HUNTER_UNCHANGED=1
