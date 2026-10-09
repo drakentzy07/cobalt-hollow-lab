@@ -15,6 +15,7 @@ const checks=[],errors=[],ok=(x,label)=>{assert(x,label);checks.push(label)};
   await page.waitForFunction(()=>window.__HF_HEAD_TRUTH_V18__?.state().ready,{},{timeout:30000});
   ok(await page.locator('#dreamCockpit').count()===1,'V17 cockpit reused exactly once');
   ok(await page.locator('#hf18Panel').count()===1,'NEW Head Truth controls exist exactly once');
+  ok(await page.locator('#hf18Gender').count()===1&&await page.locator('#hf18Front').count()===1,'Dedicated visible original Hunter face/sex controls');
   ok(await page.evaluate(()=>window.__HF_SKIN3_FACTORY_V4__.state().modelIdentity==='warrior_modular.glb'),
    'Genuine pinned original ClaudeCraft modular Hunter, not a proxy');
   await page.evaluate(()=>window.__HF_DREAM_V17__.selectTab('casco'));
@@ -42,13 +43,13 @@ const checks=[],errors=[],ok=(x,label)=>{assert(x,label);checks.push(label)};
   const poses=await page.evaluate(()=>window.__HF_HEAD_TRUTH_V18__.poseAudit());
   ok(poses.length===5&&poses.every(p=>Number.isFinite(p.ratio)&&p.animatedOriginalMeshes>0),
    'Five real moving-clip geometric pose tests with finite original mesh values');
-  await page.evaluate(()=>document.getElementById('front').click());
+  await page.locator('#hf18Front').click();
   await page.screenshot({path:out+'/03-v18-kage-front.png'});
-  await page.evaluate(()=>document.getElementById('profile').click());
+  await page.locator('#hf18Side').click();
   await page.screenshot({path:out+'/04-v18-kage-side.png'});
-  await page.evaluate(()=>document.getElementById('backview').click());
+  await page.locator('#hf18Back').click();
   await page.screenshot({path:out+'/05-v18-kage-back.png'});
-  await page.evaluate(()=>{const g=document.getElementById('gender');g.value='female';g.dispatchEvent(new Event('change',{bubbles:true}))});
+  await page.locator('#hf18Gender').selectOption('female');
   const f=await page.evaluate(()=>window.__HF_HEAD_TRUTH_V18__.scan());
   ok(f.gender==='female'&&Number.isFinite(f.headWidth)&&f.originalJointCount>=20,
    'Real original female Hunter fitted report is independent of male head bounds');
