@@ -21,7 +21,8 @@ assert(summary.originalWeightedBinaryPrefixPreserved&&summary.unchangedOriginalS
  'V15_MUST_PRESERVE_SOURCE_SKIN_AND_VERTEX_WEIGHTS');
 assert(summary.shapedGenderMeshes>0&&summary.paintedSemanticPieces>30,
  'V15_REAL_3D_AND_PBR_REQUIRED');
-assert(bytes.length>original.length,'V15_EXPECTS_REAL_NEW_VERTEX_DATA_IN_GLB');
+assert(summary.verticesMoved>0&&summary.normalsUpdated>0&&bytes.length>100_000,
+ 'V15_EXPECTS_REAL_NEW_VERTEX_DATA_IN_GLB');
 fs.mkdirSync('character-truth/v15-evidence',{recursive:true});
 fs.writeFileSync('character-truth/v15-evidence/HIGHFLY-V15-TEXT-TO-NIGHTFALL-REAL-GLB.glb',bytes);
 fs.writeFileSync('character-truth/v15-evidence/recipe.json',JSON.stringify(recipe,null,2));
