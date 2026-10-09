@@ -35,6 +35,8 @@ const ok=(yes,why)=>{assert(yes,why);report.checks.push(why)};
   console.log('HIGHFLY_V10_BROWSER_BIND_DIAGNOSTIC '+JSON.stringify({state,diagnostic,errors:report.errors}));
   report.armorDiagnostic={state,diagnostic};
   ok(state.mounted&&state.originalRig&&state.mappedToOriginalBones,'V8 weighted mesh physically bound to original rig: '+diagnostic);
+  ok(state.underarmorFabricActive&&state.originalUndersuitMaterialsStored===4,
+    'Dark premium gambeson temporarily masks original bare M/F torso and loin without editing their skinning');
   ok(state.skinnedMeshes>=80&&state.activeMeshes>=40&&state.skinnedMeshes<=140,
     'Preserved V8 36 + premium V12 meshes, real male/female filtering');
   ok(state.stats?.premiumMeshes>=50,'50+ truly new V12 premium Blender skinned meshes');
@@ -53,6 +55,7 @@ const ok=(yes,why)=>{assert(yes,why);report.checks.push(why)};
   const lookup=new Map(one.map(m=>[m.name,m.worldSample]));
   const deltas=two.map(m=>Math.hypot(...m.worldSample.map((v,i)=>v-lookup.get(m.name)[i])));
   const maxPoseDifference=Math.max(...deltas);
+  const verifiedArmorMeshCount=state.skinnedMeshes;
   ok(maxPoseDifference>.002,'Actual original rig bone motion changes new armor vertex world coordinates: '+maxPoseDifference);
   report.maxPoseDifference=maxPoseDifference;
   await page.locator('#forgeLoad').click();
@@ -77,6 +80,8 @@ const ok=(yes,why)=>{assert(yes,why);report.checks.push(why)};
   await page.locator('#bodyForgeOff').click();
   state=await page.evaluate(()=>window.__HF_SKIN_STUDIO_V10__.state());
   ok(!state.mounted&&!state.skinnedMeshes,'Safely remove body without affecting original character');
+  ok(!state.underarmorFabricActive&&state.originalUndersuitMaterialsStored===0,
+    'All authentic M/F original torso and loin source materials restored after unequip');
   ok((await page.evaluate(()=>window.__HF_SKIN_STUDIO_V6__.state())).realHeadAttached,
    'Helmet still attached independently when body removed');
   await page.locator('#forgeOff').click();
@@ -85,7 +90,7 @@ const ok=(yes,why)=>{assert(yes,why);report.checks.push(why)};
   ok(report.errors.length===0,'No browser 3D, GLB, or texture load errors');
   report.green=true;
   console.log('HIGHFLY_V12_PREMIUM_NATIVE_ARMOR_BROWSER_GREEN=1 '+JSON.stringify({
-   checks:report.checks.length,maxPoseDifference,originalHunter:true,newSkinnedMeshes:state.skinnedMeshes,newRigidHelmet:true,
+   checks:report.checks.length,maxPoseDifference,originalHunter:true,newSkinnedMeshes:verifiedArmorMeshCount,newRigidHelmet:true,
    publicGameModified:false,visualArtAccepted:false,realSamsungTested:false}));
   await context.close();
  }catch(e){
