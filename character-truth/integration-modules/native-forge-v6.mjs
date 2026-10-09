@@ -145,7 +145,14 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
     binaryBytes:bytes?.byteLength??0,sample:isSample,
     faceFit:fitState?{...fitState}:null,originalHeadBindCorrected:!!fitState,gameUnchanged:true}),
   sample,importData,remove:clear,download,
-  headWorld:()=>head?(head.updateWorldMatrix(true,false),head.getWorldPosition(new THREE.Vector3()).toArray()):null
+  headWorld:()=>head?(head.updateWorldMatrix(true,false),head.getWorldPosition(new THREE.Vector3()).toArray()):null,
+  faceplateWorld:()=>{
+   if(!node)return null;
+   node.updateWorldMatrix(true,true);
+   const plate=node.getObjectByName('KO_08_ONI_FACEPLATE');
+   if(!plate)throw Error('MISSING_TRUE_FACEPLATE');
+   return new THREE.Box3().setFromObject(plate,true).getCenter(new THREE.Vector3()).toArray();
+  }
  });
  window.__HF_SKIN_STUDIO_V6__=api;
  return api;
