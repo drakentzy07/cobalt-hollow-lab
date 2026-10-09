@@ -180,7 +180,7 @@ export function nativeBodyForgeV10({THREE,loader,getRoot,getGender,removeSourceA
      underarmorParts().every(p=>p.material===gambeson),
    originalUndersuitMaterialsStored:originalUndersuitMaterials.size}),
   sample,importData,remove:clear,syncGender:wearGender,
-  forgedMeshes:()=>importedMeshes.filter(m=>m.visible),
+  forgedMeshes:()=>importedMeshes.slice(),
   maintainUnderarmor:()=>active?dressUndersuit():0,
   download,sampleDeformation,
   bonesMatch:()=>importedMeshes.every(o=>o.skeleton.bones.every(b=>{
