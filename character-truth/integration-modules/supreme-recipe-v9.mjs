@@ -53,9 +53,9 @@ export function spanishDesignBrief(prompt){
  const t=words(prompt),x=JSON.parse(JSON.stringify(DEFAULT));
  x.brief=prompt.trim();
  x.style=/sunraku/.test(t)?'sunraku-inspired':
+   /nightfall/.test(t)?'nightfall':
    /samurai|ronin|oni|kabuto/.test(t)?'samurai':
-   /ninja|shinobi/.test(t)?'ninja':
-   /nightfall/.test(t)?'nightfall':'original';
+   /ninja|shinobi/.test(t)?'ninja':'original';
  x.head=/sin (?:casco|mascara)|cabeza libre/.test(t)?'none':
    /oni|kage|kabuto/.test(t)?'kage-oni':'new-design-needed';
  x.body=/nightfall/.test(t)?'nightfall':'new-design-needed';
