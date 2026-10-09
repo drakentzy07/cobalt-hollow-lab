@@ -578,6 +578,7 @@ $('gender').addEventListener('change',()=>{if(weightedV10.state().mounted){weigh
 const originalUpdateV10=updateModel;
 updateModel=function(...args){
  const r=originalUpdateV10(...args);
+ if(forgedV6.state().realHeadAttached)forgedV6.maintainFullHelmetOcclusion();
  if(weightedV10.state().mounted){
   for(const m of meshes)for(let parent=m;parent&&parent!==root;parent=parent.parent)
    if(parent.name.startsWith('Armor_')){m.visible=false;break}
