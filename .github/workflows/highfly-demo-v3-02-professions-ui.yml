@@ -38,6 +38,9 @@ jobs:
             /public/
             /android/
             /capacitor.config.ts
+            /tests/professions_view.test.ts
+            /tests/crafting_view.test.ts
+            /tests/recipe_tracker_view.test.ts
             /tests/global_setup.ts
             /tests/professions.test.ts
             /tests/professions_archetype.test.ts
