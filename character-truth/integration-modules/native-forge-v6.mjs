@@ -57,17 +57,26 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
  /* A sealed full Oni helmet needs to OCCLUDE source naked scalp/head mesh.
   * Full-head replacement is standard for full helmets. Do not delete meshes,
   * alter skinning, or modify the user's saved character design. */
+ function nativeFacialMeshes(){
+  const actor=getRoot(),found=[];
+  if(!actor)return found;
+  actor.traverse(mesh=>{
+   if(mesh.isSkinnedMesh&&/^[MF]_(?:Head$|Brow_|Ear_|Eye_|Lash_|Mouth_)/.test(mesh.name))
+    found.push(mesh);
+  });
+  if(!found.some(mesh=>mesh.name==='M_Head')||!found.some(mesh=>mesh.name==='F_Head'))
+   throw Error('AUTHENTIC_FACIAL_PARTS_MISSING');
+  return found;
+ }
  function hideNativeScalp(){
-  const root=getRoot();
-  if(!root)return 0;
-  let hidden=0;
-  for(const name of ['M_Head','F_Head']){
-   const mesh=root.getObjectByName(name);
-   if(!mesh?.isSkinnedMesh)throw Error('SOURCE_HEAD_OCCLUSION_TARGET_MISSING_'+name);
+  // FULL SEALED HELM only. Must hide original ear and eyebrow variants too:
+  // those are independent genuine M_/F_ skinned meshes, not part of M_Head.
+  const parts=nativeFacialMeshes();
+  for(const mesh of parts){
    if(!nativeHeadVisibility.has(mesh))nativeHeadVisibility.set(mesh,mesh.visible);
-   mesh.visible=false;hidden++;
+   mesh.visible=false;
   }
-  return hidden;
+  return parts.length;
  }
  function restoreNativeScalp(){
   for(const [mesh,wasVisible] of nativeHeadVisibility)mesh.visible=wasVisible;
@@ -168,6 +177,8 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
     binaryBytes:bytes?.byteLength??0,sample:isSample,
     faceFit:fitState?{...fitState}:null,originalHeadBindCorrected:!!fitState,
     sourceHeadOccluded:!!node&&['M_Head','F_Head'].every(n=>getRoot()?.getObjectByName(n)?.visible===false),
+    sourceFacialFeaturesOccluded:!!node&&nativeFacialMeshes().every(m=>m.visible===false),
+    sourceFacialMeshCount:node?nativeFacialMeshes().length:0,
     sourceHeadsPreserved:['M_Head','F_Head'].every(n=>!!getRoot()?.getObjectByName(n)),
     gameUnchanged:true}),
   sample,importData,remove:clear,download,
