@@ -14,6 +14,10 @@ const panel=document.createElement('section');panel.id='hf19Panel';
 panel.className='studio';panel.style.cssText='border:1px solid #bf6f66;margin:8px 0;background:linear-gradient(115deg,#2d1727,#191222)';
 panel.innerHTML=`<h2>⚒ LEGENDARY GEOMETRY FORGE · V19</h2>
  <small>Artesanía Blender NUEVA sobre Nightfall: 32 mallas originales de crestas, grabados, placas posteriores y espinas de hombrera, pesadas para el Rig_Medium auténtico. Casco Kage-Oni sigue separado.</small>
+ <label>Hunter real <select id="hf19Gender"><option value="male">Masculino</option><option value="female">Femenino</option></select></label>
+ <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:7px 0">
+  <button id="hf19Front">Frente</button><button id="hf19Side">Perfil</button><button id="hf19Back">Espalda</button>
+ </div>
  <div class="buttonrow"><button id="hf19Wear" class="primary">Vestir ornamentos legendarios</button><button id="hf19Off">Retirar ornamentos</button></div>
  <div class="buttonrow"><button id="hf19Overlay">↓ GLB NUEVAS piezas 3D</button><button id="hf19Full">↓ GLB COMPLETO · Nightfall + V19</button></div>
  <div class="buttonrow"><button id="hf19Inspect">Verificar huesos y polígonos</button><button id="hf19Pose">Probar pose auténtica</button></div>
@@ -37,6 +41,15 @@ function native(){
  return {actor,rig,bones};
 }
 const gender=()=>$('gender')?.value==='female'?'F':'M';
+$('hf19Gender').value=$('gender').value;
+$('hf19Gender').onchange=()=>{
+ const original=$('gender');original.value=$('hf19Gender').value;
+ original.dispatchEvent(new Event('change',{bubbles:true}));
+};
+$('gender').addEventListener('change',()=>{$('hf19Gender').value=$('gender').value});
+for(const [newId,oldId] of [['hf19Front','front'],['hf19Side','profile'],['hf19Back','backview']]){
+ $(newId).onclick=()=>$(oldId).click();
+}
 function sync(){
  const g=gender();
  for(const o of all)o.visible=o.name.startsWith('HFV19_'+g+'_');
