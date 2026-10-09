@@ -9,6 +9,32 @@ export function nativeBodyForgeV10({THREE,loader,getRoot,getGender,removeSourceA
  // V12 extends V8 — do not replace frozen native rig, save authority, or 6 slots.
  const allSlots=['CHEST','ARMS','HANDS','LEGS','FEET','BACK'];
  let active=null,original=null,buffer=null,importedMeshes=[],stats=null,attachedRig=null;
+ // Closed Nightfall is worn over a dark gambeson, not exposed pale source skin.
+ // This ONLY swaps presentation materials on the 4 AUTHENTIC torso/loin
+ // meshes while the forged armor is equipped. Every source material is restored
+ // verbatim on unequip; source meshes, skinning and player saves stay intact.
+ const originalUndersuitMaterials=new Map();
+ const gambeson=new THREE.MeshStandardMaterial({
+   name:'HIGHFLY_V12_DARK_GAMBESON_UNDERARMOR',color:0x171326,
+   roughness:.9,metalness:.07,side:THREE.FrontSide
+ });
+ function underarmorParts(){
+   const actor=getRoot(),parts=['M_Torso','F_Torso','M_Loin','F_Loin'].map(name=>actor?.getObjectByName(name));
+   if(parts.some(p=>!p?.isSkinnedMesh)||new Set(parts).size!==4)
+    throw Error('ORIGINAL_NATIVE_TORSO_LOIN_GAMBESON_MISSING');
+   return parts;
+ }
+ function dressUndersuit(){
+   for(const p of underarmorParts()){
+    if(!originalUndersuitMaterials.has(p))originalUndersuitMaterials.set(p,p.material);
+    p.material=gambeson;
+   }
+   return originalUndersuitMaterials.size;
+ }
+ function restoreUndersuit(){
+   for(const [p,material] of originalUndersuitMaterials)p.material=material;
+   originalUndersuitMaterials.clear();
+ }
  const show=s=>$('bodyForgeState').textContent=s;
  function rig(){
   const actor=getRoot(),skeleton=actor?.getObjectByName('Rig_Medium');
@@ -89,6 +115,7 @@ export function nativeBodyForgeV10({THREE,loader,getRoot,getGender,removeSourceA
    importedMeshes.push(mesh);
   }
   wearGender();
+  dressUndersuit();
   active=holder;buffer=bytes.slice(0);attachedRig=native.skeleton;
   stats={vertices:checked.vertices,triangles:checked.triangles,meshes:checked.list.length,
     nativeBones:native.bones.size,originalRig:true,premiumMeshes:checked.premiumMeshes,ignoredDonorClips,
@@ -105,6 +132,7 @@ export function nativeBodyForgeV10({THREE,loader,getRoot,getGender,removeSourceA
  function clear(){
   if(active){active.removeFromParent();active=null}
   importedMeshes=[];buffer=null;stats=null;attachedRig=null;
+  restoreUndersuit();
   if(original){restoreSourceArmor(original);original=null}
   redraw();show('Armadura Nightfall retirada. Hunter original conservado.');
  }
@@ -147,8 +175,12 @@ export function nativeBodyForgeV10({THREE,loader,getRoot,getGender,removeSourceA
    skinnedMeshes:importedMeshes.length,activeMeshes:importedMeshes.filter(o=>o.visible).length,
    mappedToOriginalBones:!!stats&&stats.originalRig,gender:getGender(),
    bytes:buffer?.byteLength||0,stats:stats?{...stats}:null,
-   gameUnchanged:true,visualQualityApproved:false}),
+   gameUnchanged:true,visualQualityApproved:false,
+   underarmorFabricActive:!!active&&originalUndersuitMaterials.size===4&&
+     underarmorParts().every(p=>p.material===gambeson),
+   originalUndersuitMaterialsStored:originalUndersuitMaterials.size}),
   sample,importData,remove:clear,syncGender:wearGender,
+  maintainUnderarmor:()=>active?dressUndersuit():0,
   download,sampleDeformation,
   bonesMatch:()=>importedMeshes.every(o=>o.skeleton.bones.every(b=>{
    let p=b;while(p){if(p===getRoot())return true;p=p.parent}return false;
