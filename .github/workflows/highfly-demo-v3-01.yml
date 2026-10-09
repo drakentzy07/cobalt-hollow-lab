@@ -353,7 +353,25 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 ../demo/v3/fix_training_window_visibility.py
+          if ! python3 ../demo/v3/fix_training_window_visibility.py; then
+            # Do not mutate the donor blindly: reveal the *assembled* CLEAN
+            # source (not the older training/runtime source) for exact repair.
+            python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('src/highfly/training/ui.ts')
+          s=p.read_text(encoding='utf-8')
+          print('V3_01_TRAINING_ASSEMBLED_SOURCE_DIAGNOSTICS_BEGIN')
+          print('file_length',len(s))
+          for term in ['highfly:open-training', 'highfly-training-window', 'trainingWindow', 'function installHighflyTrainingUi', 'window.addEventListener', 'display']:
+              locations=[m.start() for m in re.finditer(re.escape(term),s)]
+              print('TERM',term,'count',len(locations))
+              for position in locations[-6:]:
+                  print('CONTEXT',repr(s[max(0,position-330):min(len(s),position+650)]))
+          print('V3_01_TRAINING_ASSEMBLED_SOURCE_DIAGNOSTICS_END')
+          PY
+            exit 1
+          fi
           cp ../demo/v3/training_window_visibility.test.ts tests/highfly_demo_v3_training_window_visibility.test.ts
           pnpm exec vitest run tests/highfly_demo_v3_training_window_visibility.test.ts
           git diff --check HEAD
