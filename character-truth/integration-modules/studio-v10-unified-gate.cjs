@@ -31,7 +31,10 @@ const ok=(yes,why)=>{assert(yes,why);report.checks.push(why)};
   await page.waitForFunction(()=>window.__HF_SKIN_STUDIO_V10__?.state().mounted||
    /RECHAZADO/i.test(document.querySelector('#bodyForgeState')?.textContent||''),null,{timeout:60000});
   let state=await page.evaluate(()=>window.__HF_SKIN_STUDIO_V10__.state());
-  ok(state.mounted&&state.originalRig&&state.mappedToOriginalBones,'V8 weighted mesh physically bound to original rig');
+  const diagnostic=await page.locator('#bodyForgeState').textContent();
+  console.log('HIGHFLY_V10_BROWSER_BIND_DIAGNOSTIC '+JSON.stringify({state,diagnostic,errors:report.errors}));
+  report.armorDiagnostic={state,diagnostic};
+  ok(state.mounted&&state.originalRig&&state.mappedToOriginalBones,'V8 weighted mesh physically bound to original rig: '+diagnostic);
   ok(state.skinnedMeshes===36&&state.activeMeshes===18,'36 new Blender parts with gender filtering');
   ok(state.stats?.nativeBones===23&&state.stats?.vertices>=3000,'Actual 23 native bones and measured geometry');
   ok(await page.evaluate(()=>window.__HF_SKIN_STUDIO_V10__.bonesMatch()),'Every forged armor skin influences actual original Hunter bones');
