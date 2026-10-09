@@ -1,0 +1,98 @@
+name: HIGHFLY Skin Studio V8 — Original Weighted Nightfall Full Body Armor
+on:
+  push:
+    branches: [highfly-skin-studio-v8-weighted-armor]
+    paths:
+      - 'character-truth/integration-modules/**'
+      - '.github/workflows/studio-v8-weighted-armor.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-body:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download exact pinned original warrior GLB
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/v7-input
+          curl --retry 3 -fsSL https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb -o character-truth/v7-input/warrior_modular.glb
+          test "$(git hash-object character-truth/v7-input/warrior_modular.glb)" = "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2"
+          npm install --no-save --package-lock=false @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer gltf-validator three@0.180.0 playwright@1.55.0 esbuild@0.25.12
+          node character-truth/integration-modules/prepare-native-body.mjs character-truth/v7-input/warrior_modular.glb character-truth/v7-input/warrior-plain.glb
+      - name: Install OFFICIAL Blender 4.2 LTS portable (no apt, verified checksum)
+        shell: bash
+        timeout-minutes: 9
+        run: |
+          set -euo pipefail
+          VERSION="4.2.23"
+          NAME="blender-${VERSION}-linux-x64.tar.xz"
+          BASE="https://download.blender.org/release/Blender4.2"
+          mkdir -p "$RUNNER_TEMP/highfly-blender" "$RUNNER_TEMP/highfly-download"
+          cd "$RUNNER_TEMP/highfly-download"
+          curl --fail --show-error --location --retry 2 --retry-delay 2 --connect-timeout 15 --max-time 390 "$BASE/$NAME" -o "$NAME"
+          curl --fail --show-error --location --retry 2 --connect-timeout 15 --max-time 35 "$BASE/blender-${VERSION}.sha256" -o SHA256SUMS
+          grep -F "$NAME" SHA256SUMS | head -n 1 | sha256sum --check
+          tar -xJf "$NAME" --strip-components=1 -C "$RUNNER_TEMP/highfly-blender"
+          test -x "$RUNNER_TEMP/highfly-blender/blender"
+          echo "$RUNNER_TEMP/highfly-blender" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/highfly-blender/blender" --version | head -n 2
+      - name: Inspect actual Blender native meshes and skinning
+        shell: bash
+        run: |
+          set -euo pipefail
+          blender --background --factory-startup --python-exit-code 99 --python character-truth/integration-modules/inspect-native-body.py -- character-truth/v7-input/warrior-plain.glb | tee character-truth/v7-input/inspection.log
+          grep -F 'HIGHFLY_V7_REAL_BLENDER_RIG_IMPORT_GREEN=1' character-truth/v7-input/inspection.log
+          test -s character-truth/v7-input/blender-rig-inspection.json
+          echo HIGHFLY_V7_ORIGINAL_INSPECTION_DONE=1
+      - name: Forge independent original NIGHTFALL six-slot armors for male and female on authentic bone weights
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/v8-proof
+          python3 -m py_compile character-truth/integration-modules/nightfall-body-forge.py
+          blender --background --factory-startup --python-exit-code 99 --python character-truth/integration-modules/nightfall-body-forge.py -- \
+            --native character-truth/v7-input/warrior-plain.glb \
+            --out character-truth/v8-proof/HIGHFLY-NIGHTFALL-rigged-body.glb | tee character-truth/v8-proof/forge.log
+          grep -F 'HIGHFLY_V8_WEIGHTED_ORIGINAL_ARMOR_EXPORTED' character-truth/v8-proof/forge.log
+          test -s character-truth/v8-proof/HIGHFLY-NIGHTFALL-rigged-body.glb
+          test -s character-truth/v8-proof/HIGHFLY-NIGHTFALL-rigged-body.json
+      - name: Khronos and per-vertex proof that forged parts have real native rig weights and no source body leaks
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/nightfall-body-gate.cjs
+          node character-truth/integration-modules/nightfall-body-gate.cjs
+          test -s character-truth/v8-proof/nightfall-skinning-gate.json
+      - name: Import the exported original armor in Blender and test elbow, legs and spine deformations
+        shell: bash
+        timeout-minutes: 3
+        run: |
+          set -euo pipefail
+          blender --background --factory-startup --python-exit-code 99 --python character-truth/integration-modules/nightfall-body-motion.py -- \
+            character-truth/v8-proof/HIGHFLY-NIGHTFALL-rigged-body.glb | tee character-truth/v8-proof/pose.log
+          grep -F 'HIGHFLY_V8_REAL_BODY_ARMOR_DEFORMATION_GREEN=1' character-truth/v8-proof/pose.log
+      - name: Preserve original rig-skinned armor geometry GLB, Khronos, motion proof and audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-V8-NIGHTFALL-ORIGINAL-BODY-ARMOR-TRUE-WEIGHTED-GLB
+          path: |
+            character-truth/v8-proof/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Preserve honest Blender native rig/mesh inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-V7-NATIVE-BODY-RIG-INSPECTION
+          path: |
+            character-truth/v7-input/blender-rig-inspection.json
+            character-truth/v7-input/inspection.log
+          retention-days: 30
+          if-no-files-found: warn
