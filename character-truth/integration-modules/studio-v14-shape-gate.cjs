@@ -47,13 +47,13 @@ function positionVectors(doc,nodeName){
    window.__HF_SKIN_STUDIO_V14__.selectByName('HFV12_M_CHEST_ABDOMINAL_CUIRASS');
    window.__HF_SKIN_STUDIO_V13__.selectByName('HFV12_M_CHEST_ABDOMINAL_CUIRASS');
   });
-  await page.locator('#shapeWidth').fill('1.25');
-  await page.locator('#shapeHeight').fill('1.05');
-  await page.locator('#shapeDepth').fill('1.10');
-  await page.locator('#shapeX').fill('.02');
-  await page.locator('#shapeY').fill('.01');
+  await page.locator('#shapeWidth').evaluate(el=>{el.value='1.25';el.dispatchEvent(new Event('input',{bubbles:true}))});
+  await page.locator('#shapeHeight').evaluate(el=>{el.value='1.05';el.dispatchEvent(new Event('input',{bubbles:true}))});
+  await page.locator('#shapeDepth').evaluate(el=>{el.value='1.10';el.dispatchEvent(new Event('input',{bubbles:true}))});
+  await page.locator('#shapeX').evaluate(el=>{el.value='.02';el.dispatchEvent(new Event('input',{bubbles:true}))});
+  await page.locator('#shapeY').evaluate(el=>{el.value='.01';el.dispatchEvent(new Event('input',{bubbles:true}))});
   await page.locator('#shapeApply').click();
-  await page.locator('#premiumColor').fill('#ee4488');
+  await page.locator('#premiumColor').evaluate(el=>{el.value='#ee4488';el.dispatchEvent(new Event('input',{bubbles:true}))});
   await page.locator('#premiumApply').click();
   const after=await page.evaluate(()=>{
    const names=['HFV12_M_CHEST_ABDOMINAL_CUIRASS','HFV12_F_CHEST_ABDOMINAL_CUIRASS'];
