@@ -1,8 +1,6 @@
 name: HIGHFLY DEMO V3-01A — 9 CLASSES & PF6 CERTIFICATION
+# Independent class certificate can be rerun manually; preview iteration must not cancel it.
 on:
-  push:
-    branches:
-      - highfly-demo-v3-integration
   workflow_dispatch:
 permissions:
   contents: read
