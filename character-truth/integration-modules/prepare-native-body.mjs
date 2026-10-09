@@ -17,6 +17,17 @@ const meshoptExtension=document.getRoot().listExtensionsUsed()
 if(!meshoptExtension)throw Error('EXPECTED_NATIVE_MESHOPT_EXTENSION');
 meshoptExtension.dispose(); // Preserve decoded buffers and original source unchanged.
 await document.transform(dequantize());
+/* Blender 4.2 cannot open original KHR_texture_basisu / KTX2 textures.
+ * For a separate geometry+rig inspection ONLY, omit presentation materials.
+ * The frozen original GLB and all skinning / coordinates remain untouched. */
+for(const material of [...document.getRoot().listMaterials()])material.dispose();
+for(const texture of [...document.getRoot().listTextures()])texture.dispose();
+for(const ext of [...document.getRoot().listExtensionsUsed()]){
+ if(ext.extensionName==='KHR_texture_basisu')ext.dispose();
+}
+if(document.getRoot().listExtensionsUsed().some(e=>e.extensionName==='KHR_texture_basisu'))
+ throw Error('BLENDER_GEOMETRY_COPY_STILL_KTX2');
+
 const stillCompressed=document.getRoot().listExtensionsUsed()
  .some(e=>e.extensionName==='EXT_meshopt_compression');
 if(stillCompressed)throw Error('MESHOPT_NOT_REMOVED_FROM_BLENDER_COPY');
