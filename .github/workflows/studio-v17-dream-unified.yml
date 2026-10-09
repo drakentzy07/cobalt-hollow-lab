@@ -1,0 +1,59 @@
+name: HIGHFLY DREAM SKIN V17 — UNIFIED REAL HUNTER MOBILE STUDIO
+on:
+  push:
+    branches: [highfly-skin-studio-v17-dream-unified]
+    paths:
+      - 'character-truth/integration-modules/dream-project-v17.mjs'
+      - 'character-truth/integration-modules/dream-studio-v17.mjs'
+      - 'character-truth/integration-modules/dream-v17.test.mjs'
+      - 'character-truth/integration-modules/dream-v17-browser-gate.cjs'
+      - 'character-truth/integration-modules/package-dream-v17.mjs'
+      - '.github/workflows/studio-v17-dream-unified.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  unified-hunter-studio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-DREAM-V16-IMAGE-STUDIO-CANDIDATE-NO-DEPLOY
+          run-id: 37975253991
+          github-token: ${{ github.token }}
+          path: character-truth/v16-green-package
+      - name: Reuse real previous studio and validate V17 import/export
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/dream-studio-v17.mjs
+          node character-truth/integration-modules/package-dream-v17.mjs
+          node character-truth/integration-modules/dream-v17.test.mjs
+      - name: Setup browser engine for ORIGINAL Hunter Android landscape proof
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify actual browser controls, real skinned GLB and project save/restore
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4187 --bind 127.0.0.1 --directory highfly-dream-v17-preview >/tmp/hf-v17.log 2>&1 &
+          sleep 2
+          node character-truth/integration-modules/dream-v17-browser-gate.cjs
+          echo HIGHFLY_V17_DREAM_STUDIO_REAL_BROWSER_GREEN=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-DREAM-V17-UNIFIED-STUDIO-CANDIDATE-NO-DEPLOY
+          path: highfly-dream-v17-preview/
+          retention-days: 30
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-DREAM-V17-REAL-HUNTER-ANDROID-VIEW-QA
+          path: character-truth/v17-evidence/
+          retention-days: 30
+          if-no-files-found: warn
