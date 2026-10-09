@@ -62,7 +62,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 <aside>
 <section id="bodyPanel" class="studio">
 <h2>⚔️ NIGHTFALL V12 · ARMADURA PREMIUM FORJADA</h2>
-<small>Más de 80 mallas reales: abdomen, cintura, faldones, muslos, rodillas, hombreras, pecho, brazos y espalda. Dos cuerpos. Misma animación y esqueleto del Hunter real, sin party swap.</small>
+<small>92 mallas reales: abdomen, cintura, faldones, muslos, rodillas, hombreras y espalda. Gambesón oscuro reversible bajo las placas. Dos cuerpos. Misma animación y esqueleto del Hunter real, sin party swap.</small>
 <div class="buttonrow">
 <button id="bodyForgeLoad" class="primary">Vestir Nightfall 3D</button>
 <button id="bodyForgeOff">Retirar Nightfall</button>
@@ -583,6 +583,7 @@ updateModel=function(...args){
   for(const m of meshes)for(let parent=m;parent&&parent!==root;parent=parent.parent)
    if(parent.name.startsWith('Armor_')){m.visible=false;break}
   weightedV10.syncGender();
+  weightedV10.maintainUnderarmor();
   render();
  }
  return r;
