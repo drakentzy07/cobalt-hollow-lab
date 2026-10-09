@@ -42,11 +42,11 @@ const checks=[],errors=[],ok=(x,label)=>{assert(x,label);checks.push(label)};
   const poses=await page.evaluate(()=>window.__HF_HEAD_TRUTH_V18__.poseAudit());
   ok(poses.length===5&&poses.every(p=>Number.isFinite(p.ratio)&&p.animatedOriginalMeshes>0),
    'Five real moving-clip geometric pose tests with finite original mesh values');
-  await page.locator('#front').click();
+  await page.evaluate(()=>document.getElementById('front').click());
   await page.screenshot({path:out+'/03-v18-kage-front.png'});
-  await page.locator('#profile').click();
+  await page.evaluate(()=>document.getElementById('profile').click());
   await page.screenshot({path:out+'/04-v18-kage-side.png'});
-  await page.locator('#backview').click();
+  await page.evaluate(()=>document.getElementById('backview').click());
   await page.screenshot({path:out+'/05-v18-kage-back.png'});
   await page.locator('#gender').selectOption('female');
   const f=await page.evaluate(()=>window.__HF_HEAD_TRUTH_V18__.scan());
