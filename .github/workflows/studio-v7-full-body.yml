@@ -44,5 +44,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          blender --background --factory-startup --python character-truth/integration-modules/inspect-native-body.py -- character-truth/v7-input/warrior-plain.glb
+          blender --background --factory-startup --python-exit-code 99 --python character-truth/integration-modules/inspect-native-body.py -- character-truth/v7-input/warrior-plain.glb | tee character-truth/v7-input/inspection.log
+          grep -F 'HIGHFLY_V7_REAL_BLENDER_RIG_IMPORT_GREEN=1' character-truth/v7-input/inspection.log
+          test -s character-truth/v7-input/blender-rig-inspection.json
           echo HIGHFLY_V7_ORIGINAL_INSPECTION_DONE=1
+      - name: Preserve honest Blender native rig/mesh inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-V7-NATIVE-BODY-RIG-INSPECTION
+          path: |
+            character-truth/v7-input/blender-rig-inspection.json
+            character-truth/v7-input/inspection.log
+          retention-days: 30
+          if-no-files-found: warn
