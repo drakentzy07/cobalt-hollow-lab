@@ -94,8 +94,8 @@ end = before_main.find("// Looping home-page theme", start)
 if start < 0 or end < start:
     raise SystemExit("V3-01 source drift: launcher preview region missing")
 section = before_main[start:end]
-matcher = re.compile(r"(?m)^([ \\t]*(?:void[ \\t]+)?)charactersReady([ \\t]*\\([ \\t]*\\))")
-section, replacements = matcher.subn(r"\\1charactersReadyForPreview\\2", section)
+matcher = re.compile(r"(?m)^([ \t]*(?:void[ \t]+)?)charactersReady([ \t]*\([ \t]*\))")
+section, replacements = matcher.subn(r"\1charactersReadyForPreview\2", section)
 if replacements != 1:
     context = "\\n".join(
         row for row in before_main[start:end].splitlines() if "charactersReady" in row
