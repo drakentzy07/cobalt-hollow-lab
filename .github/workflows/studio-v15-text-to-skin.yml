@@ -1,0 +1,53 @@
+name: HIGHFLY DREAM SKIN V15 — REAL TEXT RECIPE + SKINNED GLB
+on:
+  push:
+    branches: [highfly-skin-studio-v15-text-to-skin]
+    paths:
+      - 'character-truth/integration-modules/dream-*'
+      - 'character-truth/integration-modules/package-dream-v15.mjs'
+      - '.github/workflows/studio-v15-text-to-skin.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  real-text-recipe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse EXACT successful V14.1 site and Blender-made authentic weighted Nightfall
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-V14-1-ORIGINAL-HEAD-FIT-HELMET-STUDIO-NO-DEPLOY
+          run-id: 37970676230
+          github-token: ${{ github.token }}
+          path: character-truth/v14-1-approved-package
+      - name: Create V15 preview without rebuilding or touching PF6
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/dream-recipe-v15.mjs
+          node --check character-truth/integration-modules/dream-v15-ui.mjs
+          node character-truth/integration-modules/package-dream-v15.mjs
+      - name: Produce and validate REAL 3D GLB from Spanish design text
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/dream-v15.test.mjs
+          test -s character-truth/v15-evidence/HIGHFLY-V15-TEXT-TO-NIGHTFALL-REAL-GLB.glb
+          echo HIGHFLY_V15_TEXT_TO_REAL_SKIN_FACTORY_GREEN=1
+      - name: Preserve complete independent web studio and Blender proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-DREAM-V15-STUDIO-CANDIDATE-NO-DEPLOY
+          path: highfly-dream-v15-preview/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Preserve exported real GLB and transparent pending details
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-DREAM-V15-REAL-SKINNED-GLB-EVIDENCE
+          path: character-truth/v15-evidence/
+          retention-days: 30
+          if-no-files-found: warn
