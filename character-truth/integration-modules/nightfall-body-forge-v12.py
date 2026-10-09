@@ -219,7 +219,7 @@ for gender in ('M','F'):
       (c[0]-width*.17,c[1]-depth*1.34,belt_z+.07),
       (c[0]+width*.17,c[1]-depth*1.34,belt_z+.07),
       (c[0]+width*.12,c[1]-depth*1.37,belt_z-.07),
-      (c[0]-width*.12,c[1]-depth*1.37,belt_z-.07)],gold)
+      (c[0]-width*.12,c[1]-depth*1.37,belt_z-.07)],violet)
     # Split front faulds intentionally terminate above leg flexion; no full robe/cape.
     # Shape ranges are derived from each native gender's torso dimensions.
     for k in (-1,0,1):
