@@ -53,7 +53,12 @@ export function nativeBodyForgeV10({THREE,loader,getRoot,getGender,removeSourceA
   if(!(bytes instanceof ArrayBuffer)||bytes.byteLength<12000||bytes.byteLength>9_000_000)
    throw Error('ORIGINAL_WEIGHTED_GLB_SIZE_INVALID');
   const src=await loader.parseAsync(bytes.slice(0),'');
-  if(src.animations?.length)throw Error('ARMOR_CANNOT_REPLACE_NATIVE_CLIPS');
+  // Blender V8 exported animation tracks with the ARMATURE metadata.
+  // These are discarded: this module mounts ONLY forged skinned meshes and
+  // references ONLY existing native bones. Never create a second mixer/rig.
+  const ignoredDonorClips=src.animations?.length||0;
+  if(ignoredDonorClips>150)throw Error('FORGE_UNEXPECTED_ANIMATION_PAYLOAD');
+  src.animations.length=0;
   const checked=inspect(src.scene),native=rig();
   // FIRST validate exact bone mapping for all parts without scene mutations.
   const bindings=checked.list.map(mesh=>{
@@ -83,7 +88,8 @@ export function nativeBodyForgeV10({THREE,loader,getRoot,getGender,removeSourceA
   wearGender();
   active=holder;buffer=bytes.slice(0);attachedRig=native.skeleton;
   stats={vertices:checked.vertices,triangles:checked.triangles,meshes:checked.list.length,
-    nativeBones:native.bones.size,originalRig:true,visualQualityCertified:false,phoneTested:false};
+    nativeBones:native.bones.size,originalRig:true,ignoredDonorClips,
+    nativeAnimationAuthority:true,visualQualityCertified:false,phoneTested:false};
   redraw();show('Nightfall real: '+stats.meshes+' mallas skinned · '+stats.vertices+
     ' vértices · '+stats.triangles+' triángulos · rig original '+stats.nativeBones+' huesos.');
   return stats;
