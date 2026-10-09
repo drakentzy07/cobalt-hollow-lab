@@ -348,6 +348,16 @@ jobs:
           (cd upstream && python ../professions/pr13/activate_pr13.py)
           git -C upstream diff --check HEAD
           echo "PR13_REAL_NODE_FARM_FISH_SOURCE_PROOFS=1"
+      - name: V3-01 repair original Training UI open-close display contract (no gameplay changes)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../demo/v3/fix_training_window_visibility.py
+          cp ../demo/v3/training_window_visibility.test.ts tests/highfly_demo_v3_training_window_visibility.test.ts
+          pnpm exec vitest run tests/highfly_demo_v3_training_window_visibility.test.ts
+          git diff --check HEAD
+          echo "V3_01_NATIVE_TRAINING_BUTTON_VISIBILITY_CONTRACT_GREEN=1"
       - name: V3-01 nine original classes truly present and runnable
         working-directory: upstream
         shell: bash
