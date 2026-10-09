@@ -23,7 +23,7 @@ def snapshot():
  return output
 start=snapshot()
 for name,value in [('lowerarm.l',.8),('upperarm.r',-.6),
-                   ('lowerleg.l',.7),('upperleg.r',-.5),('spine',.23),('chest',-.2)]:
+                   ('lowerleg.l',.7),('upperleg.r',-.5),('spine',.23),('chest',-.2),('hips',.18)]:
  p=rig.pose.bones.get(name)
  if not p:raise RuntimeError('MISSING_REQUIRED_NATIVE_POSE_BONE_'+name)
  p.rotation_mode='XYZ';p.rotation_euler[1]=value
