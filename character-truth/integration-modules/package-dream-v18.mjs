@@ -12,6 +12,14 @@ html=html.replace('DREAM SKIN STUDIO · V17','SUPREME SKIN STUDIO · V18')
 fs.writeFileSync(dest+'/index.html',html);
 for(const f of ['head-fit-math-v18.mjs','head-truth-v18.mjs','native-forge-v14-1.mjs'])
  fs.copyFileSync(root+'/'+f,dest+'/'+f);
+/* V14.1 in V17 was patched to relative URL by its own packager.
+ * Preserve that proven browser-relative Kage-Oni asset when replacing the source module. */
+const helmetPath=dest+'/native-forge-v14-1.mjs';
+const rawHelmet=fs.readFileSync(helmetPath,'utf8');
+const absoluteHelmet="'/character-truth/integration-modules/assets/HIGHFLY-KAGE-ONI-head.glb'";
+assert.equal(rawHelmet.split(absoluteHelmet).length,2,'V18_EXPECTS_EXACT_HELMET_SOURCE_ASSET');
+fs.writeFileSync(helmetPath,rawHelmet.replace(absoluteHelmet,"'./assets/HIGHFLY-KAGE-ONI-head.glb'"));
+assert(!fs.readFileSync(helmetPath,'utf8').includes(absoluteHelmet));
 assert(fs.statSync(dest+'/assets/HIGHFLY-NIGHTFALL-rigged-body.glb').size>100000);
 assert(fs.statSync(dest+'/assets/HIGHFLY-KAGE-ONI-head.glb').size>100000);
 assert(!fs.existsSync(dest+'/assets/warrior_modular.glb'));
