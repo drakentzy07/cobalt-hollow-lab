@@ -85,12 +85,25 @@ before_main = replace_once(
     "  charactersReadyForPreview,\n  ensureCharacterUrl,",
     "main preview import",
 )
-before_main = replace_once(
-    before_main,
-    "  charactersReady()\n    .then(() => {",
-    "  charactersReadyForPreview()\n    .then(() => {",
-    "main targeted preview gate",
-)
+# The CLEAN canonical patch may wrap the promise in a 'void' statement
+# or change line spacing. Identify the actual executable invocation inside
+# the launcher block instead of matching the donor's exact indentation.
+import re
+start = before_main.find("  // Initialize 3D character preview once")
+end = before_main.find("// Looping home-page theme", start)
+if start < 0 or end < start:
+    raise SystemExit("V3-01 source drift: launcher preview region missing")
+section = before_main[start:end]
+matcher = re.compile(r"(?m)^([ \\t]*(?:void[ \\t]+)?)charactersReady([ \\t]*\\([ \\t]*\\))")
+section, replacements = matcher.subn(r"\\1charactersReadyForPreview\\2", section)
+if replacements != 1:
+    context = "\\n".join(
+        row for row in before_main[start:end].splitlines() if "charactersReady" in row
+    )
+    raise SystemExit(
+        f"V3-01 source drift: expected 1 executable preview call, got {replacements}: {context}"
+    )
+before_main = before_main[:start] + section + before_main[end:]
 assets.write_text(before_assets, encoding="utf-8")
 main.write_text(before_main, encoding="utf-8")
 print("V3_01_PREVIEW_GATE_SOURCE_APPLIED=1")
