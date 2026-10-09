@@ -9,14 +9,18 @@ from pathlib import Path
 p=Path("src/highfly/training/ui.ts")
 s=p.read_text(encoding="utf-8")
 old_open="""  window.addEventListener('highfly:open-training', () => {
+    setTrainingFocusMode(true);
     trainingWindow?.removeAttribute('hidden');"""
 new_open="""  window.addEventListener('highfly:open-training', () => {
+    setTrainingFocusMode(true);
     trainingWindow?.removeAttribute('hidden');
     // CLEAN's managed .window uses inline display:none; removing [hidden]
     // alone cannot make the real Training panel visible.
     if (trainingWindow) trainingWindow.style.display = 'flex';"""
-old_close="""      document.querySelector('#highfly-training-window')?.setAttribute('hidden', '');"""
-new_close="""      trainingWindow?.setAttribute('hidden', '');
+old_close="""      setTrainingFocusMode(false);
+      document.querySelector('#highfly-training-window')?.setAttribute('hidden', '');"""
+new_close="""      setTrainingFocusMode(false);
+      trainingWindow?.setAttribute('hidden', '');
       // Keep both visibility channels coherent. [hidden] alone loses to
       // an author-level inline display:flex when the modal is closed.
       if (trainingWindow) trainingWindow.style.display = 'none';"""
