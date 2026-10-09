@@ -15,6 +15,7 @@ const checks=[],errors=[],ok=(x,n)=>{assert(x,n);checks.push(n)};
   ok(await page.locator('#dreamCockpit').count()===1,'V17 original cockpit stays');
   ok(await page.locator('#hf18Panel').count()===1,'V18 genuine head truth survives');
   ok(await page.locator('#hf19Panel').count()===1,'One new V19 forge panel');
+  ok(await page.locator('#hf19Gender').count()===1,'New visible independent male/female selector');
   ok(await page.locator('#hf19Launch').count()===1,'New on-screen direct Forge navigation');
   const first=await page.evaluate(()=>window.__HF_LEGENDARY_V19__.state());
   ok(first.originalHunterUntouched&&!first.mounted,'Initial unchanged original Hunter');
@@ -29,14 +30,14 @@ const checks=[],errors=[],ok=(x,n)=>{assert(x,n);checks.push(n)};
   const truth=await page.evaluate(()=>window.__HF_LEGENDARY_V19__.inspect());
   ok(truth.mapped&&truth.visible===16&&truth.originalOnly,
    'All 32 new meshes mapped exclusively to real source bones and male mesh filters');
-  await page.evaluate(()=>document.getElementById('front').click());
+  await page.locator('#hf19Front').click();
   await page.screenshot({path:proof+'/01-v19-original-male-front.png'});
-  await page.evaluate(()=>document.getElementById('profile').click());
+  await page.locator('#hf19Side').click();
   await page.screenshot({path:proof+'/02-v19-original-male-profile.png'});
   const move=await page.evaluate(()=>window.__HF_LEGENDARY_V19__.pose());
   ok(move.finite&&move.newSkinnedMeshes===16,
    'Walking_A drives original skeleton and all 16 newly skinned male ornaments');
-  await page.locator('#hf18Gender').selectOption('female');
+  await page.locator('#hf19Gender').selectOption('female');
   const female=await page.evaluate(()=>window.__HF_LEGENDARY_V19__.inspect());
   ok(female.gender==='F'&&female.visible===16,'Female genuine skinned ornaments are independently selected');
   await page.evaluate(()=>document.getElementById('front').click());
