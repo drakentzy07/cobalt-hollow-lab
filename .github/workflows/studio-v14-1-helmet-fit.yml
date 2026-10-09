@@ -1,0 +1,467 @@
+name: HIGHFLY SKIN STUDIO V14.1 — KAGE ONI ORIGINAL HEAD ANATOMY FIT
+on:
+  push:
+    branches: [highfly-skin-studio-v14-1-helmet-fit]
+    paths:
+      - 'character-truth/integration-modules/**'
+      - 'character-truth/integration-safety/guard.py'
+      - '.github/workflows/studio-v14-1-helmet-fit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  source-real-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 52
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse prior original 7-slot GREEN evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: highfly-skin3-original-7-slot-mixed-armor-proof
+          run-id: 37825143482
+          github-token: ${{ github.token }}
+          path: character-truth/phase8-prior
+      - name: Download exact six official GLB + original sim, items and compositor
+        shell: bash
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,pathlib,urllib.request,time,re
+          rev='9b57e49c9676d75962700f828cc00a50a9a988b5'
+          base='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/'+rev+'/'
+          original={
+            'src/render/characters/modular.ts':'d2ad732114b01a0aa9de5a882e0a6980d54225fb',
+            'src/render/characters/underhair.generated.ts':'630408c0ffbffb61d06e1a398f28b0d89f820dfe',
+            'src/sim/types.ts':'615266ac42c5dc71d0f1f02deef2bd8cddf826bc',
+            'src/sim/loot_quality/types.ts':'ecac0870d9f08d026b15dd405527aa693e81961e',
+            'src/sim/material_payload_identity.ts':'d705b7c4ec4b24c9caa691af8a2db642638324b8',
+            'src/sim/equipment_rules.ts':'f60a1423c05318eb8a422cdf3d8bcbcb51f6b61d',
+            'src/sim/content/items.ts':'7fa4bd4e0864df8eb85e3070c0c1e5aac2579674'
+          }
+          for model,sha in json.loads(pathlib.Path('character-truth/official-asset-shas.json').read_text()).items():
+            folder='modular' if model=='warrior_modular.glb' else 'players'
+            original['public/models/chars/'+folder+'/'+model]=sha
+          downloaded={}
+          for name,pin in original.items():
+            for attempt in range(3):
+              try:
+                req=urllib.request.Request(base+name,headers={'User-Agent':'HIGHFLY-SKIN3-PHASE10-ORIGINAL-AUDIT'})
+                with urllib.request.urlopen(req,timeout=55) as res:data=res.read()
+                break
+              except Exception:
+                if attempt==2:raise
+                time.sleep(2)
+            actual=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+            if actual!=pin:raise RuntimeError('PINNED_ORIGINAL_MISMATCH '+name)
+            if name.endswith('.glb'):
+              dest=pathlib.Path('character-truth/inputs')/pathlib.Path(name).name
+            elif name.startswith('src/render/'):
+              dest=pathlib.Path('character-truth/generated')/pathlib.Path(name).name
+            else:
+              dest=pathlib.Path('character-truth/phase10-source')/name
+            dest.parent.mkdir(parents=True,exist_ok=True)
+            dest.write_bytes(data)
+            downloaded[name]=data.decode('utf8') if name.endswith('.ts') else None
+            print('HIGHFLY_SOURCE_PIN_GREEN',name,actual)
+          prior=json.loads(pathlib.Path('character-truth/phase8-prior/seven-slot-results.json').read_text())
+          assert prior['green'] and len(prior['cases'])==116, 'phase8 proven source missing'
+          text=downloaded['src/sim/content/items.ts']
+          names=['militia_vest','shadow_jerkin','woven_robe','oiled_boots','greyjaw_hide_boots','quilted_trousers','worn_sword']
+          for name in names:
+            assert re.search(r'(?m)^\s*'+re.escape(name)+r':\s*\{\s*\n\s*id:\s*'+repr(name),text), 'Pilot item is not real original '+name
+          print('HIGHFLY_SKIN3_PHASE10_NATIVE_ITEM_DEFINITIONS_GREEN',len(names))
+          PY
+      - name: Compile true original equipment rules and original character compositor
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false three@0.180.0 playwright@1.55.0 meshoptimizer@0.23.0 esbuild@0.25.12 @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions gltf-validator
+          npx esbuild character-truth/phase10-source/src/sim/equipment_rules.ts \
+            --bundle --format=esm --platform=browser \
+            --outfile=character-truth/phase10-generated/equipment_rules.mjs
+          npx esbuild character-truth/generated/modular.ts \
+            --bundle --format=esm --platform=browser \
+            --outfile=character-truth/phase10-generated/modular.mjs
+          cp character-truth/phase10-generated/modular.mjs character-truth/generated/modular-runtime.mjs
+          node --check character-truth/phase10-item-visual-adapter.mjs
+          node --check character-truth/integration-modules/factory-v4-gate.cjs
+          node --check character-truth/integration-modules/factory-recipe-v4.mjs
+          node --check character-truth/integration-modules/native-molder-v3.mjs
+          node --check character-truth/integration-modules/paint-recipe-v3.mjs
+          node --input-type=module - <<'JS'
+          import assert from 'node:assert/strict';
+          import {initialPilot,visualPilot,equipPilot,unequipPilot,savePilot,loadPilot,PILOT_CATALOG} from './character-truth/phase10-item-visual-adapter.mjs';
+          let s=initialPilot('male');
+          assert.equal(Object.keys(PILOT_CATALOG).length,7);
+          assert(visualPilot(s).nodes.includes('M_Torso'));
+          const t=equipPilot(s,s.inventory[0].copyId,'chest');
+          assert(t.ok);
+          assert.equal(visualPilot(t.state).worn.chest,'knight');
+          const restored=loadPilot(savePilot(t.state));
+          assert.equal(restored.equipment.chest.itemId,'militia_vest');
+          const u=unequipPilot(restored,'chest');
+          assert(u.ok);assert.equal(u.state.inventory.length,7);
+          console.log('HIGHFLY_PHASE10_PURE_NATIVE_EQUIP_SAVE_GREEN=1');
+          JS
+
+      - name: Download original Blender KAGE ONI V6 validated rigid helmet artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-KAGE-ONI-REAL-3D-HELMET-GLB-SOURCE-PROOF
+          run-id: 37861879832
+          github-token: ${{ github.token }}
+          path: character-truth/v10-artifact-prep/head
+      - name: Download original Blender NIGHTFALL V8 native-weighted armor artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-V8-NIGHTFALL-ORIGINAL-BODY-ARMOR-TRUE-WEIGHTED-GLB
+          run-id: 37872837220
+          github-token: ${{ github.token }}
+          path: character-truth/v10-artifact-prep/body
+      - name: Verify and stage BOTH REAL prevalidated Blender GLB artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/integration-modules/assets
+          HEAD="$(find character-truth/v10-artifact-prep/head -name 'HIGHFLY-KAGE-ONI-head.glb' -type f -print -quit)"
+          BODY="$(find character-truth/v10-artifact-prep/body -name 'HIGHFLY-NIGHTFALL-rigged-body.glb' -type f -print -quit)"
+          test -n "$HEAD"
+          test -n "$BODY"
+          cp "$HEAD" character-truth/integration-modules/assets/
+          cp "$BODY" character-truth/integration-modules/assets/
+          test "$(stat -c %s character-truth/integration-modules/assets/HIGHFLY-KAGE-ONI-head.glb)" -eq 164052
+          test "$(stat -c %s character-truth/integration-modules/assets/HIGHFLY-NIGHTFALL-rigged-body.glb)" -eq 806004
+          echo "HIGHFLY_V10_BOTH_GENUINE_BLENDER_GLB_ARTIFACTS_VERIFIED=1"
+      - name: Run original source Hunter with new body + original face in actual Chromium
+        shell: bash
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/native-body-v10.mjs
+          node --check character-truth/integration-modules/studio-v10-unified-gate.cjs
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/highfly-v10-src.log 2>&1 &
+          sleep 2
+          npx playwright install --with-deps chromium
+          node character-truth/integration-modules/studio-v10-unified-gate.cjs
+          test -s character-truth/v10-unified-proof/v10-browser-report.json
+          node --check character-truth/integration-modules/studio-v11-fit-gate.cjs
+          node character-truth/integration-modules/studio-v11-fit-gate.cjs
+          test -s character-truth/v11-fit-proof/v11-head-fit-report.json
+      - name: Setup verified official Blender 4.2.23 LTS — ONLY isolated V12 body development
+        shell: bash
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          VERSION='4.2.23'
+          NAME="blender-${VERSION}-linux-x64.tar.xz"
+          BASE="https://download.blender.org/release/Blender4.2"
+          mkdir -p "$RUNNER_TEMP/highfly-v12-blender" "$RUNNER_TEMP/highfly-v12-download"
+          cd "$RUNNER_TEMP/highfly-v12-download"
+          curl -fsSL --retry 3 --connect-timeout 15 --max-time 390 "$BASE/$NAME" -o "$NAME"
+          curl -fsSL --retry 3 --max-time 50 "$BASE/blender-${VERSION}.sha256" -o SHA256SUMS
+          grep -F "$NAME" SHA256SUMS | head -1 | sha256sum --check
+          tar -xJf "$NAME" --strip-components=1 -C "$RUNNER_TEMP/highfly-v12-blender"
+          test -x "$RUNNER_TEMP/highfly-v12-blender/blender"
+          echo "$RUNNER_TEMP/highfly-v12-blender" >> "$GITHUB_PATH"
+
+      - name: Forge ORIGINAL premium V12 3D Nightfall chest, waist, faulds, thighs and shoulder/back pieces, both genders
+        shell: bash
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/prepare-native-body.mjs \
+            character-truth/inputs/warrior_modular.glb character-truth/v8-proof/v12-native-plain.glb
+          python3 -m py_compile character-truth/integration-modules/nightfall-body-forge-v12.py
+          blender --background --factory-startup --python-exit-code 99 \
+            --python character-truth/integration-modules/nightfall-body-forge-v12.py -- \
+            --native character-truth/v8-proof/v12-native-plain.glb \
+            --out character-truth/v8-proof/HIGHFLY-NIGHTFALL-rigged-body.glb \
+            | tee character-truth/v8-proof/nightfall-v12-forge.log
+          grep -F 'HIGHFLY_V12_PREMIUM_WEIGHTED_ARMOR_EXPORTED' character-truth/v8-proof/nightfall-v12-forge.log
+          test -s character-truth/v8-proof/HIGHFLY-NIGHTFALL-rigged-body.glb
+
+      - name: Gate GLB original 23 bones, ALL original V8 plus NEW V12 parts, per-vertex weights and pose deformation
+        shell: bash
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/nightfall-body-gate-v12.cjs \
+            | tee character-truth/v8-proof/nightfall-v12-khronos.log
+          grep -F 'HIGHFLY_V12_PREMIUM_NATIVE_BODY_WEIGHTED_GLTF_GREEN=1' character-truth/v8-proof/nightfall-v12-khronos.log
+          blender --background --factory-startup --python-exit-code 99 \
+            --python character-truth/integration-modules/nightfall-body-motion-v12.py -- \
+            character-truth/v8-proof/HIGHFLY-NIGHTFALL-rigged-body.glb \
+            | tee character-truth/v8-proof/nightfall-v12-poses.log
+          grep -F 'HIGHFLY_V12_ALL_PREMIUM_PARTS_DEFORM_WITH_SOURCE_RIG_GREEN=1' character-truth/v8-proof/nightfall-v12-poses.log
+          cp character-truth/v8-proof/HIGHFLY-NIGHTFALL-rigged-body.glb \
+            character-truth/integration-modules/assets/HIGHFLY-NIGHTFALL-rigged-body.glb
+          echo HIGHFLY_V12_NIGHTFALL_FORGED_NATIVE_3D_MODEL_GREEN=1
+
+      - name: Playwright proof on TRUE V12 browser editor with real premium anatomy and original Kage-Oni V11
+        shell: bash
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/native-body-v12.mjs
+          node --check character-truth/integration-modules/studio-v12-premium-gate.cjs
+          node character-truth/integration-modules/studio-v12-premium-gate.cjs
+          node character-truth/integration-modules/studio-v12-helmet-fit-gate.cjs
+          test -s character-truth/v12-premium-proof/v12-premium-browser-report.json
+          echo HIGHFLY_V12_ORIGINAL_HUNTER_PREMIUM_IN_BROWSER_GREEN=1
+      - name: Package independent V12 premium editor ZIP with REAL Blender GLB, no upstream figure
+        shell: bash
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/package-studio-v12.mjs
+          node character-truth/integration-modules/package-studio-v12.mjs
+          test -s highfly-skinfactory-v12-preview/index.html
+          test -s highfly-skinfactory-v12-preview/native-body-v12.mjs
+          test -s highfly-skinfactory-v12-preview/assets/HIGHFLY-KAGE-ONI-head.glb
+          test -s highfly-skinfactory-v12-preview/assets/HIGHFLY-NIGHTFALL-rigged-body.glb
+          test -z "$(find highfly-skinfactory-v12-preview -type f -name 'warrior_modular.glb' -print -quit)"
+          python3 -m http.server 4177 --bind 127.0.0.1 --directory highfly-skinfactory-v12-preview >/tmp/highfly-v10-standalone.log 2>&1 &
+          sleep 2
+          HF_SITE_PORT=4177 node character-truth/integration-modules/studio-v12-premium-gate.cjs
+          HF_SITE_PORT=4177 node character-truth/integration-modules/studio-v12-helmet-fit-gate.cjs
+          echo "HIGHFLY_V12_PREMIUM_FULL_BODY_AND_V11_HEAD_STANDALONE_GREEN=1"
+      - name: Validate safe original weighted forged armor paint recipe (NO native body modification)
+        shell: bash
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/premium-paint-v13.mjs
+          node --check character-truth/integration-modules/studio-v13-paint-gate.cjs
+          node character-truth/integration-modules/premium-paint-v13.test.mjs
+      - name: Build isolated V13 editor from original V12 Blender GLBs with real new PBR painting
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/package-studio-v13.mjs
+          test -s highfly-skinfactory-v13-preview/index.html
+          test -s highfly-skinfactory-v13-preview/premium-paint-v13.mjs
+          test -s highfly-skinfactory-v13-preview/native-body-v13.mjs
+          test -s highfly-skinfactory-v13-preview/assets/HIGHFLY-NIGHTFALL-rigged-body.glb
+          test -z "$(find highfly-skinfactory-v13-preview -iname 'warrior_modular.glb' -print -quit)"
+          grep -F 'SKIN STUDIO · V13' highfly-skinfactory-v13-preview/index.html
+      - name: Prove V13 premium real material painting on source rig in browser and standalone mobile web
+        shell: bash
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/studio-v13-paint-gate.cjs
+          python3 -m http.server 4179 --bind 127.0.0.1 --directory highfly-skinfactory-v13-preview >/tmp/highfly-v13-preview.log 2>&1 &
+          sleep 2
+          HF_SITE_PORT=4179 node character-truth/integration-modules/studio-v13-paint-gate.cjs
+          test -s character-truth/v13-forged-paint-proof/report.json
+          echo HIGHFLY_V13_TRUE_NATIVE_FORGED_PBR_PAINT_ON_BOTH_HUNTERS_GREEN=1
+      - name: Unit-test real GLB chunk integrity, PBR sRGB conversion and M/F material isolation
+        shell: bash
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/bake-nightfall-v13-1.mjs
+          node character-truth/integration-modules/bake-nightfall-v13-1.test.mjs
+          node --check character-truth/integration-modules/studio-v13-1-bake-gate.cjs
+
+      - name: Package standalone real PBR baked original-rig V13.1 studio
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/package-studio-v13-1.mjs
+          test -s highfly-skinfactory-v13-1-preview/index.html
+          test -s highfly-skinfactory-v13-1-preview/bake-nightfall-v13-1.mjs
+          test -s highfly-skinfactory-v13-1-preview/native-body-v13-1.mjs
+          test -s highfly-skinfactory-v13-1-preview/assets/HIGHFLY-NIGHTFALL-rigged-body.glb
+          ! find highfly-skinfactory-v13-1-preview -name warrior_modular.glb | grep -q .
+          grep -F 'SKIN STUDIO · V13.1' highfly-skinfactory-v13-1-preview/index.html
+
+      - name: Validate ACTUALLY DOWNLOADED GLB has new PBR colors but exact original weights and geometry
+        shell: bash
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/studio-v13-1-bake-gate.cjs
+          python3 -m http.server 4180 --bind 127.0.0.1 --directory highfly-skinfactory-v13-1-preview > /tmp/highfly-v13-1-preview.log 2>&1 &
+          sleep 2
+          HF_SITE_PORT=4180 node character-truth/integration-modules/studio-v13-1-bake-gate.cjs
+          test -s character-truth/v13-1-baked-glb-proof/HIGHFLY-Nightfall-V13-1-PINTADA-original-rig.glb
+          test -s character-truth/v13-1-baked-glb-proof/khronos-real-bake-validation.json
+          grep -F '"green": true' character-truth/v13-1-baked-glb-proof/report.json
+          echo HIGHFLY_V13_1_REAL_PAINTED_RIGGED_EXPORT_AND_KHRONOS_GREEN=1
+
+      - name: Check V14 authoritative source mesh morph safety and bounded recipe
+        shell: bash
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/native-shape-v14.mjs
+          node --check character-truth/integration-modules/bake-native-shape-v14.mjs
+          node --check character-truth/integration-modules/studio-v14-shape-gate.cjs
+          node --check character-truth/integration-modules/package-studio-v14.mjs
+
+      - name: Package V14 real weighted geometry-editable studio, isolated from GAME and public website
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/package-studio-v14.mjs
+          test -s highfly-skinfactory-v14-preview/index.html
+          grep -F 'SKIN STUDIO · V14' highfly-skinfactory-v14-preview/index.html
+          test -s highfly-skinfactory-v14-preview/native-shape-v14.mjs
+          test -s highfly-skinfactory-v14-preview/bake-native-shape-v14.mjs
+          test -s highfly-skinfactory-v14-preview/assets/HIGHFLY-NIGHTFALL-rigged-body.glb
+          test -z "$(find highfly-skinfactory-v14-preview -iname 'warrior_modular.glb' -print -quit)"
+          echo HIGHFLY_V14_GENUINE_NATIVE_RIGGED_3D_SCULPT_PACKAGE_CREATED=1
+
+      - name: Prove V14 original Rig_Medium 3D vertex sculpt and PBR baked GLB in source browser
+        shell: bash
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/studio-v14-shape-gate.cjs
+          python3 -m http.server 4182 --bind 127.0.0.1 \
+            --directory highfly-skinfactory-v14-preview > /tmp/highfly-v14-preview.log 2>&1 &
+          sleep 2
+          HF_SITE_PORT=4182 node character-truth/integration-modules/studio-v14-shape-gate.cjs
+          test -s character-truth/v14-sculpt-proof/HIGHFLY-Nightfall-V14-FORMA-Y-PINTURA-original-rig.glb
+          test -s character-truth/v14-sculpt-proof/khronos-glb-v14-validator.json
+          grep -F '"green": true' character-truth/v14-sculpt-proof/v14-report.json
+          echo HIGHFLY_V14_REAL_SCULPTED_PBR_SKINNED_GLB_KHRONOS_BROWSER_GREEN=1
+
+      - name: Check V14.1 100% original helmet/body rig fit implementation before browser
+        shell: bash
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/native-forge-v14-1.mjs
+          node --check character-truth/integration-modules/package-studio-v14-1.mjs
+          node --check character-truth/integration-modules/studio-v14-1-fit-gate.cjs
+          test -s character-truth/integration-modules/studio-v14-1.html
+
+      - name: Package isolated original Hunter V14.1 fitted Kage Oni head plus intact V14 body sculpt
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/package-studio-v14-1.mjs
+          test -s highfly-skinfactory-v14-1-preview/index.html
+          grep -F 'SKIN STUDIO · V14.1' highfly-skinfactory-v14-1-preview/index.html
+          test -s highfly-skinfactory-v14-1-preview/native-forge-v14-1.mjs
+          test -s highfly-skinfactory-v14-1-preview/assets/HIGHFLY-KAGE-ONI-head.glb
+          test -s highfly-skinfactory-v14-1-preview/assets/HIGHFLY-NIGHTFALL-rigged-body.glb
+          ! find highfly-skinfactory-v14-1-preview -iname 'warrior_modular.glb' | grep -q .
+          echo HIGHFLY_V14_1_ORIGINAL_HELMET_AND_WEIGHTED_ARMOR_PACKAGED_GREEN=1
+
+      - name: Test REAL Helmet Fit against original head & no source skeleton changes on mobile browser
+        shell: bash
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/studio-v14-1-fit-gate.cjs
+          python3 -m http.server 4185 --bind 127.0.0.1 \
+            --directory highfly-skinfactory-v14-1-preview >/tmp/highfly-v14-1-preview.log 2>&1 &
+          sleep 2
+          HF_SITE_PORT=4185 node character-truth/integration-modules/studio-v14-1-fit-gate.cjs
+          test -s character-truth/v14-1-fit-proof/01-v14-1-oni-front.png
+          test -s character-truth/v14-1-fit-proof/02-v14-1-oni-profile.png
+          test -s character-truth/v14-1-fit-proof/03-v14-1-oni-back.png
+          grep -F '"green": true' character-truth/v14-1-fit-proof/v14-1-report.json
+          echo HIGHFLY_V14_1_TRUE_ORIGINAL_HEAD_ANATOMY_FIT_ALL_PRESETS_GREEN=1
+
+      - name: Archive isolated V14.1 independent website candidate WITHOUT public publish
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-V14-1-ORIGINAL-HEAD-FIT-HELMET-STUDIO-NO-DEPLOY
+          path: highfly-skinfactory-v14-1-preview/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Archive real front/profile/back/male/female screenshots and anatomical fit checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-V14-1-NATIVE-HEAD-AUTO-FIT-AND-HELMET-ANATOMY-QA
+          path: character-truth/v14-1-fit-proof/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Archive V14 sculptor independent candidate website, NEVER main HIGHFLY
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-V14-TRUE-SKINNED-GEOMETRY-SCULPTOR-WEB-PREVIEW-NO-DEPLOY
+          path: highfly-skinfactory-v14-preview/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Archive actual V14 exported weighted 3D changes and identical source bone/weight proofs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-V14-TRUE-SCULPTED-NIGHTFALL-GLB-AND-KHRONOS-PROOF
+          path: character-truth/v14-sculpt-proof/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Archive V13.1 independent web editor (not deployed to public game or Pages)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-V13-1-BAKED-GLB-STUDIO-NO-GAME-DEPLOY
+          path: highfly-skinfactory-v13-1-preview/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Archive ACTUAL exported PBR-painted GLB plus validated original rig/weight proofs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-V13-1-ACTUAL-PAINTED-ORIGINAL-RIG-GLB-AND-QA
+          path: character-truth/v13-1-baked-glb-proof/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Archive V13 isolated working designer and real per-piece PBR browser proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN-STUDIO-V13-TRUE-FORGED-PBR-PAINTER-PREVIEW-NO-DEPLOY
+          path: highfly-skinfactory-v13-preview/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Archive original Hunter with direct new forged premium PBR paint on male and female
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN-STUDIO-V13-PAINTED-BOTH-GENDERS-SCREENSHOTS-AND-JSON
+          path: character-truth/v13-forged-paint-proof/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Archive real isolated V10 HTML/JS + V6-V8 Blender GLBs for web preview (NOT PUBLIC GAME)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN-STUDIO-V12-PREMIUM-WEB-PREVIEW-NO-GAME-DEPLOY
+          path: highfly-skinfactory-v12-preview/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Archive real original Hunter Android size views male and female native animation QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN-STUDIO-V12-PREMIUM-BODY-AND-MOTION-PROOF
+          path: |
+            character-truth/v10-unified-proof/
+            character-truth/v11-fit-proof/
+            character-truth/v12-premium-proof/
+            character-truth/v12-helmet-proof/
+            character-truth/v8-proof/nightfall-v12*.json
+            character-truth/v8-proof/nightfall-v12*.log
+          retention-days: 30
+          if-no-files-found: warn
