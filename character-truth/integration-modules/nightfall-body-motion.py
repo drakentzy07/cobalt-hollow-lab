@@ -18,7 +18,7 @@ def snapshot():
  for o in meshes:
   evalobj=o.evaluated_get(dep);mx=evalobj.matrix_world
   m=evalobj.to_mesh()
-  try:output[o.name]=[(mx@v.co).copy() for v in m.vertices[::max(1,len(m.vertices)//50)]]
+  try:output[o.name]=[(mx@v.co).copy() for v in (m.vertices[i] for i in range(0,len(m.vertices),max(1,len(m.vertices)//50)))]
   finally:evalobj.to_mesh_clear()
  return output
 start=snapshot()
