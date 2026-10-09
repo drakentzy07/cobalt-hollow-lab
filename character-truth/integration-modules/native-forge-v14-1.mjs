@@ -264,6 +264,39 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
   finally{$('forgeFile').value=''}
  };
  $('forgeDownload').onclick=()=>{try{download()}catch(e){report('Descarga: '+String(e))}};
+
+ /** Read ONLY: bounds of original male/female skinned heads and genuine Kage-Oni meshes.
+  * Box3.setFromObject uses actual skinned vertex positions, including animation pose.
+  * This deliberately does NOT claim triangle collision-free fit.
+  */
+ function geometryTruth(){
+  const actor=getRoot();
+  if(!actor?.getObjectByName('Rig_Medium'))throw Error('V18_ORIGINAL_RIG_MISSING');
+  const male=actor.getObjectByName('M_Head'),female=actor.getObjectByName('F_Head');
+  if(!male?.isSkinnedMesh||!female?.isSkinnedMesh)throw Error('V18_M_F_SOURCE_HEAD_MISSING');
+  actor.updateMatrixWorld(true);
+  const boxInfo=(o)=>{
+   if(!o)return null;
+   o.updateWorldMatrix(true,true);
+   const b=new THREE.Box3().setFromObject(o,true);
+   if(b.isEmpty())throw Error('V18_GEOMETRY_BOUNDS_EMPTY_'+o.name);
+   return {name:o.name,min:b.min.toArray(),max:b.max.toArray(),
+    center:b.getCenter(new THREE.Vector3()).toArray(),
+    size:b.getSize(new THREE.Vector3()).toArray()};
+  };
+  const origBones=[];
+  actor.traverse(o=>{if(o.isBone)origBones.push(o.name)});
+  return {
+   rig:'Rig_Medium',originalHeadsPreserved:true,originalJointCount:origBones.length,
+   originalJointNames:origBones,
+   male:boxInfo(male),female:boxInfo(female),
+   crown:node?boxInfo(node.getObjectByName('KO_01_ARTICULATED_CROWN')):null,
+   faceplate:node?boxInfo(node.getObjectByName('KO_08_ONI_FACEPLATE')):null,
+   fit:currentFit?{...currentFit}:null,helmetLoaded:!!node,
+   sourceRigUntouched:true,sourceHeadMeshWeightsUntouched:true,
+   triangleClippingVerified:false
+  };
+ }
  const api=Object.freeze({
   state:()=>({ready:!!getRoot(),rigOriginal:!!getRoot()?.getObjectByName('Rig_Medium'),
     realHeadAttached:!!node&&node.parent===head,
@@ -277,7 +310,7 @@ export function nativeForgeV6({THREE,loader,getRoot,removeNativeHelmet,restoreNa
     sourceFacialMeshCount:node?nativeFacialMeshes().length:0,
     sourceHeadsPreserved:['M_Head','F_Head'].every(n=>!!getRoot()?.getObjectByName(n)),
     gameUnchanged:true}),
-  sample,importData,remove:clear,download,
+  sample,importData,remove:clear,download,geometryTruth,
   maintainFullHelmetOcclusion:()=>node?(currentFit?.occlusion==='full'?hideNativeScalp():restoreNativeScalp()):0,
   setFit, resetFit:()=>setFit({preset:'oni_heavy'}),
   presets:()=>FIT_MODES.slice(),
