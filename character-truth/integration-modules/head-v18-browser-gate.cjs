@@ -48,7 +48,7 @@ const checks=[],errors=[],ok=(x,label)=>{assert(x,label);checks.push(label)};
   await page.screenshot({path:out+'/04-v18-kage-side.png'});
   await page.evaluate(()=>document.getElementById('backview').click());
   await page.screenshot({path:out+'/05-v18-kage-back.png'});
-  await page.locator('#gender').selectOption('female');
+  await page.evaluate(()=>{const g=document.getElementById('gender');g.value='female';g.dispatchEvent(new Event('change',{bubbles:true}))});
   const f=await page.evaluate(()=>window.__HF_HEAD_TRUTH_V18__.scan());
   ok(f.gender==='female'&&Number.isFinite(f.headWidth)&&f.originalJointCount>=20,
    'Real original female Hunter fitted report is independent of male head bounds');
