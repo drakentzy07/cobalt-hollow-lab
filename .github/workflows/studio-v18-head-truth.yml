@@ -1,0 +1,63 @@
+name: HIGHFLY SUPREME SKIN V18 - ORIGINAL HEAD TRUTH & FIT (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-skin-studio-v18-head-truth-fit]
+    paths:
+      - 'character-truth/integration-modules/native-forge-v14-1.mjs'
+      - 'character-truth/integration-modules/head-fit-math-v18.mjs'
+      - 'character-truth/integration-modules/head-truth-v18.mjs'
+      - 'character-truth/integration-modules/package-dream-v18.mjs'
+      - 'character-truth/integration-modules/head-v18.test.mjs'
+      - 'character-truth/integration-modules/head-v18-browser-gate.cjs'
+      - '.github/workflows/studio-v18-head-truth.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  head-truth-hunter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reuse EXACT previous V17 GREEN candidate (not rebuild old labs)
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-DREAM-V17-UNIFIED-STUDIO-CANDIDATE-NO-DEPLOY
+          run-id: 37975687428
+          github-token: ${{ github.token }}
+          path: character-truth/v17-green-package
+      - name: Verify V17 retained and run purely mathematical safety tests
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/native-forge-v14-1.mjs
+          node --check character-truth/integration-modules/head-fit-math-v18.mjs
+          node --check character-truth/integration-modules/head-truth-v18.mjs
+          node character-truth/integration-modules/package-dream-v18.mjs
+          node character-truth/integration-modules/head-v18.test.mjs
+      - name: Install Chromium Android-landscape emulator
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Recheck REAL original Hunter helmet, male/female, five clips and export
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4188 --bind 127.0.0.1 --directory highfly-dream-v18-preview >/tmp/hf-v18.log 2>&1 &
+          sleep 2
+          node character-truth/integration-modules/head-v18-browser-gate.cjs
+          echo HIGHFLY_V18_HEAD_TRUTH_REAL_ORIGINAL_HUNTER_GREEN=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-SUPREME-V18-HEAD-TRUTH-STUDIO-CANDIDATE-NO-DEPLOY
+          path: highfly-dream-v18-preview/
+          retention-days: 30
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-SUPREME-V18-HEAD-FIT-REAL-MOBILE-QA
+          path: character-truth/v18-evidence/
+          retention-days: 30
+          if-no-files-found: warn
