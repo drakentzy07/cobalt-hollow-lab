@@ -7,6 +7,7 @@ on:
       - highfly-monsters-lv99-content-pass01
       - highfly-monsters-lv99-pass02b-hunt-instance
       - highfly-monsters-lv99-pass02c-preview-entry
+      - highfly-monsters-lv99-pass02d-scenery-routes
   workflow_dispatch:
 permissions:
   contents: read
@@ -410,7 +411,9 @@ jobs:
           cp ../monsters/lv99/highfly_hunt_playtest_world.ts src/highfly/monsters/hunt_playtest_world.ts
           cp ../monsters/lv99/highfly_hunt_playtest_world.test.ts tests/highfly_hunt_playtest_world.test.ts
           cp ../monsters/lv99/highfly_hunt_browser_pilot.ts src/highfly/monsters/hunt_browser_pilot.ts
+          cp ../monsters/lv99/highfly_hunt_scenery.ts src/highfly/monsters/hunt_scenery.ts
           cp ../monsters/lv99/highfly_hunt_browser_pilot.test.ts tests/highfly_hunt_browser_pilot.test.ts
+          cp ../monsters/lv99/highfly_hunt_scenery.test.ts tests/highfly_hunt_scenery.test.ts
           python ../monsters/lv99/activate_content.py
           python ../monsters/lv99/adjust_donor_gathering_test.py
           python ../monsters/lv99/activate_hunt_preview.py
@@ -432,6 +435,9 @@ jobs:
       - name: HIGHFLY MONSTERS P02C — native terrain, exact URL opt-in world tests
         working-directory: upstream
         run: pnpm exec vitest run tests/highfly_hunt_browser_pilot.test.ts
+      - name: HIGHFLY MONSTERS P02D — 8 donor-native biomes and collision-free scenic routes
+        working-directory: upstream
+        run: pnpm exec vitest run tests/highfly_hunt_scenery.test.ts
       # The six worn-apex fixtures were authored with ClaudeCraft MAX_LEVEL=20.
       # Its item_level_req clamps source-25 crafted gear to that old level cap.
       # PF-6 correctly raises MAX_LEVEL to 99, so source-25 gear now requires 25.
@@ -517,7 +523,7 @@ jobs:
           test -s dist/index.html
           test -d dist/media
           echo "V3_02_FULL_GOLDEN_MEDIA_BUILD_GREEN=1"
-      - name: HIGHFLY P02C S23 emulated real hunt arena WebGL + joystick (NO DEPLOY)
+      - name: HIGHFLY P02D S23 emulated real themed-hunt WebGL + joystick (NO DEPLOY)
         working-directory: upstream
         shell: bash
         run: |
@@ -531,7 +537,7 @@ jobs:
             sleep 1
           done
           node scripts/highfly_hunt_browser_smoke.mjs
-          echo "HF_HUNT_P02C_S23_OFFLINE_NATIVE_PLAYTEST_GREEN=1"
+          echo "HF_HUNT_P02D_S23_SCENERY_ROUTE_RENDER_GREEN=1"
       - name: V3-02 real PC browser native Professions and Crafting UI from donor
         working-directory: upstream
         shell: bash

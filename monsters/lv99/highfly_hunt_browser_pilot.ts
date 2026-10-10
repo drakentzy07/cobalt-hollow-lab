@@ -8,6 +8,7 @@ import { WORLD_SEED } from '../../sim/world_seed';
 import { terrainHeight, waterLevelAt } from '../../sim/world';
 import type { WorldContent } from '../../sim/types';
 import { HIGHFLY_HUNT_SCENARIOS } from './hunt_scenarios';
+import { addHighflyHuntScenery } from './hunt_scenery';
 import { buildHighflyHuntPlaytestWorld, type HighflyHuntSurfaceProbe } from './hunt_playtest_world';
 
 export interface HighflyHuntBrowserSession {
@@ -65,7 +66,7 @@ export function createHighflyHuntBrowserSession(
     campfires: [[12, 37]] as [number,number][],
     crates: [[-12, 52]] as [number,number][],
   };
-  const world: WorldContent = {
+  const world: WorldContent = addHighflyHuntScenery({
     ...draft.world,
     props,
     // Explicit single field: no imported camps, NPCs, bosses or public roads.
@@ -74,7 +75,7 @@ export function createHighflyHuntBrowserSession(
     ],
     // Keep native open-sea detection dry, even along old built-in map coast.
     waterLevel: -20,
-  };
+  }, s.id);
   const before = getActiveWorldContent();
   setActiveWorldContent(world);
   try {
@@ -85,6 +86,24 @@ export function createHighflyHuntBrowserSession(
     if (actual.world.camps.length !== world.camps.length
       || actual.world.camps.some((c,i) => c.mobId !== world.camps[i].mobId))
       throw new Error('HF_HUNT_BROWSER_CAMP_DRIFT');
+    // Native navigability of each SCENIC road segment (not merely the direct
+    // start-to-camp routes checked by the inherited P02B validator).
+    const probe=nativeHighflyHuntSurfaceProbe(seed);
+    for(const road of world.roads) {
+      for(let i=1;i<road.length;i++) {
+        const a=road[i-1],b=road[i];
+        let previous:number|null=null;
+        for(let step=0;step<=32;step++){
+          const t=step/32;
+          const p=probe(a.x+(b.x-a.x)*t,a.z+(b.z-a.z)*t);
+          if(!p.walkable||!Number.isFinite(p.groundY)||p.groundY<=p.waterY+0.7)
+            throw Error('HF_HUNT_SCENIC_ROAD_NOT_WALKABLE');
+          if(previous!==null && Math.abs(p.groundY-previous)>0.48*Math.hypot(b.x-a.x,b.z-a.z)/32)
+            throw Error('HF_HUNT_SCENIC_ROAD_TOO_STEEP');
+          previous=p.groundY;
+        }
+      }
+    }
   } finally {
     setActiveWorldContent(before);
   }

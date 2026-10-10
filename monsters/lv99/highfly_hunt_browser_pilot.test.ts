@@ -28,10 +28,10 @@ describe('HIGHFLY P02C native offline hunt preview', () => {
       expect(preview.world.zones[0].biome).toBe(s.biome);
       expect(preview.world.camps.reduce((n,c)=>n+c.count,0)).toBe(8);
       expect(preview.world.camps.every(c=>c.offStream)).toBe(true);
-      expect(preview.world.terrainEdits).toHaveLength(1);
+      expect(preview.world.terrainEdits).toHaveLength(6);
       expect(preview.world.playerStart).toEqual({x:0,z:38});
       expect(preview.world.npcs).toEqual({});
-      expect(preview.world.roads).toEqual([]);
+      expect(preview.world.roads).toHaveLength(4);
       expect(preview.world.placements).toEqual([]);
       expect(preview.world.services).toBeUndefined();
       expect(getActiveWorldContent()).toBe(original);
