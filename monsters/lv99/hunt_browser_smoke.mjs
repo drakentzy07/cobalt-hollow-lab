@@ -56,6 +56,10 @@ try {
       sourceNpcs:Object.keys(sim.cfg.world?.npcs??{}).length,
       playerStart:sim.cfg.world?.playerStart,
       customizedTerrain:sim.cfg.world?.terrainEdits?.length??0,
+      trails:sim.cfg.world?.roads?.length??0,
+      decorCount:sim.cfg.world?.props?.decorProps?.length??0,
+      namedLandmarks:sim.cfg.world?.zones?.[0]?.pois?.length??0,
+      refugeTents:sim.cfg.world?.props?.tents?.length??0,
     };
   });
   if(!result.world||result.world.hunterLevel!==21||
@@ -63,7 +67,11 @@ try {
      result.world.mobCount!==8||
      new Set(result.world.campIds).size!==4||
      result.world.sourceNpcs!==0||
-     result.world.customizedTerrain!==1)
+     result.world.customizedTerrain!==6||
+     result.world.trails!==4||
+     result.world.decorCount!==12||
+     result.world.namedLandmarks!==6||
+     result.world.refugeTents!==3)
     throw Error('Native hunt did not load exact LV21 isolated 8-monster Sim: '+JSON.stringify(result.world));
   result.actualMobCount=result.world.mobCount;
   await page.waitForFunction(()=>{
