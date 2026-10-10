@@ -47,6 +47,7 @@ fs.mkdirSync(dir,{recursive:true});
    s=await p.evaluate(n=>{window.__HF_SKIN7_LAB__.selectClip(n,.27);return window.__HF_SKIN7_LAB__.state()},name);
    ok(s.clip===name,'Synchronized original animation '+name);
  }
+ await p.evaluate(()=>{window.__HF_SKIN7_LAB__.selectClip('Idle',0);window.__HF_SKIN7_LAB__.poseTime(.20)});
  ok(await p.locator('#viewer canvas').count()===1,'Single GPU canvas for all actors');
  ok(checks.filter(x=>x.startsWith('Synchronized original animation ')).length===22,'Every native animation clip was evaluated');
  await p.locator('#all').click();

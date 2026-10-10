@@ -49,6 +49,13 @@ MOTIFS={
  ]
 }
 
+# Proportion controls are tied to the ORIGINAL equipment envelope, not total
+# character bounds. Keep original helmet face exposed and no giant dorsal plank.
+PROPORTIONS={
+ 'head':(.66,.66,.58),'chest':(.72,.65,.52),
+ 'arms':(.76,.57,.56),'hands':(.80,.66,.51),
+ 'legs':(.80,.72,.52),'feet':(.78,.61,.49),'back':(.64,.62,.49)
+}
 def sculpt_native_paladin(obj,slot,intensity):
  if slot not in MOTIFS or not 0.15<=intensity<=1.3:
   raise RuntimeError('SKIN7_V2_UNKNOWN_SCULPT_SLOT_OR_STRENGTH_'+slot)
@@ -69,15 +76,23 @@ def sculpt_native_paladin(obj,slot,intensity):
  # a copied overlaid armor. Front surfaces remain outward of the shell.
  is_back=slot=='back'
  facing=1 if is_back else -1
- front=(maxs[1] if is_back else mins[1])+facing*sy*.035
- thickness=sy*(.12+.04*intensity)
+ thickness=sy*(.05+.025*intensity)
+ widthFit,heightFit,verticalCenter=PROPORTIONS[slot]
  b=bmesh.new();b.from_mesh(mesh)
  added=[]
  made_faces=[]
  for profile in MOTIFS[slot]:
   # intensity controls hard-surface silhouette, not just texture/scale.
-  coords=[(cx+u*sx*.5*(.80+.20*intensity),
-           mins[2]+v*sz*(.82+.18*intensity)) for u,v in profile]
+  coords=[(cx+u*sx*.5*widthFit*(.94+.06*intensity),
+           mins[2]+(verticalCenter+(v-.5)*heightFit)*sz) for u,v in profile]
+  # Find the local source-shell depth near this motif, avoiding a floating
+  # uniformly planar mask computed from whole-piece extreme bounds.
+  localY=[]
+  for x,z in coords:
+   nearest=min(points,key=lambda p:(p.x-x)**2+(p.z-z)**2)
+   localY.append(nearest.y)
+  shell=max(localY) if is_back else min(localY)
+  front=shell+facing*sy*.025
   leading=[b.verts.new((x,front+facing*thickness*.32,z)) for x,z in coords]
   trailing=[b.verts.new((x,front-facing*thickness,z)) for x,z in coords]
   added.extend(leading+trailing)

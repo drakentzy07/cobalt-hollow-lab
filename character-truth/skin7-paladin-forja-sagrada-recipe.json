@@ -1,8 +1,8 @@
 {
   "schema": "highfly.skin7.paladin-source-reforge-recipe/2",
-  "id": "paladin-forja-sagrada-nativa-v2",
-  "title": "Paladín — Forja Sagrada V2 Esculpida",
-  "brief": "Reforja hard-surface real sobre las once mallas skinned originales: corona frontal y visera del casco, hombreras aladas, pechera facetada, cresta dorsal, grebas y guardas. Modelo original y Rig_Medium intactos; NO es aprobación artística.",
+  "id": "paladin-forja-sagrada-encastre-v3",
+  "title": "Paladín — Encaje Anatómico V3",
+  "brief": "Reforja sobre 11 mallas originales: hard-surface proporcionado a la armadura nativa, casco de perfil contenido, hombreras curvas, peto y espalda acoplados a la envolvente local. Verificación M/F 16 capturas y 22 clips; prototipo artístico no aprobado.",
   "sourceUpstreamCommit": "9b57e49c9676d75962700f828cc00a50a9a988b5",
   "sourceGlbBlobSha1": "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2",
   "sourceRig": "Rig_Medium",
@@ -14,63 +14,63 @@
   "slots": {
     "head": {
       "scale": [
-        1.09,
-        1.08,
-        1.1
+        1.025,
+        1.035,
+        1.025
       ],
       "flare": 0.06,
       "curvature": 0.14
     },
     "chest": {
       "scale": [
-        1.11,
-        1.08,
-        1.11
+        1.045,
+        1.04,
+        1.035
       ],
       "flare": 0.04,
       "curvature": 0.12
     },
     "arms": {
       "scale": [
-        1.22,
-        1.12,
-        1.12
+        1.085,
+        1.065,
+        1.055
       ],
       "flare": 0.16,
       "curvature": 0.26
     },
     "hands": {
       "scale": [
-        1.08,
-        1.08,
-        1.06
+        1.035,
+        1.025,
+        1.025
       ],
       "flare": 0.02,
       "curvature": 0.1
     },
     "legs": {
       "scale": [
-        1.09,
-        1.09,
-        1.07
+        1.035,
+        1.04,
+        1.035
       ],
       "flare": 0.05,
       "curvature": 0.11
     },
     "feet": {
       "scale": [
-        1.08,
-        1.05,
-        1.04
+        1.035,
+        1.025,
+        1.025
       ],
       "flare": 0.02,
       "curvature": 0.07
     },
     "back": {
       "scale": [
-        1.09,
-        1.08,
-        1.07
+        1.035,
+        1.035,
+        1.025
       ],
       "flare": 0.02,
       "curvature": 0.1
@@ -82,13 +82,13 @@
   "hardSurface": {
     "style": "sacred-vanguard-hard-surface-v2",
     "slotIntensity": {
-      "head": 1.08,
-      "chest": 1.04,
-      "arms": 1.17,
-      "hands": 0.92,
-      "legs": 0.99,
-      "feet": 0.88,
-      "back": 1.11
+      "head": 0.91,
+      "chest": 0.97,
+      "arms": 1.05,
+      "hands": 0.88,
+      "legs": 0.93,
+      "feet": 0.86,
+      "back": 0.89
     }
   }
 }

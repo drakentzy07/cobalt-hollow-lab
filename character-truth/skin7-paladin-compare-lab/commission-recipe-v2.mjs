@@ -3,15 +3,15 @@
 // explicitly NOT an autonomous text/image-to-3D model.
 const SLOT_NAMES=['head','chest','arms','hands','legs','feet','back'];
 const OLD_SHAPE={
- head:{scale:[1.09,1.08,1.10],flare:.06,curvature:.14},
- chest:{scale:[1.11,1.08,1.11],flare:.04,curvature:.12},
- arms:{scale:[1.22,1.12,1.12],flare:.16,curvature:.26},
- hands:{scale:[1.08,1.08,1.06],flare:.02,curvature:.10},
- legs:{scale:[1.09,1.09,1.07],flare:.05,curvature:.11},
- feet:{scale:[1.08,1.05,1.04],flare:.02,curvature:.07},
- back:{scale:[1.09,1.08,1.07],flare:.02,curvature:.10}
+ head:{scale:[1.025,1.035,1.025],flare:.06,curvature:.14},
+ chest:{scale:[1.045,1.04,1.035],flare:.04,curvature:.12},
+ arms:{scale:[1.085,1.065,1.055],flare:.16,curvature:.26},
+ hands:{scale:[1.035,1.025,1.025],flare:.02,curvature:.10},
+ legs:{scale:[1.035,1.04,1.035],flare:.05,curvature:.11},
+ feet:{scale:[1.035,1.025,1.025],flare:.02,curvature:.07},
+ back:{scale:[1.035,1.035,1.025],flare:.02,curvature:.10}
 };
-const DEFAULT={head:1.08,chest:1.04,arms:1.17,hands:.92,legs:.99,feet:.88,back:1.11};
+const DEFAULT={head:.91,chest:.97,arms:1.05,hands:.88,legs:.93,feet:.86,back:.89};
 const MATCH={
  head:/casco|yelmo|visera|corona|helmet|head/i,
  chest:/pechera|peto|coraza|chest|armadura frontal/i,
