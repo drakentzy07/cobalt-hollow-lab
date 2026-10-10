@@ -106,7 +106,10 @@ describe('HIGHFLY V4-02 / PR14: real Jewelcrafting gem and native weapon inlay',
     sim.equipItem('rusty_hatchet',pid);
     expect(highflyElementalFinisherReady(e)).toBe(false);
     expect(highflyWeaponElement(e)).toBe('base');
-    expect(meta.inventory.find(x=>x.itemId==='worn_sword')?.instance?.highflyGem).toBe('fire');
+    // Donor may hold several copies with the SAME itemId; only the physical
+    // copy originally inlaid must retain the gem (the plain twin must not).
+    expect(meta.inventory.filter(x=>x.itemId==='worn_sword')
+      .map(x=>x.instance?.highflyGem)).toContain('fire');
     sim.equipItem('worn_sword',pid);
     expect(highflyWeaponElement(e)).toBe('fire');
     expect(highflyElementalFinisherReady(e)).toBe(true);
