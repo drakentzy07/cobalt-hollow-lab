@@ -1,0 +1,82 @@
+{
+  "schema": "highfly.skin7.paladin-source-reforge-recipe/1",
+  "id": "paladin-legendary-premium-v1-unapproved",
+  "title": "Paladín — Forja Legendaria · Prototipo V1",
+  "brief": "Reforja SOBRE las 11 mallas auténticas del Paladín ClaudeCraft. Casco contenido, hombreras con mayor presencia sin invadir cara, pecho heroico, espalda y grebas. Segunda etapa: detalles geométricos sagrados conformados SOBRE la superficie de esas mismas piezas mediante anclajes de malla y pesos heredados, no Nightfall superpuesto.",
+  "sourceUpstreamCommit": "9b57e49c9676d75962700f828cc00a50a9a988b5",
+  "sourceGlbBlobSha1": "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2",
+  "sourceRig": "Rig_Medium",
+  "palette": {
+    "enamel": "#202f57",
+    "metal": "#d5ae63",
+    "accent": "#78dce7"
+  },
+  "slots": {
+    "head": {
+      "scale": [
+        1.015,
+        1.025,
+        1.025
+      ],
+      "flare": 0.015,
+      "curvature": 0.045
+    },
+    "chest": {
+      "scale": [
+        1.115,
+        1.095,
+        1.07
+      ],
+      "flare": 0.075,
+      "curvature": 0.105
+    },
+    "arms": {
+      "scale": [
+        1.19,
+        1.115,
+        1.045
+      ],
+      "flare": 0.135,
+      "curvature": 0.19
+    },
+    "hands": {
+      "scale": [
+        1.045,
+        1.055,
+        1.028
+      ],
+      "flare": 0.02,
+      "curvature": 0.045
+    },
+    "legs": {
+      "scale": [
+        1.065,
+        1.068,
+        1.045
+      ],
+      "flare": 0.055,
+      "curvature": 0.08
+    },
+    "feet": {
+      "scale": [
+        1.045,
+        1.04,
+        1.018
+      ],
+      "flare": 0.022,
+      "curvature": 0.04
+    },
+    "back": {
+      "scale": [
+        1.075,
+        1.09,
+        1.045
+      ],
+      "flare": 0.04,
+      "curvature": 0.095
+    }
+  },
+  "artistApproved": false,
+  "automatedForger": "assistant-authored recipe -> Blender actual original source-mesh modification -> BVH surface-fit native weighted gold detail plates",
+  "gameDeployAllowed": false
+}
