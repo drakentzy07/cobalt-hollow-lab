@@ -36,6 +36,26 @@ const ok=(value,name)=>{assert(value,name);checks.push(name)};
   let i=await page.evaluate(()=>window.__HF_SKIN7_SUPREME_FORGE__.inspect());
   ok(i.nativeBoneMapping&&i.gender==='M'&&i.visible===32,
     '32 original-weighted new male meshes share exact 23 native bones');
+  const measureHelmet=async()=>page.evaluate(async()=>{
+    const THREE=await import('three'),root=window.__HF_V19_SCENE__.root(),
+      g=document.getElementById('gender').value==='female'?'F':'M';
+    root.updateMatrixWorld(true);
+    const metrics=name=>{
+      const n=root.getObjectByName(name);
+      if(!n)throw Error('SKIN7_REAL_HEAD_OR_HELMET_MISSING_'+name);
+      const box=new THREE.Box3().setFromObject(n,true),v=box.getSize(new THREE.Vector3());
+      return {min:box.min.toArray(),max:box.max.toArray(),size:v.toArray()};
+    };
+    return {source:metrics(g+'_Head'),dome:metrics('HF7_'+g+'_HEAD_KABUTO_DOME'),
+      horn:metrics('HF7_'+g+'_HEAD_HORN_L'),mask:metrics('HF7_'+g+'_HEAD_ONI_MASK')};
+  });
+  const maleHelmet=await measureHelmet();
+  ok(maleHelmet.dome.size[0]>maleHelmet.source.size[0]*.80&&
+    maleHelmet.dome.max[1]>maleHelmet.source.max[1]+.03,
+    'FULL-SIZE original male skull helmet DOMINATES head silhouette instead of disappearing inside');
+  ok(maleHelmet.horn.max[1]>maleHelmet.source.max[1]+.20&&
+    maleHelmet.mask.max[2]>maleHelmet.source.max[2]+.025,
+    'Real Oni horns ABOVE authentic male head and faceguard IN FRONT of original face');
   await page.locator('#skin7Front').click();
   await page.screenshot({path:dir+'/01-crimson-male-front.png'});
   await page.locator('#skin7Side').click();
@@ -44,6 +64,13 @@ const ok=(value,name)=>{assert(value,name);checks.push(name)};
   i=await page.evaluate(()=>window.__HF_SKIN7_SUPREME_FORGE__.inspect());
   ok(i.gender==='F'&&i.visible===32,
     '32 distinct female-authored meshes on true original female modular Hunter');
+  const femaleHelmet=await measureHelmet();
+  ok(femaleHelmet.dome.size[0]>femaleHelmet.source.size[0]*.80&&
+    femaleHelmet.dome.max[1]>femaleHelmet.source.max[1]+.03,
+    'Full skull-sized kabuto verified on actual female native head, not shared guess');
+  ok(femaleHelmet.horn.max[1]>femaleHelmet.source.max[1]+.20&&
+    femaleHelmet.mask.max[2]>femaleHelmet.source.max[2]+.025,
+    'Original native female face and Oni horn silhouette physically aligned in world space');
   await page.locator('#skin7Back').click();
   await page.screenshot({path:dir+'/03-crimson-female-back.png'});
   const animation=await page.evaluate(()=>window.__HF_SKIN7_SUPREME_FORGE__.anim());
@@ -121,6 +148,7 @@ const ok=(value,name)=>{assert(value,name);checks.push(name)};
     rig:'Rig_Medium',bones:23,realAuthoredMeshes:64,genders:['M','F'],
     physicalS23Tested:false,unityImportTested:false,artistApproved:false,
     perPartVertexEditingTested:true,editedSkinnedGlbSavedInIndexedDb:true,
+    nativeMAndFHeadWorldFitCertified:true,
     publicGameUnchanged:true,semanticImageToArbitrary3D:false},null,2));
   console.log('HIGHFLY_SKIN7_BLOCK2_REAL_ARTISAN_FORGE_TWO_ORIGINAL_3D_PROFILES_BROWSER_GREEN=1 CHECKS='+checks.length);
  }finally{await browser?.close()}
