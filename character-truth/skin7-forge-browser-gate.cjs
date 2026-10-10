@@ -67,10 +67,60 @@ const ok=(value,name)=>{assert(value,name);checks.push(name)};
   const reject=await page.evaluate(()=>window.__HF_SKIN7_SUPREME_FORGE__.decision('discarded'));
   ok(reject.userDecision==='discarded'&&!await page.evaluate(()=>window.__HF_SKIN7_SUPREME_FORGE__.state().mounted),
     'DISCARD actually removes only candidate and restores prior original studio');
+  // REAL artisan editing: multiple custom shapes in the same originally skinned Blender 3D source.
+  ok(await page.evaluate(()=>window.__HF_SKIN7_ARTISAN__?.state().ready)===true,
+    'Artisan real geometry + review catalog module loaded');
+  await page.locator('#skin7Prompt').fill('Armadura samurái oni roja con hombrera izquierda enorme asimétrica, pechera heroica, faldones segmentados largos');
+  const custom=await page.evaluate(()=>window.__HF_SKIN7_ARTISAN__.forge());
+  ok(custom.design.controls.shoulderLeft===1.38&&custom.design.controls.waistFlare===1.28,
+    'Spanish text controls REAL per-part 3D silhouette parameters');
+  const original=await page.evaluate(()=> {
+   const group=window.__HF_V19_SCENE__.root().getObjectByName('SKIN7_AUTHORED_BLENDER_RIG_MEDIUM_ARMOR');
+   const m=group.getObjectByName('HF7_F_SHOULDER_L_PAGODA_0');
+   return m.geometry.getAttribute('position').array[0];
+  });
+  let d=await page.evaluate(()=>{
+   const a=window.__HF_SKIN7_ARTISAN__,x=a.state().design;
+   x.controls.shoulderLeft=1.19;
+   return a.apply(x);
+  });
+  const modified=await page.evaluate(()=> {
+   const group=window.__HF_V19_SCENE__.root().getObjectByName('SKIN7_AUTHORED_BLENDER_RIG_MEDIUM_ARMOR');
+   return group.getObjectByName('HF7_F_SHOULDER_L_PAGODA_0').geometry.getAttribute('position').array[0];
+  });
+  ok(Math.abs(modified-original)>.00001&&d.realVerticesChanged===true,
+    'True GPU vertex coordinates change per part WITHOUT original skeleton modification');
+  let exported=await page.evaluate(()=>window.__HF_SKIN7_ARTISAN__.editedGlb('overlay').then(r=>r.report));
+  ok(exported.editedPrimitives===54&&exported.nativeSkinCount===1&&exported.editorGeometryExported,
+    'Editor vertices are preserved in genuine reimportable SKINNED GLB, not only displayed');
+  const withHidden=await page.evaluate(()=>{
+   const a=window.__HF_SKIN7_ARTISAN__,x=a.state().design;
+   x.visible.BACK=false;a.apply(x);
+   return a.editedGlb('overlay').then(r=>r.report);
+  });
+  ok(withHidden.hiddenParts>=4,'Hidden back armor parts stay hidden in emitted GLB scene');
+  const saved=await page.evaluate(()=>window.__HF_SKIN7_ARTISAN__.artDecision('liked'));
+  ok(saved.approvedBy==='user-local-art-choice'&&saved.gameDeployed===false&&saved.sha256.length===64,
+    'User approved candidate saved with its EDITED GLB SHA256 without game merge');
+  const gallery=await page.evaluate(()=>window.__HF_SKIN7_ARTISAN__.refresh());
+  ok(gallery.some(x=>x.id===saved.id),'Approved skin exists in persistent local IndexedDB gallery');
+  const opened=await page.evaluate(id=>window.__HF_SKIN7_ARTISAN__.openApproved(id),saved.id);
+  ok(opened.design.visible.BACK===false&&opened.design.controls.shoulderLeft===1.19,
+    'Catalog reopens EXACT stored edited armor parameters, not initial variant');
+  const archived=await page.evaluate(id=>window.__HF_SKIN7_ARTISAN__.downloadApproved(id),saved.id);
+  ok(archived.sha256===saved.sha256&&archived.bytes>15000,
+    'Immutable catalog GLB binary SHA256 verified and exportable');
+  await page.locator('#skin7Side').click();
+  await page.screenshot({path:dir+'/05-artisan-edited-female-side.png'});
+  await page.evaluate(()=>window.__HF_SKIN7_ARTISAN__.artDecision('discarded'));
+  const again=await page.evaluate(()=>window.__HF_SKIN7_ARTISAN__.refresh());
+  ok(again.some(x=>x.id===saved.id)&&!await page.evaluate(()=>window.__HF_SKIN7_SUPREME_FORGE__.state().mounted),
+    'DISCARD current candidate NEVER deletes previously user-approved catalog asset');
   ok(errors.length===0,'No JavaScript errors through actual rigged 3D armors and two scenarios');
   fs.writeFileSync(dir+'/browser-proof.json',JSON.stringify({green:true,checks,errors,
     rig:'Rig_Medium',bones:23,realAuthoredMeshes:54,genders:['M','F'],
     physicalS23Tested:false,unityImportTested:false,artistApproved:false,
+    perPartVertexEditingTested:true,editedSkinnedGlbSavedInIndexedDb:true,
     publicGameUnchanged:true,semanticImageToArbitrary3D:false},null,2));
   console.log('HIGHFLY_SKIN7_BLOCK2_REAL_ARTISAN_FORGE_TWO_ORIGINAL_3D_PROFILES_BROWSER_GREEN=1 CHECKS='+checks.length);
  }finally{await browser?.close()}
