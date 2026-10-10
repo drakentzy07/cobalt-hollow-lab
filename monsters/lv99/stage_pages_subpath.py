@@ -65,6 +65,58 @@ def main() -> None:
         raise SystemExit("HF_P02H_INDEX_PREFIX_NOT_RELOCATABLE")
     if not (TARGET / "media").is_dir() or not list((TARGET / "media").rglob("*.glb")):
         raise SystemExit("HF_P02H_NATIVE_MONSTERS_MEDIA_MISSING")
+    # A responsive pure-static menu for human S23 landscape tests; does not
+    # rewrite runtime, bypass level locks or add new character mechanics.
+    scenarios = [
+        (21, "Umbral de los Aullidos", "21–29"),
+        (30, "Marisma del Velo", "30–39"),
+        (40, "Desfiladero Colmillo", "40–49"),
+        (50, "Tundra del Silencio", "50–59"),
+        (60, "Yermo de las Escamas", "60–69"),
+        (70, "Jardín Marchito", "70–79"),
+        (80, "Cresta del Trueno", "80–89"),
+        (90, "Orilla del Abismo", "90–99"),
+    ]
+    from html import escape
+    cards = "\\n".join(
+        '<article><div class="zone"><strong>' + escape(name) +
+        '</strong><small>Hunter LV' + escape(rng) +
+        '</small></div><nav aria-label="Opciones de ' + escape(name) +
+        '"><a href="./?hfHunt=' + str(level) + '">Normal</a>' +
+        '<a href="./?hfHunt=' + str(level) + '&amp;hfEncounter=elite">Élite</a>' +
+        '<a href="./?hfHunt=' + str(level) + '&amp;hfEncounter=captain">Capitán</a>' +
+        '</nav></article>' for level, name, rng in scenarios
+    )
+    html = """<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>HIGHFLY — Monster Lab LV21–99</title><style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#080e16;color:#eef4fa;padding:24px 16px 60px}
+main{max-width:930px;margin:auto}h1{font-size:clamp(28px,4vw,43px);margin:12px 0}
+p{color:#b5c9d7;line-height:1.6} .eyebrow{letter-spacing:.17em;color:#60e0b5;font-weight:700}
+article{display:flex;align-items:center;justify-content:space-between;gap:16px;
+border:1px solid #293e50;background:#13202e;padding:17px 21px;border-radius:15px;margin:10px 0}
+.zone{display:flex;flex-direction:column;gap:7px}.zone strong{font-size:17px}
+.zone small{color:#90b3c7}nav{display:flex;gap:8px;flex-wrap:wrap}
+a{color:#d9eeff;border:1px solid #406079;text-decoration:none;padding:11px 16px;border-radius:9px;font-weight:650}
+a:hover,a:focus{border-color:#5de1a9;color:white;background:#19483c}
+a:last-child{border-color:#d2a65d}aside{border-left:3px solid #55c5bc;padding-left:15px;margin:25px 0}
+@media(max-width:720px){article{align-items:stretch;flex-direction:column}nav a{flex:1;text-align:center;padding:12px 7px}}
+</style></head><body><main>
+<div class="eyebrow">HIGHFLY · LABORATORIO DE MONSTRUOS</div>
+<h1>Ocho regiones. Tres tipos de cacería.</h1>
+<p>Versión independiente de pruebas con combate real ClaudeCraft. Elegí una región
+y girá el teléfono horizontalmente para usar joystick, cámara, habilidades y loot.</p>
+""" + cards + """
+<aside><strong>Importante:</strong> cada acceso inicia una partida de ensayo con
+un Hunter de nivel apropiado para esa región. No representa todavía los viajes
+ni los niveles de tu personaje persistente de HIGHFLY V4.
+No se altera el juego público ni los datos de sus personajes.</aside>
+<p>Revisá movimiento en 360°, cámara derecha, salto, esquiva, combate, cadáver,
+objetos y rendimiento. Para comparar probá la misma región en Normal, Élite y Capitán.</p>
+</main></body></html>"""
+    (TARGET / "hunts.html").write_text(html, encoding="utf-8")
     # Original build is a reference artifact and MUST remain byte-for-byte.
     after = {str(p.relative_to(ORIGIN)): sha(p)
              for p in ORIGIN.rglob("*") if p.is_file()}
