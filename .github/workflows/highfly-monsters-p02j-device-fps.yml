@@ -1,0 +1,226 @@
+name: HIGHFLY MONSTER P02J — REAL S23 FPS DIAGNOSTIC (PRESERVE V4)
+# PASS02J changes only Monster Lab's diagnostic HTML/JS. The P02I native
+# WebGL, monsters, loot, Training and current V4 remain immutable.
+on:
+  push:
+    branches:
+      - highfly-monsters-p02j-mobile-fps-overlay-safe
+    paths:
+      - .github/workflows/highfly-monsters-p02j-device-fps.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  deployments: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-monsterlab-pages-immutable-publish
+  cancel-in-progress: false
+
+jobs:
+  compose_and_validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - name: Checkout approved P02J overlay
+        uses: actions/checkout@v4
+
+      - name: Gate exact current published P02I Pages SHA — refuse concurrent V4 or Monster update
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,os,urllib.request
+          expected="07e10ccc815f6ff0a1243c283dcab1d2cd00e300"
+          uri="https://api.github.com/repos/"+os.environ["GITHUB_REPOSITORY"]+"/deployments?environment=highfly-v4-02-preview&per_page=1"
+          req=urllib.request.Request(uri,headers={
+              "Authorization":"Bearer "+os.environ["GH_TOKEN"],
+              "Accept":"application/vnd.github+json",
+              "X-GitHub-Api-Version":"2022-11-28",
+              "User-Agent":"HIGHFLY-monster-P02J-safe-pages-gate",
+          })
+          with urllib.request.urlopen(req,timeout=30) as f: arr=json.load(f)
+          if not arr or arr[0].get("sha")!=expected:
+              raise SystemExit("HF_P02J_PAGES_ALREADY_UPDATED_ELSEWHERE_REFUSE:"+str(arr[:1]))
+          print("HF_P02J_CURRENT_LIVE_P02I_EXACT_SHA_GREEN=1")
+          PY
+
+      - name: Fetch exact GREEN P02I live Pages artifact (run 38086943612)
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          run-id: 38086943612
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: approved-pages-artifact
+
+      - name: Restore latest approved root V4 and Monster Lab without rebuild
+        run: |
+          set -euo pipefail
+          TARBALL="$(find approved-pages-artifact -type f -name '*.tar' -print -quit)"
+          test -n "$TARBALL"
+          mkdir -p approved-live-pages
+          tar -xf "$TARBALL" -C approved-live-pages
+          test -s approved-live-pages/index.html
+          test -s approved-live-pages/v4-02/index.html
+          test -s approved-live-pages/monster-lab/game.html
+          test -s approved-live-pages/monster-lab/hunts.html
+          test -s approved-live-pages/monster-lab/monster-media-sw.js
+
+      - name: Add P02J opt-in FPS panel and prove unchanged existing public hashes
+        run: |
+          set -euo pipefail
+          python3 game/monster_p02j_patch.py
+          test -s composed-pages/monster-lab/monster-device-fps.js
+          test -s highfly-p02j-integrity.json
+          grep -q 'hfPerf=1' composed-pages/monster-lab/hunts.html
+          grep -q 'monster-device-fps.js' composed-pages/monster-lab/game.html
+          test -s composed-pages/v4-02/index.html
+          test -s composed-pages/index.html
+          test -f composed-pages/.nojekyll
+
+      - name: Checkout exact frozen donor browser dependencies only
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: browser-deps
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /package.json
+            /pnpm-lock.yaml
+            /patches/
+            /.npmrc
+
+      - name: Checkout exact accepted P02I mobile WebGL smoke test
+        uses: actions/checkout@v4
+        with:
+          ref: e6f59079fdc3f278ef041fbc8354ca837aee42ab
+          path: browser-smoke-source
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /monsters/lv99/hunt_browser_smoke.mjs
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install donor-pinned Chrome emulation deps
+        working-directory: browser-deps
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: P02J prepare real S23 browser smoke asserting visible fps panel
+        run: |
+          set -euo pipefail
+          mkdir -p browser-deps/scripts
+          cp browser-smoke-source/monsters/lv99/hunt_browser_smoke.mjs browser-deps/scripts/hf_p02j_browser_smoke.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          f=Path('browser-deps/scripts/hf_p02j_browser_smoke.mjs')
+          src=f.read_text(encoding='utf-8')
+          orig="http://127.0.0.1:4173/cobalt-hollow-lab/?hfHunt="
+          new="http://127.0.0.1:4173/cobalt-hollow-lab/monster-lab/?hfPerf=1&hfHunt="
+          assert src.count(orig)==1,"HF_P02J_BROWSER_SMOKE_URL_DRIFT"
+          src=src.replace(orig,new,1)
+          old="  if(missing.length)throw Error('HuntPilot preview contains missing assets: '+missing.slice(0,4).join(','));"
+          assert src.count(old)==1,"HF_P02J_BROWSER_SMOKE_GATE_DRIFT"
+          guard="""  await page.waitForFunction(
+            ()=>window.__hfMonsterFps?.ready===true,
+            null,{timeout:30000});
+          const stats=await page.evaluate(()=>{
+            const box=document.getElementById('hf-monster-device-fps');
+            const s=window.__hfMonsterFps;
+            return {panel:!!box && box.getBoundingClientRect().width>0,
+                    text:box?.textContent,fps:s?.fps,p95:s?.p95ms,
+                    stutters:s?.stuttersPct,frames:s?.frames};
+          });
+          if(!stats.panel||!stats.text?.includes('FPS REAL')||
+             !Number.isFinite(stats.fps)||stats.fps<=0||
+             !Number.isFinite(stats.p95)||stats.p95<=0||
+             !Number.isFinite(stats.stutters)||stats.stutters<0||
+             stats.frames<4)
+            throw Error('HF_P02J_DEVICE_METRICS_FAILED:'+JSON.stringify(stats));
+          console.log('HF_P02J_ACTUAL_FRAME_METRICS_PANEL='+JSON.stringify(stats));
+          """
+          src=src.replace(old,guard+old,1)
+          f.write_text(src,encoding='utf-8')
+          PY
+
+      - name: P02J real WebGL+FPS Chrome S23 emulation LV21 and LV90 captain
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p staged-pages
+          ln -s ../composed-pages staged-pages/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory staged-pages > p02j-http.log 2>&1 &
+          WEB_PID=$!
+          trap 'kill "$WEB_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/monster-lab/hunts.html > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/ -o /dev/null
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/v4-02/ -o /dev/null
+          curl -fsS 'http://127.0.0.1:4173/cobalt-hollow-lab/monster-lab/hunts.html?hfPerf=1' | grep -q 'Activar medición FPS'
+          (cd browser-deps && HF_HUNT_S23_MATRIX=1 node scripts/hf_p02j_browser_smoke.mjs)
+          (cd browser-deps && HF_HUNT_S23_MATRIX=1 HF_HUNT_PREVIEW_LEVEL=90 HF_HUNT_ENCOUNTER_MODE=captain node scripts/hf_p02j_browser_smoke.mjs)
+          echo 'HF_P02J_REAL_WEBGL_S23_OPT_IN_FPS_PANEL_GREEN=1'
+
+      - name: Upload proof even if Chrome fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-MONSTER-P02J-DEVICE-FPS-QA
+          path: |
+            highfly-p02j-integrity.json
+            p02j-http.log
+            highfly-hunt-p02f-*-s23-preview.png
+            highfly-hunt-p02f-*-s23-failure.png
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Recheck current deployed SHA before new Pages artifact upload
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,os,urllib.request
+          uri="https://api.github.com/repos/"+os.environ["GITHUB_REPOSITORY"]+"/deployments?environment=highfly-v4-02-preview&per_page=1"
+          req=urllib.request.Request(uri,headers={
+              "Authorization":"Bearer "+os.environ["GH_TOKEN"],
+              "Accept":"application/vnd.github+json",
+              "X-GitHub-Api-Version":"2022-11-28",
+              "User-Agent":"HIGHFLY-monster-P02J-second-release-gate",
+          })
+          with urllib.request.urlopen(req,timeout=30) as f: arr=json.load(f)
+          if not arr or arr[0].get("sha")!="07e10ccc815f6ff0a1243c283dcab1d2cd00e300":
+              raise SystemExit("HF_P02J_SITE_CHANGED_DURING_TESTS_REFUSE_UPLOAD")
+          print("HF_P02J_LAST_V4_AND_P02I_SHA_UNCHANGED_GREEN=1")
+          PY
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload P02J Pages with unchanged root V4 and gameplay media
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: composed-pages
+
+  deploy:
+    needs: compose_and_validate
+    runs-on: ubuntu-latest
+    environment:
+      name: highfly-v4-02-preview
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy opt-in FPS diagnostic without modifying V4 or combat
+        id: deployment
+        uses: actions/deploy-pages@v4
