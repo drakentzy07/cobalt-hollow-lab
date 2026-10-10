@@ -1,0 +1,22 @@
+{
+  "schema":"highfly.skin7.paladin-source-reforge-recipe/1",
+  "id":"paladin-forja-sagrada-prototipo",
+  "title":"Paladín — Primera Forja Sagrada",
+  "brief":"Partir de la armadura de paladín REAL de ClaudeCraft y mejorar por separado sus hombreras, casco, pechera, protecciones y espalda. Mantener la colocación sobre Rig_Medium y el equipo por siete slots. Demostración técnica, NO aprobación artística.",
+  "sourceUpstreamCommit":"9b57e49c9676d75962700f828cc00a50a9a988b5",
+  "sourceGlbBlobSha1":"e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2",
+  "sourceRig":"Rig_Medium",
+  "palette":{"enamel":"#314f74","metal":"#d4a953","accent":"#70d5e6"},
+  "slots":{
+    "head":{"scale":[1.09,1.08,1.10],"flare":0.06,"curvature":0.14},
+    "chest":{"scale":[1.11,1.08,1.11],"flare":0.04,"curvature":0.12},
+    "arms":{"scale":[1.22,1.12,1.12],"flare":0.16,"curvature":0.26},
+    "hands":{"scale":[1.08,1.08,1.06],"flare":0.02,"curvature":0.10},
+    "legs":{"scale":[1.09,1.09,1.07],"flare":0.05,"curvature":0.11},
+    "feet":{"scale":[1.08,1.05,1.04],"flare":0.02,"curvature":0.07},
+    "back":{"scale":[1.09,1.08,1.07],"flare":0.02,"curvature":0.10}
+  },
+  "artistApproved":false,
+  "automatedForger":"assistant-authored-structured-recipe-followed-by-reproducible-Blender-processing",
+  "gameDeployAllowed":false
+}
