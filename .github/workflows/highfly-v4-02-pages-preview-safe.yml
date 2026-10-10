@@ -1,0 +1,245 @@
+name: HIGHFLY V4-02 — SAFE SUBPATH PAGES (PRESERVE RUN1-J)
+
+on:
+  push:
+    branches:
+      - highfly-v4-02-pages-preview-safe
+    paths:
+      - .github/workflows/highfly-v4-02-pages-preview-safe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: highfly-v4-02-pages-preview-safe
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact GREEN HIGHFLY overlay
+        uses: actions/checkout@v4
+        with:
+          ref: a456c261692e100c5ac9611f582db1851a6ddd37
+
+      - name: Checkout frozen ClaudeCraft code slice
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /android/
+            /capacitor.config.ts
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+
+      - name: Verify frozen sources
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+
+      - name: Apply exact GREEN HIGHFLY overlays
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check ../overlays/pages-media-base.patch
+          git apply --check ../overlays/cobalt-offline-gate.patch
+          git apply ../overlays/pages-media-base.patch
+          git apply ../overlays/cobalt-offline-gate.patch
+          python ../overlays/highfly_mobile_360.py
+          python ../overlays/highfly_mobile_analog.py
+          python ../overlays/verify_highfly_8way.py
+          python ../overlays/highfly_offline_save.py
+          python ../overlays/highfly_entry_es.py
+          python ../overlays/highfly_mobile_creator.py
+          python ../overlays/highfly_offline_resume_preview.py
+          python ../overlays/highfly_mobile_polish.py
+          python ../overlays/highfly_advanced_mobility.py
+          python ../overlays/highfly_run09_mobile_actions.py
+          python ../overlays/highfly_run091_ui_polish.py
+          python ../overlays/highfly_run092_hud_comfort.py
+          python ../overlays/highfly_run093_preview_hud.py
+          python ../overlays/highfly_run093_combat.py
+          python ../overlays/highfly_training_core_v1.py
+          python ../overlays/highfly_training_persistence_v1.py
+          python ../overlays/highfly_training_ui_v1.py
+          python ../overlays/highfly_training_e2e_v1.py
+          python ../overlays/highfly_training_run1i_ui.py
+          python ../overlays/highfly_run1j_branding.py
+          python ../overlays/highfly_run1j_spanish.py
+          python ../overlays/highfly_run1j_j4_brandfix.py
+          python ../overlays/highfly_run1j_j3a_flags.py
+          python ../overlays/highfly_run1j_j3b_native_bridge.py
+          python ../overlays/highfly_run1j_real_device_fix.py
+          python ../overlays/highfly_run1j_foundation_close.py
+          python ../overlays/highfly_run1j_final_polish.py
+          python ../overlays/highfly_run1j_visual_release.py
+          python ../overlays/highfly_run115_visuals.py
+          python ../overlays/highfly_run119_foundation_authority.py
+          python ../overlays/highfly_run120_closure.py
+          python ../overlays/highfly_run122_training_lock.py
+          python ../overlays/rewrite_source_public_paths.py
+          python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
+          git diff --check
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Enable pinned pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+
+      - name: Install dependencies
+        working-directory: upstream
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build exact RUN1-J GREEN site
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          node scripts/build_bundle_pregen.mjs
+          python ../overlays/rewrite_source_public_paths.py
+          grep -F "/cobalt-hollow-lab/audio/sfx/runtime-pack.json" src/game/sfx_manifest.generated.ts
+          pnpm exec vite build
+          node scripts/check_backdrop_survival.mjs
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          python ../overlays/rewrite_pages_static.py
+          python ../overlays/audit_pages_public_roots.py
+          test -s dist/index.html
+          test -s dist/highfly/highfly-logo-full.webp
+          test -s dist/highfly/highfly-splash.avif
+          test -s dist/highfly/highfly-entry.avif
+          test -s dist/highfly/highfly-loading.avif
+          touch dist/.nojekyll
+          du -sh dist
+          find dist/media -type f | wc -l
+
+      - name: Download GREEN PR17 WebGL candidate (read-only existing Actions artifact)
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-V4-02-PR17-GEMS-WEBGL-PREVIEW-NO-PUBLISH
+          run-id: 38073855335
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: v4-02-candidate
+      - name: Preserve original Pages byte-for-byte and stage V4-02 isolated subtree
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          from hashlib import sha256
+          import os
+          public = Path('upstream/dist')
+          source = Path('v4-02-candidate/v4-02-package/cobalt-hollow-lab')
+          assert (public/'index.html').is_file(), 'Original Pages missing'
+          assert (source/'index.html').is_file(), 'V4-02 artifact missing'
+          original = {str(p.relative_to(public)): sha256(p.read_bytes()).hexdigest() for p in public.rglob('*') if p.is_file()}
+          target = public/'v4-02'
+          assert not target.exists(), 'Refuse to overwrite existing preview subpath'
+          target.mkdir()
+          old='/cobalt-hollow-lab/'
+          new='/cobalt-hollow-lab/v4-02/'
+          extensions={'.html','.js','.css','.json','.webmanifest','.xml','.txt','.mjs','.svg'}
+          for p in source.rglob('*'):
+              if not p.is_file(): continue
+              dest=target/p.relative_to(source)
+              dest.parent.mkdir(parents=True, exist_ok=True)
+              if p.suffix.lower() in extensions:
+                  try:
+                      raw=p.read_text(encoding='utf-8')
+                  except UnicodeDecodeError:
+                      dest.write_bytes(p.read_bytes())
+                  else:
+                      dest.write_text(raw.replace(old,new),encoding='utf-8')
+              else:
+                  dest.write_bytes(p.read_bytes())
+          for path,digest in original.items():
+              assert sha256((public/path).read_bytes()).hexdigest()==digest, 'Published baseline changed: '+path
+          assert (target/'index.html').is_file()
+          bad=[]
+          for p in target.rglob('*'):
+              if not p.is_file() or p.suffix.lower() not in extensions: continue
+              try: raw=p.read_text(encoding='utf-8')
+              except UnicodeDecodeError: continue
+              if '/cobalt-hollow-lab/cobalt-hollow-lab/' in raw: bad.append(str(p))
+          assert not bad,'Double base in preview: '+str(bad[:4])
+          site_size=sum(p.stat().st_size for p in public.rglob('*') if p.is_file())
+          root_size=sum(p.stat().st_size for p in public.rglob('*') if p.is_file() and 'v4-02' not in p.relative_to(public).parts)
+          preview_size=site_size-root_size
+          print(f'HIGHFLY_PAGES_BASELINE_BYTES={root_size}')
+          print(f'HIGHFLY_PAGES_PREVIEW_BYTES={preview_size}')
+          print(f'HIGHFLY_PAGES_COMBINED_BYTES={site_size}')
+          # GitHub Pages' published site maximum is 1 GB. Fail closed BEFORE deploy.
+          assert site_size <= 1_000_000_000, 'Combined site exceeds GitHub Pages 1GB limit; public Pages untouched'
+          print('HIGHFLY_PAGES_PRESERVE_PUBLIC_SHA256_AND_SUBPATH_OK=1')
+          PY
+      - name: Validate preview HTML and immutable public index before upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s upstream/dist/index.html
+          test -s upstream/dist/v4-02/index.html
+          grep -q '/cobalt-hollow-lab/v4-02/' upstream/dist/v4-02/index.html
+          test -s upstream/dist/.nojekyll
+          echo 'HIGHFLY_V4_02_PAGES_PRESERVE_GATE_GREEN=1'
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: upstream/dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy SAME original root + safe V4-02 subtree to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
