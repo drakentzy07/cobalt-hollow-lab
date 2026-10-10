@@ -276,7 +276,7 @@ jobs:
           test -s upstream/dist/index.html
           test -s upstream/dist/v4-02/index.html
           grep -qi '<html' upstream/dist/v4-02/index.html
-          test -s upstream/dist/.nojekyll
+          test -f upstream/dist/.nojekyll
           echo 'HIGHFLY_V4_02_PAGES_PRESERVE_GATE_GREEN=1'
       - name: Checkout PR17 approved real browser smoke (read-only)
         uses: actions/checkout@v4
