@@ -9,7 +9,7 @@ on:
       approved_qa_run:
         description: 'Existing GREEN Paladin browser QA run ID, 30-day artifact'
         required: true
-        default: '38092825964'
+        default: '38094258964'
 permissions:
   contents: write
   actions: read
@@ -28,7 +28,7 @@ jobs:
       - name: Fetch already GREEN artifact (never rebuild untested)
         env:
           GH_TOKEN: ${{ github.token }}
-          APPROVED_RUN: ${{ inputs.approved_qa_run || '38092825964' }}
+          APPROVED_RUN: ${{ inputs.approved_qa_run || '38094258964' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -53,7 +53,7 @@ jobs:
           PY
       - name: Prepare independent LIVE source branch, no HIGHFLY main/Pages deployment
         env:
-          SOURCE_RUN: ${{ inputs.approved_qa_run || '38092825964' }}
+          SOURCE_RUN: ${{ inputs.approved_qa_run || '38094258964' }}
         shell: bash
         run: |
           set -euo pipefail
