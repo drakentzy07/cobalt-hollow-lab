@@ -1,6 +1,7 @@
 /** HIGHFLY LV21-99 monster content integration: real ClaudeCraft mob/loot engine. */
 import { describe, expect, it } from 'vitest';
 import { CAMPS, MOBS } from '../src/sim/data';
+import { HARVEST_COMPONENT_ITEMS } from '../src/sim/content/professions';
 import { createMob } from '../src/sim/entity';
 import { Sim } from '../src/sim/sim';
 import { meleeSwing } from '../src/sim/combat/auto_attack';
@@ -19,6 +20,14 @@ describe('HIGHFLY Monster Content Pass 01 LV21-99', () => {
     expect(HIGHFLY_MONSTER_DONORS).toHaveLength(8);
     expect(HIGHFLY_MONSTER_BANDS).toHaveLength(8);
     expect(Object.keys(MOBS).filter(id => id.startsWith('hf_hunt_'))).toHaveLength(64);
+    const added=Object.entries(MOBS).filter(([id])=>id.startsWith('hf_hunt_')).map(([,mob])=>mob);
+    expect(added).toHaveLength(64);
+    const harvestable=added.filter(m=>(m.componentTags?.length??0)>0);
+    expect(harvestable).toHaveLength(40);
+    expect(added.length-harvestable.length).toBe(24);
+    for(const mob of harvestable){
+      expect(mob.componentTags?.every(tag=>Object.hasOwn(HARVEST_COMPONENT_ITEMS,tag))).toBe(true);
+    }
     expect(CAMPS.some(camp => camp.mobId.startsWith('hf_hunt_'))).toBe(false);
     for (const donor of HIGHFLY_MONSTER_DONORS) {
       const original = MOBS[donor.sourceId];
