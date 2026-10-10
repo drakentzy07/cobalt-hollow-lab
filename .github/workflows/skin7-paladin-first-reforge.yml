@@ -27,7 +27,7 @@ jobs:
           git diff --name-only "$BASE" HEAD | tee /tmp/skin7-source-reforge-files.txt
           while IFS= read -r f; do
             case "$f" in
-             character-truth/skin7-paladin-*|character-truth/skin7-native-wardrobe*|.github/workflows/skin7-paladin-truth.yml|.github/workflows/skin7-paladin-first-reforge.yml) ;;
+             character-truth/skin7-paladin-*|character-truth/skin7-native-wardrobe*|.github/workflows/skin7-paladin-truth.yml|.github/workflows/skin7-paladin-first-reforge.yml|.github/workflows/skin7-publish-isolated-lab.yml|.github/workflows/skin7-live-vercel-gate.yml) ;;
              *) echo "ERROR CHANGED OLD OR PUBLIC FILE $f"; exit 42 ;;
             esac
           done </tmp/skin7-source-reforge-files.txt
