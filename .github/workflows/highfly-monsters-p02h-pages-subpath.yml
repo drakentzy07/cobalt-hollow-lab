@@ -1,0 +1,267 @@
+name: HIGHFLY MONSTERS P02H — SAFE Pages /monster-lab after native QA
+# An independent SAFE Pages delivery composed from 2 existing vetted artifacts.
+# Pins currently deployed V4-02 Pages artifact; no automatic merged source.
+# Do not enable push until monster-P02H CI run green and artifact exists.
+on:
+  push:
+    branches:
+      - highfly-monsters-p02h-pages-subpath-isolated
+    paths:
+      - .github/workflows/highfly-monsters-p02h-pages-subpath.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  deployments: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-monsterlab-pages-immutable-publish
+  cancel-in-progress: false
+
+jobs:
+  compose_and_validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - name: Checkout isolated Pages composition guard
+        uses: actions/checkout@v4
+
+      - name: Require actual P02H package CI SUCCESS before even attempting Pages
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 55); do
+            if python3 - <<'PY'
+          import json,os,sys,urllib.request
+          rid=38078249008
+          uri="https://api.github.com/repos/"+os.environ["GITHUB_REPOSITORY"]+"/actions/runs/"+str(rid)
+          req=urllib.request.Request(uri,headers={
+              "Accept":"application/vnd.github+json",
+              "Authorization":"Bearer "+os.environ["GH_TOKEN"],
+              "X-GitHub-Api-Version":"2022-11-28",
+              "User-Agent":"HIGHFLY-pages-release-truth",
+          })
+          with urllib.request.urlopen(req,timeout=20) as response: d=json.load(response)
+          if d.get("head_sha")!="5f4aa55769d1cf2c00465eee228257078f323be5":
+              raise SystemExit("HF_P02H_UNEXPECTED_APPROVED_RUN_COMMIT")
+          if d.get("status")=="completed":
+              if d.get("conclusion")!="success":
+                  raise SystemExit("HF_P02H_SOURCE_CI_NOT_GREEN:"+str(d.get("conclusion")))
+              print("HF_P02H_SOURCE_SHA_GREEN=1")
+              sys.exit(0)
+          print("H_RUN_NOT_FINISHED:",d.get("status"),flush=True)
+          sys.exit(77)
+          PY
+            then
+              break
+            else
+              rc=$?
+              if [ "$rc" -ne 77 ]; then exit "$rc"; fi
+              if [ "$attempt" -eq 55 ]; then echo 'HF_P02H_SOURCE_CI_NOT_FINISHED'; exit 1; fi
+              sleep 30
+            fi
+          done
+
+      - name: Reject stale Pages snapshot if V4 was published again elsewhere
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,os,urllib.request
+          expected="b1953c1eb958517d474cf6b6d57231be78809304"
+          uri="https://api.github.com/repos/"+os.environ["GITHUB_REPOSITORY"]+"/deployments?environment=highfly-v4-02-preview&per_page=1"
+          req=urllib.request.Request(uri,headers={
+            "Accept":"application/vnd.github+json",
+            "Authorization":"Bearer "+os.environ["GH_TOKEN"],
+            "X-GitHub-Api-Version":"2022-11-28",
+            "User-Agent":"HIGHFLY-monster-safe-pages-gate",
+          })
+          with urllib.request.urlopen(req,timeout=25) as fh: rows=json.load(fh)
+          if not rows or rows[0].get("sha") != expected:
+            raise SystemExit("HF_MONSTER_PAGES_BASE_CHANGED_REFUSE_DEPLOY:"+str(rows[:1]))
+          print("HF_MONSTER_PAGES_EXACT_CURRENT_DEPLOYMENT_SHA_GREEN=1")
+          PY
+
+      - name: Fetch exact CURRENT live Pages snapshot (run 38080732208, SHA b1953c1)
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          run-id: 38080732208
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: approved-pages-artifact
+
+      - name: Fetch certified native P02H Pages-ready monster WebGL (NO BUILD MODIFICATION)
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-MONSTER-P02H-PAGES-SUBPATH-NO-DEPLOY
+          run-id: 38078249008
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: monster-approved
+
+      - name: Restore approved live root and V4-02 byte-for-byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d approved-pages-artifact
+          find approved-pages-artifact -maxdepth 2 -type f -printf '%P %s bytes\n'
+          TARBALL="$(find approved-pages-artifact -type f -name '*.tar' -print -quit)"
+          test -n "$TARBALL"
+          mkdir -p approved-live-pages
+          tar -xf "$TARBALL" -C approved-live-pages
+          test -s approved-live-pages/index.html
+          test -s approved-live-pages/v4-02/index.html
+          test -f approved-live-pages/.nojekyll
+          test -s monster-approved/cobalt-hollow-lab/monster-lab/index.html
+          test -s monster-approved/monster-lab-manifest.json
+          echo "HF_P02H_APPROVED_OLD_PAGES_ARTIFACT_RESTORED=1"
+
+      - name: Compose third isolated /monster-lab without altering any live file
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 game/monster_pages_compose.py
+          test -s composed-pages/index.html
+          test -s composed-pages/v4-02/index.html
+          test -s composed-pages/monster-lab/index.html
+          test -s composed-pages/monster-lab/game.html
+          test -s composed-pages/monster-lab/monster-media-sw.js
+          grep -q "serviceWorker.ready" composed-pages/monster-lab/index.html
+          grep -q "/cobalt-hollow-lab/media/" composed-pages/monster-lab/monster-media-sw.js
+          test -s composed-pages/monster-lab/hunts.html
+          test -s monsters-pages-composition-report.json
+          test -f composed-pages/.nojekyll
+
+      - name: Checkout pinned ClaudeCraft package to load playwright only (no build)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: browser-deps
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /package.json
+            /pnpm-lock.yaml
+            /patches/
+            /.npmrc
+
+      - name: Checkout exact P02H accepted real hunt browser smoke
+        uses: actions/checkout@v4
+        with:
+          ref: 5f4aa55769d1cf2c00465eee228257078f323be5
+          path: monster-smoke-source
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /monsters/lv99/hunt_browser_smoke.mjs
+
+      - name: Setup Node for genuine browser QA
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install reproducible browser dependencies
+        shell: bash
+        working-directory: browser-deps
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Prove live root, v4 and MONSTER-LAB URL on Chrome S23 emulation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p browser-deps/scripts staged-pages
+          cp monster-smoke-source/monsters/lv99/hunt_browser_smoke.mjs browser-deps/scripts/hf_monster_pages_smoke.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          f=Path("browser-deps/scripts/hf_monster_pages_smoke.mjs")
+          s=f.read_text()
+          old="http://127.0.0.1:4173/cobalt-hollow-lab/?hfHunt="
+          new="http://127.0.0.1:4173/cobalt-hollow-lab/monster-lab/?hfHunt="
+          assert s.count(old)==1,'HF_P02H_BROWSER_SMOKE_SOURCE_DRIFT'
+          f.write_text(s.replace(old,new))
+          PY
+          ln -s ../composed-pages staged-pages/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory staged-pages > monsterlab-pages-http.log 2>&1 &
+          WEB_PID=$!
+          trap 'kill "$WEB_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/monster-lab/hunts.html >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/ -o /dev/null
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/v4-02/ -o /dev/null
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/monster-lab/hunts.html | grep -q 'Ocho regiones'
+          (cd browser-deps && HF_HUNT_S23_MATRIX=1 node scripts/hf_monster_pages_smoke.mjs)
+          (cd browser-deps && HF_HUNT_PREVIEW_LEVEL=90 HF_HUNT_ENCOUNTER_MODE=captain HF_HUNT_S23_MATRIX=1 node scripts/hf_monster_pages_smoke.mjs)
+          echo 'HF_P02H_THREE_LIVE_ROUTES_AND_WEBGL_S23_REAL_BROWSER_GREEN=1'
+
+      - name: Upload audit evidence even if browser test fails
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-MONSTERLAB-PAGES-INTEGRITY-AUDIT
+          path: |
+            monsters-pages-composition-report.json
+            monsterlab-pages-http.log
+            highfly-hunt-p02f-*-s23-preview.png
+            highfly-hunt-p02f-*-s23-failure.png
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Verify final bounded deploy bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib
+          files=[p for p in pathlib.Path('composed-pages').rglob('*') if p.is_file()]
+          n=sum(p.stat().st_size for p in files)
+          assert n < 1_900_000_000,(len(files),n)
+          print('HF_P02H_PAGES_PACKAGE_BYTES=',n,'FILES=',len(files))
+          PY
+
+      - name: Recheck Pages deployment sha immediately before public artifact upload
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,os,urllib.request
+          url="https://api.github.com/repos/"+os.environ["GITHUB_REPOSITORY"]+"/deployments?environment=highfly-v4-02-preview&per_page=1"
+          req=urllib.request.Request(url,headers={
+            "Authorization":"Bearer "+os.environ["GH_TOKEN"],
+            "Accept":"application/vnd.github+json",
+            "X-GitHub-Api-Version":"2022-11-28",
+            "User-Agent":"HIGHFLY-pages-final-immutable-gate",
+          })
+          with urllib.request.urlopen(req,timeout=30) as res: deployed=json.load(res)
+          approved="b1953c1eb958517d474cf6b6d57231be78809304"
+          if not deployed or deployed[0].get("sha")!=approved:
+            raise SystemExit("HF_P02H_PUBLIC_SITE_CHANGED_DURING_REHEARSAL_REFUSE_UPLOAD")
+          print("HF_P02H_LATEST_LIVE_V4_SOURCE_UNCHANGED=1")
+          PY
+
+      - name: Configure Pages without changing any existing bytes
+        uses: actions/configure-pages@v5
+      - name: Upload third-subpath Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: composed-pages
+
+  deploy:
+    needs: compose_and_validate
+    runs-on: ubuntu-latest
+    environment:
+      name: highfly-v4-02-preview
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy unchanged root + unchanged V4-02 + new isolated monster-lab
+        id: deployment
+        uses: actions/deploy-pages@v4
