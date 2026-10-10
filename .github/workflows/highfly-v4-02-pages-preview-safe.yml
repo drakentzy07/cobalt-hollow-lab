@@ -258,7 +258,7 @@ jobs:
           alias_bytes=0
           for f in (source/'assets').rglob('*.js'):
               name=f.name
-              eligible=(f.stat().st_size<=1_000_000 or name.startswith(('renderer-','main-','es_ES-','es-')))
+              eligible=(f.stat().st_size<=1_000_000 or name.startswith(('renderer-','main-','es_ES-','es-','data-','ignivar_frontal_telegraph-')))
               if not eligible: continue
               dst=public/f.relative_to(source)
               if dst.exists():
