@@ -34,7 +34,7 @@ export interface HighflyHuntRewardProfile {
 export const HIGHFLY_HUNT_FAMILY_REAGENTS={
   wolf: ['rough_hide','rough_hide','rough_hide'],
   spider: ['spider_silk','spider_silk','spider_silk'],
-  skeleton: ['bone_fragments','arcane_dust','arcane_essence'],
+  skeleton: ['homespun_cloth','arcane_dust','arcane_essence'],
   ogre: ['curved_tusk','curved_tusk','curved_tusk'],
   revenant: ['homespun_cloth','arcane_essence','arcane_shard'],
   dragonkin: ['sharp_claw','sharp_claw','sharp_claw'],
