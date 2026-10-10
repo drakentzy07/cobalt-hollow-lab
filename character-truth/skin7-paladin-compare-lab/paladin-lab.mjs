@@ -41,8 +41,15 @@ ktx2.detectSupport(renderer);loader.setKTX2Loader(ktx2);
 const state={actors:[],gltf:null,forge:null,clip:null,playing:true,speed:1,view:'all',gender:'M',t:0,custom:null,assetsReady:false};
 function skinned(mesh){return !!mesh?.isSkinnedMesh&&mesh.skeleton?.bones?.length>0}
 function namedBones(actor){
- const m=new Map();actor.traverse(n=>{if(n.isBone){if(m.has(n.name))throw Error('Hueso duplicado: '+n.name);m.set(n.name,n)}});
- if(m.size!==23||expectedBones.some(n=>!m.has(n)))throw Error('No es el Rig_Medium original de 23 huesos');
+ // Strict authority: the original KayKit M_Torso SKIN joint palette is the true
+ // 23-bone animation skeleton. Counting every Bone scene node mistakenly includes
+ // auxiliary bones emitted for the many unrelated modular parts in the full source.
+ const witness=actor.getObjectByName('M_Torso');
+ if(!witness?.isSkinnedMesh||!witness.skeleton)throw Error('No existe el cuerpo modular M_Torso con skin nativo');
+ const list=witness.skeleton.bones,m=new Map();
+ for(const joint of list){if(m.has(joint.name))throw Error('Skin contiene hueso repetido: '+joint.name);m.set(joint.name,joint)}
+ if(list.length!==23||m.size!==23||expectedBones.some(n=>!m.has(n)))
+  throw Error('Rig_Medium del torso no tiene los 23 huesos originales. Recibidos '+list.length+': '+list.map(x=>x.name).join(','));
  return m;
 }
 function actorSource(){
