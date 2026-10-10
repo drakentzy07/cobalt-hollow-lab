@@ -49,8 +49,12 @@ def main():
     if not manifest.is_file():
         raise SystemExit("HF_MONSTER_PAGES_MISSING_SOURCE_MANIFEST")
     m = json.loads(manifest.read_text())
-    if m.get("path") != "/cobalt-hollow-lab/monster-lab/" or not m.get("default_public_pages_untouched"):
-        raise SystemExit("HF_MONSTER_PAGES_MANIFEST_NOT_CERTIFIED")
+    if (m.get("path") != "/cobalt-hollow-lab/monster-lab/"
+        or not m.get("default_public_pages_untouched")
+        or not m.get("v4_02_untouched")
+        or m.get("trial_only_survival_hp_multiplier") != 3
+        or m.get("biomes") != ["haunt","marsh","peaks","frost","volcano","garden","gale","cave"]):
+        raise SystemExit("HF_P02I_MONSTER_PAGES_MANIFEST_NOT_CERTIFIED")
     approved_all = catalogue(LIVE)
     # A narrow upgrade: P02-H's already-published /monster-lab/ is the ONLY
     # subtree we may replace. Every existing root, V4-02, media, and unrelated
