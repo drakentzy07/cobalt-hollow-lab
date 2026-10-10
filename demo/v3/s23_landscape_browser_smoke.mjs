@@ -54,15 +54,73 @@ try {
   });
   if(!result.preview.webgl||result.preview.width<200||result.preview.height<130)fail('Modular Warrior preview is not an actual visible mobile WebGL surface');
   await page.screenshot({path:'../demo-v3-06-s23-creator.png',fullPage:true}).catch(()=>{});
+  // Match ClaudeCraft's mobile-preflight contract: the asynchronous
+  // "enter world" click first arms a physical-device consent dialog; only
+  // that dialog's native onclick may resolve prepareWorldEntry().
+  // Diagnose every distinct stage instead of merely waiting 120 seconds.
+  const entryState=()=>page.evaluate(()=>{
+    const visible=(selector)=>{
+      const e=document.querySelector(selector);
+      return e instanceof HTMLElement&&getComputedStyle(e).display!=='none'&&
+        getComputedStyle(e).visibility!=='hidden'&&e.getBoundingClientRect().width>0;
+    };
+    const b=document.querySelector('#btn-start-offline');
+    const p=document.querySelector('#mobile-preflight-continue');
+    return {
+      selected:document.querySelector('#offline-select .mini-class.sel')?.getAttribute('data-class')??null,
+      name:document.querySelector('#char-name')?.value??null,
+      startDisabled:b?.disabled??null,startVisible:visible('#btn-start-offline'),
+      preflightVisible:visible('#mobile-preflight'),
+      preflightButtonVisible:visible('#mobile-preflight-continue'),
+      preflightButtonWired:typeof p?.onclick==='function',
+      mobileTouch:document.body.classList.contains('mobile-touch'),
+      devicePreflight:document.body.classList.contains('mobile-preflight-open'),
+      gameActive:document.body.classList.contains('game-active'),
+      gamePresent:!!window.__game,playerPresent:!!window.__game?.sim?.player,
+      loadingVisible:visible('#loading-screen'),loadingText:document.querySelector('#loading-screen')?.textContent?.slice(0,650)??null,
+      offlineError:document.querySelector('#offline-error')?.textContent??null,
+      fatalVisible:visible('#fatal-overlay'),fatalText:document.querySelector('#fatal-overlay')?.textContent?.slice(0,800)??null,
+      creatorVisible:visible('#offline-select'),
+      bodyClasses:document.body.className,
+    };
+  });
+  result.entryFlow={beforeClick:await entryState()};
+  if(result.entryFlow.beforeClick.selected!=='warrior' ||
+     result.entryFlow.beforeClick.startDisabled ||
+     result.entryFlow.beforeClick.name!=='S23Hunter'){
+    fail('Mobile creator has not accepted Warrior/name/start: '+JSON.stringify(result.entryFlow.beforeClick));
+  }
   await page.evaluate(()=>document.querySelector('#btn-start-offline')?.click());
-  await page.locator('#mobile-preflight-continue').waitFor({state:'visible',timeout:8000}).catch(()=>{});
-  await page.evaluate(()=>document.querySelector('#mobile-preflight-continue')?.click());
+  result.phase='mobile-entry-preflight';
+  await page.waitForFunction(()=>{
+    const e=document.querySelector('#mobile-preflight');
+    return !!window.__game?.sim?.player||
+      document.body.classList.contains('mobile-preflight-open')||
+      document.body.classList.contains('game-active')||
+      (e instanceof HTMLElement&&e.classList.contains('visible'));
+  },null,{timeout:30000}).catch(()=>{});
+  result.entryFlow.afterStartClick=await entryState();
+  if(result.entryFlow.afterStartClick.preflightVisible){
+    if(!result.entryFlow.afterStartClick.preflightButtonWired){
+      fail('Real mobile consent dialog rendered without its original click handler: '+JSON.stringify(result.entryFlow.afterStartClick));
+    }
+    await page.evaluate(()=>document.querySelector('#mobile-preflight-continue')?.click());
+    result.entryFlow.continuedRealPreflight=true;
+  }else if(!result.entryFlow.afterStartClick.gameActive &&
+           !result.entryFlow.afterStartClick.playerPresent){
+    fail('Original mobile entry never reached consent or world-loading stage: '+JSON.stringify(result.entryFlow.afterStartClick));
+  }
   result.phase='mobile-world-boot';
-  await page.waitForFunction(()=>Boolean(window.__game?.sim?.player),null,{timeout:120000});
+  try {
+    await page.waitForFunction(()=>Boolean(window.__game?.sim?.player),null,{timeout:100000});
+  }catch(e){
+    result.entryFlow.afterBootFailure=await entryState().catch(x=>({captureError:String(x)}));
+    fail('Mobile world failed after original entry/preflight: '+JSON.stringify(result.entryFlow)+': '+String(e));
+  }
   await page.waitForFunction(()=>{
     const e=document.querySelector('#loading-screen');if(!(e instanceof HTMLElement))return true;
     const s=getComputedStyle(e);return !e.classList.contains('visible')||s.display==='none'||s.visibility==='hidden'||s.pointerEvents==='none';
-  },null,{timeout:120000});
+  },null,{timeout:90000});
   await page.waitForTimeout(800);
   await page.evaluate(()=>{
     for(const b of document.querySelectorAll('button'))if(['Dismiss','Understood','Got it','Skip tutorial'].includes((b.textContent??'').trim()))b.click();
