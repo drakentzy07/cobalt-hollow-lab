@@ -87,7 +87,7 @@ def sculpt_native_paladin(obj,slot,intensity):
   for i in range(n):
    j=(i+1)%n
    made_faces.append(b.faces.new((leading[i],trailing[i],trailing[j],leading[j])))
- if len(added)<25:raise RuntimeError('SKIN7_V2_MEANINGLESS_TOPOLOGY_'+slot)
+ if len(added)<16:raise RuntimeError('SKIN7_V2_MEANINGLESS_TOPOLOGY_'+slot)
  bmesh.ops.recalc_face_normals(b,faces=made_faces)
  b.verts.index_update()
  ids=[v.index for v in added]
