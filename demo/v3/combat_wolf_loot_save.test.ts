@@ -34,7 +34,7 @@ describe('HIGHFLY V3-04 original ClaudeCraft combat, loot rights and Hunter pers
 
     let swung=0;
     for(;swung<40&&!wolf.dead;swung++){
-      meleeSwing(sim.ctx,actor,wolf,0,null);
+      meleeSwing(sim.ctx,actor,wolf,0,null,{});
     }
     expect(wolf.dead,'authentic native melee should kill the 1HP wolf').toBe(true);
     expect(wolf.lootable,'mob death should create a lootable corpse').toBe(true);
