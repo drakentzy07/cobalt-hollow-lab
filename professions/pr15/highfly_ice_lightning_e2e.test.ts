@@ -9,7 +9,7 @@ import {Sim} from '../src/sim/sim';
 import {STATIONS,MOBS} from '../src/sim/data';
 import {createMob} from '../src/sim/entity';
 import {recipeById} from '../src/sim/content/recipes';
-import {resolveCraft} from '../src/sim/professions/crafting';
+import {resolveCraft,requiredReagentCount} from '../src/sim/professions/crafting';
 import {highflyElementalFinisherReady,highflyWeaponElement,applyHighflyElementalFinisher} from '../src/sim/combat/highfly_elemental_basic';
 import {highflyEquippedGem} from '../src/sim/professions/highfly_gem_socket';
 const modes=[
@@ -34,6 +34,15 @@ for(const row of modes){
     meta.knownRecipes.add(row.recipe); // trainer acquisition fixture
     const recipe=recipeById(row.recipe);
     expect(recipe).toMatchObject({professionId:'jewelcrafting',resultItemId:row.gem,stationType:'forge',skillReq:row.skill,acquisition:['trainer']});
+    if(!recipe)throw Error('Recipe missing');
+    // Donor owns professional material discounts; calculate actual native
+    // cost BEFORE crafting rather than assuming nominal recipe quantities.
+    const actualCost=(itemId:string)=>{
+      const reagent=recipe.reagents.find(r=>r.itemId===itemId);
+      if(!reagent)throw Error('Recipe lacks native reagent '+itemId);
+      return requiredReagentCount(meta,reagent,meta.craftSkills,recipe.professionId).count;
+    };
+    const oreCost=actualCost(row.ore),essenceCost=actualCost(row.essence),fluxCost=actualCost('smithing_flux');
     sim.addItem(row.ore,row.oreCount,pid); // authentic item, prerequisite fixture
     sim.addItem(row.essence,row.essenceCount,pid);
     sim.addItem('smithing_flux',row.flux,pid);
@@ -51,11 +60,11 @@ for(const row of modes){
     const crafted=resolveCraft(sim.ctx,pid,row.recipe);
     expect(crafted.ok,JSON.stringify(crafted)).toBe(true);
     expect(sim.countItem(row.gem,pid)).toBe(1);
-    // Donor starts with some materials. Native crafting consumes EXACTLY
-    // the recipe costs; it must not erase pre-existing inventory stacks.
-    expect(sim.countItem(row.ore,pid)).toBe(startingOre-row.oreCount);
-    expect(sim.countItem(row.essence,pid)).toBe(startingEssence-row.essenceCount);
-    expect(sim.countItem('smithing_flux',pid)).toBe(startingFlux-row.flux);
+    // Native professional discounts (including self-signed, mastery, Jack)
+    // must be conserved, never replaced by a HIGHFLY inventory rule.
+    expect(sim.countItem(row.ore,pid)).toBe(startingOre-oreCost);
+    expect(sim.countItem(row.essence,pid)).toBe(startingEssence-essenceCost);
+    expect(sim.countItem('smithing_flux',pid)).toBe(startingFlux-fluxCost);
     expect(highflyWeaponElement(p)).toBe('base');
     expect(sim.inlayHighflyGem(row.gem,pid)).toMatchObject({ok:true,gem:row.mode,weaponId:'worn_sword'});
     expect(sim.countItem(row.gem,pid)).toBe(0);
