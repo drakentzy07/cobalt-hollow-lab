@@ -1,5 +1,5 @@
 # HIGHFLY — SKIN 7 — SUPREME ARMOR STUDIO
-**MASTER BLUEPRINT v1.0 | 2026-10-10 | Status: architecture candidate, NOT new functional forge**
+**MASTER BLUEPRINT v1.1 | 2026-10-10 | BLOCK 1: VERIFIED ENGINEERING BASELINE — NO NEW SKIN YET**
 
 ## A. Product: the true artisan workshop
 ONE authentic original ClaudeCraft/HIGHFLY male/female Hunter (`Rig_Medium`, exactly 23 native bones), visible on a Three.js stage. The user describes/drops a reference and ChatGPT authors the armor professionally in Blender. The user **tries → reviews → edits → ACCEPTS into isolated catalog OR REJECTS candidate**. An accepted skin is NOT automatically merged into HIGHFLY gameplay. Avoid pretending raw RGB extraction is a generative 3D AI.
@@ -22,7 +22,7 @@ ONE authentic original ClaudeCraft/HIGHFLY male/female Hunter (`Rig_Medium`, exa
 ### BLOCK 1 — AUDIT, BLUEPRINT AND FREEZE
 Read all existing pipelines and source licenses; inventory genuine skinned body slots/rest-frame, GLB glTF2 skins, bone names, dimensions, weight indices, maps and revisions; pin immutable base. Define new `SkinRecipe`, `PartSpec`, `ForgeJob`, `CandidateManifest`, `Approval` schemas, versioning and test fixtures. Document coordinate systems (Blender/glTF/Three/Unity) and asset pipeline. Declare acceptance criteria for one real pilot.
 **Exit:** approved architecture, tests, source manifest, exact pilot specs and no changes to published game or studio.
-**Current state:** this document opens Block 1; full inventory/test fixture evidence still required before freeze.
+**Current state:** completed native GLB static inventory and verified contract tests on the isolated branch. Part-by-part pilot spec: `skin7-crimson-tech-oni-pilot.md`. This Step 1 is an engineering freeze, NOT acceptance of future art. All outputs from the next blocks remain unbuilt.
 
 ### BLOCK 2 — COMPLETE ARTISAN FORGE CORE (one real deliverable, not patches)
 Single end-to-end candidate creation:
@@ -68,4 +68,16 @@ Single end-to-end candidate creation:
 ## G. Decision
 **Exactly three product steps.** Internal commits/tests are allowed but NO mini-public releases for each correction. Whole deliverables are audited/frozen and users see one coherent studio, with rollback to GREEN V20.1.
 
-**Architecture status:** REVIEW OPEN; Phase 2/3 are scheduled work, not yet claimed done. Existing V20.1 Pages remains the latest published.
+## H. BLOCK 1 ENGINEERING PROOF — 2026-10-10
+- CI: [SKIN7 TRUE NATIVE FREEZE #38054400389](https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38054400389) completed SUCCESS, includes source-diff guard, real pinned V20 GREEN artifact checks, pure schema contracts, exact 23-native-joint audits.
+- Provenance base: frozen V20 GREEN commit `93ed92935147ec2de07b4942a78aaf3ea06ca99d`. Source changes restricted to `character-truth/skin7-*`, this document, and isolated `.github/workflows/skin7-step1-freeze.yml`; NO legacy code modified.
+- Artifact `HIGHFLY-SKIN7-BLOCK1-TRUE_NATIVE_AUDIT-AND-CONTRACTS` from RUN (JSON stores SHA-256 for each real file). Verified static real-GLB inventory: **92** Nightfall skinned meshes, **32** newly authored V19 skinned ornaments, **124** combined; separate Kage-Oni rigid helmet has **0 skinned meshes by design**. All armor files contain original joint names and skin attributes; no original body parts packaged.
+- New schemas `skin7-contracts.mjs`: `SkinRecipe`, `PartSpec`, `ForgeJob`, `CandidateManifest` and explicit `ART_REVIEW` decisions, with local tests `skin7-contracts.test.mjs`. Revision and publication decisions may not auto-deploy gameplay.
+- Production target spec: `skin7-crimson-tech-oni-pilot.md` — original reference-inspired two-gender samurai, new sculptural shells and asymmetric silhouette; user verdict independent from CI.
+- **Crucial caveat:** original 23-bone animation runtime mapping was previously exercised by V19/V20 browser tests; new static GLB audit checks original joint names and weights but does not substitute for Blender deformation or Unity Editor QA. None of these checks certify appearance, clipping or phone performance.
+- Technical sources of record: [Blender glTF exporter](https://docs.blender.org/manual/en/latest/addons/import_export/scene_gltf2.html), [Three SkinnedMesh](https://threejs.org/docs/pages/SkinnedMesh.html), [Khronos glTF validator](https://github.com/KhronosGroup/glTF-Validator), [Unity glTFast editor importer](https://github.com/Unity-Technologies/com.unity.cloud.gltfast/blob/main/Packages/com.unity.cloud.gltfast/Documentation~/ImportEditor.md). glTFast uses a scripted importer for GLB; avoid conflicting default importers.
+
+## I. GO / NO-GO HANDOFF
+**GO to BLOCK 2 implementation** only on this isolated baseline; never modify old V17–V20, public gameplay or original rig. Required Block 2 output is actual new topological Blender mesh shell family with at least one comprehensible full M/F armor and functional user try-on and explicit accept/reject. Do NOT interpret this step's GREEN as permission for public release or as completion of the new forge.
+
+**Architecture status:** STEP 1 ENGINEERING BASELINE VERIFIED; BLOCK 2 IMPLEMENTATION NOT YET DONE; BLOCK 3 UNITY / ANDROID / VISUAL QA NOT YET DONE. V20.1 remains the newest published Skin Studio.
