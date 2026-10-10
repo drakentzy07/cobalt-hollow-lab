@@ -48,7 +48,8 @@ function namedBones(actor){
  if(!witness?.isSkinnedMesh||!witness.skeleton)throw Error('No existe el cuerpo modular M_Torso con skin nativo');
  const list=witness.skeleton.bones,m=new Map();
  for(const joint of list){if(m.has(joint.name))throw Error('Skin contiene hueso repetido: '+joint.name);m.set(joint.name,joint)}
- if(list.length!==23||m.size!==23||expectedBones.some(n=>!m.has(n)))
+ const canonical=name=>name.toLowerCase().replace(/[^a-z0-9]/g,'');
+ if(list.length!==23||m.size!==23||expectedBones.some(n=>![...m.keys()].some(k=>canonical(k)===canonical(n))))
   throw Error('Rig_Medium del torso no tiene los 23 huesos originales. Recibidos '+list.length+': '+list.map(x=>x.name).join(','));
  return m;
 }
