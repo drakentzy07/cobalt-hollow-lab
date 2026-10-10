@@ -60,7 +60,8 @@ jobs:
           git config user.name "highfly-skin7-lab-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch --orphan highfly-skin7-live-preview-site
-          git rm -rf . >/dev/null
+          # Git 2.55 orphan switch already clears tracked files; older Git may not
+          git rm -rf . >/dev/null 2>&1 || true
           cp -a /tmp/highfly-skin7-approved-site/. .
           mkdir -p proof
           cp -a /tmp/highfly-skin7-approved-proof/. proof/
