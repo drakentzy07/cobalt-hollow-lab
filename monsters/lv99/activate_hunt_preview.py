@@ -26,11 +26,11 @@ src = src.replace(anchor_signature,"""  world?: WorldContent,
 ): Promise<void> {""",1)
 offline_start = src.find('async function startOffline(')
 sim_at = src.find('  const sim = loadSpan(', offline_start)
-sim_close = src.find('\\n  );', sim_at)
+sim_close = src.find('\n  );', sim_at)
 if offline_start < 0 or sim_at < 0 or sim_at - offline_start > 8000 or sim_close < 0 or sim_close - sim_at > 4200 or 'new Sim(' not in src[sim_at:sim_close]:
     raise SystemExit('HF_HUNT_P02C_OFFLINE_SIM_BUILD_ANCHOR_MISSING')
 # Inject only after the exact native Sim creation expression, no skin/edit/Training duplication.
-insert_at = sim_close + len('\\n  );')
+insert_at = sim_close + len('\n  );')
 src = src[:insert_at] + """
   // P02C opt-in offline HuntPilot ONLY: set native class-level for balanced
   // preview combat, without a simulated Training session or additional stats.
