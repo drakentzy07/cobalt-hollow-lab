@@ -1,0 +1,73 @@
+name: HIGHFLY SKIN7 - ORIGINAL PALADIN ARMOR TRUTH AND NATIVE SLOTS (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-skin7-paladin-native-reforge]
+    paths:
+      - 'character-truth/skin7-paladin-*'
+      - 'character-truth/skin7-native-wardrobe*'
+      - '.github/workflows/skin7-paladin-truth.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  native-paladin-truth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Preserve EVERY older studio and the public game
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=736f4bd7c8462abd8bfeb1405cfe70f0cd6f9af2
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | tee /tmp/skin7-native-changed.txt
+          while IFS= read -r file; do
+            case "$file" in
+              character-truth/skin7-paladin-*|character-truth/skin7-native-wardrobe*|.github/workflows/skin7-paladin-truth.yml) ;;
+              *) echo "NO-GO: unexpected modification of older studio/game: $file"; exit 42 ;;
+            esac
+          done </tmp/skin7-native-changed.txt
+          echo HIGHFLY_SKIN7_ALL_OLD_CODE_ZERO_MUTATIONS_GREEN=1
+      - name: Test seven real original armor slots, non-overlay replacement and repeatable recipe
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check character-truth/skin7-native-wardrobe.mjs
+          node character-truth/skin7-native-wardrobe.test.mjs
+          python3 -m py_compile character-truth/skin7-paladin-source-audit.py
+      - name: Fetch pinned authentic 0.44.0 ClaudeCraft modular source GLB SHA-verified
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/skin7-paladin-scratch
+          URL="https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb"
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 180 "$URL" -o character-truth/skin7-paladin-scratch/warrior_modular.glb
+          test $(stat -c%s character-truth/skin7-paladin-scratch/warrior_modular.glb) -gt 3000000
+          # Strict Git Blob SHA from upstream source: do not trust a similarly named GLB.
+          test "$(git hash-object character-truth/skin7-paladin-scratch/warrior_modular.glb)" = "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2"
+          echo HIGHFLY_CLAUDECRAFT_V0440_IMMUTABLE_ORIGINAL_GLB_GREEN=1
+      - name: Prove all ELEVEN Paladin source meshes and seven true equip slots, both genders, native 23 bones
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 character-truth/skin7-paladin-source-audit.py \
+            character-truth/skin7-paladin-scratch/warrior_modular.glb \
+            character-truth/skin7-paladin-scratch/paladin-source-truth.json
+          python3 - <<'PY'
+          import json
+          r=json.load(open('character-truth/skin7-paladin-scratch/paladin-source-truth.json'))
+          assert r['paladinPartCount']==11 and len(r['originalPaladinSlotParts'])==7
+          assert r['jointCount']==23 and all(n['exists'] for n in r['maleBodyNodes']+r['femaleBodyNodes'])
+          assert all(p['skin'] is not None and p['primitives'] for arr in r['originalPaladinSlotParts'].values() for p in arr)
+          print('HIGHFLY_SKIN7_REAL_NATIVE_PALADIN_WARDROBE_SOURCE_DATA_GREEN=1')
+          PY
+      - name: Store proof AND NOT the binary original; no Pages deploy or gameplay branch mutation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN7-CLAUDECRAFT-PALADIN-11-PARTS-7-SLOTS-REAL-SOURCE-INVENTORY
+          path: character-truth/skin7-paladin-scratch/paladin-source-truth.json
+          if-no-files-found: warn
+          retention-days: 30
