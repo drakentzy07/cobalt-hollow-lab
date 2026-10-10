@@ -14,7 +14,7 @@ cockpit.querySelector('h2').after(button);
 const panel=document.createElement('section');panel.className='studio';panel.id='skin7Panel';
 panel.style.cssText='border:2px solid #d5a765;background:linear-gradient(120deg,#302131,#17141c);margin:8px 0';
 panel.innerHTML=`<h2>⚒ HIGHFLY SKIN 7 · FORJA ARTESANA</h2>
- <p style="font-size:12px">Este piloto viste 68 piezas 3D NUEVAS modeladas en Blender y pesadas al Rig_Medium de ClaudeCraft. Tu texto selecciona una de dos familias de silueta realmente distintas. Aún NO fabrica cualquier imagen automáticamente.</p>
+ <p style="font-size:12px">Este piloto viste 70 piezas 3D NUEVAS modeladas en Blender y pesadas al Rig_Medium de ClaudeCraft. Tu texto selecciona una de dos familias de silueta realmente distintas. Aún NO fabrica cualquier imagen automáticamente.</p>
  <label for="skin7Prompt">Describí la armadura que querés probar</label>
  <textarea id="skin7Prompt" rows="3" maxlength="1800" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid #bd8c68;border-radius:7px;background:#241c2d;color:#fff">Armadura samurái demoníaca carmesí con hombrera izquierda enorme asimétrica, pecho heroico, faldones segmentados y guardia de espalda. Inspirada en un kabuto Oni.</textarea>
  <div class="buttonrow"><button id="skin7Design" class="primary">⚒ Forjar forma real</button><button id="skin7Off">Retirar candidato</button></div>
@@ -76,7 +76,7 @@ async function nativeNightfall(){
 }
 function inspectGltf(g){
  const found=[];g.scene.traverse(o=>{if(o.isSkinnedMesh&&o.name.startsWith('HF7_'))found.push(o)});
- if(found.length!==68)throw Error('SKIN7_EXPECTED_54_BRAND_NEW_MESHES_'+found.length);
+ if(found.length!==70)throw Error('SKIN7_EXPECTED_54_BRAND_NEW_MESHES_'+found.length);
  const seen=new Set();let verts=0,tri=0;const verticesPerGender={M:0,F:0};
  for(const mesh of found){
   if(!/^HF7_[MF]_(HEAD|CHEST|SHOULDER|WAIST|BACK|ARM|LEG)_/.test(mesh.name)||seen.has(mesh.name))
