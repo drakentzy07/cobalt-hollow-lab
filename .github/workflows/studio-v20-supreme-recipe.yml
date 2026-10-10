@@ -1,0 +1,76 @@
+name: HIGHFLY V20.1 SUPREME RECIPE - REAL RIGGED GLB (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-skin-studio-v20-supreme-recipe]
+    paths:
+      - 'character-truth/integration-modules/supreme-recipe-v20.mjs'
+      - 'character-truth/integration-modules/supreme-v20-ui.mjs'
+      - 'character-truth/integration-modules/supreme-v20.test.mjs'
+      - 'character-truth/integration-modules/supreme-v20-browser-gate.cjs'
+      - 'character-truth/integration-modules/package-supreme-v20.mjs'
+      - '.github/workflows/studio-v20-supreme-recipe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  v20-authentic-supreme-recipe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 26
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download EXACT V19 Blender forged and browser GREEN candidate
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-V19-LEGENDARY-BLENDER-ORIGINAL-RIG-STUDIO-NO-DEPLOY
+          run-id: 37984648737
+          github-token: ${{ github.token }}
+          path: character-truth/v19-green-package
+      - name: Verify frozen original history and run deterministic security and GLB tests
+        run: |
+          set -euo pipefail
+          test -s character-truth/v19-green-package/index.html
+          test -s character-truth/v19-green-package/assets/HIGHFLY-V19-LEGENDARY-COMBINED.glb
+          node --check character-truth/integration-modules/supreme-recipe-v20.mjs
+          node --check character-truth/integration-modules/supreme-v20-ui.mjs
+          node --check character-truth/integration-modules/package-supreme-v20.mjs
+          node character-truth/integration-modules/supreme-v20.test.mjs
+          test ! -d character-truth/inputs
+          echo HIGHFLY_V20_1_ORIGINAL_GAME_PLAYER_AND_OLDER_STUDIOS_UNTOUCHED_GREEN=1
+      - name: Package isolated V20.1 on EXACT frozen V19
+        run: |
+          set -euo pipefail
+          node character-truth/integration-modules/package-supreme-v20.mjs
+          test -s highfly-supreme-v20-preview/supreme-v20-ui.mjs
+          test -s highfly-supreme-v20-preview/assets/HIGHFLY-V19-LEGENDARY-COMBINED.glb
+          test ! -f highfly-supreme-v20-preview/assets/warrior_modular.glb
+      - name: Install Playwright Chromium and Android-landscape simulation
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Test real ClaudeCraft 23-joint actor + styled imported Nightfall V19 GLB
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4200 --bind 127.0.0.1 --directory highfly-supreme-v20-preview >/tmp/hf-v20-server.log 2>&1 &
+          sleep 2
+          node character-truth/integration-modules/supreme-v20-browser-gate.cjs
+          grep -F '"green": true' character-truth/v20-evidence/browser-proof.json
+          echo HIGHFLY_V20_IMAGE_TEXT_REAL_RIGGED_GLB_S23_EMULATION_GREEN=1
+      - name: Store isolated browsable V20 candidate (never public game)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-V20-SUPREME-RECIPE-TRUE-RIGGED-GLB-NO-DEPLOY
+          path: highfly-supreme-v20-preview/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Save original skinned Hunter browser QA and image/color contract
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-V20-SUPREME-RECIPE-BROWSER-EVIDENCE
+          path: character-truth/v20-evidence/
+          retention-days: 30
+          if-no-files-found: warn
