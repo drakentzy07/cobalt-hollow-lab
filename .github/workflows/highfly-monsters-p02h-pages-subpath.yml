@@ -128,6 +128,10 @@ jobs:
           test -s composed-pages/index.html
           test -s composed-pages/v4-02/index.html
           test -s composed-pages/monster-lab/index.html
+          test -s composed-pages/monster-lab/game.html
+          test -s composed-pages/monster-lab/monster-media-sw.js
+          grep -q "serviceWorker.ready" composed-pages/monster-lab/index.html
+          grep -q "/cobalt-hollow-lab/media/" composed-pages/monster-lab/monster-media-sw.js
           test -s composed-pages/monster-lab/hunts.html
           test -s monsters-pages-composition-report.json
           test -f composed-pages/.nojekyll
