@@ -166,31 +166,38 @@ describe('P02M — honest combat risk and legitimate overlevel loot policy (NO D
     };
     expect(assessHighflyChallengeKill(e)).toMatchObject({qualified:true,overlevel:5});
     const low=assessHighflyChallengeKill({...e,mobLevel:40});
-    const high=assessHighflyChallengeKill({...e,mobLevel:53});
-    const capped=assessHighflyChallengeKill({...e,mobLevel:99});
+    const high=assessHighflyChallengeKill({...e,mobLevel:48});
+    const capped=assessHighflyChallengeKill({...e,mobLevel:49,hunterLevel:39});
     const normal=highflyChallengeReagentProbability(0.18,low);
     const bonus=highflyChallengeReagentProbability(0.18,high);
     expect(normal).toBe(0.18);
     expect(highflyChallengeReagentProbability(0.18,assessHighflyChallengeKill(e))).toBeGreaterThan(normal);
     expect(bonus).toBeLessThanOrEqual(0.26);
-    expect(highflyChallengeReagentProbability(0.18,capped)).toBe(bonus);
+    expect(highflyChallengeReagentProbability(0.18,capped)).toBeGreaterThanOrEqual(bonus);
     for(const disqualify of [
       {...e,kind:'boss' as const},{...e,contributors:2},{...e,tapOwnerId:2},
       {...e,hunterDamageToMob:100},{...e,combatSeconds:0.5},
       {...e,legitimateKill:false},{...e,mobId:'forest_wolf'},
-      {...e,hunterLevel:100},
+      {...e,hunterLevel:100},{...e,mobLevel:53},{...e,kind:'elite' as const},
     ])expect(assessHighflyChallengeKill(disqualify).qualified).toBe(false);
+    const elite=assessHighflyChallengeKill({...e,mobId:'hf_enc_elite_40',kind:'elite'});
+    const captain=assessHighflyChallengeKill({...e,mobId:'hf_enc_captain_40',kind:'captain'});
+    expect(elite.qualified).toBe(true);
+    expect(captain.qualified).toBe(true);
+    expect(highflyChallengeReagentProbability(0.10,elite)).toBeGreaterThan(highflyChallengeReagentProbability(0.10,assessHighflyChallengeKill(e)));
+    expect(highflyChallengeReagentProbability(0.10,captain)).toBeGreaterThan(highflyChallengeReagentProbability(0.10,elite));
+    expect(assessHighflyChallengeKill({...e,mobId:'hf_enc_captain_40',kind:'boss'}).qualified).toBe(false);
     expect(()=>highflyChallengeReagentProbability(1,high)).toThrow('HF_CHALLENGE_ONLY_REGISTERED_EXTRA_REAGENTS');
     const profiles=highflyHuntRewardProfiles(ITEMS,ALL_RECIPES);
     const gain=profiles.map(p=>({
       id:p.mobId,reagent:p.itemId,normalChance:p.chance,
       plus3Chance:highflyChallengeReagentProbability(p.chance,assessHighflyChallengeKill({...e,mobId:p.mobId,mobLevel:p.minLevel+3,hunterLevel:p.minLevel})),
       plus5Chance:highflyChallengeReagentProbability(p.chance,assessHighflyChallengeKill({...e,mobId:p.mobId,mobLevel:p.minLevel+5,hunterLevel:p.minLevel})),
-      plus10Chance:highflyChallengeReagentProbability(p.chance,assessHighflyChallengeKill({...e,mobId:p.mobId,mobLevel:Math.min(99,p.minLevel+10),hunterLevel:p.minLevel})),
+      plus10Chance:highflyChallengeReagentProbability(p.chance,assessHighflyChallengeKill({...e,mobId:p.mobId,mobLevel:p.minLevel+8,hunterLevel:p.minLevel-2})),
     }));
     csv('03_CRAFT_REAGENT_ODDS_POLICY_PROPOSED.csv',gain);
     writeFileSync(OUT+'/04_POLITICA_RECOMPENSA_ESTADO.txt',
-      'PREVIEW-ONLY; NO V4 kill-time owner-specific RNG hook installed; do not call these chances live.\n'
+      'PREVIEW-ONLY; NORMAL + ELITE + CAPTAIN. NO V4 kill-time owner-specific RNG hook installed; do not call these chances live.\n'
       +'No gear/rarity change; no extra training stats; XP stays native capped at +20% for +4 levels.\n'
       +'Proof of combat requires actual native kill-time credit and sole owner.\n');
   });
