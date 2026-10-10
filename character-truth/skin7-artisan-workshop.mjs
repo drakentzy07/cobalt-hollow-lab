@@ -105,7 +105,7 @@ function apply(input,{push=true,silent=false}={}){
   cursor=history.length-1;
  }
  window.__HF_V19_SCENE__.render();
- if(!silent)editMsg('Forma aplicada a '+m+' mallas Blender originales (35 visibles por Hunter).\nEl GLB exportado conservará los vértices editados, materiales y piezas ocultas.');
+ if(!silent)editMsg('Forma aplicada a '+m+' mallas de renderizado glTF procedentes de 68 objetos nuevos de Blender (35 visibles por Hunter).\nEl GLB exportado conservará los vértices editados, materiales y piezas ocultas.');
  return {design:structuredClone(design),meshes:m,realVerticesChanged:true,
   nativeRigModified:false,gamePublicModified:false};
 }
@@ -222,9 +222,9 @@ async function referenceChanged(){
  const blob=URL.createObjectURL(f);
  try{
   const img=new Image();img.src=blob;await img.decode();
-  const can=document.createElement('canvas');can.width=70;can.height=70;
-  const ctx=can.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,70,70);
-  const data=ctx.getImageData(0,0,70,70).data;
+  const can=document.createElement('canvas');can.width=64;can.height=64;
+  const ctx=can.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,64,64);
+  const data=ctx.getImageData(0,0,64,64).data;
   let sum=[0,0,0],weights=0;
   for(let i=0;i<data.length;i+=4){
    if(data[i+3]<128)continue;
