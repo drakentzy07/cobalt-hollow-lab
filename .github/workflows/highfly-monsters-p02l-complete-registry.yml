@@ -8,7 +8,7 @@ on:
       - monsters/audit/highfly_complete_registry_audit.test.ts
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: highfly-monsters-p02l-native-audit-no-deploy
   cancel-in-progress: false
@@ -95,9 +95,31 @@ jobs:
           test -s /tmp/hf-monstruos6-full-audit/06_MAPAS_NATIVOS_Y_HIGHFLY.csv
           test -s /tmp/hf-monstruos6-full-audit/07_MAZMORRAS.csv
           test -s /tmp/hf-monstruos6-full-audit/08_PORTALES_Y_ACCESOS.csv
+          test -s /tmp/hf-monstruos6-full-audit/10_DELVES_ACCESOS_GENERACION.csv
+          test -s /tmp/hf-monstruos6-full-audit/11_JEFES_MUNDIALES_HORARIOS.csv
           test -s /tmp/hf-monstruos6-full-audit/09_DATOS_COMPLETOS_BRUTOS.json
           test -s /tmp/hf-monstruos6-full-audit/00_RESUMEN_AUDITORIA.json
           echo 'HF_MONSTRUOS6_P02L_ALL_REAL_REGISTRIES_EXPORTED_NO_DEPLOY_GREEN=1'
+      - name: Preserve GREEN audit tables in separate MONSTRUOS 6 GitHub branch only
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd highfly
+          BRANCH='highfly-monsters-p02k-s23-realdevice-gate'
+          test "$GITHUB_REF_NAME" = "$BRANCH"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git fetch --no-tags origin "$BRANCH"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+          mkdir -p docs/HIGHFLY_MONSTRUOS6_FULL_LV1_99_AUDIT
+          cp /tmp/hf-monstruos6-full-audit/* docs/HIGHFLY_MONSTRUOS6_FULL_LV1_99_AUDIT/
+          git config user.name 'highfly-monsters-audit-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add docs/HIGHFLY_MONSTRUOS6_FULL_LV1_99_AUDIT
+          git diff --cached --check
+          git commit -m 'docs(monsters): freeze audited actual LV1-99 native+HIGHFLY full inventory (P02L)'
+          git push origin HEAD:refs/heads/"$BRANCH"
+          echo 'HF_P02L_AUDIT_COMMITTED_ONLY_TO_ISOLATED_BRANCH=1'
       - name: Upload all actual tables even when runtime fails
         if: always()
         uses: actions/upload-artifact@v4
