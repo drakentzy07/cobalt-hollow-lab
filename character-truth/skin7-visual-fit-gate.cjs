@@ -11,6 +11,7 @@ const out='character-truth/skin7-visual-truth.json';
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:4277/',{waitUntil:'domcontentloaded',timeout:120000});
   await page.waitForFunction(()=>window.__HF_SKIN7_ARTISAN__?.state().ready&&window.__HF_SKIN_STUDIO_V5__?.state().ready,null,{timeout:120000});
+  await page.locator('#skin7Open').click();
   const measurements=[];
   for(const sex of ['male','female']){
    await page.locator('#skin7Gender').selectOption(sex);
