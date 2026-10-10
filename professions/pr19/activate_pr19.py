@@ -29,6 +29,10 @@ function ensureHighflyCraftingTouchLayout(): void {
   if (!root || getComputedStyle(root).display === 'none') return;
   const tabs = root.querySelector<HTMLElement>('.crafting-tabs');
   if (!tabs) return;
+  // PR18 / donor may set inline !important, which outranks CSS even if
+  // later stylesheet also says !important. This row is presentation-only;
+  // its original event handlers stay attached for select delegation.
+  tabs.style.setProperty('display', 'none', 'important');
   const originals = Array.from(tabs.querySelectorAll<HTMLButtonElement>('button.crafting-tab[data-craft]'));
   if (!originals.length) return;
   let bar = root.querySelector<HTMLElement>('#hf-pr19-craft-chooser');
