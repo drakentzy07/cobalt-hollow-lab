@@ -92,7 +92,9 @@ describe('HIGHFLY V4-02 / PR14: real Jewelcrafting gem and native weapon inlay',
     sim.addItem(GEM,1,pid); // availability fixture: negative loose-gem authorization test
     expect(highflyElementalFinisherReady(e)).toBe(false);
     expect(sim.inlayHighflyGem('fake_gem',pid)).toMatchObject({ok:false,reason:'invalid_gem'});
-    expect(sim.inlayHighflyGem(GEM,pid)).toMatchObject({ok:false,reason:'need_weapon'});
+    // Donor gives a fresh Warrior a genuine starter weapon even with autoEquip:false.
+    // The loose gem cannot activate on its own or bypass the physical forge gate.
+    expect(sim.inlayHighflyGem(GEM,pid)).toMatchObject({ok:false,reason:'forge_required'});
     expect(sim.countItem(GEM,pid)).toBe(1);
     sim.addItem('worn_sword',1,pid);
     sim.equipItem('worn_sword',pid);
