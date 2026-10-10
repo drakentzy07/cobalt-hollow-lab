@@ -1,0 +1,2 @@
+﻿"id","ax","az","bx","bz","aZone","bZone","radius","condition","enterText","leaveText"
+"duskfall_passage","10","770","-122","959","Thornpeak Heights","The Veiled Hollow","2","Portal bidireccional por proximidad según src/sim/portals.ts","A veil of dusk parts before you, and the Hollow opens ahead.","The veil closes behind you, and the mountain air bites again."

@@ -1,0 +1,3 @@
+﻿"id","name","minLevel","suggestedPlayers","maxPlayers","doorX","doorZ","bossCandidates","modules","moduleCount","objective","note"
+"collapsed_reliquary","The Collapsed Reliquary","7","2","2","-136","112","deacon_varric","reliquary_sunken_ossuary; reliquary_bell_niche; reliquary_saintless_hall","[3,3]","kill_boss","Bosses and modules are generation candidates, not simultaneous guaranteed spawns"
+"drowned_litany","The Drowned Litany","12","2","2","-95","505","sister_nhalia_drowned_canticle","litany_sluice; litany_ledger; litany_ring; litany_baptistry; litany_choir_loft; litany_causeway","[3,3]","kill_boss","Bosses and modules are generation candidates, not simultaneous guaranteed spawns"
