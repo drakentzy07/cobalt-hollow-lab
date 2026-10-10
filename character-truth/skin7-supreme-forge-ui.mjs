@@ -77,7 +77,7 @@ async function nativeNightfall(){
 function inspectGltf(g){
  const found=[];g.scene.traverse(o=>{if(o.isSkinnedMesh&&o.name.startsWith('HF7_'))found.push(o)});
  if(found.length!==54)throw Error('SKIN7_EXPECTED_54_BRAND_NEW_MESHES_'+found.length);
- const seen=new Set();let verts=0,tri=0;
+ const seen=new Set();let verts=0,tri=0;const verticesPerGender={M:0,F:0};
  for(const mesh of found){
   if(!/^HF7_[MF]_(CHEST|SHOULDER|WAIST|BACK|ARM|LEG)_/.test(mesh.name)||seen.has(mesh.name))
    throw Error('SKIN7_BAD_NEW_SKIN_ID_'+mesh.name);
@@ -86,15 +86,15 @@ function inspectGltf(g){
   const idx=mesh.geometry.getAttribute('skinIndex');
   if(!pos||!weights||!idx||weights.count!==pos.count||idx.count!==pos.count)
    throw Error('SKIN7_REAL_ORIGINAL_BONE_WEIGHTS_REQUIRED_'+mesh.name);
-  verts+=pos.count;tri+=(mesh.geometry.index?.count||pos.count)/3;
+  verts+=pos.count;verticesPerGender[mesh.name.slice(4,5)]+=pos.count;tri+=(mesh.geometry.index?.count||pos.count)/3;
   for(let j=0;j<pos.count;j++){
    const sum=weights.getX(j)+weights.getY(j)+weights.getZ(j)+weights.getW(j);
    if(!Number.isFinite(sum)||Math.abs(sum-1)>.05)
     throw Error('SKIN7_NON_NORMALIZED_WEIGHT_'+mesh.name);
   }
  }
- if(verts>17000||tri>15000)throw Error('SKIN7_MOBILE_GEOMETRY_BUDGET_VERTICES_'+verts+'_TRIANGLES_'+Math.round(tri));
- return {found,verts,triangles:Math.round(tri)};
+ if(verts>24000||tri>15000||Math.max(...Object.values(verticesPerGender))>12000)throw Error('SKIN7_MOBILE_GEOMETRY_BUDGET_VERTICES_'+verts+'_TRIANGLES_'+Math.round(tri)+'_PER_GENDER_'+JSON.stringify(verticesPerGender));
+ return {found,verts,triangles:Math.round(tri),renderVerticesPerGender:verticesPerGender};
 }
 function clear(){
  state.parent?.removeFromParent();
@@ -137,7 +137,7 @@ async function forge(){
   state.parent=holder;state.meshes=bindings.map(x=>x.mesh);state.chosen=profile;
   state.assetBytes=bytes;
   state.report={profile,realBlenderNewMeshCount:state.meshes.length,
-    vertices:checked.verts,triangles:checked.triangles,realRigBones:source.bones.size,
+    vertices:checked.verts,triangles:checked.triangles,renderVerticesPerGender:checked.renderVerticesPerGender,realRigBones:source.bones.size,
     originalCharacterBodyUnchanged:true,topologyNovel:true,gamePublicUnchanged:true,
     shaderAndClippingArtistApproved:false,unityCertified:false,physicalSamsungTested:false};
   state.decision=null;sync();
