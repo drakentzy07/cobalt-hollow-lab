@@ -1,0 +1,102 @@
+name: HIGHFLY MONSTRUOS 6 P02L — FULL LV1-99 MOB MAP HP ATTACK LOOT AUDIT (NO DEPLOY)
+on:
+  push:
+    branches:
+      - highfly-monsters-p02k-s23-realdevice-gate
+    paths:
+      - .github/workflows/highfly-monsters-p02l-complete-registry.yml
+      - monsters/audit/highfly_complete_registry_audit.test.ts
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-monsters-p02l-native-audit-no-deploy
+  cancel-in-progress: false
+jobs:
+  full_native_registry_audit:
+    name: Execute pinned ClaudeCraft registries plus HIGHFLY monsters 21-99
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout readonly HIGHFLY P02L audit module
+        uses: actions/checkout@v4
+        with:
+          path: highfly
+      - name: Checkout immutable ClaudeCraft source at v0.44.0
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /package.json
+            /pnpm-lock.yaml
+            /patches/
+            /.npmrc
+            /vite.config.ts
+            /tsconfig.json
+      - name: Checkout exact GREEN P02I Monster source modules, no live game edit
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: e6f59079fdc3f278ef041fbc8354ca837aee42ab
+          path: source
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /monsters/lv99/highfly_monster_content.ts
+            /monsters/lv99/highfly_hunt_scenarios.ts
+            /monsters/lv99/highfly_hunt_rewards.ts
+            /monsters/lv99/highfly_hunt_encounters.ts
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install exact frozen donor dependencies
+        working-directory: upstream
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Copy read-only P02I definitions for Vitest runtime import
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p upstream/src/highfly/monsters
+          cp source/monsters/lv99/highfly_monster_content.ts upstream/src/highfly/monsters/level99.ts
+          cp source/monsters/lv99/highfly_hunt_scenarios.ts upstream/src/highfly/monsters/hunt_scenarios.ts
+          cp source/monsters/lv99/highfly_hunt_rewards.ts upstream/src/highfly/monsters/hunt_rewards.ts
+          cp source/monsters/lv99/highfly_hunt_encounters.ts upstream/src/highfly/monsters/hunt_encounters.ts
+          cp highfly/monsters/audit/highfly_complete_registry_audit.test.ts upstream/tests_highfly_monsters_p02l.test.ts
+          test -s upstream/src/sim/data.ts
+          test -s upstream/src/sim/entity.ts
+          test -s upstream/tests_highfly_monsters_p02l.test.ts
+      - name: Export ACTUAL runtime registries for ALL native monsters and HF21-99
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests_highfly_monsters_p02l.test.ts --reporter=verbose
+          test -s /tmp/hf-monstruos6-full-audit/01_MONSTRUOS_TODOS.csv
+          test -s /tmp/hf-monstruos6-full-audit/02_APARICIONES_CAMPOS_MAZMORRAS_LAB.csv
+          test -s /tmp/hf-monstruos6-full-audit/03_LOOT_TODAS_LAS_FILAS.csv
+          test -s /tmp/hf-monstruos6-full-audit/04_ATAQUES_Y_MECANICAS.csv
+          test -s /tmp/hf-monstruos6-full-audit/05_RECOLECCION_CADAVER.csv
+          test -s /tmp/hf-monstruos6-full-audit/06_MAPAS_NATIVOS_Y_HIGHFLY.csv
+          test -s /tmp/hf-monstruos6-full-audit/07_MAZMORRAS.csv
+          test -s /tmp/hf-monstruos6-full-audit/08_PORTALES_Y_ACCESOS.csv
+          test -s /tmp/hf-monstruos6-full-audit/09_DATOS_COMPLETOS_BRUTOS.json
+          test -s /tmp/hf-monstruos6-full-audit/00_RESUMEN_AUDITORIA.json
+          echo 'HF_MONSTRUOS6_P02L_ALL_REAL_REGISTRIES_EXPORTED_NO_DEPLOY_GREEN=1'
+      - name: Upload all actual tables even when runtime fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-MONSTRUOS6-P02L-LV1-99-ALL-MOBS-MAPS-LOOT-STATS
+          path: /tmp/hf-monstruos6-full-audit/
+          if-no-files-found: warn
+          retention-days: 14
