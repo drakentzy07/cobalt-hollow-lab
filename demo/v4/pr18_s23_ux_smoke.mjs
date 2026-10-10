@@ -246,8 +246,12 @@ try {
     .find(x=>x.textContent?.trim()==='Cerrar')?.click());
   await page.locator('#hf-gem-guide').waitFor({state:'hidden',timeout:10000});
   await page.evaluate(()=>document.querySelector('#mobile-menu-anchor')?.click());
-  await page.locator('#mobile-more').waitFor({state:'visible',timeout:10000});
-  await page.evaluate(()=>document.querySelector('#mobile-more')?.click());
+  // Native More may open immediately from this button (S23 GOLDEN), or via
+  // the quick-actions strip. Never wait for a strip that is intentionally hidden.
+  await page.evaluate(()=>{
+    if(!document.body.classList.contains('mobile-more-open'))
+      document.querySelector('#mobile-more')?.click();
+  });
   await page.waitForFunction(()=>document.body.classList.contains('mobile-more-open'),null,{timeout:10000});
   await page.locator('#hf-v4-gem-menu').click({timeout:12000});
   await page.locator('#hf-gem-guide').waitFor({state:'visible',timeout:12000});
