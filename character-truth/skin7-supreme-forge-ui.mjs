@@ -93,7 +93,7 @@ function inspectGltf(g){
     throw Error('SKIN7_NON_NORMALIZED_WEIGHT_'+mesh.name);
   }
  }
- if(verts>17000||tri>15000)throw Error('SKIN7_MOBILE_GEOMETRY_BUDGET');
+ if(verts>17000||tri>15000)throw Error('SKIN7_MOBILE_GEOMETRY_BUDGET_VERTICES_'+verts+'_TRIANGLES_'+Math.round(tri));
  return {found,verts,triangles:Math.round(tri)};
 }
 function clear(){
