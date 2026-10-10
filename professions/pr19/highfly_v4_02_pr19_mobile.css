@@ -1,0 +1,125 @@
+/* HIGHFLY PR19 — ONE landscape touch presentation, built only over native
+ * ClaudeCraft windows and live records. No component/value replacement.
+ * Leave PC, game controls and save-state logic unchanged. */
+@media (orientation:landscape) and (max-height:470px) {
+  body.mobile-touch #crafting-window {
+    box-sizing:border-box!important;
+    overflow:hidden!important;
+  }
+  /* The native tab strip keeps event handlers as an invisible authority.
+     Its public touch surface is this one accessible <select>. */
+  body.mobile-touch #crafting-window .crafting-tabs {
+    display:none!important;
+  }
+  body.mobile-touch #crafting-window #hf-pr19-craft-chooser {
+    box-sizing:border-box!important; display:grid!important;
+    grid-template-columns:auto minmax(0,1fr) auto;
+    gap:8px!important;align-items:center!important;
+    margin:4px 0 6px!important;padding:7px 9px!important;
+    min-height:56px!important;flex:none!important;
+    border:1px solid rgba(198,169,102,.58)!important;
+    border-radius:9px!important;
+    background:linear-gradient(100deg,rgba(28,23,44,.96),rgba(12,18,31,.98))!important;
+  }
+  body.mobile-touch #hf-pr19-craft-chooser label {
+    font:900 10px/1 system-ui,sans-serif!important;letter-spacing:.08em;
+    color:#ead7ac!important;
+  }
+  body.mobile-touch #hf-pr19-craft-select {
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    min-height:43px!important;height:43px!important;box-sizing:border-box!important;
+    background:#192238!important;color:#fff2d7!important;
+    border:1px solid rgba(220,187,102,.65)!important;border-radius:7px!important;
+    padding:0 10px!important;font:700 13px/1.2 system-ui,sans-serif!important;
+    text-overflow:ellipsis;touch-action:manipulation;
+  }
+  body.mobile-touch #hf-pr19-craft-chooser .hf-pr19-craft-info-toggle {
+    min-height:43px!important;min-width:66px!important;padding:0 8px!important;
+    background:rgba(109,85,54,.45)!important;color:#f9eac7!important;
+    border:1px solid rgba(220,187,102,.5)!important;border-radius:7px!important;
+    font:700 11px/1.2 system-ui,sans-serif!important;
+  }
+  /* The bulky identity dashboard is reachable via Detalles, not a second
+     always-on internal scroller consuming 1/3 of landscape height. */
+  body.mobile-touch #crafting-window .profession-identity-card {
+    display:none!important;
+  }
+  body.mobile-touch #crafting-window.hf-pr19-craft-show-info .profession-identity-card {
+    display:flex!important;
+    max-height:120px!important;min-height:0!important;
+    overflow-y:auto!important;
+    margin:0 0 6px!important;
+  }
+  body.mobile-touch #crafting-window .crafting-body {
+    min-height:0!important; flex:1 1 auto!important;
+    overflow-x:hidden!important;overflow-y:auto!important;
+    overscroll-behavior:contain!important;touch-action:pan-y!important;
+    padding:6px 12px 14px 0!important;
+  }
+  body.mobile-touch #crafting-window .crafting-body :is(.crafting-recipe-btn,.crafting-craft-chip,.crafting-create-all-btn) {
+    min-height:42px!important;
+  }
+  /* Elemental guide reuses the real Sim and native forging buttons; we only
+     rearrange its original children into a landscape modal. No extra scroller.
+     All three recipes/actions remain immediately visible. */
+  body.mobile-touch #hf-gem-guide {
+    inset:auto!important;top:50%!important;left:50%!important;right:auto!important;
+    bottom:auto!important;transform:translate(-50%,-50%)!important;
+    width:min(780px,calc(100vw - 34px))!important;max-width:calc(100vw - 34px)!important;
+    max-height:calc(100dvh - 24px)!important;height:auto!important;
+    padding:12px 14px 10px!important;
+    display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:7px 10px!important;align-items:start!important;
+    box-sizing:border-box!important;overflow-x:hidden!important;overflow-y:auto!important;
+    border:1px solid rgba(229,190,109,.72)!important;border-radius:12px!important;
+    background:linear-gradient(155deg,#151d30,#111221 75%)!important;
+    box-shadow:0 20px 48px #02030edb,0 0 0 100vmax #03020a66!important;
+    color:#fff3db!important;
+    font:12px/1.35 system-ui,sans-serif!important;
+    scrollbar-gutter:stable;
+  }
+  body.mobile-touch #hf-gem-guide > h3 {
+    grid-column:1/-1!important;margin:0!important;
+    font:900 16px/1.2 system-ui,sans-serif!important;letter-spacing:.045em!important;
+    color:#ffedbe!important;
+  }
+  body.mobile-touch #hf-gem-guide > p {
+    grid-column:1/-1!important;margin:0 0 2px!important;
+    font:12px/1.35 system-ui,sans-serif!important;color:#cad4e2!important;
+  }
+  body.mobile-touch #hf-gem-guide > section[data-highfly-gem-recipe] {
+    box-sizing:border-box!important;min-width:0!important;min-height:108px!important;
+    padding:8px!important;border:1px solid #35445a!important;
+    border-radius:8px!important;background:#1a2639!important;
+    overflow-wrap:anywhere!important;font:12px/1.35 system-ui,sans-serif!important;
+  }
+  body.mobile-touch #hf-gem-guide > section[data-highfly-gem-recipe] strong {
+    display:block;margin-bottom:4px!important;font-size:13px!important;color:#fce0a0!important;
+  }
+  body.mobile-touch #hf-gem-guide > div:last-child {
+    grid-column:1/-1!important;display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:7px!important;margin:2px 0 0!important;
+  }
+  body.mobile-touch #hf-gem-guide > div:last-child > button {
+    width:100%!important;min-height:44px!important;padding:6px!important;
+    color:#fff3d3!important;border:1px solid #ae9259!important;
+    background:#263450!important;font-size:12px!important;font-weight:800!important;
+  }
+  /* Utility buttons equal-family visual dimensions without altering any
+     approved GOLDEN seat position or combat touch routing. */
+  body.mobile-touch.hf-game-c25 #hf-c1-gem-seat,
+  body.mobile-touch.hf-game-c25 #mobile-consumable-seat,
+  body.mobile-touch.hf-game-c25 #mobile-stance-anchor {
+    width:44px!important;height:44px!important;min-width:44px!important;
+    min-height:44px!important;max-width:44px!important;max-height:44px!important;
+    box-sizing:border-box!important;border-radius:9px!important;
+    border:1px solid rgba(217,190,128,.55)!important;
+  }
+  body.mobile-touch.hf-game-c25 #hf-c1-gem-seat {
+    border:2px solid rgba(247,206,116,.95)!important;
+  }
+  body.mobile-touch.hf-game-c22 .hf-c22-ghost-skill {
+    opacity:.22!important;border-color:#9f89bf48!important;
+  }
+}
