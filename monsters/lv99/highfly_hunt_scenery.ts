@@ -123,7 +123,8 @@ export function addHighflyHuntScenery(
       ...SCENIC_ANCHORS.filter((_,i)=>i%2===0).map(a=>[a.x+5,a.z+4] as [number,number]),
     ]:[...base.props.marshReeds],
   };
-  if(theme.bonfires)props.campfires.push([-125,217],[125,217]);
+  // ONE remote beacon only: original refuge fire + 2 shelters + beacon = 4.
+  if(theme.bonfires)props.campfires.push([-125,217]);
   const zone=base.zones[0];
   return {
     ...base,
