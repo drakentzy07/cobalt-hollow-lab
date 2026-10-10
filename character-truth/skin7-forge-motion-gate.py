@@ -1,4 +1,4 @@
-"""SKIN7 Blender real exported GLB QA: 64 new parts, true original Rig_Medium,
+"""SKIN7 Blender real exported GLB QA: 68 new parts, true original Rig_Medium,
 weights and motion, and genuine geometry differences beyond material or node scale.
 """
 import bpy,sys,json,hashlib,math
@@ -17,7 +17,7 @@ def load(path):
  if not rig or rig.type!='ARMATURE' or len(rig.data.bones)!=23:
   raise RuntimeError('SKIN7_QA_MISSING_AUTHENTIC_23_BONES_'+str(path))
  armor=[o for o in bpy.data.objects if o.type=='MESH' and o.name.startswith('HF7_')]
- if len(armor)!=64:raise RuntimeError('SKIN7_QA_AUTHORED_MESH_COUNT_'+str(len(armor)))
+ if len(armor)!=68:raise RuntimeError('SKIN7_QA_AUTHORED_MESH_COUNT_'+str(len(armor)))
  original=[o for o in bpy.data.objects if o.type=='MESH' and o.name.startswith(('HFV8_','HFV12_','M_','F_'))]
  if original:raise RuntimeError('SKIN7_OVERLAY_ACCIDENTALLY_EXPORTED_OLD_BODY_'+str(len(original)))
  bones={b.name for b in rig.data.bones}
