@@ -13,7 +13,7 @@ assert(html.includes('supreme-v20-ui.mjs')&&html.includes('legendary-forge-v19.m
  html.includes('</body></html>'),'SKIN7_AUTHENTIC_UNMODIFIED_HUNTER_STUDIO_MISSING');
 html=html.replace('</body></html>',
   '<script type="module" src="./skin7-supreme-forge-ui.mjs"></script><script type="module" src="./skin7-artisan-workshop.mjs"></script></body></html>');
-html=html.replace('SUPREME ARMOR FORGE · V20.1','HIGHFLY · SKIN 7 SUPREME FORGE PREVIEW');
+html=html.replace('SUPREME ARMOR FORGE · V20.1','SKIN 7 · FORJA ARTESANA · CANDIDATO PRIVADO');
 fs.writeFileSync(out+'/index.html',html);
 for(const component of ['skin7-supreme-forge-ui.mjs','skin7-artisan-workshop.mjs',
  'skin7-artisan-engine.mjs','skin7-artisan-catalog.mjs']){
@@ -29,5 +29,5 @@ for(const style of ['crimson','guardian']){
 }
 assert(!fs.existsSync(out+'/assets/warrior_modular.glb'),'SKIN7_FORBIDDEN_ORIGINAL_HUNTER_ASSET_DUPLICATION');
 fs.writeFileSync(out+'/SKIN7_PROVENANCE.txt',
- 'Skin7 preview is only a candidate, NOT deployed. Blender authors 68 NEW weighted meshes per design, 34 M and 34 F. On top of TWO seed profile models the artisan editor changes actual vertex buffers per armor piece and exports rewritten skinned glTF2 GLBs preserving original bones and weights. Catalog approved candidate GLBs persist by SHA256 in browser IndexedDB, NEVER HIGHFLY gameplay. Images provide local color guidance only; arbitrary photo to geometry not solved. Kage Oni helmet remains separate. No physical Samsung, Unity Editor, visual clipping certification yet.\n');
+ 'Skin7 preview is only a candidate, NOT deployed. Blender authors 68 NEW weighted objects per design, 34 M and 34 F; 70 rendered glTF skinned meshes from material splits. On top of TWO seed profile models the artisan editor changes actual vertex buffers per armor piece and exports rewritten skinned glTF2 GLBs preserving original bones and weights. Catalog approved candidate GLBs persist by SHA256 in browser IndexedDB, NEVER HIGHFLY gameplay. Images provide local color guidance only; arbitrary photo to geometry not solved. Kage Oni helmet remains separate. No physical Samsung, Unity Editor, visual clipping certification yet.\n');
 console.log('HIGHFLY_SKIN7_BLOCK2_NONDSTRUCTIVE_REAL_ARMOR_PREVIEW_PACKAGE_GREEN=1');
