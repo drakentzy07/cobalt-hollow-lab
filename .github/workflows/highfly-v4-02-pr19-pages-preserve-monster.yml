@@ -91,6 +91,7 @@ jobs:
             /pnpm-lock.yaml
             /patches/
             /.npmrc
+            /scripts/enter_offline_game.mjs
       - name: Checkout exact PR19 approved native S23 browser gate
         uses: actions/checkout@v4
         with:
