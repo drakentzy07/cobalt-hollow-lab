@@ -30,6 +30,8 @@ jobs:
           node character-truth/skin7-paladin-compare-lab/browser-qa.cjs
           test -s character-truth/skin7-live-vercel-proof/gate.json
           grep -F '"green": true' character-truth/skin7-live-vercel-proof/gate.json
+          grep -F 'Live fourth station edits the real eleven skinned armor meshes' character-truth/skin7-live-vercel-proof/gate.json
+          grep -F 'Slider deforms actual native skinned armor vertices in real time' character-truth/skin7-live-vercel-proof/gate.json
       - name: Preserve screens and error diagnostics for live public URL
         if: always()
         uses: actions/upload-artifact@v4
