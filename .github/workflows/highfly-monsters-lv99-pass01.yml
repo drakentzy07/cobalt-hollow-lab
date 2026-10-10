@@ -11,6 +11,7 @@ on:
       - highfly-monsters-lv99-pass02e-native-loot-professions
       - highfly-monsters-lv99-pass02f-elite-captain-hunts
       - highfly-monsters-lv99-pass02g-s23-eight-band-qa
+      - highfly-monsters-lv99-pass02h-pages-package-safe
   workflow_dispatch:
 permissions:
   contents: read
@@ -620,6 +621,45 @@ jobs:
           done
           node scripts/highfly_demo_v3_s23_landscape_browser_smoke.mjs
           echo "HIGHFLY_V3_06_S23_EMULATED_CHROMIUM_TOUCH_GATE_GREEN=1"
+      - name: HIGHFLY P02H — stage isolated /monster-lab Pages subtree without touching main/V4
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 monsters/lv99/stage_pages_subpath.py
+          test -s monster-pages-candidate/cobalt-hollow-lab/monster-lab/index.html
+          test -s monster-pages-candidate/monster-lab-manifest.json
+      - name: HIGHFLY P02H — Chrome real native WebGL at exact relocated Pages subpath
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp monsters/lv99/hunt_browser_smoke.mjs upstream/scripts/hf_hunt_pages_smoke.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('upstream/scripts/hf_hunt_pages_smoke.mjs')
+          s=p.read_text()
+          old="http://127.0.0.1:4173/cobalt-hollow-lab/?hfHunt="
+          new="http://127.0.0.1:4173/cobalt-hollow-lab/monster-lab/?hfHunt="
+          assert s.count(old)==1, 'P02H original smoke URL drift'
+          p.write_text(s.replace(old,new),encoding='utf-8')
+          PY
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory monster-pages-candidate > monster-pages-candidate/pages-smoke.log 2>&1 &
+          WEB_PID=$!
+          trap 'kill "$WEB_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/monster-lab/?hfHunt=21 >/dev/null; then break; fi
+            sleep 1
+          done
+          (cd upstream && node scripts/hf_hunt_pages_smoke.mjs)
+          (cd upstream && HF_HUNT_ENCOUNTER_MODE=captain HF_HUNT_PREVIEW_LEVEL=90 HF_HUNT_S23_MATRIX=1 node scripts/hf_hunt_pages_smoke.mjs)
+          echo 'HF_P02H_REAL_ANDROID_EMULATED_PAGES_SUBPATH_GREEN=1'
+      - name: Upload HIGHFLY P02H monster-lab subpath package (NO PAGES DEPLOY)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-MONSTER-P02H-PAGES-SUBPATH-NO-DEPLOY
+          path: monster-pages-candidate/
+          if-no-files-found: warn
+          retention-days: 14
       - name: Upload V3-02 browser evidence (no Pages deploy)
         if: always()
         uses: actions/upload-artifact@v4
