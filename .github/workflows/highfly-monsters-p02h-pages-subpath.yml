@@ -73,7 +73,7 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           import json,os,urllib.request
-          expected="62902ec50c15026d6bdb607a8d5c05f618c7adf9"
+          expected="b1953c1eb958517d474cf6b6d57231be78809304"
           uri="https://api.github.com/repos/"+os.environ["GITHUB_REPOSITORY"]+"/deployments?environment=highfly-v4-02-preview&per_page=1"
           req=urllib.request.Request(uri,headers={
             "Accept":"application/vnd.github+json",
@@ -87,11 +87,11 @@ jobs:
           print("HF_MONSTER_PAGES_EXACT_CURRENT_DEPLOYMENT_SHA_GREEN=1")
           PY
 
-      - name: Fetch exact CURRENT live Pages snapshot (run 38077242582, SHA 62902ec5)
+      - name: Fetch exact CURRENT live Pages snapshot (run 38080732208, SHA b1953c1)
         uses: actions/download-artifact@v4
         with:
           name: github-pages
-          run-id: 38077242582
+          run-id: 38080732208
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: approved-pages-artifact
 
@@ -220,6 +220,28 @@ jobs:
           n=sum(p.stat().st_size for p in files)
           assert n < 1_900_000_000,(len(files),n)
           print('HF_P02H_PAGES_PACKAGE_BYTES=',n,'FILES=',len(files))
+          PY
+
+      - name: Recheck Pages deployment sha immediately before public artifact upload
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,os,urllib.request
+          url="https://api.github.com/repos/"+os.environ["GITHUB_REPOSITORY"]+"/deployments?environment=highfly-v4-02-preview&per_page=1"
+          req=urllib.request.Request(url,headers={
+            "Authorization":"Bearer "+os.environ["GH_TOKEN"],
+            "Accept":"application/vnd.github+json",
+            "X-GitHub-Api-Version":"2022-11-28",
+            "User-Agent":"HIGHFLY-pages-final-immutable-gate",
+          })
+          with urllib.request.urlopen(req,timeout=30) as res: deployed=json.load(res)
+          approved="b1953c1eb958517d474cf6b6d57231be78809304"
+          if not deployed or deployed[0].get("sha")!=approved:
+            raise SystemExit("HF_P02H_PUBLIC_SITE_CHANGED_DURING_REHEARSAL_REFUSE_UPLOAD")
+          print("HF_P02H_LATEST_LIVE_V4_SOURCE_UNCHANGED=1")
           PY
 
       - name: Configure Pages without changing any existing bytes
