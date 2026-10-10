@@ -43,7 +43,6 @@ jobs:
           python3 character-truth/skin7-paladin-source-audit.py \
             character-truth/skin7-paladin-scratch/warrior_modular.glb \
             character-truth/skin7-paladin-scratch/source-truth.json
-            character-truth/skin7-paladin-forja-sagrada-recipe.json
       - name: Install verified glTF-Transform and Meshopt decoded scratch importer
         shell: bash
         run: |
