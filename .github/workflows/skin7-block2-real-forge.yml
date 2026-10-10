@@ -26,7 +26,7 @@ jobs:
           git diff --name-only "$BASE" HEAD >/tmp/hf-skin7-changes
           while IFS= read -r f; do
             case "$f" in
-              character-truth/SKIN7_SUPREME_ARMOR_STUDIO_MASTER_BLUEPRINT.md|character-truth/skin7-*|.github/workflows/skin7-step1-freeze.yml|.github/workflows/skin7-block2-real-forge.yml) ;;
+              character-truth/SKIN7_SUPREME_ARMOR_STUDIO_MASTER_BLUEPRINT.md|character-truth/skin7-*|.github/workflows/skin7-step1-freeze.yml|.github/workflows/skin7-block2-real-forge.yml|.github/workflows/skin7-visual-fit.yml) ;;
               *) echo "SKIN7 MODIFIED OLD OR PUBLIC GAME CODE $f"; exit 47 ;;
             esac
           done </tmp/hf-skin7-changes
