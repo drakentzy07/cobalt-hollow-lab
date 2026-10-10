@@ -137,6 +137,13 @@ function materialFix(actor){
 async function load(){
  status('Descargando Hunter original y reforja real…');
  const [gltf,forge]=await Promise.all([loader.loadAsync(BASE_URL),loader.loadAsync(FORGE_URL)]);
+ // ClaudeCraft ships 247 variant meshes; preserve only the requested body M/F and
+ // 11 original Paladin armor meshes. Remove unused variants BEFORE THREE scene
+ // cloning or GPU update: 3 actors must remain light enough for mobile.
+ const retained=new Set([...ARMOR,...CORE.flatMap(n=>['M_'+n,'F_'+n]),
+   'M_Loin','F_Loin','F_Top']);
+ const obsolete=[];gltf.scene.traverse(o=>{if(o.isMesh&&!retained.has(o.name))obsolete.push(o)});
+ for(const o of obsolete)o.removeFromParent();
  state.gltf=gltf;state.forge=forge;
  if(gltf.animations.length!==22||forge.animations.length!==22)throw Error('Los 22 movimientos auténticos no coinciden');
  if(!gltf.scene.getObjectByName('Armor_paladin_Head'))throw Error('Faltan las piezas originales del Paladín');
@@ -144,7 +151,7 @@ async function load(){
  for(let i=0;i<3;i++){
   const actor=actorSource();actor.variant=['base','original','reforged'][i];
   selectParts(actor,actor.variant,state.gender);
-  if(i===2)equipGlb(actor,forge,'HF7RF_PALADIN_','recipe',true);
+  if(i===2){actor.recipeMeshes=equipGlb(actor,forge,'HF7RF_PALADIN_','recipe',true);}
   materialFix(actor);scene.add(actor.root);state.actors.push(actor);
  }
  const select=$('animation');select.replaceChildren();
@@ -209,7 +216,10 @@ $('reference').onchange=async e=>{
  $('order').textContent='Referencia local cargada. Adjuntala también en nuestro chat: la página no transmite automáticamente fotos a ChatGPT.';
 };
 $('customGlb').onchange=async e=>{try{const f=e.target.files?.[0];if(f)await importCustom(await f.arrayBuffer())}catch(err){status('❌ '+err.message)}finally{e.target.value=''}};
-$('clearCustom').onclick=()=>{const actor=state.actors[2];clearOverlays(actor,'custom');equipGlb(actor,state.forge,'HF7RF_PALADIN_','recipe',true);state.custom=null;selectParts(actor,'reforged',state.gender);$('order').textContent='Reforja experimental original restaurada. Ninguna armadura publicada.'};
+$('clearCustom').onclick=()=>{const actor=state.actors[2];clearOverlays(actor,'custom');
+ for(const mesh of actor.recipeMeshes||[]){actor.root.add(mesh);mesh.visible=true}
+ actor.overlays??=[];actor.overlays.push({tag:'recipe',meshes:actor.recipeMeshes||[]});
+ state.custom=null;selectParts(actor,'reforged',state.gender);$('order').textContent='Reforja experimental original restaurada. Ninguna armadura publicada.'};
 function orderText(){
  const t=$('prompt').value.trim();
  if(t.length<12)throw Error('Describí qué querés modificar o fabricar (mínimo 12 caracteres).');
