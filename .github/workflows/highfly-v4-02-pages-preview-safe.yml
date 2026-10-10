@@ -183,19 +183,45 @@ jobs:
           old='/cobalt-hollow-lab/'
           new='/cobalt-hollow-lab/v4-02/'
           extensions={'.html','.js','.css','.json','.webmanifest','.xml','.txt','.mjs','.svg'}
+          # Preserve the public site: media is content-addressed and can be
+          # shared across original + /v4-02. Never overwrite a differing file.
+          import shutil
+          donor_media = source/'media'
+          assert donor_media.is_dir(), 'V4-02 hashed media missing'
+          media_count=0
+          media_reused=0
+          media_added=0
+          for m in donor_media.rglob('*'):
+              if not m.is_file(): continue
+              media_count+=1
+              dest=public/'media'/m.relative_to(donor_media)
+              if dest.exists():
+                  assert sha256(m.read_bytes()).digest()==sha256(dest.read_bytes()).digest(), 'MEDIA COLLISION: PUBLIC UNTOUCHED '+str(dest)
+                  media_reused+=1
+              else:
+                  dest.parent.mkdir(parents=True,exist_ok=True)
+                  shutil.copy2(m,dest)
+                  media_added+=1
           for p in source.rglob('*'):
               if not p.is_file(): continue
-              dest=target/p.relative_to(source)
+              rel=p.relative_to(source)
+              if rel.parts[0]=='media': continue  # all hashed media at unchanged root
+              dest=target/rel
               dest.parent.mkdir(parents=True, exist_ok=True)
               if p.suffix.lower() in extensions:
                   try:
                       raw=p.read_text(encoding='utf-8')
                   except UnicodeDecodeError:
-                      dest.write_bytes(p.read_bytes())
+                      shutil.copy2(p,dest)
                   else:
-                      dest.write_text(raw.replace(old,new),encoding='utf-8')
+                      content=raw.replace(old,new)
+                      # Shared hashed GLBs/textures/audio must remain at the old
+                      # root path (checked byte-identical above).
+                      content=content.replace('/cobalt-hollow-lab/v4-02/media/', '/cobalt-hollow-lab/media/')
+                      dest.write_text(content,encoding='utf-8')
               else:
-                  dest.write_bytes(p.read_bytes())
+                  shutil.copy2(p,dest)
+          print(f'HIGHFLY_V4_02_MEDIA_FILES={media_count} SHARED={media_reused} ADDED_NO_OVERWRITE={media_added}')
           for path,digest in original.items():
               assert sha256((public/path).read_bytes()).hexdigest()==digest, 'Published baseline changed: '+path
           assert (target/'index.html').is_file()
