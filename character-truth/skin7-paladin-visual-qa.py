@@ -78,8 +78,9 @@ for g in ('M','F'):
   for o in body:o.hide_render=False
   for o in ([parts[n] for n in originalNames] if style=='original' else forged):o.hide_render=False
   bpy.context.view_layer.update()
-  focus,dims=measure(body+[parts[n] for n in originalNames])
-  scale=max(dims.z*1.30,dims.x*1.75,2.75)
+  # Fixed shared framing for original/reforged: union prevents cropped helmet spikes.
+  focus,dims=measure(body+[parts[n] for n in originalNames]+forged)
+  scale=max(dims.z*1.52,dims.x*1.95,dims.y*1.55,3.65)
   for angle in ('front','side'):
    offset=Vector((0,-7,3)) if angle=='front' else Vector((7,0,3))
    camera.location=focus+offset
