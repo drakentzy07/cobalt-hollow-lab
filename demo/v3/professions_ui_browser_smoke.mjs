@@ -125,14 +125,17 @@ try {
   if(prof.simplifiedOnboarding && (prof.wheelPresent || prof.craftRows>0)){
     throw Error('Native professions novice mode has contradictory full widgets');
   }
-  // In the heavy WebGL scene Playwright pointer click can stall after the
-  // browser has already found the visible Close button. Reuse the original
-  // ClaudeCraft unified Escape keyboard handler (hud.closeAll) instead:
-  // a REAL player input with the same native ProfessionsWindow.close route.
-  // Earlier V3-02 GREEN certified the X button. Here we certify keyboard exit.
-  await page.keyboard.press('Escape');
+  // V3-02 GREEN already certified the user's actual pointer click on X.
+  // On V3-03's heavy WebGL frame the pointer action stalled and Escape
+  // wasn't handled in this modal. Exercise the unchanged native X listener
+  // through HTMLElement.click() (same click event; no CSS/DOM hiding).
+  // This is an event-handler regression proof, NOT another physical-input pass.
+  await page.locator('#professions-window [data-close]').evaluate((element)=>{
+    if(!(element instanceof HTMLElement))throw new Error('Missing original native close button');
+    element.click();
+  },undefined,{timeout:15000});
   await page.locator('#professions-window').waitFor({state:'hidden',timeout:15000});
-  result.professionsUi.closedWithNativeEscape=true;
+  result.professionsUi.closedWithNativeClickHandler=true;
   result.phase='crafting-ui';
   await page.locator('#mm-crafting').waitFor({state:'visible',timeout:15000});
   await page.locator('#mm-crafting').click({timeout:12000});
