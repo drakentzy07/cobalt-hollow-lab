@@ -173,7 +173,12 @@ jobs:
           from hashlib import sha256
           import os
           public = Path('upstream/dist')
-          source = Path('v4-02-candidate/v4-02-package/cobalt-hollow-lab')
+          # PR17 archive used multi-path upload (retained enclosing folder).
+          # PR18 archive used one directory (Actions flattens its root).
+          # Accept ONLY these two documented layouts and validate actual index.
+          choices = [Path('v4-02-candidate/v4-02-package/cobalt-hollow-lab'),
+                     Path('v4-02-candidate/cobalt-hollow-lab')]
+          source = next((p for p in choices if (p/'index.html').is_file()), choices[0])
           assert (public/'index.html').is_file(), 'Original Pages missing'
           assert (source/'index.html').is_file(), 'V4-02 artifact missing'
           original = {str(p.relative_to(public)): sha256(p.read_bytes()).hexdigest() for p in public.rglob('*') if p.is_file()}
