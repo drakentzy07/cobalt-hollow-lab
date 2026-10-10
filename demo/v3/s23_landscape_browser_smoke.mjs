@@ -5,6 +5,7 @@
  * The 9 class buttons are only a presence gate; real-device visual QA remains.
  */
 import { chromium } from 'playwright';
+import { dismissEntryOverlays } from './enter_offline_game.mjs';
 import fs from 'node:fs';
 const URL='http://127.0.0.1:4173/cobalt-hollow-lab/';
 const EXPECTED=['warrior','paladin','hunter','rogue','priest','shaman','mage','warlock','druid'];
@@ -122,13 +123,37 @@ try {
     const s=getComputedStyle(e);return !e.classList.contains('visible')||s.display==='none'||s.visibility==='hidden'||s.pointerEvents==='none';
   },null,{timeout:90000});
   await page.waitForTimeout(800);
-  await page.evaluate(()=>{
-    for(const b of document.querySelectorAll('button'))if(['Dismiss','Understood','Got it','Skip tutorial'].includes((b.textContent??'').trim()))b.click();
-    document.querySelector('.camera-prompt-confirm')?.click();
-    document.querySelector('button.tut-skip')?.click();
-  });
+  // REUSE FIRST: the donor's established entry-overlay cleanup. The player
+  // exists before HIGHFLY's mobile WORLD READY gate necessarily releases HUD.
+  await dismissEntryOverlays(page);
   result.boot=true;
   result.phase='mobile-golden-hud';
+  await page.waitForFunction(()=>document.body.classList.contains('hf-c25-world-ready'),null,{timeout:25000}).catch(()=>{});
+  result.worldReadyDiagnostics=await page.evaluate(()=>{
+    const ids=['start-screen','offline-select','charselect-panel','charcreate-panel','mobile-preflight','rotate-device','loading-screen'];
+    return {
+      ready:document.body.classList.contains('hf-c25-world-ready'),
+      pregame:document.body.classList.contains('hf-c27-pregame'),
+      bodyClasses:document.body.className,
+      gameActive:document.body.classList.contains('game-active'),
+      player:!!window.__game?.sim?.player,
+      observer:document.body.dataset.hfC27WorldObserver??null,
+      blockers:Object.fromEntries(ids.map(id=>{
+        const el=document.getElementById(id);
+        if(!(el instanceof HTMLElement))return [id,{exists:false}];
+        const style=getComputedStyle(el),r=el.getBoundingClientRect();
+        return [id,{exists:true,hidden:el.hidden,display:style.display,visibility:style.visibility,opacity:style.opacity,
+          rect:[r.x,r.y,r.width,r.height],visible:!el.hidden&&el.getClientRects().length>0&&
+            style.display!=='none'&&style.visibility!=='hidden'&&Number(style.opacity||'1')>0.01&&r.width>1&&r.height>1}];
+      })),
+      attackCss:(()=>{
+        const el=document.getElementById('mobile-action-attack');
+        return el?{display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,opacity:getComputedStyle(el).opacity}:null;
+      })(),
+    };
+  });
+  if(!result.worldReadyDiagnostics.ready)
+    fail('HIGHFLY original mobile WORLD-READY gate remains blocked: '+JSON.stringify(result.worldReadyDiagnostics));
   for(const selector of ['#mobile-action-attack','#mobile-move-joystick','#mobile-menu-anchor','#mobile-jump','#mobile-evade']){
     await page.locator(selector).waitFor({state:'visible',timeout:20000});
   }
