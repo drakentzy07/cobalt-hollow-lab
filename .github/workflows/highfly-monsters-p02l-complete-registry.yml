@@ -77,12 +77,16 @@ jobs:
           test -s upstream/src/sim/data.ts
           test -s upstream/src/sim/entity.ts
           test -s upstream/tests/tests_highfly_monsters_p02l.test.ts
+          cat > upstream/vitest.p02l.config.mts <<'EOF'
+          import { defineConfig } from 'vitest/config';
+          export default defineConfig({test:{environment:'node',include:['tests/tests_highfly_monsters_p02l.test.ts'],passWithNoTests:false,reporters:'verbose'}});
+          EOF
       - name: Export ACTUAL runtime registries for ALL native monsters and HF21-99
         working-directory: upstream
         shell: bash
         run: |
           set -euo pipefail
-          pnpm exec vitest run tests/tests_highfly_monsters_p02l.test.ts --reporter=verbose
+          pnpm exec vitest run --config vitest.p02l.config.mts tests/tests_highfly_monsters_p02l.test.ts --reporter=verbose
           test -s /tmp/hf-monstruos6-full-audit/01_MONSTRUOS_TODOS.csv
           test -s /tmp/hf-monstruos6-full-audit/02_APARICIONES_CAMPOS_MAZMORRAS_LAB.csv
           test -s /tmp/hf-monstruos6-full-audit/03_LOOT_TODAS_LAS_FILAS.csv
