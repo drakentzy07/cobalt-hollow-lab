@@ -251,6 +251,29 @@ jobs:
               else:
                   shutil.copy2(p,dest)
           print(f'HIGHFLY_V4_02_MEDIA_FILES={media_count} SHARED={media_reused} ADDED_NO_OVERWRITE={media_added}')
+          # Vite lazily preloads some original-base /assets/*.js chunks.
+          # Alias only compact game chunks, Spanish, renderer and entry.
+          # Never overwrite a different public asset. Budget guarded below.
+          aliases_added=0
+          alias_bytes=0
+          for f in (source/'assets').rglob('*.js'):
+              name=f.name
+              eligible=(f.stat().st_size<=1_000_000 or name.startswith(('renderer-','main-','es_ES-','es-')))
+              if not eligible: continue
+              dst=public/f.relative_to(source)
+              if dst.exists():
+                  assert sha256(dst.read_bytes()).digest()==sha256(f.read_bytes()).digest(), 'PUBLIC ASSET COLLISION '+str(dst)
+              else:
+                  dst.parent.mkdir(parents=True,exist_ok=True)
+                  shutil.copy2(f,dst)
+                  aliases_added+=1
+                  alias_bytes+=f.stat().st_size
+          # Some CSS cursor images use location-relative ui/ rather than the
+          # public base. This tiny copy ensures either lookup path works.
+          cursors=source/'ui'/'cursors'
+          if cursors.is_dir():
+              shutil.copytree(cursors,target/'ui'/'cursors',dirs_exist_ok=True)
+          print(f'HIGHFLY_V4_02_VITE_LAZY_ALIAS_FILES={aliases_added} BYTES={alias_bytes}')
           for path,digest in original.items():
               assert sha256((public/path).read_bytes()).hexdigest()==digest, 'Published baseline changed: '+path
           assert (target/'index.html').is_file()
