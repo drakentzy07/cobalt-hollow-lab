@@ -37,7 +37,7 @@ try {
   }
   await page.evaluate(()=>{
     const input=document.querySelector('#char-name');
-    if(input instanceof HTMLInputElement){input.value='S23Hunter';input.dispatchEvent(new Event('input',{bubbles:true}));}
+    if(input instanceof HTMLInputElement){input.value='HighflyTester';input.dispatchEvent(new Event('input',{bubbles:true}));}
     document.querySelector('#offline-select .mini-class[data-class="warrior"]')?.click();
   });
   result.phase='actual-modular-preview';
@@ -87,7 +87,7 @@ try {
   result.entryFlow={beforeClick:await entryState()};
   if(result.entryFlow.beforeClick.selected!=='warrior' ||
      result.entryFlow.beforeClick.startDisabled ||
-     result.entryFlow.beforeClick.name!=='S23Hunter'){
+     result.entryFlow.beforeClick.name!=='HighflyTester'){
     fail('Mobile creator has not accepted Warrior/name/start: '+JSON.stringify(result.entryFlow.beforeClick));
   }
   await page.evaluate(()=>document.querySelector('#btn-start-offline')?.click());
