@@ -8,6 +8,7 @@ on:
       - highfly-monsters-lv99-pass02b-hunt-instance
       - highfly-monsters-lv99-pass02c-preview-entry
       - highfly-monsters-lv99-pass02d-scenery-routes
+      - highfly-monsters-lv99-pass02e-native-loot-professions
   workflow_dispatch:
 permissions:
   contents: read
@@ -406,6 +407,8 @@ jobs:
           mkdir -p src/highfly/monsters
           cp ../monsters/lv99/highfly_monster_content.ts src/highfly/monsters/level99.ts
           cp ../monsters/lv99/highfly_monster_content.test.ts tests/highfly_monster_content_lv99.test.ts
+          cp ../monsters/lv99/highfly_hunt_rewards.ts src/highfly/monsters/hunt_rewards.ts
+          cp ../monsters/lv99/highfly_hunt_rewards.test.ts tests/highfly_hunt_rewards.test.ts
           cp ../monsters/lv99/highfly_hunt_scenarios.ts src/highfly/monsters/hunt_scenarios.ts
           cp ../monsters/lv99/highfly_hunt_scenarios.test.ts tests/highfly_hunt_scenarios.test.ts
           cp ../monsters/lv99/highfly_hunt_playtest_world.ts src/highfly/monsters/hunt_playtest_world.ts
@@ -438,6 +441,9 @@ jobs:
       - name: HIGHFLY MONSTERS P02D — 8 donor-native biomes and collision-free scenic routes
         working-directory: upstream
         run: pnpm exec vitest run tests/highfly_hunt_scenery.test.ts
+      - name: HIGHFLY MONSTERS P02E — 64 real recipe-consumer loot rows and native corpse bag save
+        working-directory: upstream
+        run: pnpm exec vitest run tests/highfly_hunt_rewards.test.ts
       # The six worn-apex fixtures were authored with ClaudeCraft MAX_LEVEL=20.
       # Its item_level_req clamps source-25 crafted gear to that old level cap.
       # PF-6 correctly raises MAX_LEVEL to 99, so source-25 gear now requires 25.
