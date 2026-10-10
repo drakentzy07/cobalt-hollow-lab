@@ -211,7 +211,7 @@ try {
   if(result.static404.length||result.doubleBase.length)throw Error('Real browser assets returned HTTP 404 or doubled base');
   result.phase='passed';
   result.pass=true;
-  await page.screenshot({path:'../demo-v3-02-desktop.png',fullPage:true}).catch(()=>{});
+  await page.screenshot({path:'../v4-02-gem-desktop.png',fullPage:true}).catch(()=>{});
 }catch(e){
  result.error=String(e);
  result.pageErrors=errors.slice(-30);
@@ -221,12 +221,12 @@ try {
      const c=document.querySelector('#char-preview-canvas');
      return {canvas:c?{width:c.width,height:c.height,frame:c.dataset?.highflyPreviewFrame,visual:c.dataset?.highflyPreviewVisual}:null,selectedClass:document.querySelector('#offline-select .mini-class.sel')?.getAttribute('data-class'),offlineError:document.querySelector('#offline-error')?.textContent}
    }).catch(()=>null);
-   await page.screenshot({path:'../demo-v3-02-failure.png',fullPage:true}).catch(()=>{});
+   await page.screenshot({path:'../v4-02-gem-failure.png',fullPage:true}).catch(()=>{});
  }
 }
 finally {
- fs.writeFileSync('../demo-v3-02-report.json',JSON.stringify(result,null,2));
- console.log('HIGHFLY_DEMO_V3_02_PROFESSION_UI_REPORT',JSON.stringify(result));
+ fs.writeFileSync('../v4-02-gem-browser-report.json',JSON.stringify(result,null,2));
+ console.log('HIGHFLY_V4_02_GEM_BROWSER_REPORT',JSON.stringify(result));
  if(browser)await browser.close().catch(()=>{});
 }
 if(!result.pass)process.exitCode=1;
