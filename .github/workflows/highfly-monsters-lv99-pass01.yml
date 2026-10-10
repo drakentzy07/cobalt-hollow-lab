@@ -404,6 +404,7 @@ jobs:
           cp ../monsters/lv99/highfly_monster_content.ts src/highfly/monsters/level99.ts
           cp ../monsters/lv99/highfly_monster_content.test.ts tests/highfly_monster_content_lv99.test.ts
           python ../monsters/lv99/activate_content.py
+          python ../monsters/lv99/adjust_donor_gathering_test.py
           grep -q "buildHighflyMonsterRoster(MOBS)" src/sim/data.ts
           git diff --check
           echo "HIGHFLY_MONSTER_64_NATIVE_TEMPLATES_ACTIVATED=1"
