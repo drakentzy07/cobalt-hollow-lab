@@ -11,7 +11,6 @@ anchor_import = "import { takeEditorPlaytestRequest } from './game/editor_playte
 anchor_signature = """  world?: WorldContent,
   seedOverride?: number,
 ): Promise<void> {"""
-anchor_skin = "  sim.setPlayerSkin(sim.playerId, skin);"
 anchor_start = "const editorPlaytest = takeEditorPlaytestRequest();\nconst startupParams = new URLSearchParams(location.search);"
 anchor_else = "} else if (diagnosticsAutoOffline) {"
 for name,match in [('import',anchor_import),('signature',anchor_signature),('start',anchor_start),('else',anchor_else)]:
@@ -25,21 +24,16 @@ src = src.replace(anchor_signature,"""  world?: WorldContent,
   huntPreviewLevel?: number,
 ): Promise<void> {""",1)
 offline_start = src.find('async function startOffline(')
-sim_at = src.find('  const sim = loadSpan(', offline_start)
-sim_close = src.find('\n  );', sim_at)
-if offline_start < 0 or sim_at < 0 or sim_at - offline_start > 8000 or sim_close < 0 or sim_close - sim_at > 4200 or 'new Sim(' not in src[sim_at:sim_close]:
-    print('HF_HUNT_BOOT_DIAG_START=', offline_start)
-    print('HF_HUNT_BOOT_DIAG_SIM_AT=', sim_at)
-    print('HF_HUNT_BOOT_DIAG_SIM_CLOSE=', sim_close)
-    print('HF_HUNT_BOOT_DIAG_SKIN=', src.find('setPlayerSkin', offline_start))
-    print('HF_HUNT_BOOT_DIAG_NEW_SIM=', src.find('new Sim(', offline_start))
-    print('HF_HUNT_BOOT_DIAG_SNIPPET=', repr(src[offline_start:offline_start+4000]))
-    raise SystemExit('HF_HUNT_P02C_OFFLINE_SIM_BUILD_ANCHOR_MISSING')
-# Inject only after the exact native Sim creation expression, no skin/edit/Training duplication.
-insert_at = sim_close + len('\n  );')
+skin_gate = '  if (!matchingOfflineSave) sim.setPlayerSkin(sim.playerId, skin);'
+skin_at = src.find(skin_gate, offline_start)
+if offline_start < 0 or skin_at < 0 or skin_at - offline_start > 5200:
+    raise SystemExit('HF_HUNT_P02C_OFFLINE_NATIVE_SKIN_GATE_MISSING')
+# This real HIGHFLY branch saves/reconciles the Training profile immediately
+# AFTER its native skin gate. Level the isolated pilot BEFORE profile sync.
+insert_at = skin_at + len(skin_gate)
 src = src[:insert_at] + """
-  // P02C opt-in offline HuntPilot ONLY: set native class-level for balanced
-  // preview combat, without a simulated Training session or additional stats.
+  // Only P02C opt-in world: native class level for the preview Hunter.
+  // Never grants Training/Core points or touches ordinary offline saves.
   if (huntPreviewLevel !== undefined) {
     sim.setPlayerLevel(huntPreviewLevel, sim.playerId);
   }""" + src[insert_at:]
