@@ -1,0 +1,71 @@
+name: HIGHFLY SKIN 7 - STEP 1 TRUE NATIVE FREEZE (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-skin7-supreme-studio-master-blueprint]
+    paths:
+      - 'character-truth/SKIN7_SUPREME_ARMOR_STUDIO_MASTER_BLUEPRINT.md'
+      - 'character-truth/skin7-*'
+      - '.github/workflows/skin7-step1-freeze.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit-contract-freeze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout isolated Skin 7 blueprint, full Git history for non-regression check
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: PROVE no existing studio or public game source changed since pinned V20
+        run: |
+          set -euo pipefail
+          BASE=93ed92935147ec2de07b4942a78aaf3ea06ca99d
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | tee /tmp/hf-skin7-changed.txt
+          while IFS= read -r f; do
+            case "$f" in
+              character-truth/SKIN7_SUPREME_ARMOR_STUDIO_MASTER_BLUEPRINT.md|character-truth/skin7-*|.github/workflows/skin7-step1-freeze.yml) ;;
+              *) echo "FAIL SKIN7 MODIFIED FROZEN CODE OR PUBLIC GAME: $f"; exit 47 ;;
+            esac
+          done </tmp/hf-skin7-changed.txt
+          ! git diff --name-only "$BASE" HEAD | grep -E '^(public/|src/|scripts/|Assets/|\.github/workflows/(?!skin7-))' || true
+          echo HIGHFLY_SKIN7_NO_CHANGES_TO_ANY_OLD_CHARACTER_STUDIO_OR_GAME_CODE_GREEN=1
+      - name: Validate recipe, Blender part, Forge and explicit decision contracts
+        run: |
+          set -euo pipefail
+          node --check character-truth/skin7-contracts.mjs
+          node --check character-truth/skin7-contracts.test.mjs
+          node --check character-truth/skin7-audit-native-assets.mjs
+          node character-truth/skin7-contracts.test.mjs
+          test -s character-truth/SKIN7_SUPREME_ARMOR_STUDIO_MASTER_BLUEPRINT.md
+      - name: Obtain EXACT GREEN V20.1 complete native GLB package, read-only
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-V20-SUPREME-RECIPE-TRUE-RIGGED-GLB-NO-DEPLOY
+          run-id: 38018797928
+          github-token: ${{ github.token }}
+          path: character-truth/skin7-frozen-v20
+      - name: Audit actual original-rig source GLBs with SHA256 provenance
+        run: |
+          set -euo pipefail
+          test -s character-truth/skin7-frozen-v20/index.html
+          test ! -e character-truth/skin7-frozen-v20/assets/warrior_modular.glb
+          node character-truth/skin7-audit-native-assets.mjs \
+            character-truth/skin7-frozen-v20/assets \
+            character-truth/skin7-evidence/audit-native-assets.json
+          node -e "const r=require('./character-truth/skin7-evidence/audit-native-assets.json'); if(r.assets.length!==4||!r.sourceOriginalCharacterNotBundled)process.exit(3); console.log('HIGHFLY_SKIN7_NATIVE_SOURCE_TRACE_FREEZE_GREEN=1')"
+      - name: Evidence only; DO NOT publish any studio route or HIGHFLY gameplay
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-SKIN7-BLOCK1-TRUE_NATIVE_AUDIT-AND-CONTRACTS
+          path: |
+            character-truth/skin7-evidence/
+            character-truth/SKIN7_SUPREME_ARMOR_STUDIO_MASTER_BLUEPRINT.md
+            character-truth/skin7-contracts.mjs
+            character-truth/skin7-contracts.test.mjs
+          retention-days: 30
+          if-no-files-found: warn
