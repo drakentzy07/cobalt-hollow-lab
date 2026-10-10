@@ -105,9 +105,14 @@ a:last-child{border-color:#d2a65d}aside{border-left:3px solid #55c5bc;padding-le
 @media(max-width:720px){article{align-items:stretch;flex-direction:column}nav a{flex:1;text-align:center;padding:12px 7px}}
 </style></head><body><main>
 <div class="eyebrow">HIGHFLY · LABORATORIO DE MONSTRUOS</div>
-<h1>Ocho regiones. Tres tipos de cacería.</h1>
-<p>Versión independiente de pruebas con combate real ClaudeCraft. Elegí una región
-y girá el teléfono horizontalmente para usar joystick, cámara, habilidades y loot.</p>
+<h1>Ocho biomas. Tres tipos de cacería.</h1>
+<p>Instancias de cacería con aspecto propio: bosque maldito, pantano, cañón,
+tundra, volcán, jardín, tormenta y abismo. Girá el teléfono horizontalmente
+para usar joystick, cámara, habilidades y loot.</p>
+<p>Tu Guerrero de <strong>ensayo</strong> tiene vida extra temporal para probar
+los combates y poder saquear. En cada cadáver acercate hasta unos cinco pasos,
+usá <strong>Usar</strong> o aprovechá el autosaqueo cercano. Mirá la Bolsa
+para verificar los materiales. No equivale al equipo ni stats de HIGHFLY V4.</p>
 """ + cards + """
 <aside><strong>Importante:</strong> cada acceso inicia una partida de ensayo con
 un Hunter de nivel apropiado para esa región. No representa todavía los viajes
@@ -123,9 +128,9 @@ objetos y rendimiento. Para comparar probá la misma región en Normal, Élite y
     if original != after:
         raise SystemExit("HF_P02H_CHANGED_ORIGINAL_PAGES_BUNDLE")
     manifest = {
-        "product": "HIGHFLY Monstruos P02H isolated native WebGL",
+        "product": "HIGHFLY Monstruos P02I — eight native biomes & trial combat",
         "path": "/cobalt-hollow-lab/monster-lab/",
-        "built_from": "G GREEN SHA 27111e34923dd20d8f2f3f2825d4172161301bba",
+        "built_from": os.environ.get("GITHUB_SHA", "LOCAL_NONDEPLOY_BUILD"),
         "deployment": "NONE — staging artifact only",
         "android": "S23 Ultra emulated; physical handset validation pending",
         "files": len(original),
@@ -136,12 +141,14 @@ objetos y rendimiento. Para comparar probá la misma región en Normal, Élite y
         "entry_sha256": sha(TARGET / "index.html"),
         "allowed_modes": ["normal", "elite", "captain"],
         "level_starts": [21, 30, 40, 50, 60, 70, 80, 90],
+        "biomes": ["haunt","marsh","peaks","frost","volcano","garden","gale","cave"],
+        "trial_only_survival_hp_multiplier": 3,
         "default_public_pages_untouched": True,
         "v4_02_untouched": True,
     }
     REPORT.write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
     print(json.dumps(manifest, ensure_ascii=False))
-    print("HF_P02H_ISOLATED_MONSTER_PAGES_PACKAGE_GREEN=1")
+    print("HF_P02I_ISOLATED_MONSTER_PAGES_PACKAGE_GREEN=1")
 
 
 if __name__ == "__main__":
