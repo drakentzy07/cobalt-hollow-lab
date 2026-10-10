@@ -49,13 +49,27 @@ def main():
     if not manifest.is_file():
         raise SystemExit("HF_MONSTER_PAGES_MISSING_SOURCE_MANIFEST")
     m = json.loads(manifest.read_text())
-    if m.get("path") != "/cobalt-hollow-lab/monster-lab/" or not m.get("default_public_pages_untouched"):
-        raise SystemExit("HF_MONSTER_PAGES_MANIFEST_NOT_CERTIFIED")
-    approved = catalogue(LIVE)
-    if "monster-lab/index.html" in approved:
-        raise SystemExit("HF_MONSTER_PAGES_ALREADY_LIVE_OR_CONFLICT")
+    if (m.get("path") != "/cobalt-hollow-lab/monster-lab/"
+        or not m.get("default_public_pages_untouched")
+        or not m.get("v4_02_untouched")
+        or m.get("trial_only_survival_hp_multiplier") != 3
+        or m.get("biomes") != ["haunt","marsh","peaks","frost","volcano","garden","gale","cave"]):
+        raise SystemExit("HF_P02I_MONSTER_PAGES_MANIFEST_NOT_CERTIFIED")
+    approved_all = catalogue(LIVE)
+    # A narrow upgrade: P02-H's already-published /monster-lab/ is the ONLY
+    # subtree we may replace. Every existing root, V4-02, media, and unrelated
+    # file is frozen by SHA256 as before, including future V4 revisions.
+    if not (LIVE/"monster-lab/hunts.html").is_file() or not (LIVE/"monster-lab/game.html").is_file():
+        raise SystemExit("HF_P02I_NO_CURRENT_MONSTER_LAB_REFUSE_REPLACEMENT")
+    old_lab = {path:digest for path,digest in approved_all.items()
+               if path.startswith("monster-lab/")}
+    if len(old_lab)<3:
+        raise SystemExit("HF_P02I_INCOMPLETE_EXISTING_LAB")
+    approved = {path:digest for path,digest in approved_all.items()
+                if not path.startswith("monster-lab/")}
     shutil.copytree(LIVE, STAGED)
     target = STAGED / "monster-lab"
+    shutil.rmtree(target)
     target.mkdir()
     reused = 0
     new_media = 0
@@ -158,6 +172,7 @@ self.addEventListener('fetch',e=>{
         raise SystemExit(f"HF_MONSTER_PAGES_EXCEEDS_PRELIMINARY_BUDGET:{total}")
     report = {
         "existing_public_and_v4_files_untouched": len(approved),
+        "old_isolated_lab_files_replaced": len(old_lab),
         "baseline_sha256": hashlib.sha256(json.dumps(approved,sort_keys=True).encode()).hexdigest(),
         "new_media_files": new_media,
         "reused_media_files": reused,
@@ -165,11 +180,12 @@ self.addEventListener('fetch',e=>{
         "preview_url_path": "/cobalt-hollow-lab/monster-lab/",
         "source_preview_sha256": m.get("entry_sha256"),
         "deployment": "NO - downstream gated publish needed",
+        "source_version": "PASS02-I",
     }
     Path("monsters-pages-composition-report.json").write_text(
         json.dumps(report, indent=2)+"\n",encoding="utf-8")
     print(json.dumps(report))
-    print("HF_MONSTER_LAB_PRESERVE_EXISTING_ROOT_V4_SHA256_GREEN=1")
+    print("HF_P02I_PRESERVE_ROOT_V4_AND_REPLACE_ONLY_OLD_LAB_SHA256_GREEN=1")
 
 
 if __name__ == "__main__":
