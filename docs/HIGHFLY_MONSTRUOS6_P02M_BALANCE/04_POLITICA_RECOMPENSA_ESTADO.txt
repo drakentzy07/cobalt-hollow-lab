@@ -1,3 +1,3 @@
-PREVIEW-ONLY; NO V4 kill-time owner-specific RNG hook installed; do not call these chances live.
+PREVIEW-ONLY; NORMAL + ELITE + CAPTAIN. NO V4 kill-time owner-specific RNG hook installed; do not call these chances live.
 No gear/rarity change; no extra training stats; XP stays native capped at +20% for +4 levels.
 Proof of combat requires actual native kill-time credit and sole owner.
