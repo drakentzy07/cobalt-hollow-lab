@@ -1,0 +1,73 @@
+/* HIGHFLY PR18 — S23 Ultra human-video UX; no native mechanics changed. */
+body.mobile-touch.hf-game-c25 #hf-c1-gem-seat {
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;
+ max-width:48px!important;max-height:48px!important;
+ gap:0!important;border:2px solid rgba(245,199,105,.9)!important;border-radius:10px!important;
+ background:linear-gradient(180deg,rgba(55,36,78,.94),rgba(17,13,32,.95))!important;
+ color:#ffe9a1!important;box-shadow:0 0 10px rgba(190,135,252,.22),inset 0 1px 0 #fff2!important;
+ pointer-events:auto!important;touch-action:manipulation;
+}
+body.mobile-touch #hf-c1-gem-seat .hf-v4-gem-icon {display:block;font:900 19px/21px system-ui,sans-serif}
+body.mobile-touch #hf-c1-gem-seat .hf-v4-gem-label {display:block;font:900 10px/12px system-ui,sans-serif;letter-spacing:.065em;color:#fff4c5}
+body.mobile-touch #mobile-extra-grid #hf-v4-gem-menu {
+ min-width:0;border:1px solid rgba(235,193,98,.75);
+ background:linear-gradient(180deg,rgba(92,65,125,.95),rgba(39,29,74,.97));color:#fff0bd;
+}
+body.mobile-touch #mobile-extra-grid #hf-v4-gem-menu .mobile-label {color:#fff0bd;font-size:11px;font-weight:800}
+body.mobile-touch #mobile-extra-grid #hf-v4-gem-menu .hf-v4-menu-gem-icon {font-size:19px;line-height:1}
+/* No parallel profession widgets. Prefer a wrapped, entirely visible touch
+ * tab grid over the donor's difficult-to-discover horizontal swipe strip. */
+@media (orientation: landscape) and (max-height:470px) {
+ body.mobile-touch #crafting-window .crafting-tabs {
+  display:grid!important;grid-template-columns:repeat(auto-fit,minmax(108px,1fr))!important;
+  gap:4px!important;flex-wrap:wrap!important;overflow-x:visible!important;overflow-y:visible!important;
+  padding:4px 8px 4px 0!important;margin-top:4px!important;
+ }
+ body.mobile-touch #crafting-window .crafting-tab {
+  min-width:0!important;min-height:36px!important;height:auto!important;
+  padding:3px 5px!important;display:flex!important;align-items:center!important;
+  justify-content:center!important;gap:4px!important;font-size:11px!important;
+  text-align:center!important;white-space:normal!important;overflow-wrap:anywhere!important;
+  box-sizing:border-box!important;
+ }
+ body.mobile-touch #crafting-window .crafting-tab-icon {width:18px!important;height:18px!important;flex-basis:18px!important}
+ body.mobile-touch #crafting-window .profession-identity-card {
+  max-height:min(68px,20vh)!important;min-height:0!important;gap:4px!important;
+  scrollbar-gutter:stable;overflow-y:auto!important;padding-right:9px!important;
+ }
+ body.mobile-touch #crafting-window .crafting-body {
+  min-height:0!important;padding:8px 10px 8px 0!important;
+  scrollbar-gutter:stable;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;
+ }
+ body.mobile-touch #crafting-window :is(.crafting-recipe-btn,.crafting-qty-btn) {min-height:40px!important}
+ body.mobile-touch #professions-window .prof-scroll {
+  padding-right:12px!important;scrollbar-gutter:stable;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;touch-action:pan-y;
+ }
+ body.mobile-touch #professions-window :is(.prof-identity-paragraph,.prof-cta p,.prof-empty p) {
+  font-size:12px!important;line-height:1.45!important;
+ }
+ body.mobile-touch #professions-window :is(.prof-cta button,.prof-scroll button) {min-height:40px}
+ body.mobile-touch #talents-window #tal-body {
+  padding-right:12px!important;scrollbar-gutter:stable;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;touch-action:pan-y;
+ }
+ body.mobile-touch #talents-window .tal-row-opt {min-height:40px}
+ body.mobile-touch #highfly-training-window .highfly-training-shell {
+  padding:10px 12px 22px!important;scrollbar-gutter:stable;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;touch-action:pan-y;
+ }
+ body.mobile-touch #highfly-training-window :is(.hf-cycle-status,.hf-core-grid,.hf-training-days) {overflow-x:visible!important}
+ body.mobile-touch #highfly-training-window .hf-cycle-status {grid-template-columns:repeat(4,minmax(0,1fr))!important}
+ body.mobile-touch #highfly-training-window :is(.hf-core-grid,.hf-training-days) {grid-template-columns:repeat(5,minmax(0,1fr))!important}
+ body.mobile-touch #highfly-training-window :is(.hf-core-card,.hf-training-day) {min-width:0}
+ body.mobile-touch :is(#crafting-window .crafting-body,#crafting-window .profession-identity-card,
+ #professions-window .prof-scroll,#talents-window #tal-body,#highfly-training-window .highfly-training-shell)::-webkit-scrollbar {
+  width:7px;height:6px;
+ }
+ body.mobile-touch :is(#crafting-window .crafting-body,#crafting-window .profession-identity-card,
+ #professions-window .prof-scroll,#talents-window #tal-body,#highfly-training-window .highfly-training-shell)::-webkit-scrollbar-thumb {
+  background:#a98d5a;border-radius:6px;
+ }
+}
