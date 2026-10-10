@@ -34,6 +34,10 @@ fs.mkdirSync(dir,{recursive:true});
  }
  let s=await p.evaluate(()=>window.__HF_SKIN7_LAB__.state());
  ok(s.actors===3,'Three REAL independent Hunter actors render in one lab');
+ ok(s.originalPaladin.renderMeshes===17&&s.originalPaladin.missing.length===0,
+   'Original ClaudeCraft Paladin helmet, shoulders, chest, legs etc: ALL 11 slots and 17 multi-material original meshes RENDER');
+ ok(Object.keys(s.originalPaladin.slots).length===11,
+   'Original Paladin equipment is actually visible, not bald/unarmored Hunter');
  ok(s.nativeBones===23&&s.rig==='Rig_Medium','Authentic 23-bone Rig_Medium');
  ok(s.clips.length===22,'ALL 22 original ClaudeCraft movement and combat animation clips');
  ok(s.sourceBlobSha1==='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2','Frozen authentic source provenance');
@@ -49,6 +53,8 @@ fs.mkdirSync(dir,{recursive:true});
  await p.locator('#gender').selectOption('F');
  s=await p.evaluate(()=>window.__HF_SKIN7_LAB__.state());
  ok(s.gender==='F','All actor suits reuse native FEMALE modular body by visibility, no invented skeleton');
+ ok(s.originalPaladin.renderMeshes===17&&s.originalPaladin.missing.length===0,
+   'Paladin ORIGINAL eleven equipment slots still visually equipped after switch to FEMALE');
  await p.screenshot({path:dir+'/02-all-three-actors-female.png'});
  await p.locator('#gender').selectOption('M');
  await p.locator('#original').click();await p.screenshot({path:dir+'/03-paladin-original-front.png'});
