@@ -86,6 +86,63 @@ def main():
             out.write_text(src, encoding="utf-8")
         else:
             shutil.copy2(p, out)
+    # Vite's bundled donor MEDIA loader constructs base + "media/" at runtime
+    # in some chunks (not a literal full media URL), so a simple static rewrite
+    # cannot redirect every request. Keep exactly ONE shared copy of GLBs and
+    # intercept only the isolated /monster-lab/media/* subtree with a scoped SW.
+    # First visit must register/activate/claim BEFORE loading original game;
+    # otherwise the initial WebGL GLB fetches would 404 and S23 smoke would fail.
+    original_index = target / "index.html"
+    original_game = target / "game.html"
+    if original_game.exists():
+        raise SystemExit("HF_MONSTER_PAGES_GAME_ALREADY_EXISTS")
+    original_index.rename(original_game)
+    sw = """/* HIGHFLY native monster media redirect, scope /monster-lab/ ONLY.
+ * Never intercept V4-02 or site root, never cache or mutate existing files.
+ */
+self.addEventListener('install',()=>self.skipWaiting());
+self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET')return;
+  const uri=new URL(e.request.url);
+  const prefix='/cobalt-hollow-lab/monster-lab/media/';
+  if(uri.origin!==self.location.origin||!uri.pathname.startsWith(prefix))return;
+  const target=new URL('/cobalt-hollow-lab/media/'+uri.pathname.slice(prefix.length),uri.origin);
+  target.search=uri.search;
+  e.respondWith(fetch(new Request(target.href,e.request)));
+});
+"""
+    (target / "monster-media-sw.js").write_text(sw, encoding="utf-8")
+    bootstrap = """<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HIGHFLY Monster Lab — Inicialización</title></head>
+<body style="background:#0b1220;color:#e5fcf4;font:16px system-ui;padding:30px">
+<h1>HIGHFLY Monster Lab</h1><p id="message">Preparando recursos del mundo 3D…</p>
+<script>
+(async()=>{
+  const msg=document.getElementById('message');
+  try{
+    if(!('serviceWorker' in navigator))throw Error('Este navegador no admite Service Workers');
+    await navigator.serviceWorker.register('./monster-media-sw.js',{scope:'./'});
+    await navigator.serviceWorker.ready;
+    if(!navigator.serviceWorker.controller){
+      await new Promise((resolve,reject)=>{
+        const timeout=setTimeout(()=>reject(Error('No se pudo activar el gestor de modelos')),25000);
+        navigator.serviceWorker.addEventListener('controllerchange',()=>{
+          clearTimeout(timeout);resolve();
+        },{once:true});
+      });
+    }
+    location.replace('./game.html'+location.search+location.hash);
+  }catch(e){
+    msg.textContent='No fue posible preparar los archivos 3D. '+String(e)+
+      '. Probá recargando esta página con Chrome actualizado.';
+  }
+})();
+</script></body></html>"""
+    original_index.write_text(bootstrap, encoding="utf-8")
+    if "/monster-lab/media/" not in sw or "serviceWorker.ready" not in bootstrap:
+        raise SystemExit("HF_MONSTER_PAGES_NATIVE_MEDIA_REDIRECT_BROKEN")
     if reused < 20:
         raise SystemExit(f"HF_MONSTER_PAGES_NOT_REUSING_IMMUTABLE_MEDIA:{reused}")
     if not (target / "index.html").is_file():
