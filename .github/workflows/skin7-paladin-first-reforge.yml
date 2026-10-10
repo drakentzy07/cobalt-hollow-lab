@@ -90,7 +90,7 @@ jobs:
           assert report['paladinSourceMeshes']==11 and report['reforgedMeshes']==11
           assert report['sourceOriginalGeometryReused'] and not report['NightfallOverlaid']
           assert report['recipeDrivenGeometry'] and report['recipeControlsActuallyApplied']
-          assert report['appliedRecipe']=='paladin-forja-sagrada-nativa-v2'
+          assert report['appliedRecipe']=='paladin-forja-sagrada-encastre-v3'
           assert report['actualSculptTopologyGenerated']
           assert report['sculptPanelsAdded']>=30
           assert report['newWeightedVertices']>=300
