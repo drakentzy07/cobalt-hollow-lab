@@ -236,7 +236,7 @@ for gender in ('M','F'):
     faces.append((aa,bb,bb+radial,aa+radial))
   headpart('HF7_'+gender+'_HEAD_HORN_'+tag,verts,faces,trim)
  # Oni faceguard outside the forward-most original native skull (+world Z).
- x=headcenter.x;frontY=headcenter.y-headdepth*1.26;cY=headcenter.z;r=headradius
+ x=headcenter.x;frontY=headcenter.y-headdepth*1.055;cY=headcenter.z;r=headradius
  poly=[(x-r*.68,frontY+.010,cY-headheight*.29),
   (x-r*.73,frontY+.018,cY+headheight*.08),
   (x-r*.37,frontY-.018,cY+headheight*.27),
@@ -248,6 +248,36 @@ for gender in ('M','F'):
   [(a,b+.027,c) for a,b,c in poly],
   [tuple(range(7)),tuple(reversed(range(7,14)))]+
   [(i,(i+1)%7,(i+1)%7+7,i+7) for i in range(7)],dark)
+ # Oni eyes — physically authored slits on actual faceguard, gold bezel and cyan glow.
+ # One new rigid-head mesh with two material groups, never stickers or duplicated rig.
+ eyeVerts=[];eyeFaces=[];eyeMaterials=[]
+ for side in (-1,1):
+  cx=x+side*r*.35
+  cz=cY+headheight*.085
+  def quad(yfront,span,height):
+   aa=len(eyeVerts)
+   eyeVerts.extend([(cx-span,yfront,cz-height*.32),
+      (cx-span*.55,yfront-.009,cz+height*.52),
+      (cx+span*.78,yfront-.009,cz+height*.33),
+      (cx+span,yfront,cz-height*.43)])
+   eyeFaces.append((aa,aa+1,aa+2,aa+3))
+  quad(frontY-.043,r*.20,headheight*.13)
+  quad(frontY-.055,r*.13,headheight*.062)
+ eye=headpart('HF7_'+gender+'_HEAD_ONI_EYE_FRAMES',eyeVerts,eyeFaces,trim)
+ eye.data.materials.append(glow)
+ for ii,poly in enumerate(eye.data.polygons):
+  poly.material_index=(ii%2)
+ # Three-dimensional mouth fangs / cheek guard to break up large flat black mask.
+ fangVerts=[];fangFaces=[]
+ for side in (-1,0,1):
+  cx=x+side*r*.35;yfront=frontY-.047;zbase=cY-headheight*.13
+  aa=len(fangVerts)
+  fangVerts.extend([(cx-r*.09,yfront,zbase+headheight*.05),
+   (cx+r*.09,yfront,zbase+headheight*.05),
+   (cx,yfront-.012,zbase-headheight*(.10 if side==0 else .06)),
+   (cx,yfront+.016,zbase-headheight*(.10 if side==0 else .06))])
+  fangFaces.extend([(aa,aa+1,aa+2),(aa,aa+2,aa+3)])
+ headpart('HF7_'+gender+'_HEAD_ONI_MOUTH_FANGS',fangVerts,fangFaces,trim)
  # Original left-dominant and right-medium broad pagoda-like pauldron SHELLS.
  for letter in ('L','R'):
   arm=donor('HFV8_'+gender+'_ARMS_PAULDRON_'+letter)
@@ -311,7 +341,7 @@ for gender in ('M','F'):
   ring('HF7_'+gender+'_LEG_'+letter+'_SCULPTED_GREAVE',leg,lc,
     max(lr[0],.06)*1.13,max(lr[1],.045)*1.12,
     a[2]+.026,b[2]-.026,iron,16)
-if len(made)!=64:raise RuntimeError('SKIN7_PREMIUM_PARTS_COUNT_'+str(len(made)))
+if len(made)!=68:raise RuntimeError('SKIN7_PREMIUM_PARTS_COUNT_'+str(len(made)))
 verts=sum(len(x.data.vertices) for x in made)
 tris=sum(sum(max(0,len(f.vertices)-2) for f in o.data.polygons) for o in made)
 if verts>17000 or tris>15000:raise RuntimeError('SKIN7_MOBILE_ADDED_GEOMETRY_TOO_HEAVY')
