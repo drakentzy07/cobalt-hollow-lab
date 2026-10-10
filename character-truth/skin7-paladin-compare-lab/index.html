@@ -24,11 +24,13 @@ nav{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}.control{display:flex;align
 </div>
 <div class="control"><span id="stats">Sincronización de tres actores pendiente…</span></div>
 <section id="workshop" hidden><h2>4 · Encargo a la herrera — diseñar, reforjar o crear</h2>
-<p>Contame qué querés y adjuntá una imagen opcional. <strong>Yo modelo la pieza y preparo un GLB real</strong> en nuestros trabajos de GitHub; esta página estática no ejecuta Blender ni entrena una IA por sí sola. Podés guardar un pedido y cargar después el GLB que construyamos, sin tocar el juego.</p>
+<p>Contame qué querés y adjuntá una imagen opcional. <strong>Yo modelo la pieza y preparo un GLB real</strong> en nuestros trabajos de GitHub; esta página estática no ejecuta Blender ni interpreta formas con una IA propia: ofrece un borrador paramétrico verificable, extrae colores de la foto y exporta la receta ejecutable en Blender. La interpretación artística asistida por IA ocurre cuando enviás el encargo al chat. Podés guardar un pedido y cargar después el GLB que construyamos, sin tocar el juego.</p>
 <label for="prompt">Tu pedido (casco, hombreras, pechera, curvas, estilo, etc.)</label>
 <textarea id="prompt" placeholder="Guine, reforjá el Paladín. Quiero hombreras enormes pero proporcionadas, casco cerrado y bordes dorados, sin cambiar rig ni animaciones."></textarea>
 <div class="control"><label>Imagen de referencia <input id="reference" type="file" accept="image/png,image/jpeg,image/webp"></label><img id="referencePreview" alt="Tu referencia local" /><label>GLB hecho por Guine <input id="customGlb" type="file" accept=".glb,model/gltf-binary"></label></div>
-<div class="control"><button class="accent" id="copyOrder">📋 Copiar pedido para enviarlo aquí a ChatGPT</button><button id="saveOrder">↓ Guardar receta JSON</button><button id="clearCustom">Retirar prueba GLB</button></div>
+<div class="control"><button id="interpretOrder">⚙️ Interpretar descripción (borrador)</button><button id="extractColors">🎨 Paleta desde foto</button></div>
+<div id="recipeControls" class="control" aria-label="Control real de 7 slots"></div>
+<div class="control"><button class="accent" id="copyOrder">📋 Copiar pedido para enviarlo aquí a ChatGPT</button><button id="saveOrder">↓ Guardar receta Blender V2</button><button id="clearCustom">Retirar prueba GLB</button></div>
 <div id="order">Cuando me envíes el pedido por este chat, usaré las piezas originales de ClaudeCraft y las recetas de reforja para crear tu candidato. La cuarta estación no se aprueba ni publica automáticamente.</div></section>
 <footer>Los tres modelos comparten el mismo ciclo temporal y los 22 clips originales del Rig_Medium. Aquí se comprueba animación/encastre visual, <strong>no</strong> el combate jugable de HIGHFLY (daño, físicas, targeting, parry y dash del juego se validan al integrar la armadura en Unity). Los cambios de la cuarta estación son candidatos privados. Ninguna opción publica en el juego.</footer>
 </main><script type="module" src="./paladin-lab.mjs"></script></body></html>

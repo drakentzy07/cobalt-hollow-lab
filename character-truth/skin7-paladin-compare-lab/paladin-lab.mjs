@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {commissionRecipe,commissionIntensity,SLOTS as RECIPE_SLOTS} from './commission-recipe-v2.mjs';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
@@ -281,10 +282,60 @@ function orderText(){
   '\nReglas: reutilizar piezas nativas, fabricar cambios verdaderos con Blender, nueva receta versionada, evitar overlay Nightfall, conservar 22 movimientos originales, mostrar QA visual M/F, NO publicar gameplay ni aprobar arte sin revisar.';
 }
 $('copyOrder').onclick=async()=>{try{await navigator.clipboard.writeText(orderText());$('order').textContent='✅ Encargo copiado. Pegalo en nuestro chat y adjuntá la foto allí para que pueda verla.'}catch(e){$('order').textContent='No pude copiar automáticamente: '+String(e)}};
-$('saveOrder').onclick=()=>{try{const data={schema:'highfly.skin7.paladin-commission/1',prompt:orderText(),
- referenceFilename:$('reference').files?.[0]?.name||null,sourceSha:SOURCE_BLOB,
- nativeRig:'Rig_Medium',artistApproved:false,gameDeployed:false};
- const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
- const a=document.createElement('a');a.href=url;a.download='HIGHFLY-SKIN7-ENCARGO.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
- $('order').textContent='Receta descargada. Adjuntá también la imagen en nuestro chat para diseñar la armadura.'}catch(e){$('order').textContent=e.message}};
+// Source-native commission bridge. A reference photo can supply color palette,
+// NEVER unverified photo-to-3D shape. Text presets are bounded starter parameters.
+const sliderNames={head:'Casco',chest:'Pechera',arms:'Hombreras',hands:'Manoplas',legs:'Piernas',feet:'Botas',back:'Espalda'};
+let commissionPalette=null;
+const settings=$('recipeControls');
+function renderSliders(values){
+ settings.replaceChildren();
+ for(const slot of RECIPE_SLOTS){
+  const label=document.createElement('label');label.textContent=sliderNames[slot]+' ';
+  const inp=document.createElement('input');inp.type='range';inp.min='.15';inp.max='1.3';inp.step='.01';inp.value=values[slot];
+  inp.dataset.slot=slot;
+  const value=document.createElement('output');value.textContent=String(values[slot]);
+  inp.oninput=()=>value.textContent=inp.value;
+  label.append(inp,value);settings.append(label);
+ }
+}
+function sliderData(){return Object.fromEntries([...settings.querySelectorAll('input')].map(x=>[x.dataset.slot,Number(x.value)]))}
+renderSliders(commissionIntensity('Armadura Paladín de forja sagrada.'));
+$('interpretOrder').onclick=()=>{
+ try{renderSliders(commissionIntensity($('prompt').value));$('order').textContent='Borrador ajustado con reglas locales. Ajustá los siete controles, luego guardá la receta Blender V2. Para interpretación artística por IA, enviá texto/foto al chat.'}
+ catch(e){$('order').textContent='❌ '+e.message}
+};
+$('extractColors').onclick=async()=>{
+ try{
+  const f=$('reference').files?.[0];if(!f)throw Error('Elegí antes una imagen PNG/JPEG/WEBP');
+  const bitmap=await createImageBitmap(f);
+  const canvas=document.createElement('canvas');canvas.width=64;canvas.height=64;
+  const cx=canvas.getContext('2d',{willReadFrequently:true});cx.drawImage(bitmap,0,0,64,64);bitmap.close?.();
+  const raw=cx.getImageData(0,0,64,64).data,bins=new Map();
+  for(let i=0;i<raw.length;i+=4){
+   if(raw[i+3]<180)continue;
+   const [r,g,b]=[raw[i],raw[i+1],raw[i+2]];
+   if(Math.max(r,g,b)<28||Math.min(r,g,b)>246)continue;
+   const key=[r,g,b].map(v=>Math.min(255,Math.round(v/32)*32)).join(',');
+   bins.set(key,(bins.get(key)||0)+1);
+  }
+  const ranked=[...bins.entries()].sort((a,b)=>b[1]-a[1]).slice(0,12);
+  if(!ranked.length)throw Error('La imagen no contiene colores legibles');
+  const colors=ranked.map(([key])=>key.split(',').map(Number));
+  const hex=a=>'#'+a.map(x=>x.toString(16).padStart(2,'0')).join('');
+  const saturation=c=>Math.max(...c)-Math.min(...c);
+  const bySat=[...colors].sort((a,b)=>saturation(b)-saturation(a));
+  const bright=[...colors].sort((a,b)=>b.reduce((x,y)=>x+y,0)-a.reduce((x,y)=>x+y,0));
+  commissionPalette={enamel:hex(colors[0]),metal:hex(bright[0]),accent:hex(bySat[0])};
+  $('order').textContent='🎨 Paleta extraída de la foto: '+JSON.stringify(commissionPalette)+'. La silueta NO se deduce automáticamente de la imagen.';
+ }catch(e){$('order').textContent='❌ '+e.message}
+};
+$('saveOrder').onclick=()=>{
+ try{
+  const recipe=commissionRecipe($('prompt').value,{intensity:sliderData(),palette:commissionPalette});
+  const url=URL.createObjectURL(new Blob([JSON.stringify(recipe,null,2)],{type:'application/json'}));
+  const a=document.createElement('a');a.href=url;a.download='HIGHFLY-SKIN7-PALADIN-RECETA-BLENDER-V2.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),3000);
+  $('order').textContent='✅ Receta descargada y lista para el generador Blender V2. Pegala en el chat con tu imagen para el encargo; el laboratorio no publica ni crea un GLB remotamente por sí solo.';
+ }catch(e){$('order').textContent='❌ '+e.message}
+};
 load().catch(e=>{status('❌ No se pudo iniciar el laboratorio: '+e.message);console.error(e)});

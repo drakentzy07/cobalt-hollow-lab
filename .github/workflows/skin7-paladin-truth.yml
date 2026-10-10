@@ -4,6 +4,7 @@ on:
     branches: [highfly-skin7-paladin-native-reforge]
     paths:
       - 'character-truth/skin7-paladin-*'
+      - 'character-truth/skin7-paladin-compare-lab/**'
       - 'character-truth/skin7-native-wardrobe*'
       - '.github/workflows/skin7-paladin-truth.yml'
   workflow_dispatch:
@@ -35,6 +36,7 @@ jobs:
           set -euo pipefail
           node --check character-truth/skin7-native-wardrobe.mjs
           node character-truth/skin7-native-wardrobe.test.mjs
+          node character-truth/skin7-paladin-compare-lab/commission-recipe-v2.test.mjs
           python3 -m py_compile character-truth/skin7-paladin-source-audit.py
       - name: Fetch pinned authentic 0.44.0 ClaudeCraft modular source GLB SHA-verified
         shell: bash
