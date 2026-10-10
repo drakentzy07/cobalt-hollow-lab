@@ -4,6 +4,7 @@ on:
     branches: [highfly-skin7-paladin-native-reforge]
     paths:
       - 'character-truth/skin7-paladin-first-reforge.py'
+      - 'character-truth/skin7-paladin-visual-qa.py'
       - 'character-truth/skin7-paladin-forja-sagrada-recipe.json'
       - '.github/workflows/skin7-paladin-first-reforge.yml'
   workflow_dispatch:
@@ -28,7 +29,7 @@ jobs:
              *) echo "ERROR CHANGED OLD OR PUBLIC FILE $f"; exit 42 ;;
             esac
           done </tmp/skin7-source-reforge-files.txt
-          python3 -m py_compile character-truth/skin7-paladin-first-reforge.py
+          python3 -m py_compile character-truth/skin7-paladin-first-reforge.py character-truth/skin7-paladin-visual-qa.py
           node character-truth/skin7-native-wardrobe.test.mjs
           echo HIGHFLY_SKIN7_ORIGINAL_GAME_AND_ALL_PREVIOUS_LABS_UNCHANGED_GREEN=1
       - name: Fetch pinned TRUE original ClaudeCraft modular GLB, source hash check
@@ -97,6 +98,27 @@ jobs:
             assert data[:4]==b'glTF' and struct.unpack_from('<I',data,4)[0]==2
           print('SKIN7_NATIVE_PALADIN_REAL_ORIGINAL_REFORGE_REIMPORTABLE_GLBS_GREEN=1')
           PY
+      - name: Real original male/female Hunter body comparison vs assistant-produced Paladin source reforge
+        shell: bash
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          blender --background --factory-startup --python-exit-code 99 \
+            --python character-truth/skin7-paladin-visual-qa.py -- \
+            --source character-truth/skin7-paladin-scratch/original-paladin-blender-scratch.glb \
+            --reforged character-truth/skin7-paladin-scratch/PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb \
+            --out character-truth/skin7-paladin-scratch/visual-proof \
+            | tee /tmp/skin7-paladin-visual.log
+          grep -F 'SKIN7_REAL_CLAUDECRAFT_PALADIN_SOURCE_VS_AUTOMATIC_REFORGE_M_F_8_SCREENSHOTS_GREEN=1' /tmp/skin7-paladin-visual.log
+          test "$(find character-truth/skin7-paladin-scratch/visual-proof -name '*.png' | wc -l)" -eq 8
+      - name: Upload authentic body comparison screenshots for USER ART REVIEW, NOT APPROVAL
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN7-PALADIN-AUTOMATIC-REFORGE-8-VISUAL-REVIEW-CANDIDATES
+          path: character-truth/skin7-paladin-scratch/visual-proof/
+          retention-days: 30
+          if-no-files-found: warn
       - name: Upload private review proof only - do not deploy, do not auto approve
         if: always()
         uses: actions/upload-artifact@v4
