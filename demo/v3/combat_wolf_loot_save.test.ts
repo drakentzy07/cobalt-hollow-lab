@@ -44,7 +44,9 @@ describe('HIGHFLY V3-04 original ClaudeCraft combat, loot rights and Hunter pers
     expect(meta.copper).toBe(startingCopper);
     expect(sim.lootCorpse(wolf.id,pid),'real corpse looting must work for killer').toBe(true);
     expect(meta.copper).toBe(startingCopper+generatedCopper);
-    expect(wolf.loot?.copper).toBe(0);
+    // Vanilla interaction fully clears an exhausted corpse loot object;
+    // null is correct after a complete pickup (no residual copper).
+    expect(wolf.loot===null || wolf.loot.copper===0).toBe(true);
     const inventoryAfterLoot=JSON.stringify(meta.inventory);
     const balanceAfterLoot=meta.copper;
     sim.lootCorpse(wolf.id,pid); // replay cannot duplicate loot
