@@ -93,20 +93,47 @@ for suffix,ornament,tx,tz,goal,mat,side in DESIGNS:
   candidates.append((score,p.index))
  candidates.sort()
  if not candidates:raise RuntimeError('SKIN7_PREMIUM_EMPTY_SOURCE_FACES_'+ornament)
- selected={candidates[0][1]}
- queue=[candidates[0][1]]
- # Breadth expansion creates an actual contiguous armor ornament, not random
- # disconnected dots. All included source polygons share original edges.
- while queue and len(selected)<goal:
-  current=queue.pop(0)
-  ring=sorted((i for i in neighbors[current] if i not in selected),
-   key=lambda i: next((t for t,j in candidates if j==i),99))
-  for other in ring:
-   p=mesh.polygons[other]
-   if p.normal.y*fy<-.3:continue
-   selected.add(other);queue.append(other)
-   if len(selected)>=goal:break
- if len(selected)<4:raise RuntimeError('SKIN7_PREMIUM_DECOR_CONNECTED_FACES_TOO_FEW_'+ornament)
+ # Art direction: the chest should read as a shaped divine V, NOT a
+ # huge square golden breastplate pasted over the original native geometry.
+ if ornament=='CUIRASS_SHIELD':
+  selected=set()
+  for binno in range(7):
+   u0=(binno+.5)/7
+   desired_z=.38+.36*abs(2*u0-1)  # deep center / raised shoulder wings
+   matches=[]
+   for p in mesh.polygons:
+    c=centers[p.index];u=(c.x-mins[0])/wx;v=(c.z-mins[2])/hz
+    score=abs(u-u0)*2.8+abs(v-desired_z)*2.4+(0 if p.normal.y*fy>.06 else 1.1)
+    matches.append((score,p.index))
+   for score,pi in sorted(matches)[:3]:
+    if score<1.6:selected.add(pi)
+  if len(selected)<14:raise RuntimeError('SKIN7_PREMIUM_CHEST_V_SHAPE_NOT_GEOMETRICALLY_POSSIBLE')
+ elif ornament in ('LEFT_PAULDRON_RIDGE','RIGHT_PAULDRON_RIDGE'):
+  # A broad ridge must cover MULTIPLE native curved shoulder faces. Never
+  # accept the four tiny triangles which created nearly invisible ornaments.
+  selected={candidates[0][1]};queue=[candidates[0][1]]
+  while queue and len(selected)<goal:
+   current=queue.pop(0)
+   ring=sorted((i for i in neighbors[current] if i not in selected),
+    key=lambda i:next((q for q,j in candidates if j==i),99))
+   for pi in ring:
+    selected.add(pi);queue.append(pi)
+    if len(selected)>=goal:break
+  if len(selected)<20:raise RuntimeError('SKIN7_PREMIUM_SHOULDER_RIDGE_TOO_SMALL')
+ else:
+  selected={candidates[0][1]}
+  queue=[candidates[0][1]]
+  # Other native detail plates expand continuously across existing face edges.
+  while queue and len(selected)<goal:
+   current=queue.pop(0)
+   ring=sorted((i for i in neighbors[current] if i not in selected),
+    key=lambda i: next((t for t,j in candidates if j==i),99))
+   for other in ring:
+    p=mesh.polygons[other]
+    if p.normal.y*fy<-.3:continue
+    selected.add(other);queue.append(other)
+    if len(selected)>=goal:break
+ if len(selected)<4:raise RuntimeError('SKIN7_PREMIUM_DECOR_FACES_TOO_FEW_'+ornament)
  index_map={};surface_points=[];faces=[];weight_data={}
  # Lift ≤0.008 units along exact surface normal; never make an offset set piece
  # that flies above the original armor. Source geometry is otherwise untouched.
@@ -141,7 +168,8 @@ for suffix,ornament,tx,tz,goal,mat,side in DESIGNS:
  proof[ornament]={
   'originalPaladinSource':donor.name,'nativeSourceTriangles':len(faces),
   'uniqueDonorVertices':len(index_map),'realUnmodifiedWeightsTransferred':True,
-  'surfaceLiftUnits':offset,'connectedSourceFaces':True,
+  'surfaceLiftUnits':offset,'connectedSourceFaces':ornament!='CUIRASS_SHIELD',
+  'artDirectedShape':'seven-band-native-V' if ornament=='CUIRASS_SHIELD' else 'source-curved-pauldron-ridge' if 'PAULDRON' in ornament else 'connected-source-face-emboss',
   'influencingBones':sorted(groups),'material':mat.name,
   'zeroSourceArmorDisplaced':True}
  made.append(ob)
@@ -168,7 +196,7 @@ data={
  'details':proof,'oldStudioAndGameplayModified':False,
  'artApproved':False,'physicalS23Tested':False,'UnityGameplayCertified':False,
  'notes':['8 source-face ornament groups; preserve actual 11 Paladin wearables, no Nightfall stacked.',
- 'First artistic candidate; independent visual review, animation and clipping check still required.',
+ 'Art-directed V breastpiece and widened shoulder ridges; independent visual review, animation and clipping check still required.',
  'No actual model training nor autonomous photo-to-premium-3D generation claimed.']
 }
 report.write_text(json.dumps(data,indent=2,ensure_ascii=False))
