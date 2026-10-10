@@ -98,12 +98,20 @@ jobs:
             assert data[:4]==b'glTF' and struct.unpack_from('<I',data,4)[0]==2
           print('SKIN7_NATIVE_PALADIN_REAL_ORIGINAL_REFORGE_REIMPORTABLE_GLBS_GREEN=1')
           PY
+      - name: Ensure headless OpenGL/EGL and X virtual server for true Blender render QA
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libegl1 libgl1 libgl1-mesa-dri libopengl0 xvfb libx11-6
+          test -f /usr/lib/x86_64-linux-gnu/libEGL.so.1 || ldconfig -p | grep -F libEGL.so.1
       - name: Real original male/female Hunter body comparison vs assistant-produced Paladin source reforge
         shell: bash
         timeout-minutes: 6
         run: |
           set -euo pipefail
-          blender --background --factory-startup --python-exit-code 99 \
+          LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender --background --factory-startup --python-exit-code 99 \
             --python character-truth/skin7-paladin-visual-qa.py -- \
             --source character-truth/skin7-paladin-scratch/original-paladin-blender-scratch.glb \
             --reforged character-truth/skin7-paladin-scratch/PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb \
