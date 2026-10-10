@@ -38,6 +38,9 @@ for(const row of modes){
     sim.addItem(row.essence,row.essenceCount,pid);
     sim.addItem('smithing_flux',row.flux,pid);
     sim.addItem('worn_sword',1,pid);
+    const startingOre=sim.countItem(row.ore,pid);
+    const startingEssence=sim.countItem(row.essence,pid);
+    const startingFlux=sim.countItem('smithing_flux',pid);
     sim.equipItem('worn_sword',pid);
     expect(highflyElementalFinisherReady(p)).toBe(false);
     expect(sim.countItem(row.gem,pid)).toBe(0);
@@ -48,9 +51,11 @@ for(const row of modes){
     const crafted=resolveCraft(sim.ctx,pid,row.recipe);
     expect(crafted.ok,JSON.stringify(crafted)).toBe(true);
     expect(sim.countItem(row.gem,pid)).toBe(1);
-    expect(sim.countItem(row.ore,pid)).toBe(0);
-    expect(sim.countItem(row.essence,pid)).toBe(0);
-    expect(sim.countItem('smithing_flux',pid)).toBe(0);
+    // Donor starts with some materials. Native crafting consumes EXACTLY
+    // the recipe costs; it must not erase pre-existing inventory stacks.
+    expect(sim.countItem(row.ore,pid)).toBe(startingOre-row.oreCount);
+    expect(sim.countItem(row.essence,pid)).toBe(startingEssence-row.essenceCount);
+    expect(sim.countItem('smithing_flux',pid)).toBe(startingFlux-row.flux);
     expect(highflyWeaponElement(p)).toBe('base');
     expect(sim.inlayHighflyGem(row.gem,pid)).toMatchObject({ok:true,gem:row.mode,weaponId:'worn_sword'});
     expect(sim.countItem(row.gem,pid)).toBe(0);
