@@ -142,6 +142,7 @@ jobs:
           sparse-checkout: |
             /package.json
             /pnpm-lock.yaml
+            /patches/
             /.npmrc
 
       - name: Checkout exact P02H accepted real hunt browser smoke
