@@ -34,7 +34,7 @@ export const HIGHFLY_CHALLENGE_LOOT_POLICY = Object.freeze({
 });
 
 /** Overlevel is not a gate to combat: defeating even LV+11 stays possible.
- * Only the reward premium is capped, so an exploitable LV1-vs-LV99 kill
+ * Only the reward premium is capped, so even a LV1-vs-LV99 claim
  * cannot create unbounded materials. The skill challenge remains optional.
  */
 export function assessHighflyChallengeKill(e: HighflyChallengeKillEvidence): HighflyChallengeAssessment {
@@ -49,9 +49,15 @@ export function assessHighflyChallengeKill(e: HighflyChallengeKillEvidence): Hig
   if (!Number.isInteger(e.hunterLevel) || e.hunterLevel < 1 || e.hunterLevel > 99 ||
       !Number.isInteger(e.mobLevel) || e.mobLevel < 1 || e.mobLevel > 99)
     return denied('OUT_OF_NORMAL_LEVEL_RANGE');
-  if (!/^hf_hunt_[a-z]+_(21|30|40|50|60|70|80|90)$/.test(e.mobId))
-    return denied('NOT_HIGHFLY_NORMAL_HUNT');
-  if (e.kind !== 'normal') return denied('NOT_NORMAL_MOB');
+  const normal = /^hf_hunt_(wolf|spider|skeleton|ogre|revenant|dragonkin|elemental|stalker)_(21|30|40|50|60|70|80|90)$/.exec(e.mobId);
+  const special = /^hf_enc_(elite|captain)_(21|30|40|50|60|70|80|90)$/.exec(e.mobId);
+  if (!normal && !special) return denied('NOT_REGISTERED_HIGHFLY_HUNT');
+  const expectedKind = normal ? 'normal' : special![1];
+  if (e.kind !== expectedKind) return denied('MOB_ID_AND_KIND_MISMATCH');
+  const bandLow = Number((normal ?? special)![normal ? 2 : 2]);
+  const bandHigh = bandLow === 21 ? 29 : bandLow + 9;
+  if (e.mobLevel < bandLow || e.mobLevel > bandHigh)
+    return denied('MOB_LEVEL_OUTSIDE_AUTHORED_TEMPLATE_BAND');
   if (!e.legitimateKill || e.hunterId !== e.tapOwnerId || e.hunterId <= 0 ||
       e.contributors !== 1) return denied('KILL_CREDIT_OR_SOLO_UNVERIFIED');
   if (!(e.mobMaxHp > 0) || e.hunterDamageToMob < HIGHFLY_CHALLENGE_LOOT_POLICY.minimumHunterDamageFraction * e.mobMaxHp)
@@ -59,11 +65,14 @@ export function assessHighflyChallengeKill(e: HighflyChallengeKillEvidence): Hig
   if (e.combatSeconds < HIGHFLY_CHALLENGE_LOOT_POLICY.minimumCombatSeconds ||
       e.combatSeconds > HIGHFLY_CHALLENGE_LOOT_POLICY.maximumCombatSeconds)
     return denied('COMBAT_DURATION_NOT_VERIFIED');
-  if (gap < HIGHFLY_CHALLENGE_LOOT_POLICY.minimumGap)
+  if (gap < HIGHFLY_CHALLENGE_LOOT_POLICY.minimumGap && e.kind === 'normal')
     return denied('NO_HIGHER_LEVEL_CHALLENGE');
-  const cappedGap = Math.min(gap,HIGHFLY_CHALLENGE_LOOT_POLICY.maximumGapForScaling);
+  // Elite and local captain get a small quality-of-risk premium even at parity.
+  // Never reclassify a native world boss or quest mob as an optional captain.
+  const specialPremium = e.kind === 'captain' ? 0.20 : e.kind === 'elite' ? 0.10 : 0;
+  const cappedGap = Math.min(Math.max(2,gap),HIGHFLY_CHALLENGE_LOOT_POLICY.maximumGapForScaling);
   const multiplier = Math.min(HIGHFLY_CHALLENGE_LOOT_POLICY.maximumChanceMultiplier,
-    1 + (cappedGap - 2) * 0.0625);
+    1 + (cappedGap - 2) * 0.0625 + specialPremium);
   return {qualified:true,overlevel:gap,reagentChanceMultiplier:multiplier,reason:'VERIFIED_SOLO_OVERLEVEL'};
 }
 /** Returns a bounded new PROBABILITY; caller must replace the original reagent
