@@ -20,7 +20,7 @@ body = import_stmt + body.replace(
     "  ...WORLD_QUEST_MOBS,\n};\n\n"
     "// HIGHFLY LV21-99 opt-in hunt definitions. Original MOBS, quests and camps untouched.\n"
     "Object.assign(MOBS, applyHighflyHuntRewardTables(\n"
-    "  buildHighflyMonsterRoster(MOBS), ITEMS, ALL_RECIPES\n));\n\n"
+    "  buildHighflyMonsterRoster(MOBS), ITEMS, ALL_RECIPES_CONTENT\n));\n\n"
     "// Heroic upgraded drop variants:",
     1,
 )
