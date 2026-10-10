@@ -260,6 +260,10 @@ try {
   await page.evaluate(()=>[...document.querySelectorAll('#hf-gem-guide button')]
     .find(x=>x.textContent?.trim()==='Elaboración')?.click());
   await page.locator('#crafting-window').waitFor({state:'visible',timeout:15000});
+  await page.waitForFunction(()=>{
+    const tabs=document.querySelector('#crafting-window .crafting-tabs');
+    return tabs instanceof HTMLElement && getComputedStyle(tabs).display==='grid';
+  },null,{timeout:5000});
   result.craftingMobile=await page.evaluate(()=>{
     const win=document.querySelector('#crafting-window');
     const tabs=win?.querySelector('.crafting-tabs');
