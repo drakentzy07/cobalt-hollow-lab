@@ -11,7 +11,7 @@ const base=window.__HF_SKIN7_SUPREME_FORGE__;
 const $=id=>document.getElementById(id);
 if(!base?.state().ready||!$('skin7Panel'))throw Error('SKIN7_AUTHENTIC_ORIGINAL_FORGE_NOT_READY');
 const panel=$('skin7Panel'),section=document.createElement('details');
-section.id='skin7ArtisanEditor';section.open=true;
+section.id='skin7ArtisanEditor';section.open=false;
 section.style.cssText='padding:8px;margin:10px 0;border-radius:8px;background:#282232;border:1px solid #795e75';
 section.innerHTML=`<summary style="font-weight:700;cursor:pointer">🎨 EDICIÓN 3D POR PIEZA · Taller del artesano</summary>
  <p style="font-size:11px">Los controles modifican VÉRTICES de las piezas originales creadas en Blender y se guardan dentro del GLB final. No crean huesos ni alteran el juego.</p>
@@ -88,7 +88,7 @@ function colorMaterial(mesh,d){
  mesh.material.needsUpdate=true;
 }
 function apply(input,{push=true,silent=false}={}){
- if(meshes().length!==64)throw Error('SKIN7_FIRST_FORGE_ORIGINAL_3D_ARMOR');
+ if(meshes().length!==68)throw Error('SKIN7_FIRST_FORGE_ORIGINAL_3D_ARMOR');
  const next=normalizeDesign(input);
  const current=meshes();
  const m=current.length;
@@ -105,7 +105,7 @@ function apply(input,{push=true,silent=false}={}){
   cursor=history.length-1;
  }
  window.__HF_V19_SCENE__.render();
- if(!silent)editMsg('Forma aplicada a '+m+' mallas Blender originales (32 visibles por Hunter).\nEl GLB exportado conservará los vértices editados, materiales y piezas ocultas.');
+ if(!silent)editMsg('Forma aplicada a '+m+' mallas Blender originales (34 visibles por Hunter).\nEl GLB exportado conservará los vértices editados, materiales y piezas ocultas.');
  return {design:structuredClone(design),meshes:m,realVerticesChanged:true,
   nativeRigModified:false,gamePublicModified:false};
 }
@@ -144,7 +144,7 @@ function doDownload(filename,bytes,type='model/gltf-binary'){
 }
 async function editedGlb(kind='overlay'){
  const s=base.state(),profile=s.profile;
- if(!['crimson','guardian'].includes(profile)||meshes().length!==64)
+ if(!['crimson','guardian'].includes(profile)||meshes().length!==68)
   throw Error('SKIN7_NO_ACTIVE_EDITED_CANDIDATE');
  if(!sourceGlb)throw Error('SKIN7_ORIGINAL_BLENDER_SOURCE_UNAVAILABLE');
  const source=kind==='overlay'?sourceGlb:await (async()=>{
@@ -222,9 +222,9 @@ async function referenceChanged(){
  const blob=URL.createObjectURL(f);
  try{
   const img=new Image();img.src=blob;await img.decode();
-  const can=document.createElement('canvas');can.width=64;can.height=64;
-  const ctx=can.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,64,64);
-  const data=ctx.getImageData(0,0,64,64).data;
+  const can=document.createElement('canvas');can.width=68;can.height=68;
+  const ctx=can.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,68,68);
+  const data=ctx.getImageData(0,0,68,68).data;
   let sum=[0,0,0],weights=0;
   for(let i=0;i<data.length;i+=4){
    if(data[i+3]<128)continue;
@@ -237,7 +237,7 @@ async function referenceChanged(){
    $('s7Primary').value=hex;
    editMsg('Referencia leída LOCALMENTE: color principal aproximado '+hex+
     '. Para fabricar una forma concreta, describí casco/hombreras/pecho o modificá sus controles.');
-   if(meshes().length===64)apply(fromInputs());
+   if(meshes().length===68)apply(fromInputs());
   }else editMsg('Referencia leída sin colores dominantes confiables. Probá describir las formas en texto.');
  }finally{URL.revokeObjectURL(blob)}
 }
@@ -258,7 +258,7 @@ $('s7CatalogRefresh').onclick=safe(refresh,catalogMsg);
 $('s7CatalogOpen').onclick=safe(()=>openApproved(),catalogMsg);
 $('s7CatalogDownload').onclick=safe(()=>downloadApproved(),catalogMsg);
 $('s7Reference').onchange=safe(referenceChanged);
-$('gender').addEventListener('change',()=>{if(meshes().length===64){
+$('gender').addEventListener('change',()=>{if(meshes().length===68){
   const visible=$('gender').value==='female'?'F':'M';
   for(const mesh of meshes())mesh.visible=mesh.name.startsWith('HF7_'+visible+'_')&&
     design.visible[groupFor(mesh.name)];
@@ -267,9 +267,9 @@ $('gender').addEventListener('change',()=>{if(meshes().length===64){
 for(const k of Object.keys(CONTROLS)){
  $('s7_'+k).addEventListener('input',()=>{
   $('s7out_'+k).textContent=Number($('s7_'+k).value).toFixed(2);
-  if(meshes().length===64)safe(()=>apply(fromInputs(),{silent:true}))();
+  if(meshes().length===68)safe(()=>apply(fromInputs(),{silent:true}))();
  });
- $('s7_'+k).addEventListener('change',()=>{if(meshes().length===64){
+ $('s7_'+k).addEventListener('change',()=>{if(meshes().length===68){
   // Last input already applied; finalize edit to undo/redo history.
   safe(()=>apply(fromInputs()))();
  }});
