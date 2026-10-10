@@ -14,7 +14,7 @@ anchor_signature = """  world?: WorldContent,
 anchor_skin = "  sim.setPlayerSkin(sim.playerId, skin);"
 anchor_start = "const editorPlaytest = takeEditorPlaytestRequest();\nconst startupParams = new URLSearchParams(location.search);"
 anchor_else = "} else if (diagnosticsAutoOffline) {"
-for name,match in [('import',anchor_import),('signature',anchor_signature),('skin',anchor_skin),('start',anchor_start),('else',anchor_else)]:
+for name,match in [('import',anchor_import),('signature',anchor_signature),('start',anchor_start),('else',anchor_else)]:
     if src.count(match) != 1:
         raise SystemExit('HF_HUNT_P02C_ANCHOR_DRIFT:' + name)
 if 'highflyHuntBrowserRequest' in src or 'huntPreviewLevel?: number' in src:
@@ -24,12 +24,16 @@ src = src.replace(anchor_signature,"""  world?: WorldContent,
   seedOverride?: number,
   huntPreviewLevel?: number,
 ): Promise<void> {""",1)
-src = src.replace(anchor_skin,anchor_skin+"""
+offline_start = src.find('async function startOffline(')
+skin_at = src.find(anchor_skin, offline_start)
+if offline_start < 0 or skin_at < 0 or skin_at - offline_start > 5000:
+    raise SystemExit('HF_HUNT_P02C_OFFLINE_SKIN_ANCHOR_MISSING')
+src = src[:skin_at] + anchor_skin + """
   // P02C opt-in offline arena ONLY: set native test level, not Training stats.
   // Never reached from public/default V4 startup or ordinary offline creation.
   if (huntPreviewLevel !== undefined) {
     sim.setPlayerLevel(huntPreviewLevel, sim.playerId);
-  }""",1)
+  }""" + src[skin_at + len(anchor_skin):]
 src = src.replace(anchor_start,anchor_start+"""
 const highflyHuntPilot = highflyHuntBrowserRequest(
   startupParams, import.meta.env.VITE_HIGHFLY_HUNT_PREVIEW === '1',
