@@ -54,7 +54,7 @@ describe('HIGHFLY Monster Content Pass 01 LV21-99', () => {
     expect(mobXpValue(99,99)).toBeGreaterThan(0);
     expect(highflyMonsterKillXpMultiplier(99)).toBe(4.16);
     expect(m.xpMult).toBeGreaterThan(3);
-    expect(m.loot.some(entry => 'copper' in entry && entry.copper>75)).toBe(true);
+    expect(m.loot.some(entry => 'copper' in entry && (entry.copper ?? 0)>75)).toBe(true);
   });
 
   it('uses real native melee → death → corpse loot once for an LV60 wolf', () => {
