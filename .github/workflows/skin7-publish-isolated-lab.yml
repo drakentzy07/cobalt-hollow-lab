@@ -1,0 +1,80 @@
+name: HIGHFLY SKIN7 - PUBLISH ISOLATED REVIEW WEBSITE (NO HIGHFLY PUBLIC)
+on:
+  push:
+    branches: [highfly-skin7-paladin-native-reforge]
+    paths:
+      - '.github/workflows/skin7-publish-isolated-lab.yml'
+  workflow_dispatch:
+    inputs:
+      approved_qa_run:
+        description: 'Existing GREEN Paladin browser QA run ID, 30-day artifact'
+        required: true
+        default: '38092825964'
+permissions:
+  contents: write
+  actions: read
+jobs:
+  stage-isolated-lab:
+    if: github.repository == 'drakentzy07/cobalt-hollow-lab'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout ONLY SKIN7 SOURCE for isolated site assembly
+        uses: actions/checkout@v4
+        with:
+          ref: highfly-skin7-paladin-native-reforge
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Fetch already GREEN artifact (never rebuild untested)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPROVED_RUN: ${{ inputs.approved_qa_run || '38092825964' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/highfly-skin7-approved-site /tmp/highfly-skin7-approved-proof
+          gh run view "$APPROVED_RUN" --repo "$GITHUB_REPOSITORY" --json conclusion -q .conclusion | grep -x success
+          gh run download "$APPROVED_RUN" --repo "$GITHUB_REPOSITORY" \
+            --name HIGHFLY-SKIN7-PALADIN-V2-FOUR-STATION-BROWSER-LAB-NO-DEPLOY \
+            --dir /tmp/highfly-skin7-approved-site
+          gh run download "$APPROVED_RUN" --repo "$GITHUB_REPOSITORY" \
+            --name HIGHFLY-SKIN7-PALADIN-V2-22-CLIPS-THREE-ACTORS-BROWSER-PROOF \
+            --dir /tmp/highfly-skin7-approved-proof
+          test -s /tmp/highfly-skin7-approved-site/skin7-paladin-compare-lab/index.html
+          test -s /tmp/highfly-skin7-approved-site/skin7-paladin-compare-lab/assets/warrior_modular.glb
+          test -s /tmp/highfly-skin7-approved-site/skin7-paladin-compare-lab/assets/PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb
+          test -s /tmp/highfly-skin7-approved-proof/gate.json
+          python3 - <<'PY'
+          import json
+          j=json.load(open('/tmp/highfly-skin7-approved-proof/gate.json'))
+          assert j['green'] is True and j['actors']==3 and j['originalClipCount']==22
+          assert j['artApproved'] is False and j['gameplayPhysicsCertified'] is False
+          print('HIGHFLY_SKIN7_APPROVED_TECHNICAL_PREVIEW_ONLY_GREEN=1')
+          PY
+      - name: Prepare independent LIVE source branch, no HIGHFLY main/Pages deployment
+        env:
+          SOURCE_RUN: ${{ inputs.approved_qa_run || '38092825964' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "highfly-skin7-lab-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --orphan highfly-skin7-live-preview-site
+          git rm -rf . >/dev/null
+          cp -a /tmp/highfly-skin7-approved-site/. .
+          mkdir -p proof
+          cp -a /tmp/highfly-skin7-approved-proof/. proof/
+          touch .nojekyll
+          printf '%s\n' "$SOURCE_RUN" > GREEN_QA_SOURCE_RUN.txt
+          cat > index.html <<'EOF'
+          <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+          <title>HIGHFLY SKIN7 · Laboratorio aislado de Paladín</title><meta http-equiv="refresh" content="0;url=./skin7-paladin-compare-lab/"></head>
+          <body><a href="./skin7-paladin-compare-lab/">Abrir cuatro estaciones del laboratorio HIGHFLY SKIN7</a></body></html>
+          EOF
+          test -s v20/vendor/three/build/three.module.js
+          git add -A
+          git commit -m "preview(skin7): independently stage GREEN Paladin three Hunter browser lab run $SOURCE_RUN"
+          # GitHub branch name is intentionally NOT the gameplay main branch
+          git push -f origin HEAD:refs/heads/highfly-skin7-live-preview-site
+          echo "SKIN7_ISOLATED_WEB_SITE_BRANCH_PUBLISHED_GREEN=1"
+          echo "Repository: https://github.com/$GITHUB_REPOSITORY/tree/highfly-skin7-live-preview-site"
