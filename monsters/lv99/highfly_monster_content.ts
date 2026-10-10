@@ -45,11 +45,11 @@ function nativeMaterialLoot(source: MobTemplate, materialIds: readonly string[],
   // No quest loot, boss chase gear, event items or duplicated corpse materials.
   // One guaranteed native copper row per normal hunt + genuine donor material rows.
   const copper = source.loot.find((entry) => 'copper' in entry && entry.chance === 1);
-  const originalCopper = copper && 'copper' in copper ? copper.copper : 20;
+  const originalCopper = copper && typeof copper.copper === 'number' ? copper.copper : 20;
   const coins = Math.max(1, Math.round(originalCopper * (1 + (low - 20) * 0.075)));
   const loot: LootEntry[] = [{ copper: coins, chance: 1 }];
   for (const entry of source.loot) {
-    if ('itemId' in entry && materialIds.includes(entry.itemId) && !('questId' in entry))
+    if ('itemId' in entry && typeof entry.itemId === 'string' && materialIds.includes(entry.itemId) && !('questId' in entry))
       loot.push({ ...entry });
   }
   return loot;
