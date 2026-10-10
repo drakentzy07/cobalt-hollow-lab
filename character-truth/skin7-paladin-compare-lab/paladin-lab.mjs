@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-import {SkeletonUtils} from 'three/addons/utils/SkeletonUtils.js';
+import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 import {MeshoptDecoder} from './vendor/meshopt_decoder.module.js';
 const $=id=>document.getElementById(id);
 const status=text=>{$('status').textContent=text};
@@ -41,7 +41,7 @@ function namedBones(actor){
  return m;
 }
 function actorSource(){
- const sceneRoot=SkeletonUtils.clone(state.gltf.scene);
+ const sceneRoot=cloneSkeleton(state.gltf.scene);
  const bones=namedBones(sceneRoot);const rig=sceneRoot.getObjectByName('Rig_Medium');
  if(!rig)throw Error('No se encontró Rig_Medium');
  sceneRoot.traverse(o=>{if(o.isMesh){o.visible=false;o.frustumCulled=false}});
