@@ -10,6 +10,7 @@ on:
       - highfly-monsters-lv99-pass02d-scenery-routes
       - highfly-monsters-lv99-pass02e-native-loot-professions
       - highfly-monsters-lv99-pass02f-elite-captain-hunts
+      - highfly-monsters-lv99-pass02g-s23-eight-band-qa
   workflow_dispatch:
 permissions:
   contents: read
@@ -553,6 +554,24 @@ jobs:
           HF_HUNT_ENCOUNTER_MODE=captain node scripts/highfly_hunt_browser_smoke.mjs
           HF_HUNT_ENCOUNTER_MODE=captain HF_HUNT_PREVIEW_LEVEL=90 node scripts/highfly_hunt_browser_smoke.mjs
           echo "HF_HUNT_P02F_S23_NATIVE_ELITE_CAPTAIN_PREVIEW_GREEN=1"
+      - name: HIGHFLY P02G S23 all eight bands — 360 camera, 10 HUD slots, joystick and frame sample (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s scripts/highfly_hunt_browser_smoke.mjs
+          pnpm exec vite preview --host 127.0.0.1 --port 4173 --base=/cobalt-hollow-lab/ > ../highfly-hunt-p02g-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/?hfHunt=21 > /dev/null; then break; fi
+            sleep 1
+          done
+          for level in 21 30 40 50 60 70 80 90; do
+            echo "P02G_S23_NATIVE_BAND_START=$level"
+            HF_HUNT_PREVIEW_LEVEL="$level" HF_HUNT_S23_MATRIX=1 node scripts/highfly_hunt_browser_smoke.mjs
+          done
+          echo "HF_HUNT_P02G_S23_EIGHT_BANDS_WEBGL_TOUCH_CAMERA_HUD_GREEN=1"
       - name: V3-02 real PC browser native Professions and Crafting UI from donor
         working-directory: upstream
         shell: bash
@@ -624,6 +643,7 @@ jobs:
             highfly-hunt-p02f-*-s23-preview.png
             highfly-hunt-p02f-*-s23-failure.png
             highfly-hunt-p02c-preview.log
+            highfly-hunt-p02g-preview.log
           if-no-files-found: warn
           retention-days: 14
 
