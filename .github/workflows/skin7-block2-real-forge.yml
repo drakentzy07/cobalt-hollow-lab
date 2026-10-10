@@ -80,6 +80,7 @@ jobs:
             blender --background --factory-startup --python-exit-code 99 \
               --python character-truth/skin7-supreme-forge-blender.py -- \
               --source character-truth/skin7-frozen-v20/assets/HIGHFLY-NIGHTFALL-rigged-body.glb \
+              --head-fixture character-truth/skin7-native-head-fit-fixture.json \
               --overlay "character-truth/skin7-generated/HIGHFLY-SKIN7-${profile}-overlay.glb" \
               --combined "character-truth/skin7-generated/HIGHFLY-SKIN7-${profile}-combined.glb" \
               --manifest "character-truth/skin7-block2-evidence/${profile}-forge.json" \
