@@ -108,7 +108,14 @@ describe('HIGHFLY P02F opt-in regional elites and captain fights',()=>{
 
   it('rejects mutated/public worlds, missing captains, and duplicate native registrations',()=>{
     const base=createHighflyHuntBrowserSession(21).world;
-    expect(()=>addHighflyHuntEncounterWorld(base,'hf_hunt_woods_21','captain',MOBS))
+    // An untouched four-camp scenic island IS valid. A second mutation,
+    // however, must fail closed instead of doubling the boss population.
+    const once=addHighflyHuntEncounterWorld(base,'hf_hunt_woods_21','captain',MOBS);
+    expect(once.camps).toHaveLength(5);
+    expect(()=>addHighflyHuntEncounterWorld(once,'hf_hunt_woods_21','captain',MOBS))
+      .toThrow('HF_HUNT_ENCOUNTER_UNSAFE_WORLD');
+    expect(()=>addHighflyHuntEncounterWorld({...base,roads:[]},
+      'hf_hunt_woods_21','captain',MOBS))
       .toThrow('HF_HUNT_ENCOUNTER_UNSAFE_WORLD');
     expect(()=>addHighflyHuntEncounterWorld(BUILTIN_WORLD,'hf_hunt_woods_21','captain',MOBS))
       .toThrow('HF_HUNT_ENCOUNTER_UNSAFE_WORLD');
