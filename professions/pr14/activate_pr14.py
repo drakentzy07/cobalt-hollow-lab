@@ -64,17 +64,22 @@ add('src/sim/sim.ts',
     "    return player.id;",
     "restore ATK4 from character equipment payload")
 add('src/sim/items.ts',
+    "  // Recompute only after both sides of the swap exist. An ownership quest\n"
+    "  // must never see its item disappear between the bag and the equipment slot.\n"
+    "  ctx.onInventoryChangedForQuests(meta);\n"
+    "  // The all-slots deed reads equipment, so re-check this player's triggers.\n"
+    "  ctx.markDeedsDirty(meta.entityId);\n"
+    "  refreshModsForEquipmentChange(ctx, meta);\n"
+    "  recalcPlayerStats(p, meta.cls, meta.equipment, ctx.playerMods(meta), meta.equipmentInstance);\n",
+    "  // Recompute only after both sides of the swap exist. An ownership quest\n"
+    "  // must never see its item disappear between the bag and the equipment slot.\n"
+    "  ctx.onInventoryChangedForQuests(meta);\n"
+    "  // The all-slots deed reads equipment, so re-check this player's triggers.\n"
     "  ctx.markDeedsDirty(meta.entityId);\n"
     "  refreshModsForEquipmentChange(ctx, meta);\n"
     "  recalcPlayerStats(p, meta.cls, meta.equipment, ctx.playerMods(meta), meta.equipmentInstance);\n"
-    "  ctx.emit({",
-    "  ctx.markDeedsDirty(meta.entityId);\n"
-    "  refreshModsForEquipmentChange(ctx, meta);\n"
-    "  recalcPlayerStats(p, meta.cls, meta.equipment, ctx.playerMods(meta), meta.equipmentInstance);\n"
-    "  syncHighflyEquippedGem(ctx, meta.entityId);\n"
-    "  ctx.emit({",
+    "  syncHighflyEquippedGem(ctx, meta.entityId);\n",
     "equip/swap ATK4 sync")
-
 add('src/highfly/game_c1_runtime.ts',
     "function configureElement(): void {",
     """function equippedPhysicalGem(): HighflyWeaponElement {
