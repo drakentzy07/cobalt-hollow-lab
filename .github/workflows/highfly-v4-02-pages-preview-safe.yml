@@ -240,11 +240,13 @@ jobs:
                   except UnicodeDecodeError:
                       shutil.copy2(p,dest)
                   else:
-                      content=raw.replace(old,new)
-                      # Shared hashed GLBs/textures/audio must remain at the old
-                      # root path (checked byte-identical above).
-                      for folder in shared_prefixes:
-                          content=content.replace('/cobalt-hollow-lab/v4-02/'+folder+'/', '/cobalt-hollow-lab/'+folder+'/')
+                      # The asset resolver builds MEDIA URLs dynamically from
+                      # Vite BASE, so rebasing every '/cobalt-hollow-lab/'
+                      # string incorrectly points GLBs/cursors at /v4-02/.
+                      # Keep runtime public roots pointing at the byte-verified
+                      # original shared resources. Only compiled /assets/
+                      # modules are isolated under the preview subtree.
+                      content=raw.replace('/cobalt-hollow-lab/assets/', '/cobalt-hollow-lab/v4-02/assets/')
                       dest.write_text(content,encoding='utf-8')
               else:
                   shutil.copy2(p,dest)
