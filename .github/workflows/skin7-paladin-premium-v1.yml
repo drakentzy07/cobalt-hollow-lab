@@ -1,0 +1,158 @@
+name: HIGHFLY SKIN7 - PALADIN LEGENDARY PREMIUM V1 SOURCE FORGE (PRIVATE / NO DEPLOY)
+on:
+  push:
+    branches: [highfly-skin7-paladin-premium-v1]
+    paths:
+      - character-truth/skin7-paladin-premium-v1-recipe.json
+      - character-truth/skin7-paladin-premium-details.py
+      - character-truth/skin7-paladin-premium-visual.py
+      - .github/workflows/skin7-paladin-premium-v1.yml
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  forge-premium-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: No changed legacy code / true source provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=3a62b69f475205139327cee32db85b90437d61a0
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | tee /tmp/skin7-premium-only-new-files.txt
+          while IFS= read -r f; do
+            case "$f" in
+              character-truth/skin7-paladin-premium-v1-recipe.json|character-truth/skin7-paladin-premium-details.py|character-truth/skin7-paladin-premium-visual.py|.github/workflows/skin7-paladin-premium-v1.yml) ;;
+              *) echo "NO-GO: older engine, lab or game unexpectedly modified: $f"; exit 42 ;;
+            esac
+          done </tmp/skin7-premium-only-new-files.txt
+          python3 -m py_compile character-truth/skin7-paladin-premium-details.py character-truth/skin7-paladin-premium-visual.py
+          node character-truth/skin7-native-wardrobe.test.mjs
+          echo HIGHFLY_SKIN7_V10_V20_OLDER_LABS_AND_GAME_UNMODIFIED_GREEN=1
+      - name: Download SHA-verified immutable ClaudeCraft 0.44.0 original Hunter GLB
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/skin7-premium-evidence
+          curl -fLsS --retry 3 --connect-timeout 15 --max-time 160 \
+           https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb \
+           -o character-truth/skin7-premium-evidence/warrior_modular.glb
+          test "$(git hash-object character-truth/skin7-premium-evidence/warrior_modular.glb)" = 'e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2'
+          python3 character-truth/skin7-paladin-source-audit.py \
+            character-truth/skin7-premium-evidence/warrior_modular.glb \
+            character-truth/skin7-premium-evidence/native-paladin-truth.json
+          echo HIGHFLY_SKIN7_IMMUTABLE_CLAUDECRAFT_PALADIN_SOURCE_GREEN=1
+      - name: Convert original Meshopt native to Blender scratch without editing originals
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer@0.23.0
+          node character-truth/integration-modules/prepare-native-body.mjs \
+            character-truth/skin7-premium-evidence/warrior_modular.glb \
+            character-truth/skin7-premium-evidence/decoded-native-scratch.glb
+      - name: Download official Blender 4.2.23 LTS with SHA-256 manifest
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          VER=4.2.23
+          TAR="blender-${VER}-linux-x64.tar.xz"
+          ROOT="https://download.blender.org/release/Blender4.2"
+          mkdir -p "$RUNNER_TEMP/skin7-premium-blender" "$RUNNER_TEMP/skin7-premium-cache"
+          cd "$RUNNER_TEMP/skin7-premium-cache"
+          curl -fLsS --retry 3 --max-time 390 "$ROOT/$TAR" -o "$TAR"
+          curl -fLsS --retry 3 --max-time 50 "$ROOT/blender-${VER}.sha256" -o SHA256SUMS
+          grep -F "$TAR" SHA256SUMS | head -1 | sha256sum --check
+          tar -xJf "$TAR" --strip-components=1 -C "$RUNNER_TEMP/skin7-premium-blender"
+          echo "$RUNNER_TEMP/skin7-premium-blender" >> "$GITHUB_PATH"
+      - name: Forging Stage I - actually reshape all 11 original Paladin equipment meshes from premium recipe
+        shell: bash
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          blender --background --factory-startup --python-exit-code 99 \
+           --python character-truth/skin7-paladin-first-reforge.py -- \
+           --source character-truth/skin7-premium-evidence/decoded-native-scratch.glb \
+           --recipe character-truth/skin7-paladin-premium-v1-recipe.json \
+           --baseline character-truth/skin7-premium-evidence/PALADIN-ORIGINAL-11-PIECES.glb \
+           --reforge character-truth/skin7-premium-evidence/PALADIN-SOURCE-REFORGED-PREMIUM-11.glb \
+           --report character-truth/skin7-premium-evidence/source-reforge.json \
+           | tee /tmp/skin7-premium-source-reforge.log
+          grep -F 'SKIN7_REAL_CLAUDECRAFT_PALADIN_11_MESHES_REFORGED_FROM_NATIVE_SOURCE_GREEN=1' /tmp/skin7-premium-source-reforge.log
+      - name: Forging Stage II - embossed geometrical details conform exactly to original weighted armor faces
+        shell: bash
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          blender --background --factory-startup --python-exit-code 99 \
+           --python character-truth/skin7-paladin-premium-details.py -- \
+           --source character-truth/skin7-premium-evidence/PALADIN-SOURCE-REFORGED-PREMIUM-11.glb \
+           --output character-truth/skin7-premium-evidence/PALADIN-LEGENDARY-PREMIUM-V1-REVIEW.glb \
+           --report character-truth/skin7-premium-evidence/premium-report.json \
+           --recipe character-truth/skin7-paladin-premium-v1-recipe.json \
+           | tee /tmp/skin7-premium-details.log
+          grep -F 'SKIN7_PALADIN_PREMIUM_REAL_SOURCE_ARMOR_WITH_NATIVE_WEIGHTED_8_DETAIL_EMBOSSES_GREEN=1' /tmp/skin7-premium-details.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,struct
+          p=Path('character-truth/skin7-premium-evidence')
+          r=json.loads((p/'premium-report.json').read_text())
+          assert r['authoredOriginalNativeArmorMeshCount']==11
+          assert r['newSourceConformingNativeRiggedDetailMeshes']==8
+          assert r['originalRigBoneCount']==23 and r['allDetailsCopyExactSourceVertexWeights']
+          assert r['artApproved'] is False and r['UnityGameplayCertified'] is False
+          f=p/'PALADIN-LEGENDARY-PREMIUM-V1-REVIEW.glb'
+          raw=f.read_bytes();assert raw[:4]==b'glTF' and struct.unpack_from('<I',raw,4)[0]==2
+          length=struct.unpack_from('<I',raw,12)[0]
+          doc=json.loads(raw[20:20+length])
+          nodes=[x.get('name','') for x in doc.get('nodes',[])]
+          assert all(any(x.startswith('HF7RF_PALADIN_'+n) for x in nodes) for n in ['HEAD','CHEST','ARML','ARMR','BACK'])
+          assert len([x for x in nodes if x.startswith('HF7PM_PALADIN_')])>=8
+          skins=doc.get('skins',[])
+          assert skins and any(len(s.get('joints',[]))==23 for s in skins)
+          print('HIGHFLY_SKIN7_PREMIUM_V1_GENUINE_23_BONE_SKINNED_GLTF_INTEGRITY_GREEN=1')
+          PY
+      - name: Prepare headless graphics for real original Hunter comparison
+        shell: bash
+        timeout-minutes: 4
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libegl1 libgl1 libgl1-mesa-dri libopengl0 xvfb libx11-6
+      - name: ART QA - Eight neutral proof images M/F, front and profile, original versus Premium V1 candidate
+        shell: bash
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a blender --background --factory-startup --python-exit-code 99 \
+           --python character-truth/skin7-paladin-premium-visual.py -- \
+           --source character-truth/skin7-premium-evidence/decoded-native-scratch.glb \
+           --reforged character-truth/skin7-premium-evidence/PALADIN-LEGENDARY-PREMIUM-V1-REVIEW.glb \
+           --out character-truth/skin7-premium-evidence/premium-visual-proof \
+           | tee /tmp/skin7-premium-visual.log
+          grep -F 'SKIN7_REAL_NATIVE_PALADIN_PREMIUM_V1_SOURCE_VS_8_MF_VISUAL_SHOTS_GREEN=1' /tmp/skin7-premium-visual.log
+          test "$(find character-truth/skin7-premium-evidence/premium-visual-proof -name '*.png' | wc -l)" -eq 8
+      - name: Upload candidate 3D geometry and provenance - ONLY FOR ART REVIEW, not public gameplay
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN7-PALADIN-PREMIUM-V1-19-NATIVE-WEIGHTED-PARTS-PRIVATE-NO-DEPLOY
+          path: |
+            character-truth/skin7-premium-evidence/PALADIN-ORIGINAL-11-PIECES.glb
+            character-truth/skin7-premium-evidence/PALADIN-LEGENDARY-PREMIUM-V1-REVIEW.glb
+            character-truth/skin7-premium-evidence/premium-report.json
+            character-truth/skin7-premium-evidence/source-reforge.json
+            character-truth/skin7-paladin-premium-v1-recipe.json
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Upload eight M/F visual comparison captures regardless of final artistic approval
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN7-PALADIN-PREMIUM-V1-8-VISUAL-SHOTS-ART-REVIEW
+          path: character-truth/skin7-premium-evidence/premium-visual-proof/
+          retention-days: 30
+          if-no-files-found: warn
