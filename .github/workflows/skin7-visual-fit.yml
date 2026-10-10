@@ -1,0 +1,35 @@
+name: HIGHFLY SKIN7 - Actual Hunter Head Visual Fit Evidence (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-skin7-supreme-forge-core]
+    paths: ['character-truth/skin7-visual-fit-gate.cjs','.github/workflows/skin7-visual-fit.yml']
+  workflow_dispatch:
+permissions: {contents: read, actions: read}
+jobs:
+  real-fit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use exact previously Green SKIN7 preview (no Blender rerun)
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-SKIN7-BLOCK2-SUPREME-ARTISAN-FORGE-REAL-GLB-CANDIDATE-NO-DEPLOY
+          run-id: 38056994412
+          github-token: ${{ github.token }}
+          path: highfly-skin7-supreme-preview
+      - name: Install Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Capture REAL source head bounds and authored helmet intersection for M/F
+        run: |
+          python3 -m http.server 4277 --bind 127.0.0.1 --directory highfly-skin7-supreme-preview >/tmp/skin7-fit-server.log 2>&1 &
+          sleep 2
+          node character-truth/skin7-visual-fit-gate.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-SKIN7-SOURCE-HEAD-VS-ONI-HELMET-TRUTH
+          path: character-truth/skin7-visual-truth.json
+          retention-days: 30
