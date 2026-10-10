@@ -64,7 +64,12 @@ add('src/sim/sim.ts',
     "    return player.id;",
     "restore ATK4 from character equipment payload")
 add('src/sim/items.ts',
-    "  recalcPlayerStats(p, meta.cls, meta.equipment, ctx.playerMods(meta), meta.equipmentInstance);\n  ctx.emit({",
+    "  ctx.markDeedsDirty(meta.entityId);\n"
+    "  refreshModsForEquipmentChange(ctx, meta);\n"
+    "  recalcPlayerStats(p, meta.cls, meta.equipment, ctx.playerMods(meta), meta.equipmentInstance);\n"
+    "  ctx.emit({",
+    "  ctx.markDeedsDirty(meta.entityId);\n"
+    "  refreshModsForEquipmentChange(ctx, meta);\n"
     "  recalcPlayerStats(p, meta.cls, meta.equipment, ctx.playerMods(meta), meta.equipmentInstance);\n"
     "  syncHighflyEquippedGem(ctx, meta.entityId);\n"
     "  ctx.emit({",
