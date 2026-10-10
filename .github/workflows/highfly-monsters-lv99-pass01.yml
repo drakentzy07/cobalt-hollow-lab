@@ -6,6 +6,7 @@ on:
     branches:
       - highfly-monsters-lv99-content-pass01
       - highfly-monsters-lv99-pass02b-hunt-instance
+      - highfly-monsters-lv99-pass02c-preview-entry
   workflow_dispatch:
 permissions:
   contents: read
@@ -408,8 +409,11 @@ jobs:
           cp ../monsters/lv99/highfly_hunt_scenarios.test.ts tests/highfly_hunt_scenarios.test.ts
           cp ../monsters/lv99/highfly_hunt_playtest_world.ts src/highfly/monsters/hunt_playtest_world.ts
           cp ../monsters/lv99/highfly_hunt_playtest_world.test.ts tests/highfly_hunt_playtest_world.test.ts
+          cp ../monsters/lv99/highfly_hunt_browser_pilot.ts src/highfly/monsters/hunt_browser_pilot.ts
+          cp ../monsters/lv99/highfly_hunt_browser_pilot.test.ts tests/highfly_hunt_browser_pilot.test.ts
           python ../monsters/lv99/activate_content.py
           python ../monsters/lv99/adjust_donor_gathering_test.py
+          python ../monsters/lv99/activate_hunt_preview.py
           grep -q "buildHighflyMonsterRoster(MOBS)" src/sim/data.ts
           git diff --check
           echo "HIGHFLY_MONSTER_64_NATIVE_TEMPLATES_ACTIVATED=1"
@@ -425,6 +429,9 @@ jobs:
       - name: HIGHFLY MONSTERS P02B — real opt-in world spawn, corpse, save and gate tests
         working-directory: upstream
         run: pnpm exec vitest run tests/highfly_hunt_playtest_world.test.ts
+      - name: HIGHFLY MONSTERS P02C — native terrain, exact URL opt-in world tests
+        working-directory: upstream
+        run: pnpm exec vitest run tests/highfly_hunt_browser_pilot.test.ts
       # The six worn-apex fixtures were authored with ClaudeCraft MAX_LEVEL=20.
       # Its item_level_req clamps source-25 crafted gear to that old level cap.
       # PF-6 correctly raises MAX_LEVEL to 99, so source-25 gear now requires 25.
@@ -494,6 +501,7 @@ jobs:
         env:
           VITE_COBALT_OFFLINE: "1"
           VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+          VITE_HIGHFLY_HUNT_PREVIEW: "1" # Only this isolated NO-DEPLOY workflow
         shell: bash
         run: |
           set -euo pipefail
@@ -509,6 +517,21 @@ jobs:
           test -s dist/index.html
           test -d dist/media
           echo "V3_02_FULL_GOLDEN_MEDIA_BUILD_GREEN=1"
+      - name: HIGHFLY P02C S23 emulated real hunt arena WebGL + joystick (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../monsters/lv99/hunt_browser_smoke.mjs scripts/highfly_hunt_browser_smoke.mjs
+          pnpm exec vite preview --host 127.0.0.1 --port 4173 --base=/cobalt-hollow-lab/ > ../highfly-hunt-p02c-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/?hfHunt=21 > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_hunt_browser_smoke.mjs
+          echo "HF_HUNT_P02C_S23_OFFLINE_NATIVE_PLAYTEST_GREEN=1"
       - name: V3-02 real PC browser native Professions and Crafting UI from donor
         working-directory: upstream
         shell: bash
@@ -577,6 +600,9 @@ jobs:
             demo-v3-06-s23-world.png
             demo-v3-06-s23-failure.png
             demo-v3-06-preview.log
+            highfly-hunt-p02c-s23-preview.png
+            highfly-hunt-p02c-s23-failure.png
+            highfly-hunt-p02c-preview.log
           if-no-files-found: warn
           retention-days: 14
 
