@@ -202,10 +202,36 @@ jobs:
                   dest.parent.mkdir(parents=True,exist_ok=True)
                   shutil.copy2(m,dest)
                   media_added+=1
+          # Share additional static directories only when their paths never
+          # overwrite a differing public file. Vite's JS/CSS assets stay
+          # preview-local: their compiled BASE URLs require rebasing.
+          shared_prefixes={'media'}
+          extra_shared_bytes=0
+          for folder in sorted(x for x in source.iterdir() if x.is_dir() and x.name not in {'media','assets'}):
+              files=[f for f in folder.rglob('*') if f.is_file()]
+              if not files: continue
+              collision=False
+              for f in files:
+                  candidate=public/f.relative_to(source)
+                  if candidate.exists() and sha256(f.read_bytes()).digest()!=sha256(candidate.read_bytes()).digest():
+                      collision=True
+                      break
+              if collision:
+                  print(f'HIGHFLY_V4_02_KEEP_SEPARATE_PREFIX={folder.name}')
+                  continue
+              shared_prefixes.add(folder.name)
+              for f in files:
+                  candidate=public/f.relative_to(source)
+                  extra_shared_bytes+=f.stat().st_size
+                  if not candidate.exists():
+                      candidate.parent.mkdir(parents=True,exist_ok=True)
+                      shutil.copy2(f,candidate)
+          print('HIGHFLY_V4_02_SHARED_PREFIXES='+','.join(sorted(shared_prefixes)))
+          print(f'HIGHFLY_V4_02_EXTRA_SHARED_BYTES={extra_shared_bytes}')
           for p in source.rglob('*'):
               if not p.is_file(): continue
               rel=p.relative_to(source)
-              if rel.parts[0]=='media': continue  # all hashed media at unchanged root
+              if rel.parts[0] in shared_prefixes: continue
               dest=target/rel
               dest.parent.mkdir(parents=True, exist_ok=True)
               if p.suffix.lower() in extensions:
@@ -217,7 +243,8 @@ jobs:
                       content=raw.replace(old,new)
                       # Shared hashed GLBs/textures/audio must remain at the old
                       # root path (checked byte-identical above).
-                      content=content.replace('/cobalt-hollow-lab/v4-02/media/', '/cobalt-hollow-lab/media/')
+                      for folder in shared_prefixes:
+                          content=content.replace('/cobalt-hollow-lab/v4-02/'+folder+'/', '/cobalt-hollow-lab/'+folder+'/')
                       dest.write_text(content,encoding='utf-8')
               else:
                   shutil.copy2(p,dest)
