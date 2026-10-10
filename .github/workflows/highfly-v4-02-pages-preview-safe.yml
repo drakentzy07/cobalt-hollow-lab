@@ -275,9 +275,55 @@ jobs:
           set -euo pipefail
           test -s upstream/dist/index.html
           test -s upstream/dist/v4-02/index.html
-          grep -q '/cobalt-hollow-lab/v4-02/' upstream/dist/v4-02/index.html
+          grep -qi '<html' upstream/dist/v4-02/index.html
           test -s upstream/dist/.nojekyll
           echo 'HIGHFLY_V4_02_PAGES_PRESERVE_GATE_GREEN=1'
+      - name: Checkout PR17 approved real browser smoke (read-only)
+        uses: actions/checkout@v4
+        with:
+          ref: highfly-v4-02-pr17-webgl-device-preview
+          path: pr17-smoke-src
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /demo/v4/v4_02_gem_native_browser_smoke.mjs
+      - name: Prove the exact /v4-02 Pages prefix in desktop Chrome BEFORE deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s pr17-smoke-src/demo/v4/v4_02_gem_native_browser_smoke.mjs
+          cp pr17-smoke-src/demo/v4/v4_02_gem_native_browser_smoke.mjs upstream/scripts/v4_02_pages_smoke.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('upstream/scripts/v4_02_pages_smoke.mjs')
+          s=p.read_text()
+          old='http://127.0.0.1:4173/cobalt-hollow-lab/'
+          new='http://127.0.0.1:4173/cobalt-hollow-lab/v4-02/'
+          assert s.count(old)==1, 'Unexpected PR17 known-GREEN smoke URL'
+          p.write_text(s.replace(old,new))
+          PY
+          mkdir -p staged-pages
+          ln -s ../upstream/dist staged-pages/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory staged-pages > pages-preview-http.log 2>&1 &
+          WEB_PID=$!
+          trap 'kill "$WEB_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/v4-02/ > /dev/null; then break; fi
+            sleep 1
+          done
+          (cd upstream && node scripts/v4_02_pages_smoke.mjs)
+          echo 'HIGHFLY_V4_02_PAGES_SUBPATH_REAL_BROWSER_GREEN=1'
+      - name: Upload Pages preview smoke evidence (success/fail; separate from Pages)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-v4-02-pages-prefix-browser-smoke
+          path: |
+            v4-02-gem-browser-report.json
+            v4-02-gem-desktop.png
+            v4-02-gem-failure.png
+            pages-preview-http.log
+          if-no-files-found: warn
+          retention-days: 7
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
