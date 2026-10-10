@@ -8,7 +8,7 @@ body. Produces 2 separate GLBs: intact 11 piece Paladin armor as baseline
 and one modified prototype of those SAME source meshes, per true seven slots.
 These are legitimate mesh shape modifications but not a finished legendary skin.
 """
-import bpy,sys,math,json,hashlib
+import bpy,sys,math,json,hashlib,runpy
 from pathlib import Path
 args=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else []
 def flag(name):
@@ -20,9 +20,9 @@ def validate_recipe(source):
  if source is None:return None
  obj=json.loads(source.read_text())
  required={'schema','id','title','brief','sourceUpstreamCommit','sourceGlbBlobSha1',
-  'sourceRig','palette','slots','artistApproved','automatedForger','gameDeployAllowed'}
+  'sourceRig','palette','slots','hardSurface','artistApproved','automatedForger','gameDeployAllowed'}
  if set(obj)!=required:raise RuntimeError('PALADIN_RECIPE_SCHEMA_FIELD_DRIFT')
- if obj['schema']!='highfly.skin7.paladin-source-reforge-recipe/1' or not isinstance(obj['id'],str):
+ if obj['schema']!='highfly.skin7.paladin-source-reforge-recipe/2' or not isinstance(obj['id'],str):
   raise RuntimeError('PALADIN_RECIPE_IDENTITY_INVALID')
  if obj['sourceUpstreamCommit']!='9b57e49c9676d75962700f828cc00a50a9a988b5' or obj['sourceGlbBlobSha1']!='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2' or obj['sourceRig']!='Rig_Medium':
   raise RuntimeError('PALADIN_RECIPE_MUST_USE_TRUE_SOURCE')
@@ -41,6 +41,9 @@ def validate_recipe(source):
    v=values[q]
    if type(v) not in (int,float) or not math.isfinite(v) or not -.4<=v<=.4:
     raise RuntimeError('PALADIN_SLOT_UNSAFE_'+q+'_'+name)
+ hard=obj['hardSurface']
+ if not isinstance(hard,dict) or set(hard)!={'style','slotIntensity'} or hard['style']!='sacred-vanguard-hard-surface-v2':raise RuntimeError('SKIN7_V2_STYLE_UNSUPPORTED')
+ if set(hard['slotIntensity'])!=slots or any(type(n) not in (int,float) or not math.isfinite(n) or not .15<=n<=1.3 for n in hard['slotIntensity'].values()):raise RuntimeError('SKIN7_V2_INVALID_SLOT_SCULPT_INTENSITIES')
  pal=obj['palette']
  if not isinstance(pal,dict) or set(pal)!={'enamel','metal','accent'} or any(
   not isinstance(v,str) or len(v)!=7 or v[0]!='#' or not all(c in '0123456789abcdefABCDEF' for c in v[1:]) for v in pal.values()):
@@ -105,6 +108,7 @@ mshader=metal.node_tree.nodes.get('Principled BSDF')
 mshader.inputs['Base Color'].default_value=(*color_hex(pal['metal']),1)
 mshader.inputs['Metallic'].default_value=.86
 mshader.inputs['Roughness'].default_value=.29
+SCULPT=runpy.run_path(str(Path(__file__).with_name('skin7-paladin-geometry-v2.py')))['sculpt_native_paladin']
 made=[];partProof={}
 for slot,name,donor in objects:
  copy=donor.copy();copy.data=donor.data.copy()
@@ -136,7 +140,8 @@ for slot,name,donor in objects:
  # Simple PBR initial pass; MATERIAL WORK is NOT user-approved premium quality.
  copy.data.materials.clear();copy.data.materials.append(metal if slot in ('hands','legs','feet') else blue)
  for face in copy.data.polygons:face.material_index=0
- partProof[slot+'::'+name]={'sourceNode':name,'reforgedNode':copy.name,
+ sculptProof=SCULPT(copy,slot,RECIPE['hardSurface']['slotIntensity'][slot])
+ partProof[slot+'::'+name]={'sourceNode':name,'reforgedNode':copy.name,'topologySculpt':sculptProof,
   'nativeWeightGroups':sorted(g.name for g in copy.vertex_groups),
   'sourceVertices':len(oldcoords),'changedVertices':changes,
   'sourceLocalMin':lo,'sourceLocalMax':hi,'localScaleAroundOriginalCenter':scale,'curvature':curve,'flare':flare}
@@ -149,6 +154,8 @@ report={'schema':'highfly.skin7.original-paladin-reforge-first-pass/1',
  'recipeBrief':RECIPE['brief'] if RECIPE else None,
  'recipeDrivenGeometry':RECIPE is not None,
  'recipeControlsActuallyApplied':RECIPE is not None,
+ 'actualSculptTopologyGenerated':True,'sculptPanelsAdded':sum(v['topologySculpt']['motifPanels'] for v in partProof.values()),
+ 'newWeightedVertices':sum(v['topologySculpt']['weightedNewVertices'] for v in partProof.values()),
  'materialsReplacedOnExportForPrototype':True,
  'sourcePath':'public/models/chars/modular/warrior_modular.glb',
  'nativeRig':'Rig_Medium','nativeJoints':len(BONES),'paladinSourceMeshes':11,
@@ -160,7 +167,7 @@ report={'schema':'highfly.skin7.original-paladin-reforge-first-pass/1',
  'baselineSha256':hashlib.sha256(base.read_bytes()).hexdigest(),
  'reforgeSha256':hashlib.sha256(reforge.read_bytes()).hexdigest(),
  'limitations':[
-  'Only bounded geometric first-pass reshaping, not completed premium Paladin artwork',
+  'Hard-surface geometry is genuinely added into the 11 native skinned armor meshes, but artist approval is still pending',
   'Palette is a development PBR material; source GLB remained untouched',
   'Native character base body must be separately composed using original modularPartNames',
   'Collision/fit and animations on real complete player require visual QA and end-to-end staging',
@@ -169,3 +176,4 @@ report={'schema':'highfly.skin7.original-paladin-reforge-first-pass/1',
 out.write_text(json.dumps(report,ensure_ascii=False,indent=2))
 print('SKIN7_REAL_CLAUDECRAFT_PALADIN_11_MESHES_REFORGED_FROM_NATIVE_SOURCE_GREEN=1')
 print('SKIN7_SOURCE_7_SLOTS_NEW_VERTICES='+str(sum(v['changedVertices'] for v in partProof.values())))
+print('SKIN7_V2_NATIVE_SCULPTED_WEIGHTED_NEW_VERTICES='+str(report['newWeightedVertices']))

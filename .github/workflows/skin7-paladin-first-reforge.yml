@@ -4,6 +4,7 @@ on:
     branches: [highfly-skin7-paladin-native-reforge]
     paths:
       - 'character-truth/skin7-paladin-first-reforge.py'
+      - 'character-truth/skin7-paladin-geometry-v2.py'
       - 'character-truth/skin7-paladin-visual-qa.py'
       - 'character-truth/skin7-paladin-forja-sagrada-recipe.json'
       - '.github/workflows/skin7-paladin-first-reforge.yml'
@@ -29,7 +30,7 @@ jobs:
              *) echo "ERROR CHANGED OLD OR PUBLIC FILE $f"; exit 42 ;;
             esac
           done </tmp/skin7-source-reforge-files.txt
-          python3 -m py_compile character-truth/skin7-paladin-first-reforge.py character-truth/skin7-paladin-visual-qa.py
+          python3 -m py_compile character-truth/skin7-paladin-first-reforge.py character-truth/skin7-paladin-visual-qa.py character-truth/skin7-paladin-geometry-v2.py
           node character-truth/skin7-native-wardrobe.test.mjs
           echo HIGHFLY_SKIN7_ORIGINAL_GAME_AND_ALL_PREVIOUS_LABS_UNCHANGED_GREEN=1
       - name: Fetch pinned TRUE original ClaudeCraft modular GLB, source hash check
@@ -88,7 +89,11 @@ jobs:
           assert report['paladinSourceMeshes']==11 and report['reforgedMeshes']==11
           assert report['sourceOriginalGeometryReused'] and not report['NightfallOverlaid']
           assert report['recipeDrivenGeometry'] and report['recipeControlsActuallyApplied']
-          assert report['appliedRecipe']=='paladin-forja-sagrada-prototipo'
+          assert report['appliedRecipe']=='paladin-forja-sagrada-nativa-v2'
+          assert report['actualSculptTopologyGenerated']
+          assert report['sculptPanelsAdded']>=30
+          assert report['newWeightedVertices']>=300
+          assert all(x['topologySculpt']['weightedNewVertices']>0 and x['topologySculpt']['nativeSkinnedSameMesh'] for x in report['sourceBasedModifiedMeshes'].values())
           assert report['sourceBasedModifiedMeshes']['arms::Armor_paladin_ArmL']['curvature']>.1
           assert report['sourceBasedModifiedMeshes']['head::Armor_paladin_Head']['flare']>0
           assert report['nativeJoints']==23
@@ -117,13 +122,13 @@ jobs:
             --reforged character-truth/skin7-paladin-scratch/PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb \
             --out character-truth/skin7-paladin-scratch/visual-proof \
             | tee /tmp/skin7-paladin-visual.log
-          grep -F 'SKIN7_REAL_CLAUDECRAFT_PALADIN_SOURCE_VS_AUTOMATIC_REFORGE_M_F_8_SCREENSHOTS_GREEN=1' /tmp/skin7-paladin-visual.log
-          test "$(find character-truth/skin7-paladin-scratch/visual-proof -name '*.png' | wc -l)" -eq 8
+          grep -F 'SKIN7_REAL_CLAUDECRAFT_PALADIN_SOURCE_VS_AUTOMATIC_REFORGE_M_F_16_SCREENSHOTS_GREEN=1' /tmp/skin7-paladin-visual.log
+          test "$(find character-truth/skin7-paladin-scratch/visual-proof -name '*.png' | wc -l)" -eq 16
       - name: Upload authentic body comparison screenshots for USER ART REVIEW, NOT APPROVAL
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-SKIN7-PALADIN-AUTOMATIC-REFORGE-8-VISUAL-REVIEW-CANDIDATES
+          name: HIGHFLY-SKIN7-PALADIN-V2-HARDSURFACE-16-VISUAL-REVIEW-CANDIDATES
           path: character-truth/skin7-paladin-scratch/visual-proof/
           retention-days: 30
           if-no-files-found: warn

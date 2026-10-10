@@ -81,8 +81,9 @@ for g in ('M','F'):
   # Fixed shared framing for original/reforged: union prevents cropped helmet spikes.
   focus,dims=measure(body+[parts[n] for n in originalNames]+forged)
   scale=max(dims.z*1.52,dims.x*1.95,dims.y*1.55,3.65)
-  for angle in ('front','side'):
-   offset=Vector((0,-7,3)) if angle=='front' else Vector((7,0,3))
+  for angle in ('front','threequarter','side','back'):
+   offset={'front':Vector((0,-7,3)),'threequarter':Vector((5,-7,3)),
+           'side':Vector((7,0,3)),'back':Vector((0,7,3))}[angle]
    camera.location=focus+offset
    camera.rotation_euler=(focus-camera.location).to_track_quat('-Z','Y').to_euler()
    camera.data.ortho_scale=scale
@@ -101,4 +102,4 @@ for g in ('M','F'):
  'sourceTextureFaithfulness':False,
  'notes':'CPU Workbench neutral diagnostic visuals; source textures stripped from safe Blender scratch GLB. Compare silhouettes and fit only. NOT official polished look.'
 },indent=2))
-print('SKIN7_REAL_CLAUDECRAFT_PALADIN_SOURCE_VS_AUTOMATIC_REFORGE_M_F_8_SCREENSHOTS_GREEN=1')
+print('SKIN7_REAL_CLAUDECRAFT_PALADIN_SOURCE_VS_AUTOMATIC_REFORGE_M_F_16_SCREENSHOTS_GREEN=1')
