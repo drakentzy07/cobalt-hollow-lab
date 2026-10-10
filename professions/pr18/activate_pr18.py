@@ -65,10 +65,40 @@ function ensureHighflyGemMoreShortcut(): void {
   grid.prepend(button);
 }
 
+/** PR18: native crafting tabs can be repainted with inline donor styling.
+ * Reassert ONLY touch presentation while that same native window is open.
+ * No alternate recipes, actions, items, stats or scroll engine.
+ */
+function ensureHighflyCraftingTouchLayout(): void {
+  if (!document.body.classList.contains('mobile-touch') ||
+      innerWidth <= innerHeight || innerHeight > 470) return;
+  const root = document.getElementById('crafting-window');
+  if (!root || getComputedStyle(root).display === 'none') return;
+  const tabs = root.querySelector<HTMLElement>('.crafting-tabs');
+  if (!tabs) return;
+  tabs.style.setProperty('display', 'grid', 'important');
+  tabs.style.setProperty('grid-template-columns', 'repeat(auto-fit,minmax(108px,1fr))', 'important');
+  tabs.style.setProperty('gap', '4px', 'important');
+  tabs.style.setProperty('overflow-x', 'visible', 'important');
+  tabs.style.setProperty('overflow-y', 'visible', 'important');
+  tabs.style.setProperty('max-height', 'none', 'important');
+  for (const tab of tabs.querySelectorAll<HTMLElement>('.crafting-tab')) {
+    tab.style.setProperty('white-space', 'normal', 'important');
+    tab.style.setProperty('min-width', '0', 'important');
+    tab.style.setProperty('overflow-wrap', 'anywhere', 'important');
+    tab.style.setProperty('box-sizing', 'border-box', 'important');
+  }
+  const identity = root.querySelector<HTMLElement>('.profession-identity-card');
+  if (identity) {
+    identity.style.setProperty('max-height', 'min(68px,20vh)', 'important');
+    identity.style.setProperty('overflow-y', 'auto', 'important');
+  }
+}
+
 """
 s=s.replace(anchor,insert+anchor,1)
 swap("  paintGemSeat();\n}\n\nfunction skillInfo(",
-     "  paintGemSeat();\n  ensureHighflyGemMoreShortcut();\n}\n\nfunction skillInfo(",
+     "  paintGemSeat();\n  ensureHighflyGemMoreShortcut();\n  ensureHighflyCraftingTouchLayout();\n}\n\nfunction skillInfo(",
      "hook shortcut into idempotent utility lane")
 p.write_text(s,encoding='utf-8')
 print('HIGHFLY_PR18_GEM_VISIBLE_NATIVE_MORE_SHORTCUT=1')
