@@ -134,8 +134,10 @@ def ring(name,d,c,rx,ry,z0,z1,mat0,segments=18):
    faces.append((a,b,b+segments,a+segments))
  return author(name,d,verts,faces,mat0)
 for gender in ('M','F'):
- torso=donor('HFV12_'+gender+'_CHEST_ABDOMINAL_CUIRASS')
+ torso=donor('HFV8_'+gender+'_CHEST_NIGHTFALL')
+ abdomen=donor('HFV12_'+gender+'_CHEST_ABDOMINAL_CUIRASS')
  low,hi,c,r=bounds(torso);w=max(r[0],.13);h=max(r[2],.16)
+ alo,ahi,ac,ar=bounds(abdomen);waistfront=alo[1]-.038;waistwidth=max(ar[0],.13)
  front=low[1]-.038
  # Broader armored torso with original curves, raised edges and actual concave detail.
  def cuirass(t,u):
@@ -271,15 +273,15 @@ for gender in ('M','F'):
  # Moveable short samurai kusazuri faulds, using torso donor hips skin influence.
  for k,tag in [(-1,'L'),(0,'CENTER'),(1,'R')]:
   for layer in range(2):
-   xbase=c[0]+k*w*.52
-   ztop=low[2]+.14-.035*layer
-   width=w*(.24 if k else .36)*p['skirts']
+   xbase=ac[0]+k*waistwidth*.52
+   ztop=alo[2]+.14-.035*layer
+   width=waistwidth*(.24 if k else .36)*p['skirts']
    def fauld(t,u,xbase=xbase,ztop=ztop,width=width,k=k,layer=layer):
     xx=(u-.5)*2
     return (xbase+xx*width*(1+.11*t),
-       front-.06-.028*layer +.064*(xx*xx)+.012*abs(k),
+       waistfront-.06-.028*layer +.064*(xx*xx)+.012*abs(k),
        ztop-(.14+.06*layer)*t-.027*(1-xx*xx))
-   shell('HF7_'+gender+'_WAIST_KUSAZURI_'+tag+'_'+str(layer),torso,5,7,fauld,
+   shell('HF7_'+gender+'_WAIST_KUSAZURI_'+tag+'_'+str(layer),abdomen,5,7,fauld,
       iron if layer==0 else trim,.019)
  # A real rear cuirass derived from existing Nightfall rear geometry, not a floating fin.
  rear=donor('HFV12_'+gender+'_BACK_RAISED_SPINE')
