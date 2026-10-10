@@ -30,8 +30,8 @@ swap("  el.textContent = elementGlyph(effective);\n  el.title =",
   }
   symbol.textContent = elementGlyph(effective);
   el.title =""", "visible GEM caption in existing seat")
-swap("      ? 'Sin gema elemental activa'\n      : \`Gema \${effective.toUpperCase()} activa · ATK4 habilitado\`;",
-     "      ? 'GEM · Abrir gemas y forja (ATK4 se habilita con gema incrustada)'\n      : \`GEM \${effective.toUpperCase()} · ATK4 habilitado\`;",
+swap("      ? 'Sin gema elemental activa'\n      : `Gema ${effective.toUpperCase()} activa · ATK4 habilitado`;",
+     "      ? 'GEM · Abrir gemas y forja (ATK4 se habilita con gema incrustada)'\n      : `GEM ${effective.toUpperCase()} · ATK4 habilitado`;",
      "human readable aria label")
 anchor="function ensureUtilityLane(): void {"
 assert s.count(anchor)==1, "PR18 missing utility seat"
