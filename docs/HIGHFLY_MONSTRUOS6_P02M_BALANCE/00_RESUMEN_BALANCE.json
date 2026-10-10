@@ -1,0 +1,75 @@
+{
+  "audit": "P02M_REAL_CHASSIS_PLUS_REAL_MOB_TEMPLATE",
+  "certifiedBalanced": false,
+  "source": "PINNED_CLAUDECRAFT_0_44_0_PLUS_P02I_MONSTERS_PLUS_PF6_LEVEL_CAP",
+  "playerClasses": [
+    "warrior",
+    "paladin",
+    "hunter",
+    "rogue",
+    "priest",
+    "shaman",
+    "mage",
+    "warlock",
+    "druid"
+  ],
+  "classesTested": 9,
+  "monsterTemplateVariants": 80,
+  "combatMatrixRows": 21600,
+  "notASimulationOf": [
+    "player_potions",
+    "abilities",
+    "combos",
+    "dash",
+    "parry",
+    "active_avoidance",
+    "mob_special_AI",
+    "crafting_gear_LV21_99",
+    "trained_stats",
+    "S23_physical_touch_latency",
+    "world_map_navigation"
+  ],
+  "baselineEquipment": "NO_EQUIPMENT — PESSIMISTIC CHASSIS AUDIT ONLY",
+  "killTimeOver120Seconds": 13782,
+  "noAvoidanceSurvivalShare": 0.084,
+  "overlevelPlus5Assumed70AvoidanceSurvivalShare": 0.354,
+  "xpCurveSamples": [
+    {
+      "level": 1,
+      "required": 400
+    },
+    {
+      "level": 20,
+      "required": 23200
+    },
+    {
+      "level": 21,
+      "required": 25000
+    },
+    {
+      "level": 40,
+      "required": 77200
+    },
+    {
+      "level": 60,
+      "required": 167200
+    },
+    {
+      "level": 80,
+      "required": 293200
+    },
+    {
+      "level": 98,
+      "required": 437400
+    },
+    {
+      "level": 99,
+      "required": 446200
+    }
+  ],
+  "level40Vs45": {
+    "baseXp": 324,
+    "sameLevelXp": 245
+  },
+  "status": "AUDIT_GREEN_BALANCE_NOT_YET_CERTIFIED_NEEDS_GEAR_TRAINING_SKILLS_E2E"
+}
