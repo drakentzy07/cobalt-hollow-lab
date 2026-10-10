@@ -10,7 +10,7 @@ import { getActiveWorldContent, getContentGeneration } from '../../sim/data';
 import { BIOME_PALETTE } from '../../render/terrain_palette';
 
 export const HIGHFLY_HUNT_RENDER_BIOMES = [
-  'haunt','marsh','peaks','frost','ember','garden','gale','haunt',
+  'haunt','marsh','peaks','frost','volcano','garden','gale','cave',
 ] as const;
 const HUNT_ZONE_RE = /^hf_hunt_(woods_21|fen_30|crag_40|frost_50|ash_60|garden_70|storm_80|abyss_90)_playtest$/;
 let previousGeneration = -1;
@@ -30,7 +30,7 @@ export function highflyHuntActiveGroundPalette(): (typeof BIOME_PALETTE)[keyof t
 
 /** Fail-closed: no unknown/reordered biome or donor zone is painted. */
 export function highflyHuntPaletteCoverage(): boolean {
-  const names = ['haunt','marsh','peaks','frost','ember','garden','gale','haunt'];
+  const names = ['haunt','marsh','peaks','frost','volcano','garden','gale','cave'];
   return HIGHFLY_HUNT_RENDER_BIOMES.every((v,i)=>v===names[i])
     && Object.keys(BIOME_PALETTE).includes('haunt')
     && Object.keys(BIOME_PALETTE).includes('frost')
