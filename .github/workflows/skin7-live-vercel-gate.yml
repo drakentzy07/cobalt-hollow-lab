@@ -1,0 +1,40 @@
+name: HIGHFLY SKIN7 - LIVE VERCEL BROWSER SMOKE QA (ISOLATED)
+on:
+  push:
+    branches: [highfly-skin7-paladin-native-reforge]
+    paths:
+      - '.github/workflows/skin7-live-vercel-gate.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  live-paladin-preview-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Chromium and deterministic browser dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify real HTTPS preview, assets, native 22 clips, and 4 commissioned stations
+        shell: bash
+        timeout-minutes: 7
+        env:
+          HF_PALADIN_LAB_URL: https://highfly-skin7-paladin-atelier.vercel.app/
+          HF_PALADIN_PROOF: character-truth/skin7-live-vercel-proof
+        run: |
+          set -euo pipefail
+          curl -fIsS "$HF_PALADIN_LAB_URL" | head -15
+          node character-truth/skin7-paladin-compare-lab/browser-qa.cjs
+          test -s character-truth/skin7-live-vercel-proof/gate.json
+          grep -F '"green": true' character-truth/skin7-live-vercel-proof/gate.json
+      - name: Preserve screens and error diagnostics for live public URL
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN7-VERCEL-LIVE-22-CLIPS-QA-CAPTURES
+          path: character-truth/skin7-live-vercel-proof/
+          if-no-files-found: warn
+          retention-days: 21
