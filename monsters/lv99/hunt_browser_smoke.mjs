@@ -60,6 +60,8 @@ try {
     const specials=mobs.filter(e=>e.templateId.startsWith('hf_enc_'));
     return {
       hunterLevel:sim.player?.level, playerName:sim.player?.name,
+      hunterHp:sim.player?.hp, hunterMaxHp:sim.player?.maxHp,
+      biome:sim.cfg.world?.zones?.[0]?.biome,
       zone:sim.cfg.world?.zones?.[0]?.id,
       levelRange:sim.cfg.world?.zones?.[0]?.levelRange,
       campIds:sim.cfg.world?.camps?.map(c=>c.mobId),
@@ -74,6 +76,14 @@ try {
       refugeTents:sim.cfg.world?.props?.tents?.length??0,
     };
   });
+  const expectedHuntBiomes={21:'haunt',30:'marsh',40:'peaks',50:'frost',
+    60:'volcano',70:'garden',80:'gale',90:'cave'};
+  if(result.world?.biome!==expectedHuntBiomes[LEVEL]||
+     !Number.isFinite(result.world?.hunterMaxHp)||
+     result.world.hunterMaxHp<=0||
+     result.world?.hunterHp<=0)
+    throw Error('P02I hunt zone biome or live trial Hunter HP mismatch: '+
+      JSON.stringify(result.world));
   if(!result.world||result.world.hunterLevel!==LEVEL||
      result.world.levelRange?.[0]!==LEVEL||
      !result.world.zone?.endsWith('_playtest')||
@@ -171,15 +181,17 @@ try {
     if(result.cameraYawDelta<.004)throw Error('S23 HUNT free 360 camera blocked');
     result.stage='S23-frame-sample';
     result.frameMsMedian=await page.evaluate(()=>new Promise(resolve=>{
-      const frames=[],tick=(t)=>{
-        if(frames.length)frames[frames.length-1]=t-frames[frames.length-1];
-        if(frames.length>=20){
-          const sorted=frames.filter(x=>x>0).sort((a,b)=>a-b);
+      const frameIntervals=[];
+      let lastFrameTime=null;
+      const tick=(time)=>{
+        if(lastFrameTime!==null&&time>lastFrameTime)
+          frameIntervals.push(time-lastFrameTime);
+        lastFrameTime=time;
+        if(frameIntervals.length>=45){
+          const sorted=frameIntervals.filter(ms=>ms>0&&Number.isFinite(ms))
+            .sort((a,b)=>a-b);
           resolve(sorted[Math.floor(sorted.length/2)]??null);
-        }else {
-          frames.push(t);
-          requestAnimationFrame(tick);
-        }
+        }else requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
     }));

@@ -6,7 +6,7 @@
 import type { CampDef, MobTemplate, ZoneDef } from '../../sim/types';
 import { HIGHFLY_MONSTER_BANDS, highflyMonsterId } from './level99';
 
-type HuntBiome = 'haunt' | 'marsh' | 'peaks' | 'frost' | 'ember' | 'garden' | 'gale' | 'vale';
+type HuntBiome = 'haunt' | 'marsh' | 'peaks' | 'frost' | 'volcano' | 'garden' | 'gale' | 'cave';
 export interface HighflyHuntScenario {
   readonly id: string;
   readonly title: string;
@@ -26,10 +26,10 @@ export const HIGHFLY_HUNT_SCENARIOS: readonly HighflyHuntScenario[] = [
   { id: 'hf_hunt_fen_30', title: 'Marisma del Velo', minLevel: 30, maxLevel: 39, biome: 'marsh', tierLabel: 'D', families: ['spider', 'wolf', 'revenant', 'elemental'], populationBudget: 8, requiresWorldGate: true },
   { id: 'hf_hunt_crag_40', title: 'Desfiladero Colmillo', minLevel: 40, maxLevel: 49, biome: 'peaks', tierLabel: 'C', families: ['ogre', 'stalker', 'skeleton', 'elemental'], populationBudget: 8, requiresWorldGate: true },
   { id: 'hf_hunt_frost_50', title: 'Tundra del Silencio', minLevel: 50, maxLevel: 59, biome: 'frost', tierLabel: 'B', families: ['wolf', 'stalker', 'revenant', 'elemental'], populationBudget: 8, requiresWorldGate: true },
-  { id: 'hf_hunt_ash_60', title: 'Yermo de las Escamas', minLevel: 60, maxLevel: 69, biome: 'ember', tierLabel: 'B-A', families: ['dragonkin', 'ogre', 'elemental', 'revenant'], populationBudget: 8, requiresWorldGate: true },
+  { id: 'hf_hunt_ash_60', title: 'Yermo de las Escamas', minLevel: 60, maxLevel: 69, biome: 'volcano', tierLabel: 'B-A', families: ['dragonkin', 'ogre', 'elemental', 'revenant'], populationBudget: 8, requiresWorldGate: true },
   { id: 'hf_hunt_garden_70', title: 'Jardín Marchito', minLevel: 70, maxLevel: 79, biome: 'garden', tierLabel: 'A', families: ['spider', 'wolf', 'elemental', 'revenant'], populationBudget: 8, requiresWorldGate: true },
   { id: 'hf_hunt_storm_80', title: 'Cresta del Trueno', minLevel: 80, maxLevel: 89, biome: 'gale', tierLabel: 'S', families: ['elemental', 'dragonkin', 'ogre', 'stalker'], populationBudget: 8, requiresWorldGate: true },
-  { id: 'hf_hunt_abyss_90', title: 'Orilla del Abismo', minLevel: 90, maxLevel: 99, biome: 'haunt', tierLabel: 'S-Nacional', families: ['dragonkin', 'revenant', 'skeleton', 'ogre'], populationBudget: 8, requiresWorldGate: true },
+  { id: 'hf_hunt_abyss_90', title: 'Orilla del Abismo', minLevel: 90, maxLevel: 99, biome: 'cave', tierLabel: 'S-Nacional', families: ['dragonkin', 'revenant', 'skeleton', 'ogre'], populationBudget: 8, requiresWorldGate: true },
 ] as const;
 
 export interface HighflyHuntPlacement {

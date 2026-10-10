@@ -12,6 +12,7 @@ on:
       - highfly-monsters-lv99-pass02f-elite-captain-hunts
       - highfly-monsters-lv99-pass02g-s23-eight-band-qa
       - highfly-monsters-lv99-pass02h-pages-package-safe
+      - highfly-monsters-lv99-pass02i-biome-survival-fps
   workflow_dispatch:
 permissions:
   contents: read
@@ -420,11 +421,14 @@ jobs:
           cp ../monsters/lv99/highfly_hunt_playtest_world.test.ts tests/highfly_hunt_playtest_world.test.ts
           cp ../monsters/lv99/highfly_hunt_browser_pilot.ts src/highfly/monsters/hunt_browser_pilot.ts
           cp ../monsters/lv99/highfly_hunt_scenery.ts src/highfly/monsters/hunt_scenery.ts
+          cp ../monsters/lv99/highfly_hunt_render_palette.ts src/highfly/monsters/hunt_render_palette.ts
+          cp ../monsters/lv99/highfly_hunt_render_palette.test.ts tests/highfly_hunt_render_palette.test.ts
           cp ../monsters/lv99/highfly_hunt_browser_pilot.test.ts tests/highfly_hunt_browser_pilot.test.ts
           cp ../monsters/lv99/highfly_hunt_scenery.test.ts tests/highfly_hunt_scenery.test.ts
           python ../monsters/lv99/activate_content.py
           python ../monsters/lv99/adjust_donor_gathering_test.py
           python ../monsters/lv99/activate_hunt_preview.py
+          python ../monsters/lv99/activate_hunt_render_palette.py
           grep -q "buildHighflyMonsterRoster(MOBS)" src/sim/data.ts
           git diff --check
           echo "HIGHFLY_MONSTER_64_NATIVE_TEMPLATES_ACTIVATED=1"
@@ -449,6 +453,9 @@ jobs:
       - name: HIGHFLY MONSTERS P02E — 64 real recipe-consumer loot rows and native corpse bag save
         working-directory: upstream
         run: pnpm exec vitest run tests/highfly_hunt_rewards.test.ts
+      - name: HIGHFLY MONSTERS P02I — 8 truly distinct native biome palettes, default world unchanged
+        working-directory: upstream
+        run: pnpm exec vitest run tests/highfly_hunt_render_palette.test.ts
       - name: HIGHFLY MONSTERS P02F — 16 native elite/captain instances, real combat, corpse and save
         working-directory: upstream
         run: pnpm exec vitest run tests/highfly_hunt_encounters.test.ts
@@ -656,7 +663,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-MONSTER-P02H-PAGES-SUBPATH-NO-DEPLOY
+          name: HIGHFLY-MONSTER-P02I-PAGES-SUBPATH-NO-DEPLOY
           path: monster-pages-candidate/
           if-no-files-found: warn
           retention-days: 14

@@ -36,6 +36,15 @@ src = src[:insert_at] + """
   // Never grants Training/Core points or touches ordinary offline saves.
   if (huntPreviewLevel !== undefined) {
     sim.setPlayerLevel(huntPreviewLevel, sim.playerId);
+    // PASS02-I: browser-island-only training dummy survival budget.
+    // Three times the native HP helps humans test 1-2-3, dodges and corpse
+    // loot before dying. NO extra STR/AGI/VIT/PER/INT, XP, weapons, items,
+    // persistent saves or core progression are granted by this QA modifier.
+    const huntTester = sim.entities.get(sim.playerId);
+    if (huntTester && huntTester.maxHp > 0) {
+      huntTester.maxHp = Math.round(huntTester.maxHp * 3);
+      huntTester.hp = huntTester.maxHp;
+    }
   }""" + src[insert_at:]
 src = src.replace(anchor_start,anchor_start+"""
 const highflyHuntPilot = highflyHuntBrowserRequest(
@@ -50,4 +59,4 @@ src = src.replace(anchor_else,"""} else if (highflyHuntPilot) {
   );
 } else if (diagnosticsAutoOffline) {""",1)
 main.write_text(src,encoding='utf-8')
-print('HIGHFLY_P02C_BROWSER_HUNT_GATE_AND_NATIVE_OFFLINE_ENTRY=1')
+print('HIGHFLY_P02I_HUNTER_TEST_SURVIVAL_ONLY_V4_UNCHANGED=1')
