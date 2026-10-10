@@ -6,6 +6,7 @@ on:
       - 'character-truth/skin7-paladin-first-reforge.py'
       - 'character-truth/skin7-paladin-geometry-v2.py'
       - 'character-truth/skin7-paladin-visual-qa.py'
+      - 'character-truth/skin7-paladin-compare-lab/**'
       - 'character-truth/skin7-paladin-forja-sagrada-recipe.json'
       - '.github/workflows/skin7-paladin-first-reforge.yml'
   workflow_dispatch:
@@ -13,7 +14,7 @@ permissions: {contents: read}
 jobs:
   paladin-source-geometry-forge:
     runs-on: ubuntu-latest
-    timeout-minutes: 19
+    timeout-minutes: 38
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
@@ -124,6 +125,63 @@ jobs:
             | tee /tmp/skin7-paladin-visual.log
           grep -F 'SKIN7_REAL_CLAUDECRAFT_PALADIN_SOURCE_VS_AUTOMATIC_REFORGE_M_F_16_SCREENSHOTS_GREEN=1' /tmp/skin7-paladin-visual.log
           test "$(find character-truth/skin7-paladin-scratch/visual-proof -name '*.png' | wc -l)" -eq 16
+      - name: Package authentic Three.js four-station native Paladin review (NO PAGES, NO GAME DEPLOY)
+        shell: bash
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false three@0.180.0 meshoptimizer@0.23.0 playwright@1.55.0
+          SITE=highfly-skin7-paladin-review
+          mkdir -p "$SITE/skin7-paladin-compare-lab/assets" "$SITE/v20/vendor/three/build" "$SITE/v20/vendor"
+          cp character-truth/skin7-paladin-compare-lab/index.html "$SITE/skin7-paladin-compare-lab/"
+          cp character-truth/skin7-paladin-compare-lab/paladin-lab.mjs "$SITE/skin7-paladin-compare-lab/"
+          cp character-truth/skin7-paladin-compare-lab/commission-recipe-v2.mjs "$SITE/skin7-paladin-compare-lab/"
+          cp character-truth/skin7-paladin-scratch/warrior_modular.glb "$SITE/skin7-paladin-compare-lab/assets/"
+          cp character-truth/skin7-paladin-scratch/PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb "$SITE/skin7-paladin-compare-lab/assets/"
+          cp node_modules/meshoptimizer/meshopt_decoder.module.js "$SITE/v20/vendor/"
+          cp node_modules/three/build/three.module.js "$SITE/v20/vendor/three/build/"
+          cp node_modules/three/build/three.core.js "$SITE/v20/vendor/three/build/"
+          cp -R node_modules/three/examples "$SITE/v20/vendor/three/"
+          test -s "$SITE/v20/vendor/three/examples/jsm/libs/basis/basis_transcoder.wasm"
+          cat > "$SITE/START-LOCAL-LAB.txt" <<'EOF'
+          HIGHFLY SKIN7 V2 - isolated, no public deploy, no gameplay changes.
+          From the extracted directory run: python3 -m http.server 8080
+          Then open http://localhost:8080/skin7-paladin-compare-lab/
+          The official source Hunter, 22 clips and reforged armor are contained here.
+          Mobile viewport QA in CI is NOT real hardware testing or artistic approval.
+          EOF
+      - name: Install real Chromium for S23 Ultra LANDSCAPE-sized emulated browser QA
+        shell: bash
+        timeout-minutes: 9
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium
+      - name: Run ALL 22 original animations and three-actor four-station GPU visual browser tests
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4278 --bind 127.0.0.1 --directory highfly-skin7-paladin-review >/tmp/skin7-paladin-browser-http.log 2>&1 &
+          sleep 2
+          HF_PALADIN_LAB_URL=http://127.0.0.1:4278/skin7-paladin-compare-lab/ node character-truth/skin7-paladin-compare-lab/browser-qa.cjs | tee /tmp/skin7-paladin-browser.log
+          grep -F 'HIGHFLY_SKIN7_REAL_BASE_PALADIN_ORIGINAL_PALADIN_REFORGED_22_ANIMATIONS_4_STATION_LAB_BROWSER_GREEN=1' /tmp/skin7-paladin-browser.log
+          test -s character-truth/skin7-paladin-scratch/live-browser-proof/gate.json
+      - name: Archive isolated four-station review site, only as CI artifact (NO PAGES)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN7-PALADIN-V2-FOUR-STATION-BROWSER-LAB-NO-DEPLOY
+          path: highfly-skin7-paladin-review/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Archive actual 22 clip and mobile comparison screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN7-PALADIN-V2-22-CLIPS-THREE-ACTORS-BROWSER-PROOF
+          path: character-truth/skin7-paladin-scratch/live-browser-proof/
+          retention-days: 30
+          if-no-files-found: warn
       - name: Upload authentic body comparison screenshots for USER ART REVIEW, NOT APPROVAL
         if: always()
         uses: actions/upload-artifact@v4

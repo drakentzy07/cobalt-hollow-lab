@@ -43,11 +43,12 @@ fs.mkdirSync(dir,{recursive:true});
  ok(s.sourceBlobSha1==='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2','Frozen authentic source provenance');
  ok(s.gameDeployment===false,'Never touches playable public HIGHFLY game');
  ok(s.gameMechanicsSimulated===false,'Do not pretend native clips simulate hitboxes/damage/parry mechanics');
- for(const name of ['Idle','Walking_A','Running_A','1H_Melee_Attack_Chop','Block','Jump_Idle','Spellcast_Shoot','Death_A']){
+ for(const name of s.clips){
    s=await p.evaluate(n=>{window.__HF_SKIN7_LAB__.selectClip(n,.27);return window.__HF_SKIN7_LAB__.state()},name);
    ok(s.clip===name,'Synchronized original animation '+name);
  }
  ok(await p.locator('#viewer canvas').count()===1,'Single GPU canvas for all actors');
+ ok(checks.filter(x=>x.startsWith('Synchronized original animation ')).length===22,'Every native animation clip was evaluated');
  await p.locator('#all').click();
  await p.screenshot({path:dir+'/01-all-three-actors-male.png'});
  await p.locator('#gender').selectOption('F');
@@ -60,6 +61,10 @@ fs.mkdirSync(dir,{recursive:true});
  await p.locator('#original').click();await p.screenshot({path:dir+'/03-paladin-original-front.png'});
  await p.locator('#reforged').click();await p.screenshot({path:dir+'/04-paladin-reforged-front.png'});
  await p.locator('#side').click();await p.screenshot({path:dir+'/05-paladin-reforged-side.png'});
+ await p.locator('#back').click();await p.screenshot({path:dir+'/06-paladin-reforged-back.png'});
+ await p.locator('#all').click();
+ await p.evaluate(()=>window.__HF_SKIN7_LAB__.selectClip('1H_Melee_Attack_Chop',.42));
+ await p.screenshot({path:dir+'/07-three-actors-melee-attack-pose.png'});
  await p.locator('#commission').click();
  ok(await p.locator('#workshop').isVisible(),'Fourth commissioned custom armor station is functional');
  await p.locator('#prompt').fill('Forja un paladin de armadura celestial con hombreras curvas gigantes, bordes oro y casco proporcional.');
