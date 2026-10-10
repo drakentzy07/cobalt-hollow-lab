@@ -88,7 +88,7 @@ function colorMaterial(mesh,d){
  mesh.material.needsUpdate=true;
 }
 function apply(input,{push=true,silent=false}={}){
- if(meshes().length!==54)throw Error('SKIN7_FIRST_FORGE_ORIGINAL_3D_ARMOR');
+ if(meshes().length!==64)throw Error('SKIN7_FIRST_FORGE_ORIGINAL_3D_ARMOR');
  const next=normalizeDesign(input);
  const current=meshes();
  const m=current.length;
@@ -105,7 +105,7 @@ function apply(input,{push=true,silent=false}={}){
   cursor=history.length-1;
  }
  window.__HF_V19_SCENE__.render();
- if(!silent)editMsg('Forma aplicada a '+m+' mallas Blender originales (27 visibles por Hunter).\nEl GLB exportado conservará los vértices editados, materiales y piezas ocultas.');
+ if(!silent)editMsg('Forma aplicada a '+m+' mallas Blender originales (32 visibles por Hunter).\nEl GLB exportado conservará los vértices editados, materiales y piezas ocultas.');
  return {design:structuredClone(design),meshes:m,realVerticesChanged:true,
   nativeRigModified:false,gamePublicModified:false};
 }
@@ -144,7 +144,7 @@ function doDownload(filename,bytes,type='model/gltf-binary'){
 }
 async function editedGlb(kind='overlay'){
  const s=base.state(),profile=s.profile;
- if(!['crimson','guardian'].includes(profile)||meshes().length!==54)
+ if(!['crimson','guardian'].includes(profile)||meshes().length!==64)
   throw Error('SKIN7_NO_ACTIVE_EDITED_CANDIDATE');
  if(!sourceGlb)throw Error('SKIN7_ORIGINAL_BLENDER_SOURCE_UNAVAILABLE');
  const source=kind==='overlay'?sourceGlb:await (async()=>{
@@ -237,7 +237,7 @@ async function referenceChanged(){
    $('s7Primary').value=hex;
    editMsg('Referencia leída LOCALMENTE: color principal aproximado '+hex+
     '. Para fabricar una forma concreta, describí casco/hombreras/pecho o modificá sus controles.');
-   if(meshes().length===54)apply(fromInputs());
+   if(meshes().length===64)apply(fromInputs());
   }else editMsg('Referencia leída sin colores dominantes confiables. Probá describir las formas en texto.');
  }finally{URL.revokeObjectURL(blob)}
 }
@@ -258,7 +258,7 @@ $('s7CatalogRefresh').onclick=safe(refresh,catalogMsg);
 $('s7CatalogOpen').onclick=safe(()=>openApproved(),catalogMsg);
 $('s7CatalogDownload').onclick=safe(()=>downloadApproved(),catalogMsg);
 $('s7Reference').onchange=safe(referenceChanged);
-$('gender').addEventListener('change',()=>{if(meshes().length===54){
+$('gender').addEventListener('change',()=>{if(meshes().length===64){
   const visible=$('gender').value==='female'?'F':'M';
   for(const mesh of meshes())mesh.visible=mesh.name.startsWith('HF7_'+visible+'_')&&
     design.visible[groupFor(mesh.name)];
@@ -267,9 +267,9 @@ $('gender').addEventListener('change',()=>{if(meshes().length===54){
 for(const k of Object.keys(CONTROLS)){
  $('s7_'+k).addEventListener('input',()=>{
   $('s7out_'+k).textContent=Number($('s7_'+k).value).toFixed(2);
-  if(meshes().length===54)safe(()=>apply(fromInputs(),{silent:true}))();
+  if(meshes().length===64)safe(()=>apply(fromInputs(),{silent:true}))();
  });
- $('s7_'+k).addEventListener('change',()=>{if(meshes().length===54){
+ $('s7_'+k).addEventListener('change',()=>{if(meshes().length===64){
   // Last input already applied; finalize edit to undo/redo history.
   safe(()=>apply(fromInputs()))();
  }});
