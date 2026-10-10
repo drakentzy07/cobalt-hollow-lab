@@ -4,6 +4,7 @@ on:
     branches: [highfly-skin7-paladin-native-reforge]
     paths:
       - 'character-truth/skin7-paladin-first-reforge.py'
+      - 'character-truth/skin7-paladin-forja-sagrada-recipe.json'
       - '.github/workflows/skin7-paladin-first-reforge.yml'
   workflow_dispatch:
 permissions: {contents: read}
@@ -42,6 +43,7 @@ jobs:
           python3 character-truth/skin7-paladin-source-audit.py \
             character-truth/skin7-paladin-scratch/warrior_modular.glb \
             character-truth/skin7-paladin-scratch/source-truth.json
+            character-truth/skin7-paladin-forja-sagrada-recipe.json
       - name: Install verified glTF-Transform and Meshopt decoded scratch importer
         shell: bash
         run: |
@@ -73,6 +75,7 @@ jobs:
           blender --background --factory-startup --python-exit-code 99 \
             --python character-truth/skin7-paladin-first-reforge.py -- \
             --source character-truth/skin7-paladin-scratch/original-paladin-blender-scratch.glb \
+            --recipe character-truth/skin7-paladin-forja-sagrada-recipe.json \
             --baseline character-truth/skin7-paladin-scratch/PALADIN-ORIGINAL-11-PARTS.glb \
             --reforge character-truth/skin7-paladin-scratch/PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb \
             --report character-truth/skin7-paladin-scratch/first-reforge-report.json | tee /tmp/skin7-paladin-forge.log
@@ -84,6 +87,10 @@ jobs:
           report=json.loads((folder/'first-reforge-report.json').read_text())
           assert report['paladinSourceMeshes']==11 and report['reforgedMeshes']==11
           assert report['sourceOriginalGeometryReused'] and not report['NightfallOverlaid']
+          assert report['recipeDrivenGeometry'] and report['recipeControlsActuallyApplied']
+          assert report['appliedRecipe']=='paladin-forja-sagrada-prototipo'
+          assert report['sourceBasedModifiedMeshes']['arms::Armor_paladin_ArmL']['curvature']>.1
+          assert report['sourceBasedModifiedMeshes']['head::Armor_paladin_Head']['flare']>0
           assert report['nativeJoints']==23
           assert all(x['changedVertices']>0 for x in report['sourceBasedModifiedMeshes'].values())
           for fname in ('PALADIN-ORIGINAL-11-PARTS.glb','PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb'):
