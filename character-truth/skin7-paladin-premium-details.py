@@ -119,6 +119,11 @@ for suffix,ornament,tx,tz,goal,mat,side in DESIGNS:
    for pi in ring:
     selected.add(pi);queue.append(pi)
     if len(selected)>=goal:break
+  # KayKit pauldron is an intentional multiple-island mesh, not one watertight
+  # manifold. Keep the strongest original contiguous panel and distribute
+  # supplemental source-fitted gold facets on its other original islands.
+  if len(selected)<20:
+   selected.update(idx for score,idx in candidates[:min(goal,30)])
   if len(selected)<20:raise RuntimeError('SKIN7_PREMIUM_SHOULDER_RIDGE_TOO_SMALL')
  else:
   selected={candidates[0][1]}
@@ -168,8 +173,8 @@ for suffix,ornament,tx,tz,goal,mat,side in DESIGNS:
  proof[ornament]={
   'originalPaladinSource':donor.name,'nativeSourceTriangles':len(faces),
   'uniqueDonorVertices':len(index_map),'realUnmodifiedWeightsTransferred':True,
-  'surfaceLiftUnits':offset,'connectedSourceFaces':ornament!='CUIRASS_SHIELD',
-  'artDirectedShape':'seven-band-native-V' if ornament=='CUIRASS_SHIELD' else 'source-curved-pauldron-ridge' if 'PAULDRON' in ornament else 'connected-source-face-emboss',
+  'surfaceLiftUnits':offset,'connectedSourceFaces':ornament not in ('CUIRASS_SHIELD','LEFT_PAULDRON_RIDGE','RIGHT_PAULDRON_RIDGE'),
+  'artDirectedShape':'seven-band-native-V' if ornament=='CUIRASS_SHIELD' else 'multi-island-source-curved-pauldron-ridge' if 'PAULDRON' in ornament else 'connected-source-face-emboss',
   'influencingBones':sorted(groups),'material':mat.name,
   'zeroSourceArmorDisplaced':True}
  made.append(ob)
