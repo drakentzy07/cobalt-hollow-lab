@@ -12,6 +12,20 @@ const SOURCE_BLOB='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2';
 const CORE=['Head','Torso','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR'];
 const SLOTS=['Head','Chest','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR','Back'];
 const ARMOR=SLOTS.map(s=>'Armor_paladin_'+s);
+const PALADIN_SET=new Set(ARMOR);
+// In genuine ClaudeCraft GLB, the 2-material Paladin Helmet/Chest/Arms/Legs
+// are THREE.Group nodes with TWO nested skinned primitive meshes. Source audit:
+// exactly 11 original armor equipment nodes and 17 true skinned render meshes.
+// Match equip slots by the original mesh NODE / ancestry, never child primitive
+// name alone. Otherwise we silently remove real armor during mobile pruning.
+function originalArmorSlotOf(node){
+ let cur=node;
+ while(cur){
+  if(PALADIN_SET.has(cur.name))return cur.name;
+  cur=cur.parent;
+ }
+ return null;
+}
 const expectedBones=['root','hips','spine','chest','upperarm.l','upperarm.r','head','handslot.r','handslot.l'];
 const renderer=new THREE.WebGLRenderer({canvas:$('viewport'),antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));
@@ -66,10 +80,27 @@ function selectParts(actor,variant,gender){
  if(gender==='F')set.add('F_Top');
  if(variant==='original')for(const n of ARMOR)set.add(n);
  actor.root.traverse(o=>{if(o.isMesh&&!o.userData.skin7Commission) {
-  o.visible=set.has(o.name);
+  const originalSlot=originalArmorSlotOf(o);
+  // For multi-primitive armors, ORIGINAL SLOT name belongs to the container.
+  o.visible=originalSlot?(variant==='original'&&set.has(originalSlot)):set.has(o.name);
   o.frustumCulled=false;
  }});
  return set;
+}
+function originalPaladinVisualInventory(actor){
+ const slots=new Map(),meshNames=[],missing=[];
+ actor.root.traverse(o=>{
+  if(!o.isSkinnedMesh||!o.visible)return;
+  const slot=originalArmorSlotOf(o);
+  if(!slot)return;
+  const parentsVisible=(()=>{
+   for(let cur=o.parent;cur;cur=cur.parent){if(!cur.visible)return false}
+   return true;
+  })();
+  if(parentsVisible){slots.set(slot,(slots.get(slot)||0)+1);meshNames.push(o.name)}
+ });
+ for(const slot of ARMOR)if(!slots.has(slot))missing.push(slot);
+ return {slots:Object.fromEntries(slots),renderMeshes:meshNames.length,missing};
 }
 function normalizeSource(m,donor,actor){
  if(!skinned(m))throw Error('La pieza reforjada carece de pesos reales: '+m.name);
@@ -155,7 +186,9 @@ async function load(){
  // cloning or GPU update: 3 actors must remain light enough for mobile.
  const retained=new Set([...ARMOR,...CORE.flatMap(n=>['M_'+n,'F_'+n]),
    'M_Loin','F_Loin','F_Top']);
- const obsolete=[];gltf.scene.traverse(o=>{if(o.isMesh&&!retained.has(o.name))obsolete.push(o)});
+ const obsolete=[];gltf.scene.traverse(o=>{
+  if(o.isMesh&&!retained.has(o.name)&&!originalArmorSlotOf(o))obsolete.push(o);
+ });
  for(const o of obsolete)o.removeFromParent();
  state.gltf=gltf;state.forge=forge;
  if(gltf.animations.length!==22||forge.animations.length!==22)throw Error('Los 22 movimientos auténticos no coinciden');
@@ -165,7 +198,13 @@ async function load(){
   const actor=actorSource();actor.variant=['base','original','reforged'][i];
   selectParts(actor,actor.variant,state.gender);
   if(i===2){actor.recipeMeshes=equipGlb(actor,forge,'HF7RF_PALADIN_','recipe',true);}
-  materialFix(actor);scene.add(actor.root);state.actors.push(actor);
+  materialFix(actor);
+  if(i===1){
+   const visible=originalPaladinVisualInventory(actor);
+   if(visible.missing.length||visible.renderMeshes!==17)
+    throw Error('Paladín original incompleto: '+JSON.stringify(visible));
+  }
+  scene.add(actor.root);state.actors.push(actor);
  }
  const select=$('animation');select.replaceChildren();
  for(const clip of gltf.animations){
@@ -179,7 +218,8 @@ async function load(){
  window.__HF_SKIN7_LAB__=Object.freeze({
   state:()=>({ready:true,actors:state.actors.length,clip:state.clip,gender:state.gender,sourceBlobSha1:SOURCE_BLOB,
    rig:'Rig_Medium',nativeBones:23,clips:state.gltf.animations.map(a=>a.name),
-   gameDeployment:false,gameMechanicsSimulated:false,customAssetLoaded:!!state.custom}),
+   gameDeployment:false,gameMechanicsSimulated:false,customAssetLoaded:!!state.custom,
+   originalPaladin:originalPaladinVisualInventory(state.actors[1])}),
   selectClip,showStation,selectGender,addCustomGlb:importCustom,poseTime:t=>{
    state.playing=false;for(const a of state.actors)a.mixer.setTime(t);state.t=t;
   }
