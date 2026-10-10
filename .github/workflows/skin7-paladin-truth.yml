@@ -24,7 +24,7 @@ jobs:
           git diff --name-only "$BASE" HEAD | tee /tmp/skin7-native-changed.txt
           while IFS= read -r file; do
             case "$file" in
-              character-truth/skin7-paladin-*|character-truth/skin7-native-wardrobe*|.github/workflows/skin7-paladin-truth.yml) ;;
+              character-truth/skin7-paladin-*|character-truth/skin7-native-wardrobe*|.github/workflows/skin7-paladin-truth.yml|.github/workflows/skin7-paladin-first-reforge.yml) ;;
               *) echo "NO-GO: unexpected modification of older studio/game: $file"; exit 42 ;;
             esac
           done </tmp/skin7-native-changed.txt
