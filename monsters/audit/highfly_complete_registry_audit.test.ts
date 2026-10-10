@@ -8,6 +8,8 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { MOBS, CAMPS, ZONES, DUNGEONS, DELVES, PORTALS, ITEMS, ALL_RECIPES } from '../src/sim/data';
 import { createMob } from '../src/sim/entity';
 import { HARVEST_COMPONENT_ITEMS } from '../src/sim/content/professions';
+import { WORLD_BOSSES } from '../src/sim/world_boss';
+import { TRASH_RESPAWN_SECONDS, DEFAULT_RESPAWN_SECONDS, LEGACY_RESPAWN_SECONDS } from '../src/sim/respawn_policy';
 import { HIGHFLY_MONSTER_BANDS, HIGHFLY_MONSTER_DONORS, buildHighflyMonsterRoster } from '../src/highfly/monsters/level99';
 import { HIGHFLY_HUNT_SCENARIOS } from '../src/highfly/monsters/hunt_scenarios';
 import { highflyHuntRewardProfiles, applyHighflyHuntRewardTables } from '../src/highfly/monsters/hunt_rewards';
@@ -104,12 +106,23 @@ function audit() {
     }
   }
   for (const d of Object.values(DELVES) as O[]) {
-    // Delves have procedural module encounter choices, NOT necessarily a static
-    // array of mobs; never invent frequencies/counts for randomized generation.
-    for(const [i,sp] of A(d.spawns).entries()){
-      addSpawn('native_delve_static',d.id,d.name,sp.mobId,1,{
-        campIndex:i,centerX:sp.x,centerZ:sp.z,access:'Delve / generación condicionada'});
+    // A delve boss is a CHOICE POOL, NOT a guarantee that all bosses spawn.
+    for(const [i,bossId] of A(d.bosses).entries()) {
+      addSpawn('native_delve_boss_candidate',d.id,d.name,S(bossId),0,{
+        campIndex:i,centerX:d.doorPos?.x,centerZ:d.doorPos?.z,
+        access:'Entrada delve ('+S(d.doorPos?.x)+','+S(d.doorPos?.z)+') · nivel mínimo '+S(d.minLevel),
+        minLevel:d.minLevel,maxPlayers:d.maxPlayers,suggestedPlayers:d.suggestedPlayers,
+        notes:'CANDIDATO de jefe para generación dinámica: count=0 indica NO garantizar su aparición'});
     }
+  }
+  for(const boss of WORLD_BOSSES) {
+    const z=zoneAt(boss.pos.x,boss.pos.z);
+    addSpawn('native_world_boss_scheduler',z?.id??'UNMAPPED',z?.name??'UNMAPPED',boss.templateId,1,{
+      centerX:boss.pos.x,centerZ:boss.pos.z,
+      access:'Aparición del scheduler, no campamento fijo',
+      spawnIntervalSeconds:boss.intervalSeconds,
+      bossHpScale:j(boss.hpScale),
+      notes:'HP especial escalado por participantes; NO usar createMob como vida final del world boss'});
   }
   for(const s of HIGHFLY_HUNT_SCENARIOS) {
     for(const fam of s.families){
@@ -147,6 +160,8 @@ function audit() {
     const row={
       source,id:m.id,name:m.name,family:m.family,lvMin:lvLo,lvMax:lvHi,
       hpBase:m.hpBase,hpPerLevel:m.hpPerLevel,dmgBase:m.dmgBase,dmgPerLevel:m.dmgPerLevel,
+      respawnSeconds:m.respawnSeconds??'',respawnMult:m.respawnMult??'',
+      respawnWindow:j(m.respawnWindow??null),requiresQuestId:m.requiresQuestId??'',
       armorPerLevel:m.armorPerLevel,attackSpeed:m.attackSpeed,moveSpeed:m.moveSpeed,
       aggroRadius:m.aggroRadius,scale:m.scale,xpMultiplier:m.xpMult??1,
       ...flags,spawnRoutes:p.length,spawnType:[...new Set(p.map(x=>x.type))].join('; '),
@@ -195,6 +210,20 @@ function audit() {
     entryRule:'Consultar gating de instancia; datos no prueban permiso por nivel',
     details:j({guideVisible:d.guideVisible,overworldDoor:d.overworldDoor,interior:d.interior})
   }));
+  const delveRows=Object.values(DELVES).map((d:any)=>({
+    id:d.id,name:d.name,minLevel:d.minLevel,suggestedPlayers:d.suggestedPlayers,
+    maxPlayers:d.maxPlayers,doorX:d.doorPos?.x,doorZ:d.doorPos?.z,
+    bossCandidates:A(d.bosses).join('; '),modules:A(d.modules).join('; '),
+    moduleCount:j(d.moduleCount),objective:d.objective,
+    note:'Bosses and modules are generation candidates, not simultaneous guaranteed spawns'
+  }));
+  const worldBossRows=WORLD_BOSSES.map(b=>({
+    mobId:b.templateId,x:b.pos.x,z:b.pos.z,
+    map:zoneAt(b.pos.x,b.pos.z)?.name??'UNMAPPED',
+    intervalSeconds:b.intervalSeconds,hpBase:b.hpScale.base,
+    hpExtraPerPlayer:b.hpScale.perPlayer,hpMax:b.hpScale.max,
+    lockout:'Personal loot: raid-reset lockout'
+  }));
   const portalRows=A(PORTALS).map(p=>({id:p.id,ax:p.a?.x,az:p.a?.z,bx:p.b?.x,bz:p.b?.z,
     aZone:zoneAt(p.a?.x,p.a?.z)?.name??'UNMAPPED',
     bZone:zoneAt(p.b?.x,p.b?.z)?.name??'UNMAPPED',radius:p.radius,
@@ -209,9 +238,13 @@ function audit() {
   csv('06_MAPAS_NATIVOS_Y_HIGHFLY.csv',[...zones,...huntZones],cols([...zones,...huntZones]));
   csv('07_MAZMORRAS.csv',dungeonRows,cols(dungeonRows));
   csv('08_PORTALES_Y_ACCESOS.csv',portalRows,cols(portalRows));
+  csv('10_DELVES_ACCESOS_GENERACION.csv',delveRows,cols(delveRows));
+  csv('11_JEFES_MUNDIALES_HORARIOS.csv',worldBossRows,cols(worldBossRows));
   writeFileSync(output+'/09_DATOS_COMPLETOS_BRUTOS.json',j({nativeMobs:MOBS,extendedNormal:normal,
     extendedEliteCaptain:elite,nativeCamps:CAMPS,nativeZones:ZONES,nativeDungeons:DUNGEONS,
-    nativeDelves:DELVES,nativePortals:PORTALS,huntScenarios:HIGHFLY_HUNT_SCENARIOS}));
+    nativeDelves:DELVES,nativePortals:PORTALS,worldBossDefinitions:WORLD_BOSSES,
+    respawnPolicy:{TRASH_RESPAWN_SECONDS,DEFAULT_RESPAWN_SECONDS,LEGACY_RESPAWN_SECONDS},
+    huntScenarios:HIGHFLY_HUNT_SCENARIOS}));
   const summary={source:'ClaudeCraft 0.44.0 + HIGHFLY P02I without code modification',
     nativeTemplates:natives.length,highflyNormalTemplates:Object.keys(normal).length,
     highflyEliteCaptainTemplates:Object.keys(elite).length,
@@ -220,6 +253,8 @@ function audit() {
     nativeWorldCamps:CAMPS.length,nativeCampPopulation:CAMPS.reduce((s,c)=>s+c.count,0),
     nativeDungeonCount:dungeonRows.length,nativeStaticDungeonSpawns:dungeonRows.reduce((s,c)=>s+c.instanceSpawnCount,0),
     nativeDelveDefinitions:Object.keys(DELVES).length,nativePortals:PORTALS.length,
+    nativeWorldBossSchedules:WORLD_BOSSES.length,
+    trashRespawnSeconds:TRASH_RESPAWN_SECONDS,offMapRespawnSeconds:DEFAULT_RESPAWN_SECONDS,
     highflyLabNormalCampEntries:spawns.filter(x=>x.type==='highfly_opt_in_hunt').length,
     highflyLabSpecialAlternatives:spawns.filter(x=>x.type==='highfly_opt_in_variant').length,
     mobTemplatesWithoutStaticPlacement:mobRows.filter(m=>!m.spawnRoutes).length,
@@ -271,6 +306,8 @@ function audit() {
  '| 06_MAPAS_NATIVOS_Y_HIGHFLY.csv | Zonas, biomas, niveles, rectángulos, centros, cantidad de campamentos |',
  '| 07_MAZMORRAS.csv | Entradas, puntos de acceso y mobs de instancia |',
  '| 08_PORTALES_Y_ACCESOS.csv | Conexiones entre mapas y coordenadas de portales |',
+ '| 10_DELVES_ACCESOS_GENERACION.csv | Min nivel de acceso, límite de grupo, jefes candidatos, módulos aleatorios |',
+ '| 11_JEFES_MUNDIALES_HORARIOS.csv | Jefes mundiales, HP dinámico, puntos y temporizadores de aparición |',
  '| 09_DATOS_COMPLETOS_BRUTOS.json | Todas las plantillas reales sin simplificar y objetos del mundo |',
  '| 00_RESUMEN_AUDITORIA.json | Conteo reproducible y distinciones documentadas |',
  '',
