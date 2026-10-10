@@ -104,6 +104,11 @@ jobs:
           assert r['newSourceConformingNativeRiggedDetailMeshes']==8
           assert r['originalRigBoneCount']==23 and r['allDetailsCopyExactSourceVertexWeights']
           assert r['artApproved'] is False and r['UnityGameplayCertified'] is False
+          assert r['details']['LEFT_PAULDRON_RIDGE']['nativeSourceTriangles']>=20
+          assert r['details']['RIGHT_PAULDRON_RIDGE']['nativeSourceTriangles']>=20
+          assert 14<=r['details']['CUIRASS_SHIELD']['nativeSourceTriangles']<=35
+          assert r['details']['CUIRASS_SHIELD']['artDirectedShape']=='seven-band-native-V'
+          print('HIGHFLY_SKIN7_PAULDRONS_NOT_TINY_AND_CHEST_NOT_RECTANGLE_ART_GATE_GREEN=1')
           f=p/'PALADIN-LEGENDARY-PREMIUM-V1-REVIEW.glb'
           raw=f.read_bytes();assert raw[:4]==b'glTF' and struct.unpack_from('<I',raw,4)[0]==2
           length=struct.unpack_from('<I',raw,12)[0]
