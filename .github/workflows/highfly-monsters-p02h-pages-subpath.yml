@@ -1,0 +1,174 @@
+name: HIGHFLY MONSTERS P02H — SAFE Pages /monster-lab after native QA
+# An independent SAFE Pages delivery composed from 2 existing vetted artifacts.
+# Pins currently deployed V4-02 Pages artifact; no automatic merged source.
+# Do not enable push until monster-P02H CI run green and artifact exists.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-monsterlab-pages-immutable-publish
+  cancel-in-progress: false
+
+jobs:
+  compose_and_validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - name: Checkout isolated Pages composition guard
+        uses: actions/checkout@v4
+
+      - name: Fetch exact CURRENT live Pages snapshot (run 38077242582, SHA 62902ec5)
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          run-id: 38077242582
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: approved-pages-artifact
+
+      - name: Fetch certified native P02H Pages-ready monster WebGL (NO BUILD MODIFICATION)
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-MONSTER-P02H-PAGES-SUBPATH-NO-DEPLOY
+          run-id: 38078249008
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: monster-approved
+
+      - name: Restore approved live root and V4-02 byte-for-byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d approved-pages-artifact
+          find approved-pages-artifact -maxdepth 2 -type f -printf '%P %s bytes\n'
+          TARBALL="$(find approved-pages-artifact -type f -name '*.tar' -print -quit)"
+          test -n "$TARBALL"
+          mkdir -p approved-live-pages
+          tar -xf "$TARBALL" -C approved-live-pages
+          test -s approved-live-pages/index.html
+          test -s approved-live-pages/v4-02/index.html
+          test -f approved-live-pages/.nojekyll
+          test -s monster-approved/cobalt-hollow-lab/monster-lab/index.html
+          test -s monster-approved/monster-lab-manifest.json
+          echo "HF_P02H_APPROVED_OLD_PAGES_ARTIFACT_RESTORED=1"
+
+      - name: Compose third isolated /monster-lab without altering any live file
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 game/monster_pages_compose.py
+          test -s composed-pages/index.html
+          test -s composed-pages/v4-02/index.html
+          test -s composed-pages/monster-lab/index.html
+          test -s composed-pages/monster-lab/hunts.html
+          test -s monsters-pages-composition-report.json
+          test -f composed-pages/.nojekyll
+
+      - name: Checkout pinned ClaudeCraft package to load playwright only (no build)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: browser-deps
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /package.json
+            /pnpm-lock.yaml
+            /.npmrc
+
+      - name: Checkout exact P02H accepted real hunt browser smoke
+        uses: actions/checkout@v4
+        with:
+          ref: 5f4aa55769d1cf2c00465eee228257078f323be5
+          path: monster-smoke-source
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /monsters/lv99/hunt_browser_smoke.mjs
+
+      - name: Setup Node for genuine browser QA
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install reproducible browser dependencies
+        shell: bash
+        working-directory: browser-deps
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Prove live root, v4 and MONSTER-LAB URL on Chrome S23 emulation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p browser-deps/scripts staged-pages
+          cp monster-smoke-source/monsters/lv99/hunt_browser_smoke.mjs browser-deps/scripts/hf_monster_pages_smoke.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          f=Path("browser-deps/scripts/hf_monster_pages_smoke.mjs")
+          s=f.read_text()
+          old="http://127.0.0.1:4173/cobalt-hollow-lab/?hfHunt="
+          new="http://127.0.0.1:4173/cobalt-hollow-lab/monster-lab/?hfHunt="
+          assert s.count(old)==1,'HF_P02H_BROWSER_SMOKE_SOURCE_DRIFT'
+          f.write_text(s.replace(old,new))
+          PY
+          ln -s ../composed-pages staged-pages/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory staged-pages > monsterlab-pages-http.log 2>&1 &
+          WEB_PID=$!
+          trap 'kill "$WEB_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/monster-lab/hunts.html >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/ -o /dev/null
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/v4-02/ -o /dev/null
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/monster-lab/hunts.html | grep -q 'Ocho regiones'
+          (cd browser-deps && HF_HUNT_S23_MATRIX=1 node scripts/hf_monster_pages_smoke.mjs)
+          (cd browser-deps && HF_HUNT_PREVIEW_LEVEL=90 HF_HUNT_ENCOUNTER_MODE=captain HF_HUNT_S23_MATRIX=1 node scripts/hf_monster_pages_smoke.mjs)
+          echo 'HF_P02H_THREE_LIVE_ROUTES_AND_WEBGL_S23_REAL_BROWSER_GREEN=1'
+
+      - name: Upload audit evidence even if browser test fails
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-MONSTERLAB-PAGES-INTEGRITY-AUDIT
+          path: |
+            monsters-pages-composition-report.json
+            monsterlab-pages-http.log
+            highfly-hunt-p02f-*-s23-preview.png
+            highfly-hunt-p02f-*-s23-failure.png
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Verify final bounded deploy bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib
+          files=[p for p in pathlib.Path('composed-pages').rglob('*') if p.is_file()]
+          n=sum(p.stat().st_size for p in files)
+          assert n < 1_900_000_000,(len(files),n)
+          print('HF_P02H_PAGES_PACKAGE_BYTES=',n,'FILES=',len(files))
+          PY
+
+      - name: Configure Pages without changing any existing bytes
+        uses: actions/configure-pages@v5
+      - name: Upload third-subpath Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: composed-pages
+
+  deploy:
+    needs: compose_and_validate
+    runs-on: ubuntu-latest
+    environment:
+      name: highfly-v4-02-preview
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy unchanged root + unchanged V4-02 + new isolated monster-lab
+        id: deployment
+        uses: actions/deploy-pages@v4
