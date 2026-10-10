@@ -4,7 +4,12 @@
  */
 import { chromium } from 'playwright';
 
-const URL='http://127.0.0.1:4173/cobalt-hollow-lab/?hfHunt=21';
+const LEVEL=Number(process.env.HF_HUNT_PREVIEW_LEVEL??21);
+const MODE=process.env.HF_HUNT_ENCOUNTER_MODE??'';
+if(![21,30,40,50,60,70,80,90].includes(LEVEL)||
+  !['','elite','captain'].includes(MODE))throw Error('HF_HUNT_SMOKE_UNKNOWN_MODE');
+const URL='http://127.0.0.1:4173/cobalt-hollow-lab/?hfHunt='+LEVEL+
+  (MODE?'&hfEncounter='+MODE:'');
 const result={url:URL,stage:'init',world:null,actualMobCount:0,
   touchMovement:null,activeWebgl:false,missingAssets:[],errors:[],passed:false};
 const errors=[],missing=[];
@@ -46,13 +51,16 @@ try {
   result.world=await page.evaluate(()=>{
     const sim=window.__game?.sim;
     if(!sim) return null;
-    const mobs=[...sim.entities.values()].filter(e=>e.kind==='mob'&&e.templateId.startsWith('hf_hunt_')&&!e.dead);
+    const mobs=[...sim.entities.values()].filter(e=>e.kind==='mob'&&
+      (e.templateId.startsWith('hf_hunt_')||e.templateId.startsWith('hf_enc_'))&&!e.dead);
+    const specials=mobs.filter(e=>e.templateId.startsWith('hf_enc_'));
     return {
       hunterLevel:sim.player?.level, playerName:sim.player?.name,
       zone:sim.cfg.world?.zones?.[0]?.id,
       levelRange:sim.cfg.world?.zones?.[0]?.levelRange,
       campIds:sim.cfg.world?.camps?.map(c=>c.mobId),
       mobCount:mobs.length, aliveByFamily:mobs.map(e=>e.templateId),
+      specialCount:specials.length,specialIds:specials.map(e=>e.templateId),
       sourceNpcs:Object.keys(sim.cfg.world?.npcs??{}).length,
       playerStart:sim.cfg.world?.playerStart,
       customizedTerrain:sim.cfg.world?.terrainEdits?.length??0,
@@ -62,15 +70,18 @@ try {
       refugeTents:sim.cfg.world?.props?.tents?.length??0,
     };
   });
-  if(!result.world||result.world.hunterLevel!==21||
-     result.world.zone!=='hf_hunt_woods_21_playtest'||
+  if(!result.world||result.world.hunterLevel!==LEVEL||
+     result.world.levelRange?.[0]!==LEVEL||
+     !result.world.zone?.endsWith('_playtest')||
      result.world.mobCount!==8||
-     new Set(result.world.campIds).size!==4||
+     new Set(result.world.campIds).size!==(MODE?5:4)||
+     result.world.specialCount!==(MODE?1:0)||
+     (MODE&&result.world.specialIds?.[0]!=='hf_enc_'+MODE+'_'+LEVEL)||
      result.world.sourceNpcs!==0||
      result.world.customizedTerrain!==6||
      result.world.trails!==4||
      result.world.decorCount!==12||
-     result.world.namedLandmarks!==6||
+     result.world.namedLandmarks!==(MODE?7:6)||
      result.world.refugeTents!==3)
     throw Error('Native hunt did not load exact LV21 isolated 8-monster Sim: '+JSON.stringify(result.world));
   result.actualMobCount=result.world.mobCount;
@@ -110,10 +121,10 @@ try {
   if(result.touchMovement<0.3)throw Error('Real mobile HuntPilot failed native 360 joystick: '+result.touchMovement);
   if(missing.length)throw Error('HuntPilot preview contains missing assets: '+missing.slice(0,4).join(','));
   result.stage='passed';result.passed=true;
-  await page.screenshot({path:'../highfly-hunt-p02c-s23-preview.png',fullPage:true}).catch(()=>{});
+  await page.screenshot({path:'../highfly-hunt-p02f-'+(MODE||'normal')+'-lv'+LEVEL+'-s23-preview.png',fullPage:true}).catch(()=>{});
 }catch(e){
   result.error=String(e);result.errors=errors;result.missingAssets=missing;
-  await page?.screenshot({path:'../highfly-hunt-p02c-s23-failure.png',fullPage:true}).catch(()=>{});
+  await page?.screenshot({path:'../highfly-hunt-p02f-'+(MODE||'normal')+'-lv'+LEVEL+'-s23-failure.png',fullPage:true}).catch(()=>{});
 }finally{
   await browser?.close().catch(()=>{});
 }

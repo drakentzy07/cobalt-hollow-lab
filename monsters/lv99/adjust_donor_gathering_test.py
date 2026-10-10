@@ -24,9 +24,10 @@ for source, expected in counts.items():
         raise SystemExit(f"HF_MONSTER_CENSUS_ASSERT_DRIFT:{source}")
 scoped = (
     "    // Donor's fixed 54/216 template census is a compatibility pin.\n"
-    "    // HIGHFLY's 64 appended definitions have their OWN exhaustive gate.\n"
+    "    // HIGHFLY's 64 hunts + 16 elite/captain templates are audited separately.\n"
     "    const originalMobs = Object.fromEntries(\n"
-    "      Object.entries(MOBS).filter(([id]) => !id.startsWith('hf_hunt_')),\n"
+    "      Object.entries(MOBS).filter(([id]) =>\n"
+    "        !id.startsWith('hf_hunt_') && !id.startsWith('hf_enc_')),\n"
     "    );\n"
 )
 section = (scoped + section
