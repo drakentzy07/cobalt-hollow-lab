@@ -1,0 +1,141 @@
+name: HIGHFLY SKIN 7 - BLOCK 2 REAL SUPREME ARMOR FORGE (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-skin7-supreme-forge-core]
+    paths:
+      - 'character-truth/skin7-*'
+      - '.github/workflows/skin7-block2-real-forge.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  actual-blender-original-geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 36
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prove zero changes to V10-V20.1 and public HIGHFLY gameplay
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=93ed92935147ec2de07b4942a78aaf3ea06ca99d
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/hf-skin7-changes
+          while IFS= read -r f; do
+            case "$f" in
+              character-truth/SKIN7_SUPREME_ARMOR_STUDIO_MASTER_BLUEPRINT.md|character-truth/skin7-*|.github/workflows/skin7-step1-freeze.yml|.github/workflows/skin7-block2-real-forge.yml) ;;
+              *) echo "SKIN7 MODIFIED OLD OR PUBLIC GAME CODE $f"; exit 47 ;;
+            esac
+          done </tmp/hf-skin7-changes
+          node character-truth/skin7-contracts.test.mjs
+          python3 -m py_compile character-truth/skin7-supreme-forge-blender.py character-truth/skin7-forge-motion-gate.py
+          node --check character-truth/skin7-supreme-forge-ui.mjs
+          node --check character-truth/skin7-package-forge.mjs
+          node --check character-truth/skin7-forge-browser-gate.cjs
+          echo SKIN7_EXISTING_STUDIOS_AND_GAME_UNTOUCHED_GREEN=1
+      - name: Download exactly frozen genuine V20 GREEN GLBs - no source character duplication
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-V20-SUPREME-RECIPE-TRUE-RIGGED-GLB-NO-DEPLOY
+          run-id: 38018797928
+          github-token: ${{ github.token }}
+          path: character-truth/skin7-frozen-v20
+      - name: Verify exact Nightfall native source rig and provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s character-truth/skin7-frozen-v20/assets/HIGHFLY-NIGHTFALL-rigged-body.glb
+          test ! -e character-truth/skin7-frozen-v20/assets/warrior_modular.glb
+          node character-truth/skin7-audit-native-assets.mjs character-truth/skin7-frozen-v20/assets character-truth/skin7-block2-evidence/audit-source.json
+      - name: Download and hash-verify official Blender 4.2.23 LTS
+        shell: bash
+        timeout-minutes: 9
+        run: |
+          set -euo pipefail
+          VERSION=4.2.23
+          NAME="blender-${VERSION}-linux-x64.tar.xz"
+          BASE="https://download.blender.org/release/Blender4.2"
+          mkdir -p "$RUNNER_TEMP/skin7-blender" "$RUNNER_TEMP/skin7-download"
+          cd "$RUNNER_TEMP/skin7-download"
+          curl -fsSL --retry 3 --connect-timeout 15 --max-time 390 "$BASE/$NAME" -o "$NAME"
+          curl -fsSL --retry 3 --max-time 50 "$BASE/blender-${VERSION}.sha256" -o SHA256SUMS
+          grep -F "$NAME" SHA256SUMS | head -1 | sha256sum --check
+          tar -xJf "$NAME" --strip-components=1 -C "$RUNNER_TEMP/skin7-blender"
+          echo "$RUNNER_TEMP/skin7-blender" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/skin7-blender/blender" --version | head -2
+      - name: BLENDER authors NEW true 3D armor for TWO profiles and both original genders
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/skin7-generated character-truth/skin7-block2-evidence
+          for profile in crimson guardian; do
+            blender --background --factory-startup --python-exit-code 99 \
+              --python character-truth/skin7-supreme-forge-blender.py -- \
+              --source character-truth/skin7-frozen-v20/assets/HIGHFLY-NIGHTFALL-rigged-body.glb \
+              --overlay "character-truth/skin7-generated/HIGHFLY-SKIN7-${profile}-overlay.glb" \
+              --combined "character-truth/skin7-generated/HIGHFLY-SKIN7-${profile}-combined.glb" \
+              --manifest "character-truth/skin7-block2-evidence/${profile}-forge.json" \
+              --profile "$profile" | tee "/tmp/skin7-${profile}-forge.log"
+            grep -F "HIGHFLY_SKIN7_NEW_REAL_SCULPTED_NATIVE_3D_ARMOR_GREEN=1 PROFILE=${profile}" "/tmp/skin7-${profile}-forge.log"
+          done
+      - name: Real Blender reimport motion and interprofile geometry difference proof
+        shell: bash
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          blender --background --factory-startup --python-exit-code 99 \
+            --python character-truth/skin7-forge-motion-gate.py -- \
+            --input character-truth/skin7-generated/HIGHFLY-SKIN7-guardian-overlay.glb \
+            --other character-truth/skin7-generated/HIGHFLY-SKIN7-crimson-overlay.glb \
+            --out character-truth/skin7-block2-evidence/native-animation-and-topology.json \
+            | tee /tmp/skin7-native-motion.log
+          grep -F 'HIGHFLY_SKIN7_TRUE_BLENDER_NEW_MESH_TOPOLOGY_NATIVE_23_BONES_AND_DEFORMATION_GREEN=1' /tmp/skin7-native-motion.log
+      - name: Package full original Three.js Hunter editor with NEW Blender forge additively
+        shell: bash
+        run: |
+          set -euo pipefail
+          node character-truth/skin7-package-forge.mjs
+          test -s highfly-skin7-supreme-preview/index.html
+          for p in crimson guardian; do
+           test -s "highfly-skin7-supreme-preview/assets/HIGHFLY-SKIN7-${p}-overlay.glb"
+           test -s "highfly-skin7-supreme-preview/assets/HIGHFLY-SKIN7-${p}-combined.glb"
+          done
+      - name: Prepare Chromium actual 3D GPU fallback for Galaxy S23 landscape simulation
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: TRUE original 23-bone Hunter and two new authored 3D GLB browser safety gate
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4277 --bind 127.0.0.1 \
+            --directory highfly-skin7-supreme-preview >/tmp/skin7-http.log 2>&1 &
+          sleep 2
+          node character-truth/skin7-forge-browser-gate.cjs
+          grep -F '"green": true' character-truth/skin7-block2-evidence/browser-proof.json
+          echo HIGHFLY_SKIN7_BLOCK2_ORIGINAL_HUNTER_NEW_REAL_3D_GEOMETRY_GREEN=1
+      - name: Store ONE major private Block2 review candidate - no public deployment
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN7-BLOCK2-SUPREME-ARTISAN-FORGE-REAL-GLB-CANDIDATE-NO-DEPLOY
+          path: highfly-skin7-supreme-preview/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Store proof of original 3D topology and native original rig technical gates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN7-BLOCK2-GEOMETRY-AND-MOBILE-QA
+          path: |
+            character-truth/skin7-block2-evidence/
+            character-truth/skin7-generated/
+          retention-days: 30
+          if-no-files-found: warn
