@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 import {MeshoptDecoder} from '../v20/vendor/meshopt_decoder.module.js';
 const $=id=>document.getElementById(id);
@@ -33,6 +34,10 @@ const floor=new THREE.Mesh(new THREE.PlaneGeometry(80,80),new THREE.MeshStandard
 floor.rotation.x=-Math.PI/2;floor.position.y=-.12;scene.add(floor);
 const marks=new THREE.GridHelper(70,70,0x425773,0x283447);marks.position.y=-.11;scene.add(marks);
 const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
+// The AUTHENTIC source Hunter GLB uses KHR_texture_basisu / KTX2. Reuse V20's
+// preinstalled official Basis transcoder; without it original models CANNOT load.
+const ktx2=new KTX2Loader().setTranscoderPath('../v20/vendor/three/examples/jsm/libs/basis/');
+ktx2.detectSupport(renderer);loader.setKTX2Loader(ktx2);
 const state={actors:[],gltf:null,forge:null,clip:null,playing:true,speed:1,view:'all',gender:'M',t:0,custom:null,assetsReady:false};
 function skinned(mesh){return !!mesh?.isSkinnedMesh&&mesh.skeleton?.bones?.length>0}
 function namedBones(actor){
