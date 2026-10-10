@@ -22,6 +22,9 @@ STYLES={
  'guardian':{'left':1.13,'right':1.13,'chest':1.05,'skirts':.88,
   'red':(.045,.055,.085),'gold':(.47,.56,.67),'accent':(.44,.12,.65)}
 }
+HEAD_TRUTH=json.loads(Path(arg('--head-fixture')).read_text())
+if HEAD_TRUTH.get('schema')!='highfly.skin7.native-original-source-head-truth/1' or HEAD_TRUTH.get('boneCount')!=23 or HEAD_TRUTH.get('rig')!='Rig_Medium':
+ raise RuntimeError('SKIN7_REAL_HUNTER_HEAD_FIXTURE_NOT_NATIVE')
 if profile not in STYLES:raise RuntimeError('SKIN7_PROFILE_NOT_VERIFIED')
 p=STYLES[profile]
 if not source.exists():raise RuntimeError('SKIN7_NIGHTFALL_REFERENCE_MISSING')
@@ -164,16 +167,17 @@ for gender in ('M','F'):
     (c[0]+side*w*.88,front+.022,c[2]+h*.38),
     (c[0]+side*w*.62,front-.035,c[2]-h*.53),
     (c[0]+side*w*.43,front-.061,c[2]-h*.16)],trim,.015)
- # Original authored KABUTO helmet: native HEAD BONE ONLY (no generated skeleton).
- # Bone rest endpoints are transformed via actual donor matrix; never invent head measurements.
- headbone=rig.data.bones['head']
- headbottom=torso.matrix_world.inverted() @ (rig.matrix_world @ headbone.head_local)
- headtop=torso.matrix_world.inverted() @ (rig.matrix_world @ headbone.tail_local)
- if headtop.z<headbottom.z:headbottom,headtop=headtop,headbottom
- headheight=max(.15,abs(headtop.z-headbottom.z))
- headradius=max(.080,min(w*.48,headheight*.66))
- headcenter=Vector(((headtop.x+headbottom.x)*.5,(headtop.y+headbottom.y)*.5,
-  headbottom.z+headheight*.60))
+ # Native HEAD measured against the actual pinned ClaudeCraft M/F character, never
+ # guessed from the tiny head-bone segment (which caused the helmet to sit INSIDE the skull).
+ truth=HEAD_TRUTH['gender'][gender]
+ cc=truth['center'];sz=truth['size']
+ if not (.7<sz[0]<1.2 and .65<sz[1]<1.2 and .7<sz[2]<1.3):
+  raise RuntimeError('SKIN7_ORIGINAL_SOURCE_HEAD_MEASUREMENT_OUT_OF_RANGE_'+gender)
+ # Three glTF Y-up measurements -> Blender Z-up local source rig coordinates:
+ # original world X,Y,Z = Blender X,Z,-Y. Rig_Medium is unchanged.
+ headcenter=Vector((cc[0],-cc[2],cc[1]))
+ headheight=sz[1];headradius=sz[0]*.49;headdepth=sz[2]*.46
+ headbottom=Vector((cc[0],-cc[2],cc[1]-sz[1]*.50))
  def headpart(name,vertices,faces,mat):
   me=bpy.data.meshes.new(name);me.from_pydata(vertices,[],faces);me.update()
   o=bpy.data.objects.new(name,me);bpy.context.collection.objects.link(o)
@@ -181,62 +185,65 @@ for gender in ('M','F'):
   vg=o.vertex_groups.new(name='head');vg.add(list(range(len(vertices))),1.0,'REPLACE')
   o.matrix_world=torso.matrix_world.copy()
   modifier=o.modifiers.new('SKIN7_NATIVE_HEAD_RIGID_BIND','ARMATURE');modifier.object=rig
-  made.append(o);reports[name]={'donor':'ORIGINAL_NATIVE_HEAD_BONE','newVertices':len(vertices),
-   'weighted':True,'maxInfluences':1}
+  made.append(o);reports[name]={'donor':'ORIGINAL_NATIVE_HEAD_BONE',
+   'sourceHeadWorldYUp':truth,'newVertices':len(vertices),'weighted':True,'maxInfluences':1}
   return o
- def headrim(name,z,width=.99,segments=20):
+ def headrim(name,z,segments=20):
   pts=[];faces=[]
   for ringindex in range(2):
    for j in range(segments):
     q=2*math.pi*j/segments
-    rad=headradius*width*(1.12 if ringindex else 1.03)
-    pts.append((headcenter.x+rad*math.cos(q),headcenter.y+rad*.83*math.sin(q),
-     z-.018*ringindex))
+    pts.append((headcenter.x+headradius*(1.02+.07*ringindex)*math.cos(q),
+     headcenter.y+headdepth*(1.02+.07*ringindex)*math.sin(q),
+     z-.025*ringindex))
   for j in range(segments):faces.append((j,(j+1)%segments,(j+1)%segments+segments,j+segments))
   return headpart(name,pts,faces,trim)
- # Dome with a genuine curved 3D helmet contour; not old Kage Oni rescaled.
- segments=20;rings=8;vs=[];faces=[]
+ # Authentic full-skull curved 3D KABUTO rather than a tiny invisible bone-sized cap.
+ segments=20;rings=9;vs=[];faces=[]
+ lipY=headcenter.z+headheight*.085
+ domeH=headheight*.62
  for i in range(rings):
-  phi=(math.pi/2-.065)*i/(rings-1)
-  z=headbottom.z+headheight*.32+headheight*.80*math.sin(phi)
-  rad=headradius*1.02*math.cos(phi)
+  phi=(math.pi/2-.025)*i/(rings-1)
+  z=lipY+domeH*math.sin(phi)
+  radial=math.cos(phi)
   for j in range(segments):
    q=2*math.pi*j/segments
-   vs.append((headcenter.x+rad*math.cos(q),headcenter.y+rad*.83*math.sin(q),z))
+   vs.append((headcenter.x+headradius*radial*math.cos(q),
+    headcenter.y+headdepth*radial*math.sin(q),z))
  for i in range(rings-1):
   for j in range(segments):
-   a=i*segments+j;b=i*segments+(j+1)%segments
-   faces.append((a,b,b+segments,a+segments))
+   aa=i*segments+j;bb=i*segments+(j+1)%segments
+   faces.append((aa,bb,bb+segments,aa+segments))
  headpart('HF7_'+gender+'_HEAD_KABUTO_DOME',vs,faces,iron)
- headrim('HF7_'+gender+'_HEAD_KABUTO_RIM',headbottom.z+headheight*.32)
- # Paired sweeping ONI horns, sculpted taper and bend, always original head bone.
+ headrim('HF7_'+gender+'_HEAD_KABUTO_RIM',lipY)
+ # Golden upward/OUTWARD Oni horns, broad tapered curved tube; skull height accurate.
  for side,tag in [(-1,'L'),(1,'R')]:
-  verts=[];faces=[];stacks=9;radial=8
+  verts=[];faces=[];stacks=10;radial=9
   for i in range(stacks):
    t=i/(stacks-1)
-   z=headbottom.z+headheight*(.75+1.2*t)
-   x=headcenter.x+side*headradius*(.53+.68*t+.24*t*t)
-   y=headcenter.y-headradius*(.045+.28*t*t)
-   r=headradius*.22*(1-t)**1.3+.002
+   z=headcenter.z+headheight*(.45+.85*t)
+   x=headcenter.x+side*headradius*(.46+.87*t+.24*t*t)
+   y=headcenter.y-headdepth*(.07+.27*t*t)
+   rr=headradius*.15*(1-t)**1.35+.003
    for j in range(radial):
     q=2*math.pi*j/radial
-    verts.append((x+r*math.cos(q),y+r*math.sin(q),z))
+    verts.append((x+rr*math.cos(q),y+rr*math.sin(q),z))
   for i in range(stacks-1):
    for j in range(radial):
-    a=i*radial+j;b=i*radial+(j+1)%radial
-    faces.append((a,b,b+radial,a+radial))
+    aa=i*radial+j;bb=i*radial+(j+1)%radial
+    faces.append((aa,bb,bb+radial,aa+radial))
   headpart('HF7_'+gender+'_HEAD_HORN_'+tag,verts,faces,trim)
- # Oni faceguard: genuinely three-dimensional visor frame, centered on bone head.
- x,y,z=headcenter;rad=headradius
- poly=[(x-rad*.64,y-rad*.80,z-headheight*.34),
-  (x-rad*.68,y-rad*.82,z+headheight*.06),
-  (x-rad*.30,y-rad*.90,z+headheight*.21),
-  (x+rad*.30,y-rad*.90,z+headheight*.21),
-  (x+rad*.68,y-rad*.82,z+headheight*.06),
-  (x+rad*.64,y-rad*.80,z-headheight*.34),
-  (x,y-rad*.92,z-headheight*.55)]
+ # Oni faceguard outside the forward-most original native skull (+world Z).
+ x=headcenter.x;frontY=headcenter.y-headdepth*1.26;cY=headcenter.z;r=headradius
+ poly=[(x-r*.68,frontY+.010,cY-headheight*.29),
+  (x-r*.73,frontY+.018,cY+headheight*.08),
+  (x-r*.37,frontY-.018,cY+headheight*.27),
+  (x+r*.37,frontY-.018,cY+headheight*.27),
+  (x+r*.73,frontY+.018,cY+headheight*.08),
+  (x+r*.68,frontY+.010,cY-headheight*.29),
+  (x,frontY-.026,cY-headheight*.43)]
  headpart('HF7_'+gender+'_HEAD_ONI_MASK',poly+
-  [(a,b+.025,c) for a,b,c in poly],
+  [(a,b+.027,c) for a,b,c in poly],
   [tuple(range(7)),tuple(reversed(range(7,14)))]+
   [(i,(i+1)%7,(i+1)%7+7,i+7) for i in range(7)],dark)
  # Original left-dominant and right-medium broad pagoda-like pauldron SHELLS.
