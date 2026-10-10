@@ -77,8 +77,7 @@ export function highflyHuntRewardProfiles(
       const phase=highflyHuntReagentPhase(minLevel);
       const itemId=HIGHFLY_HUNT_FAMILY_REAGENTS[family][phase];
       const item=items[itemId];
-      if(!item||item.id!==itemId||item.kind==='weapon'||item.kind==='armor'||
-        item.kind==='mount'||item.kind==='container'||item.kind==='tool')
+      if(!item||item.id!==itemId||item.kind!=='junk')
         throw Error('HF_HUNT_REWARD_ITEM_NOT_NATIVE_REAGENT:'+itemId);
       const consumers=recipes.filter(r=>r.reagents.some(ing=>ing.itemId===itemId))
         .map(r=>r.id);
