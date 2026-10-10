@@ -28,6 +28,12 @@ offline_start = src.find('async function startOffline(')
 sim_at = src.find('  const sim = loadSpan(', offline_start)
 sim_close = src.find('\n  );', sim_at)
 if offline_start < 0 or sim_at < 0 or sim_at - offline_start > 8000 or sim_close < 0 or sim_close - sim_at > 4200 or 'new Sim(' not in src[sim_at:sim_close]:
+    print('HF_HUNT_BOOT_DIAG_START=', offline_start)
+    print('HF_HUNT_BOOT_DIAG_SIM_AT=', sim_at)
+    print('HF_HUNT_BOOT_DIAG_SIM_CLOSE=', sim_close)
+    print('HF_HUNT_BOOT_DIAG_SKIN=', src.find('setPlayerSkin', offline_start))
+    print('HF_HUNT_BOOT_DIAG_NEW_SIM=', src.find('new Sim(', offline_start))
+    print('HF_HUNT_BOOT_DIAG_SNIPPET=', repr(src[offline_start:offline_start+4000]))
     raise SystemExit('HF_HUNT_P02C_OFFLINE_SIM_BUILD_ANCHOR_MISSING')
 # Inject only after the exact native Sim creation expression, no skin/edit/Training duplication.
 insert_at = sim_close + len('\n  );')
