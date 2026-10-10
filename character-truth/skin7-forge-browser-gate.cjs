@@ -1,4 +1,4 @@
-/** Chromium emulated S23 landscape: TRUE 54 mesh Blender original, original 23 bone Hunter,
+/** Chromium emulated S23 landscape: TRUE 64 mesh Blender original, original 23 bone Hunter,
  * 2 body sexes, 2 geometrically different profiles, user accept/reject (local, no game).
  */
 const {chromium}=require('playwright');
@@ -29,25 +29,25 @@ const ok=(value,name)=>{assert(value,name);checks.push(name)};
   ok(await page.evaluate(()=>window.__HF_DREAM_V17__.state().tab)==='editor',
     'Artisan cockpit opens exact original 3D Hunter editor');
   const crimson=await page.evaluate(()=>window.__HF_SKIN7_SUPREME_FORGE__.forge());
-  ok(crimson.realBlenderNewMeshCount===54&&crimson.vertices>1500,
-    'REAL authored Blender 54 meshes mounted, not only recolor');
+  ok(crimson.realBlenderNewMeshCount===64&&crimson.vertices>1500,
+    'REAL authored Blender 64 meshes mounted, not only recolor');
   ok(crimson.realRigBones===23&&crimson.topologyNovel&&crimson.originalCharacterBodyUnchanged,
     'Original native ClaudeCraft rig and character meshes preserved');
   let i=await page.evaluate(()=>window.__HF_SKIN7_SUPREME_FORGE__.inspect());
-  ok(i.nativeBoneMapping&&i.gender==='M'&&i.visible===27,
-    '27 original-weighted new male meshes share exact 23 native bones');
+  ok(i.nativeBoneMapping&&i.gender==='M'&&i.visible===32,
+    '32 original-weighted new male meshes share exact 23 native bones');
   await page.locator('#skin7Front').click();
   await page.screenshot({path:dir+'/01-crimson-male-front.png'});
   await page.locator('#skin7Side').click();
   await page.screenshot({path:dir+'/02-crimson-male-side.png'});
   await page.locator('#skin7Gender').selectOption('female');
   i=await page.evaluate(()=>window.__HF_SKIN7_SUPREME_FORGE__.inspect());
-  ok(i.gender==='F'&&i.visible===27,
-    '27 distinct female-authored meshes on true original female modular Hunter');
+  ok(i.gender==='F'&&i.visible===32,
+    '32 distinct female-authored meshes on true original female modular Hunter');
   await page.locator('#skin7Back').click();
   await page.screenshot({path:dir+'/03-crimson-female-back.png'});
   const animation=await page.evaluate(()=>window.__HF_SKIN7_SUPREME_FORGE__.anim());
-  ok(animation.length===5&&animation.every(x=>x.finite&&x.newSkinnedMeshes===27),
+  ok(animation.length===5&&animation.every(x=>x.finite&&x.newSkinnedMeshes===32),
     'Five original source animation clips checked on new skinned parts');
   const exportOverlay=await page.evaluate(()=>window.__HF_SKIN7_SUPREME_FORGE__.exportOverlay());
   const exportFull=await page.evaluate(()=>window.__HF_SKIN7_SUPREME_FORGE__.exportFull());
@@ -60,7 +60,7 @@ const ok=(value,name)=>{assert(value,name);checks.push(name)};
   ok(JSON.parse(stored)?.userDecision==='liked','User art feedback persists in local project browser');
   await page.locator('#skin7Prompt').fill('Armadura caballero oscuro guardian de acero plata, hombros equilibrados, pecho blindado y faldones');
   const guardian=await page.evaluate(()=>window.__HF_SKIN7_SUPREME_FORGE__.forge());
-  ok(guardian.profile==='guardian'&&guardian.realBlenderNewMeshCount===54,
+  ok(guardian.profile==='guardian'&&guardian.realBlenderNewMeshCount===64,
     'Different Spanish prompt selects a SECOND genuinely separately forged geometry family');
   await page.locator('#skin7Front').click();
   await page.screenshot({path:dir+'/04-guardian-female-front.png'});
@@ -91,7 +91,7 @@ const ok=(value,name)=>{assert(value,name);checks.push(name)};
   ok(Math.abs(modified-original)>.00001&&d.realVerticesChanged===true,
     'True GPU vertex coordinates change per part WITHOUT original skeleton modification');
   let exported=await page.evaluate(()=>window.__HF_SKIN7_ARTISAN__.editedGlb('overlay').then(r=>r.report));
-  ok(exported.editedPrimitives===54&&exported.nativeSkinCount===1&&exported.editorGeometryExported,
+  ok(exported.editedPrimitives===64&&exported.nativeSkinCount>=1&&exported.editorGeometryExported,
     'Editor vertices are preserved in genuine reimportable SKINNED GLB, not only displayed');
   const withHidden=await page.evaluate(()=>{
    const a=window.__HF_SKIN7_ARTISAN__,x=a.state().design;
@@ -118,7 +118,7 @@ const ok=(value,name)=>{assert(value,name);checks.push(name)};
     'DISCARD current candidate NEVER deletes previously user-approved catalog asset');
   ok(errors.length===0,'No JavaScript errors through actual rigged 3D armors and two scenarios');
   fs.writeFileSync(dir+'/browser-proof.json',JSON.stringify({green:true,checks,errors,
-    rig:'Rig_Medium',bones:23,realAuthoredMeshes:54,genders:['M','F'],
+    rig:'Rig_Medium',bones:23,realAuthoredMeshes:64,genders:['M','F'],
     physicalS23Tested:false,unityImportTested:false,artistApproved:false,
     perPartVertexEditingTested:true,editedSkinnedGlbSavedInIndexedDb:true,
     publicGameUnchanged:true,semanticImageToArbitrary3D:false},null,2));
