@@ -7,6 +7,7 @@ on:
 permissions:
   contents: read
   actions: read
+  deployments: read
   pages: write
   id-token: write
 concurrency:
@@ -20,6 +21,28 @@ jobs:
     steps:
       - name: Checkout isolated Pages composition guard
         uses: actions/checkout@v4
+
+      - name: Reject stale Pages snapshot if V4 was published again elsewhere
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,os,urllib.request
+          expected="62902ec50c15026d6bdb607a8d5c05f618c7adf9"
+          uri="https://api.github.com/repos/"+os.environ["GITHUB_REPOSITORY"]+"/deployments?environment=highfly-v4-02-preview&per_page=1"
+          req=urllib.request.Request(uri,headers={
+            "Accept":"application/vnd.github+json",
+            "Authorization":"Bearer "+os.environ["GH_TOKEN"],
+            "X-GitHub-Api-Version":"2022-11-28",
+            "User-Agent":"HIGHFLY-monster-safe-pages-gate",
+          })
+          with urllib.request.urlopen(req,timeout=25) as fh: rows=json.load(fh)
+          if not rows or rows[0].get("sha") != expected:
+            raise SystemExit("HF_MONSTER_PAGES_BASE_CHANGED_REFUSE_DEPLOY:"+str(rows[:1]))
+          print("HF_MONSTER_PAGES_EXACT_CURRENT_DEPLOYMENT_SHA_GREEN=1")
+          PY
 
       - name: Fetch exact CURRENT live Pages snapshot (run 38077242582, SHA 62902ec5)
         uses: actions/download-artifact@v4
