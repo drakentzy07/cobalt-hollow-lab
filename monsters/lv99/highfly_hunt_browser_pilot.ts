@@ -9,6 +9,7 @@ import { terrainHeight, waterLevelAt } from '../../sim/world';
 import type { WorldContent } from '../../sim/types';
 import { HIGHFLY_HUNT_SCENARIOS } from './hunt_scenarios';
 import { addHighflyHuntScenery } from './hunt_scenery';
+import { addHighflyHuntEncounterWorld, type HighflyHuntEncounterMode } from './hunt_encounters';
 import { buildHighflyHuntPlaytestWorld, type HighflyHuntSurfaceProbe } from './hunt_playtest_world';
 
 export interface HighflyHuntBrowserSession {
@@ -16,6 +17,7 @@ export interface HighflyHuntBrowserSession {
   readonly seed: number;
   readonly hunterLevel: number;
   readonly scenarioId: string;
+  readonly encounterMode: HighflyHuntEncounterMode | null;
 }
 export const HIGHFLY_HUNT_BROWSER_FLAG = 'hfHunt';
 /** Only canonical level-band beginnings allowed; Extended and arbitrary IDs denied. */
@@ -47,6 +49,7 @@ export function nativeHighflyHuntSurfaceProbe(seed: number): HighflyHuntSurfaceP
 export function createHighflyHuntBrowserSession(
   startLevel: number,
   seed = WORLD_SEED,
+  encounterMode: HighflyHuntEncounterMode | null = null,
 ): HighflyHuntBrowserSession {
   if (!Number.isInteger(startLevel) || !ALLOWED_START_LEVELS.has(startLevel))
     throw new Error('HF_HUNT_BROWSER_INVALID_BAND');
@@ -66,7 +69,7 @@ export function createHighflyHuntBrowserSession(
     campfires: [[12, 37]] as [number,number][],
     crates: [[-12, 52]] as [number,number][],
   };
-  const world: WorldContent = addHighflyHuntScenery({
+  const scenicWorld: WorldContent = addHighflyHuntScenery({
     ...draft.world,
     props,
     // Explicit single field: no imported camps, NPCs, bosses or public roads.
@@ -76,6 +79,11 @@ export function createHighflyHuntBrowserSession(
     // Keep native open-sea detection dry, even along old built-in map coast.
     waterLevel: -20,
   }, s.id);
+  if (encounterMode!==null && encounterMode!=='elite' && encounterMode!=='captain')
+    throw new Error('HF_HUNT_BROWSER_INVALID_ENCOUNTER');
+  const world: WorldContent = encounterMode
+    ? addHighflyHuntEncounterWorld(scenicWorld,s.id,encounterMode,MOBS)
+    : scenicWorld;
   const before = getActiveWorldContent();
   setActiveWorldContent(world);
   try {
@@ -83,9 +91,26 @@ export function createHighflyHuntBrowserSession(
       s.id, startLevel, world, MOBS, originalZoneIds,
       nativeHighflyHuntSurfaceProbe(seed),
     );
-    if (actual.world.camps.length !== world.camps.length
+    if (actual.world.camps.length !== 4
       || actual.world.camps.some((c,i) => c.mobId !== world.camps[i].mobId))
       throw new Error('HF_HUNT_BROWSER_CAMP_DRIFT');
+    // In special encounters the extra captain/elite must also have a safe
+    // continuous route from the Hunter refuge, including its scatter radius.
+    if(encounterMode) {
+      const probe=nativeHighflyHuntSurfaceProbe(seed);
+      for(const offset of [[0,0],[-2,0],[2,0],[0,-2],[0,2]] as const) {
+        let previous:number|null=null;
+        for(let n=0;n<=50;n++){
+          const t=n/50,x=offset[0]*t,z=38+(202-38)*t+offset[1]*t;
+          const p=probe(x,z);
+          if(!p.walkable||!Number.isFinite(p.groundY)||p.groundY<=p.waterY+0.7)
+            throw Error('HF_HUNT_ENCOUNTER_ROUTE_NOT_WALKABLE');
+          if(previous!==null && Math.abs(p.groundY-previous)>0.48*(164/50))
+            throw Error('HF_HUNT_ENCOUNTER_ROUTE_TOO_STEEP');
+          previous=p.groundY;
+        }
+      }
+    }
     // Native navigability of each SCENIC road segment (not merely the direct
     // start-to-camp routes checked by the inherited P02B validator).
     const probe=nativeHighflyHuntSurfaceProbe(seed);
@@ -107,7 +132,7 @@ export function createHighflyHuntBrowserSession(
   } finally {
     setActiveWorldContent(before);
   }
-  return {world,seed,hunterLevel:startLevel,scenarioId:s.id};
+  return {world,seed,hunterLevel:startLevel,scenarioId:s.id,encounterMode};
 }
 
 /** Only a known, explicit build-flag AND exact URL parameter can open this.
@@ -120,8 +145,10 @@ export function highflyHuntBrowserRequest(
   if (!previewBuildEnabled || !urlParams.has(HIGHFLY_HUNT_BROWSER_FLAG)) return null;
   const raw = urlParams.get(HIGHFLY_HUNT_BROWSER_FLAG);
   if (!raw || !/^(21|30|40|50|60|70|80|90)$/.test(raw)) return null;
+  const modifier=urlParams.get('hfEncounter');
+  if (modifier!==null && modifier!=='elite' && modifier!=='captain') return null;
   try {
-    return createHighflyHuntBrowserSession(Number(raw));
+    return createHighflyHuntBrowserSession(Number(raw),WORLD_SEED,modifier);
   } catch {
     return null; // fail closed: never boot unsafe preview geometry
   }
