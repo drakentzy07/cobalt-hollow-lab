@@ -37,6 +37,7 @@ jobs:
             /pnpm-lock.yaml
             /patches/
             /.npmrc
+            /.browserslistrc
             /vite.config.ts
             /tsconfig.json
       - name: Checkout exact GREEN P02I Monster source modules, no live game edit
