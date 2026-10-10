@@ -157,6 +157,13 @@ for gender in ('M','F'):
    (c[0]-w*.09,front-.122,c[2]+h*.09),
    (c[0],front-.139,c[2]-h*.19),
    (c[0]+w*.09,front-.122,c[2]+h*.09)],glow,.012)
+ # Sculpted paired front flank plates, not painted texture on source torso.
+ for side,tag in [(-1,'L'),(1,'R')]:
+  plated('HF7_'+gender+'_CHEST_FLANK_RIDGE_'+tag,torso,[
+    (c[0]+side*w*.53,front-.036,c[2]+h*.74),
+    (c[0]+side*w*.88,front+.022,c[2]+h*.38),
+    (c[0]+side*w*.62,front-.035,c[2]-h*.53),
+    (c[0]+side*w*.43,front-.061,c[2]-h*.16)],trim,.015)
  # Original left-dominant and right-medium broad pagoda-like pauldron SHELLS.
  for letter in ('L','R'):
   arm=donor('HFV8_'+gender+'_ARMS_PAULDRON_'+letter)
