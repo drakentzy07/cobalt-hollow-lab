@@ -3,6 +3,11 @@ name: HIGHFLY MONSTERS P02H — SAFE Pages /monster-lab after native QA
 # Pins currently deployed V4-02 Pages artifact; no automatic merged source.
 # Do not enable push until monster-P02H CI run green and artifact exists.
 on:
+  push:
+    branches:
+      - highfly-monsters-p02h-pages-subpath-isolated
+    paths:
+      - .github/workflows/highfly-monsters-p02h-pages-subpath.yml
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,6 +26,44 @@ jobs:
     steps:
       - name: Checkout isolated Pages composition guard
         uses: actions/checkout@v4
+
+      - name: Require actual P02H package CI SUCCESS before even attempting Pages
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 55); do
+            if python3 - <<'PY'
+          import json,os,sys,urllib.request
+          rid=38078249008
+          uri="https://api.github.com/repos/"+os.environ["GITHUB_REPOSITORY"]+"/actions/runs/"+str(rid)
+          req=urllib.request.Request(uri,headers={
+              "Accept":"application/vnd.github+json",
+              "Authorization":"Bearer "+os.environ["GH_TOKEN"],
+              "X-GitHub-Api-Version":"2022-11-28",
+              "User-Agent":"HIGHFLY-pages-release-truth",
+          })
+          with urllib.request.urlopen(req,timeout=20) as response: d=json.load(response)
+          if d.get("head_sha")!="5f4aa55769d1cf2c00465eee228257078f323be5":
+              raise SystemExit("HF_P02H_UNEXPECTED_APPROVED_RUN_COMMIT")
+          if d.get("status")=="completed":
+              if d.get("conclusion")!="success":
+                  raise SystemExit("HF_P02H_SOURCE_CI_NOT_GREEN:"+str(d.get("conclusion")))
+              print("HF_P02H_SOURCE_SHA_GREEN=1")
+              sys.exit(0)
+          print("H_RUN_NOT_FINISHED:",d.get("status"),flush=True)
+          sys.exit(77)
+          PY
+            then
+              break
+            else
+              rc=$?
+              if [ "$rc" -ne 77 ]; then exit "$rc"; fi
+              if [ "$attempt" -eq 55 ]; then echo 'HF_P02H_SOURCE_CI_NOT_FINISHED'; exit 1; fi
+              sleep 30
+            fi
+          done
 
       - name: Reject stale Pages snapshot if V4 was published again elsewhere
         shell: bash
