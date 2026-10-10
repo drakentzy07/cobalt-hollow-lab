@@ -9,6 +9,7 @@ on:
       - highfly-monsters-lv99-pass02c-preview-entry
       - highfly-monsters-lv99-pass02d-scenery-routes
       - highfly-monsters-lv99-pass02e-native-loot-professions
+      - highfly-monsters-lv99-pass02f-elite-captain-hunts
   workflow_dispatch:
 permissions:
   contents: read
@@ -409,6 +410,8 @@ jobs:
           cp ../monsters/lv99/highfly_monster_content.test.ts tests/highfly_monster_content_lv99.test.ts
           cp ../monsters/lv99/highfly_hunt_rewards.ts src/highfly/monsters/hunt_rewards.ts
           cp ../monsters/lv99/highfly_hunt_rewards.test.ts tests/highfly_hunt_rewards.test.ts
+          cp ../monsters/lv99/highfly_hunt_encounters.ts src/highfly/monsters/hunt_encounters.ts
+          cp ../monsters/lv99/highfly_hunt_encounters.test.ts tests/highfly_hunt_encounters.test.ts
           cp ../monsters/lv99/highfly_hunt_scenarios.ts src/highfly/monsters/hunt_scenarios.ts
           cp ../monsters/lv99/highfly_hunt_scenarios.test.ts tests/highfly_hunt_scenarios.test.ts
           cp ../monsters/lv99/highfly_hunt_playtest_world.ts src/highfly/monsters/hunt_playtest_world.ts
@@ -444,6 +447,9 @@ jobs:
       - name: HIGHFLY MONSTERS P02E — 64 real recipe-consumer loot rows and native corpse bag save
         working-directory: upstream
         run: pnpm exec vitest run tests/highfly_hunt_rewards.test.ts
+      - name: HIGHFLY MONSTERS P02F — 16 native elite/captain instances, real combat, corpse and save
+        working-directory: upstream
+        run: pnpm exec vitest run tests/highfly_hunt_encounters.test.ts
       # The six worn-apex fixtures were authored with ClaudeCraft MAX_LEVEL=20.
       # Its item_level_req clamps source-25 crafted gear to that old level cap.
       # PF-6 correctly raises MAX_LEVEL to 99, so source-25 gear now requires 25.
@@ -529,7 +535,7 @@ jobs:
           test -s dist/index.html
           test -d dist/media
           echo "V3_02_FULL_GOLDEN_MEDIA_BUILD_GREEN=1"
-      - name: HIGHFLY P02D S23 emulated real themed-hunt WebGL + joystick (NO DEPLOY)
+      - name: HIGHFLY P02F S23 emulated hunt + elites + captains WebGL joystick (NO DEPLOY)
         working-directory: upstream
         shell: bash
         run: |
@@ -543,7 +549,10 @@ jobs:
             sleep 1
           done
           node scripts/highfly_hunt_browser_smoke.mjs
-          echo "HF_HUNT_P02D_S23_SCENERY_ROUTE_RENDER_GREEN=1"
+          HF_HUNT_ENCOUNTER_MODE=elite node scripts/highfly_hunt_browser_smoke.mjs
+          HF_HUNT_ENCOUNTER_MODE=captain node scripts/highfly_hunt_browser_smoke.mjs
+          HF_HUNT_ENCOUNTER_MODE=captain HF_HUNT_PREVIEW_LEVEL=90 node scripts/highfly_hunt_browser_smoke.mjs
+          echo "HF_HUNT_P02F_S23_NATIVE_ELITE_CAPTAIN_PREVIEW_GREEN=1"
       - name: V3-02 real PC browser native Professions and Crafting UI from donor
         working-directory: upstream
         shell: bash
@@ -612,8 +621,8 @@ jobs:
             demo-v3-06-s23-world.png
             demo-v3-06-s23-failure.png
             demo-v3-06-preview.log
-            highfly-hunt-p02c-s23-preview.png
-            highfly-hunt-p02c-s23-failure.png
+            highfly-hunt-p02f-*-s23-preview.png
+            highfly-hunt-p02f-*-s23-failure.png
             highfly-hunt-p02c-preview.log
           if-no-files-found: warn
           retention-days: 14
