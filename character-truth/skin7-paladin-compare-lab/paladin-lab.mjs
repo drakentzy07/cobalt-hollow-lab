@@ -129,6 +129,69 @@ function clearOverlays(actor,tag){
  for(const o of actor.overlays||[])if(o.tag===tag){for(const mesh of o.meshes)mesh.removeFromParent()}
  actor.overlays=(actor.overlays||[]).filter(o=>o.tag!==tag);
 }
+// Fourth station LIVE skinning-safe preview: bounded deformation of the
+// ELEVEN Blender-sculpted native skinned meshes, NOT a Nightfall overlay.
+// This cannot substitute actual Blender topology authoring for a legendary suit.
+const LIVE_DEFAULT={head:.91,chest:.97,arms:1.05,hands:.88,legs:.93,feet:.86,back:.89};
+const LIVE_SLOTS={
+ head:/^head/i,chest:/^chest/i,arms:/^arm/i,hands:/^hand/i,
+ legs:/^leg/i,feet:/^foot/i,back:/^back/i
+};
+let liveStats={editedVertices:0,meshes:0,intensity:{...LIVE_DEFAULT},palette:{enamel:'#314f74',metal:'#d4a953',accent:'#70d5e6'}};
+function liveMeshSlot(mesh){
+ const part=mesh.name.replace(/^HF7RF_PALADIN_/i,'');
+ const slot=Object.keys(LIVE_SLOTS).find(k=>LIVE_SLOTS[k].test(part));
+ if(!slot)throw Error('Pieza skinned fuera de los siete slots: '+mesh.name);
+ return slot;
+}
+function rememberNativeMesh(mesh){
+ const geom=mesh.geometry,attr=geom.attributes.position;
+ if(!attr||!attr.array||!mesh.isSkinnedMesh)throw Error('No es malla original skinned');
+ const original=new Float32Array(attr.array);
+ const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+ for(let i=0;i<original.length;i+=3)for(let k=0;k<3;k++){
+  min[k]=Math.min(min[k],original[i+k]);max[k]=Math.max(max[k],original[i+k]);
+ }
+ mesh.userData.skin7Base={original,center:min.map((lo,i)=>(lo+max[i])/2),slot:liveMeshSlot(mesh)};
+ mesh.material=Array.isArray(mesh.material)?mesh.material.map(m=>m.clone()):mesh.material.clone();
+}
+function updateLiveArmor(intensity,palette){
+ if(!state.assetsReady)return liveStats;
+ if(state.custom)throw Error('Quitá primero el GLB importado para editar la receta nativa.');
+ if(Object.keys(LIVE_DEFAULT).some(k=>!Number.isFinite(intensity[k])||intensity[k]<.15||intensity[k]>1.3))
+  throw Error('Control de pieza fuera de rango');
+ const colorValues=Object.values(palette);
+ if(colorValues.length!==3||colorValues.some(x=>!/^#[0-9a-fA-F]{6}$/.test(x)))
+  throw Error('Color fuera de rango');
+ const arm=state.actors[2],meshes=arm.recipeMeshes||[];
+ if(meshes.length!==11)throw Error('Se requieren once piezas originales skinned');
+ let edited=0;
+ for(const mesh of meshes){
+  const base=mesh.userData.skin7Base;
+  if(!base)throw Error('Geometría nativa sin captura inicial');
+  const {original,center,slot}=base;
+  const delta=Math.max(-.16,Math.min(.16,(intensity[slot]-LIVE_DEFAULT[slot])*.33));
+  const scale=[1+delta,1+delta*.65,1+delta*.83];
+  const attr=mesh.geometry.attributes.position;
+  for(let i=0;i<original.length;i+=3){
+   for(let k=0;k<3;k++)attr.array[i+k]=center[k]+(original[i+k]-center[k])*scale[k];
+  }
+  if(Math.abs(delta)>.00001)edited+=original.length/3;
+  attr.needsUpdate=true;
+  mesh.geometry.computeVertexNormals();
+  mesh.geometry.computeBoundingSphere();
+  const metal=['hands','legs','feet'].includes(slot);
+  const c=new THREE.Color(metal?palette.metal:palette.enamel);
+  if(slot==='head'||slot==='arms'||slot==='back')c.lerp(new THREE.Color(palette.accent),.20);
+  for(const mat of (Array.isArray(mesh.material)?mesh.material:[mesh.material])){
+   if(mat?.color)mat.color.copy(c);
+   mat.needsUpdate=true;
+  }
+ }
+ liveStats={editedVertices:edited,meshes:meshes.length,
+  intensity:{...intensity},palette:{...palette},rig:'Rig_Medium',nativeMeshesOnly:true};
+ return liveStats;
+}
 const stagePositions=[-2.55,0,2.55];
 function showStation(v){
  state.view=v;const compare=v==='all';
@@ -198,7 +261,9 @@ async function load(){
  for(let i=0;i<3;i++){
   const actor=actorSource();actor.variant=['base','original','reforged'][i];
   selectParts(actor,actor.variant,state.gender);
-  if(i===2){actor.recipeMeshes=equipGlb(actor,forge,'HF7RF_PALADIN_','recipe',true);}
+  if(i===2){actor.recipeMeshes=equipGlb(actor,forge,'HF7RF_PALADIN_','recipe',true);
+   for(const mesh of actor.recipeMeshes)rememberNativeMesh(mesh);
+  }
   materialFix(actor);
   if(i===1){
    const visible=originalPaladinVisualInventory(actor);
@@ -216,11 +281,14 @@ async function load(){
  selectClip('Idle');
  showStation('all');state.assetsReady=true;
  status('✅ Tres Hunter auténticos preparados · Paladín original y reforja · 22 movimientos sincronizados.');
+ updateLiveArmor(sliderData(),getLivePalette());
  window.__HF_SKIN7_LAB__=Object.freeze({
   state:()=>({ready:true,actors:state.actors.length,clip:state.clip,gender:state.gender,sourceBlobSha1:SOURCE_BLOB,
    rig:'Rig_Medium',nativeBones:23,clips:state.gltf.animations.map(a=>a.name),
    gameDeployment:false,gameMechanicsSimulated:false,customAssetLoaded:!!state.custom,
-   originalPaladin:originalPaladinVisualInventory(state.actors[1])}),
+   originalPaladin:originalPaladinVisualInventory(state.actors[1]),
+   liveCommission:liveStats}),
+  applyCommission:(intensity,palette)=>updateLiveArmor(intensity,palette),
   selectClip,showStation,selectGender,addCustomGlb:importCustom,poseTime:t=>{
    state.playing=false;for(const a of state.actors)a.mixer.setTime(t);state.t=t;
   }
@@ -294,14 +362,29 @@ function renderSliders(values){
   const inp=document.createElement('input');inp.type='range';inp.min='.15';inp.max='1.3';inp.step='.01';inp.value=values[slot];
   inp.dataset.slot=slot;
   const value=document.createElement('output');value.textContent=String(values[slot]);
-  inp.oninput=()=>value.textContent=inp.value;
+  inp.oninput=()=>{value.textContent=inp.value;applyLiveControls()};
   label.append(inp,value);settings.append(label);
  }
 }
 function sliderData(){return Object.fromEntries([...settings.querySelectorAll('input')].map(x=>[x.dataset.slot,Number(x.value)]))}
+function getLivePalette(){return {enamel:$('enamelColor').value,metal:$('metalColor').value,accent:$('accentColor').value}}
+function applyLiveControls(){
+ try{
+  if(!state.assetsReady)return;
+  const data=updateLiveArmor(sliderData(),getLivePalette());
+  if(state.view!=='commission')showStation('commission');
+  $('liveQa').textContent='VISTA VIVA · '+data.meshes+' piezas skinned nativas · '+data.editedVertices+' vértices de previsualización ajustados · Rig_Medium intacto.';
+ }catch(err){$('liveQa').textContent='❌ '+err.message}
+}
+for(const id of ['enamelColor','metalColor','accentColor'])$(id).addEventListener('input',applyLiveControls);
+$('resetLive').onclick=()=>{
+ commissionPalette=null;
+ $('enamelColor').value='#314f74';$('metalColor').value='#d4a953';$('accentColor').value='#70d5e6';
+ renderSliders({...LIVE_DEFAULT});applyLiveControls();
+};
 renderSliders(commissionIntensity('Armadura Paladín de forja sagrada.'));
 $('interpretOrder').onclick=()=>{
- try{renderSliders(commissionIntensity($('prompt').value));$('order').textContent='Borrador ajustado con reglas locales. Ajustá los siete controles, luego guardá la receta Blender V2. Para interpretación artística por IA, enviá texto/foto al chat.'}
+ try{renderSliders(commissionIntensity($('prompt').value));applyLiveControls();$('order').textContent='Borrador ajustado con reglas locales. Ajustá los siete controles, luego guardá la receta Blender V2. Para interpretación artística por IA, enviá texto/foto al chat.'}
  catch(e){$('order').textContent='❌ '+e.message}
 };
 $('extractColors').onclick=async()=>{
@@ -326,12 +409,14 @@ $('extractColors').onclick=async()=>{
   const bySat=[...colors].sort((a,b)=>saturation(b)-saturation(a));
   const bright=[...colors].sort((a,b)=>b.reduce((x,y)=>x+y,0)-a.reduce((x,y)=>x+y,0));
   commissionPalette={enamel:hex(colors[0]),metal:hex(bright[0]),accent:hex(bySat[0])};
+  $('enamelColor').value=commissionPalette.enamel;$('metalColor').value=commissionPalette.metal;$('accentColor').value=commissionPalette.accent;
+  applyLiveControls();
   $('order').textContent='🎨 Paleta extraída de la foto: '+JSON.stringify(commissionPalette)+'. La silueta NO se deduce automáticamente de la imagen.';
  }catch(e){$('order').textContent='❌ '+e.message}
 };
 $('saveOrder').onclick=()=>{
  try{
-  const recipe=commissionRecipe($('prompt').value,{intensity:sliderData(),palette:commissionPalette});
+  const recipe=commissionRecipe($('prompt').value,{intensity:sliderData(),palette:getLivePalette()});
   const url=URL.createObjectURL(new Blob([JSON.stringify(recipe,null,2)],{type:'application/json'}));
   const a=document.createElement('a');a.href=url;a.download='HIGHFLY-SKIN7-PALADIN-RECETA-BLENDER-V2.json';a.click();
   setTimeout(()=>URL.revokeObjectURL(url),3000);
