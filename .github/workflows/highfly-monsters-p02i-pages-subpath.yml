@@ -3,6 +3,11 @@ name: HIGHFLY MONSTERS P02I — SAFE Pages /monster-lab after native QA
 # Pins currently deployed V4-02 Pages artifact; no automatic merged source.
 # Manual-only release gate: require source GREEN, exact live V4 Pages SHA, native Chrome QA, SHA256 preservation.
 on:
+  push:
+    branches:
+      - highfly-monsters-p02i-pages-dungeon-update-safe
+    paths:
+      - .github/workflows/highfly-monsters-p02i-pages-subpath.yml
   workflow_dispatch:
 permissions:
   contents: read
