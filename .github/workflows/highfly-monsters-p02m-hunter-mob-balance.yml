@@ -1,0 +1,118 @@
+name: HIGHFLY MONSTRUOS 6 P02M — REAL HUNTER VS MOB BALANCE (NO DEPLOY)
+on:
+  push:
+    branches:
+      - highfly-monsters-p02m-hunter-mob-balance-audit
+    paths:
+      - .github/workflows/highfly-monsters-p02m-hunter-mob-balance.yml
+      - monsters/balance/highfly_hunter_mob_balance_audit.test.ts
+      - monsters/balance/highfly_challenge_reward_policy.ts
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: highfly-monsters-p02m-balance-frozen-source-no-deploy
+  cancel-in-progress: false
+jobs:
+  hunter_mob_balance_native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout isolated HIGHFLY balance branch
+        uses: actions/checkout@v4
+        with:
+          path: highfly
+      - name: Checkout donor ClaudeCraft EXACT pinned 0.44.0
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /package.json
+            /pnpm-lock.yaml
+            /patches/
+            /.npmrc
+            /.browserslistrc
+            /vite.config.ts
+            /tsconfig.json
+      - name: Checkout immutable P02I content source
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: e6f59079fdc3f278ef041fbc8354ca837aee42ab
+          path: source
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /monsters/lv99/highfly_monster_content.ts
+            /monsters/lv99/highfly_hunt_scenarios.ts
+            /monsters/lv99/highfly_hunt_rewards.ts
+            /monsters/lv99/highfly_hunt_encounters.ts
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Frozen dependencies
+        working-directory: upstream
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Construct pinned real LV99 Hunter plus monster TEST-ONLY runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p upstream/src/highfly/monsters upstream/src/highfly/training upstream/tests
+          cp source/monsters/lv99/highfly_monster_content.ts upstream/src/highfly/monsters/level99.ts
+          cp source/monsters/lv99/highfly_hunt_scenarios.ts upstream/src/highfly/monsters/hunt_scenarios.ts
+          cp source/monsters/lv99/highfly_hunt_rewards.ts upstream/src/highfly/monsters/hunt_rewards.ts
+          cp source/monsters/lv99/highfly_hunt_encounters.ts upstream/src/highfly/monsters/hunt_encounters.ts
+          cp highfly/training/runtime/pf6_xp_curve.ts upstream/src/highfly/training/pf6_xp_curve.ts
+          cp highfly/monsters/balance/highfly_challenge_reward_policy.ts upstream/src/highfly/monsters/hunt_challenge_reward_policy.ts
+          cp highfly/monsters/balance/highfly_hunter_mob_balance_audit.test.ts upstream/tests/highfly_p02m_balance.test.ts
+          cd upstream
+          python3 ../highfly/training/scripts/pf6_activate_gameplay.py
+          cat > vitest.p02m.config.mts <<'EOF'
+          import { defineConfig } from 'vitest/config';
+          export default defineConfig({test:{environment:'node',include:['tests/highfly_p02m_balance.test.ts'],passWithNoTests:false,reporters:'verbose'}});
+          EOF
+      - name: REAL source-derived balance / higher-level kill / safe reward test
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run --config vitest.p02m.config.mts tests/highfly_p02m_balance.test.ts --reporter=verbose
+          test -s /tmp/hf-monstruos6-p02m-balance/00_RESUMEN_BALANCE.json
+          test -s /tmp/hf-monstruos6-p02m-balance/01_HUNTER_MOB_AUTO_ATTACK_BALANCE_MATRIX.csv
+          test -s /tmp/hf-monstruos6-p02m-balance/03_CRAFT_REAGENT_ODDS_POLICY_PROPOSED.csv
+          echo 'P02M_AUDIT_EXECUTED_NOT_GAMEPLAY_BALANCE_CERTIFIED=1'
+      - name: Preserve balance figures to isolated branch ONLY
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd highfly
+          test "$GITHUB_REF_NAME" = 'highfly-monsters-p02m-hunter-mob-balance-audit'
+          git fetch --no-tags origin "$GITHUB_REF_NAME"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+          mkdir -p docs/HIGHFLY_MONSTRUOS6_P02M_BALANCE
+          cp /tmp/hf-monstruos6-p02m-balance/* docs/HIGHFLY_MONSTRUOS6_P02M_BALANCE/
+          git config user.name 'highfly-monsters-balance-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add docs/HIGHFLY_MONSTRUOS6_P02M_BALANCE
+          git diff --cached --check
+          git commit -m 'docs(monsters): audit real Hunter vs mob LV1-99 and honest balance gates P02M'
+          git push origin HEAD:refs/heads/"$GITHUB_REF_NAME"
+      - name: Attach diagnostics even after failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-MONSTRUOS6-P02M-HUNTER-MOB-BALANCE
+          path: /tmp/hf-monstruos6-p02m-balance/
+          if-no-files-found: warn
+          retention-days: 14
