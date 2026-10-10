@@ -25,15 +25,18 @@ src = src.replace(anchor_signature,"""  world?: WorldContent,
   huntPreviewLevel?: number,
 ): Promise<void> {""",1)
 offline_start = src.find('async function startOffline(')
-skin_at = src.find(anchor_skin, offline_start)
-if offline_start < 0 or skin_at < 0 or skin_at - offline_start > 5000:
-    raise SystemExit('HF_HUNT_P02C_OFFLINE_SKIN_ANCHOR_MISSING')
-src = src[:skin_at] + anchor_skin + """
-  // P02C opt-in offline arena ONLY: set native test level, not Training stats.
-  // Never reached from public/default V4 startup or ordinary offline creation.
+sim_at = src.find('  const sim = loadSpan(', offline_start)
+sim_close = src.find('\\n  );', sim_at)
+if offline_start < 0 or sim_at < 0 or sim_at - offline_start > 8000 or sim_close < 0 or sim_close - sim_at > 4200 or 'new Sim(' not in src[sim_at:sim_close]:
+    raise SystemExit('HF_HUNT_P02C_OFFLINE_SIM_BUILD_ANCHOR_MISSING')
+# Inject only after the exact native Sim creation expression, no skin/edit/Training duplication.
+insert_at = sim_close + len('\\n  );')
+src = src[:insert_at] + """
+  // P02C opt-in offline HuntPilot ONLY: set native class-level for balanced
+  // preview combat, without a simulated Training session or additional stats.
   if (huntPreviewLevel !== undefined) {
     sim.setPlayerLevel(huntPreviewLevel, sim.playerId);
-  }""" + src[skin_at + len(anchor_skin):]
+  }""" + src[insert_at:]
 src = src.replace(anchor_start,anchor_start+"""
 const highflyHuntPilot = highflyHuntBrowserRequest(
   startupParams, import.meta.env.VITE_HIGHFLY_HUNT_PREVIEW === '1',
