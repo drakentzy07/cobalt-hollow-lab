@@ -1,0 +1,20 @@
+{
+ "schema":"highfly.skin7.native-original-source-head-truth/1",
+ "source":"levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb",
+ "rig":"Rig_Medium",
+ "boneCount":23,
+ "originalActor":true,
+ "pose":"Idle clip phase 0.23, actual browser body with original native mesh, 915x412 landscape",
+ "method":"THREE.Box3.setFromObject(original M_Head/F_Head, precise=true), world Y-up",
+ "coordinateSystem":"Three glTF world X-horizontal Y-up Z-depth; Blender modeling transforms these to X, Y=-Z, Z=Y",
+ "gender":{
+  "M":{"center":[0.001641761342330711,1.61933298792945,0.03891554173334458],
+   "size":[0.8965095240291494,0.8398524167726529,0.9986764149648304]},
+  "F":{"center":[0.0003602742206373355,1.614309897079527,0.03790965380918729],
+   "size":[0.9114562121038078,0.8297829576060523,0.9875837324297978]}
+ },
+ "authoredTarget":"Kabuto dome true head width ~90%, top above original head, horns visible above skull, mask in front of original face",
+ "originalGameUnmodified":true,
+ "actualSamsungTested":false,
+ "artApproved":false
+}
