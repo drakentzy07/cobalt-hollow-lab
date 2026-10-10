@@ -97,21 +97,33 @@ try {
     return {
       nativeDialog:w?.getAttribute('role')==='dialog',
       title:(w?.querySelector('.ui-win-title')?.textContent??'').trim(),
-      identityPresent:!!w?.querySelector('.prof-identity'),
+      // ClaudeCraft 0.44.0 deliberately shows simplified onboarding for an
+      // unattuned level-1 Hunter; ring and skill rows unlock later.
+      simplifiedOnboarding:!!w?.querySelector('.prof-cta') &&
+        !!w?.querySelector('.prof-identity-paragraph'),
+      fullIdentity:!!w?.querySelector('.prof-identity'),
       wheelPresent:!!w?.querySelector('.prof-ring'),
       craftRows:w?.querySelectorAll('.prof-craft-row').length??0,
       gatheringRows:w?.querySelectorAll('.prof-gather-row').length??0,
       craftSkillsCount:Object.keys(s?.craftSkills??{}).length,
       realSource:typeof s?.professionsState!=='undefined',
+      realProfessionIdentity:!!s?.craftingIdentity,
+      nativeScroll:!!w?.querySelector('.prof-scroll'),
+      nativeDismiss:!!w?.querySelector('[data-close]'),
       innerText:(w?.textContent??'').slice(0,450),
     };
   });
-  if(!result.professionsUi.nativeDialog ||
-     !result.professionsUi.identityPresent ||
-     !result.professionsUi.wheelPresent ||
-     result.professionsUi.craftRows<5 ||
-     result.professionsUi.gatheringRows<3){
-    throw Error('ClaudeCraft original professions UI incomplete: '+JSON.stringify(result.professionsUi));
+  const prof=result.professionsUi;
+  if(!prof.nativeDialog || !prof.realSource || !prof.realProfessionIdentity ||
+     !prof.nativeScroll || !prof.nativeDismiss || prof.craftSkillsCount<5 ||
+     !(prof.simplifiedOnboarding ||
+       (prof.fullIdentity && prof.wheelPresent && prof.craftRows>=5))){
+    throw Error('ClaudeCraft native professions did not match real novice/full progression: '+JSON.stringify(prof));
+  }
+  // Fail closed: never permit a partial/full hybrid painter to masquerade
+  // as a valid novice screen.
+  if(prof.simplifiedOnboarding && (prof.wheelPresent || prof.craftRows>0)){
+    throw Error('Native professions novice mode has contradictory full widgets');
   }
   await page.locator('#professions-window [data-close]').click({timeout:10000});
   await page.locator('#professions-window').waitFor({state:'hidden',timeout:10000});
