@@ -8,14 +8,30 @@ const dir=process.env.HF_PALADIN_PROOF||'character-truth/skin7-paladin-scratch/l
 fs.mkdirSync(dir,{recursive:true});
 (async()=>{
  const browser=await chromium.launch({headless:true,args:['--enable-unsafe-swiftshader','--use-angle=swiftshader','--use-gl=angle']});
- const checks=[],errors=[];
+ const checks=[],errors=[],network=[];
  const ok=(v,description)=>{assert(v,description);checks.push(description)};
  try{
  const ctx=await browser.newContext({viewport:{width:915,height:412},isMobile:true,hasTouch:true,deviceScaleFactor:2,acceptDownloads:true});
  const p=await ctx.newPage();
  p.on('pageerror',e=>errors.push(e.message));
+ p.on('console',e=>{if(e.type()==='error')errors.push('console:'+e.text().slice(0,800))});
+ p.on('response',r=>{if(r.status()>=400)network.push(r.status()+' '+r.url())});
+ p.on('requestfailed',r=>network.push('failed:'+r.url()+':'+r.failure()?.errorText));
  await p.goto(URL,{waitUntil:'domcontentloaded',timeout:120000});
- await p.waitForFunction(()=>window.__HF_SKIN7_LAB__?.state().ready,null,{timeout:120000});
+ try{
+  await p.waitForFunction(()=>window.__HF_SKIN7_LAB__?.state().ready,null,{timeout:60000});
+ }catch(e){
+  const diagnostic=await p.evaluate(()=>({
+    status:document.getElementById('status')?.textContent,
+    appExposed:!!window.__HF_SKIN7_LAB__,
+    scripts:[...document.scripts].map(s=>s.src||s.type),
+    body:document.body.innerText.slice(0,1800)
+  })).catch(x=>({inspectError:String(x)}));
+  await p.screenshot({path:dir+'/startup-failure.png',timeout:10000}).catch(()=>{});
+  fs.writeFileSync(dir+'/startup-diagnostic.json',JSON.stringify({diagnostic,errors,network},null,2));
+  console.error('SKIN7_LAB_STARTUP_DIAGNOSTIC='+JSON.stringify({diagnostic,errors,network}));
+  throw e;
+ }
  let s=await p.evaluate(()=>window.__HF_SKIN7_LAB__.state());
  ok(s.actors===3,'Three REAL independent Hunter actors render in one lab');
  ok(s.nativeBones===23&&s.rig==='Rig_Medium','Authentic 23-bone Rig_Medium');
