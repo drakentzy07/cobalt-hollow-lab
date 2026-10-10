@@ -1,4 +1,4 @@
-/** Chromium emulated S23 landscape: TRUE 70 mesh Blender original, original 23 bone Hunter,
+/** Chromium emulated S23 landscape: 68 Blender objects / 70 glTF skinned render meshes, original 23 bone Hunter,
  * 2 body sexes, 2 geometrically different profiles, user accept/reject (local, no game).
  */
 const {chromium}=require('playwright');
@@ -127,7 +127,7 @@ const ok=(value,name)=>{assert(value,name);checks.push(name)};
   });
   ok(withHidden.hiddenParts>=4,'Hidden back armor parts stay hidden in emitted GLB scene');
   const saved=await page.evaluate(()=>window.__HF_SKIN7_ARTISAN__.artDecision('liked'));
-  ok(saved.approvedBy==='user-local-art-choice'&&saved.gameDeployed===false&&saved.sha256.length===70,
+  ok(saved.approvedBy==='user-local-art-choice'&&saved.gameDeployed===false&&saved.sha256.length===64,
     'User approved candidate saved with its EDITED GLB SHA256 without game merge');
   const gallery=await page.evaluate(()=>window.__HF_SKIN7_ARTISAN__.refresh());
   ok(gallery.some(x=>x.id===saved.id),'Approved skin exists in persistent local IndexedDB gallery');
