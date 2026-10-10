@@ -1,5 +1,5 @@
 /** SKIN 7 BLOCK2 — isolated preview composed on exactly frozen V20 GREEN, never overwrite.
- * Two actual Blender-authored 64-piece animated profiles, male/female in one source rig.
+ * Two actual Blender-authored 68-piece animated profiles, male/female in one source rig.
  */
 import fs from 'node:fs';import assert from 'node:assert/strict';
 const base='character-truth/skin7-frozen-v20';
@@ -29,5 +29,5 @@ for(const style of ['crimson','guardian']){
 }
 assert(!fs.existsSync(out+'/assets/warrior_modular.glb'),'SKIN7_FORBIDDEN_ORIGINAL_HUNTER_ASSET_DUPLICATION');
 fs.writeFileSync(out+'/SKIN7_PROVENANCE.txt',
- 'Skin7 preview is only a candidate, NOT deployed. Blender authors 64 NEW weighted meshes per design, 32 M and 32 F. On top of TWO seed profile models the artisan editor changes actual vertex buffers per armor piece and exports rewritten skinned glTF2 GLBs preserving original bones and weights. Catalog approved candidate GLBs persist by SHA256 in browser IndexedDB, NEVER HIGHFLY gameplay. Images provide local color guidance only; arbitrary photo to geometry not solved. Kage Oni helmet remains separate. No physical Samsung, Unity Editor, visual clipping certification yet.\n');
+ 'Skin7 preview is only a candidate, NOT deployed. Blender authors 68 NEW weighted meshes per design, 34 M and 34 F. On top of TWO seed profile models the artisan editor changes actual vertex buffers per armor piece and exports rewritten skinned glTF2 GLBs preserving original bones and weights. Catalog approved candidate GLBs persist by SHA256 in browser IndexedDB, NEVER HIGHFLY gameplay. Images provide local color guidance only; arbitrary photo to geometry not solved. Kage Oni helmet remains separate. No physical Samsung, Unity Editor, visual clipping certification yet.\n');
 console.log('HIGHFLY_SKIN7_BLOCK2_NONDSTRUCTIVE_REAL_ARMOR_PREVIEW_PACKAGE_GREEN=1');
