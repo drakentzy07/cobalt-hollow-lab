@@ -1,0 +1,105 @@
+name: HIGHFLY SKIN7 - FIRST TRUE PALADIN SOURCE REFORGE (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-skin7-paladin-native-reforge]
+    paths:
+      - 'character-truth/skin7-paladin-first-reforge.py'
+      - '.github/workflows/skin7-paladin-first-reforge.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  paladin-source-geometry-forge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 19
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: No legacy studio or public game code changed, baseline ancestry required
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=736f4bd7c8462abd8bfeb1405cfe70f0cd6f9af2
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | tee /tmp/skin7-source-reforge-files.txt
+          while IFS= read -r f; do
+            case "$f" in
+             character-truth/skin7-paladin-*|character-truth/skin7-native-wardrobe*|.github/workflows/skin7-paladin-truth.yml|.github/workflows/skin7-paladin-first-reforge.yml) ;;
+             *) echo "ERROR CHANGED OLD OR PUBLIC FILE $f"; exit 42 ;;
+            esac
+          done </tmp/skin7-source-reforge-files.txt
+          python3 -m py_compile character-truth/skin7-paladin-first-reforge.py
+          node character-truth/skin7-native-wardrobe.test.mjs
+          echo HIGHFLY_SKIN7_ORIGINAL_GAME_AND_ALL_PREVIOUS_LABS_UNCHANGED_GREEN=1
+      - name: Fetch pinned TRUE original ClaudeCraft modular GLB, source hash check
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/skin7-paladin-scratch
+          curl -fLsS --retry 3 --connect-timeout 15 --max-time 150 \
+            https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb \
+            -o character-truth/skin7-paladin-scratch/warrior_modular.glb
+          test "$(git hash-object character-truth/skin7-paladin-scratch/warrior_modular.glb)" = "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2"
+          python3 character-truth/skin7-paladin-source-audit.py \
+            character-truth/skin7-paladin-scratch/warrior_modular.glb \
+            character-truth/skin7-paladin-scratch/source-truth.json
+      - name: Install verified glTF-Transform and Meshopt decoded scratch importer
+        shell: bash
+        run: |
+          npm install --no-save --package-lock=false @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer@0.23.0
+          node character-truth/integration-modules/prepare-native-body.mjs \
+            character-truth/skin7-paladin-scratch/warrior_modular.glb \
+            character-truth/skin7-paladin-scratch/original-paladin-blender-scratch.glb
+          test -s character-truth/skin7-paladin-scratch/original-paladin-blender-scratch.glb
+      - name: Install Blender 4.2.23 LTS with official digest
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          VERSION=4.2.23
+          NAME="blender-${VERSION}-linux-x64.tar.xz"
+          ROOT="https://download.blender.org/release/Blender4.2"
+          mkdir -p "$RUNNER_TEMP/skin7-paladin-blender" "$RUNNER_TEMP/skin7-paladin-download"
+          cd "$RUNNER_TEMP/skin7-paladin-download"
+          curl -fLsS --retry 3 --max-time 390 "$ROOT/$NAME" -o "$NAME"
+          curl -fLsS --retry 3 --max-time 50 "$ROOT/blender-${VERSION}.sha256" -o SHA256SUMS
+          grep -F "$NAME" SHA256SUMS | head -1 | sha256sum --check
+          tar -xJf "$NAME" --strip-components=1 -C "$RUNNER_TEMP/skin7-paladin-blender"
+          echo "$RUNNER_TEMP/skin7-paladin-blender" >> "$GITHUB_PATH"
+      - name: Blender edits the real original Paladin 11 meshes, not Nightfall layered decorations
+        shell: bash
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          blender --background --factory-startup --python-exit-code 99 \
+            --python character-truth/skin7-paladin-first-reforge.py -- \
+            --source character-truth/skin7-paladin-scratch/original-paladin-blender-scratch.glb \
+            --baseline character-truth/skin7-paladin-scratch/PALADIN-ORIGINAL-11-PARTS.glb \
+            --reforge character-truth/skin7-paladin-scratch/PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb \
+            --report character-truth/skin7-paladin-scratch/first-reforge-report.json | tee /tmp/skin7-paladin-forge.log
+          grep -F 'SKIN7_REAL_CLAUDECRAFT_PALADIN_11_MESHES_REFORGED_FROM_NATIVE_SOURCE_GREEN=1' /tmp/skin7-paladin-forge.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,struct
+          folder=Path('character-truth/skin7-paladin-scratch')
+          report=json.loads((folder/'first-reforge-report.json').read_text())
+          assert report['paladinSourceMeshes']==11 and report['reforgedMeshes']==11
+          assert report['sourceOriginalGeometryReused'] and not report['NightfallOverlaid']
+          assert report['nativeJoints']==23
+          assert all(x['changedVertices']>0 for x in report['sourceBasedModifiedMeshes'].values())
+          for fname in ('PALADIN-ORIGINAL-11-PARTS.glb','PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb'):
+            data=(folder/fname).read_bytes()
+            assert data[:4]==b'glTF' and struct.unpack_from('<I',data,4)[0]==2
+          print('SKIN7_NATIVE_PALADIN_REAL_ORIGINAL_REFORGE_REIMPORTABLE_GLBS_GREEN=1')
+          PY
+      - name: Upload private review proof only - do not deploy, do not auto approve
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN7-PALADIN-ORIGINAL-VS-SOURCE-REFORGED-GLB-NO-DEPLOY
+          path: |
+            character-truth/skin7-paladin-scratch/PALADIN-ORIGINAL-11-PARTS.glb
+            character-truth/skin7-paladin-scratch/PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb
+            character-truth/skin7-paladin-scratch/first-reforge-report.json
+            character-truth/skin7-paladin-scratch/source-truth.json
+          if-no-files-found: warn
+          retention-days: 30
