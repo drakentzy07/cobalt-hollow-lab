@@ -1,0 +1,189 @@
+name: HIGHFLY PR19 — V4-02 UI safe Pages preserving ROOT and MONSTER-LAB
+on:
+  push:
+    branches:
+      - highfly-v4-02-pr19-pages-preserve-monster
+    paths:
+      - .github/workflows/highfly-v4-02-pr19-pages-preserve-monster.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  deployments: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-monsterlab-pages-immutable-publish
+  cancel-in-progress: false
+jobs:
+  compose_and_validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - name: Checkout isolated PR19 Pages composition
+        uses: actions/checkout@v4
+      - name: Refuse unapproved PR19 bundle and stale live Pages before any upload
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, json, urllib.request
+          headers={'Accept':'application/vnd.github+json','Authorization':'Bearer '+os.environ['GH_TOKEN'],
+            'X-GitHub-Api-Version':'2022-11-28','User-Agent':'HIGHFLY-PR19-pages-integrity'}
+          root='https://api.github.com/repos/'+os.environ['GITHUB_REPOSITORY']
+          def get(uri):
+            with urllib.request.urlopen(urllib.request.Request(root+uri,headers=headers),timeout=30) as stream:return json.load(stream)
+          source=get('/actions/runs/38085989015')
+          assert source['status']=='completed' and source['conclusion']=='success','PR19 package run not GREEN'
+          assert source['head_sha']=='6de0c95a5eeaba2ce1e37805bf89dd00c6a704e3','PR19 source SHA changed'
+          deployed=get('/deployments?environment=highfly-v4-02-preview&per_page=1')
+          assert deployed and deployed[0]['sha']=='5ce51d07dfa5cd392259a3f710b42445251362d4','Latest live Pages changed since certified Monster Lab!'
+          print('HIGHFLY_PR19_GREEN_CANDIDATE_AND_CURRENT_MONSTER_PAGES_SHA_OK=1')
+          PY
+      - name: Fetch last ACTUAL deployed full 3-route Pages snapshot (ROOT, V4, MONSTER)
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          run-id: 38081991130
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: approved-pages-artifact
+      - name: Fetch certified PR19 S23 WebGL bundle (no build/source modification)
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-V4-02-PR19-S23-WEBGL-CANDIDATE
+          run-id: 38085989015
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: pr19-candidate
+      - name: Restore immutable last-live Pages snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARBALL="$(find approved-pages-artifact -type f -name '*.tar' -print -quit)"
+          test -n "$TARBALL"
+          mkdir -p approved-live-pages
+          tar -xf "$TARBALL" -C approved-live-pages
+          test -s approved-live-pages/index.html
+          test -s approved-live-pages/monster-lab/index.html
+          test -s approved-live-pages/v4-02/index.html
+          test -s pr19-candidate/cobalt-hollow-lab/index.html
+          echo 'HIGHFLY_PR19_PAGES_LATEST_LIVE_SOURCE_EXACT_RESTORED=1'
+      - name: Compose PR19 onto V4 only; byte-verify EVERY original ROOT and MONSTER file
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 professions/pr19/compose_pages_preserve_monster.py
+          test -s composed-pages/v4-02/index.html
+          test -s composed-pages/monster-lab/hunts.html
+          test -s composed-pages/index.html
+          test -s pr19-pages-integrity-report.json
+          echo 'HIGHFLY_PR19_PAGES_THREE_ROUTE_ROOT_MONSTER_IMMUTABLE_GREEN=1'
+      - name: Checkout pinned ClaudeCraft browser dependencies (NO rebuild)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: browser-deps
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /package.json
+            /pnpm-lock.yaml
+            /patches/
+            /.npmrc
+      - name: Checkout exact PR19 approved native S23 browser gate
+        uses: actions/checkout@v4
+        with:
+          ref: f452fa29cd236d2addbef734cb6ee5bf3ad7d546
+          path: pr19-smoke
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /demo/v4/pr19_s23_ux_smoke.mjs
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install donor browser test tools without modifying gameplay
+        shell: bash
+        working-directory: browser-deps
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Prove current ROOT, original MONSTER and new V4 PR19 on S23 Chrome emulation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p browser-deps/scripts staged-pages
+          cp pr19-smoke/demo/v4/pr19_s23_ux_smoke.mjs browser-deps/scripts/pr19_s23_pages_smoke.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('browser-deps/scripts/pr19_s23_pages_smoke.mjs')
+          s=p.read_text()
+          a='http://127.0.0.1:4173/cobalt-hollow-lab/'
+          b='http://127.0.0.1:4173/cobalt-hollow-lab/v4-02/'
+          assert s.count(a)==1,'PR19 green smoke has changed URL contract'
+          p.write_text(s.replace(a,b))
+          PY
+          ln -s ../composed-pages staged-pages/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory staged-pages > pr19-pages-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 35); do
+            if curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/v4-02/ > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/ -o /dev/null
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/monster-lab/hunts.html -o /dev/null
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/monster-lab/game.html -o /dev/null
+          (cd browser-deps && node scripts/pr19_s23_pages_smoke.mjs)
+          echo 'HIGHFLY_PR19_PAGES_GOLDEN_S23_AND_NATIVE_COMPACT_UI_GREEN=1'
+      - name: Upload integrity and S23 screenshots even when failed (NOT public deployment)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-PR19-ROOT-MONSTER-S23-PAGES-INTEGRITY
+          path: |
+            pr19-pages-integrity-report.json
+            pr19-pages-http.log
+            demo-v4-02-pr19-s23-report.json
+            demo-v4-02-pr19-s23-gem-menu.png
+            demo-v4-02-pr19-s23-crafting.png
+            demo-v4-02-pr19-s23-failure.png
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Recheck live Monster Pages SHA immediately before publishing
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,json,urllib.request
+          url='https://api.github.com/repos/'+os.environ['GITHUB_REPOSITORY']+'/deployments?environment=highfly-v4-02-preview&per_page=1'
+          req=urllib.request.Request(url,headers={
+            'Authorization':'Bearer '+os.environ['GH_TOKEN'],
+            'Accept':'application/vnd.github+json',
+            'X-GitHub-Api-Version':'2022-11-28',
+            'User-Agent':'HIGHFLY-PR19-final-live-sha-gate'})
+          with urllib.request.urlopen(req,timeout=30) as response: deployments=json.load(response)
+          assert deployments and deployments[0]['sha']=='5ce51d07dfa5cd392259a3f710b42445251362d4', 'Another Pages publish occurred; refuse stale PR19'
+          print('HIGHFLY_PR19_LAST_LIVE_MONSTER_SHA_STILL_CURRENT=1')
+          PY
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload unchanged ROOT and MONSTER plus updated isolated V4
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: composed-pages
+  deploy:
+    needs: compose_and_validate
+    runs-on: ubuntu-latest
+    environment:
+      name: highfly-v4-02-preview
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy immutable ROOT and MONSTER plus PR19 V4
+        uses: actions/deploy-pages@v4
+        id: deployment
