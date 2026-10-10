@@ -31,10 +31,14 @@ jobs:
             esac
           done </tmp/hf-skin7-changes
           node character-truth/skin7-contracts.test.mjs
+          node character-truth/skin7-artisan-engine.test.mjs
           python3 -m py_compile character-truth/skin7-supreme-forge-blender.py character-truth/skin7-forge-motion-gate.py
           node --check character-truth/skin7-supreme-forge-ui.mjs
           node --check character-truth/skin7-package-forge.mjs
           node --check character-truth/skin7-forge-browser-gate.cjs
+          node --check character-truth/skin7-artisan-workshop.mjs
+          node --check character-truth/skin7-artisan-catalog.mjs
+          node --check character-truth/skin7-artisan-engine.mjs
           echo SKIN7_EXISTING_STUDIOS_AND_GAME_UNTOUCHED_GREEN=1
       - name: Download exactly frozen genuine V20 GREEN GLBs - no source character duplication
         uses: actions/download-artifact@v4
