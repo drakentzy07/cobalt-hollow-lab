@@ -25,7 +25,7 @@ function glb(entities=86){
  const genders=['M','F'];
  for(const gender of genders){
   for(let n=0;n<entities/2;n++){
-   const name='HFV19_'+gender+'_'+(n%3===0?'ARMS_DRAGON_SPIKE_':n%3===1?'CHEST_HEART_RUNE_':'BACK_SHADOW_PLATE_')+n;
+   const name='HFV19_'+gender+'_'+(n<4?'ARMS_DRAGON_SPIKE_':n%3===1?'CHEST_HEART_RUNE_':'BACK_SHADOW_PLATE_')+n;
    meshes.push({name,primitives:[{attributes:{POSITION:0,JOINTS_0:1,WEIGHTS_0:2},material:0}]});
    nodes.push({name,mesh:meshes.length-1,skin:0});
   }
