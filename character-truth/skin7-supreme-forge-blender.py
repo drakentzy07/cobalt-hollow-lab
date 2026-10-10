@@ -164,6 +164,81 @@ for gender in ('M','F'):
     (c[0]+side*w*.88,front+.022,c[2]+h*.38),
     (c[0]+side*w*.62,front-.035,c[2]-h*.53),
     (c[0]+side*w*.43,front-.061,c[2]-h*.16)],trim,.015)
+ # Original authored KABUTO helmet: native HEAD BONE ONLY (no generated skeleton).
+ # Bone rest endpoints are transformed via actual donor matrix; never invent head measurements.
+ headbone=rig.data.bones['head']
+ headbottom=torso.matrix_world.inverted() @ (rig.matrix_world @ headbone.head_local)
+ headtop=torso.matrix_world.inverted() @ (rig.matrix_world @ headbone.tail_local)
+ if headtop.z<headbottom.z:headbottom,headtop=headtop,headbottom
+ headheight=max(.15,abs(headtop.z-headbottom.z))
+ headradius=max(.080,min(w*.48,headheight*.66))
+ headcenter=Vector(((headtop.x+headbottom.x)*.5,(headtop.y+headbottom.y)*.5,
+  headbottom.z+headheight*.60))
+ def headpart(name,vertices,faces,mat):
+  me=bpy.data.meshes.new(name);me.from_pydata(vertices,[],faces);me.update()
+  o=bpy.data.objects.new(name,me);bpy.context.collection.objects.link(o)
+  o.data.materials.append(mat)
+  vg=o.vertex_groups.new(name='head');vg.add(list(range(len(vertices))),1.0,'REPLACE')
+  o.matrix_world=torso.matrix_world.copy()
+  modifier=o.modifiers.new('SKIN7_NATIVE_HEAD_RIGID_BIND','ARMATURE');modifier.object=rig
+  made.append(o);reports[name]={'donor':'ORIGINAL_NATIVE_HEAD_BONE','newVertices':len(vertices),
+   'weighted':True,'maxInfluences':1}
+  return o
+ def headrim(name,z,width=.99,segments=20):
+  pts=[];faces=[]
+  for ringindex in range(2):
+   for j in range(segments):
+    q=2*math.pi*j/segments
+    rad=headradius*width*(1.12 if ringindex else 1.03)
+    pts.append((headcenter.x+rad*math.cos(q),headcenter.y+rad*.83*math.sin(q),
+     z-.018*ringindex))
+  for j in range(segments):faces.append((j,(j+1)%segments,(j+1)%segments+segments,j+segments))
+  return headpart(name,pts,faces,trim)
+ # Dome with a genuine curved 3D helmet contour; not old Kage Oni rescaled.
+ segments=20;rings=8;vs=[];faces=[]
+ for i in range(rings):
+  phi=(math.pi/2-.065)*i/(rings-1)
+  z=headbottom.z+headheight*.32+headheight*.80*math.sin(phi)
+  rad=headradius*1.02*math.cos(phi)
+  for j in range(segments):
+   q=2*math.pi*j/segments
+   vs.append((headcenter.x+rad*math.cos(q),headcenter.y+rad*.83*math.sin(q),z))
+ for i in range(rings-1):
+  for j in range(segments):
+   a=i*segments+j;b=i*segments+(j+1)%segments
+   faces.append((a,b,b+segments,a+segments))
+ headpart('HF7_'+gender+'_HEAD_KABUTO_DOME',vs,faces,iron)
+ headrim('HF7_'+gender+'_HEAD_KABUTO_RIM',headbottom.z+headheight*.32)
+ # Paired sweeping ONI horns, sculpted taper and bend, always original head bone.
+ for side,tag in [(-1,'L'),(1,'R')]:
+  verts=[];faces=[];stacks=9;radial=8
+  for i in range(stacks):
+   t=i/(stacks-1)
+   z=headbottom.z+headheight*(.75+1.2*t)
+   x=headcenter.x+side*headradius*(.53+.68*t+.24*t*t)
+   y=headcenter.y-headradius*(.045+.28*t*t)
+   r=headradius*.22*(1-t)**1.3+.002
+   for j in range(radial):
+    q=2*math.pi*j/radial
+    verts.append((x+r*math.cos(q),y+r*math.sin(q),z))
+  for i in range(stacks-1):
+   for j in range(radial):
+    a=i*radial+j;b=i*radial+(j+1)%radial
+    faces.append((a,b,b+radial,a+radial))
+  headpart('HF7_'+gender+'_HEAD_HORN_'+tag,verts,faces,trim)
+ # Oni faceguard: genuinely three-dimensional visor frame, centered on bone head.
+ x,y,z=headcenter;rad=headradius
+ poly=[(x-rad*.64,y-rad*.80,z-headheight*.34),
+  (x-rad*.68,y-rad*.82,z+headheight*.06),
+  (x-rad*.30,y-rad*.90,z+headheight*.21),
+  (x+rad*.30,y-rad*.90,z+headheight*.21),
+  (x+rad*.68,y-rad*.82,z+headheight*.06),
+  (x+rad*.64,y-rad*.80,z-headheight*.34),
+  (x,y-rad*.92,z-headheight*.55)]
+ headpart('HF7_'+gender+'_HEAD_ONI_MASK',poly+
+  [(a,b+.025,c) for a,b,c in poly],
+  [tuple(range(7)),tuple(reversed(range(7,14)))]+
+  [(i,(i+1)%7,(i+1)%7+7,i+7) for i in range(7)],dark)
  # Original left-dominant and right-medium broad pagoda-like pauldron SHELLS.
  for letter in ('L','R'):
   arm=donor('HFV8_'+gender+'_ARMS_PAULDRON_'+letter)
@@ -227,7 +302,7 @@ for gender in ('M','F'):
   ring('HF7_'+gender+'_LEG_'+letter+'_SCULPTED_GREAVE',leg,lc,
     max(lr[0],.06)*1.13,max(lr[1],.045)*1.12,
     a[2]+.026,b[2]-.026,iron,16)
-if len(made)!=54:raise RuntimeError('SKIN7_PREMIUM_PARTS_COUNT_'+str(len(made)))
+if len(made)!=64:raise RuntimeError('SKIN7_PREMIUM_PARTS_COUNT_'+str(len(made)))
 verts=sum(len(x.data.vertices) for x in made)
 tris=sum(sum(max(0,len(f.vertices)-2) for f in o.data.polygons) for o in made)
 if verts>17000 or tris>15000:raise RuntimeError('SKIN7_MOBILE_ADDED_GEOMETRY_TOO_HEAVY')
