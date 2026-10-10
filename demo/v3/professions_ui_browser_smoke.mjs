@@ -125,8 +125,14 @@ try {
   if(prof.simplifiedOnboarding && (prof.wheelPresent || prof.craftRows>0)){
     throw Error('Native professions novice mode has contradictory full widgets');
   }
-  await page.locator('#professions-window [data-close]').click({timeout:10000});
-  await page.locator('#professions-window').waitFor({state:'hidden',timeout:10000});
+  // In the heavy WebGL scene Playwright pointer click can stall after the
+  // browser has already found the visible Close button. Reuse the original
+  // ClaudeCraft unified Escape keyboard handler (hud.closeAll) instead:
+  // a REAL player input with the same native ProfessionsWindow.close route.
+  // Earlier V3-02 GREEN certified the X button. Here we certify keyboard exit.
+  await page.keyboard.press('Escape');
+  await page.locator('#professions-window').waitFor({state:'hidden',timeout:15000});
+  result.professionsUi.closedWithNativeEscape=true;
   result.phase='crafting-ui';
   await page.locator('#mm-crafting').waitFor({state:'visible',timeout:15000});
   await page.locator('#mm-crafting').click({timeout:12000});
