@@ -72,16 +72,17 @@ jobs:
           cp source/monsters/lv99/highfly_hunt_scenarios.ts upstream/src/highfly/monsters/hunt_scenarios.ts
           cp source/monsters/lv99/highfly_hunt_rewards.ts upstream/src/highfly/monsters/hunt_rewards.ts
           cp source/monsters/lv99/highfly_hunt_encounters.ts upstream/src/highfly/monsters/hunt_encounters.ts
-          cp highfly/monsters/audit/highfly_complete_registry_audit.test.ts upstream/tests_highfly_monsters_p02l.test.ts
+          mkdir -p upstream/tests
+          cp highfly/monsters/audit/highfly_complete_registry_audit.test.ts upstream/tests/tests_highfly_monsters_p02l.test.ts
           test -s upstream/src/sim/data.ts
           test -s upstream/src/sim/entity.ts
-          test -s upstream/tests_highfly_monsters_p02l.test.ts
+          test -s upstream/tests/tests_highfly_monsters_p02l.test.ts
       - name: Export ACTUAL runtime registries for ALL native monsters and HF21-99
         working-directory: upstream
         shell: bash
         run: |
           set -euo pipefail
-          pnpm exec vitest run tests_highfly_monsters_p02l.test.ts --reporter=verbose
+          pnpm exec vitest run tests/tests_highfly_monsters_p02l.test.ts --reporter=verbose
           test -s /tmp/hf-monstruos6-full-audit/01_MONSTRUOS_TODOS.csv
           test -s /tmp/hf-monstruos6-full-audit/02_APARICIONES_CAMPOS_MAZMORRAS_LAB.csv
           test -s /tmp/hf-monstruos6-full-audit/03_LOOT_TODAS_LAS_FILAS.csv
