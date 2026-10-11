@@ -19,9 +19,12 @@ src=p_recipes.read_text("utf8")
 anchor="import type { ProfessionRecipeRecord } from '../professions/types';"
 if src.count(anchor)!=1:raise SystemExit("P13_RECIPE_AUTHORITATIVE_IMPORT_DRIFT")
 src=src.replace(anchor,anchor+"\nimport { HIGHFLY_P13_RECIPES } from './highfly_lv99_native_equipment';",1)
-anchor="  ...FACTION_REWARD_RECIPES,\n];"
-if src.count(anchor)!=1:raise SystemExit("P13_REAL_RECIPE_BY_ID_INDEX_DRIFT")
-src=src.replace(anchor,"  ...FACTION_REWARD_RECIPES,\n  ...HIGHFLY_P13_RECIPES,\n];",1)
+start_marker="export const ALL_RECIPES: ProfessionRecipeRecord[] = ["
+if src.count(start_marker)!=1:raise SystemExit("P13_CANONICAL_RECIPE_ARRAY_NOT_FOUND")
+start=src.index(start_marker)+len(start_marker)
+end=src.find("\n];",start)
+if end<0:raise SystemExit("P13_CANONICAL_RECIPE_ARRAY_UNTERMINATED")
+src=src[:end]+"\n  ...HIGHFLY_P13_RECIPES,"+src[end:]
 p_recipes.write_text(src,"utf8")
 p.write_text(s,"utf8")
 if s.count("HIGHFLY_P13_ITEMS")!=2 or s.count("HIGHFLY_P13_RECIPES")!=0:
