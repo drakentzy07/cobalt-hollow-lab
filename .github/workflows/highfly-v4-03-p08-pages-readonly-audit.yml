@@ -1,0 +1,31 @@
+name: HIGHFLY V4-03 P08 — READ-ONLY LIVE GITHUB PAGES PRESERVATION AUDIT
+# This is deliberately NOT a Pages deployment. Never upload-pages-artifact.
+on:
+  push:
+    branches:
+      - highfly-v4-03-p08-final-integration-qa
+    paths:
+      - .github/workflows/highfly-v4-03-p08-pages-readonly-audit.yml
+      - monsters/integration/highfly_p08_pages_public_audit.mjs
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pages_http_immutable_baseline_observation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Audit existing Github Pages WITHOUT writing to any site
+        run: node monsters/integration/highfly_p08_pages_public_audit.mjs
+      - name: Save read-only baseline HTTP evidence (NOT full-site snapshot)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-P08-EXISTING-PAGES-HTTP-BASELINE-NO-DEPLOY
+          path: pages-public-p08-audit.json
+          if-no-files-found: warn
+          retention-days: 14
