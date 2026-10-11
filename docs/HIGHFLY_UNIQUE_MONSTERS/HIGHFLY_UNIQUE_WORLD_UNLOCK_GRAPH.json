@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "status": "SPEC_ONLY",
+  "scope": "perHunterNotServer",
+  "edges": [
+    {
+      "from": "hf_special_eclipse_wolf:discovery",
+      "to": "hf_ex_eclipse_wolf:EX",
+      "condition": "9 phase quest through prepared",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_ex_eclipse_wolf:cleared",
+      "to": "hf_special_eclipse_wolf:afterStory",
+      "condition": "first clear claimed atomically",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_special_eclipse_wolf:afterStory",
+      "to": "hf_recipe_moonthread_hood",
+      "condition": "profession recipe registration",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_special_veil_matriarch:discovery",
+      "to": "hf_ex_veil_matriarch:EX",
+      "condition": "9 phase quest through prepared",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_ex_veil_matriarch:cleared",
+      "to": "hf_special_veil_matriarch:afterStory",
+      "condition": "first clear claimed atomically",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_special_veil_matriarch:afterStory",
+      "to": "hf_recipe_veilweave_mantle",
+      "condition": "profession recipe registration",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_special_siege_tyrant:discovery",
+      "to": "hf_ex_siege_tyrant:EX",
+      "condition": "9 phase quest through prepared",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_ex_siege_tyrant:cleared",
+      "to": "hf_special_siege_tyrant:afterStory",
+      "condition": "first clear claimed atomically",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_special_siege_tyrant:afterStory",
+      "to": "hf_recipe_siegebreaker_hammer",
+      "condition": "profession recipe registration",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_special_ash_gravewyrm:discovery",
+      "to": "hf_ex_ash_gravewyrm:EX",
+      "condition": "9 phase quest through prepared",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_ex_ash_gravewyrm:cleared",
+      "to": "hf_special_ash_gravewyrm:afterStory",
+      "condition": "first clear claimed atomically",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_special_ash_gravewyrm:afterStory",
+      "to": "hf_recipe_ashbound_ward",
+      "condition": "profession recipe registration",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_special_rootheart_warden:discovery",
+      "to": "hf_ex_rootheart_warden:EX",
+      "condition": "9 phase quest through prepared",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_ex_rootheart_warden:cleared",
+      "to": "hf_special_rootheart_warden:afterStory",
+      "condition": "first clear claimed atomically",
+      "confirmedInNativeQuestEngine": false
+    },
+    {
+      "from": "hf_special_rootheart_warden:afterStory",
+      "to": "hf_recipe_heartwood_forge_grip",
+      "condition": "profession recipe registration",
+      "confirmedInNativeQuestEngine": false
+    }
+  ],
+  "safety": "no irrevocable main quest softlocks"
+}

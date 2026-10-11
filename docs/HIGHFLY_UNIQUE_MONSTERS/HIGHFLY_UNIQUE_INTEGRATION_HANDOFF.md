@@ -1,0 +1,4 @@
+# HIGHFLY — UNIQUE INTEGRATION HANDOFF — NO DEPLOY
+**11/10/2026 — UE00-UE02 · Especificación recuperada/propuesta, SIN integración de bosses.**
+
+Base aislada snapshot P08 `b177196fbc1a3d59608f898ef01121940f2f86b6`; sin merge a P08, main ni publicación. Feature flag `VITE_HIGHFLY_UNIQUE_MONSTERS=0`. Los cinco son *design only*. Contrato futuro: reusar native `Sim`, `CharacterState`, `MOBS`, `BUILTIN_WORLD`, `lootCorpse`, XP, inventario, equipos, Crafting y gemas; validar cada integración en tests. No nuevos Hunters ni HP×3. Rewards únicos con claim atómico de mismo Hunter/save y primer clear por id. No publicar Pages hasta laboratorios físicos y PR autorizado. Restore branch pre-doc SHA `b177196fbc1a3d59608f898ef01121940f2f86b6`; protect PR19 Pages SHA `e90daec37dcf0778afa374dedd606a54f5696640`. Puentes Quest/Events/Asset GLB/rig, CPU S23, clase/equipamiento, materiales/recetas todavía sin implementar.

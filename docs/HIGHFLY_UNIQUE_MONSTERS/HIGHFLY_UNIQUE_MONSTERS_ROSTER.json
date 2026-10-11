@@ -1,0 +1,532 @@
+{
+  "version": 1,
+  "enabledByDefault": false,
+  "sourceBranch": "highfly-v4-03-p08-final-integration-qa",
+  "sourceSha": "b177196fbc1a3d59608f898ef01121940f2f86b6",
+  "historicalFile": "HIGHFLY_MONSTRUO4_CIERRE_5_ESPECIALES_APP_HANDOFF_v1.md",
+  "bosses": [
+    {
+      "id": "hf_special_eclipse_wolf",
+      "name": "Lobo del Eclipse",
+      "sceneName": "Coto de la Luna Rota",
+      "scenarioId": "hf_ex_eclipse_wolf",
+      "family": "beast",
+      "recommendedLevels": [
+        35,
+        45
+      ],
+      "donorIds": [
+        "forest_wolf",
+        "old_greyjaw"
+      ],
+      "regionProposal": "Eastbrook→Wraithwood, claro lunar",
+      "storyProposal": "Un lobo custodió una ruta de refugiados que los cazadores clausuraron; confunde a viajeros con invasores.",
+      "exGateProposal": "Rastrear 3 mojones y sobrevivir a una prueba de persecución.",
+      "worldChangeProposal": "La ruta de evacuación y un archivo de cazadores se reabren.",
+      "materialProposal": "hf_moon_touched_pelt",
+      "professionProposal": "tailoring",
+      "recipeProposal": "hf_recipe_moonthread_hood",
+      "abilityIds": [
+        "wolf_claw",
+        "wolf_fang_rend",
+        "wolf_lunge",
+        "wolf_feint",
+        "wolf_howl",
+        "wolf_twilight_step"
+      ],
+      "npcProposal": "Rastreadora Iria",
+      "rumor": "En las madrigueras aparecen piedras iluminadas, pero ninguna presa.",
+      "breakableRule": "Espalda y garra solo si hitboxes legítimas.",
+      "modelDecision": "A reutilizar rig forest_wolf + crin nueva; B híbrido; C nuevo solo si faltan clips.",
+      "stages": [
+        {
+          "id": "hf_special_eclipse_wolf_00_RUMOR",
+          "design": "NPC o huellas observables → rumor registrado",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_eclipse_wolf_01_INVESTIGATION",
+          "design": "3 pistas del mundo recolectadas → acceso a investigación",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_eclipse_wolf_02_MANIFESTATION",
+          "design": "primer encuentro: sobrevivir, huir o desactivar mecanismo",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_eclipse_wolf_03_MERIT",
+          "design": "dominio de telegraph, observación o decisión; no grind arbitrario",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_eclipse_wolf_04_PREPARATION",
+          "design": "conseguir herramienta/receta clave de manera garantizable",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_eclipse_wolf_05_SCENARIO_EX",
+          "design": "atravesar portal nativo con el único Hunter y retorno en save",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_eclipse_wolf_06_BOSS",
+          "design": "Combat/Encounter verifica victoria o resolución alternativa",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_eclipse_wolf_07_RESOLUTION",
+          "design": "RewardContext + Loot + firstClear en claim idempotente",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_eclipse_wolf_08_EPILOGUE",
+          "design": "reacción de NPC, worldFlags y acceso a profesiones/secretos",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        }
+      ],
+      "phaseGraph": [
+        "P1_100_70",
+        "P2_70_35",
+        "P3_35_0"
+      ],
+      "status": "DESIGN_ONLY",
+      "installedGlb": false,
+      "liveAi": false,
+      "questsRegistered": false,
+      "lootRegistered": false,
+      "scenarioRegistered": false,
+      "phoneQa": false,
+      "eligibleWorldEvent": "proposed 20% each eligible visit, guaranteed sight at visit 4; guaranteed EX after conditions",
+      "firstClearScope": "PERSONAL_HUNTER_NOT_GLOBAL"
+    },
+    {
+      "id": "hf_special_veil_matriarch",
+      "name": "Matriarca del Velo",
+      "sceneName": "Nido de los Mil Hilos",
+      "scenarioId": "hf_ex_veil_matriarch",
+      "family": "spider",
+      "recommendedLevels": [
+        45,
+        55
+      ],
+      "donorIds": [
+        "webwood_spider",
+        "mire_widow",
+        "mirefen_broodmother"
+      ],
+      "regionProposal": "Mirefen→Wraithwood, nido de 2 cámaras",
+      "storyProposal": "La araña protege memorias tejidas de evacuados de un desastre, y sus telas aprisionan a quienes cree saqueadores.",
+      "exGateProposal": "Rastrear herramientas sin cadáveres, rescatar un viajero y descubrir el nudo de la entrada.",
+      "worldChangeProposal": "Galerías y un telar de memoria se habilitan con un maestro artesano.",
+      "materialProposal": "hf_veilspinner_silk",
+      "professionProposal": "tailoring",
+      "recipeProposal": "hf_recipe_veilweave_mantle",
+      "abilityIds": [
+        "spider_web",
+        "spider_venom",
+        "spider_mandible",
+        "spider_thread_dash",
+        "spider_brood_call",
+        "spider_venom_ring"
+      ],
+      "npcProposal": "Tejedora Nara",
+      "rumor": "La seda retiene voces y ningún desaparecido ha sido hallado muerto.",
+      "breakableRule": "Saco y glándula solo al certificar colisión/ruptura.",
+      "modelDecision": "A spider donor al suelo; B abdomen y anclajes; C si se exige trepar de verdad.",
+      "stages": [
+        {
+          "id": "hf_special_veil_matriarch_00_RUMOR",
+          "design": "NPC o huellas observables → rumor registrado",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_veil_matriarch_01_INVESTIGATION",
+          "design": "3 pistas del mundo recolectadas → acceso a investigación",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_veil_matriarch_02_MANIFESTATION",
+          "design": "primer encuentro: sobrevivir, huir o desactivar mecanismo",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_veil_matriarch_03_MERIT",
+          "design": "dominio de telegraph, observación o decisión; no grind arbitrario",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_veil_matriarch_04_PREPARATION",
+          "design": "conseguir herramienta/receta clave de manera garantizable",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_veil_matriarch_05_SCENARIO_EX",
+          "design": "atravesar portal nativo con el único Hunter y retorno en save",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_veil_matriarch_06_BOSS",
+          "design": "Combat/Encounter verifica victoria o resolución alternativa",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_veil_matriarch_07_RESOLUTION",
+          "design": "RewardContext + Loot + firstClear en claim idempotente",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_veil_matriarch_08_EPILOGUE",
+          "design": "reacción de NPC, worldFlags y acceso a profesiones/secretos",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        }
+      ],
+      "phaseGraph": [
+        "P1_100_70",
+        "P2_70_35",
+        "P3_35_0"
+      ],
+      "status": "DESIGN_ONLY",
+      "installedGlb": false,
+      "liveAi": false,
+      "questsRegistered": false,
+      "lootRegistered": false,
+      "scenarioRegistered": false,
+      "phoneQa": false,
+      "eligibleWorldEvent": "proposed 20% each eligible visit, guaranteed sight at visit 4; guaranteed EX after conditions",
+      "firstClearScope": "PERSONAL_HUNTER_NOT_GLOBAL"
+    },
+    {
+      "id": "hf_special_siege_tyrant",
+      "name": "Tirano Rompemurallas",
+      "sceneName": "Fortaleza del Desfiladero",
+      "scenarioId": "hf_ex_siege_tyrant",
+      "family": "ogre",
+      "recommendedLevels": [
+        55,
+        70
+      ],
+      "donorIds": [
+        "thornpeak_ogre",
+        "brutok_skullsmasher"
+      ],
+      "regionProposal": "Thornpeak Peaks, fortificación antigua",
+      "storyProposal": "Un coloso creado para abrir una presa en una inundación aún intenta cumplir la orden tras siglos de incomprensión.",
+      "exGateProposal": "Encontrar planos, forjar cincel de prueba y sobrevivir a una carga guiada contra una barricada.",
+      "worldChangeProposal": "Se abre una galería minera y un maestro de temple puede impartir una receta.",
+      "materialProposal": "hf_crag_armor_fragment",
+      "professionProposal": "weaponcrafting",
+      "recipeProposal": "hf_recipe_siegebreaker_hammer",
+      "abilityIds": [
+        "ogre_overhead",
+        "ogre_sweep",
+        "ogre_stomp",
+        "ogre_siege_rush",
+        "ogre_pillar_break",
+        "ogre_rock"
+      ],
+      "npcProposal": "Maestra forja Vira",
+      "rumor": "Las grietas de dos muros distintos siguen el mismo patrón.",
+      "breakableRule": "Hombrera mineral tras BREAK auténtico; navmesh nunca bloqueada.",
+      "modelDecision": "A ogre native; B hombrera y maza modular; C si escala y rig lo exigen.",
+      "stages": [
+        {
+          "id": "hf_special_siege_tyrant_00_RUMOR",
+          "design": "NPC o huellas observables → rumor registrado",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_siege_tyrant_01_INVESTIGATION",
+          "design": "3 pistas del mundo recolectadas → acceso a investigación",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_siege_tyrant_02_MANIFESTATION",
+          "design": "primer encuentro: sobrevivir, huir o desactivar mecanismo",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_siege_tyrant_03_MERIT",
+          "design": "dominio de telegraph, observación o decisión; no grind arbitrario",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_siege_tyrant_04_PREPARATION",
+          "design": "conseguir herramienta/receta clave de manera garantizable",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_siege_tyrant_05_SCENARIO_EX",
+          "design": "atravesar portal nativo con el único Hunter y retorno en save",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_siege_tyrant_06_BOSS",
+          "design": "Combat/Encounter verifica victoria o resolución alternativa",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_siege_tyrant_07_RESOLUTION",
+          "design": "RewardContext + Loot + firstClear en claim idempotente",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_siege_tyrant_08_EPILOGUE",
+          "design": "reacción de NPC, worldFlags y acceso a profesiones/secretos",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        }
+      ],
+      "phaseGraph": [
+        "P1_100_70",
+        "P2_70_35",
+        "P3_35_0"
+      ],
+      "status": "DESIGN_ONLY",
+      "installedGlb": false,
+      "liveAi": false,
+      "questsRegistered": false,
+      "lootRegistered": false,
+      "scenarioRegistered": false,
+      "phoneQa": false,
+      "eligibleWorldEvent": "proposed 20% each eligible visit, guaranteed sight at visit 4; guaranteed EX after conditions",
+      "firstClearScope": "PERSONAL_HUNTER_NOT_GLOBAL"
+    },
+    {
+      "id": "hf_special_ash_gravewyrm",
+      "name": "Gravewyrm Renacido",
+      "sceneName": "Cripta del Último Aliento",
+      "scenarioId": "hf_ex_ash_gravewyrm",
+      "family": "dragonkin",
+      "recommendedLevels": [
+        75,
+        90
+      ],
+      "donorIds": [
+        "dragonkin_broodguard",
+        "korzul_the_gravewyrm",
+        "boneclad_revenant"
+      ],
+      "regionProposal": "Thornpeak Cave, cripta bajo cantera",
+      "storyProposal": "La memoria de un dragón selló una bóveda antigua; el ritual de resurrección busca proteger su contenido y no destruir ciudades.",
+      "exGateProposal": "Interpretar 3 runas, detener un custodio y apagar anclas una por vez.",
+      "worldChangeProposal": "Se abre el Archivo Sepultado y una misión sobre el origen de los sellos.",
+      "materialProposal": "hf_ashen_rune_plate",
+      "professionProposal": "enchanting",
+      "recipeProposal": "hf_recipe_ashbound_ward",
+      "abilityIds": [
+        "wyrm_tail",
+        "wyrm_necrotic_pulse",
+        "wyrm_ash_breath",
+        "wyrm_bonefall",
+        "wyrm_gravecall",
+        "wyrm_anchor_break"
+      ],
+      "npcProposal": "Archivista Orel",
+      "rumor": "La cripta late cuando los exploradores apagan las lámparas.",
+      "breakableRule": "Placa rúnica solo si se rompe mediante Combat; anclas de Encounter.",
+      "modelDecision": "Modelo nuevo C puede ser indispensable; NO asumir que dragonkin donor es wyrm esquelético.",
+      "stages": [
+        {
+          "id": "hf_special_ash_gravewyrm_00_RUMOR",
+          "design": "NPC o huellas observables → rumor registrado",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_ash_gravewyrm_01_INVESTIGATION",
+          "design": "3 pistas del mundo recolectadas → acceso a investigación",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_ash_gravewyrm_02_MANIFESTATION",
+          "design": "primer encuentro: sobrevivir, huir o desactivar mecanismo",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_ash_gravewyrm_03_MERIT",
+          "design": "dominio de telegraph, observación o decisión; no grind arbitrario",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_ash_gravewyrm_04_PREPARATION",
+          "design": "conseguir herramienta/receta clave de manera garantizable",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_ash_gravewyrm_05_SCENARIO_EX",
+          "design": "atravesar portal nativo con el único Hunter y retorno en save",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_ash_gravewyrm_06_BOSS",
+          "design": "Combat/Encounter verifica victoria o resolución alternativa",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_ash_gravewyrm_07_RESOLUTION",
+          "design": "RewardContext + Loot + firstClear en claim idempotente",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_ash_gravewyrm_08_EPILOGUE",
+          "design": "reacción de NPC, worldFlags y acceso a profesiones/secretos",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        }
+      ],
+      "phaseGraph": [
+        "P1_100_70",
+        "P2_70_35",
+        "P3_35_0"
+      ],
+      "status": "DESIGN_ONLY",
+      "installedGlb": false,
+      "liveAi": false,
+      "questsRegistered": false,
+      "lootRegistered": false,
+      "scenarioRegistered": false,
+      "phoneQa": false,
+      "eligibleWorldEvent": "proposed 20% each eligible visit, guaranteed sight at visit 4; guaranteed EX after conditions",
+      "firstClearScope": "PERSONAL_HUNTER_NOT_GLOBAL"
+    },
+    {
+      "id": "hf_special_rootheart_warden",
+      "name": "Guardián del Corazón Raíz",
+      "sceneName": "Santuario de las Raíces",
+      "scenarioId": "hf_ex_rootheart_warden",
+      "family": "elemental",
+      "recommendedLevels": [
+        65,
+        80
+      ],
+      "donorIds": [
+        "treant_elder",
+        "ancient_guardian",
+        "waking_warden"
+      ],
+      "regionProposal": "Veiled Hollow Garden, santuario interior",
+      "storyProposal": "Un guardián atrapó la contaminación de una forja en su corteza; proteger las raíces lo obliga a impedir la curación.",
+      "exGateProposal": "Restaurar 3 fuentes y descifrar 2 sellos sin destruir árboles sanos.",
+      "worldChangeProposal": "Archivo botánico y cámara de semillas; resolución por derrota o purificación accesible.",
+      "materialProposal": "hf_rootheart_heartwood",
+      "professionProposal": "woodcutting",
+      "recipeProposal": "hf_recipe_heartwood_forge_grip",
+      "abilityIds": [
+        "treant_branch_slam",
+        "treant_root_line",
+        "treant_bark_ward",
+        "treant_seed_barrage",
+        "treant_heart_pulse",
+        "treant_purify_window"
+      ],
+      "npcProposal": "Herbolaria Eira",
+      "rumor": "Las flores crecen incluso en las grietas creadas por el guardián.",
+      "breakableRule": "Corteza y núcleo EXPOSED solo por Combat; rutas de purificar/derrotar excluyentes.",
+      "modelDecision": "A treant nativo, B geometría tronco/pecho, C si el rig no sirve.",
+      "stages": [
+        {
+          "id": "hf_special_rootheart_warden_00_RUMOR",
+          "design": "NPC o huellas observables → rumor registrado",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_rootheart_warden_01_INVESTIGATION",
+          "design": "3 pistas del mundo recolectadas → acceso a investigación",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_rootheart_warden_02_MANIFESTATION",
+          "design": "primer encuentro: sobrevivir, huir o desactivar mecanismo",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_rootheart_warden_03_MERIT",
+          "design": "dominio de telegraph, observación o decisión; no grind arbitrario",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_rootheart_warden_04_PREPARATION",
+          "design": "conseguir herramienta/receta clave de manera garantizable",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_rootheart_warden_05_SCENARIO_EX",
+          "design": "atravesar portal nativo con el único Hunter y retorno en save",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_rootheart_warden_06_BOSS",
+          "design": "Combat/Encounter verifica victoria o resolución alternativa",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_rootheart_warden_07_RESOLUTION",
+          "design": "RewardContext + Loot + firstClear en claim idempotente",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        },
+        {
+          "id": "hf_special_rootheart_warden_08_EPILOGUE",
+          "design": "reacción de NPC, worldFlags y acceso a profesiones/secretos",
+          "persist": true,
+          "implementation": "PROPOSAL_NOT_CONNECTED"
+        }
+      ],
+      "phaseGraph": [
+        "P1_100_70",
+        "P2_70_35",
+        "P3_35_0"
+      ],
+      "status": "DESIGN_ONLY",
+      "installedGlb": false,
+      "liveAi": false,
+      "questsRegistered": false,
+      "lootRegistered": false,
+      "scenarioRegistered": false,
+      "phoneQa": false,
+      "eligibleWorldEvent": "proposed 20% each eligible visit, guaranteed sight at visit 4; guaranteed EX after conditions",
+      "firstClearScope": "PERSONAL_HUNTER_NOT_GLOBAL"
+    }
+  ]
+}
