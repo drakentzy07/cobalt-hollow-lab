@@ -14,7 +14,7 @@ s=insert+s
 anchor="export const DUNGEON_LIST: DungeonDef[] = Object.values(DUNGEONS).sort((a, b) => a.index - b.index);"
 assert s.count(anchor)==1, 'P04 missing DUNGEON_LIST canonical registration'
 s=s.replace(anchor,'''// P04 opt-in only. Register BEFORE donor builds DUNGEON_LIST + byIndex lookup.
-if (import.meta.env.VITE_HIGHFLY_NATIVE_HUNT === '1') {
+if (import.meta.env?.VITE_HIGHFLY_NATIVE_HUNT === '1') {
   Object.assign(DUNGEONS, buildHighflyNativeHuntDungeons(DUNGEONS));
 }
 ''' + anchor)
