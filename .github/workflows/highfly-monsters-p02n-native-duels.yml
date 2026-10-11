@@ -96,7 +96,7 @@ jobs:
         run: |
           set -euo pipefail
           cd highfly
-          test "$GITHUB_REF_NAME" = 'highfly-monsters-p02n-native-duel-simulation'
+          test "$GITHUB_REF_NAME" = 'highfly-monsters-p02n-fast-smoke'
           git fetch --no-tags origin "$GITHUB_REF_NAME"
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
           mkdir -p docs/HIGHFLY_MONSTRUOS6_P02N_SIM_NATIVE_AI
