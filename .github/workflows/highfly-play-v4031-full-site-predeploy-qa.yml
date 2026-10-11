@@ -27,6 +27,7 @@ jobs:
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /scripts/
+            /patches/
             /package.json
             /pnpm-lock.yaml
             /.npmrc
