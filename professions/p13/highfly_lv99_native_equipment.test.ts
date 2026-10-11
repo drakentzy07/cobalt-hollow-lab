@@ -5,6 +5,11 @@
 import {describe,it,expect} from 'vitest';
 import {ITEMS,ALL_RECIPES,MOBS} from '../src/sim/data';
 import {canEquipItem} from '../src/sim/equipment_rules';
+import {recipeById} from '../src/sim/content/recipes';
+import {resolveCraft} from '../src/sim/professions/crafting';
+import {stationsOfType} from '../src/sim/professions/stations';
+import {STATIONS,BUILTIN_WORLD} from '../src/sim/data';
+import {Sim} from '../src/sim/sim';
 import {requiredLevelFor,meetsLevelRequirement} from '../src/sim/item_level_req';
 import type {PlayerClass} from '../src/sim/types';
 import {HIGHFLY_P13_ITEMS,HIGHFLY_P13_RECIPES,HF_P13_WEAPON_LEVELS,
@@ -37,6 +42,10 @@ describe('HIGHFLY P13 real item and recipe registry 50–99 smoke',()=>{
           resultItemId:id,professionId:'weaponcrafting',level:lv,
           stationType:'forge',acquisition:['trainer'],resultCount:1
         });
+        // Canonical resolver drives the REAL native Sim craft command. A
+        // data.ts-only list registration would falsely pass without this.
+        expect(recipeById(recipeId)).toBeDefined();
+        expect(recipeById(recipeId)!.resultItemId).toBe(id);
         expect(item.kind).toBe('weapon');
         expect(item.stats??{}).toEqual({}); // real-world Training remains only primary stats owner
         expect(requiredLevelFor(item)).toBe(lv);
@@ -66,5 +75,39 @@ describe('HIGHFLY P13 real item and recipe registry 50–99 smoke',()=>{
        ITEMS[hfP13ItemId(lv,'warrior')].weapon?.max??0:0));
     expect(sorted).toEqual([...sorted].sort((a,b)=>a-b));
     expect(ALL_RECIPES.filter(r=>r.id.startsWith('recipe_hf_p13_'))).toHaveLength(15);
+  });
+
+  it('one native Sim performs a real late-tier craft and preserves the crafted item',()=>{
+    const recipeId=hfP13RecipeId(50,'warrior');
+    const recipe=recipeById(recipeId)!;
+    expect(recipe).toBeDefined();
+    const sim=new Sim({seed:7313,playerClass:'warrior',autoEquip:false,
+      compulsoryTutorial:false,riftPortals:false,
+      world:{...BUILTIN_WORLD,camps:[]}});
+    const pid=sim.playerId;
+    sim.setPlayerLevel(50,pid); // CI fixture only, never gameplay.
+    const meta=sim.players.get(pid)!;
+    meta.craftSkills.weaponcrafting=125;
+    meta.knownRecipes.add(recipeId); // fixture simulates real trainer acquisition.
+    for(const ing of recipe.reagents){
+      for(let i=0;i<ing.count;i++)sim.addItem(ing.itemId,1,pid);
+    }
+    const station=stationsOfType(STATIONS,'forge')[0];
+    expect(station).toBeDefined();
+    const entity=sim.entities.get(pid)!;
+    entity.pos.x=station.pos.x;
+    entity.pos.z=station.pos.z;
+    entity.prevPos={...entity.pos};
+    const output=hfP13ItemId(50,'warrior');
+    expect(sim.countItem(output,pid)).toBe(0);
+    const result=resolveCraft((sim as any).ctx,pid,recipeId);
+    expect(result.ok,JSON.stringify(result)).toBe(true);
+    expect(sim.countItem(output,pid)).toBe(1);
+    for(const ing of recipe.reagents)expect(sim.countItem(ing.itemId,pid)).toBe(0);
+    const save=JSON.parse(JSON.stringify(sim.serializeCharacter(pid)));
+    const fresh=new Sim({seed:7413,playerClass:'warrior',autoEquip:false,noPlayer:true,
+      compulsoryTutorial:false,riftPortals:false,world:{...BUILTIN_WORLD,camps:[]}});
+    const newPid=fresh.addPlayer('warrior','P13 smith',{state:save,tutorialGreetingSent:true});
+    expect(fresh.countItem(output,newPid)).toBe(1);
   });
 });
