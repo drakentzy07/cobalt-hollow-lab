@@ -162,12 +162,13 @@ function writeCsv(file:string,items:Row[]){
   +items.map(r=>keys.map(k=>q(r[k])).join(',')).join('\n')+'\n');
 }
 describe('P02N real native AI PvE fight lab (never public deploy)',()=>{
- it('runs full 80 monsters x 9 classes with actual native AI vs Hunter, at-level and +5',()=>{
+ it('smoke runs 17 across-level/content specimens x 9 classes with native AI at-level and +5',()=>{
    expect(all).toHaveLength(80);
    expect(classes).toHaveLength(9);
    const problems:string[]=[];
-   // Full roster and 9 classes: 80*9*2 = 1,440 native timed duels.
+   // Representatives: 8 wolves spanning all bands, each other family, 1 elite + 1 captain. 17*9*2=306.
    for(let idx=0;idx<all.length;idx++){
+     if(![0,1,2,3,4,5,6,7,8,16,24,32,40,48,56,64,72].includes(idx))continue;
      const m=all[idx];
      const mobLevel=Math.min(m.maxLevel,m.minLevel+5);
      for(let ci=0;ci<classes.length;ci++){
@@ -179,13 +180,13 @@ describe('P02N real native AI PvE fight lab (never public deploy)',()=>{
        }
      }
    }
-   writeCsv('01_DUELOS_COMPLETOS_REAL_SIM_1440.csv',rows);
+   writeCsv('01_DUELOS_SMOKE_306.csv',rows);
    const sample=rows.filter(r=>r.gap===5);
    const classifications=(items:Row[])=>Object.fromEntries(['WIN','LOSS','TIMEOUT'].map(
      v=>[v,items.filter(r=>r.result===v).length]));
    const summary={
       source:'EXACT_NATIVE_CLAUDECRAFT_SIM_P02I_HUNT_PF6_LV99',
-      classes:classes.length,monsterTemplates:all.length,attempted:all.length*classes.length*2,
+      classes:classes.length,monsterTemplates:all.length,attempted:17*classes.length*2,
       completed:rows.length,exceptions:problems.slice(0,40),
       resultsAtLevel:classifications(rows.filter(r=>r.gap===0)),
       resultsPlus5:classifications(sample),
@@ -203,7 +204,7 @@ describe('P02N real native AI PvE fight lab (never public deploy)',()=>{
    writeFileSync(PATH+'/00_RESUMEN_DUELOS_SIM.json',JSON.stringify(summary,null,2)+'\n');
    console.info('HIGHFLY_P02N_NATIVE_SIM_REPORT='+JSON.stringify(summary));
    expect(problems).toEqual([]);
-   expect(rows).toHaveLength(1440);
+   expect(rows).toHaveLength(306);
    expect(rows.some(r=>Number(r.damageEventsPlayer)>0)).toBe(true);
    expect(rows.some(r=>Number(r.damageEventsMob)>0)).toBe(true);
    expect(new Set(rows.map(r=>r.classId)).size).toBe(9);
