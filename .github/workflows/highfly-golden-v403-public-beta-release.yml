@@ -6,6 +6,7 @@ on:
       - .github/workflows/highfly-golden-v403-public-beta-release.yml
       - release/highfly_golden_v403_legacy_pages_browser.mjs
       - release/highfly_golden_restore_v402_assets.py
+      - release/highfly_golden_dedup_js.py
       - release/highfly_golden_v403_compose_pages.py
   workflow_dispatch:
 permissions:
@@ -185,6 +186,13 @@ jobs:
           python3 release/highfly_golden_restore_v402_assets.py
           test -s golden-v402-asset-restoration-report.json
           echo 'HF_GOLDEN_V402_HTML_LINKED_BUNDLE_RESTORED_FROM_LIVE=1'
+      - name: Dedup SHA-identical V4-03 JS against immutable original JS, gate 995MB budget
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 release/highfly_golden_dedup_js.py
+          test -s golden-v403-js-dedup-report.json
+          echo 'HF_GOLDEN_JS_DEDUP_AND_SITE_LIMIT_QA=1'
       - name: Pre-deploy GOLDEN original V4-02 and new V4-03 emulated S23 Chrome
         working-directory: legacy/upstream
         shell: bash
@@ -228,6 +236,7 @@ jobs:
           path: |
             golden-combined-stage-report.json
             golden-v402-asset-restoration-report.json
+            golden-v403-js-dedup-report.json
             golden-play-pages-local.log
             legacy/demo-v4-02-pr19-s23-report.json
             legacy/demo-v4-02-pr19-s23-creator.png
