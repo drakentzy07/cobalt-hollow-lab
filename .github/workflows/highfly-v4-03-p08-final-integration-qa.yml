@@ -9,6 +9,8 @@ on:
       - .github/workflows/highfly-v4-03-p08-final-integration-qa.yml
       - monsters/integration/highfly_p08_world_class_save.test.ts
       - monsters/integration/highfly_p08_optout.test.ts
+      - monsters/integration/highfly_p08_loot_to_forge_gem_save.test.ts
+      - monsters/integration/highfly_p08_pages_preview_stage.py
       - monsters/integration/highfly_open_world_habitats.ts
       - monsters/integration/activate_p07_open_world.py
       - monsters/integration/highfly_p07_open_world.test.ts
@@ -480,6 +482,7 @@ jobs:
           cp monsters/integration/highfly_p07_open_world.test.ts upstream/tests/highfly_v403_p07_open_world.test.ts
           cp monsters/integration/highfly_p08_world_class_save.test.ts upstream/tests/highfly_v403_p08_world_class_save.test.ts
           cp monsters/integration/highfly_p08_optout.test.ts upstream/tests/highfly_v403_p08_optout.test.ts
+          cp monsters/integration/highfly_p08_loot_to_forge_gem_save.test.ts upstream/tests/highfly_v403_p08_loot_to_forge_gem_save.test.ts
           (cd upstream && python ../monsters/integration/activate_p07_open_world.py)
           git -C upstream diff --check HEAD
           echo 'V403_P07_REAL_OPEN_WORLD_MONSTER_CAMP_OVERLAY=1'
@@ -573,6 +576,16 @@ jobs:
           set -euo pipefail
           pnpm exec vitest run tests/highfly_v403_p08_optout.test.ts
           echo 'V403_P08_SAFE_V402_FEATURE_ROLLBACK_GREEN=1'
+      - name: P08 — native LV21 monster material to authentic forged sword, fire gem and save/reload
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_HIGHFLY_NATIVE_HUNT: "1"
+          VITE_HIGHFLY_OPEN_WORLD_HUNTS: "1"
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/highfly_v403_p08_loot_to_forge_gem_save.test.ts
+          echo 'HF_P08_LV21_NATIVE_DROP_FORGE_SWORD_GEM_SAVE_GREEN=1'
       - name: P08 — build exact PR19 WebGL isolated final QA candidate (no public deployment)
         working-directory: upstream
         shell: bash
@@ -658,6 +671,54 @@ jobs:
           path: v403-p08-candidate/
           if-no-files-found: error
           retention-days: 14
+      # Prepare only an artifact which could LATER be merged into a complete
+      # byte-preserved Pages snapshot. No public Pages publication occurs here.
+      - name: P08 — stage nested /v4-03-preview/ Pages artifact only (NO DEPLOY)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 monsters/integration/highfly_p08_pages_preview_stage.py
+          test -s v403-p08-pages-preview-only/cobalt-hollow-lab/v4-03-preview/index.html
+          test -s v403-p08-pages-preview-only/preview_file_manifest.json
+          echo 'HF_P08_NESTED_PAGES_PREVIEW_PACKAGE_NO_DEPLOY=1'
+      - name: P08 — validate nested Pages route with emulated S23 Chrome and HTTP 404 gate
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../monsters/integration/highfly_p06_mobile_smoke.mjs scripts/highfly_p08_pages_nested_smoke.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/highfly_p08_pages_nested_smoke.mjs')
+          s=p.read_text('utf-8')
+          old="const URL='http://127.0.0.1:4173/cobalt-hollow-lab/';"
+          new="const URL='http://127.0.0.1:4174/cobalt-hollow-lab/v4-03-preview/';"
+          assert s.count(old)==1
+          p.write_text(s.replace(old,new,1),'utf-8')
+          PY
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory ../v403-p08-pages-preview-only > ../p08-pages-nested-preview.log 2>&1 &
+          HTTP_PID=$!
+          trap 'kill "$HTTP_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:4174/cobalt-hollow-lab/v4-03-preview/ >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4174/cobalt-hollow-lab/v4-03-preview/ >/dev/null
+          node scripts/highfly_p08_pages_nested_smoke.mjs
+          test -s ../demo-v4-02-pr19-s23-report.json
+          node - <<'JS'
+          const r=require('../demo-v4-02-pr19-s23-report.json');
+          if(!r.pass || r.static404.length || r.p06?.eightHFNativeMobs!==8)
+            throw Error('HF_P08_NESTED_PAGES_S23_HTTP_AND_NATIVE_HUNTER_NOT_GREEN');
+          console.log('HF_P08_NESTED_PAGES_CHROME_S23_MOCKED_GREEN=1');
+          JS
+      - name: P08 — upload nested Pages REVIEW ONLY, not complete site (NO DEPLOY)
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-V403-P08-PAGES-NESTED-REVIEW-ONLY-NO-DEPLOY
+          path: v403-p08-pages-preview-only/
+          retention-days: 14
+          if-no-files-found: error
       - name: Artifact P01 SOURCE and test gate only (NO DEPLOY, NO USER SAVES)
         if: always()
         uses: actions/upload-artifact@v4
