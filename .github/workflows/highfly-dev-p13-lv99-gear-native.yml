@@ -9,6 +9,7 @@ on:
       - .github/workflows/highfly-dev-p13-lv99-gear-native.yml
       - professions/p13/highfly_lv99_native_equipment.ts
       - professions/p13/highfly_lv99_native_equipment.test.ts
+      - professions/p14/highfly_gem_attribute_expansion_foundation.test.ts
       - professions/p13/highfly_full_227_recipes_catalog.test.ts
       - professions/p13/highfly_complete_native_1_99_catalog.test.ts
       - docs/HIGHFLY_DEV_P13_EXACT_RECIPES_LEVEL_50_99.md
@@ -532,6 +533,7 @@ jobs:
           set -euo pipefail
           cp ../professions/p13/highfly_lv99_native_equipment.ts src/sim/content/highfly_lv99_native_equipment.ts
           cp ../professions/p13/highfly_lv99_native_equipment.test.ts tests/highfly_lv99_native_equipment.test.ts
+          cp ../professions/p14/highfly_gem_attribute_expansion_foundation.test.ts tests/highfly_gem_attribute_expansion_foundation.test.ts
           cp ../professions/p13/highfly_full_227_recipes_catalog.test.ts tests/highfly_full_227_recipes_catalog.test.ts
           cp ../professions/p13/highfly_complete_native_1_99_catalog.test.ts tests/highfly_complete_native_1_99_catalog.test.ts
           python3 ../professions/p13/activate_p13.py
@@ -689,6 +691,17 @@ jobs:
           path: highfly_dev_p13_full_227_recipes_materials_99_levels.json
           retention-days: 30
           if-no-files-found: error
+      - name: DEV P14 foundation — three REAL elemental sockets, physical consumption, ATK4 save and unchanged Training
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_HIGHFLY_NATIVE_HUNT: "1"
+          VITE_HIGHFLY_OPEN_WORLD_HUNTS: "1"
+          VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/highfly_gem_attribute_expansion_foundation.test.ts
+          echo 'HF_DEV_P14_THREE_NATIVE_ELEMENT_SOCKETS_AND_TRAINING_INTACT=1'
       - name: P12 — 9 classes REAL CLEAN offline save, localStorage fallback and old CharacterState reload
         working-directory: upstream
         shell: bash
