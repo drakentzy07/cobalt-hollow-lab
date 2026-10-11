@@ -157,6 +157,9 @@ manifest["source_sha256"]={
 }
 (dest/"HIGHFLY_V4_03_MONSTERS_INTEGRATION_MANIFEST.json").write_text(json.dumps(manifest,indent=2,ensure_ascii=False)+"\n")
 shutil.copyfile(duels/"HIGHFLY_P02N_ALL_1440_DUELS.csv",dest/"HIGHFLY_V4_03_P02N_1440_RAW_DUELS.csv")
+# GitHub diff --check requires LF; csv.DictWriter defaults to Windows CRLF.
+for output in dest.glob("*.csv"):
+    output.write_bytes(output.read_bytes().replace(b"\r\n",b"\n"))
 
 print(json.dumps({
   "bestiary":len(best),"loot_rows":len(loot),
