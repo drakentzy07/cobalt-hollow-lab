@@ -1,0 +1,48 @@
+name: HIGHFLY GOLDEN PLAY — Pages Asset Sharing / Legacy Protection Audit
+on:
+  push:
+    branches:
+      - highfly-play-v403-release-candidate
+    paths:
+      - .github/workflows/highfly-play-v403-pages-asset-audit.yml
+      - release/highfly_play_v403_pages_asset_audit.mjs
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+concurrency:
+  group: highfly-golden-play-pages-audit-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  asset_preflight_no_deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Reuse exact P10 GREEN web build; NOT rebuild old app
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-V403-P10-MONSTER6-EXTENDED-COMBAT-WEBGL-NO-DEPLOY
+          run-id: 38141812753
+          github-token: ${{ github.token }}
+          repository: drakentzy07/cobalt-hollow-lab
+          path: candidate
+      - name: HTTP verify original GOLDEN Pages and source-media potential reuse
+        shell: bash
+        run: |
+          set -euo pipefail
+          node release/highfly_play_v403_pages_asset_audit.mjs
+          test -s highfly_golden_play_v403_pages_asset_audit.json
+          echo 'HF_GOLDEN_PLAY_PAGES_SHARED_ASSET_PREFLIGHT_DIAGNOSTIC_GREEN_NO_DEPLOY=1'
+      - name: Upload non-destructive preservation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-GOLDEN-PLAY-V403-PAGES-LEGACY-ASSET-COMPATIBILITY-READONLY
+          path: highfly_golden_play_v403_pages_asset_audit.json
+          retention-days: 21
+          if-no-files-found: warn
