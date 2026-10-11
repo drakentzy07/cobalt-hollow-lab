@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/highfly-play-v4031-full-site-predeploy-qa.yml"
       - "release/highfly_golden_v4031_overlay_live_pages.py"
+      - "release/highfly_v4031_storage_reuse_audit.py"
   workflow_dispatch:
 permissions:
   contents: read
@@ -88,6 +89,13 @@ jobs:
           python3 release/highfly_golden_v4031_overlay_live_pages.py
           test -s golden-v4031-full-site-stage.json
           echo 'HF_GOLDEN_V4031_OLD_PAGES_HASH_PROTECTED_AND_NEW_P13_WEBGL_STAGED=1'
+      - name: Inventory exact-match oversized assets (read-only report, no deploy)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 release/highfly_v4031_storage_reuse_audit.py
+          test -s highfly-v4031-storage-reuse-audit.json
+          echo 'HF_REUSE_CANDIDATES_AUDITED_NO_ASSET_MUTATION=1'
       - name: Share only byte-identical old game JS chunks, strict 995MB site budget
         shell: bash
         run: |
@@ -147,6 +155,7 @@ jobs:
           name: HIGHFLY-GOLDEN-V4031-P13-FULL-SITE-PREDEPLOY-QA
           path: |
             golden-v4031-full-site-stage.json
+            highfly-v4031-storage-reuse-audit.json
             golden-v403-js-dedup-report.json
             golden-v403-final-chunk-route-qa.json
             demo-v4-02-pr19-s23-report.json
