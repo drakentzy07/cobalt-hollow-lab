@@ -86,7 +86,7 @@ for(const urlPath of ['','v4-02/','monster-lab/hunts.html']){
   try{
     const res=await getResponse(SITE+urlPath,'GET');
     const html=await res.text();
-    const title=html.match(/<title[^>]*>([^<]*)<\\/title>/i)?.[1]??null;
+    const title=html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]??null;
     liveTitles[urlPath]={httpStatus:res.status,title,
       sha256:crypto.createHash('sha256').update(html).digest('hex'),
       bytes:Buffer.byteLength(html)};
