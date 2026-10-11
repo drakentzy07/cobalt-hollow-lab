@@ -34,13 +34,15 @@ s=s.replace(old,old+"""
 """,1)
 p.write_text(s,'utf-8')
 
+s=s.replace("import { highflyMonsterId } from './monsters/level99';", '')
+
 # P05 menu must stop manually injecting 4 more monsters:
 # claimInstance now owns its 8 mobs, corpse, respawn and cleanup.
 p=Path('src/highfly/game_c1_runtime.ts')
 s=p.read_text('utf-8')
 old="import { admitHighflyNativeDungeonWave } from './monsters/hunt_native_dungeon';"
 assert s.count(old)==1, 'P06 REFUSE altered P05 manual wave import'
-s=s.replace(old,"import { highflyPortalManifest } from './monsters/hunt_dungeon_registry';")
+s=s.replace(old,'')
 a="""      const result=admitHighflyNativeDungeonWave(original,pid,{
         scenarioId:s.id,dungeonId:id,
         level:Math.min(s.maxLevel,hunter.level),
