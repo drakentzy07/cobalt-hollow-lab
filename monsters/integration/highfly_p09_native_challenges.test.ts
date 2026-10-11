@@ -20,7 +20,15 @@ describe('HIGHFLY P09 — MONSTRUOS 6 local challenges in SAME native dungeon + 
   it('preserves original 15 zones and all donor dungeon definitions; challenge has 0 extra world mobs',()=>{
     expect(import.meta.env.VITE_HIGHFLY_CHALLENGE_ENCOUNTERS).toBe('1');
     expect(DUNGEONS.hollow_crypt.index).toBe(0);
-    expect(BUILTIN_WORLD.zones).toBe(ZONES);
+    // P07 intentionally clones zones to append portal/camp POIs. Preserve IDs,
+    // original town hubs and native zone geometry, NOT array object identity.
+    expect(BUILTIN_WORLD.zones).toHaveLength(ZONES.length);
+    expect(BUILTIN_WORLD.zones.map(z=>z.id)).toEqual(ZONES.map(z=>z.id));
+    for(let i=0;i<ZONES.length;i++){
+      expect(BUILTIN_WORLD.zones[i].hub).toEqual(ZONES[i].hub);
+      expect(BUILTIN_WORLD.zones[i].zMin).toBe(ZONES[i].zMin);
+      expect(BUILTIN_WORLD.zones[i].zMax).toBe(ZONES[i].zMax);
+    }
     expect(ZONES.length).toBe(15);
     expect(HIGHFLY_P09_NATIVE_CAP).toMatchObject({
       dungeons:8,perDungeon:8,ordinary:6,elite:1,captain:1,addedWorldPopulation:0,newLegendaryBosses:0,
