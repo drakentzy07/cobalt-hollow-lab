@@ -37,47 +37,41 @@ def main():
         if q.is_file() and p.stat().st_size==q.stat().st_size and h(p)==h(q):
             duplicates[rel.as_posix()]=p.stat().st_size
     if len(duplicates)<150:raise RuntimeError("INSUFFICIENT_IDENTICAL_MODULE_BLOBS:"+str(len(duplicates)))
-    changes={}
-    for p in files(BETA):
-        if p.suffix.lower() not in TXT:continue
-        before=p.read_bytes()
-        content=before
-        for name in sorted(duplicates,key=len,reverse=True):
-            encoded=name.encode("ascii")
-            target=(BASE+name).encode("ascii")
-            # Explicit encoded ESM import relative URL and Vite asset prefix.
-            content=content.replace(b"/cobalt-hollow-lab/v4-03-preview/assets/"+encoded,target)
-            content=content.replace(b"./"+encoded,target)
-            # Other formatters emit absolute candidate URL or bare quoted chunks.
-            for quote in (b'"',b"'",b'`'):
-                content=content.replace(quote+encoded+quote,quote+target+quote)
-                content=content.replace(quote+b'assets/'+encoded,quote+target)
-        if content!=before:
-            p.write_bytes(content);changes[p.relative_to(BETA).as_posix()]={"old":len(before),"new":len(content)}
-    # Preserve the *original* index's absolute candidate js and css entrypoints.
-    for name in duplicates:
+    # Preserve every V4-03 chunk URL. Removing it and rewriting Vite's
+    # internal dynamic-import strings creates double-prefixed URLs and broken
+    # ESM dependency graphs. Instead, replace ONLY modules proven byte-exact
+    # with a tiny same-path ESM forwarder to the existing ROOT module.
+    # This keeps Vite's original import graph and cache keys in V4-03 intact.
+    forwards={}
+    for name,size in duplicates.items():
         p=CHUNKS/name
-        p.unlink()
-    # Check every candidate JS file that was not pruned: its explicit relative
-    # references to deleted chunks must have been rewritten to shared root URLs.
+        url='../../assets/'+name
+        proxy=(
+          'export * from "'+url+'";\\n'
+          'import * as hfShared from "'+url+'";\\n'
+          'export default hfShared.default;\\n'
+        ).encode('ascii')
+        if len(proxy)>size:continue
+        p.write_bytes(proxy)
+        forwards[name]={"originalBytes":size,"proxyBytes":len(proxy)}
+    if len(forwards)<150:raise RuntimeError("NOT_ENOUGH_SAFE_NATIVE_MODULE_PROXIES:"+str(len(forwards)))
+    # A forwarder that points at a missing or non-hash-identical old module
+    # would silently break the runtime. Recheck ALL before publication.
+    for name in forwards:
+        p=CHUNKS/name
+        old=OLD/name
+        if not old.is_file():raise RuntimeError("MISSING_SHARED_MODULE:"+name)
+        expected=b'../../assets/'+name.encode('ascii')
+        if expected not in p.read_bytes():raise RuntimeError("FORWARDER_TARGET_INCORRECT:"+name)
+    changes={name:entry for name,entry in forwards.items()}
     dangling=[]
-    for p in files(BETA):
-        if p.suffix.lower() not in TXT:continue
-        blob=p.read_bytes()
-        for name in duplicates:
-            encoded=name.encode("ascii")
-            if (b"./"+encoded in blob or b"/v4-03-preview/assets/"+encoded in blob):
-                dangling.append([p.relative_to(BETA).as_posix(),name])
-                if len(dangling)>=12:break
-        if len(dangling)>=12:break
-    if dangling:raise RuntimeError("UNREWRITTEN_JS_IMPORTS:"+json.dumps(dangling))
     for p,oldhash in original_checks.items():
         if h(ROOT/p)!=oldhash:raise RuntimeError("LEGACY_ASSET_MUTATED:"+p)
     total=sum(p.stat().st_size for p in files(ROOT))
     report={
         "status":"DEDUPED_JS_ONLY_WITH_HASH_EQUALS_AND_PRESERVED_LEGACY",
-        "deduplicatedJsCount":len(duplicates),
-        "removedJsBytes":sum(duplicates.values()),
+        "deduplicatedJsCount":len(forwards),
+        "removedJsBytes":sum(row['originalBytes']-row['proxyBytes'] for row in forwards.values()),
         "rewrittenCandidateFiles":len(changes),
         "legacyHtmlHashes":original_checks,
         "combinedPagesBytes":total,
