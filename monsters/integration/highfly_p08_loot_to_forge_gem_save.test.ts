@@ -115,7 +115,7 @@ describe('HIGHFLY P08 continuous native monster material -> forged weapon -> fir
       expect(restored.level).toBe(21);
       expect(restored.inventory).toEqual(saved.inventory);
       expect(restored.copper).toBe(saved.copper);
-      expect(restored.equipmentInstance.mainhand?.highflyGem).toBe('fire');
+      expect(restored.equipmentInstance?.mainhand?.highflyGem).toBe('fire');
       expect(next.players.get(rid)?.equipment.mainhand).toBe(SWORD);
       expect(highflyElementalFinisherReady(next.entities.get(rid)!)).toBe(true);
       expect([...next.entities.values()].filter(e=>e.kind==='player')).toHaveLength(1);
