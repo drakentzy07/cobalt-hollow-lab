@@ -1,0 +1,5 @@
+HIGHFLY SKIN7 V2 - isolated, no public deploy, no gameplay changes.
+From the extracted directory run: python3 -m http.server 8080
+Then open http://localhost:8080/skin7-paladin-compare-lab/
+The official source Hunter, 22 clips and reforged armor are contained here.
+Mobile viewport QA in CI is NOT real hardware testing or artistic approval.
