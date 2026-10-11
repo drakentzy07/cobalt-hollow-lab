@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {commissionRecipe,commissionIntensity,SLOTS as RECIPE_SLOTS} from './commission-recipe-v2.mjs';
 import {parseArmorIntent,mutateArmorIntent,makeBlenderCandidate} from './skin9-armor-core.mjs';
+import {buildPremiumV3,checkPremiumCandidate,legacyPrototypeVerdict,ELEVEN as PREMIUM_PIECES} from './skin10-premium-recipe-v3.mjs';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
@@ -334,6 +335,7 @@ async function load(){
   applyCommission:(intensity,palette)=>updateLiveArmor(intensity,palette),
   selectClip,showStation,selectGender,addCustomGlb:importCustom,
   skin9:()=>({intent:skin9Current,mode:'deterministic-text-intent-preview',newTopologyGenerated:false}),
+  premiumV3:()=>({blueprint:skin10Current,prototype:legacyPrototypeVerdict(),modelFromTextGenerated:false}),
   studio:()=>({styleCount:Object.keys(FACTORY_STYLES).length,saved:localDesigns.map(d=>d.name),undoDepth:undoStack.length,redoDepth:redoStack.length,cameraX:camera.position.x}),
   poseTime:t=>{
    state.playing=false;for(const a of state.actors)a.mixer.setTime(t);state.t=t;
@@ -568,6 +570,37 @@ $('skin9BlenderCandidate').onclick=()=>{
   downloadJson('HIGHFLY-SKIN9-BLENDER-CANDIDATE.json',candidate);
   $('order').textContent='✅ Candidato exportado. NO genera un GLB solo, NO modifica HIGHFLY. Lleva las formas nuevas para la siguiente etapa Blender.';
  }catch(e){$('order').textContent='❌ '+e.message}
+};
+
+
+let skin10Current=null;
+function compileStructuralRecipe(){
+ const existing=skin9Current&&skin9Current.brief===$('prompt').value?skin9Current:
+    parseArmorIntent($('prompt').value,{imagePalette:commissionPalette});
+ const v3=buildPremiumV3(existing,{name:'HIGHFLY '+existing.themes.join('+')+' · premium candidate'});
+ const guard=checkPremiumCandidate(v3,null);
+ if(guard.status!=='NO_GO'||guard.artistApproved||guard.gameDeployAllowed)
+   throw Error('La receta experimental jamás debe desbloquearse sin geometría revisada');
+ skin10Current=v3;
+ const names=Object.keys(v3.pieces);
+ $('premiumV3Status').textContent='✅ Blueprint estructural compilado: '+names.length+
+   ' piezas skinned · '+v3.style.themes.join(', ')+'\n'+
+   'Silueta: '+v3.silhouette.overall+' · cintura '+v3.silhouette.waist+
+   '\nLímites: casco ≤115% altura del original, hombros ≤124% ancho original'+
+   '\nCada pieza: curvatura + biseles + panel secundario + grabado. 5 pasos de modelado.'+
+   '\nNO-GO: sin geometría nueva auditada, encastre M/F, 22 clips y tu aprobación visual.'+
+   '\nESTADO: '+v3.exports.status+' · 4ª armadura actual RECHAZADA, no es salida de esta receta.';
+ return v3;
+}
+$('compilePremiumV3').onclick=()=>{
+ try{compileStructuralRecipe()}catch(e){$('premiumV3Status').textContent='❌ '+e.message}
+};
+$('downloadPremiumV3').onclick=()=>{
+ try{
+  const blueprint=skin10Current&&skin10Current.origin.text===$('prompt').value?skin10Current:compileStructuralRecipe();
+  downloadJson('HIGHFLY-SKIN10-RECETA-V3-PREMIUM-BLENDER.json',blueprint);
+  $('premiumV3Status').textContent+='\n✅ Plano completo descargado (NO es GLB, no es arte aprobado).';
+ }catch(e){$('premiumV3Status').textContent='❌ '+e.message}
 };
 
 const sliderNames={head:'Casco',chest:'Pechera',arms:'Hombreras',hands:'Manoplas',legs:'Piernas',feet:'Botas',back:'Espalda'};

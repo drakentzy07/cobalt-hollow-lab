@@ -141,15 +141,34 @@ fs.mkdirSync(dir,{recursive:true});
  ok((await p.locator('#order').innerText()).includes('Candidato exportado'),
     'SKIN9 Blender candidate JSON exported with outstanding topology requirements');
  await p.screenshot({path:dir+'/09-skin9-prompt-to-armored-hunter.png'});
+
+ await p.locator('#prompt').fill('Una armadura dragon oscura original, casco con cuernos finos y hombreras escamadas, cintura visible');
+ await p.locator('#compilePremiumV3').click();
+ const v3=await p.evaluate(()=>window.__HF_SKIN7_LAB__.premiumV3());
+ ok(v3.blueprint?.schema==='highfly.skin10.premium-armor-recipe/3',
+   'SKIN10 compiles a new PREMIUM V3 structural recipe instead of a recolor');
+ ok(Object.keys(v3.blueprint.pieces).length===11 &&
+    Object.keys(v3.blueprint.pieces).every(k=>v3.blueprint.pieces[k].requiredDetailLayers.length===4),
+   'SKIN10 gives all ELEVEN real armor pieces four required detail layers');
+ ok(v3.prototype.verdict==='REJECTED_ART'&&!v3.blueprint.artGate.userApproved,
+    'SKIN9-B oversized crown PROTOTYPE permanently rejected in Premium V3 gate');
+ ok(v3.modelFromTextGenerated===false&&v3.blueprint.exports.gameDeployAllowed===false,
+    'No false claims about image/text-to-3D automatic generation or release');
+ ok((await p.locator('#premiumV3Status').innerText()).includes('115%'),
+    'Real anatomical proportional helmet limit visible in fourth-station UI');
+ await p.locator('#downloadPremiumV3').click();
+ ok((await p.locator('#premiumV3Status').innerText()).includes('Plano completo descargado'),
+    'Full premium native Blender structural blueprint exported for modeling');
+ await p.screenshot({path:dir+'/12-premium-v3-blueprint-eleven-pieces-art-rejected.png'});
  await p.locator('#resetLive').click();
 
  ok((await p.evaluate(()=>window.__HF_SKIN7_LAB__.state().liveCommission)).editedVertices===0,'Reset fully restores baseline geometry and material colors');
  await p.locator('#saveOrder').click();
  ok(await p.locator('#order').innerText().then(x=>x.includes('Receta descargada')),'Fourth station exports actual source-derived commission recipe JSON');
  ok(errors.length===0,'Browser has zero fatal JavaScript page errors');
- fs.writeFileSync(dir+'/gate.json',JSON.stringify({green:true,checks,errors,sourceGLB:true,actors:3,
+ fs.writeFileSync(dir+'/gate.json',JSON.stringify({green:true,checks,errors,sourceGLB:true,actors:4,
    originalClipCount:22,customImageTo3DAutomatic:false,gameplayPhysicsCertified:false,
-   actualSamsungHardwareTested:false,artApproved:false},null,2));
+   actualSamsungHardwareTested:false,artApproved:false,prototypeRejected:true,skin10PremiumBlueprintValidated:true},null,2));
  console.log('HIGHFLY_SKIN7_REAL_BASE_PALADIN_ORIGINAL_PALADIN_REFORGED_22_ANIMATIONS_4_STATION_LAB_BROWSER_GREEN=1 CHECKS='+checks.length);
  }finally{await browser.close()}
 })().catch(e=>{fs.writeFileSync(dir+'/gate-red.json',JSON.stringify({red:true,error:String(e.stack||e)},null,2));console.error(e);process.exitCode=1});
