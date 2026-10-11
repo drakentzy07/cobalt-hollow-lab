@@ -18,9 +18,6 @@ concurrency:
 jobs:
   stage_preserved_site:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     timeout-minutes: 75
     steps:
       - name: Checkout current Golden V4-03 overlay stage scripts
@@ -234,6 +231,18 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: golden-publish/cobalt-hollow-lab
+  deploy_after_QA:
+    needs: stage_preserved_site
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download preserved original HTML SHA and V4-03 QA report
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-GOLDEN-PLAY-V403-PREDEPLOY-LEGACY-AND-MOBILE-EVIDENCE
+          path: .
       - name: Deploy V4-03 BETA after all immutable old-site and GOLDEN gates
         id: deployment
         uses: actions/deploy-pages@v4
