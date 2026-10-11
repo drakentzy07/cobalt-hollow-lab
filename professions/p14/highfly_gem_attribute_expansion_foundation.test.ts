@@ -49,7 +49,7 @@ describe('HIGHFLY DEV P14 — native physical gemstone persistence foundation',(
         compulsoryTutorial:false,riftPortals:false,
         world:{...BUILTIN_WORLD,camps:[]}});
       const newPid=again.addPlayer('warrior','P14Gem_'+element,{state:after,tutorialGreetingSent:true});
-      expect(again.serializeCharacter(newPid).equipmentInstance?.mainhand?.highflyGem).toBe(element);
+      expect(again.serializeCharacter(newPid)!.equipmentInstance?.mainhand?.highflyGem).toBe(element);
       expect(highflyElementalFinisherReady(again.entities.get(newPid)!)).toBe(true);
       expect([...again.entities.values()].filter(e=>e.kind==='player')).toHaveLength(1);
     });
