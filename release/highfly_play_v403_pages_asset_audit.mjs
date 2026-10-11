@@ -59,6 +59,39 @@ for(const f of candidates){
   }
   checks.push({path:rel,bytes:fs.statSync(f).size,sources,compatible:sources.some(x=>x.match)});
 }
+// Test AUDIO independently: this is the second-largest original bundle,
+// so a shared-media preview must not accidentally duplicate 235MB of SFX.
+const audioFiles=walk(path.join(base,'audio'))
+  .filter(f=>fs.statSync(f).isFile())
+  .sort((a,b)=>fs.statSync(b).size-fs.statSync(a).size);
+const audioChecks=[];
+for(const f of [...audioFiles.slice(0,8),...audioFiles.slice(-8)]){
+  const rel=path.relative(base,f).split(path.sep).join('/');
+  const ours=crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
+  const origins=[];
+  for(const prefix of ['','v4-02/']){
+    try{
+      const response=await getResponse(SITE+prefix+rel,'GET');
+      const remoteHash=response.status===200?
+        crypto.createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex'):null;
+      origins.push({prefix,status:response.status,match:ours===remoteHash});
+      if(ours===remoteHash)break;
+    }catch(e){origins.push({prefix,error:String(e)})}
+  }
+  audioChecks.push({path:rel,bytes:fs.statSync(f).size,
+    compatible:origins.some(x=>x.match),origins});
+}
+const liveTitles={};
+for(const urlPath of ['','v4-02/','monster-lab/hunts.html']){
+  try{
+    const res=await getResponse(SITE+urlPath,'GET');
+    const html=await res.text();
+    const title=html.match(/<title[^>]*>([^<]*)<\\/title>/i)?.[1]??null;
+    liveTitles[urlPath]={httpStatus:res.status,title,
+      sha256:crypto.createHash('sha256').update(html).digest('hex'),
+      bytes:Buffer.byteLength(html)};
+  }catch(e){liveTitles[urlPath]={error:String(e)}}
+}
 const allBytes=walk(base).reduce((a,f)=>a+fs.statSync(f).size,0);
 const result={
   status:'READ_ONLY_ASSET_SHARING_PREFLIGHT_NOT_A_PUBLIC_DEPLOY',
@@ -66,7 +99,7 @@ const result={
   candidateRoot:base,oldSite:SITE,
   candidateTotalBytes:allBytes,candidateFileCount:unique,
   groups:samples,existingPagesRoutes:original,sampledMedia:checks,
-  matchedSamples:checks.filter(x=>x.compatible).length,totalSamples:checks.length,
+  matchedSamples:checks.filter(x=>x.compatible).length,totalSamples:checks.length,\n  sampledAudio:audioChecks,audioMatched:audioChecks.filter(x=>x.compatible).length,\n  audioTotal:audioChecks.length,liveTitles,
   canPublishNow:false,
   mustProveBeforePublish:[
     'all legacy Pages routes, assets and hashes preserved',
@@ -79,7 +112,7 @@ const result={
 fs.writeFileSync('highfly_golden_play_v403_pages_asset_audit.json',JSON.stringify(result,null,2)+'\n');
 console.log('HF_GOLDEN_PLAY_PAGES_BUDGET_READONLY_DIAGNOSTIC='+JSON.stringify({
   allBytes,groups:samples,matchedSamples:result.matchedSamples,
-  totalSamples:result.totalSamples,routeStatus:original
+  totalSamples:result.totalSamples,audioMatched:result.audioMatched,\n  audioTotal:result.audioTotal,liveTitles,routeStatus:original
 }));
 if(!files.length||stat.size<500)throw Error('P10_WEBGL_CANDIDATE_BAD');
 if(original[''].status!==200||original['v4-02/'].status!==200)throw Error('PUBLIC_SITE_NOT_REACHABLE');
