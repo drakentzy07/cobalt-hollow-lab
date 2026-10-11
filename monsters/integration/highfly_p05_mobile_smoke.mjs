@@ -343,7 +343,7 @@ try {
     // changes player level when clicking More/Cacerías.
     sim.setPlayerLevel(21,pid);
     const sameAfterFixture=sim.entities.get(pid)===hunter;
-    const noTripledHp=Math.abs(hunter.maxHp-oldHp)<oldHp*3;
+    const nativeLevel21Hp=hunter.maxHp;
     document.getElementById('hf-v403-hunt-panel')?.remove();
     more.click();
     select=document.getElementById('hf-v403-hunt-select');
@@ -352,6 +352,7 @@ try {
     button?.click();
     const dungeon=sim.instances.find(i=>i.dungeonId==='hf_dungeon_'+chosen && i.enteredBy.has(pid));
     const actual=(dungeon?.mobIds??[]).filter(id=>sim.entities.get(id)?.templateId?.startsWith('hf_hunt_'));
+    const noTripledHp=hunter.maxHp===nativeLevel21Hp;
     const sameHunter=sim.entities.get(pid)===hunter;
     const sameSim=window.__game?.sim===sim;
     const nativeExit=sim.leaveDungeon(pid);
