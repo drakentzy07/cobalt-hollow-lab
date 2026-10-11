@@ -47,9 +47,9 @@ def main():
         p=CHUNKS/name
         url='../../assets/'+name
         proxy=(
-          'export * from "'+url+'";\\n'
-          'import * as hfShared from "'+url+'";\\n'
-          'export default hfShared.default;\\n'
+          'export * from "'+url+'";\n'
+          'import * as hfShared from "'+url+'";\n'
+          'export default hfShared.default;\n'
         ).encode('ascii')
         if len(proxy)>size:continue
         p.write_bytes(proxy)
