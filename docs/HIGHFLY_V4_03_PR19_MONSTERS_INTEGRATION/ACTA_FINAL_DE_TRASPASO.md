@@ -29,12 +29,12 @@ Rama de traspaso: `highfly-v4-03-pr19-monsters-handoff-real`. Leer el commit act
 - P02M: https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38095460400
 - P02N: https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38102239479
 - Reports + 350/988 + 1440: https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38103132422
-- PR19+P02I combined: https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38103098404 **CONSULTAR CONCLUSIÓN ACTUAL, NO asumir GREEN si está procesando**.
+- PR19+P02I combined GREEN: https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38103098404 (tests PR19 S23 emulado, gemas y Monster Lab).
 
 ## 4. BUILD Y ANDROID
 - Sitio aislado de monstruos previamente GREEN: https://drakentzy07.github.io/cobalt-hollow-lab/monster-lab/hunts.html
 - V4-03 combinada anterior PR17 GREEN: https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38102162302 (artefacto WebGL, NO equivalente PR19).
-- Build combinada de PR19 candidata: link de RUN anterior en ítem 3; artefacto esperado `HIGHFLY-V4-03-PR19-GEMS-MONSTERS-COMBINATION-NO-PUBLISH`. No afirmar que existe hasta que CI termine y el artefacto sea visible.
+- Build combinada PR19 **GREEN LAB**, sin portal persistente: [artefacto WebGL de GitHub #11689006382](https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38103098404/artifacts/11689006382), 719.303.385 bytes. Solo paquete WebGL sin publicación; no es prueba en Samsung físico.
 - En Samsung S23 Ultra: elegir PR19 original o Monster Lab aislado sin mezclar guardados. Cualquier WebGL empaquetado se sirve por HTTP local/LAN, **no file://**, antes de URL de QA separada.
 
 ## 5. CONTENIDO
