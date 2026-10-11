@@ -9,6 +9,7 @@ on:
       - .github/workflows/highfly-dev-p13-lv99-gear-native.yml
       - professions/p13/highfly_lv99_native_equipment.ts
       - professions/p13/highfly_lv99_native_equipment.test.ts
+      - professions/p13/highfly_full_227_recipes_catalog.test.ts
       - professions/p13/highfly_complete_native_1_99_catalog.test.ts
       - docs/HIGHFLY_DEV_P13_EXACT_RECIPES_LEVEL_50_99.md
       - professions/p13/activate_p13.py
@@ -531,6 +532,7 @@ jobs:
           set -euo pipefail
           cp ../professions/p13/highfly_lv99_native_equipment.ts src/sim/content/highfly_lv99_native_equipment.ts
           cp ../professions/p13/highfly_lv99_native_equipment.test.ts tests/highfly_lv99_native_equipment.test.ts
+          cp ../professions/p13/highfly_full_227_recipes_catalog.test.ts tests/highfly_full_227_recipes_catalog.test.ts
           cp ../professions/p13/highfly_complete_native_1_99_catalog.test.ts tests/highfly_complete_native_1_99_catalog.test.ts
           python3 ../professions/p13/activate_p13.py
           git diff --check HEAD
@@ -668,6 +670,25 @@ jobs:
             HIGHFLY_FULL_1_99_NATIVE_RECIPE_CATALOG.json
           retention-days: 45
           if-no-files-found: warn
+      - name: P13 FULL CATALOG — export all 227 native recipes and LV1–99 XP
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_HIGHFLY_NATIVE_HUNT: "1"
+          VITE_HIGHFLY_OPEN_WORLD_HUNTS: "1"
+          VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/highfly_full_227_recipes_catalog.test.ts
+          test -s ../highfly_dev_p13_full_227_recipes_materials_99_levels.json
+          echo 'HF_NATIVE_EXACT_227_BOM_99_LEVELS_AUDIT_GREEN=1'
+      - name: P13 archive native full recipe and XP dataset
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-DEV-P13-FULL-227-RECIPE-MATERIAL-LOOT-XP-LEVEL99-CATALOG
+          path: highfly_dev_p13_full_227_recipes_materials_99_levels.json
+          retention-days: 30
+          if-no-files-found: error
       - name: P12 — 9 classes REAL CLEAN offline save, localStorage fallback and old CharacterState reload
         working-directory: upstream
         shell: bash
