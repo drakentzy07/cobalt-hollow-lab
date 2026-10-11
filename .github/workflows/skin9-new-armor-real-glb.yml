@@ -1,0 +1,165 @@
+name: HIGHFLY SKIN9-B — NEW ROYAL ARMOR REAL GLB AND FOUR HUNTERS (ISOLATED)
+on:
+  push:
+    branches: [highfly-skin9-armor-factory-core]
+    paths:
+      - 'character-truth/skin9-brand-new-royal-armor.py'
+      - 'character-truth/skin7-paladin-compare-lab/**'
+      - '.github/workflows/skin9-new-armor-real-glb.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  real-fourth-armor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Safeguard all HIGHFLY public gameplay and earlier studios
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only 03015847e4efdb587a012d1dd6dc4a07d24845c7 HEAD | tee /tmp/skin9-b-files.txt
+          while IFS= read -r f; do
+            case "$f" in
+              character-truth/skin7-paladin-compare-lab/*|character-truth/skin9-brand-new-royal-armor.py|.github/workflows/skin9-armor-factory.yml|.github/workflows/skin9-live-atelier-gate.yml|.github/workflows/skin9-new-armor-real-glb.yml) ;;
+              *) echo "NO_GO_CHANGED_GAME_OR_OTHER_LABS $f";exit 42;;
+            esac
+          done < /tmp/skin9-b-files.txt
+          python3 -m py_compile character-truth/skin9-brand-new-royal-armor.py
+          node --check character-truth/skin7-paladin-compare-lab/paladin-lab.mjs
+          node character-truth/skin7-paladin-compare-lab/skin9-armor-core.test.mjs
+          echo HIGHFLY_SKIN9B_PUBLIC_GAME_NOT_TOUCHED_GREEN=1
+      - name: Fetch immutable ClaudeCraft source and decode Meshopt without rewriting original
+        shell: bash
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/skin9-real-scratch
+          curl -fLsS --retry 3 --max-time 150 \
+            https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb \
+            -o character-truth/skin9-real-scratch/warrior_modular.glb
+          test "$(git hash-object character-truth/skin9-real-scratch/warrior_modular.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          npm install --no-save --package-lock=false @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer@0.23.0 playwright@1.55.0
+          node character-truth/integration-modules/prepare-native-body.mjs \
+            character-truth/skin9-real-scratch/warrior_modular.glb \
+            character-truth/skin9-real-scratch/source-for-blender.glb
+          test -s character-truth/skin9-real-scratch/source-for-blender.glb
+      - name: Download official digest-verified Blender 4.2 LTS
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          VERSION=4.2.23
+          NAME="blender-${VERSION}-linux-x64.tar.xz"
+          ROOT="https://download.blender.org/release/Blender4.2"
+          mkdir -p "$RUNNER_TEMP/skin9-blender" "$RUNNER_TEMP/skin9-download"
+          cd "$RUNNER_TEMP/skin9-download"
+          curl -fLsS --retry 3 --max-time 390 "$ROOT/$NAME" -o "$NAME"
+          curl -fLsS --retry 3 --max-time 50 "$ROOT/blender-${VERSION}.sha256" -o SHA256SUMS
+          grep -F "$NAME" SHA256SUMS | head -1 | sha256sum --check
+          tar -xJf "$NAME" --strip-components=1 -C "$RUNNER_TEMP/skin9-blender"
+          echo "$RUNNER_TEMP/skin9-blender" >> "$GITHUB_PATH"
+      - name: Actually create ELEVEN new SkinnedMeshes, not recolored old Paladin
+        shell: bash
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          blender --background --factory-startup --python-exit-code 99 \
+            --python character-truth/skin9-brand-new-royal-armor.py -- \
+            --source character-truth/skin9-real-scratch/source-for-blender.glb \
+            --out character-truth/skin9-real-scratch/HF9-ROYAL-DARK-NEW-GEOMETRY-11-PIECES.glb \
+            --report character-truth/skin9-real-scratch/royal-new-topology-proof.json \
+            | tee /tmp/skin9-new-blender.log
+          grep -F 'HIGHFLY_SKIN9_TRUE_NEW_11_SKINNED_ARMOR_OBJECTS_FROM_ZERO_GEOMETRY_GREEN=1' /tmp/skin9-new-blender.log
+          python3 - <<'PY'
+          import json,struct
+          from pathlib import Path
+          d=Path('character-truth/skin9-real-scratch')
+          r=json.loads((d/'royal-new-topology-proof.json').read_text())
+          assert r['bones']==23 and r['newSkinnedMeshCount']==11 and r['newFaceCount']>110
+          assert r['headCrownNewMesh'] and r['backWingsNewMesh'] and r['shoulderSpikesNewMesh']
+          assert r['reusedPaladinTriangles'] is False and r['originalReforgeUntouched']
+          assert all(x['allVerticesWeighted'] and not x['sourceTriangleReuse'] for x in r['pieces'].values())
+          glb=(d/'HF9-ROYAL-DARK-NEW-GEOMETRY-11-PIECES.glb').read_bytes()
+          assert glb[:4]==b'glTF' and struct.unpack_from('<I',glb,4)[0]==2
+          print('SKIN9_REAL_NOVEL_GLTF_SKELETAL_GEOMETRY_PROOF_GREEN=1',len(glb),r['newFaceCount'])
+          PY
+      - name: Bundle baseline lab and FOURTH independently authored GLB
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run view 38100031860 --repo "$GITHUB_REPOSITORY" --json conclusion -q .conclusion | grep -x success
+          mkdir -p highfly-skin9b-site
+          gh run download 38100031860 --repo "$GITHUB_REPOSITORY" \
+            --name HIGHFLY-SKIN7-PALADIN-V2-FOUR-STATION-BROWSER-LAB-NO-DEPLOY \
+            --dir highfly-skin9b-site
+          D=highfly-skin9b-site/skin7-paladin-compare-lab
+          test -s "$D/assets/PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb"
+          cp character-truth/skin9-real-scratch/HF9-ROYAL-DARK-NEW-GEOMETRY-11-PIECES.glb "$D/assets/"
+          cp character-truth/skin7-paladin-compare-lab/{index.html,paladin-lab.mjs,commission-recipe-v2.mjs,skin9-armor-core.mjs} "$D/"
+          test -s "$D/assets/HF9-ROYAL-DARK-NEW-GEOMETRY-11-PIECES.glb"
+      - name: 22 original clips, four actors, actual new topology, third unchanged, M/F
+        shell: bash
+        timeout-minutes: 7
+        env:
+          HF_PALADIN_LAB_URL: http://127.0.0.1:4278/skin7-paladin-compare-lab/
+          HF_PALADIN_PROOF: character-truth/skin9b-qa-proof
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium
+          python3 -m http.server 4278 --bind 127.0.0.1 --directory highfly-skin9b-site >/tmp/skin9b-browser.log 2>&1 &
+          sleep 2
+          node character-truth/skin7-paladin-compare-lab/browser-qa.cjs
+          grep -F 'Fourth has actually different polygon topology' character-truth/skin9b-qa-proof/gate.json
+          grep -F 'Changing fourth skin color does NOT modify third Paladin color' character-truth/skin9b-qa-proof/gate.json
+          grep -F '"green": true' character-truth/skin9b-qa-proof/gate.json
+          echo HIGHFLY_SKIN9B_FOURTH_REAL_NEW_SKIN_22_CLIPS_BROWSER_GREEN=1
+      - name: Store GLB, Blender report and four-actor preview for art review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN9B-REAL-NEW-ROYAL-ARMOR-11-SKINNED-GLB
+          path: |
+            character-truth/skin9-real-scratch/HF9-ROYAL-DARK-NEW-GEOMETRY-11-PIECES.glb
+            character-truth/skin9-real-scratch/royal-new-topology-proof.json
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Store independent lab preview and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN9B-FOUR-HUNTERS-PREVIEW-AND-QA
+          path: |
+            character-truth/skin9b-qa-proof/
+            highfly-skin9b-site/
+          retention-days: 30
+          if-no-files-found: warn
+      - uses: actions/checkout@v4
+        name: Check out ONLY isolated SKIN Atelier staging branch after GREEN
+        with:
+          ref: highfly-skin7-live-preview-site
+          path: skin9b-live-asset-branch
+          persist-credentials: true
+      - name: Publish ONLY new GLB to isolated Atelier asset branch, NEVER Pages gameplay
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s character-truth/skin9b-qa-proof/gate.json
+          grep -F '"green": true' character-truth/skin9b-qa-proof/gate.json
+          cd skin9b-live-asset-branch
+          test "$(git branch --show-current)" = highfly-skin7-live-preview-site
+          mkdir -p skin7-paladin-compare-lab/assets
+          cp ../character-truth/skin9-real-scratch/HF9-ROYAL-DARK-NEW-GEOMETRY-11-PIECES.glb skin7-paladin-compare-lab/assets/
+          git config user.name highfly-skin9-isolated-builder
+          git config user.email highfly-skin9-bot@users.noreply.github.com
+          git add skin7-paladin-compare-lab/assets/HF9-ROYAL-DARK-NEW-GEOMETRY-11-PIECES.glb
+          git commit -m "Add separately forged SKIN9 royal dark armor GLB after Blender and browser GREEN"
+          git push origin HEAD:highfly-skin7-live-preview-site
+          echo HIGHFLY_SKIN9B_ISOLATED_NEW_GLTF_PUBLISHED_NO_PUBLIC_GAME_GREEN=1
