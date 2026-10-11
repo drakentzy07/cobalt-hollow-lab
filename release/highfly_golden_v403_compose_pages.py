@@ -83,14 +83,21 @@ def main():
     if src.is_symlink():raise RuntimeError("SYMLINK:"+str(rel))
     if rel.parts[0] in shared:
       existing=ROOT/rel
-      if not existing.exists():
-        stats["shared_missing"].append(str(rel))
-        continue
-      # Re-using media requires equality across ALL 6000+ files, not samples.
-      s1=sha(src.read_bytes());s2=sha(existing.read_bytes())
-      if s1!=s2:
-        stats["shared_mismatch"].append(str(rel))
-        continue
+      candidate_hash=sha(src.read_bytes())
+      if not existing.exists() or sha(existing.read_bytes())!=candidate_hash:
+        # Older DONOR reconstruct may be stale, but live user Pages always wins.
+        # Only restore a resource if the current public URL has SAME SHA as
+        # V4-03; never replace a current public asset with differing bytes.
+        try:published=remote(rel.as_posix())
+        except HTTPError as e:
+          if e.code==404:
+            stats["shared_missing"].append(str(rel));continue
+          raise
+        if sha(published)!=candidate_hash:
+          stats["shared_mismatch"].append(str(rel));continue
+        existing.parent.mkdir(parents=True,exist_ok=True)
+        existing.write_bytes(published)
+        print("HF_GOLDEN_PRESERVED_LIVE_SHARED_ASSET="+str(rel))
       stats["reused_files"]+=1
       stats["reused_bytes"]+=src.stat().st_size
       continue
