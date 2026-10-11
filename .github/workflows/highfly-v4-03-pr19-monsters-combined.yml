@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - highfly-v4-03-pr19-monsters-handoff-real
+    paths:
+      - .github/workflows/highfly-v4-03-pr19-monsters-combined.yml
   workflow_dispatch:
 permissions:
   contents: read
