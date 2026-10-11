@@ -1,0 +1,184 @@
+name: HIGHFLY GOLDEN PLAY V4-03 — COMPLETE PAGES REUSE STAGING (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-play-v403-release-candidate]
+    paths:
+      - .github/workflows/highfly-golden-v403-full-pages-stage.yml
+      - release/highfly_golden_v403_compose_pages.py
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: highfly-golden-play-stage
+  cancel-in-progress: true
+jobs:
+  stage_preserved_site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout current Golden V4-03 overlay stage scripts
+        uses: actions/checkout@v4
+      - name: Checkout exact original RUN1-J Pages overlay (legacy base reconstruction)
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: a456c261692e100c5ac9611f582db1851a6ddd37
+          path: legacy
+
+      - name: Checkout frozen ClaudeCraft code slice
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: legacy/upstream
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /android/
+            /capacitor.config.ts
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+
+      - name: Verify original pinned donor and immutable RUN1-J overlay
+        working-directory: legacy/upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+      - name: Apply exact GREEN HIGHFLY overlays
+        working-directory: legacy/upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check ../overlays/pages-media-base.patch
+          git apply --check ../overlays/cobalt-offline-gate.patch
+          git apply ../overlays/pages-media-base.patch
+          git apply ../overlays/cobalt-offline-gate.patch
+          python ../overlays/highfly_mobile_360.py
+          python ../overlays/highfly_mobile_analog.py
+          python ../overlays/verify_highfly_8way.py
+          python ../overlays/highfly_offline_save.py
+          python ../overlays/highfly_entry_es.py
+          python ../overlays/highfly_mobile_creator.py
+          python ../overlays/highfly_offline_resume_preview.py
+          python ../overlays/highfly_mobile_polish.py
+          python ../overlays/highfly_advanced_mobility.py
+          python ../overlays/highfly_run09_mobile_actions.py
+          python ../overlays/highfly_run091_ui_polish.py
+          python ../overlays/highfly_run092_hud_comfort.py
+          python ../overlays/highfly_run093_preview_hud.py
+          python ../overlays/highfly_run093_combat.py
+          python ../overlays/highfly_training_core_v1.py
+          python ../overlays/highfly_training_persistence_v1.py
+          python ../overlays/highfly_training_ui_v1.py
+          python ../overlays/highfly_training_e2e_v1.py
+          python ../overlays/highfly_training_run1i_ui.py
+          python ../overlays/highfly_run1j_branding.py
+          python ../overlays/highfly_run1j_spanish.py
+          python ../overlays/highfly_run1j_j4_brandfix.py
+          python ../overlays/highfly_run1j_j3a_flags.py
+          python ../overlays/highfly_run1j_j3b_native_bridge.py
+          python ../overlays/highfly_run1j_real_device_fix.py
+          python ../overlays/highfly_run1j_foundation_close.py
+          python ../overlays/highfly_run1j_final_polish.py
+          python ../overlays/highfly_run1j_visual_release.py
+          python ../overlays/highfly_run115_visuals.py
+          python ../overlays/highfly_run119_foundation_authority.py
+          python ../overlays/highfly_run120_closure.py
+          python ../overlays/highfly_run122_training_lock.py
+          python ../overlays/rewrite_source_public_paths.py
+          python -c "from pathlib import Path; p=Path('vite.config.ts'); s=p.read_text(); old=\"  base: '/',\"; new=\"  base: env(['VITE_COBALT_BASE']) ?? '/',\"; assert s.count(old)==1, 'unexpected vite base'; p.write_text(s.replace(old,new))"
+          git diff --check
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Enable pinned pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+
+      - name: Install dependencies
+        working-directory: legacy/upstream
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Build exact RUN1-J GREEN site
+        working-directory: legacy/upstream
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          node scripts/build_bundle_pregen.mjs
+          python ../overlays/rewrite_source_public_paths.py
+          grep -F "/cobalt-hollow-lab/audio/sfx/runtime-pack.json" src/game/sfx_manifest.generated.ts
+          pnpm exec vite build
+          node scripts/check_backdrop_survival.mjs
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          python ../overlays/rewrite_pages_static.py
+          python ../overlays/audit_pages_public_roots.py
+          test -s dist/index.html
+          test -s dist/highfly/highfly-logo-full.webp
+          test -s dist/highfly/highfly-splash.avif
+          test -s dist/highfly/highfly-entry.avif
+          test -s dist/highfly/highfly-loading.avif
+          touch dist/.nojekyll
+          du -sh dist
+          find dist/media -type f | wc -l
+
+      - name: Reuse GOLDEN PLAY V4-03 latest GREEN WebGL artifact (no duplicate game rebuild)
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-GOLDEN-PLAY-V403-WEBGL-SAFE-HUNTER-NO-DEPLOY
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38148356731
+          github-token: ${{ github.token }}
+          path: golden-build
+      - name: Compose verified previous FULL Pages site with new GOLDEN V4-03 preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 release/highfly_golden_v403_compose_pages.py
+          test -s golden-combined-stage-report.json
+          test -s golden-publish/cobalt-hollow-lab/index.html
+          test -s golden-publish/cobalt-hollow-lab/v4-02/index.html
+          test -s golden-publish/cobalt-hollow-lab/monster-lab/hunts.html
+          test -s golden-publish/cobalt-hollow-lab/v4-03-preview/index.html
+          echo 'HF_GOLDEN_PLAY_PREVIEW_STAGED_WITH_VERIFIED_LEGACY=1'
+      - name: Archive manifest only, never overwrite Pages before browser QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-GOLDEN-PLAY-V403-FULL-PAGES-RECONSTRUCTION-MANIFEST
+          path: golden-combined-stage-report.json
+          if-no-files-found: warn
+          retention-days: 21
