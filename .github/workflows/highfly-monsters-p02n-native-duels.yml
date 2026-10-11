@@ -15,6 +15,10 @@ concurrency:
 jobs:
   native_duels:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     timeout-minutes: 55
     steps:
       - name: Checkout HIGHFLY isolated lab scripts
@@ -81,37 +85,84 @@ jobs:
           import { defineConfig } from 'vitest/config';
           export default defineConfig({test:{environment:'node',testTimeout:2400000,include:['tests/highfly_p02n_native_duel.test.ts'],reporters:'verbose',passWithNoTests:false}});
           EOF
-      - name: Run native Hunter vs active AI combat with corpse/XP (never dummy-HP)
+      - name: "Run native Hunter vs monster duels — shard ${{ matrix.shard }} / 8"
         working-directory: upstream
         shell: bash
+        env:
+          HF_P02N_SHARD_INDEX: ${{ matrix.shard }}
+          HF_P02N_SHARD_COUNT: "8"
         run: |
           set -euo pipefail
           pnpm exec vitest run --config vitest.p02n.config.mts tests/highfly_p02n_native_duel.test.ts --reporter=verbose
-          test -s /tmp/hf-monstruos6-p02n-combat-sim/00_RESUMEN_DUELOS_SIM.json
-          test -s /tmp/hf-monstruos6-p02n-combat-sim/01_DUELOS_COMPLETOS_REAL_SIM_1440.csv
-          echo 'P02N_NATIVE_LIVE_AI_SIMULATED_NO_PUBLIC_DEPLOY=1'
-      - name: Preserve reports only to isolated branch
-        if: success()
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd highfly
-          test "$GITHUB_REF_NAME" = 'highfly-monsters-p02n-native-duel-simulation'
-          git fetch --no-tags origin "$GITHUB_REF_NAME"
-          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
-          mkdir -p docs/HIGHFLY_MONSTRUOS6_P02N_SIM_NATIVE_AI
-          cp /tmp/hf-monstruos6-p02n-combat-sim/* docs/HIGHFLY_MONSTRUOS6_P02N_SIM_NATIVE_AI/
-          git config user.name 'highfly-monsters-native-combat-bot'
-          git config user.email 'actions@users.noreply.github.com'
-          git add docs/HIGHFLY_MONSTRUOS6_P02N_SIM_NATIVE_AI/
-          git diff --cached --check
-          git commit -m 'docs(monsters): freeze 9 class x 80 mob native AI fight simulation P02N'
-          git push origin HEAD:refs/heads/"$GITHUB_REF_NAME"
+          test -s "/tmp/hf-monstruos6-p02n-combat-sim/00_RESUMEN_DUELOS_SIM_SHARD_${HF_P02N_SHARD_INDEX}.json"
+          test -s "/tmp/hf-monstruos6-p02n-combat-sim/01_DUELOS_SHARD_${HF_P02N_SHARD_INDEX}.csv"
+          echo "P02N_SHARD_${HF_P02N_SHARD_INDEX}_NATIVE_AI_VERIFIED_180=1"
       - name: Upload results even if failures
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-P02N-NATIVE-HUNTER-MOB-1440-DUELS
+          name: HIGHFLY-P02N-NATIVE-180-DUELS-${{ matrix.shard }}
           path: /tmp/hf-monstruos6-p02n-combat-sim/
           if-no-files-found: warn
+          retention-days: 14
+
+  aggregate_1440:
+    needs: native_duels
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download actual 8 native fight result shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: HIGHFLY-P02N-NATIVE-180-DUELS-*
+          path: shard-artifacts
+          merge-multiple: true
+      - name: Verify 8 SHARDS / 1440 duels and aggregate actual deaths, XP and corpses
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv,json,pathlib
+          root=pathlib.Path('shard-artifacts')
+          sources=sorted(root.glob('00_RESUMEN_DUELOS_SIM_SHARD_*.json'))
+          assert len(sources)==8, ('MISSING_SHARDS',len(sources))
+          records=[json.loads(f.read_text()) for f in sources]
+          assert sorted(x['shardIndex'] for x in records)==list(range(8))
+          assert all(x['completed']==x['attempted']==180 and not x['exceptions'] for x in records)
+          summary={'scope':'1440 NATIVE AI DUELS: 9 CLASSES x 80 TEMPLATES x 2 LEVEL GAPS',
+                   'source':'PINNED CLAUDECRAFT P02I + PF6',
+                   'status':'NATIVE_SIM_RUNTIME_GATES_ONLY_NOT_COMBAT_BALANCE_CERTIFIED',
+                   'attempted':sum(x['attempted'] for x in records),
+                   'completed':sum(x['completed'] for x in records),
+                   'nativeLootClaims':sum(x['nativeLootClaims'] for x in records),
+                   'actualAbilitiesAttempted':sum(x['actualAbilitiesAttempted'] for x in records),
+                   'classes':9,'monsterTemplates':80,
+                   'atLevel':{k:sum(x['resultsAtLevel'][k] for x in records) for k in ['WIN','LOSS','TIMEOUT']},
+                   'plusFive':{k:sum(x['resultsPlus5'][k] for x in records) for k in ['WIN','LOSS','TIMEOUT']},
+                   'limitSecondsPerFight':8,
+                   'persistentHunterIntegrated':False,'fullLootBalanced':False,
+                   'remarks':'Eight-second smoke duels do not establish fair long fights, skillful dodges, or a calibrated XP/loot economy.'}
+          assert summary['completed']==1440
+          pathlib.Path('HIGHFLY_P02N_SUMMARY_1440.json').write_text(json.dumps(summary,indent=2,ensure_ascii=False)+'\n')
+          dest=pathlib.Path('HIGHFLY_P02N_ALL_1440_DUELS.csv')
+          with dest.open('w',newline='',encoding='utf-8-sig') as output:
+            wr=None
+            for f in sorted(root.glob('01_DUELOS_SHARD_*.csv')):
+              with f.open(encoding='utf-8-sig',newline='') as input:
+                rd=csv.DictReader(input)
+                if wr is None:
+                  wr=csv.DictWriter(output,fieldnames=rd.fieldnames);wr.writeheader()
+                wr.writerows(rd)
+          with dest.open(encoding='utf-8-sig',newline='') as f:
+            assert sum(1 for _ in csv.DictReader(f))==1440
+          print('HIGHFLY_P02N_ALL_1440_SHARDED_NATIVE_DUELS_OK='+json.dumps(summary))
+          PY
+      - name: Upload final complete fight matrix for V4 integration gate
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-P02N-SHARD-MERGED-1440-DUELS
+          path: |
+            HIGHFLY_P02N_SUMMARY_1440.json
+            HIGHFLY_P02N_ALL_1440_DUELS.csv
+          if-no-files-found: error
           retention-days: 14
