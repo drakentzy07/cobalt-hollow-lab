@@ -40,8 +40,8 @@ fs.mkdirSync(dir,{recursive:true});
    'Original Paladin equipment is actually visible, not bald/unarmored Hunter');
  ok(s.nativeBones===23&&s.rig==='Rig_Medium','Authentic 23-bone Rig_Medium');
  ok(s.clips.length===22,'ALL 22 original ClaudeCraft movement and combat animation clips');
- ok(s.independentArmor.newlyAuthoredMeshCount===11 && s.independentArmor.oldThirdMeshCount===11,
-   'Third and fourth are independent armor assets, eleven skinned pieces EACH');
+ ok(s.independentArmor.newArmorLogicalParts===11 && s.independentArmor.newlyAuthoredMeshCount>=11 && s.independentArmor.oldThirdMeshCount===11,
+   'Third has 11 skinned meshes; fourth has 11 NEW armor pieces with material primitives');
  ok(s.independentArmor.fourthPrefix===true && s.independentArmor.thirdPrefix===true && !s.independentArmor.sameActor,
    'Fourth is NOT the third Paladin recolored: another actor and independent GLB');
  ok(s.independentArmor.newFourthVertices!==s.independentArmor.oldThirdVertices,
@@ -89,7 +89,7 @@ fs.mkdirSync(dir,{recursive:true});
  await p.locator('#enamelColor').fill('#bb3344');
  await p.locator('input[data-slot="arms"]').evaluate(input=>{input.value='1.29';input.dispatchEvent(new Event('input',{bubbles:true}))});
  const live=await p.evaluate(()=>window.__HF_SKIN7_LAB__.state().liveCommission);
- ok(live.meshes===11&&live.nativeMeshesOnly===true&&live.rig==='Rig_Medium','Live fourth station edits the real eleven skinned armor meshes with original rig');
+ ok(live.logicalParts===11&&live.meshes>=11&&live.nativeMeshesOnly===true&&live.rig==='Rig_Medium','Live fourth station edits all eleven entirely new skinned armor PIECES with original rig');
  ok(live.editedVertices>0&&live.intensity.arms===1.29,'Slider deforms actual native skinned armor vertices in real time');
  ok(live.palette.enamel==='#bb3344','Changing the color picker repaints the real preview material');
  await p.screenshot({path:dir+'/08-fourth-station-live-deformation-and-color.png'});
