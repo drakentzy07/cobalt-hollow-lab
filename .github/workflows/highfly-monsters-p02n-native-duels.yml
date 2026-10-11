@@ -1,8 +1,8 @@
-name: HIGHFLY MONSTRUOS 6 P02N — 1440 NATIVE AI DUELS (NO DEPLOY)
+name: HIGHFLY MONSTRUOS 6 P02N — 306 CANARY NATIVE AI DUELS (NO DEPLOY)
 on:
   push:
     branches:
-      - highfly-monsters-p02n-native-duel-simulation
+      - highfly-monsters-p02n-fast-smoke
     paths:
       - .github/workflows/highfly-monsters-p02n-native-duels.yml
       - monsters/balance/highfly_p02n_native_duel.test.ts
@@ -88,8 +88,8 @@ jobs:
           set -euo pipefail
           pnpm exec vitest run --config vitest.p02n.config.mts tests/highfly_p02n_native_duel.test.ts --reporter=verbose
           test -s /tmp/hf-monstruos6-p02n-combat-sim/00_RESUMEN_DUELOS_SIM.json
-          test -s /tmp/hf-monstruos6-p02n-combat-sim/01_DUELOS_COMPLETOS_REAL_SIM_1440.csv
-          echo 'P02N_NATIVE_LIVE_AI_SIMULATED_NO_PUBLIC_DEPLOY=1'
+          test -s /tmp/hf-monstruos6-p02n-combat-sim/01_DUELOS_SMOKE_306.csv
+          echo 'P02N_CANARY_AI_SIMULATED_NO_PUBLIC_DEPLOY=1'
       - name: Preserve reports only to isolated branch
         if: success()
         shell: bash
@@ -111,7 +111,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-P02N-NATIVE-HUNTER-MOB-1440-DUELS
+          name: HIGHFLY-P02N-CANARY-306-DUELS
           path: /tmp/hf-monstruos6-p02n-combat-sim/
           if-no-files-found: warn
           retention-days: 14
