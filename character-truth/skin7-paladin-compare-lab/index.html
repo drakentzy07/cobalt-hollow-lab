@@ -13,7 +13,7 @@ nav{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}.control{display:flex;align
 </head><body><header><h1>⚒️ <b>HIGHFLY</b> · FORJA NATIVA PALADÍN</h1><small>CLAUDECRAFT 0.44.0 → 0.44.6 · Rig_Medium · laboratorio aislado</small></header>
 <main><div id="status" role="status" aria-live="polite">Preparando Hunter auténtico y 22 movimientos originales…</div>
 <nav id="stations" aria-label="Estaciones del laboratorio">
-<button id="all" class="active">⚔️ Comparar los 3</button><button id="base">1 · Hunter base</button><button id="original">2 · Paladín original</button><button id="reforged">3 · Paladín reforjado</button><button id="commission">4 · Tu próximo diseño</button></nav>
+<button id="all" class="active">⚔️ Comparar los 3</button><button id="base">1 · Hunter base</button><button id="original">2 · Paladín original</button><button id="reforged">3 · Paladín reforjado</button><button id="commission">4 · Armadura NUEVA</button><button id="compare34">🆚 3ª vs 4ª</button></nav>
 <div id="viewer"><canvas id="viewport" aria-label="Los tres modelos 3D del Hunter con el mismo movimiento"></canvas><div class="overlay" id="actorLabels"><div class="pill"><b>1 · BASE</b>Hunter original</div><div class="pill"><b>2 · CLAUDECRAFT</b>Paladín original</div><div class="pill"><b>3 · REFORJA</b>Receta experimental</div></div></div>
 <div class="control">
 <label>Personaje <select id="gender"><option value="M">Masculino</option><option value="F">Femenino</option></select></label>
@@ -36,7 +36,7 @@ nav{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}.control{display:flex;align
 <option value="heavy">Más pesado</option><option value="holy">Más sagrado</option>
 <option value="ferocious">Más feroz</option><option value="clean">Más limpio</option></select></label>
 <button id="skin9Mutate">🧬 Crear variante hija</button></div>
-<p class="preset-note">SKIN 9-A: texto → intención + receta + vista nativa. Foto → paleta (no lectura automática de geometría). Pedidos inéditos → candidato para escultura Blender, todavía no modelo nuevo.</p></div>
+<p class="preset-note"><strong>SKIN 9-B:</strong> El cuarto Rey Oscuro tiene mallas nuevas fabricadas en Blender, distintas de la tercera skin. Un nuevo pedido de texto aún NO modela automáticamente piezas: cambia la receta, los colores y los parámetros sobre ese cuarto prototipo. Para crear otra silueta hay que ejecutar una nueva forja. Imagen: paleta solamente.</p></div>
 <div id="recipeControls" class="control" aria-label="Controles de siete piezas skinned nativas"></div>
 <div class="control" aria-label="Colores de armadura en vivo">
 <label>Esmalte <input id="enamelColor" type="color" value="#314f74"></label>
@@ -66,5 +66,5 @@ nav{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}.control{display:flex;align
 </div>
 <div class="control"><button class="accent" id="copyOrder">📋 Copiar pedido para enviarlo aquí a ChatGPT</button><button id="saveOrder">↓ Guardar receta Blender V2</button><button id="clearCustom">Retirar prueba GLB</button></div>
 <div id="order">Cuando me envíes el pedido por este chat, usaré las piezas originales de ClaudeCraft y las recetas de reforja para crear tu candidato. La cuarta estación no se aprueba ni publica automáticamente.</div></section>
-<footer>Los tres modelos comparten el mismo ciclo temporal y los 22 clips originales del Rig_Medium. Aquí se comprueba animación/encastre visual, <strong>no</strong> el combate jugable de HIGHFLY (daño, físicas, targeting, parry y dash del juego se validan al integrar la armadura en Unity). Los cambios de la cuarta estación son candidatos privados. Ninguna opción publica en el juego.</footer>
+<footer>Los cuatro Hunter comparten el mismo ciclo temporal y los 22 clips originales del Rig_Medium. Aquí se comprueba animación/encastre visual, <strong>no</strong> el combate jugable de HIGHFLY (daño, físicas, targeting, parry y dash del juego se validan al integrar la armadura en Unity). Los cambios de la cuarta estación son candidatos privados. Ninguna opción publica en el juego.</footer>
 </main><script type="module" src="./paladin-lab.mjs"></script></body></html>

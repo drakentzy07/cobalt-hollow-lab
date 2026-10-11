@@ -33,13 +33,30 @@ fs.mkdirSync(dir,{recursive:true});
   throw e;
  }
  let s=await p.evaluate(()=>window.__HF_SKIN7_LAB__.state());
- ok(s.actors===3,'Three REAL independent Hunter actors render in one lab');
+ ok(s.actors===4,'FOUR independent Hunter actors including new skinned armor');
  ok(s.originalPaladin.renderMeshes===17&&s.originalPaladin.missing.length===0,
    'Original ClaudeCraft Paladin helmet, shoulders, chest, legs etc: ALL 11 slots and 17 multi-material original meshes RENDER');
  ok(Object.keys(s.originalPaladin.slots).length===11,
    'Original Paladin equipment is actually visible, not bald/unarmored Hunter');
  ok(s.nativeBones===23&&s.rig==='Rig_Medium','Authentic 23-bone Rig_Medium');
  ok(s.clips.length===22,'ALL 22 original ClaudeCraft movement and combat animation clips');
+ ok(s.independentArmor.newlyAuthoredMeshCount===11 && s.independentArmor.oldThirdMeshCount===11,
+   'Third and fourth are independent armor assets, eleven skinned pieces EACH');
+ ok(s.independentArmor.fourthPrefix===true && s.independentArmor.thirdPrefix===true && !s.independentArmor.sameActor,
+   'Fourth is NOT the third Paladin recolored: another actor and independent GLB');
+ ok(s.independentArmor.newFourthVertices!==s.independentArmor.oldThirdVertices,
+   'Fourth has actually different polygon topology from the original third armor');
+ await p.locator('#compare34').click();
+ await p.screenshot({path:dir+'/10-third-old-vs-fourth-new-independent-geometry.png'});
+ await p.locator('#commission').click();
+ let beforeThirdColor=(await p.evaluate(()=>window.__HF_SKIN7_LAB__.state())).independentArmor.thirdColor;
+ await p.locator('#enamelColor').fill('#be3345');
+ ok((await p.evaluate(()=>window.__HF_SKIN7_LAB__.state())).independentArmor.thirdColor===beforeThirdColor,
+   'Changing fourth skin color does NOT modify third Paladin color');
+ await p.locator('#compare34').click();
+ await p.screenshot({path:dir+'/11-third-unchanged-fourth-customized.png'});
+ await p.locator('#all').click();
+
  ok(s.sourceBlobSha1==='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2','Frozen authentic source provenance');
  ok(s.gameDeployment===false,'Never touches playable public HIGHFLY game');
  ok(s.gameMechanicsSimulated===false,'Do not pretend native clips simulate hitboxes/damage/parry mechanics');

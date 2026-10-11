@@ -10,6 +10,7 @@ const $=id=>document.getElementById(id);
 const status=text=>{$('status').textContent=text};
 const BASE_URL='./assets/warrior_modular.glb';
 const FORGE_URL='./assets/PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb';
+const NEW_ARMOR_URL='./assets/HF9-ROYAL-DARK-NEW-GEOMETRY-11-PIECES.glb';
 const SOURCE_BLOB='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2';
 const CORE=['Head','Torso','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR'];
 const SLOTS=['Head','Chest','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR','Back'];
@@ -140,7 +141,7 @@ const LIVE_SLOTS={
 };
 let liveStats={editedVertices:0,meshes:0,intensity:{...LIVE_DEFAULT},palette:{enamel:'#314f74',metal:'#d4a953',accent:'#70d5e6'}};
 function liveMeshSlot(mesh){
- const part=mesh.name.replace(/^HF7RF_PALADIN_/i,'');
+ const part=mesh.name.replace(/^HF(?:7RF|9NEW)_PALADIN_/i,'');
  const slot=Object.keys(LIVE_SLOTS).find(k=>LIVE_SLOTS[k].test(part));
  if(!slot)throw Error('Pieza skinned fuera de los siete slots: '+mesh.name);
  return slot;
@@ -164,7 +165,7 @@ function updateLiveArmor(intensity,palette){
  const colorValues=Object.values(palette);
  if(colorValues.length!==3||colorValues.some(x=>!/^#[0-9a-fA-F]{6}$/.test(x)))
   throw Error('Color fuera de rango');
- const arm=state.actors[2],meshes=arm.recipeMeshes||[];
+ const arm=state.actors[3],meshes=arm.recipeMeshes||[];
  if(meshes.length!==11)throw Error('Se requieren once piezas originales skinned');
  let edited=0;
  for(const mesh of meshes){
@@ -195,16 +196,21 @@ function updateLiveArmor(intensity,palette){
 }
 const stagePositions=[-2.55,0,2.55];
 function showStation(v){
- state.view=v;const compare=v==='all';
+ state.view=v;const compare=v==='all',difference=v==='compare34';
  for(let i=0;i<state.actors.length;i++){
-  const actor=state.actors[i],visible=compare||v===['base','original','reforged'][i]||v==='commission'&&i===2;
-  actor.root.visible=visible;
-  actor.root.position.x=compare?stagePositions[i]:0;
+  const actor=state.actors[i];
+  actor.root.visible=compare?i<3:difference?(i===2||i===3):
+   v===['base','original','reforged','commission'][i];
+  actor.root.position.x=compare?stagePositions[i]:
+   difference?(i===2?-1.30:i===3?1.30:0):0;
  }
- $('actorLabels').style.display=compare?'grid':'none';
+ $('actorLabels').style.display=compare||difference?'grid':'none';
+ $('actorLabels').style.gridTemplateColumns=difference?'repeat(2,minmax(0,1fr))':'repeat(3,minmax(0,1fr))';
+ $('actorLabels').innerHTML=difference?'<div class="pill"><b>3 · REFORJA ANTERIOR</b>Geometría SKIN 7</div><div class="pill"><b>4 · REY OSCURO NUEVO</b>Otra geometría · 11 piezas skinned</div>':
+  '<div class="pill"><b>1 · BASE</b>Hunter original</div><div class="pill"><b>2 · CLAUDECRAFT</b>Paladín original</div><div class="pill"><b>3 · REFORJA</b>Receta experimental</div>';
  for(const b of $('stations').querySelectorAll('button'))b.classList.toggle('active',b.id===v);
  $('workshop').hidden=v!=='commission';
- camera.position.set(0,1.92,compare?11.3:4.45);
+ camera.position.set(0,1.92,compare?11.3:difference?6.8:4.45);
  controls.target.set(0,1.05,0);controls.update();
 }
 function selectClip(name,atTime=0){
@@ -217,7 +223,7 @@ function selectClip(name,atTime=0){
   action.setLoop(THREE.LoopRepeat,Infinity);
   a.mixer.setTime(atTime);
  }
- $('stats').textContent='Rig_Medium · 23 huesos · 22 movimientos originales · '+name+' · 3 actores sincronizados. Solo QA visual, sin físicas de gameplay.';
+ $('stats').textContent='Rig_Medium · 23 huesos · 22 movimientos originales · '+name+' · 4 actores y nueva cuarta armadura skinned. Solo QA visual.';
 }
 function clocked(){
  const now=performance.now();
@@ -245,7 +251,7 @@ function materialFix(actor){
 }
 async function load(){
  status('Descargando Hunter original y reforja real…');
- const [gltf,forge]=await Promise.all([loader.loadAsync(BASE_URL),loader.loadAsync(FORGE_URL)]);
+ const [gltf,forge,royal]=await Promise.all([loader.loadAsync(BASE_URL),loader.loadAsync(FORGE_URL),loader.loadAsync(NEW_ARMOR_URL)]);
  // ClaudeCraft ships 247 variant meshes; preserve only the requested body M/F and
  // 11 original Paladin armor meshes. Remove unused variants BEFORE THREE scene
  // cloning or GPU update: 3 actors must remain light enough for mobile.
@@ -255,14 +261,16 @@ async function load(){
   if(o.isMesh&&!retained.has(o.name)&&!originalArmorSlotOf(o))obsolete.push(o);
  });
  for(const o of obsolete)o.removeFromParent();
- state.gltf=gltf;state.forge=forge;
- if(gltf.animations.length!==22||forge.animations.length!==22)throw Error('Los 22 movimientos auténticos no coinciden');
+ state.gltf=gltf;state.forge=forge;state.royal=royal;
+ if(gltf.animations.length!==22||forge.animations.length!==22||royal.animations.length!==22)throw Error('Los 22 movimientos auténticos no coinciden');
  if(!gltf.scene.getObjectByName('Armor_paladin_Head'))throw Error('Faltan las piezas originales del Paladín');
  if(!forge.scene.getObjectByName('HF7RF_PALADIN_HEAD'))throw Error('Falta casco Paladín reforjado');
- for(let i=0;i<3;i++){
-  const actor=actorSource();actor.variant=['base','original','reforged'][i];
+ for(let i=0;i<4;i++){
+  const actor=actorSource();actor.variant=['base','original','reforged','commission'][i];
   selectParts(actor,actor.variant,state.gender);
-  if(i===2){actor.recipeMeshes=equipGlb(actor,forge,'HF7RF_PALADIN_','recipe',true);
+  if(i===2)actor.recipeMeshes=equipGlb(actor,forge,'HF7RF_PALADIN_','recipe',true);
+  if(i===3){
+   actor.recipeMeshes=equipGlb(actor,royal,'HF9NEW_PALADIN_','recipe',true);
    for(const mesh of actor.recipeMeshes)rememberNativeMesh(mesh);
   }
   materialFix(actor);
@@ -281,14 +289,26 @@ async function load(){
  select.value='Idle';
  selectClip('Idle');
  showStation('all');state.assetsReady=true;
- status('✅ Tres Hunter auténticos preparados · Paladín original y reforja · 22 movimientos sincronizados.');
+ status('✅ Cuatro Hunter: base, Paladín, reforja intacta y NUEVO Rey Oscuro con 22 movimientos.');
  updateLiveArmor(sliderData(),getLivePalette());
  window.__HF_SKIN7_LAB__=Object.freeze({
   state:()=>({ready:true,actors:state.actors.length,clip:state.clip,gender:state.gender,sourceBlobSha1:SOURCE_BLOB,
    rig:'Rig_Medium',nativeBones:23,clips:state.gltf.animations.map(a=>a.name),
    gameDeployment:false,gameMechanicsSimulated:false,customAssetLoaded:!!state.custom,
    originalPaladin:originalPaladinVisualInventory(state.actors[1]),
-   liveCommission:liveStats,skin9Intent:skin9Current}),
+   liveCommission:liveStats,skin9Intent:skin9Current,
+   independentArmor:{
+    oldThirdMeshCount:state.actors[2].recipeMeshes?.length||0,
+    newlyAuthoredMeshCount:state.actors[3].recipeMeshes?.length||0,
+    oldThirdVertices:state.actors[2].recipeMeshes?.reduce((n,m)=>n+m.geometry.attributes.position.count,0)||0,
+    newFourthVertices:state.actors[3].recipeMeshes?.reduce((n,m)=>n+m.geometry.attributes.position.count,0)||0,
+    fourthPrefix:state.actors[3].recipeMeshes?.every(m=>m.name.startsWith('HF9NEW_PALADIN_')),
+    thirdPrefix:state.actors[2].recipeMeshes?.every(m=>m.name.startsWith('HF7RF_PALADIN_')),
+    sameActor:state.actors[2]===state.actors[3],
+    thirdColor:state.actors[2].recipeMeshes?.[0]?.material?.color?.getHexString()||'',
+    fourthColor:state.actors[3].recipeMeshes?.[0]?.material?.color?.getHexString()||''
+   }
+  }),
   applyCommission:(intensity,palette)=>updateLiveArmor(intensity,palette),
   selectClip,showStation,selectGender,addCustomGlb:importCustom,
   skin9:()=>({intent:skin9Current,mode:'deterministic-text-intent-preview',newTopologyGenerated:false}),
@@ -310,7 +330,7 @@ function selectGender(g){
 async function importCustom(buffer){
  if(buffer.byteLength<15000||buffer.byteLength>12e6)throw Error('GLB fuera del límite seguro');
  const gltf=await loader.parseAsync(buffer,'');
- const actor=state.actors[2];const data=gltf.scene;
+ const actor=state.actors[3];const data=gltf.scene;
  const list=[];data.traverse(o=>{if(skinned(o)&&o.name.startsWith('HF7RF_'))list.push(o)});
  if(!list.length||list.length>85)throw Error('GLB sin mallas de forja HF7RF_ válidas');
  // Atomic: validate BEFORE swapping displayed candidates
@@ -320,7 +340,7 @@ async function importCustom(buffer){
  for(const m of list){m.userData.skin7Commission=true;normalizeSource(m,data,actor);m.visible=true}
  actor.overlays??=[];actor.overlays.push({tag:'custom',meshes:list});
  state.custom={parts:list.length,bytes:buffer.byteLength};
- selectParts(actor,'reforged',state.gender);showStation('commission');
+ selectParts(actor,'commission',state.gender);showStation('commission');
  $('order').textContent='✅ GLB de candidato cargado en el Hunter auténtico: '+list.length+' mallas skinned. Revisá cada animación. NO se integró al juego.';
  return state.custom;
 }
@@ -329,7 +349,7 @@ $('animation').onchange=e=>selectClip(e.target.value);
 $('play').onclick=()=>{state.playing=!state.playing;$('play').textContent=state.playing?'⏸ Pausar':'▶ Reproducir'};
 $('step').onclick=()=>{state.playing=false;$('play').textContent='▶ Reproducir';state.t+=1/30;for(const a of state.actors)a.mixer.setTime(state.t)};
 $('speed').oninput=e=>state.speed=Number(e.target.value);
-for(const v of ['all','base','original','reforged','commission'])$(v).onclick=()=>showStation(v);
+for(const v of ['all','base','original','reforged','commission','compare34'])$(v).onclick=()=>showStation(v);
 $('front').onclick=()=>{camera.position.set(0,1.75,state.view==='all'?11.4:4.5);controls.target.set(0,1.05,0)};
 $('epic').onclick=()=>{const compare=state.view==='all';camera.position.set(compare?2.4:1.25,2.02,compare?11.2:4.4);controls.target.set(0,1.10,0);controls.update()};
 $('side').onclick=()=>{camera.position.set(state.view==='all'?11.4:4.5,1.8,0);controls.target.set(0,1.05,0)};
@@ -343,10 +363,10 @@ $('reference').onchange=async e=>{
  $('order').textContent='Referencia local cargada. Adjuntala también en nuestro chat: la página no transmite automáticamente fotos a ChatGPT.';
 };
 $('customGlb').onchange=async e=>{try{const f=e.target.files?.[0];if(f)await importCustom(await f.arrayBuffer())}catch(err){status('❌ '+err.message)}finally{e.target.value=''}};
-$('clearCustom').onclick=()=>{const actor=state.actors[2];clearOverlays(actor,'custom');
+$('clearCustom').onclick=()=>{const actor=state.actors[3];clearOverlays(actor,'custom');
  for(const mesh of actor.recipeMeshes||[]){actor.root.add(mesh);mesh.visible=true}
  actor.overlays??=[];actor.overlays.push({tag:'recipe',meshes:actor.recipeMeshes||[]});
- state.custom=null;selectParts(actor,'reforged',state.gender);$('order').textContent='Reforja experimental original restaurada. Ninguna armadura publicada.'};
+ state.custom=null;selectParts(actor,'commission',state.gender);$('order').textContent='Reforja experimental original restaurada. Ninguna armadura publicada.'};
 function orderText(){
  const t=$('prompt').value.trim();
  if(t.length<12)throw Error('Describí qué querés modificar o fabricar (mínimo 12 caracteres).');
@@ -508,7 +528,7 @@ function applySkin9Intent(intent){
  renderSliders(intent.intensity);
  for(const c of ['enamel','metal','accent'])$(c+'Color').value=intent.palette[c];
  applyLiveControls();recordHistory();displaySkin9Intent(intent);
- $('order').textContent='✅ SKIN 9: borrador visual aplicado al Hunter auténtico. Nuevas formas requeridas: '+
+ $('order').textContent='✅ Vista sobre el CUARTO TRAJE NUEVO Rey Oscuro. El pedido se interpreta, pero su geometría inédita requiere otra forja Blender. Nuevas formas requeridas: '+
   (intent.actualNewMeshRequired?'sí, se deben modelar en Blender':'según aprobación artística')+
   '. Podés mutar, guardar variante o preparar candidato Blender.';
 }
