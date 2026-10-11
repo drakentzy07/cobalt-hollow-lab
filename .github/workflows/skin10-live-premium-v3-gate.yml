@@ -1,0 +1,50 @@
+name: HIGHFLY SKIN10 — PUBLIC ATELIER V3 HTTPS QA (ART REJECTED)
+on:
+  push:
+    branches: [highfly-skin10-premium-recipe-v3]
+    paths: ['.github/workflows/skin10-live-premium-v3-gate.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  test-actual-atelier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - name: Check Premium V3 recipe structural, rejection and mandatory human approval gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          node character-truth/skin7-paladin-compare-lab/skin10-premium-recipe-v3.test.mjs
+          echo HIGHFLY_SKIN10_V3_PUBLISHED_HARD_ART_NO_GO_TESTS_GREEN=1
+      - name: Browser runtime and phone-landscape emulation
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: All original 22 clips plus SKIN10 premium V3 on actual HTTPS site
+        timeout-minutes: 7
+        shell: bash
+        env:
+          HF_PALADIN_LAB_URL: https://highfly-skin7-paladin-atelier.vercel.app/
+          HF_PALADIN_PROOF: character-truth/skin10-live-qa
+        run: |
+          set -euo pipefail
+          curl -fIsS "$HF_PALADIN_LAB_URL" | head -15
+          node character-truth/skin7-paladin-compare-lab/browser-qa.cjs
+          grep -F 'SKIN10 compiles a new PREMIUM V3 structural recipe' character-truth/skin10-live-qa/gate.json
+          grep -F 'SKIN9-B oversized crown PROTOTYPE permanently rejected' character-truth/skin10-live-qa/gate.json
+          grep -F 'Full premium native Blender structural blueprint exported' character-truth/skin10-live-qa/gate.json
+          grep -F '"artApproved": false' character-truth/skin10-live-qa/gate.json
+          grep -F '"green": true' character-truth/skin10-live-qa/gate.json
+          echo HIGHFLY_SKIN10_V3_LIVE_VERCEL_22_CLIPS_AND_ART_NO_GO_GREEN=1
+      - name: Preserve actual public HTTPS screenshots and checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN10-V3-LIVE-HTTPS-QA-NO-PREMIUM-ART-APPROVAL
+          path: character-truth/skin10-live-qa/
+          retention-days: 21
+          if-no-files-found: warn
