@@ -10,7 +10,7 @@
 - P02L registros completos RUN `38094126772`. P02M matemático RUN `38095460400`.
 - P02N 306 RUN `38101731031`; 1.440 reales con IA nativa RUN `38102239479`.
 - V4-03 PR17 combinada: RUN `38102162302` GREEN, **NO basarla en PR19 sin reponer la UI móvil**.
-- Rama PR19 real segura: `highfly-v4-03-pr19-monsters-handoff-real`, base PR19 real. Workflow **NO DEPLOY**: `.github/workflows/highfly-v4-03-pr19-monsters-combined.yml`; consultar RUN de CI vigente.
+- Rama PR19 real segura: `highfly-v4-03-pr19-monsters-handoff-real`, base PR19 real. Workflow **NO DEPLOY**: `.github/workflows/highfly-v4-03-pr19-monsters-combined.yml`, RUN GREEN #38103098404, artefacto [WebGL PR19+Monsters](https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38103098404/artifacts/11689006382).
 
 ## 2) Estado real, sin maquillar
 | Subsistema | Estado | Verificación |
@@ -21,7 +21,7 @@
 | Totales 350 registros, 988 loot rows, 8 LAB + 15 zonas nativas | GREEN AUDIT | P02L #38094126772 |
 | Motor nativo vs 9 clases, a nivel y +5 | GREEN LAB smoke de 8 segundos | P02N #38102239479 |
 | La mayoría de los duelos termina, balance real, rotations, defensas, gear, Training | RED/NO EVIDENCIA | P02N: 6 WIN, 1.434 TIMEOUT |
-| V4-03 binario PR19 + monstruos fuente en **una misma compilación** | PENDIENTE confirmar CI final | `highfly-v4-03-pr19-monsters-combined.yml` |
+| V4-03 binario PR19 + monstruos fuente en **una misma compilación** | GREEN LAB, **sin Hunter persistente** | RUN #38103098404 + artefacto #11689006382 |
 | V4-03 **UN Hunter persistente entre mundo y ocho instancias** | RED | Inexistente puente de instancia |
 | V4-03 XP/loot al inventario único y retorno tras carga de save | RED | Requiere E2E con un solo Sim |
 | Loot desafío P02M +5 con propiedad, antifraude y economía | GREEN PROPUESTA LAB; NO ACTIVO | `monsters/balance/highfly_challenge_reward_policy.ts` en rama P02M |
