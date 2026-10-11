@@ -109,6 +109,12 @@ for part,kind in PIECES.items():
  for face,material in zip(mesh.polygons,indices):face.material_index=material
  created=donor.copy();created.data=mesh;created.name='HF9NEW_PALADIN_'+part.upper()
  bpy.context.collection.objects.link(created)
+ # Blender does not guarantee vertex_group containers survive replacing Mesh data.
+ # Re-create each genuine donor bone group before transferring donor influences.
+ if len(created.vertex_groups)==0:
+  for g in donor.vertex_groups:created.vertex_groups.new(name=g.name)
+ assert len(created.vertex_groups)==len(donor.vertex_groups), 'SKIN9_GROUP_MAP_LOST_'+part
+ assert all(created.vertex_groups[g.index].name==g.name for g in donor.vertex_groups), 'SKIN9_BONE_GROUP_DRIFT_'+part
  # The new faces borrow WEIGHT INFLUENCES only — none of the old triangle
  # positions/faces/materials are used. Every new vertex must have real weights.
  for index,v in enumerate(mesh.vertices):
