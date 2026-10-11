@@ -1,0 +1,90 @@
+name: HIGHFLY SKIN10 — PREMIUM V3 ANATOMICAL RECIPE + ART NO-GO (ISOLATED)
+on:
+  push:
+    branches: [highfly-skin10-premium-recipe-v3]
+    paths:
+      - 'character-truth/skin7-paladin-compare-lab/**'
+      - '.github/workflows/skin10-premium-v3-art-gate.yml'
+  workflow_dispatch:
+permissions: {contents: read, actions: read}
+jobs:
+  premium-v3-art-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: false}
+      - name: Verify entire SKIN10 branch is isolated — prevent altering game or old forges
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only b5385cbaf7c5d0942c5d82f572663843dac7db6c HEAD | tee /tmp/skin10-v3-changed.txt
+          while IFS= read -r f; do
+            case "$f" in
+              character-truth/skin7-paladin-compare-lab/*|.github/workflows/skin10-premium-v3-art-gate.yml) ;;
+              *) echo "HIGHFLY_SKIN10_MODIFIED_PUBLIC_GAME_OR_UNRELATED_SOURCE $f";exit 42;;
+            esac
+          done < /tmp/skin10-v3-changed.txt
+          node --check character-truth/skin7-paladin-compare-lab/paladin-lab.mjs
+          node --check character-truth/skin7-paladin-compare-lab/skin10-premium-recipe-v3.mjs
+          node character-truth/skin7-paladin-compare-lab/commission-recipe-v2.test.mjs
+          node character-truth/skin7-paladin-compare-lab/skin9-armor-core.test.mjs
+          node character-truth/skin7-paladin-compare-lab/skin10-premium-recipe-v3.test.mjs
+          echo HIGHFLY_SKIN10_PREMIUM_V3_BLUEPRINT_NOGO_AND_PUBLIC_GAME_SAFETY_GREEN=1
+      - name: Stage immutable proven four-Hunter GLBs — rejected Royal remains art NO-GO
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run view 38107374976 --repo "$GITHUB_REPOSITORY" --json conclusion -q .conclusion | grep -x success
+          mkdir -p character-truth/skin10-qa/stage-scratch
+          gh run download 38107374976 --repo "$GITHUB_REPOSITORY" \
+            --name HIGHFLY-SKIN9B-FOUR-HUNTERS-PREVIEW-AND-QA \
+            --dir character-truth/skin10-qa/stage-scratch
+          find character-truth/skin10-qa/stage-scratch -maxdepth 5 -name 'HF9-ROYAL-DARK-NEW-GEOMETRY-11-PIECES.glb'
+          SOURCE=character-truth/skin10-qa/stage-scratch/highfly-skin9b-site
+          test -s "$SOURCE/skin7-paladin-compare-lab/assets/HF9-ROYAL-DARK-NEW-GEOMETRY-11-PIECES.glb"
+          test -s "$SOURCE/skin7-paladin-compare-lab/assets/PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb"
+          test -s "$SOURCE/skin7-paladin-compare-lab/assets/warrior_modular.glb"
+          mkdir -p highfly-skin10-v3-browser
+          cp -R "$SOURCE/skin7-paladin-compare-lab" highfly-skin10-v3-browser/
+          cp -R "$SOURCE/v20" highfly-skin10-v3-browser/
+          cp character-truth/skin7-paladin-compare-lab/{index.html,paladin-lab.mjs,skin9-armor-core.mjs,commission-recipe-v2.mjs,skin10-premium-recipe-v3.mjs} highfly-skin10-v3-browser/skin7-paladin-compare-lab/
+          test -s highfly-skin10-v3-browser/skin7-paladin-compare-lab/skin10-premium-recipe-v3.mjs
+          echo HIGHFLY_SKIN10_NATIVE_FOUR_ACTORS_STAGED_FOR_V3_BLUEPRINT_GREEN=1
+      - name: Install Chromium browser for mobile landscape original 22 clips
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Test Premium V3 in REAL 3D fourth station, preserve ART REJECTED
+        shell: bash
+        timeout-minutes: 7
+        env:
+          HF_PALADIN_LAB_URL: http://127.0.0.1:4278/skin7-paladin-compare-lab/
+          HF_PALADIN_PROOF: character-truth/skin10-qa/browser
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4278 --bind 127.0.0.1 --directory highfly-skin10-v3-browser >/tmp/skin10-web.log 2>&1 &
+          sleep 2
+          node character-truth/skin7-paladin-compare-lab/browser-qa.cjs
+          grep -F 'SKIN10 compiles a new PREMIUM V3 structural recipe' character-truth/skin10-qa/browser/gate.json
+          grep -F 'SKIN9-B oversized crown PROTOTYPE permanently rejected' character-truth/skin10-qa/browser/gate.json
+          grep -F 'Full premium native Blender structural blueprint exported' character-truth/skin10-qa/browser/gate.json
+          grep -F '"artApproved": false' character-truth/skin10-qa/browser/gate.json
+          grep -F '"green": true' character-truth/skin10-qa/browser/gate.json
+          echo HIGHFLY_SKIN10_PREMIUM_BLUEPRINT_22_ANIMATIONS_NOGO_BROWSER_GREEN=1
+      - name: Export QA proof and source site; NEVER publish to public HIGHFLY game
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN10-V3-PREMIUM-RECIPE-ART-NOGO-BROWSER-QA
+          path: |
+            character-truth/skin10-qa/browser/
+            highfly-skin10-v3-browser/skin7-paladin-compare-lab/index.html
+            highfly-skin10-v3-browser/skin7-paladin-compare-lab/paladin-lab.mjs
+            highfly-skin10-v3-browser/skin7-paladin-compare-lab/skin10-premium-recipe-v3.mjs
+          retention-days: 21
+          if-no-files-found: warn
