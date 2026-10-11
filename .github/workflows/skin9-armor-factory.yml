@@ -1,0 +1,94 @@
+name: HIGHFLY SKIN9-A — TEXT TO ORIGINAL ARMOR RECIPE AND LIVE LAB (NO PUBLIC GAME)
+on:
+  push:
+    branches: [highfly-skin9-armor-factory-core]
+    paths:
+      - 'character-truth/skin7-paladin-compare-lab/**'
+      - '.github/workflows/skin9-armor-factory.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  skin9-prompt-recipe-browser-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Hard isolation — no gameplay, no source GLB replacement, no Pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = 'highfly-skin9-armor-factory-core'
+          test -s character-truth/skin7-paladin-compare-lab/skin9-armor-core.mjs
+          node --check character-truth/skin7-paladin-compare-lab/paladin-lab.mjs
+          node --check character-truth/skin7-paladin-compare-lab/skin9-armor-core.mjs
+          node character-truth/skin7-paladin-compare-lab/commission-recipe-v2.test.mjs
+          node character-truth/skin7-paladin-compare-lab/skin9-armor-core.test.mjs
+          git diff --name-only 03015847e4efdb587a012d1dd6dc4a07d24845c7 HEAD > /tmp/skin9-changed.txt
+          cat /tmp/skin9-changed.txt
+          while IFS= read -r f; do
+            case "$f" in
+              character-truth/skin7-paladin-compare-lab/*|.github/workflows/skin9-armor-factory.yml) ;;
+              *) echo "SKIN9_NO_GO_CHANGED_PUBLIC_OR_SOURCE: $f";exit 42;;
+            esac
+          done < /tmp/skin9-changed.txt
+          echo HIGHFLY_SKIN9_NO_PUBLIC_GAME_MODIFICATIONS_GREEN=1
+      - name: Download immutable previously GREEN 3D source artifact (never edit original model)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run view 38100031860 --repo "$GITHUB_REPOSITORY" --json conclusion -q .conclusion | grep -x success
+          mkdir -p highfly-skin9-preview
+          gh run download 38100031860 --repo "$GITHUB_REPOSITORY" \
+            --name HIGHFLY-SKIN7-PALADIN-V2-FOUR-STATION-BROWSER-LAB-NO-DEPLOY \
+            --dir highfly-skin9-preview
+          test -s highfly-skin9-preview/skin7-paladin-compare-lab/assets/warrior_modular.glb
+          test -s highfly-skin9-preview/skin7-paladin-compare-lab/assets/PALADIN-HIGHFLY-SOURCE-REFORGE-11-PARTS.glb
+          test -s highfly-skin9-preview/v20/vendor/three/build/three.module.js
+          cp character-truth/skin7-paladin-compare-lab/index.html highfly-skin9-preview/skin7-paladin-compare-lab/
+          cp character-truth/skin7-paladin-compare-lab/paladin-lab.mjs highfly-skin9-preview/skin7-paladin-compare-lab/
+          cp character-truth/skin7-paladin-compare-lab/skin9-armor-core.mjs highfly-skin9-preview/skin7-paladin-compare-lab/
+          cp character-truth/skin7-paladin-compare-lab/commission-recipe-v2.mjs highfly-skin9-preview/skin7-paladin-compare-lab/
+          echo SKIN9_PINNED_AUTHENTIC_GLBS_STAGED_GREEN=1
+      - name: Install Chromium for actual S23-size emulated browser tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: All 22 native clips + M/F + ten prompts + fourth-station interaction
+        shell: bash
+        timeout-minutes: 6
+        env:
+          HF_PALADIN_LAB_URL: http://127.0.0.1:4278/skin7-paladin-compare-lab/
+          HF_PALADIN_PROOF: character-truth/skin9-proof
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4278 --bind 127.0.0.1 --directory highfly-skin9-preview >/tmp/skin9-http.log 2>&1 &
+          sleep 2
+          node character-truth/skin7-paladin-compare-lab/browser-qa.cjs
+          grep -F 'SKIN9 Spanish natural language' character-truth/skin9-proof/gate.json
+          grep -F 'SKIN9 Blender candidate JSON' character-truth/skin9-proof/gate.json
+          grep -F '"green": true' character-truth/skin9-proof/gate.json
+          echo HIGHFLY_SKIN9_PROMPT_TO_NATIVE_HUNTER_BROWSER_GREEN=1
+      - name: Preserve web lab and QA screenshots — NO Pages/public gameplay deploy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN9-A-TEXT-RECIPE-NATIVE-ARMOR-WEB-LAB
+          path: highfly-skin9-preview/
+          retention-days: 21
+          if-no-files-found: warn
+      - name: Preserve technical truth and Samsung-landscape browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN9-A-BROWSER-QA-PROOF
+          path: character-truth/skin9-proof/
+          retention-days: 21
+          if-no-files-found: warn
