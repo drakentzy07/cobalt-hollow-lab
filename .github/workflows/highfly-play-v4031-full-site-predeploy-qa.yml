@@ -1,7 +1,7 @@
 name: HIGHFLY GOLDEN PLAY V4-03.1 — FULL-SITE PRESERVED PREDEPLOY CHROME QA (NO DEPLOY)
 on:
   push:
-    branches: [highfly-play-v403-1-native-equipment-rc]
+    branches: [highfly-play-v403-1-native-equipment-rc, highfly-golden-v4031-predeploy-tar-safe]
     paths:
       - ".github/workflows/highfly-play-v4031-full-site-predeploy-qa.yml"
       - "release/highfly_golden_v4031_overlay_live_pages.py"
@@ -62,13 +62,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -s old-certified/artifact.tar.gz
+          # upload-pages-artifact@v3 yields artifact.tar (not .tar.gz).
+          # Match the already approved main publisher's exact unpack contract,
+          # instead of accepting an absent path or rebuilding the LIVE site.
+          test -s old-certified/artifact.tar || {
+            echo 'SAFE_STOP: approved github-pages archive artifact.tar missing'
+            ls -lah old-certified
+            exit 2
+          }
           mkdir published-old
-          tar -xzf old-certified/artifact.tar.gz -C published-old
-          test -s published-old/index.html
-          test -s published-old/v4-02/index.html
-          test -s published-old/monster-lab/hunts.html
-          test -s published-old/v4-03-preview/index.html
+          tar -xf old-certified/artifact.tar -C published-old
+          for protected in index.html v4-02/index.html monster-lab/hunts.html v4-03-preview/index.html; do
+            test -s "published-old/$protected" || {
+              echo "SAFE_STOP: protected LIVE page missing: $protected"
+              exit 2
+            }
+          done
           echo 'Candidate index candidates:'
           find candidate -maxdepth 4 -name index.html -print | head -15
           test -s candidate/cobalt-hollow-lab/v4-03-preview/index.html
