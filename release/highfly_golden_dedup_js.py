@@ -49,11 +49,9 @@ def main():
             content=content.replace(b"/cobalt-hollow-lab/v4-03-preview/assets/"+encoded,target)
             content=content.replace(b"./"+encoded,target)
             # Other formatters emit absolute candidate URL or bare quoted chunks.
-            content=content.replace(b"/cobalt-hollow-lab/assets/"+target,target)
             for quote in (b'"',b"'",b'`'):
                 content=content.replace(quote+encoded+quote,quote+target+quote)
-            # Vite sometimes emits URL-escaped module names in array literals.
-            content=content.replace(b'assets/'+encoded,target)
+                content=content.replace(quote+b'assets/'+encoded,quote+target)
         if content!=before:
             p.write_bytes(content);changes[p.relative_to(BETA).as_posix()]={"old":len(before),"new":len(content)}
     # Preserve the *original* index's absolute candidate js and css entrypoints.
