@@ -38,11 +38,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -s certified/artifact.tar.gz || { echo 'FATAL: QA artifact.tar.gz missing'; ls -la certified; exit 2; }
+          test -s certified/artifact.tar || { echo 'FATAL: QA artifact.tar.gz missing'; ls -la certified; exit 2; }
           echo "HF_MAIN_CERTIFIED_ARTIFACT_SIZE"
-          ls -lh certified/artifact.tar.gz
+          ls -lh certified/artifact.tar
           mkdir -p preserved
-          tar -xzf certified/artifact.tar.gz -C preserved
+          tar -xf certified/artifact.tar -C preserved
           python3 - <<'PY'
           from pathlib import Path
           root=Path('preserved')
