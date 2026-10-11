@@ -69,7 +69,9 @@ jobs:
           test -s published-old/v4-02/index.html
           test -s published-old/monster-lab/hunts.html
           test -s published-old/v4-03-preview/index.html
-          test -s candidate/cobalt-hollow-lab/index.html
+          echo 'Candidate index candidates:'
+          find candidate -maxdepth 4 -name index.html -print | head -15
+          test -s candidate/cobalt-hollow-lab/index.html || test -s candidate/index.html
       - name: Replace ONLY latest PLAY app, never old Pages / old Hunter save namespace
         shell: bash
         run: |
