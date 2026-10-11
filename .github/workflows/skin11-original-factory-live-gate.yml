@@ -1,0 +1,49 @@
+name: HIGHFLY SKIN11 — LIVE ORIGINAL FACTORY HTTPS AND ZERO-LEGACY MUTATION
+on:
+  push:
+    branches: [highfly-skin11-original-factory-separate-from-legacy]
+    paths:
+      - '.github/workflows/skin11-original-factory-live-gate.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - name: Prohibit legacy geometry deformation in original commission contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node character-truth/skin11-original-factory/skin11-original-factory-core.test.mjs
+          echo HIGHFLY_SKIN11_LIVE_NO_FAKE_AI_AND_INDEPENDENT_CONTRACT_GREEN=1
+      - name: Install Chromium with Android viewport emulation
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Test actual HTTPS original factory image/text input and isolated local library
+        shell: bash
+        timeout-minutes: 5
+        env:
+          SKIN11_TEST_URL: https://highfly-skin7-paladin-atelier.vercel.app/original-factory.html
+          SKIN11_QA_DIR: character-truth/skin11-original-factory/live-proof
+        run: |
+          set -euo pipefail
+          curl -fIsS "$SKIN11_TEST_URL" | head -20
+          node character-truth/skin11-original-factory/skin11-original-factory-browser-qa.cjs
+          grep -F '"green": true' character-truth/skin11-original-factory/live-proof/gate.json
+          grep -F '"automatic3DClaim": false' character-truth/skin11-original-factory/live-proof/gate.json
+          grep -F '"sourceDonorGeometryCopied": false' character-truth/skin11-original-factory/live-proof/gate.json
+          echo HIGHFLY_SKIN11_ORIGINAL_FACTORY_ACTUAL_HTTPS_TEXT_IMAGE_GREEN=1
+      - name: Save screenshots from Vercel website
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN11-ORIGINAL-FACTORY-LIVE-HTTPS-PROOF
+          path: character-truth/skin11-original-factory/live-proof/
+          retention-days: 21
+          if-no-files-found: warn
