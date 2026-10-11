@@ -1,4 +1,4 @@
-name: HIGHFLY SKIN9-A — LIVE PUBLIC ATELIER HTTPS BROWSER QA (NO GAME)
+name: HIGHFLY SKIN9-B — LIVE PUBLIC FOUR ARMORS HTTPS QA (NO GAME)
 on:
   push:
     branches: [highfly-skin9-armor-factory-core]
@@ -30,6 +30,9 @@ jobs:
           grep -F '"green": true' character-truth/skin9-live-qa/gate.json
           grep -F 'SKIN9 Spanish natural language' character-truth/skin9-live-qa/gate.json
           grep -F 'SKIN9 Blender candidate JSON' character-truth/skin9-live-qa/gate.json
+          grep -F 'Fourth has actually different polygon topology' character-truth/skin9-live-qa/gate.json
+          grep -F 'Changing fourth skin color does NOT modify third Paladin color' character-truth/skin9-live-qa/gate.json
+          grep -F 'FOUR independent Hunter actors including new skinned armor' character-truth/skin9-live-qa/gate.json
           echo HIGHFLY_SKIN9_LIVE_HTTPS_TEXT_TO_HUNTER_PREVIEW_GREEN=1
       - name: Keep real-site screenshots and technical proof
         if: always()
