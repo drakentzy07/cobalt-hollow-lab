@@ -9,6 +9,8 @@ on:
       - .github/workflows/highfly-dev-p13-lv99-gear-native.yml
       - professions/p13/highfly_lv99_native_equipment.ts
       - professions/p13/highfly_lv99_native_equipment.test.ts
+      - professions/p13/highfly_complete_native_1_99_catalog.test.ts
+      - docs/HIGHFLY_DEV_P13_EXACT_RECIPES_LEVEL_50_99.md
       - professions/p13/activate_p13.py
       - .github/workflows/highfly-dev-p12-save-compatibility.yml
       - monsters/integration/highfly_p12_local_save_compat.test.ts
@@ -529,6 +531,7 @@ jobs:
           set -euo pipefail
           cp ../professions/p13/highfly_lv99_native_equipment.ts src/sim/content/highfly_lv99_native_equipment.ts
           cp ../professions/p13/highfly_lv99_native_equipment.test.ts tests/highfly_lv99_native_equipment.test.ts
+          cp ../professions/p13/highfly_complete_native_1_99_catalog.test.ts tests/highfly_complete_native_1_99_catalog.test.ts
           python3 ../professions/p13/activate_p13.py
           git diff --check HEAD
           echo 'HF_P13_EXISTING_ITEM_RECIPES_RUNTIME_EXTENDED_50_99_DEV_ONLY=1'
@@ -646,6 +649,25 @@ jobs:
           set -euo pipefail
           pnpm exec vitest run tests/highfly_lv99_native_equipment.test.ts
           echo 'HF_P13_15_REAL_LV50_99_ITEMS_15_RECIPES_9_CLASS_MATERIAL_NATIVE_GREEN=1'
+      - name: P13 — emit EVERY native recipe and exact quantities by each Hunter level 1–99
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/highfly_complete_native_1_99_catalog.test.ts
+          test -s ../HIGHFLY_FULL_1_99_NATIVE_RECIPE_CATALOG.md
+          test -s ../HIGHFLY_FULL_1_99_NATIVE_RECIPE_CATALOG.json
+          echo 'HF_P13_ALL_1_99_RECIPE_COUNTS_AND_QUANTITIES_EXPORTED=1'
+      - name: Archive full readable recipe guide and machine ledger
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-DEV-P13-ALL-NATIVE-RECIPES-1-99-QUANTITIES-LEDGER
+          path: |
+            HIGHFLY_FULL_1_99_NATIVE_RECIPE_CATALOG.md
+            HIGHFLY_FULL_1_99_NATIVE_RECIPE_CATALOG.json
+          retention-days: 45
+          if-no-files-found: warn
       - name: P12 — 9 classes REAL CLEAN offline save, localStorage fallback and old CharacterState reload
         working-directory: upstream
         shell: bash
