@@ -76,7 +76,38 @@ fs.mkdirSync(dir,{recursive:true});
  ok(live.editedVertices>0&&live.intensity.arms===1.29,'Slider deforms actual native skinned armor vertices in real time');
  ok(live.palette.enamel==='#bb3344','Changing the color picker repaints the real preview material');
  await p.screenshot({path:dir+'/08-fourth-station-live-deformation-and-color.png'});
+
+ ok(await p.locator('#presetFactory').count()===1,'Skin8 native factory with local library and bounded workflows exists');
+ await p.locator('[data-style="obsidiana"]').click();
+ let studio=await p.evaluate(()=>window.__HF_SKIN7_LAB__.studio());
+ ok(studio.styleCount===5,'FIVE actual native experimental armor presets available');
+ ok((await p.evaluate(()=>window.__HF_SKIN7_LAB__.state().liveCommission)).palette.enamel==='#202435',
+   'Obsidian visual preset repaints actual source-derived skinned armor');
+ await p.locator('#designName').fill('QA Obsidiana Local');
+ await p.locator('#storeDesign').click();
+ studio=await p.evaluate(()=>window.__HF_SKIN7_LAB__.studio());
+ ok(studio.saved.includes('QA Obsidiana Local'),'Custom named armor preset saved to local browser library');
+ await p.reload({waitUntil:'domcontentloaded'});
+ await p.waitForFunction(()=>window.__HF_SKIN7_LAB__?.state().ready,null,{timeout:60000});
+ studio=await p.evaluate(()=>window.__HF_SKIN7_LAB__.studio());
+ ok(studio.saved.includes('QA Obsidiana Local'),'Saved custom armor preset survives page reload in localStorage');
+ await p.locator('#commission').click();
+ await p.locator('#savedDesigns').selectOption('QA Obsidiana Local');
+ await p.locator('#loadDesign').click();
+ ok((await p.evaluate(()=>window.__HF_SKIN7_LAB__.state().liveCommission)).palette.enamel==='#202435',
+    'Reloaded stored preset changes true skinned armor in viewer');
+ await p.locator('[data-style="real"]').click();
+ await p.locator('#undoDesign').click();
+ ok((await p.evaluate(()=>window.__HF_SKIN7_LAB__.state().liveCommission)).palette.enamel==='#202435',
+    'Undo safely restores previous native armor colors');
+ await p.locator('#redoDesign').click();
+ ok((await p.evaluate(()=>window.__HF_SKIN7_LAB__.state().liveCommission)).palette.enamel==='#522439',
+    'Redo re-applies a full preset on the same native mesh');
+ await p.locator('#epic').click();
+ ok((await p.evaluate(()=>window.__HF_SKIN7_LAB__.studio())).cameraX>0,
+    'Epic presentation camera is interactive');
  await p.locator('#resetLive').click();
+
  ok((await p.evaluate(()=>window.__HF_SKIN7_LAB__.state().liveCommission)).editedVertices===0,'Reset fully restores baseline geometry and material colors');
  await p.locator('#saveOrder').click();
  ok(await p.locator('#order').innerText().then(x=>x.includes('Receta descargada')),'Fourth station exports actual source-derived commission recipe JSON');

@@ -6,7 +6,7 @@ main{max-width:1440px;margin:0 auto;padding:10px}#stats{font-size:12px;color:#9b
 #viewer{position:relative;background:radial-gradient(ellipse at 50% 37%,#29364d,#121c2d 60%,#0d111b);border:1px solid #43526a;border-radius:12px;overflow:hidden;height:min(61vh,570px);min-height:270px}
 #viewport{width:100%;height:100%;display:block;touch-action:none}.overlay{position:absolute;pointer-events:none;top:8px;left:8px;right:8px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.pill{padding:6px 8px;background:#111c30c9;border:1px solid #334960;border-radius:8px;text-align:center;font-size:12px}.pill b{display:block;color:#eed09a}.pill.hide{display:none}
 nav{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}.control{display:flex;align-items:center;flex-wrap:wrap;gap:8px;background:#121c2c;border:1px solid #3d4f67;padding:9px;border-radius:10px;margin-top:9px}.control label{display:flex;align-items:center;gap:6px}.control input[type=range]{width:135px}
-#workshop{margin-top:10px;padding:13px;border:1px solid #526584;border-radius:11px;background:#172134}#workshop h2{margin:0 0 6px;font-size:16px;color:var(--gold)}#workshop p{margin:5px 0 12px;color:#bdcce0;line-height:1.45}textarea{width:100%;min-height:66px;padding:10px;border-radius:8px;border:1px solid #63748e;background:#0f1827;color:#fff;resize:vertical}input[type=file]{font-size:12px;max-width:95%}#referencePreview{display:none;max-width:180px;max-height:140px;object-fit:contain;border-radius:6px;border:1px solid #778}#order{font-size:12px;color:#c5d8e8;white-space:pre-wrap}footer{padding:12px;color:#a4b7ca;font-size:11px;line-height:1.5}
+#presetFactory{padding:10px;margin-top:8px;border:1px solid #455c77;border-radius:9px;background:#111b2a}#presetFactory h3{font-size:14px;color:#eac785;margin:0 0 8px}#presetFactory .control{margin-top:5px}#presetFactory button{min-height:34px}#savedDesigns{max-width:260px}.preset-note{color:#a9bed8;font-size:11px}#workshop{margin-top:10px;padding:13px;border:1px solid #526584;border-radius:11px;background:#172134}#workshop h2{margin:0 0 6px;font-size:16px;color:var(--gold)}#workshop p{margin:5px 0 12px;color:#bdcce0;line-height:1.45}textarea{width:100%;min-height:66px;padding:10px;border-radius:8px;border:1px solid #63748e;background:#0f1827;color:#fff;resize:vertical}input[type=file]{font-size:12px;max-width:95%}#referencePreview{display:none;max-width:180px;max-height:140px;object-fit:contain;border-radius:6px;border:1px solid #778}#order{font-size:12px;color:#c5d8e8;white-space:pre-wrap}footer{padding:12px;color:#a4b7ca;font-size:11px;line-height:1.5}
 @media(max-width:780px){h1{font-size:14px}main{padding:6px}#viewer{height:55vh;min-height:225px}.pill{font-size:10px;padding:4px}nav button{font-size:12px;padding:7px 8px}.control{padding:6px;gap:6px}#workshop{padding:9px}}
 </style>
 <script type="importmap">{"imports":{"three":"../v20/vendor/three/build/three.module.js","three/addons/":"../v20/vendor/three/examples/jsm/"}}</script>
@@ -20,7 +20,7 @@ nav{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}.control{display:flex;align
 <label>Animación <select id="animation" aria-label="Animaciones originales de ClaudeCraft"><option>Cargando…</option></select></label>
 <button id="play">⏸ Pausar</button><button id="step">▶ Fotograma</button>
 <label>Velocidad <input id="speed" type="range" min="0.2" max="1.6" step="0.1" value="1"></label>
-<button id="front">Frente</button><button id="side">Perfil</button><button id="back">Espalda</button><button id="reset">Restablecer vista</button>
+<button id="front">Frente</button><button id="epic" title="Vista de presentación cinematográfica">✨ Vista épica</button><button id="side">Perfil</button><button id="back">Espalda</button><button id="reset">Restablecer vista</button>
 </div>
 <div class="control"><span id="stats">Sincronización de tres actores pendiente…</span></div>
 <section id="workshop" hidden><h2>4 · Encargo a la herrera — diseñar, reforjar o crear</h2>
@@ -36,6 +36,26 @@ nav{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}.control{display:flex;align
 <label>Acento <input id="accentColor" type="color" value="#70d5e6"></label>
 <button id="resetLive">↺ Restaurar forma y colores</button></div>
 <div id="liveQa" role="status">VISTA VIVA: lista cuando cargue el Hunter auténtico. Mover controles cambia geometría y color en el modelo 3D, sin guardar nada en el juego.</div>
+<div id="presetFactory">
+<h3>SKIN FACTORY · Diseños y variantes</h3>
+<p class="preset-note">Presets de apariencia experimentales, no skins 3D finales. Los guardados permanecen solo en este navegador; no se suben al juego.</p>
+<div class="control" id="factoryStyles">
+<button data-style="sagrado" class="accent">☀️ Sagrado</button>
+<button data-style="obsidiana">🌑 Obsidiana</button>
+<button data-style="real">👑 Real</button>
+<button data-style="celestial">🪽 Celestial</button>
+<button data-style="dragon">🐉 Dragón</button></div>
+<div class="control">
+<label>Nombre <input id="designName" maxlength="60" placeholder="Mi Paladín legendario" value="Paladín experimental"></label>
+<button id="storeDesign">💾 Guardar variante</button>
+<label>Mis diseños <select id="savedDesigns" aria-label="Diseños guardados en el navegador"><option value="">Sin diseños guardados</option></select></label>
+<button id="loadDesign">Cargar</button><button id="removeDesign">Eliminar</button></div>
+<div class="control">
+<button id="undoDesign">↶ Deshacer</button><button id="redoDesign">↷ Rehacer</button>
+<button id="exportDesign">↓ Exportar JSON</button>
+<label>Importar JSON <input id="importDesign" type="file" accept=".json,application/json"></label></div>
+<div class="preset-note" id="factoryStatus" role="status">Ningún cambio se integra en HIGHFLY público. Máximo 16 diseños locales.</div>
+</div>
 <div class="control"><button class="accent" id="copyOrder">📋 Copiar pedido para enviarlo aquí a ChatGPT</button><button id="saveOrder">↓ Guardar receta Blender V3</button><button id="clearCustom">Retirar prueba GLB</button></div>
 <div id="order">Cuando me envíes el pedido por este chat, usaré las piezas originales de ClaudeCraft y las recetas de reforja para crear tu candidato. La cuarta estación no se aprueba ni publica automáticamente.</div></section>
 <footer>Los tres modelos comparten el mismo ciclo temporal y los 22 clips originales del Rig_Medium. Aquí se comprueba animación/encastre visual, <strong>no</strong> el combate jugable de HIGHFLY (daño, físicas, targeting, parry y dash del juego se validan al integrar la armadura en Unity). Los cambios de la cuarta estación son candidatos privados. Ninguna opción publica en el juego.</footer>

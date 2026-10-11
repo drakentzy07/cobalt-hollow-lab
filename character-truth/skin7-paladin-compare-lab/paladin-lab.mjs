@@ -203,7 +203,7 @@ function showStation(v){
  $('actorLabels').style.display=compare?'grid':'none';
  for(const b of $('stations').querySelectorAll('button'))b.classList.toggle('active',b.id===v);
  $('workshop').hidden=v!=='commission';
- camera.position.set(compare?1.7:1.8,2.4,compare?11.4:4.5);
+ camera.position.set(0,1.92,compare?11.3:4.45);
  controls.target.set(0,1.05,0);controls.update();
 }
 function selectClip(name,atTime=0){
@@ -289,7 +289,9 @@ async function load(){
    originalPaladin:originalPaladinVisualInventory(state.actors[1]),
    liveCommission:liveStats}),
   applyCommission:(intensity,palette)=>updateLiveArmor(intensity,palette),
-  selectClip,showStation,selectGender,addCustomGlb:importCustom,poseTime:t=>{
+  selectClip,showStation,selectGender,addCustomGlb:importCustom,
+  studio:()=>({styleCount:Object.keys(FACTORY_STYLES).length,saved:localDesigns.map(d=>d.name),undoDepth:undoStack.length,redoDepth:redoStack.length,cameraX:camera.position.x}),
+  poseTime:t=>{
    state.playing=false;for(const a of state.actors)a.mixer.setTime(t);state.t=t;
   }
  });
@@ -327,6 +329,7 @@ $('step').onclick=()=>{state.playing=false;$('play').textContent='▶ Reproducir
 $('speed').oninput=e=>state.speed=Number(e.target.value);
 for(const v of ['all','base','original','reforged','commission'])$(v).onclick=()=>showStation(v);
 $('front').onclick=()=>{camera.position.set(0,1.75,state.view==='all'?11.4:4.5);controls.target.set(0,1.05,0)};
+$('epic').onclick=()=>{const compare=state.view==='all';camera.position.set(compare?2.4:1.25,2.02,compare?11.2:4.4);controls.target.set(0,1.10,0);controls.update()};
 $('side').onclick=()=>{camera.position.set(state.view==='all'?11.4:4.5,1.8,0);controls.target.set(0,1.05,0)};
 $('back').onclick=()=>{camera.position.set(0,1.75,state.view==='all'?-11.4:-4.5);controls.target.set(0,1.05,0)};
 $('reset').onclick=()=>showStation(state.view);
@@ -352,6 +355,140 @@ function orderText(){
 $('copyOrder').onclick=async()=>{try{await navigator.clipboard.writeText(orderText());$('order').textContent='✅ Encargo copiado. Pegalo en nuestro chat y adjuntá la foto allí para que pueda verla.'}catch(e){$('order').textContent='No pude copiar automáticamente: '+String(e)}};
 // Source-native commission bridge. A reference photo can supply color palette,
 // NEVER unverified photo-to-3D shape. Text presets are bounded starter parameters.
+
+const FACTORY_KEY='highfly.skin8.paladin.local-presets.v1';
+const FACTORY_STYLES={
+ sagrado:{label:'Paladín Sagrado',intensity:{head:.9,chest:1.07,arms:1.12,hands:.89,legs:.94,feet:.89,back:1.04},palette:{enamel:'#e2dfd2',metal:'#d8af63',accent:'#60b9e9'}},
+ obsidiana:{label:'Guardián Obsidiana',intensity:{head:.92,chest:1.01,arms:1.22,hands:.93,legs:1.04,feet:.97,back:1.14},palette:{enamel:'#202435',metal:'#8d929d',accent:'#a54dba'}},
+ real:{label:'Cruzado Real',intensity:{head:.9,chest:1.15,arms:1.14,hands:1.0,legs:.98,feet:1.02,back:.94},palette:{enamel:'#522439',metal:'#e7b855',accent:'#f2dfb8'}},
+ celestial:{label:'Centinela Celestial',intensity:{head:.83,chest:.98,arms:1.02,hands:.86,legs:.91,feet:.88,back:1.2},palette:{enamel:'#e3eaf0',metal:'#cbd6dd',accent:'#5ac7db'}},
+ dragon:{label:'Juramento Dragón',intensity:{head:1.08,chest:1.1,arms:1.28,hands:1.03,legs:1.04,feet:.98,back:1.27},palette:{enamel:'#305149',metal:'#b88d53',accent:'#dc7546'}}
+};
+let localDesigns=[],undoStack=[],redoStack=[],lastSnapshot=null;
+function factoryNotice(t){$('factoryStatus').textContent=t}
+function takeSnapshot(){return {version:1,description:$('prompt').value.slice(0,1000),intensity:sliderData(),palette:getLivePalette()}}
+function validateSnapshot(d){
+ if(!d||d.version!==1||typeof d.description!=='string'||d.description.length>1000||
+  typeof d.intensity!=='object'||!d.intensity||typeof d.palette!=='object'||!d.palette)throw Error('Archivo incompatible con SKIN 8');
+ const slots=Object.keys(LIVE_DEFAULT),colors=['enamel','metal','accent'];
+ if(Object.keys(d.intensity).sort().join('|')!==slots.sort().join('|') ||
+    slots.some(s=>typeof d.intensity[s]!=='number'||!Number.isFinite(d.intensity[s])||d.intensity[s]<.15||d.intensity[s]>1.3) ||
+    Object.keys(d.palette).sort().join('|')!==colors.sort().join('|') ||
+    colors.some(s=>typeof d.palette[s]!=='string'||!/^#[0-9a-f]{6}$/i.test(d.palette[s])))
+  throw Error('Receta inválida: forma o paleta fuera de límites');
+ return {version:1,description:d.description,intensity:{...d.intensity},palette:{...d.palette}}
+}
+function restoreSnapshot(snapshot,{view=true}={}){
+ const d=validateSnapshot(snapshot);
+ $('prompt').value=d.description;
+ renderSliders(d.intensity);
+ for(const key of ['enamel','metal','accent'])$(key+'Color').value=d.palette[key];
+ if(view)applyLiveControls();
+ lastSnapshot=takeSnapshot();
+}
+function recordHistory(){
+ const next=takeSnapshot();
+ if(lastSnapshot&&JSON.stringify(next)!==JSON.stringify(lastSnapshot)){
+  undoStack.push(lastSnapshot);if(undoStack.length>45)undoStack.shift();
+  redoStack.length=0;
+ }
+ lastSnapshot=next;
+ $('undoDesign').disabled=undoStack.length===0;
+ $('redoDesign').disabled=redoStack.length===0;
+}
+function stepHistory(undo){
+ const from=undo?undoStack:redoStack,to=undo?redoStack:undoStack;
+ if(!from.length)return;
+ to.push(takeSnapshot());
+ restoreSnapshot(from.pop());
+ $('undoDesign').disabled=undoStack.length===0;
+ $('redoDesign').disabled=redoStack.length===0;
+ factoryNotice((undo?'Deshecho':'Rehecho')+' · cambios visibles en la armadura nativa.');
+}
+function downloadJson(filename,object){
+ const url=URL.createObjectURL(new Blob([JSON.stringify(object,null,2)],{type:'application/json'}));
+ const a=document.createElement('a');a.href=url;a.download=filename;a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function refreshDesignOptions(){
+ const el=$('savedDesigns'),previous=el.value;el.replaceChildren();
+ const o=document.createElement('option');o.value='';o.textContent=localDesigns.length?'Elegir diseño':'Sin diseños guardados';el.append(o);
+ for(const d of localDesigns){const opt=document.createElement('option');opt.value=d.name;opt.textContent=d.name;el.append(opt)}
+ if(localDesigns.some(x=>x.name===previous))el.value=previous;
+}
+function loadBrowserDesigns(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(FACTORY_KEY)||'[]');
+  if(!Array.isArray(saved)||saved.length>16)throw Error('Biblioteca local fuera de límites');
+  localDesigns=saved.map(x=>{
+   if(typeof x.name!=='string'||x.name.length<1||x.name.length>60)throw Error('Nombre de diseño inválido');
+   return {name:x.name,snapshot:validateSnapshot(x.snapshot)};
+  });
+ }catch(err){localDesigns=[];factoryNotice('Biblioteca local no disponible. Podés exportar diseños a JSON. '+err.message)}
+ refreshDesignOptions();
+}
+function persistDesigns(){
+ try{localStorage.setItem(FACTORY_KEY,JSON.stringify(localDesigns));return true}
+ catch(err){factoryNotice('No pude guardar en este navegador: exportá el diseño a JSON.');return false}
+}
+function factoryApply(style){
+ const design=FACTORY_STYLES[style];if(!design)throw Error('Preset desconocido');
+ restoreSnapshot({version:1,description:'Diseño de prueba: '+design.label+'. Aprobación artística pendiente.',intensity:design.intensity,palette:design.palette});
+ recordHistory();factoryNotice('Variante '+design.label+' aplicada en vivo sobre 11 piezas nativas. No es una skin legendaria final.');
+}
+$('factoryStyles').addEventListener('click',e=>{
+ const btn=e.target.closest('button[data-style]');if(!btn)return;
+ try{factoryApply(btn.dataset.style)}catch(err){factoryNotice('❌ '+err.message)}
+});
+$('undoDesign').onclick=()=>stepHistory(true);
+$('redoDesign').onclick=()=>stepHistory(false);
+$('storeDesign').onclick=()=>{
+ try{
+  const name=$('designName').value.trim().slice(0,60);
+  if(name.length<2)throw Error('Escribí un nombre de al menos dos caracteres.');
+  const existing=localDesigns.findIndex(x=>x.name===name);
+  if(existing<0&&localDesigns.length>=16)throw Error('Máximo 16 diseños; exportá y eliminá uno.');
+  const rec={name,snapshot:validateSnapshot(takeSnapshot())};
+  if(existing>=0)localDesigns[existing]=rec;else localDesigns.push(rec);
+  const stored=persistDesigns();refreshDesignOptions();$('savedDesigns').value=name;
+  if(stored)factoryNotice('✅ '+name+' guardado solo en este navegador.');
+ }catch(err){factoryNotice('❌ '+err.message)}
+};
+$('loadDesign').onclick=()=>{
+ try{
+  const item=localDesigns.find(x=>x.name===$('savedDesigns').value);
+  if(!item)throw Error('Elegí un diseño guardado.');
+  restoreSnapshot(item.snapshot);recordHistory();factoryNotice('Cargado: '+item.name);
+ }catch(err){factoryNotice('❌ '+err.message)}
+};
+$('removeDesign').onclick=()=>{
+ const name=$('savedDesigns').value;if(!name)return;
+ localDesigns=localDesigns.filter(x=>x.name!==name);persistDesigns();refreshDesignOptions();
+ factoryNotice('Diseño borrado solo de la biblioteca local: '+name);
+};
+$('exportDesign').onclick=()=>{
+ try{
+  const snapshot=validateSnapshot(takeSnapshot());
+  downloadJson('HIGHFLY-SKIN8-DISENO-LOCAL.json',{format:'highfly-skin8-local-preset/1',name:$('designName').value.trim().slice(0,60),snapshot});
+  factoryNotice('✅ Diseño exportado a JSON: podés recuperarlo en otro navegador.');
+ }catch(err){factoryNotice('❌ '+err.message)}
+};
+$('importDesign').onchange=async e=>{
+ try{
+  const f=e.target.files?.[0];if(!f)return;
+  if(f.size>30000)throw Error('Archivo excesivamente grande (máximo 30 KB).');
+  const obj=JSON.parse(await f.text());
+  if(obj.format!=='highfly-skin8-local-preset/1')throw Error('Formato de diseño desconocido.');
+  const validated=validateSnapshot(obj.snapshot);
+  restoreSnapshot(validated);recordHistory();
+  const n=String(obj.name||'Paladín importado').trim().slice(0,60);
+  $('designName').value=n;
+  factoryNotice('✅ Diseño importado y aplicado: '+n+'. Guardalo si querés conservarlo en este dispositivo.');
+ }catch(err){factoryNotice('❌ '+err.message)}finally{e.target.value=''}
+};
+loadBrowserDesigns();
+$('undoDesign').disabled=true;$('redoDesign').disabled=true;
+
 const sliderNames={head:'Casco',chest:'Pechera',arms:'Hombreras',hands:'Manoplas',legs:'Piernas',feet:'Botas',back:'Espalda'};
 let commissionPalette=null;
 const settings=$('recipeControls');
@@ -362,7 +499,7 @@ function renderSliders(values){
   const inp=document.createElement('input');inp.type='range';inp.min='.15';inp.max='1.3';inp.step='.01';inp.value=values[slot];
   inp.dataset.slot=slot;
   const value=document.createElement('output');value.textContent=String(values[slot]);
-  inp.oninput=()=>{value.textContent=inp.value;applyLiveControls()};
+  inp.oninput=()=>{value.textContent=inp.value;applyLiveControls();recordHistory()};
   label.append(inp,value);settings.append(label);
  }
 }
@@ -376,15 +513,16 @@ function applyLiveControls(){
   $('liveQa').textContent='VISTA VIVA · '+data.meshes+' piezas skinned nativas · '+data.editedVertices+' vértices de previsualización ajustados · Rig_Medium intacto.';
  }catch(err){$('liveQa').textContent='❌ '+err.message}
 }
-for(const id of ['enamelColor','metalColor','accentColor'])$(id).addEventListener('input',applyLiveControls);
+for(const id of ['enamelColor','metalColor','accentColor'])$(id).addEventListener('input',()=>{applyLiveControls();recordHistory()});
 $('resetLive').onclick=()=>{
  commissionPalette=null;
  $('enamelColor').value='#314f74';$('metalColor').value='#d4a953';$('accentColor').value='#70d5e6';
- renderSliders({...LIVE_DEFAULT});applyLiveControls();
+ renderSliders({...LIVE_DEFAULT});applyLiveControls();recordHistory();
 };
 renderSliders(commissionIntensity('Armadura Paladín de forja sagrada.'));
+lastSnapshot=takeSnapshot();
 $('interpretOrder').onclick=()=>{
- try{renderSliders(commissionIntensity($('prompt').value));applyLiveControls();$('order').textContent='Borrador ajustado con reglas locales. Ajustá los siete controles, luego guardá la receta Blender V2. Para interpretación artística por IA, enviá texto/foto al chat.'}
+ try{renderSliders(commissionIntensity($('prompt').value));applyLiveControls();recordHistory();$('order').textContent='Borrador ajustado con reglas locales. Ajustá los siete controles, luego guardá la receta Blender V2. Para interpretación artística por IA, enviá texto/foto al chat.'}
  catch(e){$('order').textContent='❌ '+e.message}
 };
 $('extractColors').onclick=async()=>{
@@ -410,7 +548,7 @@ $('extractColors').onclick=async()=>{
   const bright=[...colors].sort((a,b)=>b.reduce((x,y)=>x+y,0)-a.reduce((x,y)=>x+y,0));
   commissionPalette={enamel:hex(colors[0]),metal:hex(bright[0]),accent:hex(bySat[0])};
   $('enamelColor').value=commissionPalette.enamel;$('metalColor').value=commissionPalette.metal;$('accentColor').value=commissionPalette.accent;
-  applyLiveControls();
+  applyLiveControls();recordHistory();
   $('order').textContent='🎨 Paleta extraída de la foto: '+JSON.stringify(commissionPalette)+'. La silueta NO se deduce automáticamente de la imagen.';
  }catch(e){$('order').textContent='❌ '+e.message}
 };
@@ -418,7 +556,7 @@ $('saveOrder').onclick=()=>{
  try{
   const recipe=commissionRecipe($('prompt').value,{intensity:sliderData(),palette:getLivePalette()});
   const url=URL.createObjectURL(new Blob([JSON.stringify(recipe,null,2)],{type:'application/json'}));
-  const a=document.createElement('a');a.href=url;a.download='HIGHFLY-SKIN7-PALADIN-RECETA-BLENDER-V2.json';a.click();
+  const a=document.createElement('a');a.href=url;a.download='HIGHFLY-SKIN8-PALADIN-RECETA-BLENDER-V2.json';a.click();
   setTimeout(()=>URL.revokeObjectURL(url),3000);
   $('order').textContent='✅ Receta descargada y lista para el generador Blender V2. Pegala en el chat con tu imagen para el encargo; el laboratorio no publica ni crea un GLB remotamente por sí solo.';
  }catch(e){$('order').textContent='❌ '+e.message}
