@@ -12,7 +12,7 @@ Repositorio `drakentzy07/cobalt-hollow-lab`. Rama de traspaso técnica (NO PUBLI
 `HIGHFLY_V4_03_REWARD_LOOT_CRAFTING.csv`,
 `HIGHFLY_V4_03_P02N_1440_RAW_DUELS.csv`,
 y los workflows `.github/workflows/highfly-v4-03-pr19-monsters-combined.yml` y `highfly-v4-03-pr19-handoff-reports.yml`.
-Comprobaciones GREEN: PR19 `38085915127` y `38085989015`; P02L `38094126772`; P02M `38095460400`; P02N sharded 1.440 `38102239479`; handoff datos `38103132422`; combinada PR17 (NO base correcta) `38102162302`. Consultar conclusión **real más reciente** del RUN PR19+Monster del workflow, sin inventar GREEN.
+Build PR19+Monsters confirmada GREEN en RUN `38103098404`, artefacto `11689006382`. Comprobaciones GREEN: PR19 `38085915127` y `38085989015`; P02L `38094126772`; P02M `38095460400`; P02N sharded 1.440 `38102239479`; handoff datos `38103132422`; combinada PR17 (NO base correcta) `38102162302`. No atribuir al RUN PR19+Monster integración persistente: es una sola build con HuntPilot opt-in.
 
 **Lo que sí existe:** 270 registros original ClaudeCraft +64 normales HIGHFLY +16 élites/capitanes =350 definiciones (NO 350 mobs activos), 988 filas de loot, 8 escenarios LAB LV21–99 y 15 zonas donor. P02N corrió 1.440 peleas de 8s, 6 WIN y 1.434 TIMEOUT: GREEN SMOKE, **NO balance de peleas completas**. El HuntPilot opt-in de P02I utiliza otro Hunter y +3× HP, NO está permitido en app persistente. Los cinco bosses especiales, skins premium y Extended 100+ son contenido FUTURO.
 
