@@ -1,0 +1,41 @@
+name: HIGHFLY SKIN9-A — LIVE PUBLIC ATELIER HTTPS BROWSER QA (NO GAME)
+on:
+  push:
+    branches: [highfly-skin9-armor-factory-core]
+    paths: ['.github/workflows/skin9-live-atelier-gate.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  live-atelier-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify prompt compiler on isolated source
+        run: node character-truth/skin7-paladin-compare-lab/skin9-armor-core.test.mjs
+      - name: Chromium Samsung landscape browser emulation
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify actually published Vercel site and its 22 clips
+        timeout-minutes: 6
+        env:
+          HF_PALADIN_LAB_URL: https://highfly-skin7-paladin-atelier.vercel.app/
+          HF_PALADIN_PROOF: character-truth/skin9-live-qa
+        run: |
+          set -euo pipefail
+          curl -fIsS "$HF_PALADIN_LAB_URL" | head -15
+          node character-truth/skin7-paladin-compare-lab/browser-qa.cjs
+          grep -F '"green": true' character-truth/skin9-live-qa/gate.json
+          grep -F 'SKIN9 Spanish natural language' character-truth/skin9-live-qa/gate.json
+          grep -F 'SKIN9 Blender candidate JSON' character-truth/skin9-live-qa/gate.json
+          echo HIGHFLY_SKIN9_LIVE_HTTPS_TEXT_TO_HUNTER_PREVIEW_GREEN=1
+      - name: Keep real-site screenshots and technical proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN9-A-LIVE-VERCEL-PROMPT-TO-ARMOR-QA
+          path: character-truth/skin9-live-qa/
+          retention-days: 21
+          if-no-files-found: warn
