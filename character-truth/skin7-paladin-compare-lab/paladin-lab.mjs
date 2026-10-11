@@ -119,12 +119,29 @@ function normalizeSource(m,donor,actor){
  m.frustumCulled=false;return m;
 }
 function equipGlb(actor,g,expectedPrefix,tag,strict=true){
- const meshes=[];g.scene.traverse(o=>{if(skinned(o)&&o.name.startsWith(expectedPrefix))meshes.push(o)});
- if(strict&&meshes.length!==11)throw Error('La armadura reforjada debe tener exactamente 11 piezas nativas; encontradas '+meshes.length);
- const found=new Set(meshes.map(m=>m.name));
- if(strict)for(const part of SLOTS)if(![...found].some(name=>name.toUpperCase().includes('_'+part.toUpperCase())))throw Error('Falta slot '+part);
+ // An exported authored Blender armor may have 1-3 skinned primitives per
+ // original *logical slot* due to separate enamel/gold/gem materials.
+ // The GLB root node has HF9NEW_PALADIN_<SLOT> but its children are primitive
+ // meshes whose names don't start with HF9NEW_. Collect via real ancestry.
+ const meshes=[],parts=new Set();let meshOrdinal=0;
+ g.scene.traverse(o=>{
+  if(!skinned(o))return;
+  let node=o;
+  while(node&&!node.name.startsWith(expectedPrefix))node=node.parent;
+  if(!node)return;
+  const part=node.name.slice(expectedPrefix.length).replace(/[._]\\d+$/,'').toUpperCase();
+  parts.add(part);
+  // Never confuse the previous Paladin third-actor asset with the new armor.
+  if(!o.name.startsWith(expectedPrefix))o.name=node.name+'_PRIM_'+(meshOrdinal++);
+  o.userData.skin9LogicalPart=part;
+  meshes.push(o);
+ });
+ if(strict&&parts.size!==11)throw Error('El GLB debe aportar 11 PARTES skinned reales; recibió '+parts.size+
+  ' grupos, '+meshes.length+' superficies de material');
+ if(strict)for(const part of SLOTS)if(!parts.has(part.toUpperCase()))throw Error('Falta pieza real '+part);
+ if(!meshes.length)throw Error('GLB sin mallas skinned reales');
  for(const m of meshes){m.userData.skin7Commission=true;normalizeSource(m,g.scene,actor);m.visible=true}
- actor.overlays??=[];actor.overlays.push({tag,meshes});
+ actor.overlays??=[];actor.overlays.push({tag,meshes,logicalParts:parts.size});
  return meshes;
 }
 function clearOverlays(actor,tag){
@@ -166,7 +183,7 @@ function updateLiveArmor(intensity,palette){
  if(colorValues.length!==3||colorValues.some(x=>!/^#[0-9a-fA-F]{6}$/.test(x)))
   throw Error('Color fuera de rango');
  const arm=state.actors[3],meshes=arm.recipeMeshes||[];
- if(meshes.length!==11)throw Error('Se requieren once piezas originales skinned');
+ if(new Set(meshes.map(m=>m.userData.skin9LogicalPart)).size!==11)throw Error('El cuarto traje necesita once piezas reales, aunque cada una tenga varios materiales');
  let edited=0;
  for(const mesh of meshes){
   const base=mesh.userData.skin7Base;
@@ -186,11 +203,15 @@ function updateLiveArmor(intensity,palette){
   const c=new THREE.Color(metal?palette.metal:palette.enamel);
   if(slot==='head'||slot==='arms'||slot==='back')c.lerp(new THREE.Color(palette.accent),.20);
   for(const mat of (Array.isArray(mesh.material)?mesh.material:[mesh.material])){
+   const n=(mat?.name||'').toUpperCase();
+   if(n.includes('ROYAL_GOLD'))c.set(palette.metal);
+   else if(n.includes('CRIMSON_GEM'))c.set(palette.accent);
+   else if(n.includes('ROYAL_PLATE'))c.set(palette.enamel);
    if(mat?.color)mat.color.copy(c);
    mat.needsUpdate=true;
   }
  }
- liveStats={editedVertices:edited,meshes:meshes.length,
+ liveStats={editedVertices:edited,meshes:meshes.length,logicalParts:new Set(meshes.map(m=>m.userData.skin9LogicalPart)).size,
   intensity:{...intensity},palette:{...palette},rig:'Rig_Medium',nativeMeshesOnly:true};
  return liveStats;
 }
@@ -300,6 +321,7 @@ async function load(){
    independentArmor:{
     oldThirdMeshCount:state.actors[2].recipeMeshes?.length||0,
     newlyAuthoredMeshCount:state.actors[3].recipeMeshes?.length||0,
+    newArmorLogicalParts:new Set(state.actors[3].recipeMeshes?.map(m=>m.userData.skin9LogicalPart)).size||0,
     oldThirdVertices:state.actors[2].recipeMeshes?.reduce((n,m)=>n+m.geometry.attributes.position.count,0)||0,
     newFourthVertices:state.actors[3].recipeMeshes?.reduce((n,m)=>n+m.geometry.attributes.position.count,0)||0,
     fourthPrefix:state.actors[3].recipeMeshes?.every(m=>m.name.startsWith('HF9NEW_PALADIN_')),
@@ -569,7 +591,7 @@ function applyLiveControls(){
   if(!state.assetsReady)return;
   const data=updateLiveArmor(sliderData(),getLivePalette());
   if(state.view!=='commission')showStation('commission');
-  $('liveQa').textContent='VISTA VIVA · '+data.meshes+' piezas skinned nativas · '+data.editedVertices+' vértices de previsualización ajustados · Rig_Medium intacto.';
+  $('liveQa').textContent='VISTA VIVA · '+data.logicalParts+' piezas nuevas / '+data.meshes+' superficies skinned · '+data.editedVertices+' vértices de previsualización ajustados · Rig_Medium intacto.';
  }catch(err){$('liveQa').textContent='❌ '+err.message}
 }
 for(const id of ['enamelColor','metalColor','accentColor'])$(id).addEventListener('input',()=>{applyLiveControls();recordHistory()});
