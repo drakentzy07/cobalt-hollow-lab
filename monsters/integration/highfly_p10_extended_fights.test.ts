@@ -100,7 +100,7 @@ function runFight(cls:PlayerClass,scenarioIndex:number,kind:'normal'|'captain'):
   const creature=createMob(sim.nextId++,def,level,{
     x:hunter.pos.x+2,y:hunter.pos.y,z:hunter.pos.z+2,
   });
-  creature.hostile=true;creature.offStreamIdle=false;
+  creature.hostile=true; // native MobTemplate owns offStreamIdle, not Entity
   creature.facing=Math.atan2(hunter.pos.x-creature.pos.x,hunter.pos.z-creature.pos.z);
   sim.addEntity(creature);
   hunter.facing=Math.atan2(creature.pos.x-hunter.pos.x,creature.pos.z-hunter.pos.z);
