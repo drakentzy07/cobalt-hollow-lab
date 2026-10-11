@@ -7,6 +7,7 @@ import {ITEMS,ALL_RECIPES,MOBS} from '../src/sim/data';
 import {canEquipItem} from '../src/sim/equipment_rules';
 import {recipeById} from '../src/sim/content/recipes';
 import {resolveCraft} from '../src/sim/professions/crafting';
+import {resolveTrain,trainingFeeFor} from '../src/sim/professions/training';
 import {stationsOfType} from '../src/sim/professions/stations';
 import {STATIONS,BUILTIN_WORLD} from '../src/sim/data';
 import {Sim} from '../src/sim/sim';
@@ -75,6 +76,31 @@ describe('HIGHFLY P13 real item and recipe registry 50–99 smoke',()=>{
        ITEMS[hfP13ItemId(lv,'warrior')].weapon?.max??0:0));
     expect(sorted).toEqual([...sorted].sort((a,b)=>a-b));
     expect(ALL_RECIPES.filter(r=>r.id.startsWith('recipe_hf_p13_'))).toHaveLength(15);
+  });
+
+  it('the authentic forge trainer requires the proper profession tier for all 15 recipes',()=>{
+    const sim=new Sim({seed:7314,playerClass:'warrior',autoEquip:false,
+      compulsoryTutorial:false,riftPortals:false,
+      world:{...BUILTIN_WORLD,camps:[]}});
+    const meta=sim.players.get(sim.playerId)!;
+    const station=stationsOfType(STATIONS,'forge')[0];
+    expect(station).toBeDefined();
+    const pos={x:station.pos.x,z:station.pos.z};
+    for(const lv of HF_P13_WEAPON_LEVELS){
+      for(const track of ['warrior','scout','caster'] as const){
+        const id=hfP13RecipeId(lv,track),recipe=recipeById(id)!;
+        meta.knownRecipes.delete(id);
+        meta.copper=250000;
+        meta.craftSkills.weaponcrafting=0;
+        expect(resolveTrain(STATIONS,meta,pos,id).reason).toBe('train_tier_unmet');
+        meta.craftSkills.weaponcrafting=recipe.skillReq;
+        const permitted=resolveTrain(STATIONS,meta,pos,id);
+        expect(permitted.ok,JSON.stringify({id,permitted})).toBe(true);
+        expect(permitted.fee).toBe(trainingFeeFor(recipe));
+        meta.knownRecipes.add(id);
+        expect(resolveTrain(STATIONS,meta,pos,id).reason).toBe('train_already_known');
+      }
+    }
   });
 
   it('one native Sim performs a real late-tier craft and preserves the crafted item',()=>{
