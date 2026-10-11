@@ -1,0 +1,110 @@
+{
+  "simulation": "CLAUDECRAFT_NATIVE_SIM_8_SECOND_SMOKE",
+  "p02m_math": {
+    "audit": "P02M_REAL_CHASSIS_PLUS_REAL_MOB_TEMPLATE",
+    "certifiedBalanced": false,
+    "source": "PINNED_CLAUDECRAFT_0_44_0_PLUS_P02I_MONSTERS_PLUS_PF6_LEVEL_CAP",
+    "playerClasses": [
+      "warrior",
+      "paladin",
+      "hunter",
+      "rogue",
+      "priest",
+      "shaman",
+      "mage",
+      "warlock",
+      "druid"
+    ],
+    "classesTested": 9,
+    "monsterTemplateVariants": 80,
+    "combatMatrixRows": 21600,
+    "notASimulationOf": [
+      "player_potions",
+      "abilities",
+      "combos",
+      "dash",
+      "parry",
+      "active_avoidance",
+      "mob_special_AI",
+      "crafting_gear_LV21_99",
+      "trained_stats",
+      "S23_physical_touch_latency",
+      "world_map_navigation"
+    ],
+    "baselineEquipment": "NO_EQUIPMENT — PESSIMISTIC CHASSIS AUDIT ONLY",
+    "killTimeOver120Seconds": 13782,
+    "noAvoidanceSurvivalShare": 0.084,
+    "overlevelPlus5Assumed70AvoidanceSurvivalShare": 0.354,
+    "xpCurveSamples": [
+      {
+        "level": 1,
+        "required": 400
+      },
+      {
+        "level": 20,
+        "required": 23200
+      },
+      {
+        "level": 21,
+        "required": 25000
+      },
+      {
+        "level": 40,
+        "required": 77200
+      },
+      {
+        "level": 60,
+        "required": 167200
+      },
+      {
+        "level": 80,
+        "required": 293200
+      },
+      {
+        "level": 98,
+        "required": 437400
+      },
+      {
+        "level": 99,
+        "required": 446200
+      }
+    ],
+    "level40Vs45": {
+      "baseXp": 324,
+      "sameLevelXp": 245
+    },
+    "status": "AUDIT_GREEN_BALANCE_NOT_YET_CERTIFIED_NEEDS_GEAR_TRAINING_SKILLS_E2E"
+  },
+  "p02n_duels": {
+    "scope": "1440 NATIVE AI DUELS: 9 CLASSES x 80 TEMPLATES x 2 LEVEL GAPS",
+    "source": "PINNED CLAUDECRAFT P02I + PF6",
+    "status": "NATIVE_SIM_RUNTIME_GATES_ONLY_NOT_COMBAT_BALANCE_CERTIFIED",
+    "attempted": 1440,
+    "completed": 1440,
+    "nativeLootClaims": 6,
+    "actualAbilitiesAttempted": 1280,
+    "classes": 9,
+    "monsterTemplates": 80,
+    "atLevel": {
+      "WIN": 4,
+      "LOSS": 0,
+      "TIMEOUT": 716
+    },
+    "plusFive": {
+      "WIN": 2,
+      "LOSS": 0,
+      "TIMEOUT": 718
+    },
+    "limitSecondsPerFight": 8,
+    "persistentHunterIntegrated": false,
+    "fullLootBalanced": false,
+    "remarks": "Eight-second smoke duels do not establish fair long fights, skillful dodges, or a calibrated XP/loot economy."
+  },
+  "full_length_pve_fights_certified": false,
+  "verified_win_rates": false,
+  "training_profiles_real_evidence": false,
+  "gear_tiers_pf9_live": false,
+  "human_dodge_parry_dash_and_elemental_combo_tested": false,
+  "interpretation": "6 victories and 1434 timeouts in 8-second smoke; NO balance winrate inference. 0 losses in timeout-limited experiment does not mean zero-death gameplay.",
+  "status": "GREEN_LAB_RUN_NOT_GAME_BALANCE_GREEN"
+}

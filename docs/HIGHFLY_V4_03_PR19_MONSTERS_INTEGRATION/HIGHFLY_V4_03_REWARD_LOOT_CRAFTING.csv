@@ -1,0 +1,989 @@
+﻿scope,monsterId,monster,lvMin,lvMax,index,lootType,itemId,copperAmount,chanceRaw,chancePercent,qtyMin,qtyMax,rollGroup,questId,flags,entry_chance_not_final_probability,group_quest_and_ownership_must_be_checked,v403_persistent_crafting_e2e
+CLAUDECRAFT_PINNED,forest_wolf,Forest Wolf,1,2,1,copper,,8,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,forest_wolf,Forest Wolf,1,2,2,item,wolf_fang,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,forest_wolf,Forest Wolf,1,2,3,item,milepost_boots,,0.017,1.7,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,forest_wolf,Forest Wolf,1,2,4,item,wolfhide_satchel,,0.003,0.3,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_greyjaw,Old Greyjaw,4,4,1,copper,,60,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_greyjaw,Old Greyjaw,4,4,2,item,greyjaw_fang,,1,100,,,,q_greyjaw,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_greyjaw,Old Greyjaw,4,4,3,item,wolf_fang,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_greyjaw,Old Greyjaw,4,4,4,item,wolfhide_satchel,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_greyjaw,Old Greyjaw,4,4,5,item,acolyte_chain_grips,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wild_boar,Wild Boar,2,3,1,copper,,12,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wild_boar,Wild Boar,2,3,2,item,boar_hide,,0.6,60,,,,q_boars,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wild_boar,Wild Boar,2,3,3,item,tough_jerky,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wild_boar,Wild Boar,2,3,4,item,trail_leggings,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,webwood_spider,Sableweb Lurker,2,4,1,copper,,14,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,webwood_spider,Sableweb Lurker,2,4,2,item,webwood_silk,,0.55,55,,,,q_spiders,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,webwood_spider,Sableweb Lurker,2,4,3,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,webwood_spider,Sableweb Lurker,2,4,4,item,mosshide_vest,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mogger,Mogger,6,6,1,copper,,180,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mogger,Mogger,6,6,2,item,linen_scrap,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mogger,Mogger,6,6,3,item,moggers_stomper_boots,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mogger,Mogger,6,6,4,item,moggers_shiv,,0.25,25,,,mogger_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mogger,Mogger,6,6,5,item,cryptstalker_jerkin,,0.25,25,,,mogger_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mogger,Mogger,6,6,6,item,valefire_lantern,,0.2,20,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mogger,Mogger,6,6,7,item,moggers_hide_quiver,,0.2,20,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mudfin_murloc,Mudfin Skulker,3,5,1,copper,,18,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mudfin_murloc,Mudfin Skulker,3,5,2,item,mudfin_scale,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mudfin_murloc,Mudfin Skulker,3,5,3,item,linen_scrap,,0.2,20,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,tunnel_rat,Deeprock Digger,4,6,1,copper,,22,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,tunnel_rat,Deeprock Digger,4,6,2,item,tallow_candle,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,tunnel_rat,Deeprock Digger,4,6,3,item,blessed_wax,,0.45,45,,,,q_rite,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,tunnel_rat,Deeprock Digger,4,6,4,item,linen_scrap,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,tunnel_rat,Deeprock Digger,4,6,5,item,mossy_handwraps,,0.01,1,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,tunnel_rat,Deeprock Digger,4,6,6,item,thornling_grips,,0.01,1,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grix_the_tunnelking,Grix the Tunnelking,7,7,1,copper,,150,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grix_the_tunnelking,Grix the Tunnelking,7,7,2,item,tallow_candle,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grix_the_tunnelking,Grix the Tunnelking,7,7,3,item,lesser_healing_potion,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grix_the_tunnelking,Grix the Tunnelking,7,7,4,item,tunnelkings_spade,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grix_the_tunnelking,Grix the Tunnelking,7,7,5,item,moggers_copper_cudgel,,0.25,25,,,grix_tunnelking_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grix_the_tunnelking,Grix the Tunnelking,7,7,6,item,hollowbone_hauberk,,0.25,25,,,grix_tunnelking_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grix_the_tunnelking,Grix the Tunnelking,7,7,7,item,briarroot_staff,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vale_bandit,Vale Bandit,3,5,1,copper,,25,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vale_bandit,Vale Bandit,3,5,2,item,bandit_bandana,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vale_bandit,Vale Bandit,3,5,3,item,linen_scrap,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,restless_bones,Restless Bones,5,7,1,copper,,30,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,restless_bones,Restless Bones,5,7,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,restless_bones,Restless Bones,5,7,3,item,ghostly_essence,,0.55,55,,,,q_rite,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,restless_bones,Restless Bones,5,7,4,item,restless_skull,,1,100,,,,q_bones,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,captain_verlan,Captain Verlan,7,7,1,copper,,160,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,captain_verlan,Captain Verlan,7,7,2,item,bone_fragments,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,captain_verlan,Captain Verlan,7,7,3,item,oathbound_greaves,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,captain_verlan,Captain Verlan,7,7,4,item,verlans_oathblade,,0.25,25,,,verlan_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,captain_verlan,Captain Verlan,7,7,5,item,hollow_vigil_staff,,0.25,25,,,verlan_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,captain_verlan,Captain Verlan,7,7,6,item,gravewardens_shiv,,0.25,25,,,verlan_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wraithbinder_maldrec,Wraithbinder Maldrec,7,7,1,copper,,160,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wraithbinder_maldrec,Wraithbinder Maldrec,7,7,2,item,bone_fragments,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wraithbinder_maldrec,Wraithbinder Maldrec,7,7,3,item,maldrecs_soulbinder,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wraithbinder_maldrec,Wraithbinder Maldrec,7,7,4,item,hollowbone_hauberk,,0.25,25,,,maldrec_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wraithbinder_maldrec,Wraithbinder Maldrec,7,7,5,item,gravewoven_raiment,,0.25,25,,,maldrec_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wraithbinder_maldrec,Wraithbinder Maldrec,7,7,6,item,cryptstalker_jerkin,,0.25,25,,,maldrec_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gorrak,Gorrak the Ruthless,6,6,1,copper,,250,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gorrak,Gorrak the Ruthless,6,6,2,item,bandit_bandana,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gorrak,Gorrak the Ruthless,6,6,3,item,oiled_boots,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gorrak,Gorrak the Ruthless,6,6,4,item,quilted_trousers,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gorrak,Gorrak the Ruthless,6,6,5,item,gorraks_cruel_chopper,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gorrak,Gorrak the Ruthless,6,6,6,item,gorraks_cleaver,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gorrak,Gorrak the Ruthless,6,6,7,item,votive_chain_belt,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mire_prowler,Mire Prowler,7,8,1,copper,,30,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mire_prowler,Mire Prowler,7,8,2,item,mire_prowler_pelt,,0.6,60,,,,q_prowler_pelts,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mire_prowler,Mire Prowler,7,8,3,item,soggy_moccasin,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mire_prowler,Mire Prowler,7,8,4,item,lesser_healing_potion,,0.08,8,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deepfen_murloc,Deepfen Snapper,8,9,1,copper,,35,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deepfen_murloc,Deepfen Snapper,8,9,2,item,waterlogged_idol,,0.5,50,,,,q_idols,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deepfen_murloc,Deepfen Snapper,8,9,3,item,mudfin_scale,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mirejaw_the_ravenous,Mirejaw the Ravenous,10,10,1,copper,,260,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mirejaw_the_ravenous,Mirejaw the Ravenous,10,10,2,item,mudfin_scale,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mirejaw_the_ravenous,Mirejaw the Ravenous,10,10,3,item,mirejaw_biteblade,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mirejaw_the_ravenous,Mirejaw the Ravenous,10,10,4,item,mirejaw_scale_vest,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mirejaw_the_ravenous,Mirejaw the Ravenous,10,10,5,item,fen_reaver_glaive,,0.25,25,,,mirejaw_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mirejaw_the_ravenous,Mirejaw the Ravenous,10,10,6,item,mirejaw_oracle_staff,,0.25,25,,,mirejaw_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mirejaw_the_ravenous,Mirejaw the Ravenous,10,10,7,item,mirebloom_treads,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sloomtooth_the_drowned,Sloomtooth the Drowned,11,11,1,copper,,280,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sloomtooth_the_drowned,Sloomtooth the Drowned,11,11,2,item,mudfin_scale,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sloomtooth_the_drowned,Sloomtooth the Drowned,11,11,3,item,tidereaver_gaff,,0.25,25,,,sloomtooth_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sloomtooth_the_drowned,Sloomtooth the Drowned,11,11,4,item,sloomtooth_tidefang,,0.25,25,,,sloomtooth_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sloomtooth_the_drowned,Sloomtooth the Drowned,11,11,5,item,drowned_tide_scepter,,0.25,25,,,sloomtooth_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mire_widow,Mirefen Widow,8,10,1,copper,,38,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mire_widow,Mirefen Widow,8,10,2,item,widow_venom_sac,,0.65,65,,,,q_widows,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mire_widow,Mirefen Widow,8,10,3,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mire_widow,Mirefen Widow,8,10,4,item,fenbark_leggings,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,widow_hatchling,Widow Hatchling,9,9,1,copper,,8,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mirefen_broodmother,The Broodmother,10,10,1,copper,,300,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mirefen_broodmother,The Broodmother,10,10,2,item,marshstrider_boots,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mirefen_broodmother,The Broodmother,10,10,3,item,broodmother_silk_robe,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mirefen_broodmother,The Broodmother,10,10,4,item,spider_leg,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mirefen_broodmother,The Broodmother,10,10,5,item,fenwarden_sabatons,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_dead,Drowned Dead,9,11,1,copper,,42,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_dead,Drowned Dead,9,11,2,item,bone_fragments,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_dead,Drowned Dead,9,11,3,item,cracked_fetish,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_warlord,The Drowned Warlord,12,12,1,copper,,120,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_warlord,The Drowned Warlord,12,12,2,item,bone_fragments,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_warlord,The Drowned Warlord,12,12,3,item,cracked_fetish,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,fen_troll,Mirefen Troll,10,12,1,copper,,50,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,fen_troll,Mirefen Troll,10,12,2,item,troll_fetish,,0.6,60,,,,q_troll_fetishes,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,fen_troll,Mirefen Troll,10,12,3,item,chipped_tusk,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,fen_troll,Mirefen Troll,10,12,4,item,bogiron_nugget,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,fen_troll,Mirefen Troll,10,12,5,item,elixir_of_the_bear,,0.008,0.8,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,fen_troll,Mirefen Troll,10,12,6,item,marshlight_hauberk,,0.012,1.2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,fen_troll,Mirefen Troll,10,12,7,item,wayfarers_backpack,,0.0015,0.15,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grubjaw,Grubjaw the Glutton,12,12,1,copper,,200,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grubjaw,Grubjaw the Glutton,12,12,2,item,grubjaw_tusk,,1,100,,,,q_grubjaw,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grubjaw,Grubjaw the Glutton,12,12,3,item,chipped_tusk,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gravecaller_cultist,Gravecaller Cultist,10,12,1,copper,,55,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gravecaller_cultist,Gravecaller Cultist,10,12,2,item,linen_scrap,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gravecaller_cultist,Gravecaller Cultist,10,12,3,item,tallow_candle,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gravecaller_summoner,Gravecaller Summoner,11,12,1,copper,,60,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gravecaller_summoner,Gravecaller Summoner,11,12,2,item,cult_cipher,,0.6,60,,,,q_summoners,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gravecaller_mender,Gravecaller Mender,11,12,1,copper,,58,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gravecaller_mender,Gravecaller Mender,11,12,2,item,cult_cipher,,0.4,40,,,,q_summoners,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gravecaller_mender,Gravecaller Mender,11,12,3,item,tallow_candle,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gravecaller_mender,Gravecaller Mender,11,12,4,item,duskthorn_mantle,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sister_nhalia,Sister Nhalia,12,12,1,copper,,350,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sister_nhalia,Sister Nhalia,12,12,2,item,tallow_candle,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sister_nhalia,Sister Nhalia,12,12,3,item,nhalias_funeral_wraps,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sister_nhalia,Sister Nhalia,12,12,4,item,nhalias_dirgeblade,,0.25,25,,,sister_nhalia_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deacon_voss,Deacon Voss,12,12,1,copper,,600,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deacon_voss,Deacon Voss,12,12,2,item,tallow_candle,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deacon_voss,Deacon Voss,12,12,3,item,voss_sanctified_mace,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deacon_voss,Deacon Voss,12,12,4,item,fenshadow_maul,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,bog_bloat,Bog Bloat,9,11,1,copper,,40,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,bog_bloat,Bog Bloat,9,11,2,item,tangled_weed,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ridge_stalker,Ridge Stalker,13,14,1,copper,,60,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ridge_stalker,Ridge Stalker,13,14,2,item,ridge_stalker_pelt,,0.6,60,,,,q_stalker_pelts,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ridge_stalker,Ridge Stalker,13,14,3,item,ridge_stalker_pelt,,0.6,60,,,,q_stalker_cloaks,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ridge_stalker,Ridge Stalker,13,14,4,item,wildgrove_cinch,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_cragmaw,Old Cragmaw,14,14,1,copper,,220,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_cragmaw,Old Cragmaw,14,14,2,item,old_cragmaws_pelt,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_cragmaw,Old Cragmaw,14,14,3,item,cragmaw_huntcord,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_cragmaw,Old Cragmaw,14,14,4,item,cragmaw_prowlboots,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_cragmaw,Old Cragmaw,14,14,5,item,cragward_pauldrons,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_cragmaw,Old Cragmaw,14,14,6,item,cragthorn_greatstaff,,0.2,20,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_cragmaw,Old Cragmaw,14,14,7,item,boneglass_shiv,,0.2,20,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_cragmaw,Old Cragmaw,14,14,8,item,cragmaw_huntquiver,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deeprock_kobold,Deeprock Tunneler,14,15,1,copper,,65,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deeprock_kobold,Deeprock Tunneler,14,15,2,item,glowing_wax,,0.5,50,,,,q_glowing_wax,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deeprock_kobold,Deeprock Tunneler,14,15,3,item,tallow_candle,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deeprock_kobold,Deeprock Tunneler,14,15,4,item,healing_potion,,0.08,8,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deeprock_kobold,Deeprock Tunneler,14,15,5,item,deathlord_sabatons,,0.001,0.1,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deeprock_kobold,Deeprock Tunneler,14,15,6,item,peaksong_helm,,0.002,0.2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deeprock_kobold,Deeprock Tunneler,14,15,7,item,moonbark_vestments,,0.002,0.2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deeprock_kobold,Deeprock Tunneler,14,15,8,item,wayfarers_backpack,,0.001,0.1,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ironvein_foreman,Ironvein Foreman,16,16,1,copper,,420,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ironvein_foreman,Ironvein Foreman,16,16,2,item,glowing_wax,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ironvein_foreman,Ironvein Foreman,16,16,3,item,ironvein_pickblade,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ironvein_foreman,Ironvein Foreman,16,16,4,item,ironvein_lantern_staff,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ironvein_foreman,Ironvein Foreman,16,16,5,item,gutripper_shiv,,0.25,25,,,ironvein_foreman_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ironvein_foreman,Ironvein Foreman,16,16,6,item,deathlord_sabatons,,0.25,25,,,ironvein_foreman_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ironvein_foreman,Ironvein Foreman,16,16,7,item,stormchant_gauntlets,,0.2,20,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thornpeak_ogre,Thornpeak Ogre,15,16,1,copper,,75,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thornpeak_ogre,Thornpeak Ogre,15,16,2,item,ogre_toe_ring,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thornpeak_ogre,Thornpeak Ogre,15,16,3,item,cragprowl_belt,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thornpeak_ogre,Thornpeak Ogre,15,16,4,item,wayfarers_backpack,,0.002,0.2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,brakka_wallbreaker,Brakka the Wallbreaker,17,17,1,copper,,300,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,brakka_wallbreaker,Brakka the Wallbreaker,17,17,2,item,ogre_toe_ring,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ogre_crusher,Thornpeak Crusher,16,17,1,copper,,85,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ogre_crusher,Thornpeak Crusher,16,17,2,item,ogre_toe_ring,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ogre_crusher,Thornpeak Crusher,16,17,3,item,revenantstep_treads,,0.06,6,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,warlord_drogmar,Warlord Drogmar,17,17,1,copper,,650,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,warlord_drogmar,Warlord Drogmar,17,17,2,item,drogmar_warboots,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,warlord_drogmar,Warlord Drogmar,17,17,3,item,drogmars_skullcleaver,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,warlord_drogmar,Warlord Drogmar,17,17,4,item,thunderward_legguards,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,brutok_skullsmasher,Brutok Skullsmasher,17,17,1,copper,,320,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,brutok_skullsmasher,Brutok Skullsmasher,17,17,2,item,cracked_ogre_tusk,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,brutok_skullsmasher,Brutok Skullsmasher,17,17,3,item,skullsmasher_warbelt,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,brutok_skullsmasher,Brutok Skullsmasher,17,17,4,item,brutoks_maul,,0.25,25,,,brutok_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,brutok_skullsmasher,Brutok Skullsmasher,17,17,5,item,crag_warden_cudgel,,0.25,25,,,brutok_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,brutok_skullsmasher,Brutok Skullsmasher,17,17,6,item,skullsplitter_dirk,,0.25,25,,,brutok_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,brutok_skullsmasher,Brutok Skullsmasher,17,17,7,item,stormroot_cowl,,0.2,20,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,brutok_skullsmasher,Brutok Skullsmasher,17,17,8,item,wayfarers_backpack,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,stormcrag_elemental,Stormcrag Elemental,17,18,1,copper,,80,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,stormcrag_elemental,Stormcrag Elemental,17,18,2,item,storm_core,,0.55,55,,,,q_shard_cores,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,stormcrag_elemental,Stormcrag Elemental,17,18,3,item,blessed_embers,,0.55,55,,,,q_breaking_the_seal,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,stormcrag_elemental,Stormcrag Elemental,17,18,4,item,inert_storm_shard,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,shardlord_kazzix,Shardlord Kazzix,18,18,1,copper,,500,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,shardlord_kazzix,Shardlord Kazzix,18,18,2,item,kazzix_heartshard,,1,100,,,,q_kazzix,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,shardlord_kazzix,Shardlord Kazzix,18,18,3,item,inert_storm_shard,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,shardlord_kazzix,Shardlord Kazzix,18,18,4,item,shardfang_grips,,0.25,25,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wyrmcult_zealot,Broodsworn Zealot,17,19,1,copper,,90,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wyrmcult_zealot,Broodsworn Zealot,17,19,2,item,wyrmcult_orders,,0.1,10,,,,q_cult_orders,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wyrmcult_zealot,Broodsworn Zealot,17,19,3,item,frayed_prayer_beads,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wyrmcult_zealot,Broodsworn Zealot,17,19,4,item,shardsong_mantle,,0.002,0.2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wyrmcult_necromancer,Broodsworn Necromancer,18,19,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wyrmcult_necromancer,Broodsworn Necromancer,18,19,2,item,ritual_phylactery,,0.55,55,,,,q_necromancers,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wyrmcult_necromancer,Broodsworn Necromancer,18,19,3,item,linen_scrap,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wyrmcult_necromancer,Broodsworn Necromancer,18,19,4,item,wyrmcult_spellgrips,,0.002,0.2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,threnos_first_voice,Threnos the First Voice,19,19,1,copper,,300,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,threnos_first_voice,Threnos the First Voice,19,19,2,item,frayed_prayer_beads,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,threnos_first_voice,Threnos the First Voice,19,19,3,item,shardsong_mantle,,0.06,6,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,boneclad_revenant,Boneclad Revenant,18,19,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,boneclad_revenant,Boneclad Revenant,18,19,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,boneclad_revenant,Boneclad Revenant,18,19,3,item,runed_bone_shard,,0.7,70,,,,q_nythraxis_restless_dead,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,boneclad_revenant,Boneclad Revenant,18,19,4,item,vanguard_bone,,0.7,70,,,,q_revenant_vanguard,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,boneclad_revenant,Boneclad Revenant,18,19,5,item,necromancers_legwraps,,0.001,0.1,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,boneclad_revenant,Boneclad Revenant,18,19,6,item,thornpeak_wildwraps,,0.002,0.2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,fallen_captain_aldren,Fallen Captain Aldren,20,20,1,copper,,450,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,fallen_captain_aldren,Fallen Captain Aldren,20,20,2,item,captains_crest,,1,100,,,,q_nythraxis_sealed_crypt,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,fallen_captain_aldren,Fallen Captain Aldren,20,20,3,item,bone_fragments,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,corrupted_priest_malric,Corrupted Priest Malric,20,20,1,copper,,450,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,corrupted_priest_malric,Corrupted Priest Malric,20,20,2,item,priests_sigil,,1,100,,,,q_nythraxis_sealed_crypt,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,corrupted_priest_malric,Corrupted Priest Malric,20,20,3,item,frayed_prayer_beads,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,corrupted_priest_malric,Corrupted Priest Malric,20,20,4,item,cryptbloom_shoulderguards,,0.2,20,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deathstalker_voss,Deathstalker Voss,20,20,1,copper,,450,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deathstalker_voss,Deathstalker Voss,20,20,2,item,royal_seal,,1,100,,,,q_nythraxis_sealed_crypt,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deathstalker_voss,Deathstalker Voss,20,20,3,item,bone_fragments,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,bound_guardian,The Bound Guardian,20,20,1,copper,,1200,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,bound_guardian,The Bound Guardian,20,20,2,item,kings_signet,,1,100,,,,q_nythraxis_bound_guardian,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,marrowlord_varkas,Marrowlord Varkas,19,19,1,copper,,650,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,marrowlord_varkas,Marrowlord Varkas,19,19,2,item,bone_fragments,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,marrowlord_varkas,Marrowlord Varkas,19,19,3,item,marrowlord_boneboots,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,marrowlord_varkas,Marrowlord Varkas,19,19,4,item,necromancers_legwraps,,0.25,25,,,marrowlord_varkas_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,voskar_emberwing,Voskar the Emberwing,19,19,1,copper,,700,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,voskar_emberwing,Voskar the Emberwing,19,19,2,item,emberwing_cinderscale,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,voskar_emberwing,Voskar the Emberwing,19,19,3,item,emberwing_legguards,,0.25,25,,,voskar_emberwing_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,voskar_emberwing,Voskar the Emberwing,19,19,4,item,emberfang_warblade,,0.25,25,,,voskar_emberwing_chase,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,voskar_emberwing,Voskar the Emberwing,19,19,5,item,stormvotive_hauberk,,0.2,20,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thunzharr_waking_peak,"Thunzharr, the Waking Peak",20,20,1,item,inert_storm_shard,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thunzharr_waking_peak,"Thunzharr, the Waking Peak",20,20,2,item,crownforged_gauntlets,,0.08,8,,,thunzharr_t2,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thunzharr_waking_peak,"Thunzharr, the Waking Peak",20,20,3,item,nighttalon_grips,,0.08,8,,,thunzharr_t2,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thunzharr_waking_peak,"Thunzharr, the Waking Peak",20,20,4,item,soulflame_gloves,,0.08,8,,,thunzharr_t2,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thunzharr_waking_peak,"Thunzharr, the Waking Peak",20,20,5,item,stormcallers_handguards,,0.08,8,,,thunzharr_t2,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thunzharr_waking_peak,"Thunzharr, the Waking Peak",20,20,6,item,crownforged_girdle,,0.08,8,,,thunzharr_t2_belt,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thunzharr_waking_peak,"Thunzharr, the Waking Peak",20,20,7,item,nighttalon_waistband,,0.08,8,,,thunzharr_t2_belt,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thunzharr_waking_peak,"Thunzharr, the Waking Peak",20,20,8,item,soulflame_cord,,0.08,8,,,thunzharr_t2_belt,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thunzharr_waking_peak,"Thunzharr, the Waking Peak",20,20,9,item,stormcallers_waistguard,,0.08,8,,,thunzharr_t2_belt,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thunzharr_waking_peak,"Thunzharr, the Waking Peak",20,20,10,item,vestments_of_the_waking_grove,,0.08,8,,,thunzharr_t2,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,1,copper,,200000,1,100,,,,,"{""heroicCopper"":200000}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,2,item,sigil_anvil_legs,,0.17,17,,,varkhul_sigils,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,3,item,sigil_ember_legs,,0.17,17,,,varkhul_sigils,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,4,item,sigil_tempest_legs,,0.16,16,,,varkhul_sigils,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,5,item,sigil_anvil_helmet,,0.17,17,,,varkhul_sigils,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,6,item,sigil_ember_helmet,,0.16,16,,,varkhul_sigils,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,7,item,sigil_tempest_helmet,,0.17,17,,,varkhul_sigils,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,8,item,cindersoaked_slippers,,0.0390625,3.90625,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,9,item,steps_of_quiet_water,,0.0390625,3.90625,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,10,item,ashenbark_treads,,0.0390625,3.90625,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,11,item,ashrunner_boots,,0.0390625,3.90625,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,12,item,scorchgrove_striders,,0.0390625,3.90625,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,13,item,dewfall_moccasins,,0.0390625,3.90625,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,14,item,anvilstance_sabatons,,0.0390625,3.90625,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,15,item,furnace_march_greaves,,0.0390625,3.90625,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,16,item,thundershock_treads,,0.0390625,3.90625,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,17,item,springwarden_sabatons,,0.0390625,3.90625,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,18,item,seal_of_the_forgewall,,0.08984375,8.98438,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,19,item,band_of_marked_strikes,,0.08984375,8.98438,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,20,item,circle_of_cinders,,0.08984375,8.98438,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,21,item,loop_of_quiet_springs,,0.08984375,8.98438,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,22,item,forgefathers_temper,,0.125,12.5,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,23,item,heart_of_the_crucible,,0.125,12.5,,,varkhul_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,24,item,lastflame_core,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,25,item,lastflame_core,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,26,item,pattern_crucible_str_mail,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,27,item,pattern_crucible_tank_mail,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,28,item,pattern_crucible_caster_mail,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,29,item,pattern_crucible_healer_mail,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,30,item,pattern_crucible_agi_leather,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,31,item,pattern_crucible_str_leather,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,32,item,pattern_crucible_tank_leather,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,33,item,pattern_crucible_caster_leather,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,34,item,pattern_crucible_healer_leather,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,35,item,pattern_crucible_caster_cloth,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,36,item,pattern_crucible_healer_cloth,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,37,item,formula_lastflame_zeal,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,varkhul_forgefather_of_the_last_flame,"Varkhul, Forgefather of the Last Flame",20,20,38,item,forgefathers_ember,,1,100,,,,q_forgefathers_requiem,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,1,copper,,150000,1,100,,,,,"{""heroicCopper"":200000}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,2,item,sigil_anvil_shoulder,,0.17,17,,,ignivar_sigils,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,3,item,sigil_ember_shoulder,,0.17,17,,,ignivar_sigils,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,4,item,sigil_tempest_shoulder,,0.16,16,,,ignivar_sigils,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,5,item,sigil_anvil_gloves,,0.17,17,,,ignivar_sigils,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,6,item,sigil_ember_gloves,,0.16,16,,,ignivar_sigils,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,7,item,sigil_tempest_gloves,,0.17,17,,,ignivar_sigils,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,8,item,pendant_of_the_first_tempering,,0.078125,7.8125,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,9,item,ignivars_ember_choker,,0.078125,7.8125,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,10,item,locket_of_the_last_flame,,0.078125,7.8125,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,11,item,heartspring_amulet,,0.078125,7.8125,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,12,item,cord_of_the_last_flame,,0.01953125,1.95313,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,13,item,springbinder_sash,,0.01953125,1.95313,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,14,item,cinderbark_cinch,,0.01953125,1.95313,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,15,item,slagstalker_belt,,0.01953125,1.95313,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,16,item,moonscorch_waistwrap,,0.01953125,1.95313,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,17,item,grovetender_belt,,0.01953125,1.95313,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,18,item,forgewall_girdle,,0.01953125,1.95313,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,19,item,warforged_waistguard,,0.01953125,1.95313,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,20,item,stormkindled_chain,,0.01953125,1.95313,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,21,item,tidebinder_links,,0.01953125,1.95313,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,22,item,cinderfang_kris,,0.05859375,5.85938,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,23,item,slagrender_cleaver,,0.05859375,5.85938,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,24,item,kindling_orb,,0.125,12.5,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,25,item,molten_fletching,,0.125,12.5,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,26,item,last_flame_lantern,,0.125,12.5,,,ignivar_offset,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,27,item,lastflame_core,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,28,item,lastflame_core,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,29,item,pattern_crucible_str_mail,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,30,item,pattern_crucible_tank_mail,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,31,item,pattern_crucible_caster_mail,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,32,item,pattern_crucible_healer_mail,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,33,item,pattern_crucible_agi_leather,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,34,item,pattern_crucible_str_leather,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,35,item,pattern_crucible_tank_leather,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,36,item,pattern_crucible_caster_leather,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,37,item,pattern_crucible_healer_leather,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,38,item,pattern_crucible_caster_cloth,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,39,item,pattern_crucible_healer_cloth,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ignivar_herald_of_the_last_flame,"Ignivar, Herald of the Last Flame",20,20,40,item,formula_lastflame_zeal,,0.025,2.5,,,crucible_profession_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,crypt_shambler,Crypt Shambler,7,8,1,copper,,90,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,crypt_shambler,Crypt Shambler,7,8,2,item,bone_fragments,,0.8,80,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hollow_acolyte,Hollow Acolyte,8,8,1,copper,,110,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hollow_acolyte,Hollow Acolyte,8,8,2,item,linen_scrap,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,bonechill_widow,Bonechill Widow,8,9,1,copper,,120,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,bonechill_widow,Bonechill Widow,8,9,2,item,spider_leg,,0.7,70,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sexton_marrow,Sexton Marrow,9,9,1,copper,,400,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sexton_marrow,Sexton Marrow,9,9,2,item,quilted_trousers,,0.4,40,,,,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sexton_marrow,Sexton Marrow,9,9,3,item,oiled_boots,,0.4,40,,,,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,morthen,Morthen the Gravecaller,10,10,1,copper,,2500,1,100,,,,,"{""heroicCopper"":100000}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,morthen,Morthen the Gravecaller,10,10,2,item,cryptbone_greaves,,0.34,34,,,morthen_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,morthen,Morthen the Gravecaller,10,10,3,item,quilted_trousers,,0.33,33,,,morthen_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,morthen,Morthen the Gravecaller,10,10,4,item,oiled_boots,,0.33,33,,,morthen_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,morthen,Morthen the Gravecaller,10,10,5,item,greyjaw_hide_boots,,0.25,25,,,morthen_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,morthen,Morthen the Gravecaller,10,10,6,item,gravewoven_bag,,0.2,20,,,morthen_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,morthen,Morthen the Gravecaller,10,10,7,item,cryptbone_helm,,0.18,18,,,morthen_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,morthen,Morthen the Gravecaller,10,10,8,item,cryptbone_pauldrons,,0.18,18,,,morthen_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,bastion_revenant,Bastion Revenant,12,13,1,copper,,150,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,bastion_revenant,Bastion Revenant,12,13,2,item,bone_fragments,,0.7,70,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,bastion_revenant,Bastion Revenant,12,13,3,item,mistveil_cord,,0.06,6,,,revenant_bonus,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,tidebound_acolyte,Tidebound Acolyte,12,13,1,copper,,170,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,tidebound_acolyte,Tidebound Acolyte,12,13,2,item,linen_scrap,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,tidebound_acolyte,Tidebound Acolyte,12,13,3,item,mistveil_grips,,0.06,6,,,acolyte_bonus,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,knight_commander_olen,Knight-Commander Olen,13,13,1,copper,,800,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,knight_commander_olen,Knight-Commander Olen,13,13,2,item,trollhide_leggings,,0.5,50,,,olen_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,knight_commander_olen,Knight-Commander Olen,13,13,3,item,marshstrider_boots,,0.5,50,,,olen_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,knight_commander_olen,Knight-Commander Olen,13,13,4,item,fenmist_robe,,0.25,25,,,olen_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,knight_commander_olen,Knight-Commander Olen,13,13,5,item,tideguard_greaves,,0.1,10,,,olen_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,knight_commander_olen,Knight-Commander Olen,13,13,6,item,tideguard_sabatons,,0.1,10,,,olen_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,knight_commander_olen,Knight-Commander Olen,13,13,7,item,eelscale_leggings,,0.1,10,,,olen_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vael_the_mistcaller,Vael the Fogbinder,13,13,1,copper,,5000,1,100,,,,,"{""heroicCopper"":100000}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vael_the_mistcaller,Vael the Fogbinder,13,13,2,item,trollhide_leggings,,0.34,34,,,vael_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vael_the_mistcaller,Vael the Fogbinder,13,13,3,item,marshstrider_boots,,0.33,33,,,vael_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vael_the_mistcaller,Vael the Fogbinder,13,13,4,item,fenmist_robe,,0.33,33,,,vael_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vael_the_mistcaller,Vael the Fogbinder,13,13,5,item,deepfen_pearl,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vael_the_mistcaller,Vael the Fogbinder,13,13,6,item,eelskin_tunic,,0.2,20,,,vael_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vael_the_mistcaller,Vael the Fogbinder,13,13,7,item,tidescale_vest,,0.1,10,,,vael_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vael_the_mistcaller,Vael the Fogbinder,13,13,8,item,drowned_prayer_leggings,,0.1,10,,,vael_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vael_the_mistcaller,Vael the Fogbinder,13,13,9,item,drowned_prayer_sandals,,0.1,10,,,vael_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vael_the_mistcaller,Vael the Fogbinder,13,13,10,item,eelscale_treads,,0.1,10,,,vael_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vael_the_mistcaller,Vael the Fogbinder,13,13,11,item,mistveil_cord,,0.12,12,,,vael_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vael_the_mistcaller,Vael the Fogbinder,13,13,12,item,mistveil_grips,,0.12,12,,,vael_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,vael_the_mistcaller,Vael the Fogbinder,13,13,13,item,mistcallers_duffel,,0.1,10,,,vael_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sanctum_boneguard,Sanctum Boneguard,19,19,1,copper,,300,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sanctum_boneguard,Sanctum Boneguard,19,19,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sanctum_boneguard,Sanctum Boneguard,19,19,3,item,boundstone_helm,,0.04,4,,,boneguard_bonus,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sanctum_boneguard,Sanctum Boneguard,19,19,4,item,boundstone_girdle,,0.04,4,,,boneguard_bonus,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sanctum_drakonid,Sanctum Scaleguard,19,20,1,copper,,350,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sanctum_drakonid,Sanctum Scaleguard,19,20,2,item,cracked_wyrm_scale,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sanctum_drakonid,Sanctum Scaleguard,19,20,3,item,gravewyrm_mantle,,0.05,5,,,drakonid_bonus,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sanctum_drakonid,Sanctum Scaleguard,19,20,4,item,gravewyrm_gauntlets,,0.05,5,,,drakonid_bonus,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sanctum_drakonid,Sanctum Scaleguard,19,20,5,item,gravewyrm_thornmaul,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,2,item,boneplate_vest,,0.34,34,,,korgath_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,3,item,revenant_silk_robe,,0.33,33,,,korgath_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,4,item,nightwalk_jerkin,,0.33,33,,,korgath_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,5,item,zealotsbane_blade,,0.19,19,,,korgath_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,6,item,korgaths_chainwraps,,0.1,10,,,korgath_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,7,item,staff_of_velkhar,,0.1,10,,,korgath_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,8,item,shadowmeld_tunic,,0.1,10,,,korgath_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,9,item,wyrmcult_grand_robe,,0.1,10,,,korgath_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,10,item,gravewyrm_sabatons,,0.1,10,,,korgath_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,11,item,wyrmcult_soulsteps,,0.1,10,,,korgath_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,12,item,wyrmshadow_treads,,0.05,5,,,korgath_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,13,item,boundstone_helm,,0.08,8,,,korgath_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korgath_the_bound,Korgath the Bound,20,20,14,item,gravewyrm_mantle,,0.08,8,,,korgath_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grand_necromancer_velkhar,Grand Necromancer Velkhar,20,20,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grand_necromancer_velkhar,Grand Necromancer Velkhar,20,20,2,item,boneplate_vest,,0.34,34,,,velkhar_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grand_necromancer_velkhar,Grand Necromancer Velkhar,20,20,3,item,revenant_silk_robe,,0.33,33,,,velkhar_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grand_necromancer_velkhar,Grand Necromancer Velkhar,20,20,4,item,nightwalk_jerkin,,0.33,33,,,velkhar_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grand_necromancer_velkhar,Grand Necromancer Velkhar,20,20,5,item,emberwood_staff,,0.2,20,,,velkhar_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grand_necromancer_velkhar,Grand Necromancer Velkhar,20,20,6,item,boneguard_breastplate,,0.1,10,,,velkhar_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grand_necromancer_velkhar,Grand Necromancer Velkhar,20,20,7,item,shadowmeld_tunic,,0.1,10,,,velkhar_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grand_necromancer_velkhar,Grand Necromancer Velkhar,20,20,8,item,staff_of_velkhar,,0.1,10,,,velkhar_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grand_necromancer_velkhar,Grand Necromancer Velkhar,20,20,9,item,gravewyrm_stalkers_treads,,0.1,10,,,velkhar_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grand_necromancer_velkhar,Grand Necromancer Velkhar,20,20,10,item,deathlord_legguards,,0.05,5,,,velkhar_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grand_necromancer_velkhar,Grand Necromancer Velkhar,20,20,11,item,necromancers_soulsteps,,0.05,5,,,velkhar_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grand_necromancer_velkhar,Grand Necromancer Velkhar,20,20,12,item,wyrmshadow_legguards,,0.05,5,,,velkhar_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grand_necromancer_velkhar,Grand Necromancer Velkhar,20,20,13,item,necromancers_reagent_satchel,,0.2,20,,,velkhar_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,1,copper,,15000,1,100,,,,,"{""heroicCopper"":100000}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,2,item,boneplate_vest,,0.34,34,,,korzul_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,3,item,revenant_silk_robe,,0.33,33,,,korzul_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,4,item,nightwalk_jerkin,,0.33,33,,,korzul_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,5,item,cultist_flayer,,0.1,10,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,6,item,wyrmfang_greatblade,,0.05,5,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,7,item,staff_of_the_gravewyrm,,0.05,5,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,8,item,fang_of_korzul,,0.05,5,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,9,item,deathlord_warplate,,0.05,5,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,10,item,necromancers_starshroud,,0.05,5,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,11,item,wyrmshadow_harness,,0.05,5,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,12,item,boundstone_girdle,,0.05,5,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,13,item,gravewyrm_gauntlets,,0.05,5,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,14,item,deathlords_dread_visage,,0.04,4,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,15,item,necromancers_soulspire_mantle,,0.04,4,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,16,item,wyrmshadow_talongrips,,0.04,4,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,17,item,nightfangs_greatstaff,,0.05,5,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,18,item,wildgrowth_leggings,,0.05,5,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,19,item,grovewardens_grips,,0.05,5,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,20,item,verdant_walkers,,0.05,5,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,korzul_the_gravewyrm,Korzul the Gravewyrm,20,20,21,item,gravewyrm_bone_quiver,,0.05,5,,,korzul_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,1,copper,,150000,1,100,,,,,"{""heroicCopper"":200000}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,2,item,deathless_heartwood,,0.03,3,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,3,item,kingsbane_last_oath,,0.03,3,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,4,item,bonewrought_greatsword,,0.021252173913043477,2.12522,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,5,item,crownforged_dreadhelm,,0.08827826086956521,8.82783,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,6,item,nighttalon_crown,,0.08827826086956521,8.82783,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,7,item,soulflame_cowl,,0.042504347826086954,4.25043,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,8,item,stormcallers_crown,,0.042504347826086954,4.25043,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,9,item,nighttalon_shoulderguards,,0.08827826086956521,8.82783,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,10,item,soulflame_mantle,,0.08827826086956521,8.82783,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,11,item,bonewrought_bulwark,,0.021252173913043477,2.12522,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,12,item,crownforged_warspaulders,,0.04577391304347826,4.57739,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,13,item,stormcallers_spaulders,,0.04577391304347826,4.57739,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,14,item,wraithfire_orb,,0.02288695652173913,2.2887,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,15,item,direfang_quiver,,0.02288695652173913,2.2887,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,16,item,direfang_greatblade,,0.026156521739130432,2.61565,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,17,item,maul_of_the_scourged_wilds,,0.0408695652173913,4.08696,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,18,item,bramblehide_crown,,0.013078260869565216,1.30783,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,19,item,bramblehide_mantle,,0.013078260869565216,1.30783,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,20,item,bramblehide_harness,,0.013078260869565216,1.30783,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,21,item,bramblehide_cinch,,0.013078260869565216,1.30783,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,22,item,bramblehide_legguards,,0.013078260869565216,1.30783,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,23,item,bramblehide_grips,,0.013078260869565216,1.30783,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,24,item,bramblehide_treads,,0.013078260869565216,1.30783,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,25,item,courtiers_bonefang,,0.024521739130434782,2.45217,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,26,item,thornpeak_wardblade,,0.024521739130434782,2.45217,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,27,item,gravecourt_hewer,,0.02288695652173913,2.2887,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,28,item,votive_ward_of_the_deathless_court,,0.02288695652173913,2.2887,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,29,item,thornpeak_moonhide_cowl,,0.02288695652173913,2.2887,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,30,item,stormhymn_chain_grips,,0.02288695652173913,2.2887,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,31,item,stormhymn_chain_treads,,0.022886956521739554,2.2887,,,nythraxis_drop_1,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,32,item,bonewrought_greatsword,,0.022608695652173914,2.26087,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,33,item,crownforged_dreadhelm,,0.09391304347826086,9.3913,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,34,item,nighttalon_crown,,0.09391304347826086,9.3913,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,35,item,soulflame_cowl,,0.04521739130434783,4.52174,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,36,item,stormcallers_crown,,0.04521739130434783,4.52174,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,37,item,nighttalon_shoulderguards,,0.09391304347826086,9.3913,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,38,item,soulflame_mantle,,0.09391304347826086,9.3913,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,39,item,bonewrought_bulwark,,0.022608695652173914,2.26087,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,40,item,crownforged_warspaulders,,0.04869565217391304,4.86957,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,41,item,stormcallers_spaulders,,0.04869565217391304,4.86957,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,42,item,wraithfire_orb,,0.02434782608695652,2.43478,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,43,item,direfang_quiver,,0.02434782608695652,2.43478,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,44,item,direfang_greatblade,,0.02782608695652174,2.78261,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,45,item,maul_of_the_scourged_wilds,,0.043478260869565216,4.34783,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,46,item,bramblehide_crown,,0.01391304347826087,1.3913,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,47,item,bramblehide_mantle,,0.01391304347826087,1.3913,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,48,item,bramblehide_harness,,0.01391304347826087,1.3913,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,49,item,bramblehide_cinch,,0.01391304347826087,1.3913,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,50,item,bramblehide_legguards,,0.01391304347826087,1.3913,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,51,item,bramblehide_grips,,0.01391304347826087,1.3913,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,52,item,bramblehide_treads,,0.01391304347826087,1.3913,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,53,item,courtiers_bonefang,,0.02608695652173913,2.6087,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,54,item,thornpeak_wardblade,,0.02608695652173913,2.6087,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,55,item,gravecourt_hewer,,0.02434782608695652,2.43478,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,56,item,votive_ward_of_the_deathless_court,,0.02434782608695652,2.43478,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,57,item,thornpeak_moonhide_cowl,,0.02434782608695652,2.43478,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,58,item,stormhymn_chain_grips,,0.02434782608695652,2.43478,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,59,item,stormhymn_chain_treads,,0.02434782608695696,2.43478,,,nythraxis_drop_2,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,60,item,pattern_duskforged_warblade,,0.04,4,,,nythraxis_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,61,item,pattern_ridgebreaker,,0.04,4,,,nythraxis_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,62,item,pattern_duskforged_bulwark,,0.04,4,,,nythraxis_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,63,item,pattern_wyrmfall_pendant,,0.04,4,,,nythraxis_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,64,item,pattern_warhewn_signet,,0.04,4,,,nythraxis_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,65,item,pattern_prismglass_loop,,0.04,4,,,nythraxis_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,66,item,pattern_gyrelens_array,,0.04,4,,,nythraxis_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,67,item,pattern_masters_field_forge,,0.04,4,,,nythraxis_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,68,item,pattern_makers_charm,,0.04,4,,,nythraxis_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,69,item,pattern_voidbound_grimoire,,0.04,4,,,nythraxis_patterns,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,70,item,pattern_harvest_feast,,0.04,4,,,nythraxis_farm,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,71,item,gilded_sunmelon_seed,,0.04,4,,,nythraxis_farm,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,72,item,evergarden_greens_seed,,0.04,4,,,nythraxis_farm,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,73,item,gilded_yam_seed,,0.04,4,,,nythraxis_farm,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nythraxis_scourge_of_thornpeak,"Nythraxis, Scourge of Thornpeak",20,20,74,item,evergarden_pumpkin_seed,,0.04,4,,,nythraxis_farm,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,glimmermere_wader,Glimmermere Wader,15,16,1,copper,,70,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,glimmermere_wader,Glimmermere Wader,15,16,2,item,pale_pearl,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,glimmermere_wader,Glimmermere Wader,15,16,3,item,moonpale_scale,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_votary,Drowned Votary,15,16,1,copper,,80,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_votary,Drowned Votary,15,16,2,item,drowned_offering,,0.6,60,,,,q_drowned_choir,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_votary,Drowned Votary,15,16,3,item,briny_idol,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_votary,Drowned Votary,15,16,4,item,tidehymn_slippers,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sethrael_palecoil,Sethrael the Palecoil,16,16,1,copper,,500,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sethrael_palecoil,Sethrael the Palecoil,16,16,2,item,palecoil_heartscale,,1,100,,,,q_palecoil,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sethrael_palecoil,Sethrael the Palecoil,16,16,3,item,moonpale_scale,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sethrael_palecoil,Sethrael the Palecoil,16,16,4,item,pale_pearl,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sethrael_palecoil,Sethrael the Palecoil,16,16,5,item,pearlward_aegis,,0.2,20,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_templeguard,Drowned Templeguard,16,17,1,copper,,200,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_templeguard,Drowned Templeguard,16,17,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_templeguard,Drowned Templeguard,16,17,3,item,pale_pearl,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,pale_choir_acolyte,Pale Choir Acolyte,16,17,1,copper,,220,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,pale_choir_acolyte,Pale Choir Acolyte,16,17,2,item,linen_scrap,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,pale_choir_acolyte,Pale Choir Acolyte,16,17,3,item,briny_idol,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,glimmerscale_lurker,Glimmerscale Lurker,16,17,1,copper,,200,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,glimmerscale_lurker,Glimmerscale Lurker,16,17,2,item,spider_leg,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,glimmerscale_lurker,Glimmerscale Lurker,16,17,3,item,moonpale_scale,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,pearlguard_sentinel,Pearlguard Sentinel,17,18,1,copper,,260,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,pearlguard_sentinel,Pearlguard Sentinel,17,18,2,item,pale_pearl,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,pearlguard_sentinel,Pearlguard Sentinel,17,18,3,item,moonpale_scale,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,choirmother_selthe,Choirmother Selthe,18,18,1,copper,,700,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,choirmother_selthe,Choirmother Selthe,18,18,2,item,selthes_seastriders,,0.4,40,,,,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,choirmother_selthe,Choirmother Selthe,18,18,3,item,briny_idol,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ysolei,"Ysolei, Avatar of the Drowned Moon",18,18,1,copper,,6000,1,100,,,,,"{""heroicCopper"":100000}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ysolei,"Ysolei, Avatar of the Drowned Moon",18,18,2,item,ysols_pearl_greaves,,0.5,50,,,,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ysolei,"Ysolei, Avatar of the Drowned Moon",18,18,3,item,moonshroud_breastplate,,0.34,34,,,ysolei_blue,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ysolei,"Ysolei, Avatar of the Drowned Moon",18,18,4,item,moonshroud_robe,,0.33,33,,,ysolei_blue,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ysolei,"Ysolei, Avatar of the Drowned Moon",18,18,5,item,moonshroud_tunic,,0.33,33,,,ysolei_blue,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,reliquary_ledger_wraith,Ledger Wraith,7,8,1,copper,,6,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,reliquary_funeral_ringer,Funeral Ringer,7,8,1,copper,,8,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,reliquary_gravecall_acolyte,Gravecall Acolyte,7,8,1,copper,,10,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,reliquary_bonewalker,Raised Bonewalker,7,8,1,copper,,3,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,reliquary_saintless_effigy,Saintless Effigy,8,8,1,copper,,60,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deacon_varric,Deacon Vandric,9,9,1,copper,,320,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_cantor,Drowned Cantor,12,13,1,copper,,10,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,reedbound_acolyte,Reedbound Acolyte,12,13,1,copper,,9,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,deepfen_spearjaw,Deepfen Spearjaw,12,13,1,copper,,7,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mirefen_widowling,Mirefen Widowling,12,13,1,copper,,6,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,grave_silt_bulwark,Grave-Silt Bulwark,13,13,1,copper,,64,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sump_troll_devourer,Sump Troll Devourer,13,14,1,copper,,70,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,choir_thrall,Bog Thrall,12,12,1,copper,,3,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sister_nhalia_drowned_canticle,"Sister Nhalia, the Drowned Canticle",14,14,1,copper,,340,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_frost_revenant,Frostbound Revenant,18,23,1,copper,,120,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_frost_revenant,Frostbound Revenant,18,23,2,item,hoarfrost_edge,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_frost_revenant,Frostbound Revenant,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_rime_elemental,Rime Elemental,18,23,1,copper,,130,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_rime_elemental,Rime Elemental,18,23,2,item,hoarfrost_edge,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_rime_elemental,Rime Elemental,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_ember_fiend,Ember Fiend,18,23,1,copper,,130,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_ember_fiend,Ember Fiend,18,23,2,item,emberforge_gauntlets,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_ember_fiend,Ember Fiend,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_magma_brute,Magma Brute,18,23,1,copper,,150,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_magma_brute,Magma Brute,18,23,2,item,emberforge_gauntlets,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_magma_brute,Magma Brute,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_venom_weaver,Venom Weaver,18,23,1,copper,,120,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_venom_weaver,Venom Weaver,18,23,2,item,broodmother_carapace,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_venom_weaver,Venom Weaver,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_thornback,Thornback Stalker,18,23,1,copper,,130,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_thornback,Thornback Stalker,18,23,2,item,broodmother_carapace,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_thornback,Thornback Stalker,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boneclad,Boneclad Warrior,18,23,1,copper,,140,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boneclad,Boneclad Warrior,18,23,2,item,bonelord_mantle,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boneclad,Boneclad Warrior,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_marrow_troll,Marrow Troll,18,23,1,copper,,160,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_marrow_troll,Marrow Troll,18,23,2,item,bonelord_mantle,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_marrow_troll,Marrow Troll,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_marrow_golem,Marrow Golem,18,23,1,copper,,160,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_marrow_golem,Marrow Golem,18,23,2,item,bonelord_mantle,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_marrow_golem,Marrow Golem,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_void_acolyte,Voidscar Acolyte,18,23,1,copper,,130,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_void_acolyte,Voidscar Acolyte,18,23,2,item,voidscar_handwraps,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_void_acolyte,Voidscar Acolyte,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_dread_stalker,Dread Stalker,18,23,1,copper,,140,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_dread_stalker,Dread Stalker,18,23,2,item,voidscar_handwraps,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_dread_stalker,Dread Stalker,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_storm_caller,Storm Caller,18,23,1,copper,,140,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_storm_caller,Storm Caller,18,23,2,item,stormscale_treads,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_storm_caller,Storm Caller,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_stormscale,Stormscale Drake,18,23,1,copper,,160,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_stormscale,Stormscale Drake,18,23,2,item,stormscale_treads,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_stormscale,Stormscale Drake,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_tide_thrall,Tide Thrall,18,23,1,copper,,130,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_tide_thrall,Tide Thrall,18,23,2,item,abyssal_loop,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_tide_thrall,Tide Thrall,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_deep_lurker,Deep Lurker,18,23,1,copper,,130,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_deep_lurker,Deep Lurker,18,23,2,item,abyssal_loop,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_deep_lurker,Deep Lurker,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_stone_ogre,Stone Ogre,18,23,1,copper,,170,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_stone_ogre,Stone Ogre,18,23,2,item,graskbreaker_girdle,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_stone_ogre,Stone Ogre,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_hellguard,Hellguard,18,23,1,copper,,160,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_hellguard,Hellguard,18,23,2,item,pactbound_vestments,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_hellguard,Hellguard,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_pact_acolyte,Pact Acolyte,18,23,1,copper,,140,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_pact_acolyte,Pact Acolyte,18,23,2,item,pactbound_vestments,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_pact_acolyte,Pact Acolyte,18,23,3,item,rift_essence,,0.05,5,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_frost,Hoarfrost Warden,18,23,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_frost,Hoarfrost Warden,18,23,2,item,hoarfrost_edge,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_frost,Hoarfrost Warden,18,23,3,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_frost,Hoarfrost Warden,18,23,4,item,rift_essence,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_ember,Emberforge Tyrant,18,23,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_ember,Emberforge Tyrant,18,23,2,item,emberforge_gauntlets,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_ember,Emberforge Tyrant,18,23,3,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_ember,Emberforge Tyrant,18,23,4,item,rift_essence,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_venom,Broodmother Vysska,18,23,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_venom,Broodmother Vysska,18,23,2,item,broodmother_carapace,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_venom,Broodmother Vysska,18,23,3,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_venom,Broodmother Vysska,18,23,4,item,rift_essence,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_necro,Bonelord Xarreth,18,23,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_necro,Bonelord Xarreth,18,23,2,item,bonelord_mantle,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_necro,Bonelord Xarreth,18,23,3,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_necro,Bonelord Xarreth,18,23,4,item,rift_essence,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_brute,Warlord Grask,18,23,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_brute,Warlord Grask,18,23,2,item,graskbreaker_girdle,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_brute,Warlord Grask,18,23,3,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_brute,Warlord Grask,18,23,4,item,rift_essence,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_arcane,Archon Nyxaris,18,23,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_arcane,Archon Nyxaris,18,23,2,item,voidscar_handwraps,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_arcane,Archon Nyxaris,18,23,3,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_arcane,Archon Nyxaris,18,23,4,item,rift_essence,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_storm,Tempest Vharok,18,23,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_storm,Tempest Vharok,18,23,2,item,stormscale_treads,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_storm,Tempest Vharok,18,23,3,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_storm,Tempest Vharok,18,23,4,item,rift_essence,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_tide,Abyssal Maw,18,23,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_tide,Abyssal Maw,18,23,2,item,abyssal_loop,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_tide,Abyssal Maw,18,23,3,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_tide,Abyssal Maw,18,23,4,item,rift_essence,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_ritualist,Magus Vel'Kor the Pactbound,18,23,1,copper,,2200,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_ritualist,Magus Vel'Kor the Pactbound,18,23,2,item,pactbound_vestments,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_ritualist,Magus Vel'Kor the Pactbound,18,23,3,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_ritualist,Magus Vel'Kor the Pactbound,18,23,4,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_pitlord,"Azgorath, Lord of the Pit",18,23,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_pitlord,"Azgorath, Lord of the Pit",18,23,2,item,pitlords_cleaver,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_pitlord,"Azgorath, Lord of the Pit",18,23,3,item,pactbound_vestments,,0.15,15,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_pitlord,"Azgorath, Lord of the Pit",18,23,4,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rift_boss_pitlord,"Azgorath, Lord of the Pit",18,23,5,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hoard_boss_mushroom,Mother of Mushrooms,18,23,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hoard_boss_mushroom,Mother of Mushrooms,18,23,2,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hoard_boss_mushroom,Mother of Mushrooms,18,23,3,item,rift_essence,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hoard_boss_mole,Deeprake,18,23,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hoard_boss_mole,Deeprake,18,23,2,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hoard_boss_mole,Deeprake,18,23,3,item,rift_essence,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hoard_boss_bat,Colossal Bat,18,23,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hoard_boss_bat,Colossal Bat,18,23,2,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hoard_boss_bat,Colossal Bat,18,23,3,item,rift_essence,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hoard_boss_mimic,Voracious Chest,18,23,1,copper,,5000,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hoard_boss_mimic,Voracious Chest,18,23,2,item,rift_essence,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hoard_boss_mimic,Voracious Chest,18,23,3,item,rift_essence,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,glimmerwisp,Glimmerwisp,15,16,1,copper,,75,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,glimmerwisp,Glimmerwisp,15,16,2,item,wisp_mote,,0.6,60,,,,q_wisp_lights,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,duskwisp,Duskwisp,15,16,1,copper,,70,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,duskwisp,Duskwisp,15,16,2,item,duskwisp_essence,,0.6,60,,,,q_veil_thinned,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,duskwisp,Duskwisp,15,16,3,item,starfall_shard,,0.5,50,,,,q_shards_of_starfall,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,veiled_stag,Veiled Stag,15,16,1,copper,,45,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,veiled_stag,Veiled Stag,15,16,2,item,gleaming_antler,,0.55,55,,,,q_gleaming_antlers,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,veiled_doe,Veiled Doe,14,15,1,copper,,40,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gleamstag,The Gleamstag,17,17,1,copper,,260,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gleamstag,The Gleamstag,17,17,2,item,gleamstag_charm,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mushroom_pixie,Gleamfolk Pixie,15,16,1,copper,,80,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sporeling_gatherer,Sporeling Gatherer,15,15,1,copper,,75,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,corrupted_sporeling,Corrupted Sporeling,16,17,1,copper,,85,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,corrupted_sporeling,Corrupted Sporeling,16,17,2,item,spore_heart,,0.65,65,,,,q_spore_hearts,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,treant_elder,Treant Elder,18,18,1,copper,,90,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,treant_elder,Treant Elder,18,18,2,item,elder_bark,,0.7,70,,,,q_treant_accord,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ancient_guardian,Ancient Guardian,18,19,1,copper,,95,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ancient_guardian,Ancient Guardian,18,19,2,item,guardian_core,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_marrowshell,Old Marrowshell,17,17,1,copper,,700,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_marrowshell,Old Marrowshell,17,17,2,item,guardian_core,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,old_marrowshell,Old Marrowshell,17,17,3,item,duskfang_dirk,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,aurelhorn,"Aurelhorn, First of the Herd",18,18,1,copper,,700,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,aurelhorn,"Aurelhorn, First of the Herd",18,18,2,item,gleaming_antler,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,aurelhorn,"Aurelhorn, First of the Herd",18,18,3,item,veilsteel_blade,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,waking_warden,The Waking Warden,20,20,1,copper,,600,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,waking_warden,The Waking Warden,20,20,2,item,wardens_seal,,1,100,,,,q_waking_warden,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,emberwing_drake,Emberwing Drake,19,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,emberwing_drake,Emberwing Drake,19,20,2,item,emberwing_scale,,0.7,70,,,,q_dk_scales_of_the_maw,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,dragonkin_whelp,Dragonkin Whelp,19,20,1,copper,,15,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,dragonkin_broodguard,Dragonkin Broodguard,19,20,1,copper,,90,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,dragonkin_broodguard,Dragonkin Broodguard,19,20,2,item,emberwing_scale,,0.5,50,,,,q_dk_scales_of_the_maw,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drakemaw_broodlord,Drakemaw Broodlord,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drakemaw_broodlord,Drakemaw Broodlord,20,20,2,item,emberwing_scale,,0.9,90,,,,q_dk_scales_of_the_maw,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ashbone_raider,Ashbone Raider,17,18,1,copper,,90,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ashbone_raider,Ashbone Raider,17,18,2,item,bone_fragments,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ashbone_raider,Ashbone Raider,17,18,3,item,ashbone_war_brand,,0.6,60,,,,q_dk_marrow_and_ash,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ashbone_warcaller,Ashbone Warcaller,18,19,1,copper,,95,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ashbone_warcaller,Ashbone Warcaller,18,19,2,item,bone_fragments,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ashbone_warcaller,Ashbone Warcaller,18,19,3,item,ashbone_war_brand,,0.6,60,,,,q_dk_marrow_and_ash,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,dune_troll,Dune Troll,17,19,1,copper,,90,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,dune_troll,Dune Troll,17,19,2,item,chipped_tusk,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,cindraleth_maw_matriarch,Cindraleth the Maw Matriarch,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,cindraleth_maw_matriarch,Cindraleth the Maw Matriarch,20,20,2,item,marrowpoint,,0.15,15,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_stalker,Vineclaw Stalker,20,20,1,copper,,360,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_stalker,Vineclaw Stalker,20,20,2,item,chipped_tusk,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_ravager,Bloodmane Ravager,20,20,1,copper,,450,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_ravager,Bloodmane Ravager,20,20,2,item,chipped_tusk,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_hexcaller,Sunbone Hexcaller,20,20,1,copper,,430,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_hexcaller,Sunbone Hexcaller,20,20,2,item,chipped_tusk,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_beastmaster,Fanglord Beastmaster,20,20,1,copper,,2500,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_beastmaster,Fanglord Beastmaster,20,20,2,item,chipped_tusk,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_beastmaster,Fanglord Beastmaster,20,20,3,item,fanglords_beastspear,,0.12,12,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_beastmaster,Fanglord Beastmaster,20,20,4,item,duskwhisper,,0.12,12,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_high_priest,"Zulgar, Voice of the Basin",20,20,1,copper,,15000,1,100,,,,,"{""heroicCopper"":100000}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_high_priest,"Zulgar, Voice of the Basin",20,20,2,item,bone_fragments,,0.8,80,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_high_priest,"Zulgar, Voice of the Basin",20,20,3,item,bloodmane_warleggings,,0.34,34,,,zulgar_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_high_priest,"Zulgar, Voice of the Basin",20,20,4,item,vineclaw_stalking_breeches,,0.33,33,,,zulgar_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_high_priest,"Zulgar, Voice of the Basin",20,20,5,item,sunbone_ritual_sarong,,0.33,33,,,zulgar_guaranteed_uncommon,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_high_priest,"Zulgar, Voice of the Basin",20,20,6,item,wildheart_tuskblade,,0.06,6,,,wildheart_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_high_priest,"Zulgar, Voice of the Basin",20,20,7,item,wildheart_hexwood_staff,,0.06,6,,,wildheart_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wildheart_high_priest,"Zulgar, Voice of the Basin",20,20,8,item,wildheart_fangknife,,0.06,6,,,wildheart_bonus,,"{""normalOnly"":true}",true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,snowdrift_wolf,Snowdrift Wolf,17,18,1,copper,,80,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,snowdrift_wolf,Snowdrift Wolf,17,18,2,item,thick_winter_pelt,,0.6,60,,,,q_fv_winter_pelts,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ice_wisp,Ice Wisp,17,18,1,copper,,90,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,ice_wisp,Ice Wisp,17,18,2,item,aurora_mote,,0.65,65,,,,q_fv_aurora_motes,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,rime_elemental,Rime Elemental,18,19,1,copper,,95,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,fen_sprite,Fen Sprite,17,18,1,copper,,90,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,terrace_howler,Terrace Howler,19,20,1,copper,,105,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,frostmane_yeti,Rimemane Yeti,19,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gilded_stag,Gilded Stag,18,19,1,item,gilded_sap_clot,,0.6,60,,,,q_af_amber_from_the_herd,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gloam_fox,Gloam Fox,18,18,1,copper,,90,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,orchard_treant,Orchard Treant,19,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,orchard_treant,Orchard Treant,19,20,2,item,tangled_weed,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,harvest_sprite,Gleaning Sprite,18,19,1,copper,,95,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mere_lurker,Mere Lurker,19,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mere_lurker,Mere Lurker,19,20,2,item,mudfin_scale,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,the_meredark,The Meredark,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,the_meredark,The Meredark,20,20,2,item,mudfin_scale,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,bogtoad,Bogtoad,19,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,bogtoad,Bogtoad,19,20,2,item,plump_fen_eel,,0.6,60,,,,q_wf_eels_for_the_smokehouse,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowsy_croaker,The Drowsy Croaker,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,lily_wisp,Lily Wisp,19,19,1,copper,,95,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,lily_wisp,Lily Wisp,19,19,2,item,wisplight_globe,,0.65,65,,,,q_wf_wisplight_charms,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,willow_sprite,Willow Sprite,19,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,moonfleece_grazer,Moonfleece Grazer,20,20,1,copper,,105,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,moonfleece_grazer,Moonfleece Grazer,20,20,2,item,moonfleece_tuft,,0.6,60,,,,q_nb_wool_by_moonlight,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gloam_strider,Gloam Strider,20,20,1,copper,,105,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,nightkin_stargazer,Gloamkin Stargazer,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,barrow_king,The Barrow King,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,barrow_king,The Barrow King,20,20,2,item,bone_fragments,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,barrow_wight,Barrow Wight,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,barrow_wight,Barrow Wight,20,20,2,item,bone_fragments,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,widowsilk_spinner,Widowsilk Spinner,20,20,1,copper,,105,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,widowsilk_spinner,Widowsilk Spinner,20,20,2,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,widowsilk_spinner,Widowsilk Spinner,20,20,3,item,widowsilk_skein,,0.6,60,,,,q_ww_widows_skeins,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wood_wraith,Wood Wraith,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gravenbark_shambler,Gravenbark Shambler,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gravenbark_shambler,Gravenbark Shambler,20,20,2,item,tangled_weed,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,pale_huntsman,The Pale Huntsman,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,pale_huntsman,The Pale Huntsman,20,20,2,item,bone_fragments,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,tide_scuttler,Tide Scuttler,20,20,1,copper,,105,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,thicket_boar,Thicket Boar,20,20,1,copper,,105,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,canopy_weaver,Canopy Weaver,20,20,1,copper,,105,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,canopy_weaver,Canopy Weaver,20,20,2,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,canopy_weaver,Canopy Weaver,20,20,3,item,canopy_silk_hank,,0.6,60,,,,q_pr_canopy_silk,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,idol_guardian,The Idol Guardian,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,topiary_stag,Topiary Stag,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,topiary_stag,Topiary Stag,20,20,2,item,evergarden_bloom_clipping,,0.65,65,,,,q_eg_bloom_clippings,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,topiary_wolf,Topiary Wolf,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hedge_knight,Dawnhold Knight,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hedge_knight,Dawnhold Knight,20,20,2,item,linen_scrap,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hedge_gnome,Hedge Gnome,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,hedge_gnome,Hedge Gnome,20,20,2,item,hedgewick_shears,,0.6,60,,,,q_eg_stolen_shears,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,the_topiary_bull,The Topiary Bull,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,the_topiary_bull,The Topiary Bull,20,20,2,item,tangled_weed,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,moor_ram,Moor Ram,20,20,1,copper,,105,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,moor_ram,Moor Ram,20,20,2,item,galecrest_ram_wool,,0.65,65,,,,q_gc_wool_off_the_downs,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,gale_wisp,Gale Wisp,20,20,1,copper,,105,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,shoal_scuttler,Shoal Scuttler,20,20,1,copper,,105,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,downs_bandit,Downs Bandit,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,downs_bandit,Downs Bandit,20,20,2,item,bandit_bandana,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,downs_bandit,Downs Bandit,20,20,3,item,linen_scrap,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wreck_thief,Wreckfield Thief,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wreck_thief,Wreckfield Thief,20,20,2,item,bandit_bandana,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,wreck_thief,Wreckfield Thief,20,20,3,item,linen_scrap,,0.3,30,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,the_wreck_warden,The Wreck Warden,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,the_wreck_warden,The Wreck Warden,20,20,2,item,bone_fragments,,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_deckhand,Drowned Deckhand,20,20,1,copper,,100,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,drowned_deckhand,Drowned Deckhand,20,20,2,item,bone_fragments,,0.5,50,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,riftspawn,Riftspawn,3,4,1,copper,,20,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,riftspawn,Riftspawn,3,4,2,item,farshore_salt_moss,,0.6,60,,,,q_fs_moss_and_mending,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,breach_wretch,Breach Wretch,3,5,1,copper,,20,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,breach_wretch,Breach Wretch,3,5,2,item,breakscarred_steel,,0.6,60,,,,q_fs_steel_for_the_redoubt,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,void_stalker,Void Stalker,5,6,1,copper,,26,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,sundered_horror,The Sundered Horror,7,7,1,copper,,35,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,training_effigy,Training Effigy,1,1,1,copper,,1,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,shore_scuttler,Shore Scuttler,1,2,1,copper,,4,1,100,,,,,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mister_crabs,Mister Crabs,2,2,1,copper,,30,1,100,,,,q_ps_mother_of_pearl,{},true,true,NOT_VERIFIED
+CLAUDECRAFT_PINNED,mister_crabs,Mister Crabs,2,2,2,item,ps_lustrous_pearl,,1,100,,,,q_ps_mother_of_pearl,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_21,Forest Wolf — HIGHFLY 21–29,21,29,1,copper,,9,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_21,Forest Wolf — HIGHFLY 21–29,21,29,2,item,wolf_fang,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_21,Forest Wolf — HIGHFLY 21–29,21,29,3,item,rough_hide,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_30,Forest Wolf — HIGHFLY 30–39,30,39,1,copper,,14,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_30,Forest Wolf — HIGHFLY 30–39,30,39,2,item,wolf_fang,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_30,Forest Wolf — HIGHFLY 30–39,30,39,3,item,rough_hide,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_40,Forest Wolf — HIGHFLY 40–49,40,49,1,copper,,20,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_40,Forest Wolf — HIGHFLY 40–49,40,49,2,item,wolf_fang,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_40,Forest Wolf — HIGHFLY 40–49,40,49,3,item,rough_hide,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_50,Forest Wolf — HIGHFLY 50–59,50,59,1,copper,,26,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_50,Forest Wolf — HIGHFLY 50–59,50,59,2,item,wolf_fang,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_50,Forest Wolf — HIGHFLY 50–59,50,59,3,item,rough_hide,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_60,Forest Wolf — HIGHFLY 60–69,60,69,1,copper,,32,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_60,Forest Wolf — HIGHFLY 60–69,60,69,2,item,wolf_fang,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_60,Forest Wolf — HIGHFLY 60–69,60,69,3,item,rough_hide,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_70,Forest Wolf — HIGHFLY 70–79,70,79,1,copper,,38,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_70,Forest Wolf — HIGHFLY 70–79,70,79,2,item,wolf_fang,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_70,Forest Wolf — HIGHFLY 70–79,70,79,3,item,rough_hide,,0.14,14,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_80,Forest Wolf — HIGHFLY 80–89,80,89,1,copper,,44,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_80,Forest Wolf — HIGHFLY 80–89,80,89,2,item,wolf_fang,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_80,Forest Wolf — HIGHFLY 80–89,80,89,3,item,rough_hide,,0.14,14,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_90,Forest Wolf — HIGHFLY 90–99,90,99,1,copper,,50,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_90,Forest Wolf — HIGHFLY 90–99,90,99,2,item,wolf_fang,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_wolf_90,Forest Wolf — HIGHFLY 90–99,90,99,3,item,rough_hide,,0.16,16,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_21,Sableweb Lurker — HIGHFLY 21–29,21,29,1,copper,,15,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_21,Sableweb Lurker — HIGHFLY 21–29,21,29,2,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_21,Sableweb Lurker — HIGHFLY 21–29,21,29,3,item,spider_silk,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_30,Sableweb Lurker — HIGHFLY 30–39,30,39,1,copper,,25,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_30,Sableweb Lurker — HIGHFLY 30–39,30,39,2,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_30,Sableweb Lurker — HIGHFLY 30–39,30,39,3,item,spider_silk,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_40,Sableweb Lurker — HIGHFLY 40–49,40,49,1,copper,,35,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_40,Sableweb Lurker — HIGHFLY 40–49,40,49,2,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_40,Sableweb Lurker — HIGHFLY 40–49,40,49,3,item,spider_silk,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_50,Sableweb Lurker — HIGHFLY 50–59,50,59,1,copper,,46,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_50,Sableweb Lurker — HIGHFLY 50–59,50,59,2,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_50,Sableweb Lurker — HIGHFLY 50–59,50,59,3,item,spider_silk,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_60,Sableweb Lurker — HIGHFLY 60–69,60,69,1,copper,,56,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_60,Sableweb Lurker — HIGHFLY 60–69,60,69,2,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_60,Sableweb Lurker — HIGHFLY 60–69,60,69,3,item,spider_silk,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_70,Sableweb Lurker — HIGHFLY 70–79,70,79,1,copper,,67,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_70,Sableweb Lurker — HIGHFLY 70–79,70,79,2,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_70,Sableweb Lurker — HIGHFLY 70–79,70,79,3,item,spider_silk,,0.14,14,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_80,Sableweb Lurker — HIGHFLY 80–89,80,89,1,copper,,77,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_80,Sableweb Lurker — HIGHFLY 80–89,80,89,2,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_80,Sableweb Lurker — HIGHFLY 80–89,80,89,3,item,spider_silk,,0.14,14,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_90,Sableweb Lurker — HIGHFLY 90–99,90,99,1,copper,,88,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_90,Sableweb Lurker — HIGHFLY 90–99,90,99,2,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_spider_90,Sableweb Lurker — HIGHFLY 90–99,90,99,3,item,spider_silk,,0.16,16,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_21,Restless Bones — HIGHFLY 21–29,21,29,1,copper,,32,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_21,Restless Bones — HIGHFLY 21–29,21,29,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_21,Restless Bones — HIGHFLY 21–29,21,29,3,item,homespun_cloth,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_30,Restless Bones — HIGHFLY 30–39,30,39,1,copper,,53,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_30,Restless Bones — HIGHFLY 30–39,30,39,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_30,Restless Bones — HIGHFLY 30–39,30,39,3,item,homespun_cloth,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_40,Restless Bones — HIGHFLY 40–49,40,49,1,copper,,75,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_40,Restless Bones — HIGHFLY 40–49,40,49,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_40,Restless Bones — HIGHFLY 40–49,40,49,3,item,arcane_dust,,0.09,9,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_50,Restless Bones — HIGHFLY 50–59,50,59,1,copper,,98,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_50,Restless Bones — HIGHFLY 50–59,50,59,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_50,Restless Bones — HIGHFLY 50–59,50,59,3,item,arcane_dust,,0.09,9,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_60,Restless Bones — HIGHFLY 60–69,60,69,1,copper,,120,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_60,Restless Bones — HIGHFLY 60–69,60,69,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_60,Restless Bones — HIGHFLY 60–69,60,69,3,item,arcane_dust,,0.09,9,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_70,Restless Bones — HIGHFLY 70–79,70,79,1,copper,,143,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_70,Restless Bones — HIGHFLY 70–79,70,79,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_70,Restless Bones — HIGHFLY 70–79,70,79,3,item,arcane_dust,,0.09,9,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_80,Restless Bones — HIGHFLY 80–89,80,89,1,copper,,165,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_80,Restless Bones — HIGHFLY 80–89,80,89,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_80,Restless Bones — HIGHFLY 80–89,80,89,3,item,arcane_essence,,0.06,6,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_90,Restless Bones — HIGHFLY 90–99,90,99,1,copper,,188,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_90,Restless Bones — HIGHFLY 90–99,90,99,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_skeleton_90,Restless Bones — HIGHFLY 90–99,90,99,3,item,arcane_essence,,0.06,6,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_21,Thornpeak Ogre — HIGHFLY 21–29,21,29,1,copper,,81,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_21,Thornpeak Ogre — HIGHFLY 21–29,21,29,2,item,ogre_toe_ring,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_21,Thornpeak Ogre — HIGHFLY 21–29,21,29,3,item,curved_tusk,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_30,Thornpeak Ogre — HIGHFLY 30–39,30,39,1,copper,,131,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_30,Thornpeak Ogre — HIGHFLY 30–39,30,39,2,item,ogre_toe_ring,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_30,Thornpeak Ogre — HIGHFLY 30–39,30,39,3,item,curved_tusk,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_40,Thornpeak Ogre — HIGHFLY 40–49,40,49,1,copper,,188,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_40,Thornpeak Ogre — HIGHFLY 40–49,40,49,2,item,ogre_toe_ring,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_40,Thornpeak Ogre — HIGHFLY 40–49,40,49,3,item,curved_tusk,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_50,Thornpeak Ogre — HIGHFLY 50–59,50,59,1,copper,,244,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_50,Thornpeak Ogre — HIGHFLY 50–59,50,59,2,item,ogre_toe_ring,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_50,Thornpeak Ogre — HIGHFLY 50–59,50,59,3,item,curved_tusk,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_60,Thornpeak Ogre — HIGHFLY 60–69,60,69,1,copper,,300,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_60,Thornpeak Ogre — HIGHFLY 60–69,60,69,2,item,ogre_toe_ring,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_60,Thornpeak Ogre — HIGHFLY 60–69,60,69,3,item,curved_tusk,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_70,Thornpeak Ogre — HIGHFLY 70–79,70,79,1,copper,,356,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_70,Thornpeak Ogre — HIGHFLY 70–79,70,79,2,item,ogre_toe_ring,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_70,Thornpeak Ogre — HIGHFLY 70–79,70,79,3,item,curved_tusk,,0.14,14,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_80,Thornpeak Ogre — HIGHFLY 80–89,80,89,1,copper,,413,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_80,Thornpeak Ogre — HIGHFLY 80–89,80,89,2,item,ogre_toe_ring,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_80,Thornpeak Ogre — HIGHFLY 80–89,80,89,3,item,curved_tusk,,0.14,14,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_90,Thornpeak Ogre — HIGHFLY 90–99,90,99,1,copper,,469,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_90,Thornpeak Ogre — HIGHFLY 90–99,90,99,2,item,ogre_toe_ring,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_ogre_90,Thornpeak Ogre — HIGHFLY 90–99,90,99,3,item,curved_tusk,,0.16,16,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_21,Boneclad Revenant — HIGHFLY 21–29,21,29,1,copper,,108,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_21,Boneclad Revenant — HIGHFLY 21–29,21,29,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_21,Boneclad Revenant — HIGHFLY 21–29,21,29,3,item,homespun_cloth,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_30,Boneclad Revenant — HIGHFLY 30–39,30,39,1,copper,,175,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_30,Boneclad Revenant — HIGHFLY 30–39,30,39,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_30,Boneclad Revenant — HIGHFLY 30–39,30,39,3,item,homespun_cloth,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_40,Boneclad Revenant — HIGHFLY 40–49,40,49,1,copper,,250,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_40,Boneclad Revenant — HIGHFLY 40–49,40,49,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_40,Boneclad Revenant — HIGHFLY 40–49,40,49,3,item,arcane_essence,,0.06,6,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_50,Boneclad Revenant — HIGHFLY 50–59,50,59,1,copper,,325,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_50,Boneclad Revenant — HIGHFLY 50–59,50,59,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_50,Boneclad Revenant — HIGHFLY 50–59,50,59,3,item,arcane_essence,,0.06,6,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_60,Boneclad Revenant — HIGHFLY 60–69,60,69,1,copper,,400,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_60,Boneclad Revenant — HIGHFLY 60–69,60,69,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_60,Boneclad Revenant — HIGHFLY 60–69,60,69,3,item,arcane_essence,,0.06,6,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_70,Boneclad Revenant — HIGHFLY 70–79,70,79,1,copper,,475,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_70,Boneclad Revenant — HIGHFLY 70–79,70,79,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_70,Boneclad Revenant — HIGHFLY 70–79,70,79,3,item,arcane_essence,,0.06,6,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_80,Boneclad Revenant — HIGHFLY 80–89,80,89,1,copper,,550,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_80,Boneclad Revenant — HIGHFLY 80–89,80,89,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_80,Boneclad Revenant — HIGHFLY 80–89,80,89,3,item,arcane_shard,,0.03,3,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_90,Boneclad Revenant — HIGHFLY 90–99,90,99,1,copper,,625,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_90,Boneclad Revenant — HIGHFLY 90–99,90,99,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_revenant_90,Boneclad Revenant — HIGHFLY 90–99,90,99,3,item,arcane_shard,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_21,Dragonkin Broodguard — HIGHFLY 21–29,21,29,1,copper,,97,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_21,Dragonkin Broodguard — HIGHFLY 21–29,21,29,2,item,sharp_claw,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_30,Dragonkin Broodguard — HIGHFLY 30–39,30,39,1,copper,,158,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_30,Dragonkin Broodguard — HIGHFLY 30–39,30,39,2,item,sharp_claw,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_40,Dragonkin Broodguard — HIGHFLY 40–49,40,49,1,copper,,225,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_40,Dragonkin Broodguard — HIGHFLY 40–49,40,49,2,item,sharp_claw,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_50,Dragonkin Broodguard — HIGHFLY 50–59,50,59,1,copper,,293,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_50,Dragonkin Broodguard — HIGHFLY 50–59,50,59,2,item,sharp_claw,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_60,Dragonkin Broodguard — HIGHFLY 60–69,60,69,1,copper,,360,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_60,Dragonkin Broodguard — HIGHFLY 60–69,60,69,2,item,sharp_claw,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_70,Dragonkin Broodguard — HIGHFLY 70–79,70,79,1,copper,,428,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_70,Dragonkin Broodguard — HIGHFLY 70–79,70,79,2,item,sharp_claw,,0.14,14,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_80,Dragonkin Broodguard — HIGHFLY 80–89,80,89,1,copper,,495,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_80,Dragonkin Broodguard — HIGHFLY 80–89,80,89,2,item,sharp_claw,,0.14,14,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_90,Dragonkin Broodguard — HIGHFLY 90–99,90,99,1,copper,,563,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_dragonkin_90,Dragonkin Broodguard — HIGHFLY 90–99,90,99,2,item,sharp_claw,,0.16,16,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_21,Stormcrag Elemental — HIGHFLY 21–29,21,29,1,copper,,86,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_21,Stormcrag Elemental — HIGHFLY 21–29,21,29,2,item,arcane_dust,,0.09,9,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_30,Stormcrag Elemental — HIGHFLY 30–39,30,39,1,copper,,140,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_30,Stormcrag Elemental — HIGHFLY 30–39,30,39,2,item,arcane_dust,,0.09,9,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_40,Stormcrag Elemental — HIGHFLY 40–49,40,49,1,copper,,200,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_40,Stormcrag Elemental — HIGHFLY 40–49,40,49,2,item,arcane_essence,,0.06,6,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_50,Stormcrag Elemental — HIGHFLY 50–59,50,59,1,copper,,260,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_50,Stormcrag Elemental — HIGHFLY 50–59,50,59,2,item,arcane_essence,,0.06,6,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_60,Stormcrag Elemental — HIGHFLY 60–69,60,69,1,copper,,320,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_60,Stormcrag Elemental — HIGHFLY 60–69,60,69,2,item,arcane_essence,,0.06,6,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_70,Stormcrag Elemental — HIGHFLY 70–79,70,79,1,copper,,380,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_70,Stormcrag Elemental — HIGHFLY 70–79,70,79,2,item,arcane_essence,,0.06,6,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_80,Stormcrag Elemental — HIGHFLY 80–89,80,89,1,copper,,440,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_80,Stormcrag Elemental — HIGHFLY 80–89,80,89,2,item,arcane_shard,,0.03,3,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_90,Stormcrag Elemental — HIGHFLY 90–99,90,99,1,copper,,500,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_elemental_90,Stormcrag Elemental — HIGHFLY 90–99,90,99,2,item,arcane_shard,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_21,Ridge Stalker — HIGHFLY 21–29,21,29,1,copper,,65,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_21,Ridge Stalker — HIGHFLY 21–29,21,29,2,item,rough_hide,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_30,Ridge Stalker — HIGHFLY 30–39,30,39,1,copper,,105,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_30,Ridge Stalker — HIGHFLY 30–39,30,39,2,item,rough_hide,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_40,Ridge Stalker — HIGHFLY 40–49,40,49,1,copper,,150,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_40,Ridge Stalker — HIGHFLY 40–49,40,49,2,item,rough_hide,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_50,Ridge Stalker — HIGHFLY 50–59,50,59,1,copper,,195,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_50,Ridge Stalker — HIGHFLY 50–59,50,59,2,item,rough_hide,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_60,Ridge Stalker — HIGHFLY 60–69,60,69,1,copper,,240,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_60,Ridge Stalker — HIGHFLY 60–69,60,69,2,item,rough_hide,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_70,Ridge Stalker — HIGHFLY 70–79,70,79,1,copper,,285,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_70,Ridge Stalker — HIGHFLY 70–79,70,79,2,item,rough_hide,,0.14,14,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_80,Ridge Stalker — HIGHFLY 80–89,80,89,1,copper,,330,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_80,Ridge Stalker — HIGHFLY 80–89,80,89,2,item,rough_hide,,0.14,14,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_90,Ridge Stalker — HIGHFLY 90–99,90,99,1,copper,,375,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_hunt_stalker_90,Ridge Stalker — HIGHFLY 90–99,90,99,2,item,rough_hide,,0.16,16,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_21,Élite del territorio — Umbral de los Aullidos (LV21–29),21,29,1,copper,,15,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_21,Élite del territorio — Umbral de los Aullidos (LV21–29),21,29,2,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_21,Élite del territorio — Umbral de los Aullidos (LV21–29),21,29,3,item,spider_silk,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_21,Capitán de la región — Umbral de los Aullidos (LV21–29),21,29,1,copper,,9,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_21,Capitán de la región — Umbral de los Aullidos (LV21–29),21,29,2,item,wolf_fang,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_21,Capitán de la región — Umbral de los Aullidos (LV21–29),21,29,3,item,rough_hide,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_30,Élite del territorio — Marisma del Velo (LV30–39),30,39,1,copper,,14,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_30,Élite del territorio — Marisma del Velo (LV30–39),30,39,2,item,wolf_fang,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_30,Élite del territorio — Marisma del Velo (LV30–39),30,39,3,item,rough_hide,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_30,Capitán de la región — Marisma del Velo (LV30–39),30,39,1,copper,,25,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_30,Capitán de la región — Marisma del Velo (LV30–39),30,39,2,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_30,Capitán de la región — Marisma del Velo (LV30–39),30,39,3,item,spider_silk,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_40,Élite del territorio — Desfiladero Colmillo (LV40–49),40,49,1,copper,,150,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_40,Élite del territorio — Desfiladero Colmillo (LV40–49),40,49,2,item,rough_hide,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_40,Capitán de la región — Desfiladero Colmillo (LV40–49),40,49,1,copper,,188,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_40,Capitán de la región — Desfiladero Colmillo (LV40–49),40,49,2,item,ogre_toe_ring,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_40,Capitán de la región — Desfiladero Colmillo (LV40–49),40,49,3,item,curved_tusk,,0.1,10,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_50,Élite del territorio — Tundra del Silencio (LV50–59),50,59,1,copper,,195,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_50,Élite del territorio — Tundra del Silencio (LV50–59),50,59,2,item,rough_hide,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_50,Capitán de la región — Tundra del Silencio (LV50–59),50,59,1,copper,,26,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_50,Capitán de la región — Tundra del Silencio (LV50–59),50,59,2,item,wolf_fang,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_50,Capitán de la región — Tundra del Silencio (LV50–59),50,59,3,item,rough_hide,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_60,Élite del territorio — Yermo de las Escamas (LV60–69),60,69,1,copper,,300,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_60,Élite del territorio — Yermo de las Escamas (LV60–69),60,69,2,item,ogre_toe_ring,,0.35,35,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_60,Élite del territorio — Yermo de las Escamas (LV60–69),60,69,3,item,curved_tusk,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_60,Capitán de la región — Yermo de las Escamas (LV60–69),60,69,1,copper,,360,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_60,Capitán de la región — Yermo de las Escamas (LV60–69),60,69,2,item,sharp_claw,,0.12000000000000001,12,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_70,Élite del territorio — Jardín Marchito (LV70–79),70,79,1,copper,,38,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_70,Élite del territorio — Jardín Marchito (LV70–79),70,79,2,item,wolf_fang,,0.45,45,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_70,Élite del territorio — Jardín Marchito (LV70–79),70,79,3,item,rough_hide,,0.14,14,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_70,Capitán de la región — Jardín Marchito (LV70–79),70,79,1,copper,,67,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_70,Capitán de la región — Jardín Marchito (LV70–79),70,79,2,item,spider_leg,,0.4,40,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_70,Capitán de la región — Jardín Marchito (LV70–79),70,79,3,item,spider_silk,,0.14,14,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_80,Élite del territorio — Cresta del Trueno (LV80–89),80,89,1,copper,,495,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_80,Élite del territorio — Cresta del Trueno (LV80–89),80,89,2,item,sharp_claw,,0.14,14,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_80,Capitán de la región — Cresta del Trueno (LV80–89),80,89,1,copper,,440,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_80,Capitán de la región — Cresta del Trueno (LV80–89),80,89,2,item,arcane_shard,,0.03,3,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_90,Élite del territorio — Orilla del Abismo (LV90–99),90,99,1,copper,,625,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_90,Élite del territorio — Orilla del Abismo (LV90–99),90,99,2,item,bone_fragments,,0.6,60,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_elite_90,Élite del territorio — Orilla del Abismo (LV90–99),90,99,3,item,arcane_shard,,0.02,2,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_90,Capitán de la región — Orilla del Abismo (LV90–99),90,99,1,copper,,563,1,100,,,,,{},true,true,NOT_VERIFIED
+HIGHFLY_P02I_21_99,hf_enc_captain_90,Capitán de la región — Orilla del Abismo (LV90–99),90,99,2,item,sharp_claw,,0.16,16,,,,,{},true,true,NOT_VERIFIED

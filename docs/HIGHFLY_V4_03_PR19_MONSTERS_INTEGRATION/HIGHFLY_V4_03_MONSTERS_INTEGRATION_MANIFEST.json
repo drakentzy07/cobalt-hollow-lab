@@ -1,0 +1,79 @@
+{
+  "name": "HIGHFLY_V4_03_MONSTERS_INTEGRATION_MANIFEST",
+  "as_of": "2026-10-10T22:44:00-03:00",
+  "repo": "drakentzy07/cobalt-hollow-lab",
+  "branch": "highfly-v4-03-pr19-monsters-handoff-real",
+  "pr19_webgl_base_sha": "6de0c95a5eeaba2ce1e37805bf89dd00c6a704e3",
+  "pr19_mobile_ui_sha": "f452fa29cd236d2addbef734cb6ee5bf3ad7d546",
+  "pr19_published_pages_sha": "e90daec37dcf0778afa374dedd606a54f5696640",
+  "donor_claudecraft_sha": "9b57e49c9676d75962700f828cc00a50a9a988b5",
+  "p02i_monsters_sha": "e6f59079fdc3f278ef041fbc8354ca837aee42ab",
+  "p02m_audit_sha": "402c779c9f2caf2e3c538313ed627d1163792aaf",
+  "p02n_green_sha": "0ebb3de9044cd86b47ac4cd9cc2665b47cb85c04",
+  "p02n_count": 1440,
+  "creature_definitions": {
+    "native": 270,
+    "hf_normals": 64,
+    "hf_elite_captain": 16,
+    "all": 350,
+    "active_distinct_all": null
+  },
+  "scenarios": {
+    "donor_zones": 15,
+    "hf_lab": 8,
+    "hf_persistent": 0
+  },
+  "loot_config_rows": 988,
+  "live_default_player_path": "PR19 ORIGINAL_UNCHANGED",
+  "test_only_monster_path": "?hfHunt=(21|30|40|50|60|70|80|90) + optional hfEncounter",
+  "test_only_hunter": "NEW_HUNTPILOT_PLUS_3X_HP: MUST_NOT_PROMOTE",
+  "same_sim_persistent_hunter_monster_transition": false,
+  "same_inventory_xp_save_e2e": false,
+  "v403_pr19_source_combined_build_run": "SEE_GITHUB_WORKFLOW_FOR_CURRENT_RESULT",
+  "real_trainable_stats_mutated_by_kills": false,
+  "lv100_plus_enabled": false,
+  "isolated_public_deploy": false,
+  "external_source_runs": [
+    "P02L: https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38094126772",
+    "P02M: https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38095460400",
+    "P02N: https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38102239479",
+    "PR19: https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38085989015",
+    "PR19 Pages: https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38086619159",
+    "V4-03 PR17 combined GREEN (NOT PR19): https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38102162302"
+  ],
+  "files": {
+    "bestiary": "HIGHFLY_V4_03_BESTIARY_1_99.csv",
+    "spawns": "HIGHFLY_V4_03_WORLD_SPAWN_ACCESS.csv",
+    "loot": "HIGHFLY_V4_03_REWARD_LOOT_CRAFTING.csv",
+    "balance": "HIGHFLY_V4_03_HUNTER_VS_MOB_BALANCE_REPORT.json"
+  },
+  "states": {
+    "PR19_NATIVE_UI": "GREEN_REAL_ORIGINAL",
+    "PR19_PROFESSIONS_GEMS_PF6": "GREEN_REAL_ORIGINAL",
+    "P02I_LV21_99_HUNT": "GREEN_LAB",
+    "P02L_BESTIARY": "GREEN_AUDIT",
+    "P02M_HUNTER_MOB": "GREEN_AUDIT_NOT_BALANCE_CERT",
+    "P02N_1440_8SEC": "GREEN_LAB_NOT_FULL_FIGHT",
+    "V403_PR19_SINGLE_WEBGL": "CI_RESULT_REQUIRED",
+    "V403_PERSISTENT_SINGLE_HUNTER": "RED",
+    "HUNTER_KILL_TO_LOOT_TO_FORGE_RETURN": "RED",
+    "REAL_S23_FPS": "YELLOW",
+    "FIVE_LEGENDARY_BOSSES": "FUTURO",
+    "EXTENDED_LEVEL_100_PLUS": "FUTURO"
+  },
+  "safety_gates": [
+    "NO_NEW_HUNTER_IN_INSTANCE",
+    "NO_TEST_HP_MULTIPLIER_IN_GAME",
+    "ONE_REAL_SIM_XP_INVENTORY_SAVE",
+    "REAL_ITEM_COMBAT_TRAINING_9_CLASSES",
+    "REAL_LOOT_RECIPE_CONSUMPTION",
+    "MOBILE_PHYSICAL_S23",
+    "NO_PUBLIC_DEPLOY_UNTIL_SHA_GATE_AND_ROLLBACK"
+  ],
+  "source_sha256": {
+    "source_bestiary": "807d73731bec2c49cc913e58f1a1bcddd86e17825228ab920abc54f410e0616c",
+    "source_spawns": "81befe69cd51e07946617c5a14a97a84bd463b8bfca3f1ce4b50270d4d2d9fe6",
+    "source_loot": "31733d1629f90faa21f6a4accf394d1b76fb4fd93585528ae32358c13ed913fd",
+    "source_p02n": "e94e7380606fd39ac77e2828e6d4a1159102efaedaa75ab9469560f46c80b372"
+  }
+}
