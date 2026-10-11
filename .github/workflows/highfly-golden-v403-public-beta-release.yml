@@ -5,6 +5,7 @@ on:
     paths:
       - .github/workflows/highfly-golden-v403-public-beta-release.yml
       - release/highfly_golden_v403_legacy_pages_browser.mjs
+      - release/highfly_golden_restore_v402_assets.py
       - release/highfly_golden_v403_compose_pages.py
   workflow_dispatch:
 permissions:
@@ -177,6 +178,13 @@ jobs:
           test -s golden-publish/cobalt-hollow-lab/monster-lab/hunts.html
           test -s golden-publish/cobalt-hollow-lab/v4-03-preview/index.html
           echo 'HF_GOLDEN_PLAY_PREVIEW_STAGED_WITH_VERIFIED_LEGACY=1'
+      - name: Restore REAL live V4-02 module assets and keep Pages below budget
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 release/highfly_golden_restore_v402_assets.py
+          test -s golden-v402-asset-restoration-report.json
+          echo 'HF_GOLDEN_V402_HTML_LINKED_BUNDLE_RESTORED_FROM_LIVE=1'
       - name: Pre-deploy GOLDEN original V4-02 and new V4-03 emulated S23 Chrome
         working-directory: legacy/upstream
         shell: bash
@@ -219,6 +227,7 @@ jobs:
           name: HIGHFLY-GOLDEN-PLAY-V403-PREDEPLOY-LEGACY-AND-MOBILE-EVIDENCE
           path: |
             golden-combined-stage-report.json
+            golden-v402-asset-restoration-report.json
             golden-play-pages-local.log
             legacy/demo-v4-02-pr19-s23-report.json
             legacy/demo-v4-02-pr19-s23-creator.png
