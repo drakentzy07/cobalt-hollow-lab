@@ -384,8 +384,8 @@ function restoreSnapshot(snapshot,{view=true}={}){
  renderSliders(d.intensity);
  for(const key of ['enamel','metal','accent'])$(key+'Color').value=d.palette[key];
  if(view)applyLiveControls();
- lastSnapshot=takeSnapshot();
 }
+
 function recordHistory(){
  const next=takeSnapshot();
  if(lastSnapshot&&JSON.stringify(next)!==JSON.stringify(lastSnapshot)){
@@ -401,6 +401,7 @@ function stepHistory(undo){
  if(!from.length)return;
  to.push(takeSnapshot());
  restoreSnapshot(from.pop());
+ lastSnapshot=takeSnapshot();
  $('undoDesign').disabled=undoStack.length===0;
  $('redoDesign').disabled=redoStack.length===0;
  factoryNotice((undo?'Deshecho':'Rehecho')+' · cambios visibles en la armadura nativa.');
