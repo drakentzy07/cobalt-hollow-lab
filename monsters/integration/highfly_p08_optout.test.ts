@@ -5,6 +5,8 @@
 import {describe,it,expect} from 'vitest';
 import {Sim} from '../src/sim/sim';
 import {BUILTIN_WORLD,CAMPS,DUNGEONS,ZONES} from '../src/sim/data';
+import {HIGHFLY_HUNT_SCENARIOS} from '../src/highfly/monsters/hunt_scenarios';
+import {highflyNativeHuntDungeonId} from '../src/highfly/monsters/hunt_dungeon_registry';
 
 describe('HIGHFLY P08 production-safe V4-03 feature rollback',()=>{
   it('keeps donor world content untouched and adds no native HF doors or packs',()=>{
@@ -20,6 +22,6 @@ describe('HIGHFLY P08 production-safe V4-03 feature rollback',()=>{
     const pid=sim.addPlayer('warrior','P08Baseline',{tutorialGreetingSent:true});
     expect(sim.serializeCharacter(pid)?.level).toBe(1);
     expect([...sim.entities.values()].filter(e=>e.kind==='player')).toHaveLength(1);
-    expect(sim.enterDungeon('hf_dungeon_hf_hunt_wolves_21',pid)).toBe(false);
+    expect(sim.enterDungeon(highflyNativeHuntDungeonId(HIGHFLY_HUNT_SCENARIOS[0].id),pid)).toBe(false);
   });
 });
