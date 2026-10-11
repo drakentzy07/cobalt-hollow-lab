@@ -29,7 +29,19 @@
   "test_only_hunter": "NEW_HUNTPILOT_PLUS_3X_HP: MUST_NOT_PROMOTE",
   "same_sim_persistent_hunter_monster_transition": false,
   "same_inventory_xp_save_e2e": false,
-  "v403_pr19_source_combined_build_run": "SEE_GITHUB_WORKFLOW_FOR_CURRENT_RESULT",
+  "v403_pr19_source_combined_build_run": {
+    "id": 38103098404,
+    "status": "completed",
+    "conclusion": "success",
+    "sha": "ec76ac9da894b8329295dad952cfe6eab772bb6e",
+    "url": "https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38103098404"
+  },
+  "v403_pr19_webgl_artifact": {
+    "id": 11689006382,
+    "name": "HIGHFLY-V4-03-PR19-GEMS-MONSTERS-COMBINATION-NO-PUBLISH",
+    "size_bytes": 719303385,
+    "url": "https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38103098404/artifacts/11689006382"
+  },
   "real_trainable_stats_mutated_by_kills": false,
   "lv100_plus_enabled": false,
   "isolated_public_deploy": false,
@@ -54,7 +66,7 @@
     "P02L_BESTIARY": "GREEN_AUDIT",
     "P02M_HUNTER_MOB": "GREEN_AUDIT_NOT_BALANCE_CERT",
     "P02N_1440_8SEC": "GREEN_LAB_NOT_FULL_FIGHT",
-    "V403_PR19_SINGLE_WEBGL": "CI_RESULT_REQUIRED",
+    "V403_PR19_SINGLE_WEBGL": "GREEN_LAB_NO_PERSISTENCE_BRIDGE",
     "V403_PERSISTENT_SINGLE_HUNTER": "RED",
     "HUNTER_KILL_TO_LOOT_TO_FORGE_RETURN": "RED",
     "REAL_S23_FPS": "YELLOW",
