@@ -1,0 +1,36 @@
+{
+  "source": "EXACT_NATIVE_CLAUDECRAFT_SIM_P02I_HUNT_PF6_LV99",
+  "classes": 9,
+  "monsterTemplates": 80,
+  "attempted": 306,
+  "completed": 306,
+  "exceptions": [],
+  "resultsAtLevel": {
+    "WIN": 4,
+    "LOSS": 0,
+    "TIMEOUT": 149
+  },
+  "resultsPlus5": {
+    "WIN": 2,
+    "LOSS": 0,
+    "TIMEOUT": 151
+  },
+  "nativeAIUsed": true,
+  "actualAbilitiesAttempted": 272,
+  "nativeLootClaims": 6,
+  "skillInputMode": "STATIONARY_SKILL_CAST_PLUS_AUTO_ATTACK; NO DODGE/PARRY HUMAN INPUT",
+  "training": "SYNTHETIC_BRIDGE_FOR_SENSITIVITY_ONLY; NOT REAL SESSION EVIDENCE",
+  "equipment": "NATIVE_ITEMS_EQUIPPED_VIA_SIM_API_NOT_PF9_21_99_GEAR_PROGRESSION",
+  "balancedCertified": false,
+  "publicAppTouched": false,
+  "gates": [
+    "PF9_21_99_ITEMIZATION",
+    "ACTIVE_PARRY_DASH",
+    "COMBOS_1_2_3_4_GEM",
+    "9_CLASS_FULL_ROTATIONS",
+    "99_EXTENDED_CLOSED",
+    "HUMAN_S23_QA",
+    "REAL_TRAINING_SENSITIVITY",
+    "NATIVE_LOOT_ODDS_ECONOMY"
+  ]
+}
