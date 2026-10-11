@@ -14,6 +14,7 @@ Fecha: 11 de octubre de 2026. **Estado documental previo a la sentencia final de
 - `highfly-monsters-p02i-functional-freeze-green-20261010` @ `e6f59079fdc3f278ef041fbc8354ca837aee42ab`: 8 escenarios P02I, contenido/caza LV21–99, recompensas nativas, 16 élites/capitanes, biomas y ambientación del laboratorio.
 - RUN P02M https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38095460400: matriz derivada de estadísticas/TTK/casos, laboratorio separado.
 - RUN P02N https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38102239479: 1440 duelos `Sim.tick` headless, 80 plantillas × 9 clases × (nivel par/+5). **No** certifica victoria del jugador humano, rotaciones, parry o equipamiento progresivo definitivo.
+  - Resultado agregado CI P02N: al mismo nivel **4 WIN, 0 LOSS, 716 TIMEOUT**; contra enemigo +5 **2 WIN, 0 LOSS, 718 TIMEOUT**. Cada prueba duró como máximo **8 segundos**. Predominan los TIMEOUT; no interpretar \`0 LOSS\` como invulnerabilidad o balance logrado. Se requieren combates prolongados y rotaciones de cada clase.
 
 ## P09 NUEVO: capa optativa de desafíos en la MISMA app
 
