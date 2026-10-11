@@ -62,8 +62,8 @@ function openLegacyDb(): Promise<IDBDatabase | null> {
 '''+anchor.replace("key: string","key: string, legacy = false"),1)
 # Both getters preserve the SAME native code/typing, only selector changes.
 needle="  const db = await openDb();"
-if s.count(needle)!=4:
-    raise SystemExit("HF_PLAY_EXPECTED_FOUR_ORIGINAL_IDB_OPERATIONS_FOUND:"+str(s.count(needle)))
+if s.count(needle)!=3:
+    raise SystemExit("HF_PLAY_EXPECTED_THREE_ORIGINAL_IDB_OPERATIONS_FOUND:"+str(s.count(needle)))
 # First 2 getters only; last 2 writers remain on NEW DB.
 s=s.replace(needle,"  const db = legacy ? await openLegacyDb() : await openDb();",2)
 s=s.replace(
