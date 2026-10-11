@@ -126,8 +126,19 @@ def main():
     data=(ROOT/entry["path"]).read_bytes()
     if sha(data)!=entry["sha256"] or sha(remote(entry["path"]))!=entry["sha256"]:
       raise RuntimeError("PUBLIC_OR_STAGED_LEGACY_CHANGED_CONCURRENTLY:"+entry["path"])
+  # Report exact duplicate asset blobs that may safely be shareable with
+  # targeted URL rewriting in a next pass (not changing anything yet).
+  dup={}
+  for f in files(ROOT/"v4-03-preview/assets"):
+    rel=f.relative_to(ROOT/"v4-03-preview/assets")
+    previous=ROOT/"assets"/rel
+    if previous.is_file() and sha(f.read_bytes())==sha(previous.read_bytes()):
+      ext=rel.suffix.lower()
+      item=dup.setdefault(ext,{"files":0,"bytes":0})
+      item["files"]+=1;item["bytes"]+=f.stat().st_size
+  print("HF_GOLDEN_BUDGET_POTENTIAL_EXACT_DUPLICATE_ASSETS="+json.dumps(dup))
   grand=sum(x.stat().st_size for x in files(ROOT))
-  if grand>BUDGET:raise RuntimeError(f"PAGES_TOTAL_EXCEEDS_BUDGET:{grand}/{BUDGET}")
+  if grand>BUDGET:raise RuntimeError(f"PAGES_TOTAL_EXCEEDS_BUDGET:{grand}/{BUDGET}:EXACT_DUPLICATES="+json.dumps(dup))
   (ROOT/".nojekyll").touch()
   result={"status":"PACKAGED_READY_FOR_LOCAL_BROWSER_QA_ONLY_NOT_PUBLISHED",
     "host":"cobalt-hollow-lab","target":BASE+"v4-03-preview/",
