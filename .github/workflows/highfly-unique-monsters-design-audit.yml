@@ -1,0 +1,17 @@
+name: HIGHFLY UNIQUE UE00-02 DATA & POC (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-unique-monsters-ue00-ue02-design]
+  workflow_dispatch:
+jobs:
+  docs-and-poc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate five dossiers/data and offline prototype (NOT Sim)
+        run: node monsters/unique/validate_unique_monsters.mjs

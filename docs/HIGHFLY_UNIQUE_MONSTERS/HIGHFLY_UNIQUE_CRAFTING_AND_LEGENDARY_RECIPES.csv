@@ -1,0 +1,6 @@
+"bossId","materialId","recipeId","profession","resultItemCandidate","materialCountPROPOSAL","additionalIngredients","skillLevel","stationType","itemRegistered","recipeRegistered","nativeCraftEndToEnd","noTrainingStats"
+"hf_special_eclipse_wolf","hf_moon_touched_pelt","hf_recipe_moonthread_hood","","hf_item_moonthread_hood","2","TBD donor consumables","TBD","AUDIT native profession station","NO","NO","NO","YES"
+"hf_special_veil_matriarch","hf_veilspinner_silk","hf_recipe_veilweave_mantle","","hf_item_veilweave_mantle","2","TBD donor consumables","TBD","AUDIT native profession station","NO","NO","NO","YES"
+"hf_special_siege_tyrant","hf_crag_armor_fragment","hf_recipe_siegebreaker_hammer","","hf_item_siegebreaker_hammer","2","TBD donor consumables","TBD","AUDIT native profession station","NO","NO","NO","YES"
+"hf_special_ash_gravewyrm","hf_ashen_rune_plate","hf_recipe_ashbound_ward","","hf_item_ashbound_ward","2","TBD donor consumables","TBD","AUDIT native profession station","NO","NO","NO","YES"
+"hf_special_rootheart_warden","hf_rootheart_heartwood","hf_recipe_heartwood_forge_grip","","hf_item_heartwood_forge_grip","2","TBD donor consumables","TBD","AUDIT native profession station","NO","NO","NO","YES"

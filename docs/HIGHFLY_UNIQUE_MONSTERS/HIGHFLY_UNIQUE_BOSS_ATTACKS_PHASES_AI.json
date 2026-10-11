@@ -1,0 +1,411 @@
+{
+  "version": 1,
+  "status": "SPEC_ONLY_NATIVE_COMBAT_NOT_WIRED",
+  "commonStateMachine": [
+    "IDLE",
+    "OBSERVE",
+    "INVESTIGATE",
+    "POSITION",
+    "TELEGRAPH",
+    "COMMIT",
+    "ACTIVE",
+    "RECOVERY",
+    "PHASE_CHANGE",
+    "LEASH",
+    "RESOLVED"
+  ],
+  "constraints": {
+    "maxSummonedAdds": 2,
+    "forbidUntelegraphedHits": true,
+    "phaseTransitionsOnce": true,
+    "lockTrajectoryOnCommit": true,
+    "hitAuthority": "NATIVE_COMBAT",
+    "noRngPityInBossDamage": true,
+    "referenceTelegraphWindowsSec": [
+      0.45,
+      1.6
+    ]
+  },
+  "bosses": [
+    {
+      "bossId": "hf_special_eclipse_wolf",
+      "phaseThresholds": [
+        0.7,
+        0.35,
+        0
+      ],
+      "phases": [
+        "P1_100_70",
+        "P2_70_35",
+        "P3_35_0"
+      ],
+      "breakables": "Espalda y garra solo si hitboxes legítimas.",
+      "attacks": [
+        {
+          "id": "wolf_claw",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "wolf_fang_rend",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "wolf_lunge",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "wolf_feint",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "wolf_howl",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "wolf_twilight_step",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "bossId": "hf_special_veil_matriarch",
+      "phaseThresholds": [
+        0.7,
+        0.35,
+        0
+      ],
+      "phases": [
+        "P1_100_70",
+        "P2_70_35",
+        "P3_35_0"
+      ],
+      "breakables": "Saco y glándula solo al certificar colisión/ruptura.",
+      "attacks": [
+        {
+          "id": "spider_web",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "spider_venom",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "spider_mandible",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "spider_thread_dash",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "spider_brood_call",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "spider_venom_ring",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "bossId": "hf_special_siege_tyrant",
+      "phaseThresholds": [
+        0.7,
+        0.35,
+        0
+      ],
+      "phases": [
+        "P1_100_70",
+        "P2_70_35",
+        "P3_35_0"
+      ],
+      "breakables": "Hombrera mineral tras BREAK auténtico; navmesh nunca bloqueada.",
+      "attacks": [
+        {
+          "id": "ogre_overhead",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "ogre_sweep",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "ogre_stomp",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "ogre_siege_rush",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "ogre_pillar_break",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "ogre_rock",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "bossId": "hf_special_ash_gravewyrm",
+      "phaseThresholds": [
+        0.7,
+        0.35,
+        0
+      ],
+      "phases": [
+        "P1_100_70",
+        "P2_70_35",
+        "P3_35_0"
+      ],
+      "breakables": "Placa rúnica solo si se rompe mediante Combat; anclas de Encounter.",
+      "attacks": [
+        {
+          "id": "wyrm_tail",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "wyrm_necrotic_pulse",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "wyrm_ash_breath",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "wyrm_bonefall",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "wyrm_gravecall",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "wyrm_anchor_break",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "bossId": "hf_special_rootheart_warden",
+      "phaseThresholds": [
+        0.7,
+        0.35,
+        0
+      ],
+      "phases": [
+        "P1_100_70",
+        "P2_70_35",
+        "P3_35_0"
+      ],
+      "breakables": "Corteza y núcleo EXPOSED solo por Combat; rutas de purificar/derrotar excluyentes.",
+      "attacks": [
+        {
+          "id": "treant_branch_slam",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "treant_root_line",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "treant_bark_ward",
+          "telegraphSecondsPROPOSAL": 0.75,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "treant_seed_barrage",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "treant_heart_pulse",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        },
+        {
+          "id": "treant_purify_window",
+          "telegraphSecondsPROPOSAL": 1.2,
+          "activeFramesTBD": true,
+          "recoveryTBD": true,
+          "defenseCounterTBD": true,
+          "animationClip": null,
+          "nativeHitbox": null,
+          "enabled": false
+        }
+      ]
+    }
+  ]
+}

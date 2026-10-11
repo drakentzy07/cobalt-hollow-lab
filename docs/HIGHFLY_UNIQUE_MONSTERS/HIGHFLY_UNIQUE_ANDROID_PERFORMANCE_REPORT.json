@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-11",
+  "device": "Samsung S23 Ultra Android landscape",
+  "runtime": "WebGL/Three.js + native Sim, not interchangeable with Unity components",
+  "status": "NOT_TESTED",
+  "fpsMedian": null,
+  "fpsMin": null,
+  "frameTimeP95ms": null,
+  "firstFrameSeconds": null,
+  "peakMemoryMb": null,
+  "bosses": [
+    {
+      "id": "hf_special_eclipse_wolf",
+      "triangles": null,
+      "drawCalls": null,
+      "animationClips": null,
+      "textureMemoryMb": null,
+      "particles": null,
+      "fpsMedian": null,
+      "p95ms": null,
+      "loadSeconds": null,
+      "physicalDeviceStatus": "UNTESTED"
+    },
+    {
+      "id": "hf_special_veil_matriarch",
+      "triangles": null,
+      "drawCalls": null,
+      "animationClips": null,
+      "textureMemoryMb": null,
+      "particles": null,
+      "fpsMedian": null,
+      "p95ms": null,
+      "loadSeconds": null,
+      "physicalDeviceStatus": "UNTESTED"
+    },
+    {
+      "id": "hf_special_siege_tyrant",
+      "triangles": null,
+      "drawCalls": null,
+      "animationClips": null,
+      "textureMemoryMb": null,
+      "particles": null,
+      "fpsMedian": null,
+      "p95ms": null,
+      "loadSeconds": null,
+      "physicalDeviceStatus": "UNTESTED"
+    },
+    {
+      "id": "hf_special_ash_gravewyrm",
+      "triangles": null,
+      "drawCalls": null,
+      "animationClips": null,
+      "textureMemoryMb": null,
+      "particles": null,
+      "fpsMedian": null,
+      "p95ms": null,
+      "loadSeconds": null,
+      "physicalDeviceStatus": "UNTESTED"
+    },
+    {
+      "id": "hf_special_rootheart_warden",
+      "triangles": null,
+      "drawCalls": null,
+      "animationClips": null,
+      "textureMemoryMb": null,
+      "particles": null,
+      "fpsMedian": null,
+      "p95ms": null,
+      "loadSeconds": null,
+      "physicalDeviceStatus": "UNTESTED"
+    }
+  ],
+  "mandatoryChecks": [
+    "single Hunter",
+    "left joystick camera-relative + right free camera",
+    "multitouch diagonal",
+    "lock-on multi-points",
+    "safe telegraphs",
+    "phase VFX spikes",
+    "save close recovery",
+    "near/far lighting",
+    "fresh load time"
+  ]
+}
