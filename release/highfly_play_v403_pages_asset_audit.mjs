@@ -99,7 +99,9 @@ const result={
   candidateRoot:base,oldSite:SITE,
   candidateTotalBytes:allBytes,candidateFileCount:unique,
   groups:samples,existingPagesRoutes:original,sampledMedia:checks,
-  matchedSamples:checks.filter(x=>x.compatible).length,totalSamples:checks.length,\n  sampledAudio:audioChecks,audioMatched:audioChecks.filter(x=>x.compatible).length,\n  audioTotal:audioChecks.length,liveTitles,
+  matchedSamples:checks.filter(x=>x.compatible).length,totalSamples:checks.length,
+  sampledAudio:audioChecks,audioMatched:audioChecks.filter(x=>x.compatible).length,
+  audioTotal:audioChecks.length,liveTitles,
   canPublishNow:false,
   mustProveBeforePublish:[
     'all legacy Pages routes, assets and hashes preserved',
@@ -112,7 +114,8 @@ const result={
 fs.writeFileSync('highfly_golden_play_v403_pages_asset_audit.json',JSON.stringify(result,null,2)+'\n');
 console.log('HF_GOLDEN_PLAY_PAGES_BUDGET_READONLY_DIAGNOSTIC='+JSON.stringify({
   allBytes,groups:samples,matchedSamples:result.matchedSamples,
-  totalSamples:result.totalSamples,audioMatched:result.audioMatched,\n  audioTotal:result.audioTotal,liveTitles,routeStatus:original
+  totalSamples:result.totalSamples,audioMatched:result.audioMatched,
+  audioTotal:result.audioTotal,liveTitles,routeStatus:original
 }));
 if(!files.length||stat.size<500)throw Error('P10_WEBGL_CANDIDATE_BAD');
 if(original[''].status!==200||original['v4-02/'].status!==200)throw Error('PUBLIC_SITE_NOT_REACHABLE');
