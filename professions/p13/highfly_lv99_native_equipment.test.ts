@@ -103,7 +103,11 @@ describe('HIGHFLY P13 real item and recipe registry 50–99 smoke',()=>{
     const result=resolveCraft((sim as any).ctx,pid,recipeId);
     expect(result.ok,JSON.stringify(result)).toBe(true);
     expect(sim.countItem(output,pid)).toBe(1);
-    for(const ing of recipe.reagents)expect(sim.countItem(ing.itemId,pid)).toBe(0);
+    // ClaudeCraft's specialization discounts some reagents at profession 125;
+    // each ingredient must be CONSUMED, but the remainder need not be zero.
+    for(const ing of recipe.reagents){
+      expect(sim.countItem(ing.itemId,pid),ing.itemId+' should be consumed').toBeLessThan(ing.count);
+    }
     const save=JSON.parse(JSON.stringify(sim.serializeCharacter(pid)));
     const fresh=new Sim({seed:7413,playerClass:'warrior',autoEquip:false,noPlayer:true,
       compulsoryTutorial:false,riftPortals:false,world:{...BUILTIN_WORLD,camps:[]}});
