@@ -1,0 +1,43 @@
+name: HIGHFLY GOLDEN PLAY — FULL EXISTING-PAGES ASSET HASH GATE (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-play-v403-release-candidate]
+    paths:
+      - .github/workflows/highfly-play-v403-full-media-hash.yml
+      - release/highfly_play_v403_full_asset_hash_audit.mjs
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: highfly-golden-full-hash-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  all_assets_readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Download P10 GREEN original GOLDEN V4-03 WEBGL output
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-V403-P10-MONSTER6-EXTENDED-COMBAT-WEBGL-NO-DEPLOY
+          run-id: 38141812753
+          github-token: ${{ github.token }}
+          repository: drakentzy07/cobalt-hollow-lab
+          path: candidate
+      - name: SHA256 verify ALL existing media and audio matches root/v4-02 LIVE
+        run: |
+          set -euo pipefail
+          node release/highfly_play_v403_full_asset_hash_audit.mjs
+      - name: Upload full immutable report even if differences are detected
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-GOLDEN-V403-ALL-3179-ASSETS-TO-EXISTING-PAGES-SHA-READONLY
+          path: highfly_golden_play_v403_full_asset_hashes.json
+          retention-days: 14
+          if-no-files-found: warn
