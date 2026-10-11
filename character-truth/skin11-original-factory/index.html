@@ -1,0 +1,27 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#101824"><title>HIGHFLY · Fábrica de Armaduras Originales</title>
+<style>
+:root{font-family:system-ui,sans-serif;color-scheme:dark}*{box-sizing:border-box}body{background:#0d1320;color:#f2f5fa;margin:0;font-size:14px}
+header{padding:15px 18px;background:#121e32;border-bottom:1px solid #35445b}h1{font-size:20px;margin:0 0 5px;color:#efcd83}small{color:#b2c7d9}main{max-width:1030px;margin:auto;padding:14px;display:grid;gap:13px}section{border:1px solid #43566f;border-radius:12px;padding:14px;background:#152238}section h2{font-size:17px;color:#ebc981;margin:0 0 10px}p{line-height:1.48}label{display:block;font-weight:600;margin:9px 0}textarea{background:#0c1728;color:#f1f4fb;border:1px solid #56708b;border-radius:8px;padding:12px;min-height:110px;width:100%;resize:vertical;font:inherit}input[type=file]{display:block;margin:7px 0;width:100%;font:inherit}button{background:#34465d;border:1px solid #8197ae;color:#fff;border-radius:9px;padding:12px 14px;font:inherit;cursor:pointer}button.primary{background:#766039;border-color:#e0bd6b}button:disabled{opacity:.55;cursor:not-allowed}button:focus-visible,textarea:focus-visible{outline:2px solid #8bd7ff}nav a{color:#9fd6ff}.row{display:flex;flex-wrap:wrap;gap:8px}.warning{border-left:4px solid #d99c4f;background:#362c21;padding:12px;border-radius:5px}.safe{background:#162d31;padding:10px;border-radius:8px;color:#b5ebd7}#preview{display:none;width:100%;max-height:300px;object-fit:contain;background:#0c1624;border-radius:7px;border:1px solid #4b617c}#result{white-space:pre-wrap;overflow-wrap:anywhere;background:#0d1829;padding:12px;line-height:1.5;border-radius:8px;min-height:80px}#status{margin:10px 0;color:#f1c988}#history{display:grid;gap:7px}#history button{text-align:left}footer{margin:20px 16px;color:#a8b6ca;font-size:12px}
+</style></head><body>
+<header><h1>⚒️ HIGHFLY · SKIN 11 — Fábrica de Armaduras Originales</h1><small>Creación original desde texto + imagen · ClaudeCraft solo sirve como guía anatómica y rig</small></header>
+<main>
+<section><h2>1 · Encargá TU armadura</h2>
+<p>Tu descripción no necesita parecerse a ninguna skin anterior. Pedí cualquier estilo o subí una referencia.</p>
+<label for="prompt">Diseño imaginado</label>
+<textarea id="prompt" maxlength="1000" placeholder="Quiero una armadura de dragón legendaria, casco esculpido en forma de fauces, hombreras como escamas superpuestas, pechera anatómica y detalles de metal negro..."></textarea>
+<label for="image">Imagen de referencia (opcional) — JPG, PNG o WebP</label>
+<input id="image" type="file" accept="image/png,image/jpeg,image/webp"><img id="preview" alt="Imagen local de referencia">
+<div class="row"><button class="primary" id="build">📐 Crear encargo original</button><button id="export" disabled>⬇ Exportar a Blender / IA</button></div>
+<p id="status" role="status">Esperando pedido original.</p>
+</section>
+<section><h2>2 · Contrato de construcción</h2>
+<p class="warning"><strong>Importante:</strong> crear una receta no significa generar una armadura 3D. La interpretación de imágenes mediante IA y la generación automática del GLB todavía necesitan una conexión segura al motor de IA y Blender. Este laboratorio NO va a fingir que un recolor es una creación inédita.</p>
+<div id="result" role="status" aria-live="polite">Aguardando encargo…</div>
+<p class="safe">✓ Personaje ClaudeCraft como referencia de tamaño, huesos, weights, sockets y 22 animaciones. ✕ Prohibido usar sus triángulos para fabricar el diseño, o modificar la skin 3.</p>
+</section>
+<section><h2>3 · Historial local de encargos</h2>
+<p>Estos encargos quedan solo en tu navegador, sin compartir fotografías con un servicio externo.</p><div id="history">Sin encargos.</div></section>
+<nav><a href="/">← Volver al laboratorio original (SKIN 7–10)</a></nav>
+</main>
+<footer>Proyecto aislado de HIGHFLY · No modifica GitHub Pages del juego · Modelado nuevo sujeto a QA artístico y aprobación humana.</footer>
+<script type="module" src="./skin11-original-factory-ui.mjs"></script></body></html>
