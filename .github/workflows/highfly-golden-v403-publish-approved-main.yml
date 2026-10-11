@@ -1,0 +1,128 @@
+name: HIGHFLY GOLDEN PLAY V4-03 — MAIN-SAFE VERIFIED FULL PAGES RELEASE
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/highfly-golden-v403-publish-approved-main.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: highfly-golden-v403-approved-main-publish
+  cancel-in-progress: false
+
+jobs:
+  main_protected_release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout main release manifest only (no stale app)
+        uses: actions/checkout@v4
+      - name: Retrieve SAME browser-certified COMPLETE Pages upload from release QA
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38162961877
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: certified
+      - name: Extract immutable QA-certified site, verify 4 original SHA and V4-03 before ANY deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s certified/artifact.tar.gz
+          mkdir -p preserved
+          tar -xzf certified/artifact.tar.gz -C preserved
+          test -s preserved/index.html
+          test -s preserved/v4-02/index.html
+          test -s preserved/monster-lab/index.html
+          test -s preserved/monster-lab/hunts.html
+          test -s preserved/v4-03-preview/index.html
+          test -s preserved/v4-03-preview/ui/cursors/gauntlet.png
+          test -s preserved/v4-03-preview/ui/cursors/arrow.png
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,urllib.request,json
+          root=Path('preserved')
+          original={
+            'index.html':'dbfeb72d93b41dd3603cf241b8d3ec7e294bafe57f5e18c94e9adc767c2c8d14',
+            'v4-02/index.html':'9de58293d969652a34c2940ae44756b52234eb2818f3a7497f24aaba3a7e5558',
+            'monster-lab/index.html':'71cbb37bb3179d579e7410c2cfd739e0cc7a1a3fecf8bb91fd3ddf0de3a3f06e',
+            'monster-lab/hunts.html':'53e6a923cf381d6018f209ad35a932d4222c7ec3b7d845294b11c37892554d41',
+          }
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for relative,want in original.items():
+            stored=hashlib.sha256((root/relative).read_bytes()).hexdigest()
+            if stored!=want:raise RuntimeError('QA_ARTIFACT_ORIGINAL_HTML_MISMATCH:'+relative)
+            req=urllib.request.Request(base+relative,headers={
+              'User-Agent':'HIGHFLY-MAIN-PROTECTED-RELEASE-NO-CACHE',
+              'Cache-Control':'no-cache'})
+            with urllib.request.urlopen(req,timeout=60) as r:
+              current=hashlib.sha256(r.read()).hexdigest()
+            if current!=want:raise RuntimeError('LIVE_ORIGINAL_PAGES_CHANGED_ABORT:'+relative)
+          body=(root/'v4-03-preview/index.html').read_bytes()
+          if b'/cobalt-hollow-lab/v4-03-preview/assets/' not in body:
+            raise RuntimeError('CANDIDATE_INDEX_NOT_GOLDEN_V403')
+          allfiles=[p for p in root.rglob('*') if p.is_file()]
+          total=sum(p.stat().st_size for p in allfiles)
+          if total>=995000000 or total<950000000:
+            raise RuntimeError('PAGES_SIZE_OUTSIDE_CERTIFIED_LIMITS:'+str(total))
+          if len(allfiles)<6000:raise RuntimeError('PAGES_SITE_INCOMPLETE')
+          print('HF_MAIN_GOLDEN_V403_FULL_QA_ARTIFACT_AND_OLD_SITE_GUARDED='+json.dumps({
+            'totalBytes':total,'files':len(allfiles),'originalRootsVerified':list(original),
+            'newPreviewExists':True,'nexusUsed':False}))
+          PY
+      - name: Configure ONLY original cobalt-hollow-lab Pages
+        uses: actions/configure-pages@v5
+      - name: Re-upload precisely the already verified complete site, no new build
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: preserved
+      - name: Deploy GOLDEN PLAY V4-03 beta via authorized main branch
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify REAL live V4-03 URL plus all original Roots HTTP and SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import urllib.request,hashlib,json,time
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          hashes={
+            'index.html':'dbfeb72d93b41dd3603cf241b8d3ec7e294bafe57f5e18c94e9adc767c2c8d14',
+            'v4-02/index.html':'9de58293d969652a34c2940ae44756b52234eb2818f3a7497f24aaba3a7e5558',
+            'monster-lab/index.html':'71cbb37bb3179d579e7410c2cfd739e0cc7a1a3fecf8bb91fd3ddf0de3a3f06e',
+            'monster-lab/hunts.html':'53e6a923cf381d6018f209ad35a932d4222c7ec3b7d845294b11c37892554d41',
+          }
+          def fetch(p):
+            req=urllib.request.Request(base+p,headers={
+              'User-Agent':'HIGHFLY-GOLDEN-LIVE-CONFIRMATION',
+              'Cache-Control':'no-cache'})
+            with urllib.request.urlopen(req,timeout=60) as f:
+              if f.status!=200:raise RuntimeError('BAD_HTTP:'+p)
+              return f.read(400000)
+          for i in range(24):
+            try:
+              body=fetch('v4-03-preview/index.html')
+              if b'/cobalt-hollow-lab/v4-03-preview/assets/' in body:break
+            except Exception:pass
+            time.sleep(5)
+          else:raise RuntimeError('V403_PUBLIC_NOT_YET_SERVING')
+          for p,want in hashes.items():
+            if hashlib.sha256(fetch(p)).hexdigest()!=want:
+              raise RuntimeError('LEGACY_HTML_CHANGED_AFTER_DEPLOY:'+p)
+          for p in ['v4-03-preview/ui/cursors/gauntlet.png',
+                    'v4-03-preview/ui/cursors/arrow.png']:
+            if not fetch(p):raise RuntimeError('MISSING_UI:'+p)
+          print('HF_GOLDEN_V403_REAL_PUBLIC_SITE_GREEN='+json.dumps({
+            'newPlayUrl':base+'v4-03-preview/','oldPlayUrl':base+'v4-02/',
+            'preservedLegacy':list(hashes),'nexusUsed':False}))
+          PY
