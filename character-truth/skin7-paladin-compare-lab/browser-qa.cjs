@@ -106,6 +106,24 @@ fs.mkdirSync(dir,{recursive:true});
  await p.locator('#epic').click();
  ok((await p.evaluate(()=>window.__HF_SKIN7_LAB__.studio())).cameraX>0,
     'Epic presentation camera is interactive');
+
+ await p.locator('#prompt').fill('Armadura de rey oscuro con corona dorada, visor cerrado y hombreras enormes');
+ await p.locator('#interpretOrder').click();
+ const intent=await p.evaluate(()=>window.__HF_SKIN7_LAB__.skin9());
+ ok(intent.intent?.themes.includes('royal')&&intent.intent.themes.includes('shadow'),
+    'SKIN9 Spanish natural language interpreted as combined royal and shadow armor themes');
+ ok(intent.intent.slotShapes.head.includes('crown')&&intent.intent.slotShapes.head.includes('closed-visor'),
+    'SKIN9 identifies novel crown and closed-visor Blender shape instructions');
+ ok(intent.intent.gameDeployAllowed===false&&intent.newTopologyGenerated===false,
+    'SKIN9 never falsely claims new modeled meshes or public game deployment');
+ await p.locator('#skin9Mutation').selectOption('epic');
+ await p.locator('#skin9Mutate').click();
+ ok((await p.evaluate(()=>window.__HF_SKIN7_LAB__.skin9())).intent.mutation==='epic',
+    'SKIN9 live genetic mutation creates derived recipe and updates the actual Hunter preview');
+ await p.locator('#skin9BlenderCandidate').click();
+ ok((await p.locator('#order').innerText()).includes('Candidato exportado'),
+    'SKIN9 Blender candidate JSON exported with outstanding topology requirements');
+ await p.screenshot({path:dir+'/09-skin9-prompt-to-armored-hunter.png'});
  await p.locator('#resetLive').click();
 
  ok((await p.evaluate(()=>window.__HF_SKIN7_LAB__.state().liveCommission)).editedVertices===0,'Reset fully restores baseline geometry and material colors');

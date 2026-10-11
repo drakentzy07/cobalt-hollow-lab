@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {commissionRecipe,commissionIntensity,SLOTS as RECIPE_SLOTS} from './commission-recipe-v2.mjs';
+import {parseArmorIntent,mutateArmorIntent,makeBlenderCandidate} from './skin9-armor-core.mjs';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
@@ -287,9 +288,10 @@ async function load(){
    rig:'Rig_Medium',nativeBones:23,clips:state.gltf.animations.map(a=>a.name),
    gameDeployment:false,gameMechanicsSimulated:false,customAssetLoaded:!!state.custom,
    originalPaladin:originalPaladinVisualInventory(state.actors[1]),
-   liveCommission:liveStats}),
+   liveCommission:liveStats,skin9Intent:skin9Current}),
   applyCommission:(intensity,palette)=>updateLiveArmor(intensity,palette),
   selectClip,showStation,selectGender,addCustomGlb:importCustom,
+  skin9:()=>({intent:skin9Current,mode:'deterministic-text-intent-preview',newTopologyGenerated:false}),
   studio:()=>({styleCount:Object.keys(FACTORY_STYLES).length,saved:localDesigns.map(d=>d.name),undoDepth:undoStack.length,redoDepth:redoStack.length,cameraX:camera.position.x}),
   poseTime:t=>{
    state.playing=false;for(const a of state.actors)a.mixer.setTime(t);state.t=t;
@@ -348,7 +350,7 @@ $('clearCustom').onclick=()=>{const actor=state.actors[2];clearOverlays(actor,'c
 function orderText(){
  const t=$('prompt').value.trim();
  if(t.length<12)throw Error('Describí qué querés modificar o fabricar (mínimo 12 caracteres).');
- return 'HIGHFLY SKIN7 · ENCARGO PARA GUINE\nBase: armadura Paladín original ClaudeCraft 0.44.0, Rig_Medium 23 huesos, once mallas en siete slots.\nPedido: '+t+
+ return 'HIGHFLY SKIN9 · ENCARGO PARA GUINE\nBase: armadura Paladín original ClaudeCraft 0.44.0, Rig_Medium 23 huesos, once mallas en siete slots.\nPedido: '+t+
   '\nFoto adjunta: '+($('reference').files?.[0]?.name||'no adjuntada')+
   '\nReglas: reutilizar piezas nativas, fabricar cambios verdaderos con Blender, nueva receta versionada, evitar overlay Nightfall, conservar 22 movimientos originales, mostrar QA visual M/F, NO publicar gameplay ni aprobar arte sin revisar.';
 }
@@ -490,6 +492,42 @@ $('importDesign').onchange=async e=>{
 loadBrowserDesigns();
 $('undoDesign').disabled=true;$('redoDesign').disabled=true;
 
+let skin9Current=null;
+function displaySkin9Intent(intent){
+ const pieces=Object.entries(intent.slotShapes).filter(([,p])=>p.length).map(([k,v])=>k+': '+v.join(', '));
+ $('skin9Interpretation').textContent=
+  'Temas: '+intent.themes.join(', ')+' · estilo: '+intent.mood+
+  '\nMateriales: '+intent.materials.join(', ')+' · foco: '+(intent.focus.join(', ')||'todas las piezas')+
+  '\nFormas NUEVAS para Blender: '+(pieces.join(' | ')||'interpretación abierta: diseño artesanal pendiente')+
+  '\nVista actual: modificación limitada de 11 piezas nativas; nueva topología todavía NO generada.';
+}
+function applySkin9Intent(intent){
+ if(state.custom)throw Error('Retirá primero el GLB importado para usar el diseño paramétrico.');
+ skin9Current=intent;
+ $('prompt').value=intent.brief;
+ renderSliders(intent.intensity);
+ for(const c of ['enamel','metal','accent'])$(c+'Color').value=intent.palette[c];
+ applyLiveControls();recordHistory();displaySkin9Intent(intent);
+ $('order').textContent='✅ SKIN 9: borrador visual aplicado al Hunter auténtico. Nuevas formas requeridas: '+
+  (intent.actualNewMeshRequired?'sí, se deben modelar en Blender':'según aprobación artística')+
+  '. Podés mutar, guardar variante o preparar candidato Blender.';
+}
+$('skin9Mutate').onclick=()=>{
+ try{
+  if(!skin9Current)skin9Current=parseArmorIntent($('prompt').value,{imagePalette:commissionPalette});
+  applySkin9Intent(mutateArmorIntent(skin9Current,$('skin9Mutation').value));
+ }catch(e){$('skin9Interpretation').textContent='❌ '+e.message}
+};
+$('skin9BlenderCandidate').onclick=()=>{
+ try{
+  const latest=parseArmorIntent($('prompt').value,{imagePalette:commissionPalette});
+  const intent=skin9Current&&skin9Current.brief===$('prompt').value?skin9Current:latest;
+  const candidate=makeBlenderCandidate(intent);
+  downloadJson('HIGHFLY-SKIN9-BLENDER-CANDIDATE.json',candidate);
+  $('order').textContent='✅ Candidato exportado. NO genera un GLB solo, NO modifica HIGHFLY. Lleva las formas nuevas para la siguiente etapa Blender.';
+ }catch(e){$('order').textContent='❌ '+e.message}
+};
+
 const sliderNames={head:'Casco',chest:'Pechera',arms:'Hombreras',hands:'Manoplas',legs:'Piernas',feet:'Botas',back:'Espalda'};
 let commissionPalette=null;
 const settings=$('recipeControls');
@@ -523,7 +561,7 @@ $('resetLive').onclick=()=>{
 renderSliders(commissionIntensity('Armadura Paladín de forja sagrada.'));
 lastSnapshot=takeSnapshot();
 $('interpretOrder').onclick=()=>{
- try{renderSliders(commissionIntensity($('prompt').value));applyLiveControls();recordHistory();$('order').textContent='Borrador ajustado con reglas locales. Ajustá los siete controles, luego guardá la receta Blender V2. Para interpretación artística por IA, enviá texto/foto al chat.'}
+ try{applySkin9Intent(parseArmorIntent($('prompt').value,{imagePalette:commissionPalette}))}
  catch(e){$('order').textContent='❌ '+e.message}
 };
 $('extractColors').onclick=async()=>{
@@ -549,7 +587,8 @@ $('extractColors').onclick=async()=>{
   const bright=[...colors].sort((a,b)=>b.reduce((x,y)=>x+y,0)-a.reduce((x,y)=>x+y,0));
   commissionPalette={enamel:hex(colors[0]),metal:hex(bright[0]),accent:hex(bySat[0])};
   $('enamelColor').value=commissionPalette.enamel;$('metalColor').value=commissionPalette.metal;$('accentColor').value=commissionPalette.accent;
-  applyLiveControls();recordHistory();
+  if($('prompt').value.trim().length>=12){try{applySkin9Intent(parseArmorIntent($('prompt').value,{imagePalette:commissionPalette}))}catch(e){applyLiveControls();recordHistory()}}
+  else {applyLiveControls();recordHistory()}
   $('order').textContent='🎨 Paleta extraída de la foto: '+JSON.stringify(commissionPalette)+'. La silueta NO se deduce automáticamente de la imagen.';
  }catch(e){$('order').textContent='❌ '+e.message}
 };
