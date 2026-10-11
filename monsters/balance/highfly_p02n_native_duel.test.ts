@@ -119,9 +119,9 @@ function runFight(cls:PlayerClass,template:MobTemplate,mobLevel:number,gap:0|5,
       sim.castAbility(selected,pid);
       castAttempts++;
     }
-    sim.tick();
-    // Native combat events (do not infer damage from each individual hit).
-    const events=sim.drainEvents();
+    // tick() RETURNS and clears this frame's native combat events.
+    // Never call drainEvents() AFTER tick() or the combat log becomes empty.
+    const events=sim.tick();
     for(const ev of events){
       if(ev.type==='damage' && ev.sourceId===pid && ev.targetId===creature.id
         && ev.amount>0)playerDamageEvents++;
