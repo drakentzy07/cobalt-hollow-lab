@@ -47,6 +47,12 @@ const abilityOptions:Record<PlayerClass,string[]>={
 };
 type Row=Record<string,string|number|boolean>;
 const rows:Row[]=[];
+const shardCount=Number(process.env.HF_P02N_SHARD_COUNT??'8');
+const shardIndex=Number(process.env.HF_P02N_SHARD_INDEX??'0');
+if(!Number.isInteger(shardCount)||shardCount!==8||
+ !Number.isInteger(shardIndex)||shardIndex<0||shardIndex>=shardCount)
+ throw Error('HF_P02N_UNSAFE_SHARD_RANGE');
+
 function runFight(cls:PlayerClass,template:MobTemplate,mobLevel:number,gap:0|5,
   trained:boolean,seed:number,seconds:number):Row {
   const level=mobLevel-gap;
@@ -168,6 +174,7 @@ describe('P02N real native AI PvE fight lab (never public deploy)',()=>{
    const problems:string[]=[];
    // Full roster and 9 classes: 80*9*2 = 1,440 native timed duels.
    for(let idx=0;idx<all.length;idx++){
+     if(idx%shardCount!==shardIndex)continue;
      const m=all[idx];
      const mobLevel=Math.min(m.maxLevel,m.minLevel+5);
      for(let ci=0;ci<classes.length;ci++){
@@ -179,13 +186,16 @@ describe('P02N real native AI PvE fight lab (never public deploy)',()=>{
        }
      }
    }
-   writeCsv('01_DUELOS_COMPLETOS_REAL_SIM_1440.csv',rows);
+   writeCsv('01_DUELOS_SHARD_'+shardIndex+'.csv',rows);
    const sample=rows.filter(r=>r.gap===5);
    const classifications=(items:Row[])=>Object.fromEntries(['WIN','LOSS','TIMEOUT'].map(
      v=>[v,items.filter(r=>r.result===v).length]));
    const summary={
       source:'EXACT_NATIVE_CLAUDECRAFT_SIM_P02I_HUNT_PF6_LV99',
-      classes:classes.length,monsterTemplates:all.length,attempted:all.length*classes.length*2,
+      classes:classes.length,monsterTemplates:all.length,attempted:(all.length/shardCount)*classes.length*2,
+      shardIndex,shardCount,
+      shardMonsterTemplates:all.length/shardCount,
+
       completed:rows.length,exceptions:problems.slice(0,40),
       resultsAtLevel:classifications(rows.filter(r=>r.gap===0)),
       resultsPlus5:classifications(sample),
@@ -200,10 +210,10 @@ describe('P02N real native AI PvE fight lab (never public deploy)',()=>{
         '9_CLASS_FULL_ROTATIONS','99_EXTENDED_CLOSED','HUMAN_S23_QA',
         'REAL_TRAINING_SENSITIVITY','NATIVE_LOOT_ODDS_ECONOMY'],
     };
-   writeFileSync(PATH+'/00_RESUMEN_DUELOS_SIM.json',JSON.stringify(summary,null,2)+'\n');
+   writeFileSync(PATH+'/00_RESUMEN_DUELOS_SIM_SHARD_'+shardIndex+'.json',JSON.stringify(summary,null,2)+'\n');
    console.info('HIGHFLY_P02N_NATIVE_SIM_REPORT='+JSON.stringify(summary));
    expect(problems).toEqual([]);
-   expect(rows).toHaveLength(1440);
+   expect(rows).toHaveLength(180);
    expect(rows.some(r=>Number(r.damageEventsPlayer)>0)).toBe(true);
    expect(rows.some(r=>Number(r.damageEventsMob)>0)).toBe(true);
    expect(new Set(rows.map(r=>r.classId)).size).toBe(9);
