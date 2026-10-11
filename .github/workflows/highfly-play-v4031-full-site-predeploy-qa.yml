@@ -1,0 +1,143 @@
+name: HIGHFLY GOLDEN PLAY V4-03.1 — FULL-SITE PRESERVED PREDEPLOY CHROME QA (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-play-v403-1-native-equipment-rc]
+    paths:
+      - ".github/workflows/highfly-play-v4031-full-site-predeploy-qa.yml"
+      - "release/highfly_golden_v4031_overlay_live_pages.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: highfly-golden-v4031-full-site-predeploy
+  cancel-in-progress: true
+jobs:
+  preserve_test_package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Frozen donor browser-dependency setup ONLY (not another engine)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/
+            /package.json
+            /pnpm-lock.yaml
+            /.npmrc
+            /vite.config.ts
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - name: Pinned pnpm for Chrome/Playwright client smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          cd upstream
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Download byte-certified CURRENT FULL Pages artifact already published V4-03
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38163605895
+          name: github-pages
+          github-token: ${{ github.token }}
+          path: old-certified
+      - name: Download exact QA-GREEN V4-03.1 WebGL from P13 (never rebuild)
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38165622295
+          name: HIGHFLY-GOLDEN-PLAY-V403-1-P13-WEBGL-NO-DEPLOY
+          github-token: ${{ github.token }}
+          path: candidate
+      - name: Extract current full PUBLIC site and prove new WebGL source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s old-certified/artifact.tar.gz
+          mkdir published-old
+          tar -xzf old-certified/artifact.tar.gz -C published-old
+          test -s published-old/index.html
+          test -s published-old/v4-02/index.html
+          test -s published-old/monster-lab/hunts.html
+          test -s published-old/v4-03-preview/index.html
+          test -s candidate/cobalt-hollow-lab/index.html
+      - name: Replace ONLY latest PLAY app, never old Pages / old Hunter save namespace
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 release/highfly_golden_v4031_overlay_live_pages.py
+          test -s golden-v4031-full-site-stage.json
+          echo 'HF_GOLDEN_V4031_OLD_PAGES_HASH_PROTECTED_AND_NEW_P13_WEBGL_STAGED=1'
+      - name: Share only byte-identical old game JS chunks, strict 995MB site budget
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 release/highfly_golden_dedup_js.py
+          python3 release/highfly_golden_preview_module_aliases.py
+          test -s golden-v403-js-dedup-report.json
+          python3 - <<'PY'
+          from pathlib import Path
+          total=sum(p.stat().st_size for p in Path('golden-publish').rglob('*') if p.is_file())
+          print('HF_PLAY_V4031_PACKAGE_FINAL_BYTES='+str(total))
+          if total>=995_000_000:raise SystemExit('SAFE_PAGES_SIZE_LIMIT_EXCEEDED_NO_DEPLOY')
+          PY
+      - name: Browser QA — old V4-02 and Monster Lab PLUS new P13 9-class gameplay on S23 emulation
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../release/highfly_golden_v403_legacy_pages_browser.mjs scripts/highfly_golden_v402_legacy_check.mjs
+          cp ../monsters/integration/highfly_p06_mobile_smoke.mjs scripts/highfly_golden_v4031_new_pages_mobile.mjs
+          python3 ../monsters/integration/activate_p09_mobile_smoke.py scripts/highfly_golden_v4031_new_pages_mobile.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/highfly_golden_v4031_new_pages_mobile.mjs')
+          s=p.read_text()
+          a="const URL='http://127.0.0.1:4173/cobalt-hollow-lab/';"
+          b="const URL='http://127.0.0.1:4174/cobalt-hollow-lab/v4-03-preview/';"
+          assert s.count(a)==1
+          p.write_text(s.replace(a,b,1))
+          PY
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory ../golden-publish > ../golden-v4031-local.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -fsS 'http://127.0.0.1:4174/cobalt-hollow-lab/v4-03-preview/' >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_golden_v402_legacy_check.mjs
+          node scripts/highfly_golden_v4031_new_pages_mobile.mjs
+          test -s ../demo-v4-02-pr19-s23-report.json
+          node - <<'JS'
+          const r=require('../demo-v4-02-pr19-s23-report.json');
+          if(!r.pass||r.static404?.length||r.p06?.options!==8||
+             r.p06?.ordinaryCount!==6||r.p06?.eliteCount!==1||
+             r.p06?.captainCount!==1||!r.p06?.sameHunter||!r.p06?.sameSim)
+            throw Error('HF_GOLDEN_P13_GAME_MOBILE_PAGES_QA_FAILED');
+          console.log('HF_GOLDEN_V4031_P13_FULL_SITE_CHROME_S23_LV99_QA_GREEN=1');
+          JS
+      - name: Upload FULL immutable Pages candidate for separate MAIN approval (NO DEPLOY)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: golden-publish/cobalt-hollow-lab
+      - name: Archive manifest and Chrome evidences for auditable release
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-GOLDEN-V4031-P13-FULL-SITE-PREDEPLOY-QA
+          path: |
+            golden-v4031-full-site-stage.json
+            golden-v403-js-dedup-report.json
+            golden-v403-final-chunk-route-qa.json
+            demo-v4-02-pr19-s23-report.json
+            golden-v4031-local.log
+          if-no-files-found: warn
+          retention-days: 21
