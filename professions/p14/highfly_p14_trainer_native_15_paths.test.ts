@@ -55,7 +55,7 @@ describe('GOLDEN DEV1 native P13 trainer-to-forge contracts, 15 weapons',()=>{
       ent.pos={...sim.groundPos(FORGE!.pos.x,FORGE!.pos.z)};
       ent.prevPos={...ent.pos};
       const priorTraining=JSON.parse(JSON.stringify(
-        sim.serializeCharacter(pid).trainingProfile));
+        sim.serializeCharacter(pid)!.trainingProfile));
       const fee=trainingFeeFor(recipe!);
       const tier=tierForSkill(recipe!.skillReq);
       expect(tier).toBeGreaterThan(0);
@@ -114,7 +114,7 @@ describe('GOLDEN DEV1 native P13 trainer-to-forge contracts, 15 weapons',()=>{
       expect(restored.countItem(itemId,restoredId)).toBe(1);
       expect(restored.players.get(restoredId)!.knownRecipes.has(recipeId))
         .toBe(true);
-      expect(restored.serializeCharacter(restoredId).trainingProfile)
+      expect(restored.serializeCharacter(restoredId)!.trainingProfile)
         .toEqual(priorTraining);
       expect([...restored.entities.values()].filter(e=>e.kind==='player'))
         .toHaveLength(1);
