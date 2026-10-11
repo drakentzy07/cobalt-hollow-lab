@@ -81,7 +81,7 @@ def main():
   for src in new_files:
     rel=src.relative_to(LATEST)
     if src.is_symlink():raise RuntimeError("SYMLINK:"+str(rel))
-    if rel.parts[0] in shared:
+    if len(rel.parts)>1 and rel.parts[0]!="assets" and rel.parts[0]!="v4-03-preview":
       existing=ROOT/rel
       candidate_hash=sha(src.read_bytes())
       if not existing.exists() or sha(existing.read_bytes())!=candidate_hash:
