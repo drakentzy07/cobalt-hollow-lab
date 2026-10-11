@@ -1,0 +1,66 @@
+name: HIGHFLY SKIN11 — ORIGINAL SKIN FACTORY TEXT + IMAGE CONTRACT (ISOLATED)
+on:
+  push:
+    branches: [highfly-skin11-original-factory-separate-from-legacy]
+    paths:
+      - 'character-truth/skin11-original-factory/**'
+      - '.github/workflows/skin11-original-factory.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  true-original-factory-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0,persist-credentials: false}
+      - name: Explicit no-legacy-mesh-modification and no public HIGHFLY update
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = 'highfly-skin11-original-factory-separate-from-legacy'
+          git diff --name-only 3cc1ab98a66840aaefa69b7345b1f998f354014a HEAD | tee /tmp/skin11-modified.txt
+          while IFS= read -r f; do
+            case "$f" in
+              character-truth/skin11-original-factory/*|.github/workflows/skin11-original-factory.yml) ;;
+              *) echo "PUBLIC_GAME_OR_LEGACY_SKIN_MUTATION_FORBIDDEN $f";exit 45;;
+            esac
+          done < /tmp/skin11-modified.txt
+          node --check character-truth/skin11-original-factory/skin11-original-factory-core.mjs
+          node --check character-truth/skin11-original-factory/skin11-original-factory-ui.mjs
+          node character-truth/skin11-original-factory/skin11-original-factory-core.test.mjs
+          echo HIGHFLY_SKIN11_NO_DEFORM_OR_RECOLOR_OR_FAKE_AI_CLAIM_GREEN=1
+      - name: Install official Playwright Chromium for Android landscape browser QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Exercise independent original-factory on 915x412 mobile viewport
+        shell: bash
+        timeout-minutes: 5
+        env:
+          SKIN11_TEST_URL: http://127.0.0.1:4777/
+          SKIN11_QA_DIR: character-truth/skin11-original-factory/qa-proof
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4777 --bind 127.0.0.1 --directory character-truth/skin11-original-factory >/tmp/skin11-http.log 2>&1 &
+          sleep 2
+          node character-truth/skin11-original-factory/skin11-original-factory-browser-qa.cjs
+          grep -F '"green": true' character-truth/skin11-original-factory/qa-proof/gate.json
+          grep -F '"automatic3DClaim": false' character-truth/skin11-original-factory/qa-proof/gate.json
+          grep -F '"gameDeployed": false' character-truth/skin11-original-factory/qa-proof/gate.json
+          echo HIGHFLY_SKIN11_ORIGINAL_FACTORY_BROWSER_QA_GREEN=1
+      - name: Preserve standalone safe factory and realistic proof without deploying Pages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN11-ORIGINAL-TEXT-IMAGE-FACTORY-CONTRACT-QA
+          path: |
+            character-truth/skin11-original-factory/index.html
+            character-truth/skin11-original-factory/skin11-original-factory-core.mjs
+            character-truth/skin11-original-factory/skin11-original-factory-ui.mjs
+            character-truth/skin11-original-factory/README.md
+            character-truth/skin11-original-factory/qa-proof/
+          retention-days: 30
+          if-no-files-found: warn
