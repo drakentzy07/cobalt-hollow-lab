@@ -447,7 +447,7 @@ jobs:
           done
           node scripts/v4_02_gem_native_browser_smoke.mjs
           echo "HIGHFLY_V4_02_PR17_NATIVE_GEM_BROWSER_REAL=1"
-      - name: V4-03 — S23 Chrome emulation: same-build real monster-LAB alongside V4 gem experience
+      - name: "V4-03 — S23 Chrome emulation: same-build real monster-LAB alongside V4 gem experience"
         working-directory: upstream
         shell: bash
         run: |
