@@ -11,7 +11,7 @@ from pathlib import Path
 from urllib.request import Request,urlopen
 import hashlib,json,shutil,sys
 OLD=Path("published-old")
-NEW=Path("candidate/cobalt-hollow-lab")
+NEW=Path("candidate/cobalt-hollow-lab") if Path("candidate/cobalt-hollow-lab/index.html").is_file() else Path("candidate")
 OUT=Path("golden-publish/cobalt-hollow-lab")
 PREFIX=b"/cobalt-hollow-lab/assets/"
 REBASE=b"/cobalt-hollow-lab/v4-03-preview/assets/"
