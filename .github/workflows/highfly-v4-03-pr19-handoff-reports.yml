@@ -1,0 +1,71 @@
+name: HIGHFLY V4-03 PR19 — ALL P02L/M/N AUDIT DELIVERABLES (NO DEPLOY)
+on:
+  push:
+    branches:
+      - highfly-v4-03-pr19-monsters-handoff-real
+    paths:
+      - .github/workflows/highfly-v4-03-pr19-handoff-reports.yml
+      - monsters/integration/build_v403_pr19_handoff.py
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: highfly-v403-pr19-handoff-reports
+  cancel-in-progress: true
+jobs:
+  handoff_reports:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout PR19 integration branch only
+        uses: actions/checkout@v4
+      - name: Checkout PINNED P02L/P02M complete registry and balance source
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: 402c779c9f2caf2e3c538313ed627d1163792aaf
+          path: p02m-source
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /docs/HIGHFLY_MONSTRUOS6_FULL_LV1_99_AUDIT/
+            /docs/HIGHFLY_MONSTRUOS6_P02M_BALANCE/
+      - name: Download VERIFIED full native 1440 duel matrix artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: HIGHFLY-P02N-SHARD-MERGED-1440-DUELS
+          run-id: 38102239479
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: p02n-source
+      - name: Validate source SHA, 350 mob definitions, all 988 loot rows and 1440 real 8-second fights
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C p02m-source rev-parse HEAD)" = "402c779c9f2caf2e3c538313ed627d1163792aaf"
+          test -s p02n-source/HIGHFLY_P02N_SUMMARY_1440.json
+          test -s p02n-source/HIGHFLY_P02N_ALL_1440_DUELS.csv
+          python3 monsters/integration/build_v403_pr19_handoff.py
+          test -s docs/HIGHFLY_V4_03_PR19_MONSTERS_INTEGRATION/HIGHFLY_V4_03_MONSTERS_INTEGRATION_MANIFEST.json
+          test -s docs/HIGHFLY_V4_03_PR19_MONSTERS_INTEGRATION/HIGHFLY_V4_03_BESTIARY_1_99.csv
+          test -s docs/HIGHFLY_V4_03_PR19_MONSTERS_INTEGRATION/HIGHFLY_V4_03_WORLD_SPAWN_ACCESS.csv
+          test -s docs/HIGHFLY_V4_03_PR19_MONSTERS_INTEGRATION/HIGHFLY_V4_03_REWARD_LOOT_CRAFTING.csv
+          echo 'PR19_MONSTERS_AUDITED_DATA_AND_SMOKE_DUELS_GREEN_NOT_E2E_BALANCE=1'
+      - name: Commit forensic handoff data ONLY into isolated branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "highfly-v4-03-pr19-monsters-handoff-real"
+          git config user.name 'highfly-pr19-monsters-handoff-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add docs/HIGHFLY_V4_03_PR19_MONSTERS_INTEGRATION/
+          git diff --cached --check
+          git commit -m 'docs(v4): freeze exact PR19 350-bestiary 988-loot and P02N 1440 native duel evidence'
+          git push origin HEAD:refs/heads/"$GITHUB_REF_NAME"
+      - name: Upload PR19 handoff sources, unchanged public site
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-V403-PR19-BESTIARY-LOOT-BALANCE-HANDOFF
+          path: docs/HIGHFLY_V4_03_PR19_MONSTERS_INTEGRATION/
+          if-no-files-found: warn
+          retention-days: 30
