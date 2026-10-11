@@ -135,6 +135,16 @@ bpy.context.view_layer.objects.active=rig
 bpy.ops.export_scene.gltf(filepath=str(out),export_format='GLB',use_selection=True,export_apply=False,export_yup=True)
 data=out.read_bytes()
 assert data[:4]==b'glTF' and len(data)>17000, 'INVALID_NEW_GLTF'
+# Inspect the ACTUAL EXPORTED GLB, not only what Blender held in memory.
+import struct
+length,chunk_type=struct.unpack_from('<II',data,12)
+assert chunk_type==0x4e4f534a, 'JSON_CHUNK_NOT_FOUND'
+gltf_json=json.loads(data[20:20+length].decode('utf-8'))
+brand_nodes=[{'name':n.get('name'),'mesh':n.get('mesh'),'skin':n.get('skin')} for n in gltf_json.get('nodes',[]) if 'HF9NEW_' in n.get('name','')]
+print('SKIN9_EXPORTED_NODES='+json.dumps(brand_nodes,sort_keys=True),flush=True)
+print('SKIN9_EXPORTED_SKINS='+str(len(gltf_json.get('skins',[])))+' MESHES='+str(len(gltf_json.get('meshes',[]))),flush=True)
+assert len(brand_nodes)>=11, 'NEW_NODES_NOT_EXPORTED'
+assert len([n for n in brand_nodes if n['skin'] is not None])>=11, 'BLENDER_NEW_ARMOR_HAS_NO_EXPORTED_SKIN'
 report={'schema':'highfly.skin9.real-new-independent-armor/1',
  'name':'REY OSCURO · Primera Armadura Propia · PROTOTIPO',
  'rig':'Rig_Medium','bones':len(rig.data.bones),'newSkinnedMeshCount':len(output),
