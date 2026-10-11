@@ -80,7 +80,8 @@ describe('HIGHFLY P08 continuous native monster material -> forged weapon -> fir
         }
       };
       addMissing(swordRecipe);
-      addMissing(gemRecipe);
+      // Supply gem-only test prerequisites after the sword consumes any
+      // common reagent; otherwise the first authentic craft spends them.
       hunter.pos={...sim.groundPos(forge!.pos.x,forge!.pos.z)};
       hunter.prevPos={...hunter.pos};
       const beforeSword=sim.countItem(SWORD,pid);
@@ -96,6 +97,7 @@ describe('HIGHFLY P08 continuous native monster material -> forged weapon -> fir
       sim.equipItem(SWORD,pid);
       expect(meta.equipment.mainhand).toBe(SWORD);
       expect(highflyElementalFinisherReady(hunter)).toBe(false);
+      addMissing(gemRecipe);
       const craftedGem=resolveCraft(sim.ctx,pid,GEM_RECIPE);
       expect(craftedGem.ok,JSON.stringify(craftedGem)).toBe(true);
       expect(sim.countItem(GEM,pid)).toBe(1);
