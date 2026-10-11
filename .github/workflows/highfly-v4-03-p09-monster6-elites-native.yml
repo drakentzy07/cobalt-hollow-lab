@@ -6,6 +6,7 @@ on:
     branches:
       - highfly-v4-03-p09-monster6-elites-native
     paths:
+      - .github/workflows/highfly-v4-03-p09-monster6-elites-native.yml
       - .github/workflows/highfly-v4-03-p08-final-integration-qa.yml
       - monsters/integration/highfly_p08_world_class_save.test.ts
       - monsters/integration/highfly_p08_optout.test.ts
