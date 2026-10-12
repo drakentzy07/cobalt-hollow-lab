@@ -33,7 +33,7 @@ const ARMOR_TRACK:Record<PlayerClass,'mail'|'leather'|'cloth'>={
 };
 const CLASS_ACTION:Record<PlayerClass,readonly string[]>={
   warrior:['mortal_strike','slam','heroic_strike'],
-  paladin:['crusader_strike','judgement'],
+  paladin:['hammer_of_grace','crusader_strike','judgement'],
   hunter:['arcane_shot','steady_shot'],
   rogue:['sinister_strike','eviscerate'],
   priest:['smite','mind_blast'],
@@ -62,6 +62,12 @@ function createHunter(cls:PlayerClass,seed:number){
   // explicitly targets MAINHAND to compare all nine class loadouts without
   // changing the authentic dual-wield/equip rules.
   sim.equipItem(weapon,pid,'mainhand');
+  if(cls==='rogue'){
+    // Two separately obtainable legal daggers, both explicit CI loadout fixtures.
+    sim.addItem(weapon,1,pid);
+    sim.equipItem(weapon,pid,'offhand');
+    expect(meta.equipment.offhand).toBe(weapon);
+  }
   expect(meta.equipment.mainhand).toBe(weapon);
   sim.addItem(chest,1,pid);
   sim.equipItem(chest,pid);
@@ -111,7 +117,7 @@ describe('HIGHFLY GOLDEN DEV7 LV99 nine classes — original Sim with earned-leg
         .toEqual(orig.trainingProfile);
       expect([...reloaded.entities.values()].filter(x=>x.kind==='player')).toHaveLength(1);
     }
-  });
+  },180000); // CI nine-class load/save may exceed Vitest default 20s on shared runners.
   it('measures nine real LV99 captain fights with proper P13/P16 equipment, no combat buff',()=>{
     const rows=[] as {cls:PlayerClass,weapon:string,chest:string,
       monster:string,action:string,elapsedSeconds:number,
@@ -134,6 +140,7 @@ describe('HIGHFLY GOLDEN DEV7 LV99 nine classes — original Sim with earned-leg
       sim.targetEntity(target.id,pid);
       sim.startAutoAttack(pid);
       const action=CLASS_ACTION[cls].find(id=>meta.known.some(a=>a.def.id===id))??'';
+    expect(action,'NO_KNOWN_CLASS_ACTION_FOR_'+cls).not.toBe('');
       let tick=0;
       const limit=Math.ceil(25/DT),interval=Math.max(1,Math.floor(2.5/DT));
       const startHP=actor.maxHp;

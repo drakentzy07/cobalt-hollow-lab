@@ -66,8 +66,9 @@ describe('HIGHFLY P16 3 source chest models × 3 levels = 9 native armors',()=>{
       expect(Object.keys(item!.stats??{})).toEqual(['armor']);
       expect(item!.stats!.armor).toBeGreaterThan(0);
       expect(requiredLevelFor(item)).toBe(level);
-      expect(item?.noMarketList).toBe(true);
-      expect(item?.soulbound).toBe(true);
+      expect(item?.noMarketList).toBe(false);
+      expect(item?.sellValue).toBeGreaterThan(0);
+      expect(item?.soulbound).toBe(false);
       expect(recipe?.professionId).toBe('armorcrafting');
       expect(recipe?.resultItemId).toBe(id);
       expect(recipe?.stationType).toBe('forge');

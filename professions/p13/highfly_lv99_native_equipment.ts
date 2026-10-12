@@ -63,8 +63,10 @@ for(const level of HF_P13_WEAPON_LEVELS){
       quality:QUALITY[level],
       weapon:{...original.weapon,min:amount,max:amount+Math.round(level*0.20)},
       ...(track==='caster'?{spellPower:Math.round(level*0.2)}:{}),
-      // Pilot supply is non-tradeable until economy and market tests:
-      sellValue:0,noMarketList:true,soulbound:true,
+      // Player-made NORMAL equipment can be sold via original NPC, World Market,
+      // direct P2P trade and commissions; UNIQUE or bound rewards remain locked.
+      // NPC resale floor is low to prevent crafting -> merchant money printing.
+      sellValue:Math.round(level*1.5),noMarketList:false,soulbound:false,
     };
     HIGHFLY_P13_RECIPES.push({
       id:hfP13RecipeId(level,track),
