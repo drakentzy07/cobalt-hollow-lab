@@ -824,7 +824,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
     hunter:['shellskin','aspect_of_the_monkey'],
     rogue:['evasion'],
     priest:['power_word_shield'],
-    shaman:['lightning_shield'],
+    shaman:[], // Lightning Shield is an opener, not a defensive reaction
     mage:['ice_barrier','blazing_barrier','ice_block'],
     warlock:['demon_skin','bone_armor'],
     druid:['barkskin'],
@@ -894,7 +894,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       sim.startAutoAttack(pid);
       const castPeriod=Math.max(1,Math.ceil(1.55/DT));
       const maxTicks=Math.ceil(130/DT);
-      let turns=0,atk=0,defensive=0,heals=0,potions=0,relocations=0;
+      let turns=0,atk=0,defensive=0,heals=0,potions=0,relocations=0,executeAttempts=0;
       let attemptedAttacks=0,attemptedHeals=0,attemptedGuard=0;
       let maxRange=0,lastHeal=-500,lastDefend=-500,ticks=0;
       let effectiveHealing=0,healingEvents=0,actualDamageDone=0,actualDamageTaken=0;
@@ -927,8 +927,13 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
             sim.castAbilityOn(heal,pid,pid);
             attemptedHeals++;lastHeal=ticks;
           }else{
-            const id=attack[atk++%attack.length];
+            // Original Arms/Prot finishing move only below its native 20% HP gate.
+            // No extra damage or resource: the Sim validates its genuine cast.
+            const finishing=cls==='warrior'&&known.has('execute')&&
+              captain.hp/captain.maxHp<0.2;
+            const id=finishing?'execute':attack[atk++%attack.length];
             sim.castAbility(id,pid);
+            if(finishing)executeAttempts++;
             attemptedAttacks++;
           }
           turns++;
@@ -954,7 +959,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         bossHpRemainingPct:Math.round(10000*Math.max(0,captain.hp)/startHp)/100,
         heroEndHp:Math.max(0,p.hp),heroMaxHp:p.maxHp,
         seconds:Math.round(ticks*DT*100)/100,gearSlots:Object.values(meta.equipment).filter(Boolean).length,
-        opened,guardsAvailable:guard,healsAvailable:healing,
+        opened,guardsAvailable:guard,healsAvailable:healing,executeAttempts,
         attemptedAttacks,attemptedHeals,attemptedGuard,botTurns:turns,
         potionUses:potions,nativeInputSteps:relocations,
         maxRange:Math.round(maxRange*10)/10,
@@ -977,7 +982,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       playtestOnPhysicalS23Needed:true,
       rows:rows.map(x=>({cls:x.cls,result:x.result,
         bossHpRemainingPct:x.bossHpRemainingPct,heroEndHp:x.heroEndHp,
-        seconds:x.seconds,guardAttempts:x.attemptedGuard,
+        seconds:x.seconds,executeAttempts:x.executeAttempts,guardAttempts:x.attemptedGuard,
         healingAttempts:x.attemptedHeals,effectiveHealing:x.effectiveHealing,
         healingEvents:x.healingEvents,damageDone:x.actualDamageDone,
         hunterRangeOutSeconds:x.hunterSecondsOutsideEffectiveRange,
