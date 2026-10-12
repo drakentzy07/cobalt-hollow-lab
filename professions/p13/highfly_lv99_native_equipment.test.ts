@@ -28,7 +28,8 @@ describe('HIGHFLY P13 real item and recipe registry 50–99 smoke',()=>{
     expect(HF_P13_WEAPON_LEVELS).toEqual([50,60,70,80,90]);
     expect(Object.keys(HIGHFLY_P13_ITEMS)).toHaveLength(15);
     expect(HIGHFLY_P13_RECIPES).toHaveLength(15);
-    const originalRecipeCount=ALL_RECIPES.filter(r=>!r.id.startsWith('recipe_hf_p13_')).length;
+    const originalRecipeCount=ALL_RECIPES.filter(r=>!r.id.startsWith('recipe_hf_p13_') &&
+      !r.id.startsWith('recipe_hf_p15_bridge_')).length;
     expect(originalRecipeCount).toBe(212);
     const allOutputIds=new Set<string>();
     for(const lv of HF_P13_WEAPON_LEVELS){

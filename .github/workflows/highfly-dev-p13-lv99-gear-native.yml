@@ -5,9 +5,13 @@ on:
   push:
     branches:
       - highfly-dev-main
+      - highfly-golden-dev1-p15-bridge-lv30-40
     paths:
       - .github/workflows/highfly-dev-p13-lv99-gear-native.yml
       - professions/p13/highfly_lv99_native_equipment.ts
+      - professions/p15/highfly_bridge_30_40_native_weapons.ts
+      - professions/p15/highfly_bridge_30_40_native_weapons.test.ts
+      - professions/p15/activate_p15_bridge.py
       - professions/p13/highfly_lv99_native_equipment.test.ts
       - professions/p14/highfly_gem_attribute_expansion_foundation.test.ts
       - professions/p13/highfly_full_227_recipes_catalog.test.ts
@@ -537,8 +541,11 @@ jobs:
           cp ../professions/p13/highfly_full_227_recipes_catalog.test.ts tests/highfly_full_227_recipes_catalog.test.ts
           cp ../professions/p13/highfly_complete_native_1_99_catalog.test.ts tests/highfly_complete_native_1_99_catalog.test.ts
           python3 ../professions/p13/activate_p13.py
+          cp ../professions/p15/highfly_bridge_30_40_native_weapons.ts src/sim/content/highfly_bridge_30_40_native_weapons.ts
+          cp ../professions/p15/highfly_bridge_30_40_native_weapons.test.ts tests/highfly_bridge_30_40_native_weapons.test.ts
+          python3 ../professions/p15/activate_p15_bridge.py
           git diff --check HEAD
-          echo 'HF_P13_EXISTING_ITEM_RECIPES_RUNTIME_EXTENDED_50_99_DEV_ONLY=1'
+          echo 'HF_P13_P15_SAME_NATIVE_WEAPON_RECIPES_30_40_50_90_DEV_ONLY=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -651,8 +658,8 @@ jobs:
           VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
         run: |
           set -euo pipefail
-          pnpm exec vitest run tests/highfly_lv99_native_equipment.test.ts
-          echo 'HF_P13_15_REAL_LV50_99_ITEMS_15_RECIPES_9_CLASS_MATERIAL_NATIVE_GREEN=1'
+          pnpm exec vitest run tests/highfly_lv99_native_equipment.test.ts tests/highfly_bridge_30_40_native_weapons.test.ts
+          echo 'HF_P13_P15_21_NATIVE_ITEMS_RECIPES_9_CLASS_LV30_90_GREEN=1'
       - name: P13 — emit EVERY native recipe and exact quantities by each Hunter level 1–99
         working-directory: upstream
         shell: bash
