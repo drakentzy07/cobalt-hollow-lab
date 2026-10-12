@@ -29,7 +29,7 @@ describe('HIGHFLY P13 real item and recipe registry 50–99 smoke',()=>{
     expect(Object.keys(HIGHFLY_P13_ITEMS)).toHaveLength(15);
     expect(HIGHFLY_P13_RECIPES).toHaveLength(15);
     const originalRecipeCount=ALL_RECIPES.filter(r=>!r.id.startsWith('recipe_hf_p13_')).length;
-    expect(originalRecipeCount).toBe(215); // 212 original + 3 native LV35 P15
+    expect(originalRecipeCount).toBe(224); // 212 original + 3 P15 LV35 + 9 P16 armors
     const allOutputIds=new Set<string>();
     for(const lv of HF_P13_WEAPON_LEVELS){
       for(const track of ['warrior','scout','caster'] as const){
