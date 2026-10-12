@@ -33,7 +33,7 @@ const ARMOR_TRACK:Record<PlayerClass,'mail'|'leather'|'cloth'>={
 };
 const CLASS_ACTION:Record<PlayerClass,readonly string[]>={
   warrior:['mortal_strike','slam','heroic_strike'],
-  paladin:['crusader_strike','judgement'],
+  paladin:['hammer_of_grace','crusader_strike','judgement'],
   hunter:['arcane_shot','steady_shot'],
   rogue:['sinister_strike','eviscerate'],
   priest:['smite','mind_blast'],
@@ -134,6 +134,7 @@ describe('HIGHFLY GOLDEN DEV7 LV99 nine classes — original Sim with earned-leg
       sim.targetEntity(target.id,pid);
       sim.startAutoAttack(pid);
       const action=CLASS_ACTION[cls].find(id=>meta.known.some(a=>a.def.id===id))??'';
+    expect(action,'NO_KNOWN_CLASS_ACTION_FOR_'+cls).not.toBe('');
       let tick=0;
       const limit=Math.ceil(25/DT),interval=Math.max(1,Math.floor(2.5/DT));
       const startHP=actor.maxHp;

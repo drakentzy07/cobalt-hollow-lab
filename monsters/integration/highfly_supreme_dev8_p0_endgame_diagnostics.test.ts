@@ -31,7 +31,7 @@ const ARMORS:Record<PlayerClass,'mail'|'leather'|'cloth'>={
 };
 const PRIORITY:Record<PlayerClass,string[]>={
   warrior:['mortal_strike','slam','heroic_strike','rend'],
-  paladin:['crusader_strike','judgement','holy_strike'],
+  paladin:['hammer_of_grace','crusader_strike','judgement','holy_strike'],
   hunter:['arcane_shot','steady_shot','serpent_sting'],
   rogue:['sinister_strike','eviscerate','backstab'],
   priest:['smite','mind_blast','shadow_word_pain'],
@@ -89,6 +89,7 @@ function fight(cls:PlayerClass,policy:Policy):FightRow {
   sim.targetEntity(mob.id,pid);
   sim.startAutoAttack(pid);
   const known=PRIORITY[cls].filter(id=>meta.known.some(a=>a.def.id===id));
+  expect(known.length,'NO_KNOWN_CLASS_ACTION_FOR_'+cls).toBeGreaterThan(0);
   const maxSeconds=policy==='single_25s'?25:40;
   const maxTicks=Math.ceil(maxSeconds/DT);
   const castEvery=Math.max(1,Math.floor(2.5/DT));
