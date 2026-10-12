@@ -1,0 +1,412 @@
+{
+  "schema": "highfly.skin18.volumetric-armor-proof/1",
+  "jobId": "hf13-eclipse-eterno-demonstration-01",
+  "style": "eclipse",
+  "prompt": "Eclipse Eterno: armadura negra de acero pulido y plata vieja, yelmo cerrado proporcional con visor violeta, hombreras curvas asimetricas, pechera anatomica con gema violeta, grebas esculpidas y espaldar articulado sin placas flotantes. Fabricar mallas originales sin usar triangulos del Paladin.",
+  "designBlueprintName": "Eclipse Eterno / Royal Obsidian Violet",
+  "designBlueprintSource": "HUMAN_SELECTED_CONCEPT_ART_DIRECTED",
+  "designReference": "BLACK_SILVER_VIOLET_3_VIEW_APPROVED_VISUAL_REFERENCE",
+  "originalArtworkAdaptation": "UNAPPROVED_GEOMETRY_INTERPRETATION",
+  "worker": "BLENDER_SKIN18_REAL_VOLUMETRIC_SOLID_ARMOR_BOUND_TO_NATIVE_RIG",
+  "freshOriginalGeometry": true,
+  "copiedSourceTriangles": 0,
+  "donorMeshesUsedOnlyForFitAndWeights": true,
+  "nativeRig": "Rig_Medium",
+  "originalRigBones": 23,
+  "originalAnimationClips": 22,
+  "newSkinnedPieces": 11,
+  "newVertices": 1872,
+  "newPolygonFaces": 2233,
+  "newSculpturalDetails": 47,
+  "nativeBodyParts": 11,
+  "closedArmorSolids": 47,
+  "anatomicalVolumeEvidence": {
+    "Head": {
+      "bodyLocalAxes": [
+        0.8965067267417908,
+        0.9966605305671692,
+        0.8391784429550171
+      ],
+      "armorLocalAxes": [
+        1.331133246421814,
+        1.827588438987732,
+        0.938788890838623
+      ],
+      "armorToBodyAxes": [
+        1.4848000653152968,
+        1.8337120643753264,
+        1.1186999603241063
+      ],
+      "closedArmorSolids": 6
+    },
+    "Chest": {
+      "bodyLocalAxes": [
+        0.5399410128593445,
+        0.38606035709381104,
+        0.8999922275543213
+      ],
+      "armorLocalAxes": [
+        0.8252933621406555,
+        0.9073329269886017,
+        0.9800915420055389
+      ],
+      "armorToBodyAxes": [
+        1.5284880060697403,
+        2.350235941910305,
+        1.0890000068877073
+      ],
+      "closedArmorSolids": 6
+    },
+    "ArmL": {
+      "bodyLocalAxes": [
+        0.636990025639534,
+        0.23198816180229187,
+        0.23200726509094238
+      ],
+      "armorLocalAxes": [
+        1.3431439399719238,
+        0.5492490530014038,
+        0.313035786151886
+      ],
+      "armorToBodyAxes": [
+        2.108579233439983,
+        2.3675736241640313,
+        1.349249929863972
+      ],
+      "closedArmorSolids": 5
+    },
+    "ArmR": {
+      "bodyLocalAxes": [
+        0.636990025639534,
+        0.23198816180229187,
+        0.23200726509094238
+      ],
+      "armorLocalAxes": [
+        1.343143880367279,
+        0.5492490381002426,
+        0.313035786151886
+      ],
+      "armorToBodyAxes": [
+        2.108579139867647,
+        2.3675735599316106,
+        1.349249929863972
+      ],
+      "closedArmorSolids": 5
+    },
+    "HandL": {
+      "bodyLocalAxes": [
+        0.1574796438217163,
+        0.17268012464046478,
+        0.1655716896057129
+      ],
+      "armorLocalAxes": [
+        0.23198449611663818,
+        0.3317689299583435,
+        0.18080425262451172
+      ],
+      "armorToBodyAxes": [
+        1.4731078283315733,
+        1.9212919300881652,
+        1.0919998041638228
+      ],
+      "closedArmorSolids": 3
+    },
+    "HandR": {
+      "bodyLocalAxes": [
+        0.1574796438217163,
+        0.17268013954162598,
+        0.1655716896057129
+      ],
+      "armorLocalAxes": [
+        0.23198449611663818,
+        0.3317689746618271,
+        0.18080425262451172
+      ],
+      "armorToBodyAxes": [
+        1.4731078283315733,
+        1.9212920231735824,
+        1.0919998041638228
+      ],
+      "closedArmorSolids": 3
+    },
+    "LegL": {
+      "bodyLocalAxes": [
+        0.2070070579648018,
+        0.16401620209217072,
+        0.40500758588314056
+      ],
+      "armorLocalAxes": [
+        0.36524466052651405,
+        0.35049887001514435,
+        0.4592786133289337
+      ],
+      "armorToBodyAxes": [
+        1.7644067990600496,
+        2.1369771128963078,
+        1.1340000270055492
+      ],
+      "closedArmorSolids": 4
+    },
+    "LegR": {
+      "bodyLocalAxes": [
+        0.20700707286596298,
+        0.16401620209217072,
+        0.40500764548778534
+      ],
+      "armorLocalAxes": [
+        0.36524470150470734,
+        0.35049887001514435,
+        0.4592786878347397
+      ],
+      "armorToBodyAxes": [
+        1.7644068700068194,
+        2.1369771128963078,
+        1.1340000440771707
+      ],
+      "closedArmorSolids": 4
+    },
+    "FootL": {
+      "bodyLocalAxes": [
+        0.17099710553884506,
+        0.2845999374985695,
+        0.12690920010209084
+      ],
+      "armorLocalAxes": [
+        0.30390545539557934,
+        0.6371771395206451,
+        0.14059000834822655
+      ],
+      "armorToBodyAxes": [
+        1.7772549683687,
+        2.2388520008857973,
+        1.1077999722252627
+      ],
+      "closedArmorSolids": 3
+    },
+    "FootR": {
+      "bodyLocalAxes": [
+        0.17099711298942566,
+        0.28459998965263367,
+        0.12690919265151024
+      ],
+      "armorLocalAxes": [
+        0.30390546284615993,
+        0.6371772736310959,
+        0.1405900027602911
+      ],
+      "armorToBodyAxes": [
+        1.7772549345026265,
+        2.238852061831758,
+        1.1077999932309714
+      ],
+      "closedArmorSolids": 3
+    },
+    "Back": {
+      "bodyLocalAxes": [
+        0.5399410128593445,
+        0.38606035709381104,
+        0.8999922275543213
+      ],
+      "armorLocalAxes": [
+        0.7386392951011658,
+        0.4527095779776573,
+        1.0029513239860535
+      ],
+      "armorToBodyAxes": [
+        1.3679999805711787,
+        1.1726393804988653,
+        1.1143999839993262
+      ],
+      "closedArmorSolids": 5
+    }
+  },
+  "glbSha256": "f75cbc66892f0edef2f211e3062b58b86e3b3043fb7f2df1828a62e270463f3e",
+  "glbBytes": 1113104,
+  "skinsInGltf": 1,
+  "animationTracksInGltf": 22,
+  "visualArtQaPassed": false,
+  "maleFemaleFitVerified": false,
+  "reviewScreenshots": [
+    {
+      "view": "front",
+      "filename": "hf13-eclipse-eterno-demonstration-01-front.png",
+      "bytes": 452856
+    },
+    {
+      "view": "profile",
+      "filename": "hf13-eclipse-eterno-demonstration-01-profile.png",
+      "bytes": 441480
+    },
+    {
+      "view": "back",
+      "filename": "hf13-eclipse-eterno-demonstration-01-back.png",
+      "bytes": 422801
+    }
+  ],
+  "reviewAnglesRendered": 3,
+  "qaHiddenOriginalVariants": 237,
+  "qaVisibleBodyPieces": [
+    "M_ArmL",
+    "M_ArmR",
+    "M_FootL",
+    "M_FootR",
+    "M_HandL",
+    "M_HandR",
+    "M_Head",
+    "M_LegL",
+    "M_LegR",
+    "M_Loin",
+    "M_Torso"
+  ],
+  "artistApproved": false,
+  "artApproved": false,
+  "gameDeployed": false,
+  "outcome": "TECHNICAL_GLTF_CREATED_AWAITING_ARTISTIC_AND_MOBILE_REVIEW",
+  "anatomyReferenceBodyMeshes": {
+    "Head": "M_Head",
+    "Chest": "M_Torso",
+    "Back": "M_Torso",
+    "ArmL": "M_ArmL",
+    "ArmR": "M_ArmR",
+    "HandL": "M_HandL",
+    "HandR": "M_HandR",
+    "LegL": "M_LegL",
+    "LegR": "M_LegR",
+    "FootL": "M_FootL",
+    "FootR": "M_FootR"
+  },
+  "pieces": {
+    "Head": {
+      "freshVertices": 202,
+      "freshFaces": 241,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.5199739015102386,
+        0.6179295289516449,
+        0.4741358202695846
+      ],
+      "closedSolids": 6
+    },
+    "Chest": {
+      "freshVertices": 188,
+      "freshFaces": 220,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.37255929887294764,
+        0.2837543624639511,
+        0.4949957251548768
+      ],
+      "closedSolids": 6
+    },
+    "ArmL": {
+      "freshVertices": 211,
+      "freshFaces": 253,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.4458930179476738,
+        0.1623917132616043,
+        0.12180381417274476
+      ],
+      "closedSolids": 5
+    },
+    "ArmR": {
+      "freshVertices": 211,
+      "freshFaces": 253,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.4458930179476738,
+        0.1623917132616043,
+        0.12180381417274476
+      ],
+      "closedSolids": 5
+    },
+    "HandL": {
+      "freshVertices": 114,
+      "freshFaces": 135,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.10472396314144135,
+        0.11569568350911141,
+        0.09272014617919923
+      ],
+      "closedSolids": 3
+    },
+    "HandR": {
+      "freshVertices": 114,
+      "freshFaces": 135,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.10472396314144135,
+        0.11569569349288941,
+        0.09272014617919923
+      ],
+      "closedSolids": 3
+    },
+    "LegL": {
+      "freshVertices": 180,
+      "freshFaces": 215,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.13972976412624122,
+        0.11071093641221524,
+        0.21870409637689592
+      ],
+      "closedSolids": 4
+    },
+    "LegR": {
+      "freshVertices": 180,
+      "freshFaces": 215,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.13972977418452504,
+        0.11071093641221524,
+        0.2187041285634041
+      ],
+      "closedSolids": 4
+    },
+    "FootL": {
+      "freshVertices": 158,
+      "freshFaces": 190,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.12140794493257999,
+        0.2191419518738985,
+        0.07360733605921269
+      ],
+      "closedSolids": 3
+    },
+    "FootR": {
+      "freshVertices": 158,
+      "freshFaces": 190,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.1214079502224922,
+        0.21914199203252793,
+        0.07360733173787594
+      ],
+      "closedSolids": 3
+    },
+    "Back": {
+      "freshVertices": 156,
+      "freshFaces": 186,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.3239646077156067,
+        0.15002305476665498,
+        0.50399564743042
+      ],
+      "closedSolids": 5
+    }
+  }
+}
