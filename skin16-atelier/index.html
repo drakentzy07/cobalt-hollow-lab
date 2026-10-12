@@ -59,13 +59,14 @@ function frame(){
 function displayError(e){$('#status').textContent='NO DISPONIBLE: '+String(e?.message||e).slice(0,240)+' · Revisá el RUN y el enlace del artefacto. La skin no está aprobada.'}
 new GLTFLoader().load(ASSET,gltf=>{
  model=gltf.scene;scene.add(model);
- const skeleton=[];let base=0,skin=0;
+ const skeleton=[];let base=0,skin=0;const armorSlots=new Set();
  model.traverse(o=>{
-  if(o.isSkinnedMesh){skeleton.push(o.name);if(o.name.startsWith('HF13NEW_'))skin++;if(/^M_(Head|Torso|ArmL|ArmR|HandL|HandR|LegL|LegR|FootL|FootR|Loin)$/.test(o.name))base++}
+  if(o.isSkinnedMesh){skeleton.push(o.name);const slot=o.name.match(/^(?:HF13NEW_|HF13_TRUE_NEW_MESH_)(ArmL|ArmR|Back|Chest|FootL|FootR|HandL|HandR|Head|LegL|LegR)(?:_|$)/);if(slot)armorSlots.add(slot[1]);if(/^M_(Head|Torso|ArmL|ArmR|HandL|HandR|LegL|LegR|FootL|FootR|Loin)$/.test(o.name))base++}
   if(o.isMesh){o.frustumCulled=false;if(o.material){const mm=Array.isArray(o.material)?o.material:[o.material];for(const m of mm){if(m.name?.includes('VIOLET')||m.name?.includes('ENERGY')||m.name?.includes('CRYSTAL')){m.emissive=new THREE.Color(0x590baf);m.emissiveIntensity=.6}}}}
  });
- clips=gltf.animations;
- if(skin!==11||base<9||clips.length!==22)throw Error('GLB no conserva el cuerpo, las 11 piezas o las 22 animaciones');
+ clips=gltf.animations;skin=armorSlots.size;
+ if(skin!==11||base<9||clips.length!==22)throw Error('GLB Three.js diagnóstico: armadura='+skin+', cuerpo='+base+', clips='+clips.length+', nodos='+skeleton.slice(0,30).join('|'));
+
  mixer=new THREE.AnimationMixer(model);
  const select=$('#clips');select.replaceChildren();for(let i=0;i<clips.length;i++){let o=document.createElement('option');o.value=i;o.textContent=clips[i].name;select.append(o)}
  let idle=clips.findIndex(c=>/idle/i.test(c.name));select.value=String(Math.max(0,idle));
@@ -73,7 +74,7 @@ new GLTFLoader().load(ASSET,gltf=>{
  select.onchange=()=>start(Number(select.value));
  $('#play').onclick=()=>{paused=!paused;mixer.timeScale=paused?0:Number($('#speed').value);$('#play').textContent=paused?'▶ Reanudar':'⏸ Pausar'};
  $('#speed').onchange=()=>{if(!paused)mixer.timeScale=Number($('#speed').value)};
- $('#armor').onclick=()=>{armor=!armor;model.traverse(o=>{if(o.isMesh&&o.name.startsWith('HF13NEW_'))o.visible=armor});$('#armor').textContent='Armadura: '+(armor?'SI':'NO');$('#armor').classList.toggle('active',armor)};
+ $('#armor').onclick=()=>{armor=!armor;model.traverse(o=>{if(o.isMesh&&/^(HF13NEW_|HF13_TRUE_NEW_MESH_)/.test(o.name))o.visible=armor});$('#armor').textContent='Armadura: '+(armor?'SI':'NO');$('#armor').classList.toggle('active',armor)};
  $('#reset').onclick=frame;$('#rotate').onclick=()=>{auto=!auto;controls.autoRotate=auto;controls.autoRotateSpeed=1;$('#rotate').classList.toggle('active',auto)};
  for(const ctl of ['#armor','#clips','#play','#speed','#reset','#rotate'])$(ctl).disabled=false;
  start(Number(select.value));frame();$('#status').textContent='✅ Modelo real cargado: '+base+' piezas corporales, '+skin+' partes nuevas, '+clips.length+' movimientos · REVISIÓN ARTÍSTICA PENDIENTE';
