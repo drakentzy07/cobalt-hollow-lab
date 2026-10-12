@@ -1,0 +1,39 @@
+name: HIGHFLY SKIN13 — LIVE HTTPS SERVERLESS FORGE GATE
+on:
+  push:
+    branches: [highfly-skin13-auto-forge-mvp]
+    paths: ['.github/workflows/skin13-live-server-gate.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  live-forge-verified:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - name: Check no-credential backend never dispatches fake job
+        run: |
+          node character-truth/skin13-auto-forge/skin13-job-core.test.mjs
+          node character-truth/skin13-auto-forge/skin13-vercel-api.test.cjs
+      - name: Chromium on Samsung landscape viewport
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Assert actual production HTTPS capability state and browser button
+        timeout-minutes: 5
+        env:
+          SKIN13_URL: https://highfly-skin12-forja-original.vercel.app/
+        run: |
+          set -euo pipefail
+          node character-truth/skin13-auto-forge/skin13-live-qa.cjs
+          grep -F '"green": true' character-truth/skin13-auto-forge/live-qa/gate.json
+          grep -F '"noFakeQueue": true' character-truth/skin13-auto-forge/live-qa/gate.json
+          echo HIGHFLY_SKIN13_REAL_LIVE_SERVERLESS_NO_FAKE_FORGE_GREEN=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-SKIN13-LIVE-AUTOFORGE-VERCEL-BROWSER-SAFETY-QA
+          path: character-truth/skin13-auto-forge/live-qa/
+          retention-days: 21
+          if-no-files-found: warn
