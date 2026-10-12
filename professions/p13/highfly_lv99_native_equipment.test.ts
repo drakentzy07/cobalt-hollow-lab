@@ -51,8 +51,9 @@ describe('HIGHFLY P13 real item and recipe registry 50–99 smoke',()=>{
         expect(requiredLevelFor(item)).toBe(lv);
         expect(meetsLevelRequirement(lv-1,item)).toBe(false);
         expect(meetsLevelRequirement(lv,item)).toBe(true);
-        expect(item.soulbound).toBe(true);
-        expect(item.noMarketList).toBe(true);
+        expect(item.soulbound).toBe(false);
+        expect(item.noMarketList).toBe(false);
+        expect(item.sellValue).toBeGreaterThan(0);
         expect(allOutputIds.has(id)).toBe(false);
         allOutputIds.add(id);
         for(const cls of CLASSES){

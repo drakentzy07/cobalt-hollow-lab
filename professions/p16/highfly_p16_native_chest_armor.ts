@@ -69,7 +69,8 @@ for(const level of HF_P16_ARMOR_LEVELS){
       quality:QUALITY[level],requiredLevel:level,
       requiredClass:[...spec.classes],classLocked:true,
       stats:{armor},
-      sellValue:0,noMarketList:true,soulbound:true,
+      // Native NORMAL crafted gear is marketable; named uniques/bindings stay locked.
+      sellValue:Math.round(level*1.5),noMarketList:false,soulbound:false,
     };
     HIGHFLY_P16_ARMOR_RECIPES.push({
       id:hfP16ArmorRecipeId(level,track),
