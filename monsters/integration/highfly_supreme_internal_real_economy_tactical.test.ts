@@ -818,8 +818,14 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
     warlock:['demon_skin','summon_voidwalker'],
     druid:['mark_of_the_wild','thorns'],
   };
+  // First legal class-spec candidate per original class: the native Sim validates every choice.
+  // One candidate per class is exploratory, NOT a full 27-spec or player-skill certification.
+  const PvMSpec:Record<PlayerClass,string>={
+    warrior:'arms',paladin:'retribution',hunter:'marksmanship',rogue:'assassination',
+    priest:'discipline',shaman:'restoration',mage:'frost',warlock:'affliction',druid:'balance',
+  };
   const GUARD:Record<PlayerClass,string[]>={
-    warrior:['iron_resolve','raised_guard'],
+    warrior:['rallying_cry','iron_resolve','raised_guard'],
     paladin:['divine_protection','holy_shield'],
     hunter:['shellskin','aspect_of_the_monkey'],
     rogue:['evasion'],
@@ -830,7 +836,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
     druid:['barkskin'],
   };
   const SKILL:Record<PlayerClass,string[]>={
-    warrior:['heroic_strike','slam','sunder_armor','rend'],
+    warrior:['mortal_strike','slam','heroic_strike','sunder_armor','rend'],
     paladin:['hammer_of_grace','crusader_strike','judgement'],
     hunter:['serpent_sting','arcane_shot','measured_shot','aimed_shot','concussive_shot'], 
     rogue:['sinister_strike','sinister_strike','sinister_strike','eviscerate'],
@@ -847,6 +853,9 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
     for(const [index,cls] of CLASSES.entries()){
       const {sim,pid,p,meta}=simFor(cls,947111+index*817);
       sim.setPlayerLevel(99,pid);
+      // Game-authoritative specialization selection, same API as a real user.
+      // Do not mint training points or assign unsupported power/talents.
+      expect(sim.setSpec(PvMSpec[cls],pid),'NATIVE_SPEC_CHOICE_REJECTED_'+cls).toBe(true);
       const training=JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile);
       const weapon=hfP13ItemId(90,WT[cls]),armor=hfP16ArmorId(90,AT[cls]);
       sim.addItem(weapon,1,pid);sim.equipItem(weapon,pid,'mainhand');
@@ -924,7 +933,8 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         }
         if(ticks%castPeriod===0&&!p.castingAbility){
           const health=p.hp/p.maxHp;
-          if((cls==='priest'||cls==='druid')&&health<0.68&&healing.length&&
+          if((cls==='priest'||cls==='druid')&&
+            health<(cls==='druid'?0.43:0.68)&&healing.length&&
             ticks-lastHeal>Math.ceil(3/DT)){
             const heal=healing[heals++%healing.length];
             sim.castAbilityOn(heal,pid,pid);
@@ -968,7 +978,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       meta.moveInput.back=false;meta.moveInput.forward=false;
       const win=captain.dead&&!p.dead;
       const row={
-        cls,result:win?'WIN':p.dead?'LOSS':'TIMEOUT',
+        cls,spec:PvMSpec[cls],result:win?'WIN':p.dead?'LOSS':'TIMEOUT',
         bossHpStart:startHp,bossHpEnd:Math.max(0,captain.hp),
         bossHpRemainingPct:Math.round(10000*Math.max(0,captain.hp)/startHp)/100,
         heroEndHp:Math.max(0,p.hp),heroMaxHp:p.maxHp,
@@ -996,6 +1006,8 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       gearAndLevelsAreExplicitFixtures:true,
       playtestOnPhysicalS23Needed:true,nineOfNineSoloCertified:rows.every(x=>x.result==='WIN'),
       fiveMinuteFightLimit:true,onlyOriginalNativeCastHealDamageMovement:true,
+      nativeSpecsChosenViaSim:true,allTalentRowsSelected:false,
+      nineOriginalClassesPreserved:true,
       rows:rows.map(x=>({cls:x.cls,result:x.result,
         bossHpRemainingPct:x.bossHpRemainingPct,heroEndHp:x.heroEndHp,
         seconds:x.seconds,executeAttempts:x.executeAttempts,guardAttempts:x.attemptedGuard,
