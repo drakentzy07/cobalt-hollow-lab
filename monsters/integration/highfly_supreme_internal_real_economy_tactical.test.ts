@@ -551,8 +551,9 @@ describe('HIGHFLY native cooperative party+XP+loot+direct player trade compatibi
       expect(goodsTransferred,'COOP_DIRECT_ITEM_TRADE_FAILED_'+cls).toBe(true);
       expect(paymentTransferred,'COOP_DIRECT_COPPER_TRADE_FAILED_'+cls).toBe(true);
       const ls=sim.serializeCharacter(leader),gs=sim.serializeCharacter(guest);
-      expect(ls?.name).not.toBe(gs?.name);
-      const persistentHunterProfiles=ls?.level===front.level&&gs?.level===e.level;
+      expect(lm.name).not.toBe(gm.name);
+      const persistentHunterProfiles=ls?.level===front.level&&gs?.level===e.level&&
+        ls?.copper===lm.copper&&gs?.copper===gm.copper;
       expect(persistentHunterProfiles).toBe(true);
       rows.push({guest:cls,partySize:party!.members.length,
         killXpLead:shared[0],killXpGuest:shared[1],
