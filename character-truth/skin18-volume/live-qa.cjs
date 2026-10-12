@@ -48,6 +48,10 @@ try{
   return await r.json();
  });
  assert.equal(proof.schema,'highfly.skin18.volumetric-armor-proof/1');
+ assert.equal(proof.designRevision,'VOLUME_BLOCKOUT_V2_ANATOMICAL_PROPORTIONS','PREVIOUS_BLOCKOUT_NOT_V2');
+ assert.equal(proof.glbSha256,'8353b0f48000e5cff24b88e6940e5d02c55f33f500753fbb2787ce12632d6063');
+ const actualDownload=await page.evaluate(()=>performance.getEntriesByType('resource').some(e=>e.name.includes('HF18-ECLIPSE-REAL-VOLUME-22-CLIPS.glb?v=8353b0f48000')));
+ assert(actualDownload,'V2_GLTF_WAS_NOT_REQUESTED');
  assert(proof.closedArmorSolids>=38);
  assert(proof.reviewAnglesRendered===3);
  assert(proof.originalRigBones===23 && proof.originalAnimationClips===22);
@@ -56,7 +60,7 @@ try{
  }
  const payload={green:true,url:URL,nativePaladinVisible:true,nativeKnightVisible:true,
   nativeBodyPieces:meta.nativeBody,paladinRenderMeshes:17,
-  currentEclipseArmorSlots:meta.volumeArmorSlots,oldEclipseArmorSlots:meta.newArmorSlots,
+  currentEclipseArmorSlots:meta.volumeArmorSlots,oldEclipseArmorSlots:meta.newArmorSlots,revision:'V2',
   volumeSolids:proof.closedArmorSolids,animationClips:22,rigBones:23,
   comparisonControlsValidated:true,artApproved:false,physicalSamsungS23Tested:false,
   publicHighflyUnchanged:true};
