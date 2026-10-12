@@ -21,7 +21,7 @@ import {recipeById} from '../src/sim/content/recipes';
 import {resolveCraft} from '../src/sim/professions/crafting';
 import {trainingFeeFor} from '../src/sim/professions/training';
 import {hfP13ItemId,hfP13RecipeId} from '../src/sim/content/highfly_lv99_native_equipment';
-import {hfP16ArmorId} from '../src/sim/content/highfly_p16_native_chest_armor';
+import {hfP16ArmorId,hfP16ArmorRecipeId} from '../src/sim/content/highfly_p16_native_chest_armor';
 import {highflyEncounterId} from '../src/highfly/monsters/hunt_encounters';
 import {HIGHFLY_HUNT_SCENARIOS} from '../src/highfly/monsters/hunt_scenarios';
 
@@ -249,5 +249,124 @@ describe('HIGHFLY internal 9 classes full monster HP + native tactical AI/extra 
     expect(rows).toHaveLength(18);
     expect(rows.every(r=>r.enemyNativeHp>1&&r.gearSlots>=3)).toBe(true);
     expect(rows.every(r=>r.skills.length>0)).toBe(true);
+  },240000);
+});
+
+/** HIGHFLY SUPREME LATE ECONOMY MATRIX
+ * Replicate the authentic corpse+vendor+trainer+forge loop at every
+ * P13 rung and every P16 armor rung. No copper or loot injected; only
+ * starting player level and craft mastery are declared CI preconditions.
+ * No enemy AI turns during farming => measures drop/economy *accessibility*,
+ * not live combat grinding time. No new reports or laboratory artifacts.
+ */
+type EconomyCase={level:50|60|70|80|90;cls:PlayerClass;
+  recipeId:string;outputId:string;kind:'weapon'|'chest'};
+const ECONOMY_CASES:EconomyCase[]=[
+  ...([50,60,70,80,90] as const).map((level,i)=>({
+    level,cls:(['warrior','hunter','mage','paladin','rogue'] as const)[i],
+    recipeId:hfP13RecipeId(level,(['warrior','scout','caster','warrior','scout'] as const)[i]),
+    outputId:hfP13ItemId(level,(['warrior','scout','caster','warrior','scout'] as const)[i]),
+    kind:'weapon' as const,
+  })),
+  {level:50,cls:'paladin',recipeId:hfP16ArmorRecipeId(50,'mail'),
+    outputId:hfP16ArmorId(50,'mail'),kind:'chest'},
+  {level:70,cls:'druid',recipeId:hfP16ArmorRecipeId(70,'leather'),
+    outputId:hfP16ArmorId(70,'leather'),kind:'chest'},
+  {level:90,cls:'priest',recipeId:hfP16ArmorRecipeId(90,'cloth'),
+    outputId:hfP16ArmorId(90,'cloth'),kind:'chest'},
+];
+describe('HIGHFLY SUPREME late-economy authentic RNG five rungs and armor',()=>{
+  it('pays trainer and vendor from native full-HP monster copper; farms materials; crafts and saves',()=>{
+    const records:unknown[]=[];
+    for(const [index,c] of ECONOMY_CASES.entries()){
+      const {sim,pid,p,meta}=simFor(c.cls,909900+index*201);
+      sim.setPlayerLevel(c.level,pid);
+      const recipe=recipeById(c.recipeId)!;
+      expect(recipe,'NO_REAL_NATIVE_RECIPE_'+c.recipeId).toBeDefined();
+      expect(recipe.reagents.length).toBeGreaterThan(1);
+      const required=recipe.reagents.filter(x=>x.itemId!=='smithing_flux');
+      const flux=recipe.reagents.find(x=>x.itemId==='smithing_flux')?.count??0;
+      const fee=trainingFeeFor(recipe);
+      const copperNeed=fee+flux*(ITEMS.smithing_flux.buyValue??0);
+      expect(flux).toBeGreaterThan(0);
+      // A source must have an unquested natural drop at this exact rung.
+      const normals=Object.values(MOBS).filter(x=>x.id.startsWith('hf_hunt_')&&
+        !x.elite&&!x.boss&&!x.worldBoss&&!x.dummy&&!x.ambient&&
+        x.minLevel<=c.level&&x.maxLevel>=c.level);
+      expect(normals.length,'NO_NATIVE_NORMALS_LEVEL_'+c.level).toBeGreaterThan(0);
+      const bestFor=(itemId:string)=>normals
+        .map(m=>({m,drop:m.loot.find(x=>x.itemId===itemId&&!x.questId&&x.chance>0)}))
+        .filter(x=>!!x.drop).sort((a,b)=>(b.drop?.chance??0)-(a.drop?.chance??0))[0]?.m;
+      for(const reagent of required)
+        expect(bestFor(reagent.itemId),
+          'NO_NORMAL_RNG_MATERIAL_SOURCE_'+c.level+'_'+reagent.itemId).toBeDefined();
+      const cashMob=normals.slice().sort((a,b)=>{
+        const base=(m:typeof a)=>m.loot.filter(x=>x.copper!==undefined&&x.chance===1)
+          .reduce((n,x)=>n+(x.copper??0),0);
+        return base(b)-base(a);
+      })[0];
+      const killCounts:Record<string,number>={};
+      let kills=0;
+      for(;kills<2400;kills++){
+        const lacking=required.find(r=>sim.countItem(r.itemId,pid)<r.count);
+        if(!lacking&&meta.copper>=copperNeed)break;
+        const source=lacking?bestFor(lacking.itemId)!:cashMob;
+        fullHpNativeKill(sim,pid,source.id,c.level);
+        killCounts[source.id]=(killCounts[source.id]??0)+1;
+      }
+      const haveMaterials=required.every(r=>sim.countItem(r.itemId,pid)>=r.count);
+      const haveMoney=meta.copper>=copperNeed;
+      const row:any={level:c.level,cls:c.cls,kind:c.kind,recipe:c.recipeId,
+        nativeFullHpKills:kills,mobSources:killCounts,
+        earnedCopper:meta.copper,trainerAndVendorCopper:copperNeed,
+        haveMaterials,haveMoney,starterLevelFixture:true,
+        professionSkillFixture:true,
+        enemyAiCompressed:true,noRebalancedEconomy:true};
+      if(haveMaterials&&haveMoney){
+        const npc=[...sim.entities.values()].find(e=>e.kind==='npc'&&
+          e.vendorItems.includes('smithing_flux'));
+        expect(npc,'NO_ORIGINAL_NPC_FOR_FLUX').toBeDefined();
+        p.pos=sim.groundPos(npc!.pos.x,npc!.pos.z);
+        p.prevPos={...p.pos};sim.rebucket(p);
+        for(let n=0;n<flux;n++)sim.buyItem(npc!.id,'smithing_flux',undefined,pid);
+        expect(sim.countItem('smithing_flux',pid)).toBeGreaterThanOrEqual(flux);
+        const forge=STATIONS.find(s=>s.id==='station_eastbrook_forge')!;
+        p.pos=sim.groundPos(forge.pos.x,forge.pos.z);
+        p.prevPos={...p.pos};sim.rebucket(p);
+        meta.craftSkills[recipe.professionId]=recipe.skillReq;
+        sim.trainRecipe(recipe.id,pid);
+        row.trainerResult=meta.lastTrainResult;
+        if(meta.lastTrainResult?.ok){
+          const result=resolveCraft(sim.ctx,pid,recipe.id);
+          row.craftResult=result.ok;
+          row.owned=sim.countItem(c.outputId,pid);
+          if(result.ok){
+            sim.equipItem(c.outputId,pid);
+            row.equipped=Object.values(meta.equipment).includes(c.outputId);
+            const saved=JSON.parse(JSON.stringify(sim.serializeCharacter(pid)));
+            const restored=new Sim({seed:991100+index,noPlayer:true,
+              autoEquip:false,playerClass:c.cls,world:WORLD,
+              compulsoryTutorial:false,riftPortals:false});
+            const rid=restored.addPlayer(c.cls,'HF_NATIVE_LATE_ECONOMY',
+              {state:saved,tutorialGreetingSent:true});
+            row.savedGear=Object.values(restored.players.get(rid)!.equipment).includes(c.outputId);
+          }
+        }
+      }
+      records.push(row);
+      console.info('HF_SUPREME_5RUNG_ECONOMY='+JSON.stringify(row));
+    }
+    const failures=(records as any[]).filter(r=>!r.haveMaterials||!r.haveMoney||
+      !r.craftResult||!r.equipped||!r.savedGear);
+    console.info('HF_SUPREME_ECONOMY_MATRIX_SUMMARY='+JSON.stringify({
+      routes:records.length,passes:records.length-failures.length,
+      failures:failures.map(x=>({level:x.level,cls:x.cls,recipe:x.recipe,
+        kills:x.nativeFullHpKills,haveMaterials:x.haveMaterials,
+        haveMoney:x.haveMoney,trainer:x.trainerResult?.reason,craft:x.craftResult})),
+      allGoldAndMaterialsFromOriginalCorpses:true,
+      notProofOfNaturalProfessionMasteryOrPlayerTime:true
+    }));
+    expect(records).toHaveLength(8);
+    expect(failures,'REAL_NATIVE_ECONOMY_GAPS').toEqual([]);
   },240000);
 });
