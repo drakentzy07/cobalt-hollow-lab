@@ -28,6 +28,9 @@ type ClassResult={cls:PlayerClass;level:number;xpGrants:number;dungeons:number;
 function oneHunter(sim:Sim):boolean {
   return [...sim.entities.values()].filter(x=>x.kind==='player').length===1;
 }
+function trainingOf(state:unknown):unknown {
+  return JSON.parse(JSON.stringify(state??{})).trainingProfile;
+}
 function stage(sim:Sim,pid:number,cls:PlayerClass,idx:number):Gate {
   const sc=HIGHFLY_HUNT_SCENARIOS[idx];
   const actor=sim.entities.get(pid)!;
@@ -80,7 +83,7 @@ describe('HIGHFLY SUPREME INTERNAL AUTOPLAY: 9 classes x 1-99, no deploy',()=>{
           {tutorialGreetingSent:true});
         const actor=sim.entities.get(pid)!;
         const meta=sim.players.get(pid)!;
-        const originalProfile=JSON.stringify(sim.serializeCharacter(pid)?.trainingProfile);
+        const originalProfile=JSON.stringify(trainingOf(sim.serializeCharacter(pid)));
         expect(actor.level).toBe(1);
         expect(oneHunter(sim)).toBe(true);
         let nextStage=0;
@@ -120,7 +123,7 @@ describe('HIGHFLY SUPREME INTERNAL AUTOPLAY: 9 classes x 1-99, no deploy',()=>{
         expect(result.level).toBe(99);
         expect(result.dungeons).toBe(8);
         result.trainUnchanged=JSON.stringify(
-          sim.serializeCharacter(pid)?.trainingProfile)===originalProfile;
+          trainingOf(sim.serializeCharacter(pid)))===originalProfile;
         const before=meta.lifetimeXp;
         sim.grantXp(1000,meta); // Native original LV99 lifetime XP/cosmetic path
         result.postCapStable=actor.level===99&&meta.lifetimeXp>=before+1000;
@@ -131,7 +134,7 @@ describe('HIGHFLY SUPREME INTERNAL AUTOPLAY: 9 classes x 1-99, no deploy',()=>{
           {state:saved,tutorialGreetingSent:true});
         const loaded=reloaded.serializeCharacter(rid);
         result.savedAndRestored=loaded?.level===99&&oneHunter(reloaded)&&
-          JSON.stringify(loaded?.trainingProfile)===originalProfile&&
+          JSON.stringify(trainingOf(loaded))===originalProfile&&
           loaded?.lifetimeXp===saved.lifetimeXp;
         expect(result.trainUnchanged).toBe(true);
         expect(result.postCapStable).toBe(true);
