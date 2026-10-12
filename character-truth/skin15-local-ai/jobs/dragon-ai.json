@@ -1,0 +1,31 @@
+{
+  "schema": "highfly.skin13.forge-job/1",
+  "id": "hf15-dragon-llm-20261012",
+  "createdAt": "2026-10-12T21:30:00Z",
+  "source": "manual-ci-test",
+  "phase": "queued",
+  "request": {
+    "prompt": "Quiero armadura de dragón rojo de bronce, casco con dos cuernos curvados, hombreras de escamas articuladas, runas rojas en la pechera y una espina dorsal de dragón. Debe ser un guerrero feroz con armadura segmentada, totalmente diferente de Eclipse Eterno.",
+    "reference": null,
+    "preset": "dragon",
+    "mode": "text",
+    "generateGltf": true,
+    "recreateAsOriginal": true,
+    "geometryInputs": "NEW_MESHES_ONLY",
+    "humanArtApprovalRequired": true,
+    "gameDeploymentAllowed": false
+  },
+  "output": {
+    "glb": null,
+    "proof": null,
+    "artApproved": false,
+    "gameDeployed": false
+  },
+  "provenance": {
+    "parentSourceArmorGeometryCopied": false,
+    "rigReference": "Rig_Medium",
+    "targetRigBones": 23,
+    "originalAnimationClips": 22,
+    "artStatus": "NOT_REVIEWED"
+  }
+}

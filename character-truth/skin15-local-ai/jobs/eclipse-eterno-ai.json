@@ -1,0 +1,31 @@
+{
+  "schema": "highfly.skin13.forge-job/1",
+  "id": "hf15-eclipse-llm-20261012",
+  "createdAt": "2026-10-12T21:30:00Z",
+  "source": "manual-ci-test",
+  "phase": "queued",
+  "request": {
+    "prompt": "Creá Eclipse Eterno: armadura legendaria negra de obsidiana, casco angular cerrado con visor violeta, hombreras asimétricas en forma de luna creciente, un cristal violeta incrustado en el pecho y otros cristales pequeños a lo largo de la espalda. Necesito grebas y botas articuladas y proporciones heroicas. No copies skins anteriores.",
+    "reference": null,
+    "preset": "eclipse",
+    "mode": "text",
+    "generateGltf": true,
+    "recreateAsOriginal": true,
+    "geometryInputs": "NEW_MESHES_ONLY",
+    "humanArtApprovalRequired": true,
+    "gameDeploymentAllowed": false
+  },
+  "output": {
+    "glb": null,
+    "proof": null,
+    "artApproved": false,
+    "gameDeployed": false
+  },
+  "provenance": {
+    "parentSourceArmorGeometryCopied": false,
+    "rigReference": "Rig_Medium",
+    "targetRigBones": 23,
+    "originalAnimationClips": 22,
+    "artStatus": "NOT_REVIEWED"
+  }
+}
