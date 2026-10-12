@@ -537,6 +537,7 @@ jobs:
           VITE_HIGHFLY_HUNT_PREVIEW: "0"
           VITE_HIGHFLY_NATIVE_HUNT: "1"
           VITE_HIGHFLY_OPEN_WORLD_HUNTS: "1"
+          VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
         run: |
           set -euo pipefail
           node scripts/build_bundle_pregen.mjs
