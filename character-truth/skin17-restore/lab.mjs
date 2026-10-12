@@ -151,8 +151,10 @@ async function load(){
    }
    toRemove.push(o);
   });
-  if(native!==11||armorSlots.size!==11||armorMeshes!==17)
-   throw Error('La fuente original quedó incompleta: '+native+' cuerpo / '+armorSlots.size+' slots / '+armorMeshes+' partes de Paladín');
+  if(native!==11||armorMeshes!==17)
+   throw Error('La fuente original quedó incompleta: '+native+' cuerpo / '+armorMeshes+' render meshes de Paladín; esperado 11 cuerpo, 17 armadura');
+  // ClaudeCraft has several multi-material primitives inside each equipment
+  // group; never equate the number of renderer names with equipment slots.
   for(const item of toRemove){item.removeFromParent();removed++}
   state.originalFamilies=[...familyRenderers].filter(([,n])=>n>=6).map(([family,count])=>({family,count}));
   if(!state.originalFamilies.some(x=>x.family==='paladin'))throw Error('Paladín original ya no figura en los equipamientos');
