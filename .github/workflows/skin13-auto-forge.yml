@@ -4,7 +4,7 @@ on:
     branches: [highfly-skin13-auto-forge-mvp]
     paths:
       - 'character-truth/skin13-auto-forge/**'
-      - 'api/forge.cjs'
+      - 'api/forge.js'
       - '.github/workflows/skin13-auto-forge.yml'
   workflow_dispatch:
 permissions: {contents: read, actions: read}
@@ -31,7 +31,7 @@ jobs:
             esac
           done < /tmp/skin13-files.txt
           python3 -m py_compile character-truth/skin13-auto-forge/blender-original-prototype.py
-          node --check api/forge.cjs
+          node --check api/forge.js
           node character-truth/skin13-auto-forge/skin13-job-core.test.mjs
           node character-truth/skin13-auto-forge/skin13-vercel-api.test.cjs
           echo HIGHFLY_SKIN13_ISOLATED_SECURE_JOB_STATE_MACHINE_GREEN=1

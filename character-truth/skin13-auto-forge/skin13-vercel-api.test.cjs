@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const handler=require('../../api/forge.cjs');
+const handler=require('../../api/forge.js');
 const make=(method,body={},query={},headers={})=>{
  let statusCode=null,result=null,headersSent={};
  let res={setHeader(k,v){headersSent[k]=v;return this},status(n){statusCode=n;return this},json(x){result=x;return x}};
@@ -9,7 +9,7 @@ const make=(method,body={},query={},headers={})=>{
  // Never leak the GitHub PAT, and NEVER accept jobs without configured secrets.
  delete process.env.HIGHFLY_FORGE_ACCESS_TOKEN;
  delete process.env.HIGHFLY_GITHUB_WRITE_TOKEN;
- delete process.env.HIGHFLY_AI_ENDPOINT;
+ delete process.env.HIGHFLY_FORGE_MODE;
  let r=await make('GET');
  assert.equal(r.statusCode,200);assert.equal(r.result.mode,'offline');
  assert.equal(r.result.jobDispatchEnabled,false);

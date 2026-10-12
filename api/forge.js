@@ -10,7 +10,7 @@ const BRANCH='highfly-skin13-auto-forge-mvp';
 const ROOT='character-truth/skin13-auto-forge/jobs/';
 const GH='https://api.github.com';
 const response=(res,n,data)=>res.status(n).json(data);
-const available=()=>Boolean(process.env.HIGHFLY_FORGE_ACCESS_TOKEN&&process.env.HIGHFLY_GITHUB_WRITE_TOKEN&&process.env.HIGHFLY_AI_ENDPOINT);
+const available=()=>Boolean(process.env.HIGHFLY_FORGE_ACCESS_TOKEN&&process.env.HIGHFLY_GITHUB_WRITE_TOKEN&&process.env.HIGHFLY_FORGE_MODE==='procedural_demo');
 const tokenMatches=req=>{
  const expected=process.env.HIGHFLY_FORGE_ACCESS_TOKEN||'';
  const incoming=String(req.headers['x-highfly-forge-token']||'');
@@ -37,9 +37,9 @@ module.exports=async function handler(req,res){
  if(req.method==='GET'&&!req.query?.commit){
   return response(res,200,{schema:'highfly.skin13.capability/1',
    mode:available()?'operational':'offline',
-   aiIntegrated:Boolean(process.env.HIGHFLY_AI_ENDPOINT),
+   aiIntegrated:false,prototypeOnly:available(),
    jobDispatchEnabled:available(),
-   userActionRequired:available()?null:'REQUIRES_SERVER_SECRETS_AND_AI_PROVIDER',
+   userActionRequired:available()?null:'REQUIRES_SERVER_SECRETS_AND_PROTOTYPE_MODE',
    activeJob:null});
  }
  if(!available())return response(res,503,{code:'FORGE_NOT_CONFIGURED',
@@ -82,7 +82,7 @@ module.exports=async function handler(req,res){
   if(!/^[0-9a-f]{40}$/i.test(put.commit?.sha||''))throw Error('NO_GITHUB_COMMIT');
   return response(res,202,{id,phase:'queued',commit:put.commit.sha,
    verified:false,jobPath:path,dispatchedVia:'isolated-GitHub-commit',
-   message:'Encargo enviado a GitHub. Consultá el RUN para el estado real. Arte aún no aprobado.'});
+   message:'Prototipo procedural enviado a GitHub; esto NO es un modelo generado por IA ni arte aprobado.'});
  }catch(e){return response(res,502,{code:'QUEUE_NOT_CONFIRMED',
   message:'No se pudo confirmar el encargo en GitHub. No se inició ningún trabajo.'})}
 };
