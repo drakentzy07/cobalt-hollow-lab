@@ -7,8 +7,10 @@ try{
  const errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
- const url='https://highfly-skin17-original-character-restore.vercel.app/';
- await page.goto(url,{waitUntil:'domcontentloaded',timeout:50000});
+ const url='https://highfly-skin17-original-character-r.vercel.app/';
+ const response=await page.goto(url,{waitUntil:'domcontentloaded',timeout:50000});
+ assert.equal(response.status(),200,'LIVE_SITE_HTTP_'+response.status()+' body='+((await page.locator('body').innerText()).slice(0,260)));
+ await page.locator('#status').waitFor({timeout:10000});
  try{
   await page.waitForFunction(()=>window.HIGHFLY_SKIN17?.ready,{timeout:90000});
  }catch(e){
