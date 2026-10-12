@@ -69,6 +69,12 @@ function fight(cls:PlayerClass,policy:Policy):FightRow {
   // Native auto-equip sends Rogue's second dagger to offhand; force
   // explicit MAINHAND only in QA, without changing dual-wield game rules.
   sim.equipItem(weapon,pid,'mainhand');
+  if(cls==='rogue'){
+    // Two separately obtainable legal daggers, both explicit CI loadout fixtures.
+    sim.addItem(weapon,1,pid);
+    sim.equipItem(weapon,pid,'offhand');
+    expect(meta.equipment.offhand).toBe(weapon);
+  }
   sim.addItem(chest,1,pid);
   sim.equipItem(chest,pid);
   expect(meta.equipment.mainhand).toBe(weapon);
