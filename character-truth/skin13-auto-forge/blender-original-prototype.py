@@ -162,9 +162,22 @@ assert len(skin_nodes)>=11,'NEW_ARMOR_NODES_MISSING'
 # Mandatory auto-rendered review angles. Images are *evidence*, NOT art PASS.
 # A workbench rendering does not establish mobile quality or 22 playable clips.
 from mathutils import Vector as V3
+# ClaudeCraft contains HUNDREDS of mutually exclusive hair, face, eye, mask
+# and armor variants. Showing all at once was the source of misleading QA
+# images (massive grey hair obscured the new armor).
+BODY_ONLY={'M_Head','M_Torso','M_ArmL','M_ArmR','M_HandL','M_HandR',
+ 'M_LegL','M_LegR','M_FootL','M_FootR','M_Loin'}
+qa_hidden=[]
+qa_body=[]
 for obj in bpy.data.objects:
- if obj.type=='MESH' and obj not in objects and obj.name.startswith(('Armor_','HF7RF','HF9NEW')):
-  obj.hide_render=True
+ if obj.type!='MESH' or obj in objects:continue
+ if obj.name in BODY_ONLY:
+  obj.hide_render=False;qa_body.append(obj.name)
+ else:
+  obj.hide_render=True;qa_hidden.append(obj.name)
+assert len(qa_hidden)>30 and len(qa_body)>=9,'CLAUDECRAFT_VARIANT_FILTER_BAD'
+assert all(o.hide_render or o in objects or o.name in BODY_ONLY for o in bpy.data.objects if o.type=='MESH')
+print('HIGHFLY_SKIN13_QA_SHOWS_ONLY_BASE_BODY_AND_FRESH_SKIN_HIDDEN_VARIANTS='+str(len(qa_hidden)),flush=True)
 bounds=[]
 for obj in objects:
  for corner in obj.bound_box:
@@ -219,6 +232,7 @@ report={
  'animationTracksInGltf':len(glbjson.get('animations',[])),
  'visualArtQaPassed':False,'maleFemaleFitVerified':False,
  'reviewScreenshots':frames,'reviewAnglesRendered':len(frames),
+ 'qaHiddenOriginalVariants':len(qa_hidden),'qaVisibleBodyPieces':qa_body,
  'artistApproved':False,'artApproved':False,'gameDeployed':False,
  'outcome':'TECHNICAL_GLTF_CREATED_AWAITING_ARTISTIC_AND_MOBILE_REVIEW',
  'pieces':stats
