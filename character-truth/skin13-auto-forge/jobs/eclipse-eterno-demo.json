@@ -1,0 +1,16 @@
+{
+ "schema":"highfly.skin13.forge-job/1",
+ "id":"hf13-eclipse-eterno-demonstration-01",
+ "createdAt":"2026-10-12T18:00:00Z",
+ "source":"manual-ci-test",
+ "phase":"queued",
+ "request":{
+  "prompt":"Eclipse Eterno: armadura negra de acero pulido y plata vieja, yelmo cerrado proporcional con visor violeta, hombreras curvas asimetricas, pechera anatomica con gema violeta, grebas esculpidas y espaldar articulado sin placas flotantes. Fabricar mallas originales sin usar triangulos del Paladin.",
+  "reference":null,"preset":"eclipse","mode":"text","generateGltf":true,
+  "recreateAsOriginal":true,"geometryInputs":"NEW_MESHES_ONLY",
+  "humanArtApprovalRequired":true,"gameDeploymentAllowed":false
+ },
+ "output":{"glb":null,"proof":null,"artApproved":false,"gameDeployed":false},
+ "provenance":{"parentSourceArmorGeometryCopied":false,"rigReference":"Rig_Medium",
+  "targetRigBones":23,"originalAnimationClips":22,"artStatus":"NOT_REVIEWED"}
+}
