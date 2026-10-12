@@ -111,7 +111,7 @@ describe('HIGHFLY GOLDEN DEV7 LV99 nine classes — original Sim with earned-leg
         .toEqual(orig.trainingProfile);
       expect([...reloaded.entities.values()].filter(x=>x.kind==='player')).toHaveLength(1);
     }
-  });
+  },180000); // CI nine-class load/save may exceed Vitest default 20s on shared runners.
   it('measures nine real LV99 captain fights with proper P13/P16 equipment, no combat buff',()=>{
     const rows=[] as {cls:PlayerClass,weapon:string,chest:string,
       monster:string,action:string,elapsedSeconds:number,
