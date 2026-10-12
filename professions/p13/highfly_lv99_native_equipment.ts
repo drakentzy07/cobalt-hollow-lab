@@ -21,12 +21,16 @@ const TRACKS={
   scout:{base:'rusty_dagger',classes:['rogue','hunter']},
   caster:{base:'gnarled_staff',classes:['mage','priest','warlock','druid']},
 } as const satisfies Record<Track,{base:string,classes:readonly PlayerClass[]}>;
+// DEV2 economic rung tuning (2026-10-12): native MOBS chance and P13 source
+// census found >550 expected kills for a single LV90 weapon. Preserve original
+// material IDs, trainer/forge requirements and 15 native output IDs; adjust
+// quantities only. Report and strict guard live in DEV2 native economy test.
 const MATERIALS={
   50:[{itemId:'rough_hide',count:5},{itemId:'arcane_essence',count:3},{itemId:'smithing_flux',count:3}],
-  60:[{itemId:'sharp_claw',count:5},{itemId:'curved_tusk',count:5},{itemId:'smithing_flux',count:3}],
-  70:[{itemId:'spider_silk',count:8},{itemId:'arcane_essence',count:7},{itemId:'smithing_flux',count:5}],
+  60:[{itemId:'sharp_claw',count:6},{itemId:'curved_tusk',count:6},{itemId:'smithing_flux',count:3}],
+  70:[{itemId:'spider_silk',count:8},{itemId:'arcane_essence',count:5},{itemId:'smithing_flux',count:5}],
   80:[{itemId:'arcane_shard',count:3},{itemId:'sharp_claw',count:9},{itemId:'smithing_flux',count:6}],
-  90:[{itemId:'arcane_shard',count:7},{itemId:'arcane_essence',count:12},{itemId:'smithing_flux',count:8}],
+  90:[{itemId:'arcane_shard',count:2},{itemId:'arcane_essence',count:6},{itemId:'smithing_flux',count:8}],
 } as const;
 const SKILLS={50:75,60:85,70:95,80:110,90:125} as const;
 const QUALITY={50:'uncommon',60:'rare',70:'rare',80:'epic',90:'epic'} as const;
