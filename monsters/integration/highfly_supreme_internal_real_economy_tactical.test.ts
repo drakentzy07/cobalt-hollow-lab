@@ -46,8 +46,8 @@ const OFFENSE:Record<PlayerClass,string[]>={
   druid:['wrath','moonfire','claw'],
 };
 const HEALS:Partial<Record<PlayerClass,string[]>>={
-  paladin:['holy_light','flash_of_light'],priest:['flash_heal','heal'],
-  shaman:['healing_wave','lesser_healing_wave'],druid:['healing_touch','rejuvenation']};
+  paladin:['holy_light','flash_of_light'],priest:['renew','flash_heal','heal'],
+  shaman:['healing_wave','lesser_healing_wave'],druid:['rejuvenation','regrowth','healing_touch']};
 const WORLD={...BUILTIN_WORLD,camps:[]};
 function simFor(cls:PlayerClass,seed:number){
   const sim=new Sim({seed,playerClass:cls,noPlayer:true,autoEquip:false,
@@ -893,16 +893,22 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       sim.targetEntity(captain.id,pid);
       sim.startAutoAttack(pid);
       const castPeriod=Math.max(1,Math.ceil(1.55/DT));
-      const maxTicks=Math.ceil(130/DT);
+      const maxTicks=Math.ceil(300/DT); // up to FIVE real Sim game-minutes per solo class
       let turns=0,atk=0,defensive=0,heals=0,potions=0,relocations=0,executeAttempts=0;
       let attemptedAttacks=0,attemptedHeals=0,attemptedGuard=0;
       let maxRange=0,lastHeal=-500,lastDefend=-500,ticks=0;
       let effectiveHealing=0,healingEvents=0,actualDamageDone=0,actualDamageTaken=0;
+      let captainEffectiveHealing=0,captainHealEvents=0,highestEvadeEpoch=0;
+      const sampledTimeline:{seconds:number,bossHp:number,heroHp:number,range:number,evadeEpoch:number}[]=[];
       let outOfPreferredRangeTicks=0,minRange=Infinity;
       for(;ticks<maxTicks&&!p.dead&&!captain.dead;ticks++){
         const d=Math.hypot(p.pos.x-captain.pos.x,p.pos.z-captain.pos.z);
         maxRange=Math.max(maxRange,d);
         minRange=Math.min(minRange,d);
+        if(ticks%Math.max(1,Math.ceil(10/DT))===0)
+          sampledTimeline.push({seconds:Math.round(ticks*DT),bossHp:captain.hp,
+            heroHp:p.hp,range:Math.round(d*10)/10,evadeEpoch:captain.evadeEpoch});
+        highestEvadeEpoch=Math.max(highestEvadeEpoch,captain.evadeEpoch);
         if(cls==='hunter'&&(d<8||d>18))outOfPreferredRangeTicks++;
         p.facing=Math.atan2(captain.pos.x-p.pos.x,captain.pos.z-p.pos.z);
         // PLAYER-LEGAL MOVE INPUT via original stepPlayerMotion, no teleport.
@@ -918,7 +924,12 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         }
         if(ticks%castPeriod===0&&!p.castingAbility){
           const health=p.hp/p.maxHp;
-          if(health<0.78&&guard.length&&ticks-lastDefend>Math.ceil(10/DT)){
+          if((cls==='priest'||cls==='druid')&&health<0.68&&healing.length&&
+            ticks-lastHeal>Math.ceil(3/DT)){
+            const heal=healing[heals++%healing.length];
+            sim.castAbilityOn(heal,pid,pid);
+            attemptedHeals++;lastHeal=ticks;
+          }else if(health<0.78&&guard.length&&ticks-lastDefend>Math.ceil(10/DT)){
             const id=guard[defensive++%guard.length];
             sim.castAbility(id,pid);
             attemptedGuard++;lastDefend=ticks;
@@ -940,6 +951,9 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         }
         const events=sim.tick();
         for(const ev of events){
+          if(ev.type==='heal2'&&ev.targetId===captain.id&&ev.amount>0){
+            captainEffectiveHealing+=ev.amount;captainHealEvents++;
+          }
           if(ev.type==='heal2'&&ev.targetId===pid&&ev.amount>0){
             effectiveHealing+=ev.amount;healingEvents++;
           }
@@ -967,6 +981,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         hunterSecondsOutsideEffectiveRange:cls==='hunter'?Math.round(outOfPreferredRangeTicks*DT*100)/100:0,
         effectiveHealing,healingEvents,
         actualDamageDone:Math.round(actualDamageDone),actualDamageTaken:Math.round(actualDamageTaken),
+        captainEffectiveHealing,captainHealEvents,highestEvadeEpoch,sampledTimeline,
         trainingUnchanged:JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile)===training,
         level99Preserved:sim.serializeCharacter(pid)?.level===99,
         noEnemyHpOverride:captain.maxHp===startHp};
@@ -979,12 +994,14 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       noBossNerf:true,noTrainingStatBoost:true,
       roleAppropriateOffenseHealingDefensesAndNativeInput:true,
       gearAndLevelsAreExplicitFixtures:true,
-      playtestOnPhysicalS23Needed:true,
+      playtestOnPhysicalS23Needed:true,nineOfNineSoloCertified:rows.every(x=>x.result==='WIN'),
+      fiveMinuteFightLimit:true,onlyOriginalNativeCastHealDamageMovement:true,
       rows:rows.map(x=>({cls:x.cls,result:x.result,
         bossHpRemainingPct:x.bossHpRemainingPct,heroEndHp:x.heroEndHp,
         seconds:x.seconds,executeAttempts:x.executeAttempts,guardAttempts:x.attemptedGuard,
         healingAttempts:x.attemptedHeals,effectiveHealing:x.effectiveHealing,
         healingEvents:x.healingEvents,damageDone:x.actualDamageDone,
+        captainHealing:x.captainEffectiveHealing,captainEvades:x.highestEvadeEpoch,
         hunterRangeOutSeconds:x.hunterSecondsOutsideEffectiveRange,
         potions:x.potionUses}))};
     console.info('HF_SUPREME_SOLO99_TACTICAL_9='+JSON.stringify(summary));
