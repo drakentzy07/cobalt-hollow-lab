@@ -114,6 +114,12 @@ jobs:
           const dir='character-truth/skin13-auto-forge/out';
           const json=JSON.parse(fs.readFileSync(process.env.SKIN13_JOB,'utf8'));
           const proof=JSON.parse(fs.readFileSync(dir+'/proof.json','utf8'));
+          console.log('SKIN13_PROOF_INSPECTION',JSON.stringify({
+            inputJobId:json.id,proofJobId:proof.jobId,sourceTriangles:proof.copiedSourceTriangles,
+            pieces:proof.newSkinnedPieces,bones:proof.originalRigBones,
+            clips:proof.originalAnimationClips,glbBytes:proof.glbBytes,
+            skinsInGltf:proof.skinsInGltf,art:proof.artApproved,visual:proof.visualArtQaPassed
+          }));
           if(proof.jobId!==json.id||proof.copiedSourceTriangles!==0||
             proof.newSkinnedPieces!==11||proof.originalRigBones!==23||
             proof.originalAnimationClips!==22||proof.artApproved!==false||
