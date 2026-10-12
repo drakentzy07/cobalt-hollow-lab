@@ -885,7 +885,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       // Use actual class attack distances; stationary bosses do not chase
       // casters into wand range. A 10m opener previously suppressed all
       // movement and most caster auto-attacks in the test bot.
-      const spawnGap=ranged?(cls==='hunter'?8:4.5):2;
+      const spawnGap=ranged?(cls==='hunter'?5:4.5):2;
       const captain=createMob(sim.nextId++,def,99,
         {x:p.pos.x+spawnGap,y:p.pos.y,z:p.pos.z+spawnGap/4});
       captain.hostile=true;sim.addEntity(captain);
@@ -897,14 +897,18 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       let turns=0,atk=0,defensive=0,heals=0,potions=0,relocations=0;
       let attemptedAttacks=0,attemptedHeals=0,attemptedGuard=0;
       let maxRange=0,lastHeal=-500,lastDefend=-500,ticks=0;
+      let effectiveHealing=0,healingEvents=0,actualDamageDone=0,actualDamageTaken=0;
+      let outOfPreferredRangeTicks=0,minRange=Infinity;
       for(;ticks<maxTicks&&!p.dead&&!captain.dead;ticks++){
         const d=Math.hypot(p.pos.x-captain.pos.x,p.pos.z-captain.pos.z);
         maxRange=Math.max(maxRange,d);
+        minRange=Math.min(minRange,d);
+        if(cls==='hunter'&&d>7)outOfPreferredRangeTicks++;
         p.facing=Math.atan2(captain.pos.x-p.pos.x,captain.pos.z-p.pos.z);
         // PLAYER-LEGAL MOVE INPUT via original stepPlayerMotion, no teleport.
         // Kite only while not hard casting; remain within attack range.
-        meta.moveInput.back=ranged&&d<(cls==='hunter'?7.5:3)&&!p.castingAbility;
-        meta.moveInput.forward=ranged&&d>(cls==='hunter'?9.5:5.5)&&!p.castingAbility;
+        meta.moveInput.back=ranged&&d<(cls==='hunter'?3.5:3)&&!p.castingAbility;
+        meta.moveInput.forward=ranged&&d>(cls==='hunter'?6.5:5.5)&&!p.castingAbility;
         if(meta.moveInput.back||meta.moveInput.forward)relocations++;
         if(p.hp/p.maxHp<=0.52&&p.potionCooldownUntil<=sim.time&&
           sim.countItem('healing_potion',pid)>0){
@@ -929,7 +933,16 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
           }
           turns++;
         }
-        sim.tick();
+        const events=sim.tick();
+        for(const ev of events){
+          if(ev.type==='heal2'&&ev.targetId===pid&&ev.amount>0){
+            effectiveHealing+=ev.amount;healingEvents++;
+          }
+          if(ev.type==='damage'&&ev.amount>0){
+            if(ev.sourceId===pid&&ev.targetId===captain.id)actualDamageDone+=ev.amount;
+            if(ev.sourceId===captain.id&&ev.targetId===pid)actualDamageTaken+=ev.amount;
+          }
+        }
       }
       // Motion bits MUST be released on leaving automated combat, just as
       // lifting one's thumbs releases both virtual joysticks.
@@ -945,6 +958,10 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         attemptedAttacks,attemptedHeals,attemptedGuard,botTurns:turns,
         potionUses:potions,nativeInputSteps:relocations,
         maxRange:Math.round(maxRange*10)/10,
+        minRange:Math.round(minRange*10)/10,
+        hunterSecondsBeyondPreferredRange:cls==='hunter'?Math.round(outOfPreferredRangeTicks*DT*100)/100:0,
+        effectiveHealing,healingEvents,
+        actualDamageDone:Math.round(actualDamageDone),actualDamageTaken:Math.round(actualDamageTaken),
         trainingUnchanged:JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile)===training,
         level99Preserved:sim.serializeCharacter(pid)?.level===99,
         noEnemyHpOverride:captain.maxHp===startHp};
@@ -961,7 +978,10 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       rows:rows.map(x=>({cls:x.cls,result:x.result,
         bossHpRemainingPct:x.bossHpRemainingPct,heroEndHp:x.heroEndHp,
         seconds:x.seconds,guardAttempts:x.attemptedGuard,
-        healingAttempts:x.attemptedHeals,potions:x.potionUses}))};
+        healingAttempts:x.attemptedHeals,effectiveHealing:x.effectiveHealing,
+        healingEvents:x.healingEvents,damageDone:x.actualDamageDone,
+        hunterRangeOutSeconds:x.hunterSecondsBeyondPreferredRange,
+        potions:x.potionUses}))};
     console.info('HF_SUPREME_SOLO99_TACTICAL_9='+JSON.stringify(summary));
     expect(rows).toHaveLength(9);
     expect(rows.every(x=>x.trainingUnchanged&&x.level99Preserved&&
