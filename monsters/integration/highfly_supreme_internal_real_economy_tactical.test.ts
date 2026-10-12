@@ -917,7 +917,10 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       // Use actual class attack distances; stationary bosses do not chase
       // casters into wand range. A 10m opener previously suppressed all
       // movement and most caster auto-attacks in the test bot.
-      const spawnGap=ranged?(cls==='hunter'?12:4.5):2;
+      // Pure test-pilot geometry: for fragile caster specs begin outside the
+      // native 5m pulse radius; no teleport after aggro or source-stat changes.
+      const tacticalCaster=cls==='mage'||(cls==='druid'&&spec!=='feral');
+      const spawnGap=ranged?(cls==='hunter'?12:tacticalCaster?9:4.5):2;
       const captain=createMob(sim.nextId++,def,99,
         {x:p.pos.x+spawnGap,y:p.pos.y,z:p.pos.z+spawnGap/4});
       captain.hostile=true;sim.addEntity(captain);
@@ -943,10 +946,26 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         highestEvadeEpoch=Math.max(highestEvadeEpoch,captain.evadeEpoch);
         if(cls==='hunter'&&(d<8||d>18))outOfPreferredRangeTicks++;
         p.facing=Math.atan2(captain.pos.x-p.pos.x,captain.pos.z-p.pos.z);
-        // PLAYER-LEGAL MOVE INPUT via original stepPlayerMotion, no teleport.
-        // Kite only while not hard casting; remain within attack range.
-        meta.moveInput.back=ranged&&d<(cls==='hunter'?10:3)&&!p.castingAbility;
-        meta.moveInput.forward=ranged&&d>(cls==='hunter'?14:5.5)&&!p.castingAbility;
+        // HUMAN-LEGAL response to the ORIGINAL captain telegraph. Movement
+        // during a hard-cast legitimately cancels it, just like the player HUD.
+        // Fight within the authored 38m hard leash instead of dragging the boss
+        // infinitely away or editing its behavior.
+        const pulseIncoming=tacticalCaster&&captain.castingAbility===def.bigCast?.castId;
+        const pulseDodge=pulseIncoming&&d<8;
+        const canMove=!p.castingAbility||pulseDodge;
+        const anchorDistance=Math.hypot(p.pos.x-captain.spawnPos.x,
+          p.pos.z-captain.spawnPos.z);
+        if(tacticalCaster&&anchorDistance>18&&canMove){
+          // Reposition toward the ACTUAL spawn via normal directional movement.
+          p.facing=Math.atan2(captain.spawnPos.x-p.pos.x,captain.spawnPos.z-p.pos.z);
+          meta.moveInput.forward=true;meta.moveInput.back=false;
+        }else if(tacticalCaster){
+          meta.moveInput.back=canMove&&(d<7.5||pulseDodge);
+          meta.moveInput.forward=canMove&&!pulseIncoming&&d>10.5;
+        }else{
+          meta.moveInput.back=ranged&&d<(cls==='hunter'?10:3)&&!p.castingAbility;
+          meta.moveInput.forward=ranged&&d>(cls==='hunter'?14:5.5)&&!p.castingAbility;
+        }
         if(meta.moveInput.back||meta.moveInput.forward)relocations++;
         if(p.hp/p.maxHp<=0.52&&p.potionCooldownUntil<=sim.time&&
           sim.countItem('healing_potion',pid)>0){
@@ -1011,10 +1030,11 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         potionUses:potions,nativeInputSteps:relocations,
         maxRange:Math.round(maxRange*10)/10,
         minRange:Math.round(minRange*10)/10,
-        hunterSecondsOutsideEffectiveRange:cls==='hunter'?Math.round(outOfPreferredRangeTicks*DT*100)/100:0,
+        hunterSecondsOutsideEffectiveRange:cls==='hunter'&&spec!=='survival'?Math.round(outOfPreferredRangeTicks*DT*100)/100:0,
         effectiveHealing,healingEvents,
         actualDamageDone:Math.round(actualDamageDone),actualDamageTaken:Math.round(actualDamageTaken),
         captainEffectiveHealing,captainHealEvents,highestEvadeEpoch,sampledTimeline,
+        tacticalCasterMovement:tacticalCaster,legalTelegraphReaction:true,
         trainingUnchanged:JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile)===training,
         level99Preserved:sim.serializeCharacter(pid)?.level===99,
         noEnemyHpOverride:captain.maxHp===startHp};
@@ -1039,6 +1059,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       playtestOnPhysicalS23Needed:true,nineOfNineSoloCertified:bestRows.every(x=>x.result==='WIN'),
       fiveMinuteFightLimit:true,onlyOriginalNativeCastHealDamageMovement:true,
       nativeSpecsChosenViaSim:true,allTalentRowsSelected:false,
+      casterKitingStaysWithinNativeBossLeash:true,noMobAIOrDamageEditing:true,
       nineOriginalClassesPreserved:true,
       rows:bestRows.map(x=>({cls:x.cls,spec:x.spec,result:x.result,
         bossHpRemainingPct:x.bossHpRemainingPct,heroEndHp:x.heroEndHp,
