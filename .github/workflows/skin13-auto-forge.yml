@@ -91,12 +91,20 @@ jobs:
           grep -F "$NAME" SHA256SUMS | head -1 | sha256sum --check
           tar -xJf "$NAME" --strip-components=1 -C "$RUNNER_TEMP/skin13-blender"
           echo "$RUNNER_TEMP/skin13-blender" >> "$GITHUB_PATH"
+      - name: Enable Linux OpenGL/EGL software rendering for headless art QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libegl1 libgl1 libgl1-mesa-dri libgles2 libgbm1 libopengl0 xvfb
+          test -f /usr/lib/x86_64-linux-gnu/libEGL.so.1
+          echo HIGHFLY_SKIN13_SOFTWARE_RENDER_LIBEGL_READY=1
       - name: Run REAL Blender worker for original standalone armor geometry
         shell: bash
         timeout-minutes: 8
         run: |
           set -euo pipefail
-          blender --background --factory-startup --python-exit-code 99 \
+          LIBGL_ALWAYS_SOFTWARE=1 MESA_LOADER_DRIVER_OVERRIDE=llvmpipe xvfb-run -a -s '-screen 0 1280x1024x24' blender --background --factory-startup --python-exit-code 99 \
             --python character-truth/skin13-auto-forge/blender-original-prototype.py -- \
             --job "$SKIN13_JOB" \
             --source character-truth/skin13-auto-forge/out/source-for-blender.glb \
