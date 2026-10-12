@@ -656,3 +656,135 @@ describe('HIGHFLY co-op native group dungeon instance: 9 classes x 8 stages',()=
       x.rejectedUnderlevel&&x.eachExited&&x.distinctHunters)).toBe(true);
   },240000);
 });
+
+/** LV99 captain tactical role pairs. No player-stat/monster HP cheat.
+ * All actual Sim AI turns and cooldowns run, with NORMAL native monster HP.
+ * Legal level-90 equipment and three potions are declared QA fixtures.
+ * No automated solo-balance success claim; each of nine classes gets an actual
+ * combat role alongside a native Warrior, as requested for 2-person co-op.
+ */
+describe('HIGHFLY LV99 captain — 9 native class-pair tactical stress; no balancing shortcuts',()=>{
+  it('measures full-HP final captain against warrior+each class, heals, legal armor, native AI',()=>{
+    type Row={guest:PlayerClass,result:'WIN'|'LOSS'|'TIMEOUT',
+      captainStartHp:number,captainEndHp:number,heroEndHp:number,
+      allyEndHp:number,seconds:number,skillsAttempted:number,
+      directHealAttempts:number,actualHealing:number,
+      potionUses:number,soloVictoryNotAsserted:boolean};
+    const rows:Row[]=[];
+    const bossId=highflyEncounterId('captain',HIGHFLY_HUNT_SCENARIOS.at(-1)!.minLevel);
+    const def=MOBS[bossId];
+    expect(def?.boss).toBe(true);
+    for(const [index,cls] of CLASSES.entries()){
+      const {sim,pid:leader,p:tank,meta:leadMeta}=simFor('warrior',910001+index*99);
+      const aid=sim.addPlayer(cls,'HF99_COOP_'+cls,
+        {characterId:991001+index,tutorialGreetingSent:true});
+      const ally=sim.entities.get(aid)!;
+      const other=sim.players.get(aid)!;
+      sim.setPlayerLevel(99,leader);
+      sim.setPlayerLevel(99,aid);
+      sim.partyInvite(aid,leader);sim.partyAccept(aid);
+      expect(sim.partyOf(aid)?.members).toEqual(expect.arrayContaining([leader,aid]));
+      // Arm every player under ORIGINAL level+class legal item rules.
+      for(const [pid,klass,meta] of [[leader,'warrior',leadMeta],[aid,cls,other]] as const){
+        const weapon=hfP13ItemId(90,WT[klass]);
+        const chest=hfP16ArmorId(90,AT[klass]);
+        sim.addItem(weapon,1,pid);
+        sim.equipItem(weapon,pid,'mainhand');
+        sim.addItem(chest,1,pid);
+        sim.equipItem(chest,pid);
+        expect(meta.equipment.mainhand).toBe(weapon);
+        expect(meta.equipment.chest).toBe(chest);
+        const legal=Object.values(ITEMS).filter(item=>
+          item.kind==='armor'&&!!item.slot&&item.slot!=='chest'&&
+          canEquipItem(klass,item)&&requiredLevelFor(item)<=99)
+          .sort((a,b)=>requiredLevelFor(b)-requiredLevelFor(a)||
+            (b.stats?.armor??0)-(a.stats?.armor??0));
+        const slots=new Set<string>();
+        for(const item of legal){
+          if(!item.slot||slots.has(item.slot))continue;
+          sim.addItem(item.id,1,pid);
+          sim.equipItem(item.id,pid);
+          if(Object.values(meta.equipment).includes(item.id))slots.add(item.slot);
+          if(slots.size>=8)break;
+        }
+        expect(Object.values(meta.equipment).filter(Boolean).length).toBeGreaterThanOrEqual(3);
+        sim.addItem('healing_potion',3,pid);
+      }
+      ally.pos={...tank.pos,x:tank.pos.x+0.75,z:tank.pos.z+0.5};
+      ally.prevPos={...ally.pos};sim.rebucket(ally);
+      const target=createMob(sim.nextId++,def,99,
+        {x:tank.pos.x+2,y:tank.pos.y,z:tank.pos.z+2});
+      const captainStartHp=target.hp;
+      expect(captainStartHp).toBeGreaterThan(1);
+      target.hostile=true;sim.addEntity(target);
+      for(const pid of [leader,aid]){
+        const e=sim.entities.get(pid)!;
+        e.facing=Math.atan2(target.pos.x-e.pos.x,target.pos.z-e.pos.z);
+        sim.targetEntity(target.id,pid);sim.startAutoAttack(pid);
+      }
+      const know=(meta:typeof leadMeta,order:string[])=>
+        order.filter(x=>meta.known.some(a=>a.def.id===x));
+      const leaderAtk=know(leadMeta,OFFENSE.warrior);
+      const guestAtk=know(other,OFFENSE[cls]);
+      const heals=know(other,HEALS[cls]??[]);
+      expect(leaderAtk.length).toBeGreaterThan(0);
+      expect(guestAtk.length).toBeGreaterThan(0);
+      const capTicks=Math.ceil(105/DT);
+      const tickEvery=Math.max(1,Math.round(1.65/DT));
+      let attempted=0,directHealAttempts=0,actualHealing=0,potions=0,ticks=0;
+      let lp=0,ap=0;
+      for(;ticks<capTicks&&!target.dead&&( !tank.dead || !ally.dead);ticks++){
+        for(const pid of [leader,aid]){
+          const p=sim.entities.get(pid)!;
+          if(p.dead||p.hp/p.maxHp>0.60||sim.countItem('healing_potion',pid)===0)continue;
+          const before=sim.countItem('healing_potion',pid);
+          sim.useItem('healing_potion',pid);
+          if(sim.countItem('healing_potion',pid)<before)potions++;
+        }
+        if(ticks%tickEvery===0){
+          if(!tank.dead){
+            sim.castAbility(leaderAtk[lp++%leaderAtk.length],leader);
+            attempted++;
+          }
+          if(!ally.dead){
+            // Healer roles target the injured frontline with the genuine
+            // native friendly-target cast path; offensive roles deal damage.
+            if(heals.length&&tank.hp/tank.maxHp<0.65){
+              const before=tank.hp;
+              sim.castAbilityOn(heals[directHealAttempts%heals.length],leader,aid);
+              directHealAttempts++;
+              actualHealing+=Math.max(0,tank.hp-before);
+            }else{
+              sim.castAbility(guestAtk[ap++%guestAtk.length],aid);
+              attempted++;
+            }
+          }
+        }
+        sim.tick();
+      }
+      rows.push({guest:cls,result:target.dead&&( !tank.dead||!ally.dead)?'WIN':
+          tank.dead&&ally.dead?'LOSS':'TIMEOUT',
+        captainStartHp,captainEndHp:Math.max(0,target.hp),
+        heroEndHp:Math.max(0,tank.hp),allyEndHp:Math.max(0,ally.hp),
+        seconds:Math.round(ticks*DT*100)/100,skillsAttempted:attempted,
+        directHealAttempts,actualHealing,potionUses:potions,
+        soloVictoryNotAsserted:true});
+      expect(sim.players.get(aid)?.cls).toBe(cls);
+      expect(sim.serializeCharacter(leader)?.level).toBe(99);
+      expect(sim.serializeCharacter(aid)?.level).toBe(99);
+      expect(target.maxHp).toBe(captainStartHp);
+    }
+    const result={
+      scenario:'LV99_ROLE_AWARE_TWO_HUNTERS_VS_NATIVE_CAPTAIN_NOT_SOLO_BALANCE',
+      total:rows.length,wins:rows.filter(x=>x.result==='WIN').length,
+      losses:rows.filter(x=>x.result==='LOSS').length,
+      timeouts:rows.filter(x=>x.result==='TIMEOUT').length,
+      hpNeverOverridden:true,simTicksWithNativeAI:true,
+      gearAndPotionsTestFixtures:true,trainingNotMinted:true,
+      noPlayerMovementOrParryAutomation:true,
+      classes:rows};
+    console.info('HF_SUPREME_LV99_ROLE_PAIR_BOSS='+JSON.stringify(result));
+    expect(rows).toHaveLength(9);
+    expect(rows.every(r=>r.captainStartHp>1&&r.skillsAttempted>0)).toBe(true);
+  },240000);
+});

@@ -745,6 +745,13 @@ jobs:
           set -euo pipefail
           pnpm exec vitest run tests/highfly_supreme_internal_real_economy_tactical.test.ts
           echo 'HF_SUPREME_NATIVE_REAL_COPPER_RNG_VENDOR_FORGE_AND_FULL_HP_AI_REPORT=1'
+      - name: Original WebSocket auth, market commands, P2P trade, party restrictions (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/server/ws_auth.test.ts tests/server/game_boot_order.test.ts tests/server/market_commands.test.ts tests/trade.test.ts tests/bop_party_trade.test.ts
+          echo 'HF_SERVER_COMMAND_SECURITY_AND_NATIVE_SOCIAL_TESTS_COMPLETE=1'
       - name: Archive DEV8 native LV99 diagnostics (NO DEPLOY)
         if: always()
         uses: actions/upload-artifact@v4
