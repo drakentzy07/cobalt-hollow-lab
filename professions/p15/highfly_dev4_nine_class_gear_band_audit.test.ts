@@ -26,11 +26,19 @@ const isGear=(id:string)=>{
   const item=ITEMS[id];
   return !!item&&(item.kind==='weapon'||item.kind==='armor');
 };
+const LOOT_SOURCE_INDEX=new Map<string,{mobId:string,levels:[number,number]}[]>();
+for(const mob of Object.values(MOBS)){
+  if(mob.dummy||mob.ambient)continue;
+  for(const drop of mob.loot){
+    if(!drop.itemId||!(drop.chance>0))continue;
+    const rows=LOOT_SOURCE_INDEX.get(drop.itemId)??[];
+    rows.push({mobId:mob.id,levels:[mob.minLevel,mob.maxLevel]});
+    LOOT_SOURCE_INDEX.set(drop.itemId,rows);
+  }
+}
 const atLevelMonsterDrops=(id:string,from:number,to:number)=>
-  Object.values(MOBS).filter(m=>!m.ambient&&!m.dummy&&
-    m.minLevel<=to&&m.maxLevel>=from&&
-    m.loot.some(e=>e.itemId===id&&e.chance>0))
-    .map(m=>({mobId:m.id,levels:[m.minLevel,m.maxLevel]}));
+  (LOOT_SOURCE_INDEX.get(id)??[]).filter(m=>
+    m.levels[0]<=to&&m.levels[1]>=from);
 const entryLevel=(id:string)=>{
   try{return requiredLevelFor(ITEMS[id]);}
   catch{return null;}
