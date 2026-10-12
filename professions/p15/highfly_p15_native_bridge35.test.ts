@@ -36,7 +36,7 @@ describe('DEV5 original donor-gear source reuse LV35 bridge',()=>{
     expect(HF_P15_BRIDGE_LEVEL).toBe(35);
     expect(HIGHFLY_P15_RECIPES).toHaveLength(3);
     expect(Object.keys(HIGHFLY_P15_ITEMS)).toHaveLength(3);
-    expect(ALL_RECIPES.length).toBe(230);
+    expect(ALL_RECIPES.length).toBe(239); // 212 native baseline +15 P13 +3 P15 +9 P16
     expect(F?.type).toBe('forge');
     for(const track of TRACKS){
       const item=ITEMS[hfP15ItemId(track)];
