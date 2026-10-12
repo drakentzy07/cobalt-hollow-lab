@@ -21,7 +21,17 @@ jobs:
         with:
           # Frozen QA commit: real native captain, nine classes each won.
           # Deliberately immutable to avoid a moving dev branch changing the release.
+          ref: 8a3ddc93c9147e8c3320c04d4d2a13896b11e063
+      - name: Checkout isolated V9 correction script and regression tests
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
           ref: ${{ github.sha }}
+          path: v9-corrections
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /overlays/highfly_v9_p0_corrections.py
+            /game/c1/highfly_v9_p0_regression.test.ts
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
@@ -527,8 +537,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 ../overlays/highfly_v9_p0_corrections.py
-          cp ../game/c1/highfly_v9_p0_regression.test.ts tests/highfly_v9_p0_regression.test.ts
+          python3 ../v9-corrections/overlays/highfly_v9_p0_corrections.py
+          cp ../v9-corrections/game/c1/highfly_v9_p0_regression.test.ts tests/highfly_v9_p0_regression.test.ts
           git diff --check HEAD
           grep -Fq 'HIGHFLY V9 P0' src/styles/shell.css
           grep -Fq 'currentId: number | null = null' src/game/auto_target.ts
