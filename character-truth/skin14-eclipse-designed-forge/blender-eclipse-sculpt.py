@@ -111,13 +111,24 @@ def add_forged_plate(verts,faces,mi,ctr,sx,sy,sz,outline,color,face_side=-1.0):
  # Faces and vertices are GENERATED from instructions, not donor geometry.
  n=len(outline);base=len(verts)
  cx=sum(x for x,z in outline)/n;cz=sum(z for x,z in outline)/n
- front=ctr[1]+face_side*sy*1.22
- levels=[(1.0,front+face_side*sy*.035),(.89,front+face_side*sy*.18),
-   (.85,front+face_side*sy*.22),(.95,front-face_side*sy*.02)]
- for fac,y in levels:
+ # Project every sculptural panel vertex onto the local volumetric shell.
+ # Fixed-Y flat sheets stood a huge distance in front of the helmet in v1.
+ # Original geometry is NOT read or reused; only the freshly generated shell
+ # equation is used to project the new front/back bevels.
+ def surface(x,z,fac,offset):
+  nx=(cx+(x-cx)*fac)*.93
+  nz=(cz+(z-cz)*fac)*.92
+  r2=nx*nx+nz*nz
+  curved=max(.07,math.sqrt(max(0.0,1.0-min(.995,r2))))
+  # Match shape's *.84..1.0 width correction and variable depth.
+  return (ctr[0]+nx*sx,
+    ctr[1]+face_side*sy*(curved+offset),
+    ctr[2]+nz*sz)
+ # Millimetric embossed plate: bevel and rim closely hugging metal base.
+ levels=[(1.0,.024),(.93,.078),(.86,.092),(.98,-.013)]
+ for fac,offset in levels:
   for x,z in outline:
-   verts.append((ctr[0]+(cx+(x-cx)*fac)*sx*.93,
-     y,ctr[2]+(cz+(z-cz)*fac)*sz*.92))
+   verts.append(surface(x,z,fac,offset))
  for band in range(len(levels)-1):
   for i in range(n):
    a=base+band*n+i;b=base+band*n+(i+1)%n
@@ -125,12 +136,12 @@ def add_forged_plate(verts,faces,mi,ctr,sx,sy,sz,outline,color,face_side=-1.0):
    faces.append((a,b,c,d));mi.append(1 if band in (0,2) else color)
  # Cap fan is topologically new, all quads/nonconvex outline kept triangulable.
  tip=len(verts)
- verts.append((ctr[0]+cx*sx*.93,front+face_side*sy*.245,ctr[2]+cz*sz*.92))
+ verts.append(surface(cx,cz,.88,.104))
  for i in range(n):
   a=base+2*n+i;b=base+2*n+(i+1)%n
   faces.append((tip,a,b));mi.append(color)
  # Close back to avoid paper-thin floating ornaments.
- back=len(verts);verts.append((ctr[0]+cx*sx*.93,front-face_side*sy*.07,ctr[2]+cz*sz*.92))
+ back=len(verts);verts.append(surface(cx,cz,.99,-.022))
  for i in range(n):
   a=base+3*n+i;b=base+3*n+(i+1)%n
   faces.append((back,b,a));mi.append(color)
