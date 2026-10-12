@@ -54,14 +54,15 @@ for(const level of HF_P16_ARMOR_LEVELS){
   for(const track of Object.keys(SOURCE) as HfP16ArmorTrack[]){
     const spec=SOURCE[track];
     const base=BASE_ITEMS[spec.donor];
+    const baseArmor=base?.kind==='armor'?base.stats?.armor:undefined;
     if(!base||base.kind!=='armor'||base.slot!=='chest'||
-      base.armorType!==track||!(base.stats?.armor>0))
+      base.armorType!==track||typeof baseArmor!=='number'||baseArmor<=0)
       throw Error('HF_P16_INVALID_ORIGINAL_DONOR_CHEST:'+spec.donor);
     // Explicitly remove donor equipment's physical/mental stats, sets and
     // vendor price. Only original defensive armor value is level-scaled.
     const {stats:_oldTrainingStats,buyValue:_vendor,set:_set,...native}=base;
     const id=hfP16ArmorId(level,track);
-    const armor=Math.round(base.stats.armor*level/20);
+    const armor=Math.round(baseArmor*level/20);
     HIGHFLY_P16_ARMOR_ITEMS[id]={
       ...native,id,
       name:`HIGHFLY ${spec.name} · ${level}`,
