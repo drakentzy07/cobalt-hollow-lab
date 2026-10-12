@@ -17,8 +17,6 @@ designfile=get('--design')
 design=json.loads(designfile.read_text())
 assert design['schema']=='highfly.skin16.elegant-violet-concept/1' and design.get('source')=='HUMAN_SELECTED_CONCEPT_ART_DIRECTED','NEED_APPROVED_CONCEPT'
 assert design['newGeometryOnly'] is True and design['artApproved'] is False and not design.get('imageSemanticsAnalyzed'),'NEED_UNAPPROVED_ORIGINAL_MODEL'
-choices=design['decisions']
-assert set(choices)=={'theme','helmet','shoulders','chest','back','shape','metal','accent'},'INVALID_DESIGN_SCHEMA'
 
 j=json.loads(jobfile.read_text())
 assert j['schema']=='highfly.skin13.forge-job/1' and j['phase']=='queued','BAD_JOB_SCHEMA'
