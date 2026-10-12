@@ -3,7 +3,7 @@ name: HIGHFLY SUPREME — Unified REAL WebGL S23 Preview (NO DEPLOY)
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
   push:
-    branches: [highfly-supreme-v9-p0-target-training-rogue]
+    branches: [highfly-supreme-v91-combat-aim-nine-classes]
     paths: [".github/workflows/highfly-supreme-integrated-candidate-s23-no-deploy.yml"]
   workflow_dispatch:
 permissions:
@@ -32,6 +32,8 @@ jobs:
           sparse-checkout: |
             /overlays/highfly_v9_p0_corrections.py
             /game/c1/highfly_v9_p0_regression.test.ts
+            /overlays/highfly_v91_combat_feel.py
+            /game/c1/highfly_v91_combat_nine_classes.test.ts
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
@@ -550,6 +552,23 @@ jobs:
           set -euo pipefail
           pnpm exec vitest run tests/highfly_v9_p0_regression.test.ts
           echo 'HF_V9_P0_NATIVE_TARGET_STEALTH_REGRESSION_GREEN=1'
+      - name: V9.1 genuine nine-class combat aim, Rogue opener, combo/touch feel (NO XP/HP/Training changes)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_v91_combat_feel.py
+          cp ../v9-corrections/game/c1/highfly_v91_combat_nine_classes.test.ts tests/highfly_v91_combat_nine_classes.test.ts
+          git diff --check HEAD
+          test -s src/sim/combat/highfly_v91_rogue_opener.ts
+          echo 'HF_V91_NINE_CLASS_AIM_ROGUE_SKILL_COMBO_PATCH_GREEN=1'
+      - name: V9.1 nine-class soft aim, honest Rogue positioning and touch response regressions
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/highfly_v9_p0_regression.test.ts tests/highfly_v91_combat_nine_classes.test.ts
+          echo 'HF_V91_ALL_NINE_CLASSES_AIM_AND_ROGUE_SKILL_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -617,7 +636,7 @@ jobs:
           # Separate release QA metadata, NOT a game-play buff or stats edit.
           import json
           (root/'highfly-supreme-qa.json').write_text(json.dumps({
-            'edition':'HIGHFLY SUPREME V9 P0 CORRECTIONS LV1-99',
+            'edition':'HIGHFLY SUPREME V9.1 COMBAT FEEL 9 CLASS LV1-99',
             'qaSourceCommit':'8a3ddc93c9147e8c3320c04d4d2a13896b11e063',
             'nineClassesNativeSoloCaptainLv99':True,
             'bossStatOverride':False,'trainingStatInjection':False,
@@ -625,6 +644,7 @@ jobs:
             'multipleSeedsCertified':False,'physicalSamsungS23Tested':False,
             'cooperativeMultiDeviceVerified':False,'extended100PlusEnabled':False,
             'v9Corrections':{'target360':True,'trainingHeaderGrid':True,'rogueStealth90':True},
+            'v91Combat':{'allNineSoftAim':True,'meleeRangeAware':True,'rogueStealthUnawareBackstab':True,'oneHitComboBuffer':True,'mobileAttackPressFeedback':True},
             'testType':'native-sim plus simulated S23 browser smoke; player manual QA needed'
           },indent=2),encoding='utf-8')
           assert (root/'index.html').is_file()
