@@ -91,7 +91,7 @@ describe('HIGHFLY internal native XP, copper, material, vendor/forge accessibili
     const output=hfP13ItemId(50,'warrior');
     const fee=trainingFeeFor(recipe);
     const fluxQty=recipe.reagents.find(r=>r.itemId==='smithing_flux')?.count??0;
-    const cost=fee+fluxQty*ITEMS.smithing_flux.buyValue;
+    const cost=fee+fluxQty*(ITEMS.smithing_flux.buyValue??0);
     expect(fluxQty).toBeGreaterThan(0);
     const materials=['rough_hide','arcane_essence'] as const;
     const sources={rough_hide:'hf_hunt_wolf_50',
@@ -138,8 +138,7 @@ describe('HIGHFLY internal native XP, copper, material, vendor/forge accessibili
     sim.equipItem(output,pid,'mainhand');
     expect(meta.equipment.mainhand).toBe(output);
     const save=JSON.parse(JSON.stringify(sim.serializeCharacter(pid)));
-    const next=simFor('warrior',20261014);
-    next.sim.addPlayer; // no second player is created in the ORIGINAL sim
+    // Rehydration creates exactly one persisted Hunter in a fresh Sim.
     const load=new Sim({seed:20261014,playerClass:'warrior',noPlayer:true,
       autoEquip:false,world:WORLD,compulsoryTutorial:false,riftPortals:false});
     const rid=load.addPlayer('warrior','HF_SUPREME_ECONOMY',
