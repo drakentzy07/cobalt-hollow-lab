@@ -9,12 +9,12 @@ import {requiredLevelFor} from '../src/sim/item_level_req';
 import {HIGHFLY_PF6_XP_TABLE,HIGHFLY_PF6_NORMAL_MAX_LEVEL,HIGHFLY_PF6_EXTENDED_ENABLED}
   from '../src/highfly/training/pf6_xp_curve';
 
-describe('DEV full 230 native recipe material source catalog LV1-99',()=>{
+describe('DEV full 239 native recipe material source catalog LV1-99',()=>{
   it('exports exact ingredients quantities output gates and loot origins without inventing production',()=>{
     expect(HIGHFLY_PF6_NORMAL_MAX_LEVEL).toBe(99);
     expect(HIGHFLY_PF6_EXTENDED_ENABLED).toBe(false);
     expect(HIGHFLY_PF6_XP_TABLE).toHaveLength(99);
-    expect(ALL_RECIPES.length).toBe(230); // 212 donor/HF +15 P13 +3 P15 bridge
+    expect(ALL_RECIPES.length).toBe(239); // 212 donor/HF +15 P13 +3 P15 +9 P16 armor
     const missingOutputs=ALL_RECIPES.filter(x=>!ITEMS[x.resultItemId]).map(x=>x.id);
     const missingMats=ALL_RECIPES.flatMap(x=>x.reagents
       .filter(y=>!ITEMS[y.itemId]).map(y=>x.id+':'+y.itemId));
@@ -77,9 +77,9 @@ describe('DEV full 230 native recipe material source catalog LV1-99',()=>{
         'Mobs listed are native template sources; no guaranteed user encounter or drop',
         'No new premium GLB assets or 100+ Extended released',
       ]};
-    writeFileSync('../highfly_dev_p15_full_230_recipes_materials_99_levels.json',
+    writeFileSync('../highfly_dev_p16_full_239_recipes_materials_99_levels.json',
       JSON.stringify(report,null,2)+'\n','utf8');
-    console.info('HF_DEV_NATIVE_230_RECIPES_99_LEVELS_CATALOG='+
+    console.info('HF_DEV_NATIVE_239_RECIPES_99_LEVELS_CATALOG='+
       JSON.stringify({totalRecipes:catalog.length,oldRecipes:report.oldRecipes,
         newP13:report.newP13Recipes,distinctMobs:allMobs.length,
         levels:progression.length,maxNominalLevel:Math.max(...catalog.map(x=>x.nominalLevel)),
