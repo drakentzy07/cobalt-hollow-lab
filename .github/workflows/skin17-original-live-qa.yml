@@ -1,0 +1,37 @@
+name: HIGHFLY SKIN17 — RESTORE REAL ORIGINAL CLAUDECRAFT PALADIN BROWSER QA
+on:
+  push:
+    branches: [highfly-skin17-restore-claudecraft-character]
+    paths:
+      - 'character-truth/skin17-restore/**'
+      - '.github/workflows/skin17-original-live-qa.yml'
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  actual-original-restored:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - name: Verify isolated SKIN17 content, no gameplay updates
+        run: |
+          test -s character-truth/skin17-restore/index.html
+          node --check character-truth/skin17-restore/live-qa.cjs
+      - name: Install real headless Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify the ORIGINAL native armor and 22 playable clips LIVE
+        timeout-minutes: 4
+        run: |
+          node character-truth/skin17-restore/live-qa.cjs
+          grep -F '"green": true' character-truth/skin17-restore/qa/gate.json
+          grep -F '"paladinNativeMeshes": 17' character-truth/skin17-restore/qa/gate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-SKIN17-ORIGINAL-HUNTER-PALADIN-NATIVE-RESTORE-SCREENSHOTS
+          path: character-truth/skin17-restore/qa/
+          retention-days: 30
+          if-no-files-found: warn
