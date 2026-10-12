@@ -1,0 +1,98 @@
+name: HIGHFLY PLAY — Single Candidate S23 Chrome QA (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-golden-v4031-predeploy-tar-safe]
+    paths: [".github/workflows/highfly-play-v4031-standalone-s23-preflight.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  s23_candidate_only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download immutable P13 V4-03.1 candidate (NO PAGES)
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38165622295
+          name: HIGHFLY-GOLDEN-PLAY-V403-1-P13-PAGES-REVIEW-NO-DEPLOY
+          github-token: ${{ github.token }}
+          path: candidate
+      - name: Guard exact single candidate route, integrity and budget
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s candidate/cobalt-hollow-lab/v4-03-preview/index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('candidate/cobalt-hollow-lab')
+          assert p.is_dir()
+          files=[f for f in p.rglob('*') if f.is_file()]
+          assert files and not any(f.is_symlink() for f in p.rglob('*'))
+          total=sum(f.stat().st_size for f in files)
+          print('HF_CANDIDATE_ONLY_PAGES_BYTES='+str(total))
+          print('HF_CANDIDATE_ONLY_FILES='+str(len(files)))
+          if total>=995_000_000:raise SystemExit('SAFE_PAGES_CANDIDATE_TOO_LARGE_NO_DEPLOY')
+          PY
+      - name: Checkout original frozen browser tooling
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/
+            /patches/
+            /package.json
+            /pnpm-lock.yaml
+            /.npmrc
+            /vite.config.ts
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - name: Install pinned Chromium smoke dependencies
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          cd upstream
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Test S23 Chrome emulation from actual build (NOT HARDWARE)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../monsters/integration/highfly_p06_mobile_smoke.mjs scripts/highfly_s23_candidate.mjs
+          python3 ../monsters/integration/activate_p09_mobile_smoke.py scripts/highfly_s23_candidate.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/highfly_s23_candidate.mjs')
+          s=p.read_text()
+          a="const URL='http://127.0.0.1:4173/cobalt-hollow-lab/';"
+          b="const URL='http://127.0.0.1:4174/cobalt-hollow-lab/v4-03-preview/';"
+          assert s.count(a)==1
+          p.write_text(s.replace(a,b,1))
+          PY
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory ../candidate > ../hf-standalone-local.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 60); do
+            if curl -fsS 'http://127.0.0.1:4174/cobalt-hollow-lab/v4-03-preview/' >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_s23_candidate.mjs
+          test -s ../demo-v4-02-pr19-s23-report.json
+          node - <<'JS'
+          const r=require('../demo-v4-02-pr19-s23-report.json');
+          if(!r.pass||r.static404?.length||r.p06?.options!==8||
+            r.p06?.ordinaryCount!==6||r.p06?.eliteCount!==1||
+            r.p06?.captainCount!==1||!r.p06?.sameHunter||!r.p06?.sameSim)
+            throw Error('HF_S23_CHROME_CANDIDATE_QA_FAILED');
+          console.log('HF_CANDIDATE_ONLY_S23_EMULATION_GREEN_NEVER_DEPLOY=1');
+          JS
+      - name: No deploy, no Pages mutation
+        if: always()
+        run: echo 'HF_STAGING_GUARD_NEVER_DEPLOY=1'
