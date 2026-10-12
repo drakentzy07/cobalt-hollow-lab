@@ -1,27 +1,73 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#101824"><title>HIGHFLY · Fábrica de Armaduras Originales</title>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1423"><title>HIGHFLY · Forja de Armaduras Originales</title>
 <style>
-:root{font-family:system-ui,sans-serif;color-scheme:dark}*{box-sizing:border-box}body{background:#0d1320;color:#f2f5fa;margin:0;font-size:14px}
-header{padding:15px 18px;background:#121e32;border-bottom:1px solid #35445b}h1{font-size:20px;margin:0 0 5px;color:#efcd83}small{color:#b2c7d9}main{max-width:1030px;margin:auto;padding:14px;display:grid;gap:13px}section{border:1px solid #43566f;border-radius:12px;padding:14px;background:#152238}section h2{font-size:17px;color:#ebc981;margin:0 0 10px}p{line-height:1.48}label{display:block;font-weight:600;margin:9px 0}textarea{background:#0c1728;color:#f1f4fb;border:1px solid #56708b;border-radius:8px;padding:12px;min-height:110px;width:100%;resize:vertical;font:inherit}input[type=file]{display:block;margin:7px 0;width:100%;font:inherit}button{background:#34465d;border:1px solid #8197ae;color:#fff;border-radius:9px;padding:12px 14px;font:inherit;cursor:pointer}button.primary{background:#766039;border-color:#e0bd6b}button:disabled{opacity:.55;cursor:not-allowed}button:focus-visible,textarea:focus-visible{outline:2px solid #8bd7ff}nav a{color:#9fd6ff}.row{display:flex;flex-wrap:wrap;gap:8px}.warning{border-left:4px solid #d99c4f;background:#362c21;padding:12px;border-radius:5px}.safe{background:#162d31;padding:10px;border-radius:8px;color:#b5ebd7}#preview{display:none;width:100%;max-height:300px;object-fit:contain;background:#0c1624;border-radius:7px;border:1px solid #4b617c}#result{white-space:pre-wrap;overflow-wrap:anywhere;background:#0d1829;padding:12px;line-height:1.5;border-radius:8px;min-height:80px}#status{margin:10px 0;color:#f1c988}#history{display:grid;gap:7px}#history button{text-align:left}footer{margin:20px 16px;color:#a8b6ca;font-size:12px}
+:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark;--bg:#0a111e;--panel:#152339;--gold:#f2cc85;--line:#334c69;--muted:#b6c7d7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f5f7fc;font-size:14px}
+header{padding:18px clamp(15px,3vw,30px);background:linear-gradient(125deg,#131f32,#10172b 80%);border-bottom:1px solid #334c69}
+h1{margin:0 0 8px;font-size:clamp(20px,3vw,29px);color:var(--gold)}
+small{color:var(--muted)}h2{font-size:18px;color:var(--gold);margin:0 0 8px}h3{font-size:14px;margin:8px 0}
+main{max-width:1180px;margin:auto;padding:14px;display:grid;gap:13px}
+section{border:1px solid var(--line);border-radius:14px;padding:clamp(12px,2.2vw,20px);background:var(--panel)}
+p{line-height:1.5;color:#c6d4e4;margin:8px 0 11px}strong{color:#f4e0ae}
+label{display:block;font-weight:600;margin:10px 0 7px}
+textarea{width:100%;background:#0c1828;color:#fff;border:1px solid #59708e;border-radius:10px;padding:12px;font:inherit;min-height:108px;resize:vertical}
+input[type=file]{display:block;width:100%;margin:7px 0;font:inherit;color:var(--muted)}
+button{font:inherit;cursor:pointer;background:#294059;border:1px solid #6481a0;color:#f5f7fc;border-radius:9px;padding:10px 13px;min-height:40px}
+button:hover{background:#395572}button:focus-visible,textarea:focus-visible{outline:2px solid #8ad5f4}
+button.primary{background:#9c7942;border-color:#e5bf79;color:#101826;font-weight:750;min-height:49px}
+button.secondary{background:#253953}
+button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.space{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:13px}.step{border:1px solid var(--line);border-radius:8px;background:#0f2036;padding:9px;color:#a8bdd0;text-align:center;font-size:12px}.step.active{border-color:#c8a76d;color:#f1d5a0;background:#2c2c34}.step.done{border-color:#678c75;color:#b9ead0}
+.kicker{text-transform:uppercase;letter-spacing:.13em;font-size:11px;color:#f2ca7a;font-weight:750}.cardgrid{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:8px}
+.preset{display:grid;gap:7px;text-align:left;align-content:start;min-height:104px;background:linear-gradient(150deg,#253951,#142439)}
+.preset b{font-size:14px}.preset span{color:#b7c9dd;font-size:11px;line-height:1.4}.preset.selected{outline:2px solid #e9c78c}
+#preview{display:none;max-width:100%;max-height:220px;object-fit:contain;border-radius:9px;border:1px solid #516782;background:#0e1d2b}
+#status{color:#f7d089;font-weight:550;min-height:20px}
+#result{white-space:pre-wrap;overflow-wrap:anywhere;background:#0b1a2d;border:1px solid #314762;border-radius:9px;padding:13px;min-height:78px;line-height:1.55;color:#d3e2ed}
+#history{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:7px}#history button{text-align:left;font-size:12px}
+.swatches{display:flex;gap:6px;margin:7px 0}.swatches span{width:25px;height:25px;border-radius:7px;border:1px solid #8593a1}
+.note{padding:12px;background:#232d38;border-left:3px solid #caa166;border-radius:7px}
+.good{padding:11px;background:#17322d;border:1px solid #3d806d;border-radius:8px;color:#bee9d0}
+.stage{padding:11px;background:#0f2034;border-radius:10px}
+.stage .mark{color:#eac67e;font-weight:bold}
+details{border-top:1px solid var(--line);margin-top:12px;padding-top:9px}summary{cursor:pointer;color:#d4e6f4;font-weight:650}
+a{color:#9fdbff}footer{padding:15px;color:#a7bbd0;font-size:11px}
+@media(max-width:720px){main{padding:8px}.cardgrid{display:flex;overflow-x:auto;gap:7px}.preset{min-width:160px;flex:0 0 160px}.step{font-size:10px;padding:7px 4px}.row button{flex:1 1 auto}h1{font-size:20px}section{padding:12px}}
 </style></head><body>
-<header><h1>⚒️ HIGHFLY · SKIN 11 — Fábrica de Armaduras Originales</h1><small>Creación original desde texto + imagen · ClaudeCraft solo sirve como guía anatómica y rig</small></header>
+<header><div class="kicker">HIGHFLY · FORJA INTELIGENTE · LAB AISLADO</div>
+<h1>⚒️ Diseñá una armadura que nunca existió</h1>
+<small>Un pedido, una nueva identidad. ClaudeCraft sirve de referencia para el cuerpo y las animaciones, no de molde para deformar.</small>
+<div class="steps" aria-label="Proceso de creación"><div id="stepDraft" class="step active">1 · Imaginá</div><div id="stepReview" class="step">2 · Diseño listo</div><div id="stepModel" class="step">3 · Modelo 3D pendiente</div></div></header>
 <main>
-<section><h2>1 · Encargá TU armadura</h2>
-<p>Tu descripción no necesita parecerse a ninguna skin anterior. Pedí cualquier estilo o subí una referencia.</p>
-<label for="prompt">Diseño imaginado</label>
-<textarea id="prompt" maxlength="1000" placeholder="Quiero una armadura de dragón legendaria, casco esculpido en forma de fauces, hombreras como escamas superpuestas, pechera anatómica y detalles de metal negro..."></textarea>
-<label for="image">Imagen de referencia (opcional) — JPG, PNG o WebP</label>
-<input id="image" type="file" accept="image/png,image/jpeg,image/webp"><img id="preview" alt="Imagen local de referencia">
-<div class="row"><button class="primary" id="build">📐 Crear encargo original</button><button id="export" disabled>⬇ Exportar a Blender / IA</button></div>
-<p id="status" role="status">Esperando pedido original.</p>
+<section><h2>Empezá con una idea o inventá la tuya</h2><p>Tocá una inspiración y modificá lo que quieras; también podés empezar directamente con tus palabras.</p>
+<div class="cardgrid" id="presetGallery">
+<button class="preset" data-preset="eclipse"><b>🌘 Eclipse Eterno</b><span>Acero negro, plata, grabados y energía violeta</span></button>
+<button class="preset" data-preset="dragon"><b>🐉 Caballero Dragón</b><span>Escamas esculpidas y placas anatómicas</span></button>
+<button class="preset" data-preset="celestial"><b>☀️ Guardián Celestial</b><span>Marfil, oro, metal con plumas</span></button>
+<button class="preset" data-preset="samurai"><b>⚔️ Ronin Imperial</b><span>Lamelas, acero negro y cordonería roja</span></button>
+<button class="preset" data-preset="original"><b>✨ Mi propia idea</b><span>Descripción totalmente libre</span></button>
+</div>
+<label for="prompt">¿Cómo querés tu armadura?</label>
+<textarea id="prompt" maxlength="1000" placeholder="Ejemplo: armadura legendaria oscura con casco cerrado y proporcionado, hombreras esculpidas y pechera articulada..."></textarea>
+<div class="space"><small id="characters">0 / 1000 caracteres</small><small>No hace falta saber modelado 3D</small></div>
+<label for="image">¿Tenés una imagen de referencia? (Opcional)</label>
+<input id="image" type="file" accept="image/png,image/jpeg,image/webp">
+<img id="preview" alt="Imagen de referencia que seleccionaste">
+<div id="colorSwatches" class="swatches" aria-label="Paleta tomada de la foto" hidden></div>
+<p class="note">Una foto se procesa localmente para obtener colores e identificación segura. La IA que interpreta sus formas y genera mallas todavía no está conectada.</p>
+<div class="row"><button class="primary" id="build">✨ Preparar mi armadura original</button><button id="export" class="secondary" disabled>⬇ Guardar encargo</button></div>
+<p id="status" role="status">Elegí una idea, escribí tu encargo o subí una referencia.</p></section>
+<section id="outcome"><div class="space"><h2>Tu diseño y el avance de fabricación</h2><span id="stageLabel" class="kicker">Sin encargo</span></div>
+<div id="result" role="status" aria-live="polite">Acá aparecerá tu diseño personalizado y lo que falta para verlo en 3D.</div>
+<div class="stage"><div class="mark">✓ Diseño original · sin copiar otras skins</div>
+<p><strong>Próxima etapa:</strong> modelado nuevo en Blender, armado con Rig_Medium, pruebas de las 22 animaciones y aprobación artística. Hoy el lab genera y conserva el encargo, pero no puede fabricar un GLB automáticamente desde el navegador.</p></div>
+<details><summary>Opciones avanzadas y datos técnicos</summary>
+<p>El encargo queda en JSON versionado para conectarlo en el futuro con el motor seguro de IA y Blender; no hace falta manejar ese archivo para diseñar.</p><button id="copyBrief">Copiar descripción del encargo</button>
+<p class="good">Rig 23 huesos · 22 clips · cero reutilización de triángulos de ClaudeCraft · SKIN 3 preservada · sin despliegue al juego.</p>
+</details>
 </section>
-<section><h2>2 · Contrato de construcción</h2>
-<p class="warning"><strong>Importante:</strong> crear una receta no significa generar una armadura 3D. La interpretación de imágenes mediante IA y la generación automática del GLB todavía necesitan una conexión segura al motor de IA y Blender. Este laboratorio NO va a fingir que un recolor es una creación inédita.</p>
-<div id="result" role="status" aria-live="polite">Aguardando encargo…</div>
-<p class="safe">✓ Personaje ClaudeCraft como referencia de tamaño, huesos, weights, sockets y 22 animaciones. ✕ Prohibido usar sus triángulos para fabricar el diseño, o modificar la skin 3.</p>
-</section>
-<section><h2>3 · Historial local de encargos</h2>
-<p>Estos encargos quedan solo en tu navegador, sin compartir fotografías con un servicio externo.</p><div id="history">Sin encargos.</div></section>
-<nav><a href="/">← Volver al laboratorio original (SKIN 7–10)</a></nav>
-</main>
-<footer>Proyecto aislado de HIGHFLY · No modifica GitHub Pages del juego · Modelado nuevo sujeto a QA artístico y aprobación humana.</footer>
+<section><h2>Mis creaciones</h2><p>Hasta 20 encargos guardados en este navegador. No se almacenan las fotos, solo sus colores, medidas y huella SHA-256.</p>
+<div id="history">Sin encargos.</div></section>
+<nav><a href="/">← Atelier histórico de pruebas SKIN 7–10</a></nav>
+</main><footer>SKIN 12 · Experiencia simplificada de la fábrica original. La creación de diseños funciona; generación de arte 3D mediante IA/Blender todavía pendiente de conectar y validar.</footer>
 <script type="module" src="./skin11-original-factory-ui.mjs"></script></body></html>
