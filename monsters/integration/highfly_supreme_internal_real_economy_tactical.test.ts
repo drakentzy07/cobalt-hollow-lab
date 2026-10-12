@@ -493,3 +493,79 @@ describe('HIGHFLY player-made equipment: original NPC + market economy',()=>{
     expect(ITEMS[hfP13ItemId(90,'warrior')].requiredClass).not.toContain('mage');
   });
 });
+
+/** ORIGINAL CO-OP + COMMERCE. Two distinct player identities in one Sim.
+ * P2P WebSocket deployment/browser networking is explicitly NOT certified here.
+ * A single Hunter still belongs to each real user; never party-swap Hunters.
+ */
+describe('HIGHFLY native cooperative party+XP+loot+direct player trade compatibility',()=>{
+  it('tests warrior+each of 9 original classes in a real two-Hunter party, shared native XP and trade',()=>{
+    const rows:{
+      guest:PlayerClass,partySize:number,killXpLead:number,killXpGuest:number,
+      lootCandidates:number,goodsTransferred:boolean,paymentTransferred:boolean,
+      persistentHunterProfiles:boolean
+    }[]=[];
+    for(const [idx,cls] of CLASSES.entries()){
+      const {sim,pid:leader,p:front,meta:lm}=simFor('warrior',199911+idx*101);
+      const guest=sim.addPlayer(cls,'HF_COOP_GUEST_'+cls,
+        {characterId:1701+idx,tutorialGreetingSent:true});
+      const gm=sim.players.get(guest)!;
+      const e=sim.entities.get(guest)!;
+      e.pos={...front.pos};e.prevPos={...e.pos};sim.rebucket(e);
+      sim.partyInvite(guest,leader);
+      sim.partyAccept(guest);
+      const party=sim.partyOf(leader);
+      expect(party,'COOP_PARTY_NOT_CREATED_'+cls).not.toBeNull();
+      expect(party!.members).toEqual(expect.arrayContaining([leader,guest]));
+      expect(sim.partyOf(guest)?.id).toBe(party!.id);
+      const xp0=[lm.lifetimeXp,gm.lifetimeXp];
+      const mob=createMob(sim.nextId++,MOBS.forest_wolf,1,
+        {x:front.pos.x+1,y:front.pos.y,z:front.pos.z+1});
+      mob.hostile=true;mob.tappedById=leader;
+      expect(mob.hp,'FULL_HP_REQUIRED').toBeGreaterThan(1);
+      sim.addEntity(mob);
+      front.facing=Math.atan2(mob.pos.x-front.pos.x,mob.pos.z-front.pos.z);
+      for(let i=0;i<2000&&!mob.dead;i++)meleeSwing(sim.ctx,front,mob,0,null,{});
+      expect(mob.dead,'COOP_KILL_NOT_SETTLED_'+cls).toBe(true);
+      const shared=[lm.lifetimeXp-xp0[0],gm.lifetimeXp-xp0[1]];
+      expect(shared[0],'LEADER_NO_KILL_XP_'+cls).toBeGreaterThan(0);
+      expect(shared[1],'GUEST_NO_SHARED_XP_'+cls).toBeGreaterThan(0);
+      const eligible=sim.partyLootCandidatesForMob(mob).map(x=>x.entityId);
+      expect(eligible,'PARTY_LOOT_RIGHTS_MISSING_'+cls)
+        .toEqual(expect.arrayContaining([leader,guest]));
+      // Trade items and funds are declared INPUT fixtures, NOT dropped by this
+      // one sampled wolf. All transfer/atomicity rules remain native.
+      sim.addItem('wolf_fang',1,leader);
+      gm.copper=100;
+      const leadCash=lm.copper,guestCash=gm.copper;
+      sim.tradeRequest(guest,leader);
+      sim.tradeAccept(guest);
+      sim.tradeSetOffer([{itemId:'wolf_fang',count:1}],0,leader);
+      sim.tradeSetOffer([],50,guest);
+      sim.tradeConfirm(leader);
+      sim.tradeConfirm(guest);
+      const goodsTransferred=sim.countItem('wolf_fang',guest)===1&&
+        sim.countItem('wolf_fang',leader)===0;
+      const paymentTransferred=lm.copper===leadCash+50&&
+        gm.copper===guestCash-50;
+      expect(goodsTransferred,'COOP_DIRECT_ITEM_TRADE_FAILED_'+cls).toBe(true);
+      expect(paymentTransferred,'COOP_DIRECT_COPPER_TRADE_FAILED_'+cls).toBe(true);
+      const ls=sim.serializeCharacter(leader),gs=sim.serializeCharacter(guest);
+      expect(ls?.name).not.toBe(gs?.name);
+      const persistentHunterProfiles=ls?.level===front.level&&gs?.level===e.level;
+      expect(persistentHunterProfiles).toBe(true);
+      rows.push({guest:cls,partySize:party!.members.length,
+        killXpLead:shared[0],killXpGuest:shared[1],
+        lootCandidates:eligible.length,goodsTransferred,paymentTransferred,
+        persistentHunterProfiles});
+    }
+    console.info('HIGHFLY_COOP_PARTY_TRADE='+JSON.stringify({
+      scenarios:rows.length,pass:rows.length,partyMaxNative:5,
+      twoDistinctHuntersFromDistinctTestPlayerIdentities:true,
+      nativeSharedXp:true,nativePartyLootRights:true,nativeDirectCopperItemTrade:true,
+      frontendPagesOnline:false,physicalTwoDeviceTest:false,
+      rows
+    }));
+    expect(rows).toHaveLength(9);
+  },180000);
+});
