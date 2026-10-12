@@ -19,7 +19,9 @@ jobs:
       - name: Checkout isolated HIGHFLY PR overlay
         uses: actions/checkout@v4
         with:
-          ref: highfly-supreme-dev8-p0-endgame-diagnostics
+          # Frozen QA commit: real native captain, nine classes each won.
+          # Deliberately immutable to avoid a moving dev branch changing the release.
+          ref: 8a3ddc93c9147e8c3320c04d4d2a13896b11e063
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
@@ -523,6 +525,31 @@ jobs:
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
+      - name: SUPREME mandatory native solo Captain LV99 9/9 victory gate (NO CHEATS)
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_HIGHFLY_NATIVE_HUNT: "1"
+          VITE_HIGHFLY_OPEN_WORLD_HUNTS: "1"
+          VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/highfly_supreme_internal_real_economy_tactical.test.ts 2>&1 | tee ../highfly_supreme_nine_of_nine_release.log
+          grep -q 'HF_SUPREME_SOLO99_TACTICAL_9=.*"wins":9,"losses":0,"timeouts":0' ../highfly_supreme_nine_of_nine_release.log
+          grep -q '"nineOfNineSoloCertified":true' ../highfly_supreme_nine_of_nine_release.log
+          grep -q '"noBossNerf":true,"noTrainingStatBoost":true' ../highfly_supreme_nine_of_nine_release.log
+          echo 'HF_SUPREME_LV99_ALL_NINE_ORIGINAL_SOLO_NATIVE_WIN_GATE_GREEN=1'
+      - name: SUPREME mandatory original LV1–99 and P16 class-gear QA gates
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_HIGHFLY_NATIVE_HUNT: "1"
+          VITE_HIGHFLY_OPEN_WORLD_HUNTS: "1"
+          VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/highfly_supreme_internal_autoplay.test.ts tests/highfly_v403_p09_native_challenges.test.ts tests/highfly_p16_native_chest_armor.test.ts tests/highfly_gem_attribute_expansion_foundation.test.ts tests/highfly_v403_p12_local_save_compat.test.ts
+          echo 'HF_SUPREME_LV1_99_CONTENT_9CLASS_GEAR_GEM_SAVE_SMOKE_GREEN=1'
       # The six worn-apex fixtures were authored with ClaudeCraft MAX_LEVEL=20.
       # Its item_level_req clamps source-25 crafted gear to that old level cap.
       # PF-6 correctly raises MAX_LEVEL to 99, so source-25 gear now requires 25.
@@ -559,6 +586,18 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           root=Path('supreme-preview/cobalt-hollow-lab')
+          # Separate release QA metadata, NOT a game-play buff or stats edit.
+          import json
+          (root/'highfly-supreme-qa.json').write_text(json.dumps({
+            'edition':'HIGHFLY SUPREME LV1-99 INTEGRATED',
+            'qaSourceCommit':'8a3ddc93c9147e8c3320c04d4d2a13896b11e063',
+            'nineClassesNativeSoloCaptainLv99':True,
+            'bossStatOverride':False,'trainingStatInjection':False,
+            'playerLevelAndEquipmentAreTestFixtures':True,
+            'multipleSeedsCertified':False,'physicalSamsungS23Tested':False,
+            'cooperativeMultiDeviceVerified':False,'extended100PlusEnabled':False,
+            'testType':'native-sim plus simulated S23 browser smoke; player manual QA needed'
+          },indent=2),encoding='utf-8')
           assert (root/'index.html').is_file()
           assert (root/'media').is_dir()
           files=[p for p in root.rglob('*') if p.is_file()]
