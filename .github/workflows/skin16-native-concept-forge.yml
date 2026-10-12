@@ -1,0 +1,188 @@
+name: HIGHFLY SKIN16 — NATIVE HUNTER ECLIPSE VIOLET ARMOR + LIVE 22 CLIPS
+on:
+  push:
+    branches: [highfly-skin16-eclipse-concept-native-rig]
+    paths:
+      - 'character-truth/skin16-concept/**'
+      - '.github/workflows/skin16-native-concept-forge.yml'
+  workflow_dispatch:
+permissions: {contents: write, actions: read}
+concurrency:
+  group: highfly-skin16-${{ github.ref_name }}-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  forge-demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 33
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: false}
+      - name: Block any writes to HIGHFLY game, old skins, or Vercel secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = highfly-skin16-eclipse-concept-native-rig
+          git diff --name-only 1939f1a481c882af011ffc2a7534be2d3bb98c46 HEAD | tee /tmp/skin13-files.txt
+          while IFS= read -r file; do
+            case "$file" in
+              character-truth/skin16-concept/*|.github/workflows/skin16-native-concept-forge.yml) ;;
+              *) echo "SKIN14_GAME_OR_LEGACY_SKIN_MUTATION_FORBIDDEN:$file";exit 42;;
+            esac
+          done < /tmp/skin13-files.txt
+          python3 -m py_compile character-truth/skin16-concept/blender-violet-concept.py
+          test -s character-truth/skin16-concept/atelier/index.html
+          node --check api/forge.js
+          node character-truth/skin13-auto-forge/skin13-job-core.test.mjs
+          node character-truth/skin13-auto-forge/skin13-vercel-api.test.cjs
+          echo HIGHFLY_SKIN13_ISOLATED_SECURE_JOB_STATE_MACHINE_GREEN=1
+      - name: Select latest original-armour commission (demo if no new job)
+        shell: bash
+        run: |
+          set -euo pipefail
+          before="${{ github.event.before }}"
+          candidate=''
+          if [[ "$before" =~ ^[a-f0-9]{40}$ ]] && git cat-file -e "$before^{commit}" 2>/dev/null;then
+            candidate="$(git diff --name-only "$before" HEAD | grep -E '^character-truth/skin13-auto-forge/jobs/[a-z0-9-]+\.json$' | head -n1 || true)"
+          fi
+          if [[ -z "$candidate" ]];then
+            candidate=character-truth/skin13-auto-forge/jobs/eclipse-eterno-demo.json
+          fi
+          test -s "$candidate"
+          node --input-type=module - "$candidate" <<'JS'
+          import fs from 'node:fs';
+          import {newForgeJob} from './character-truth/skin13-auto-forge/skin13-job-core.mjs';
+          const job=JSON.parse(fs.readFileSync(process.argv[2]));
+          const v=newForgeJob({id:job.id,request:job.request,source:job.source,createdAt:job.createdAt});
+          if(v.schema!==job.schema||v.phase!==job.phase||v.request.prompt!==job.request.prompt){
+            throw Error('NOT_AN_AUTHENTIC_JOB');
+          }
+          if(v.request.reference)throw Error('IMAGE_WORKER_REQUIRES_ACTUAL_IMAGE_STORAGE_AND_AI');
+          console.log('SKIN13_JOB_VALIDATED='+v.id);
+          JS
+          echo "SKIN13_JOB=$candidate" >> "$GITHUB_ENV"
+          echo "SKIN13_JOB_ID=$(basename "$candidate" .json)" >> "$GITHUB_ENV"
+      - name: Verify immutable source GLB and decode Meshopt native character
+        shell: bash
+        timeout-minutes: 6
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/skin13-auto-forge/out
+          curl -fLsS --retry 3 --max-time 150 \
+            https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb \
+            -o character-truth/skin13-auto-forge/out/warrior-original-source.glb
+          test "$(git hash-object character-truth/skin13-auto-forge/out/warrior-original-source.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          npm install --no-save --package-lock=false @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer@0.23.0
+          node character-truth/integration-modules/prepare-native-body.mjs \
+            character-truth/skin13-auto-forge/out/warrior-original-source.glb \
+            character-truth/skin13-auto-forge/out/source-for-blender.glb
+          test -s character-truth/skin13-auto-forge/out/source-for-blender.glb
+      - name: Install digest-verified Blender 4.2 LTS
+        shell: bash
+        timeout-minutes: 9
+        run: |
+          set -euo pipefail
+          VERSION=4.2.23
+          NAME="blender-${VERSION}-linux-x64.tar.xz"
+          ROOT="https://download.blender.org/release/Blender4.2"
+          mkdir -p "$RUNNER_TEMP/skin13-blender" "$RUNNER_TEMP/skin13-download"
+          cd "$RUNNER_TEMP/skin13-download"
+          curl -fLsS --retry 3 --max-time 390 "$ROOT/$NAME" -o "$NAME"
+          curl -fLsS --retry 3 --max-time 50 "$ROOT/blender-${VERSION}.sha256" -o SHA256SUMS
+          grep -F "$NAME" SHA256SUMS | head -1 | sha256sum --check
+          tar -xJf "$NAME" --strip-components=1 -C "$RUNNER_TEMP/skin13-blender"
+          echo "$RUNNER_TEMP/skin13-blender" >> "$GITHUB_PATH"
+      - name: Enable Linux OpenGL/EGL software rendering for headless art QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libegl1 libgl1 libgl1-mesa-dri libgles2 libgbm1 libopengl0 xvfb
+          test -f /usr/lib/x86_64-linux-gnu/libEGL.so.1
+          echo HIGHFLY_SKIN13_SOFTWARE_RENDER_LIBEGL_READY=1
+      - name: Run real Blender on AI-assistant-authored Eclipse Eterno design blueprint
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          LIBGL_ALWAYS_SOFTWARE=1 MESA_LOADER_DRIVER_OVERRIDE=llvmpipe xvfb-run -a -s '-screen 0 1280x1024x24' blender --background --factory-startup --python-exit-code 99 \
+            --python character-truth/skin16-concept/blender-violet-concept.py -- \
+            --job "$SKIN13_JOB" \
+            --design character-truth/skin16-concept/concept.json \
+            --source character-truth/skin13-auto-forge/out/source-for-blender.glb \
+            --out character-truth/skin13-auto-forge/out/HF16-ECLIPSE-NATIVE-RIG-22-CLIPS.glb \
+            --proof character-truth/skin13-auto-forge/out/proof.json | tee /tmp/skin13-blender.log
+          grep -F HIGHFLY_SKIN16_REAL_CLAUDECRAFT_BODY_PLUS_NEW_ECLIPSE_ARMOR_22_CLIPS_GREEN=1 /tmp/skin13-blender.log
+          grep -F HIGHFLY_SKIN13_ART_APPROVED=0 /tmp/skin13-blender.log
+          grep -F HIGHFLY_SKIN13_FRONT_SIDE_BACK_ART_REVIEW_SCREENSHOTS_SAVED=3 /tmp/skin13-blender.log
+      - name: Inspect output and produce machine-auditable progress without fake art approval
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          import {newForgeJob,advancePhase} from './character-truth/skin13-auto-forge/skin13-job-core.mjs';
+          const dir='character-truth/skin13-auto-forge/out';
+          const json=JSON.parse(fs.readFileSync(process.env.SKIN13_JOB,'utf8'));
+          const proof=JSON.parse(fs.readFileSync(dir+'/proof.json','utf8'));
+          console.log('SKIN13_PROOF_INSPECTION',JSON.stringify({
+            inputJobId:json.id,proofJobId:proof.jobId,sourceTriangles:proof.copiedSourceTriangles,
+            pieces:proof.newSkinnedPieces,bones:proof.originalRigBones,
+            clips:proof.originalAnimationClips,glbBytes:proof.glbBytes,
+            skinsInGltf:proof.skinsInGltf,art:proof.artApproved,visual:proof.visualArtQaPassed
+          }));
+          if(proof.jobId!==json.id||proof.copiedSourceTriangles!==0||
+            proof.newSkinnedPieces!==11||proof.originalRigBones!==23||
+            proof.originalAnimationClips!==22||proof.artApproved!==false||proof.artistApproved!==false||
+            proof.visualArtQaPassed!==false||proof.glbBytes<40000||
+            proof.skinsInGltf<1||proof.reviewAnglesRendered!==3||proof.newSculpturalDetails<55||proof.nativeBodyParts!==11||proof.designBlueprintSource!=='HUMAN_SELECTED_CONCEPT_ART_DIRECTED'||proof.designReference!=='BLACK_SILVER_VIOLET_3_VIEW_APPROVED_VISUAL_REFERENCE')throw Error('SKIN14_SCULPTURAL_GEOMETRY_OR_PROVENANCE_NO_GO');
+          const job=newForgeJob({id:json.id,source:json.source,request:json.request,createdAt:json.createdAt});
+          let staged=job;
+          for(const phase of ['designing','design_ready','modeling','rigging','qa']){
+            staged=advancePhase(staged,phase);
+          }
+          staged.output.proof=proof;
+          // Cannot advance to ART READY until full M/F/22-clip visual QA.
+          if(staged.phase!=='qa'||staged.output.artApproved||staged.output.gameDeployed)
+            throw Error('FAKE_ART_APPROVAL_FORBIDDEN');
+          fs.writeFileSync(dir+'/job-status.json',JSON.stringify(staged,null,2));
+          console.log('HIGHFLY_SKIN13_GLTF_FROM_REAL_BLENDER_PROVENANCE_PASS_ART_QA_PENDING_GREEN=1');
+          JS
+      - name: Artifact + three real design render views, NOT premium-approved or deployed
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN16-ECLIPSE-NATIVE-22CLIPS-GLB-AND-QA-NOT-ART-APPROVED
+          path: |
+            character-truth/skin13-auto-forge/out/HF16-ECLIPSE-NATIVE-RIG-22-CLIPS.glb
+            character-truth/skin16-concept/atelier/index.html
+            character-truth/skin13-auto-forge/out/proof.json
+            character-truth/skin13-auto-forge/out/job-status.json
+            character-truth/skin13-auto-forge/out/*.png
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Publish new GLB ONLY to isolated non-game preview branch (never HIGHFLY Pages)
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          BRANCH=highfly-skin16-preview-assets
+          PUBLISH="$RUNNER_TEMP/hf16-preview-worktree"
+          HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c http.extraheader="$HEADER" fetch origin "refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
+          git worktree add -B "$BRANCH" "$PUBLISH" "origin/$BRANCH"
+          mkdir -p "$PUBLISH/skin16-atelier/assets" "$PUBLISH/skin16-atelier/qa"
+          cp character-truth/skin16-concept/atelier/index.html "$PUBLISH/skin16-atelier/index.html"
+          cp character-truth/skin13-auto-forge/out/HF16-ECLIPSE-NATIVE-RIG-22-CLIPS.glb "$PUBLISH/skin16-atelier/assets/"
+          cp character-truth/skin13-auto-forge/out/*.png "$PUBLISH/skin16-atelier/qa/"
+          cp character-truth/skin13-auto-forge/out/proof.json "$PUBLISH/skin16-atelier/qa/proof.json"
+          cd "$PUBLISH"
+          git config user.email 'highfly-ci@users.noreply.github.com'
+          git config user.name 'HIGHFLY Isolated Skin CI'
+          git add skin16-atelier/
+          git diff --cached --quiet && exit 0
+          git commit -m "SKIN16 experiment: ClaudeCraft 22-motion 3D lab assets from audited Blender run"
+          git -c http.extraheader="$HEADER" push origin "HEAD:refs/heads/$BRANCH"
+          echo HIGHFLY_SKIN16_ISOLATED_LAB_ASSETS_PUBLISHED_NOT_PUBLIC_GAME=1
