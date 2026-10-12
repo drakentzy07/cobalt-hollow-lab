@@ -62,6 +62,12 @@ function createHunter(cls:PlayerClass,seed:number){
   // explicitly targets MAINHAND to compare all nine class loadouts without
   // changing the authentic dual-wield/equip rules.
   sim.equipItem(weapon,pid,'mainhand');
+  if(cls==='rogue'){
+    // Two separately obtainable legal daggers, both explicit CI loadout fixtures.
+    sim.addItem(weapon,1,pid);
+    sim.equipItem(weapon,pid,'offhand');
+    expect(meta.equipment.offhand).toBe(weapon);
+  }
   expect(meta.equipment.mainhand).toBe(weapon);
   sim.addItem(chest,1,pid);
   sim.equipItem(chest,pid);
