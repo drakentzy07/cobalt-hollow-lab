@@ -142,7 +142,11 @@ async function load(){
    const family=rootArmorFamily(o);
    if(family){
     familyRenderers.set(family,(familyRenderers.get(family)||0)+1);
-    if(family==='paladin'){armorSlots.add(rootArmorName(o));armorMeshes++}
+    if(family==='paladin'){
+     const slot=rootArmorName(o).match(/^Armor_paladin_(Head|Chest|ArmL|ArmR|HandL|HandR|LegL|LegR|FootL|FootR|Back)(?:$|_)/i)?.[1];
+     if(slot)armorSlots.add(slot);
+     armorMeshes++
+    }
     return;
    }
    toRemove.push(o);
