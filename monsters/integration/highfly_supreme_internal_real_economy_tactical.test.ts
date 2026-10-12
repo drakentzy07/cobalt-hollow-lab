@@ -832,7 +832,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
   const SKILL:Record<PlayerClass,string[]>={
     warrior:['heroic_strike','slam','sunder_armor','rend'],
     paladin:['hammer_of_grace','crusader_strike','judgement'],
-    hunter:['serpent_sting','arcane_shot','steady_shot','aimed_shot'],
+    hunter:['serpent_sting','arcane_shot','measured_shot','aimed_shot','concussive_shot'], 
     rogue:['sinister_strike','sinister_strike','sinister_strike','eviscerate'],
     priest:['shadow_word_pain','mind_blast','smite'],
     shaman:['flame_shock','earth_shock','lightning_bolt','lava_burst'],
@@ -885,7 +885,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       // Use actual class attack distances; stationary bosses do not chase
       // casters into wand range. A 10m opener previously suppressed all
       // movement and most caster auto-attacks in the test bot.
-      const spawnGap=ranged?(cls==='hunter'?5:4.5):2;
+      const spawnGap=ranged?(cls==='hunter'?12:4.5):2;
       const captain=createMob(sim.nextId++,def,99,
         {x:p.pos.x+spawnGap,y:p.pos.y,z:p.pos.z+spawnGap/4});
       captain.hostile=true;sim.addEntity(captain);
@@ -903,12 +903,12 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         const d=Math.hypot(p.pos.x-captain.pos.x,p.pos.z-captain.pos.z);
         maxRange=Math.max(maxRange,d);
         minRange=Math.min(minRange,d);
-        if(cls==='hunter'&&d>7)outOfPreferredRangeTicks++;
+        if(cls==='hunter'&&(d<8||d>18))outOfPreferredRangeTicks++;
         p.facing=Math.atan2(captain.pos.x-p.pos.x,captain.pos.z-p.pos.z);
         // PLAYER-LEGAL MOVE INPUT via original stepPlayerMotion, no teleport.
         // Kite only while not hard casting; remain within attack range.
-        meta.moveInput.back=ranged&&d<(cls==='hunter'?3.5:3)&&!p.castingAbility;
-        meta.moveInput.forward=ranged&&d>(cls==='hunter'?6.5:5.5)&&!p.castingAbility;
+        meta.moveInput.back=ranged&&d<(cls==='hunter'?10:3)&&!p.castingAbility;
+        meta.moveInput.forward=ranged&&d>(cls==='hunter'?14:5.5)&&!p.castingAbility;
         if(meta.moveInput.back||meta.moveInput.forward)relocations++;
         if(p.hp/p.maxHp<=0.52&&p.potionCooldownUntil<=sim.time&&
           sim.countItem('healing_potion',pid)>0){
@@ -959,7 +959,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         potionUses:potions,nativeInputSteps:relocations,
         maxRange:Math.round(maxRange*10)/10,
         minRange:Math.round(minRange*10)/10,
-        hunterSecondsBeyondPreferredRange:cls==='hunter'?Math.round(outOfPreferredRangeTicks*DT*100)/100:0,
+        hunterSecondsOutsideEffectiveRange:cls==='hunter'?Math.round(outOfPreferredRangeTicks*DT*100)/100:0,
         effectiveHealing,healingEvents,
         actualDamageDone:Math.round(actualDamageDone),actualDamageTaken:Math.round(actualDamageTaken),
         trainingUnchanged:JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile)===training,
@@ -980,7 +980,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         seconds:x.seconds,guardAttempts:x.attemptedGuard,
         healingAttempts:x.attemptedHeals,effectiveHealing:x.effectiveHealing,
         healingEvents:x.healingEvents,damageDone:x.actualDamageDone,
-        hunterRangeOutSeconds:x.hunterSecondsBeyondPreferredRange,
+        hunterRangeOutSeconds:x.hunterSecondsOutsideEffectiveRange,
         potions:x.potionUses}))};
     console.info('HF_SUPREME_SOLO99_TACTICAL_9='+JSON.stringify(summary));
     expect(rows).toHaveLength(9);
