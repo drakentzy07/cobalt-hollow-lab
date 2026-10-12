@@ -120,6 +120,15 @@ describe('HIGHFLY GOLDEN DEV2 reuse-first 1–99 loot/equipment economy',()=>{
       maximumEstimatedKills:Math.max(...gear.map(g=>g.estimatedKillsExcludingVendor)),
     }));
     expect(gear).toHaveLength(15);
+    // Regression protection: a late-tier item cannot require hundreds more
+    // expected RNG kills than the prior rung without explicit review.
+    // This is a source-odds ECONOMY budget, not a simulated human playtime.
+    const tierKills=HF_P13_WEAPON_LEVELS.map(level=>
+      gear.find(g=>g.level===level)!.estimatedKillsExcludingVendor);
+    expect(tierKills).toEqual([...tierKills].sort((a,b)=>a-b));
+    expect(tierKills.every(n=>n>0&&n<=250)).toBe(true);
+    console.info('HF_GOLDEN_DEV2_CRAFTING_RNG_KILL_BUDGET_GREEN='+
+      JSON.stringify({levels:HF_P13_WEAPON_LEVELS,budget:250,tierKills}));
   });
 
   it('gets normal-chance LV50 corpse drops, trains, forges, equips and reloads WITHOUT gifted mob reagents',()=>{
