@@ -828,7 +828,9 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
     warrior:['arms'],paladin:['retribution'],hunter:['marksmanship','survival','beast_mastery'],
     rogue:['assassination'],priest:['discipline','shadow','holy'],shaman:['restoration'],
     mage:['frost','fire','arcane'],warlock:['affliction','destruction','demonology'],
-    druid:['balance','feral','restoration'],
+    druid:['balance','feral','restoration','restoration','balance'],
+    // Extra Druid trials are legal, seeded tactical variants of the exact
+    // same two original specs, NEVER extra classes or stat injections.
   };
   // These six legal choice rows are available to ANY real player at LV99.
   // Unlike a debug power grant, selection calls the original Sim talent API.
@@ -913,10 +915,12 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         cls==='warlock'&&spec==='demonology' ? ['raise_graveguard','raise_skeletal_warrior','shadow_bolt','immolate'] :
         cls==='warlock'&&spec==='affliction' ? ['corruption','needle_of_fate','sentence','drain_life'] :
         cls==='druid'&&spec==='feral' ? ['maul','claw','swipe','moonfire'] :
+        cls==='druid'&&spec==='restoration'&&variant>=3 ? ['starfire','starfire','wrath','moonfire'] :
         SKILL[cls];
       const attack=candidateAttacks.filter(x=>known.has(x));
       const healing=(cls==='druid'&&spec==='restoration'
-        ? ['rejuvenation','swiftmend','regrowth','healing_touch']
+        ? (variant>=3?['rejuvenation','regrowth','healing_touch']:
+          ['rejuvenation','swiftmend','regrowth','healing_touch'])
         : HEALS[cls]??[]).filter(x=>known.has(x));
       const guard=GUARD[cls].filter(x=>known.has(x));
       expect(attack.length,'NO_NATIVE_SOLO_ATTACK_'+cls).toBeGreaterThan(0);
@@ -930,6 +934,12 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       for(const buff of preBuffs.filter(x=>known.has(x))){
         sim.castAbility(buff,pid);
         opened.push(buff);
+        for(let t=0;t<Math.ceil(1.6/DT);t++)sim.tick();
+      }
+      if(cls==='druid'&&spec==='balance'&&known.has('moonkin_form')){
+        // Original Balance signature: +20% spell damage, +50% armor.
+        sim.castAbility('moonkin_form',pid);
+        opened.push('moonkin_form');
         for(let t=0;t<Math.ceil(1.6/DT);t++)sim.tick();
       }
       if(cls==='druid'&&spec==='feral'&&known.has('bear_form')){
@@ -946,7 +956,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       // The first moving-caster experiment reduced Mage's completed casts.
       // Keep Mage casting stationary with native barriers; Druid's ORIGINAL
       // Skylark choice now permits its core damage/heal spells while moving.
-      const tacticalCaster=cls==='druid'&&spec!=='feral';
+      const tacticalCaster=cls==='druid'&&spec!=='feral'&&variant<3;
       const spawnGap=ranged?(cls==='hunter'?12:tacticalCaster?9:4.5):2;
       const captain=createMob(sim.nextId++,def,99,
         {x:p.pos.x+spawnGap,y:p.pos.y,z:p.pos.z+spawnGap/4});
@@ -997,7 +1007,8 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
           meta.moveInput.forward=ranged&&d>(cls==='hunter'?14:5.5)&&!p.castingAbility;
         }
         if(meta.moveInput.back||meta.moveInput.forward)relocations++;
-        if(p.hp/p.maxHp<=0.52&&p.potionCooldownUntil<=sim.time&&
+        if(p.hp/p.maxHp<=(cls==='druid'&&variant>=3?0.64:0.52)&&
+          p.potionCooldownUntil<=sim.time&&
           sim.countItem('healing_potion',pid)>0){
           const before=sim.countItem('healing_potion',pid);
           sim.useItem('healing_potion',pid);
@@ -1024,7 +1035,8 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
             sim.castAbility('typhoon',pid);
             lastTyphoon=ticks;typhoonAttempts++;
           }else if((cls==='priest'||cls==='druid')&&
-            health<(cls==='druid'?0.43:0.68)&&healing.length&&
+            health<(cls==='druid'&&variant>=3?0.57:cls==='druid'?0.43:0.68)&&
+            healing.length&&
             ticks-lastHeal>Math.ceil(3/DT)){
             const heal=healing[heals++%healing.length];
             sim.castAbilityOn(heal,pid,pid);
@@ -1068,7 +1080,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       meta.moveInput.back=false;meta.moveInput.forward=false;
       const win=captain.dead&&!p.dead;
       const row={
-        cls,spec,talentRowsSelected,typhoonAttempts,
+        cls,spec,variant,talentRowsSelected,typhoonAttempts,
         phoenixTranceAttempts,fireBlastAttempts,meteorAttempts,
         result:win?'WIN':p.dead?'LOSS':'TIMEOUT',
         bossHpStart:startHp,bossHpEnd:Math.max(0,captain.hp),
@@ -1100,7 +1112,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
     const summary={classes:9,wins:bestRows.filter(x=>x.result==='WIN').length,
       losses:bestRows.filter(x=>x.result==='LOSS').length,
       timeouts:bestRows.filter(x=>x.result==='TIMEOUT').length,
-      specTrials:rows.length,specTrialResults:rows.map(x=>({cls:x.cls,spec:x.spec,
+      specTrials:rows.length,specTrialResults:rows.map(x=>({cls:x.cls,spec:x.spec,variant:x.variant,
         result:x.result,bossHpRemainingPct:x.bossHpRemainingPct,seconds:x.seconds,
         captainEvades:x.highestEvadeEpoch})),
       noBossNerf:true,noTrainingStatBoost:true,
@@ -1110,6 +1122,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       fiveMinuteFightLimit:true,onlyOriginalNativeCastHealDamageMovement:true,
       nativeSpecsChosenViaSim:true,allTalentRowsSelected:false,
       mageDruidOriginalSixTalentRowsSelected:true,trainingCoreNotMinted:true,
+      druidMoonkinFormAndSmartRestorationComparedViaOriginalCast:true,
       fireOriginalOffGcdAndRestorationNativeSwiftmend:true,
       casterKitingStaysWithinNativeBossLeash:true,noMobAIOrDamageEditing:true,
       nineOriginalClassesPreserved:true,
