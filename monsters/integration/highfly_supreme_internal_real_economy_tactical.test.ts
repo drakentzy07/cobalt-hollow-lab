@@ -55,6 +55,14 @@ function simFor(cls:PlayerClass,seed:number){
   const pid=sim.addPlayer(cls,'HF_SUPREME_NATIVE_QA_'+cls,{tutorialGreetingSent:true});
   return {sim,pid,p:sim.entities.get(pid)!,meta:sim.players.get(pid)!};
 }
+/** Assassin PvM/PvP fixture: two independent authentic one-hand daggers, no stat gifts. */
+function equipRogueDualDagger(sim:Sim,pid:number,cls:PlayerClass,weapon:string){
+  if(cls!=='rogue')return;
+  expect(ITEMS[weapon]?.weapon?.dagger).toBe(true);
+  sim.addItem(weapon,1,pid); // second legal test-given, separately craftable dagger
+  sim.equipItem(weapon,pid,'offhand');
+  expect(sim.players.get(pid)?.equipment.offhand).toBe(weapon);
+}
 function fullHpNativeKill(sim:Sim,pid:number,mobId:string,level:number):boolean{
   const actor=sim.entities.get(pid)!,def=MOBS[mobId];
   expect(def,'UNREGISTERED_MONSTER_'+mobId).toBeDefined();
@@ -165,6 +173,7 @@ function battle(cls:PlayerClass,level:50|99,seed:number):Fight{
   const armor=hfP16ArmorId(level===50?50:90,AT[cls]);
   sim.addItem(weapon,1,pid);
   sim.equipItem(weapon,pid,'mainhand');
+  equipRogueDualDagger(sim,pid,cls,weapon);
   sim.addItem(armor,1,pid);
   sim.equipItem(armor,pid);
   expect(meta.equipment.mainhand).toBe(weapon);
@@ -690,6 +699,7 @@ describe('HIGHFLY LV99 captain — 9 native class-pair tactical stress; no balan
         const chest=hfP16ArmorId(90,AT[klass]);
         sim.addItem(weapon,1,pid);
         sim.equipItem(weapon,pid,'mainhand');
+        equipRogueDualDagger(sim,pid,klass,weapon);
         sim.addItem(chest,1,pid);
         sim.equipItem(chest,pid);
         expect(meta.equipment.mainhand).toBe(weapon);
@@ -840,6 +850,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       const training=JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile);
       const weapon=hfP13ItemId(90,WT[cls]),armor=hfP16ArmorId(90,AT[cls]);
       sim.addItem(weapon,1,pid);sim.equipItem(weapon,pid,'mainhand');
+      equipRogueDualDagger(sim,pid,cls,weapon);
       sim.addItem(armor,1,pid);sim.equipItem(armor,pid);
       expect(meta.equipment.mainhand).toBe(weapon);
       expect(meta.equipment.chest).toBe(armor);
@@ -976,6 +987,7 @@ describe('HIGHFLY LV99 normal open-world combat — ALL nine classes viable solo
       const startTraining=JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile);
       const weapon=hfP13ItemId(90,WT[cls]),chest=hfP16ArmorId(90,AT[cls]);
       sim.addItem(weapon,1,pid);sim.equipItem(weapon,pid,'mainhand');
+      equipRogueDualDagger(sim,pid,cls,weapon);
       sim.addItem(chest,1,pid);sim.equipItem(chest,pid);
       expect(meta.equipment.mainhand).toBe(weapon);
       expect(meta.equipment.chest).toBe(chest);
@@ -1078,6 +1090,7 @@ describe('HIGHFLY PvP — real class duels level99, 9 matchups plus nine mirrors
       for(const [pid,cl,meta] of [[a,aClass,aMeta],[b,bClass,bMeta]] as const){
         const weapon=hfP13ItemId(90,WT[cl]),chest=hfP16ArmorId(90,AT[cl]);
         sim.addItem(weapon,1,pid);sim.equipItem(weapon,pid,'mainhand');
+        equipRogueDualDagger(sim,pid,cl,weapon);
         sim.addItem(chest,1,pid);sim.equipItem(chest,pid);
         expect(meta.equipment.mainhand).toBe(weapon);
         expect(meta.equipment.chest).toBe(chest);
