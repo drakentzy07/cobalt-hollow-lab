@@ -1,0 +1,115 @@
+name: HIGHFLY SUPREME — VERIFIED NINE OF NINE MAIN PAGES
+# User-approved release: retain earlier sources and reject any staged artifact
+# that is not exactly the original source SHA + authentic LV99 9/9 suite.
+on:
+  workflow_run:
+    workflows:
+      - "HIGHFLY SUPREME — Unified REAL WebGL S23 Preview (NO DEPLOY)"
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: highfly-supreme-99-gated-main-release
+  cancel-in-progress: false
+
+jobs:
+  promote_only_verified_supreme:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_sha == '238a4cf9e5dc6ce2a9094062d7a13d30f005bffc' &&
+      github.event.workflow_run.head_branch == 'highfly-golden-v4031-predeploy-tar-safe' &&
+      github.event.workflow_run.head_repository.full_name == 'drakentzy07/cobalt-hollow-lab'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download ONLY exact source-SHA GREEN S23-built WebGL artifact
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          name: HIGHFLY-SUPREME-INTEGRATED-WEBGL-S23-CANDIDATE-NO-DEPLOY
+          path: approved
+      - name: Owner-approved exact source plus nine-class native boss QA and asset safety checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s approved/cobalt-hollow-lab/index.html
+          test -s approved/cobalt-hollow-lab/highfly-supreme-qa.json
+          test -d approved/cobalt-hollow-lab/assets
+          test -d approved/cobalt-hollow-lab/media
+          grep -q '/cobalt-hollow-lab/assets/' approved/cobalt-hollow-lab/index.html
+          mkdir -p supreme-release
+          cp -a approved/cobalt-hollow-lab/. supreme-release/
+          touch supreme-release/.nojekyll
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('supreme-release')
+          qa=json.loads((root/'highfly-supreme-qa.json').read_text())
+          assert qa['qaSourceCommit']=='8a3ddc93c9147e8c3320c04d4d2a13896b11e063'
+          assert qa['nineClassesNativeSoloCaptainLv99'] is True
+          assert qa['bossStatOverride'] is False
+          assert qa['trainingStatInjection'] is False
+          assert qa['multipleSeedsCertified'] is False
+          assert qa['physicalSamsungS23Tested'] is False
+          assert qa['cooperativeMultiDeviceVerified'] is False
+          assert qa['extended100PlusEnabled'] is False
+          files=[p for p in root.rglob('*') if p.is_file()]
+          total=sum(p.stat().st_size for p in files)
+          assert 500_000_000 < total < 995_000_000, total
+          assert len(files)>6000, len(files)
+          assert not any(p.is_symlink() for p in root.rglob('*'))
+          print('HF_SUPREME_9OF9_LV99_OWNER_APPROVED_PAGES_READY='+json.dumps({
+            'sourceRun':${{ github.event.workflow_run.id }},
+            'sourceCommit':qa['qaSourceCommit'],'bytes':total,'files':len(files),
+            'native9of9Tested':True,'realPhoneNotYetTested':True}))
+          PY
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload NEW complete SUPREME and replace old site (keep source refs)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: supreme-release
+      - name: Deploy NEW native-9-of-9-gated SUPREME to approved public Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify real Pages HTML hash and deployed QA metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, time, urllib.request
+          from pathlib import Path
+          root=Path('supreme-release')
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          wanted=hashlib.sha256((root/'index.html').read_bytes()).hexdigest()
+          def get(rel):
+            req=urllib.request.Request(base+rel,headers={'User-Agent':'HIGHFLY-SUPREME-NINE-OF-NINE-QA','Cache-Control':'no-cache'})
+            with urllib.request.urlopen(req,timeout=45) as res:
+              assert res.status==200
+              return res.read()
+          for i in range(32):
+            try:
+              if hashlib.sha256(get('')).hexdigest()==wanted:
+                live=json.loads(get('highfly-supreme-qa.json'))
+                assert live['nineClassesNativeSoloCaptainLv99']
+                assert live['qaSourceCommit']=='8a3ddc93c9147e8c3320c04d4d2a13896b11e063'
+                break
+            except Exception as ex:
+              print('HF_99_PAGES_VERIFY_RETRY',i,str(ex)[:160])
+            time.sleep(5)
+          else:
+            raise SystemExit('HF_99_LIVE_PAGES_NOT_MATCHING_APPROVED_ARTIFACT')
+          print('HF_SUPREME_REAL_PUBLIC_NINE_OF_NINE_RELEASE_GREEN='+json.dumps({
+            'url':base,'indexSha256':wanted,'native9of9':True,
+            'physicalS23StillNeeded':True,'extended100PlusNotEnabled':True}))
+          PY
