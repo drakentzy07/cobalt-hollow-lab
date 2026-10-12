@@ -57,7 +57,11 @@ function createHunter(cls:PlayerClass,seed:number){
   expect(ITEMS[weapon]?.requiredLevel).toBe(90);
   expect(ITEMS[chest]?.requiredLevel).toBe(90);
   sim.addItem(weapon,1,pid);
-  sim.equipItem(weapon,pid);
+  // In the original ClaudeCraft game, a Rogue with a rusty dagger already
+  // equipped auto-routes a second one-handed weapon to OFFHAND. This QA
+  // explicitly targets MAINHAND to compare all nine class loadouts without
+  // changing the authentic dual-wield/equip rules.
+  sim.equipItem(weapon,pid,'mainhand');
   expect(meta.equipment.mainhand).toBe(weapon);
   sim.addItem(chest,1,pid);
   sim.equipItem(chest,pid);
