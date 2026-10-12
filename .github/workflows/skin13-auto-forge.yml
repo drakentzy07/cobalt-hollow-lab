@@ -26,7 +26,7 @@ jobs:
           git diff --name-only c5e36b020a8ab749fd7970190e68211c4be1a34d HEAD | tee /tmp/skin13-files.txt
           while IFS= read -r file; do
             case "$file" in
-              character-truth/skin13-auto-forge/*|api/forge.js|api/forge.cjs|character-truth/skin11-original-factory/index.html|character-truth/skin11-original-factory/skin11-original-factory-ui.mjs|character-truth/skin11-original-factory/skin13-forge-client.mjs|.github/workflows/skin13-auto-forge.yml) ;;
+              character-truth/skin13-auto-forge/*|api/forge.js|api/forge.cjs|character-truth/skin11-original-factory/index.html|character-truth/skin11-original-factory/skin11-original-factory-ui.mjs|character-truth/skin11-original-factory/skin13-forge-client.mjs|.github/workflows/skin13-auto-forge.yml|.github/workflows/skin13-live-server-gate.yml) ;;
               *) echo "SKIN13_GAME_OR_HISTORICAL_LAB_MODIFICATION_FORBIDDEN:$file";exit 42;;
             esac
           done < /tmp/skin13-files.txt
