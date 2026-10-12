@@ -1130,9 +1130,22 @@ describe('HIGHFLY PvP — real class duels level99, 9 matchups plus nine mirrors
             }else sim.castAbility(attacksB[bOffense++%attacksB.length],b);
           }
         }
+        // Skill-expression fixture: keep melee in weapon range, let ranged
+        // classes kite using only the ORIGINAL authoritative MoveInput.
+        // The pursuer's forward press and the defender's backward press are
+        // competing player inputs, not teleports or AI stat buffs.
+        const gap=Math.hypot(aE.pos.x-bE.pos.x,aE.pos.z-bE.pos.z);
+        for(const [p,m,klass] of [[aE,aMeta,aClass],[bE,bMeta,bClass]] as const){
+          const ranged=klass==='hunter'||['priest','shaman','mage','warlock','druid'].includes(klass);
+          const preferred=klass==='hunter'?10:ranged?5:1.6;
+          m.moveInput.forward=gap>preferred+0.9&&!p.castingAbility;
+          m.moveInput.back=ranged&&gap<preferred-0.9&&!p.castingAbility;
+        }
         sim.tick();
         minA=Math.min(minA,aE.hp);minB=Math.min(minB,bE.hp);
       }
+      aMeta.moveInput.forward=false;aMeta.moveInput.back=false;
+      bMeta.moveInput.forward=false;bMeta.moveInput.back=false;
       const aWon=(aMeta.deedStats.counters.duelsWon??0)>0;
       const bWon=(bMeta.deedStats.counters.duelsWon??0)>0;
       const statsUnchanged=
@@ -1166,4 +1179,43 @@ describe('HIGHFLY PvP — real class duels level99, 9 matchups plus nine mirrors
     expect(rows).toHaveLength(18);
     expect(rows.every(x=>x.zeroRealDeaths&&x.bothLevel99&&x.statsUnchanged)).toBe(true);
   },240000);
+});
+
+/** Rogue's CLASS FOUNDATION is dual rusty_daggers. The P13 LV90 Night Dirk
+ * stays a genuine native ONEHAND dagger, and the ORIGINAL equipment rules
+ * permit two separately made copies in both sockets. This regression is
+ * needed because "mainhand upgraded, rusty offhand" silently understates the
+ * Rogue's LV99 DPS and made the owner question its identity.
+ */
+describe('HIGHFLY Rogue Lv99 — native Assassin DOUBLE DAGGER not single dagger',()=>{
+  it('equips TWO independently crafted level-90 Night Dirks and saves both without Training change',()=>{
+    const {sim,pid,meta}=simFor('rogue',198702);
+    sim.setPlayerLevel(99,pid);
+    const before=JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile);
+    const dagger=hfP13ItemId(90,'scout');
+    expect(ITEMS[dagger].kind).toBe('weapon');
+    expect(ITEMS[dagger].weapon?.dagger).toBe(true);
+    expect(meta.equipment.mainhand).toBe('rusty_dagger');
+    expect(meta.equipment.offhand).toBe('rusty_dagger');
+    sim.addItem(dagger,2,pid);
+    sim.equipItem(dagger,pid,'mainhand');
+    expect(meta.equipment.mainhand).toBe(dagger);
+    sim.equipItem(dagger,pid,'offhand');
+    expect(meta.equipment.offhand).toBe(dagger);
+    expect(sim.countItem(dagger,pid)).toBe(0);
+    expect(JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile)).toBe(before);
+    const snapshot=JSON.parse(JSON.stringify(sim.serializeCharacter(pid)));
+    const load=new Sim({seed:198703,playerClass:'rogue',noPlayer:true,
+      autoEquip:false,world:WORLD,compulsoryTutorial:false,riftPortals:false});
+    const rid=load.addPlayer('rogue','AssassinTwoDaggers',
+      {state:snapshot,tutorialGreetingSent:true});
+    expect(load.players.get(rid)?.equipment.mainhand).toBe(dagger);
+    expect(load.players.get(rid)?.equipment.offhand).toBe(dagger);
+    console.info('HF99_ROGUE_DUAL_NIGHT_DIRK_NATIVE_GEAR='+JSON.stringify({
+      class:'rogue',style:'DUAL_DAGGER',originalRig:true,
+      mainhand:dagger,offhand:dagger,craftCopiesNeeded:2,
+      originalEquipmentRules:true,unchangedTraining:true,persistent:true,
+      marketEligible:ITEMS[dagger].noMarketList===false
+    }));
+  });
 });
