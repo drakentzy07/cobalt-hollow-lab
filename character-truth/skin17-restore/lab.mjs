@@ -151,7 +151,9 @@ async function load(){
   }
   const picker=$('#clip');picker.replaceChildren();
   state.clips.forEach((c,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=c.name;picker.append(o)});
-  const idle=state.clips.findIndex(c=>/idle/i.test(c.name));picker.value=String(Math.max(0,idle));
+  const exactIdle=state.clips.findIndex(c=>c.name==='Idle');
+  const genericIdle=state.clips.findIndex(c=>/^Idle($|_)/i.test(c.name));
+  picker.value=String(exactIdle>=0?exactIdle:Math.max(0,genericIdle));
   state.ready=true;
   for(const id of ['original','base','experiment','clip','pause','focus','rotate','speed'])$('#'+id).disabled=false;
   if(state.overlay.length===0)$('#experiment').disabled=true;

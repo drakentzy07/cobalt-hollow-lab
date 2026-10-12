@@ -18,6 +18,7 @@ try{
  }
  const original=await page.evaluate(()=>window.HIGHFLY_SKIN17);
  assert.equal(original.mode,'original');
+ assert.equal(await page.locator('#clip').inputValue(),String(await page.locator('#clip option').evaluateAll(nodes=>nodes.findIndex(o=>o.textContent==='Idle'))),'Default animation must be true standing Idle, not Sit_Floor_Idle');
  assert.equal(original.clips,22);
  assert.equal(original.nativeBody,11);
  assert.equal(original.originalArmorMeshes,17);
