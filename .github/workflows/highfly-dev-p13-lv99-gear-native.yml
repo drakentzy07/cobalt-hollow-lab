@@ -126,6 +126,12 @@ jobs:
             /tests/gather_rare_events.test.ts
             /tests/helpers/farming_calendar_model.ts
             /tests/helpers/bare_client.ts
+            /tests/helpers/defined.ts
+            /tests/server/ws_auth.test.ts
+            /tests/server/game_boot_order.test.ts
+            /tests/server/market_commands.test.ts
+            /tests/trade.test.ts
+            /tests/bop_party_trade.test.ts
             /tests/inscription_scroll_exclusivity.test.ts
             /tests/orange_promotion.test.ts
             /tests/professions_enchanting.test.ts
