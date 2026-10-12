@@ -406,3 +406,90 @@ describe('HIGHFLY SUPREME late-economy authentic RNG five rungs and armor',()=>{
     expect(failures,'REAL_NATIVE_ECONOMY_GAPS').toEqual([]);
   },240000);
 });
+
+/** HIGHFLY SUPREME ECONOMY PLAYER MARKET
+ * Multiplayer proof uses TWO DISTINCT players within ONE original Sim (one
+ * hunter per account). Not a second game, and not an online Pages backend.
+ * The 8-rung suite already verifies honest raw-material/copper acquisition;
+ * this verifies actual crafted provenance, broker sale/escrow/cut, buyer equip
+ * and SAVE. Starting materials and funds here are explicit QA fixtures. */
+describe('HIGHFLY player-made equipment: original NPC + market economy',()=>{
+  it('forges a normal P13 sword and sells it between two distinct Hunters through the native Merchant',()=>{
+    const sim=new Sim({seed:551122,playerClass:'warrior',noPlayer:true,
+      autoEquip:false,world:WORLD,compulsoryTutorial:false,riftPortals:false});
+    const seller=sim.addPlayer('warrior','MasterBlacksmith',{characterId:701,tutorialGreetingSent:true});
+    const buyer=sim.addPlayer('warrior','BuyerHunter',{characterId:702,tutorialGreetingSent:true});
+    sim.setPlayerLevel(50,seller);
+    sim.setPlayerLevel(50,buyer);
+    const sm=sim.players.get(seller)!,bm=sim.players.get(buyer)!;
+    const recipe=recipeById(hfP13RecipeId(50,'warrior'))!;
+    const id=hfP13ItemId(50,'warrior');
+    expect(ITEMS[id].soulbound).toBe(false);
+    expect(ITEMS[id].noMarketList).toBe(false);
+    expect(ITEMS[id].sellValue).toBeGreaterThan(0);
+    // QA-prepared smith inputs, production forge and trainer are ORIGINAL.
+    sm.copper=trainingFeeFor(recipe)+1000;
+    sm.craftSkills.weaponcrafting=recipe.skillReq;
+    for(const m of recipe.reagents)sim.addItem(m.itemId,m.count,seller);
+    const sp=sim.entities.get(seller)!;
+    const forge=STATIONS.find(x=>x.id==='station_eastbrook_forge')!;
+    sp.pos=sim.groundPos(forge.pos.x,forge.pos.z);
+    sp.prevPos={...sp.pos};sim.rebucket(sp);
+    sim.trainRecipe(recipe.id,seller);
+    expect(sm.lastTrainResult?.ok).toBe(true);
+    const result=resolveCraft(sim.ctx,seller,recipe.id);
+    expect(result.ok).toBe(true);
+    expect(sim.countItem(id,seller)).toBe(1);
+    const crafted=sm.inventory.find(s=>s.itemId===id)!;
+    expect(crafted.craftedRecipeId).toBe(recipe.id);
+    const merchant=[...sim.entities.values()].find(x=>x.templateId==='the_merchant')!;
+    expect(merchant).toBeDefined();
+    for(const pid of [seller,buyer]){
+      const e=sim.entities.get(pid)!;
+      e.pos=sim.groundPos(merchant.pos.x,merchant.pos.z);
+      e.prevPos={...e.pos};sim.rebucket(e);
+    }
+    const ask=15000;
+    const sellerCopper=sm.copper;
+    if(crafted.instance)sim.marketListInstance(id,ask,crafted.instance,seller);
+    else sim.marketList(id,1,ask,seller);
+    const listing=sim.marketListings.find(x=>x.itemId===id&&!x.house);
+    expect(listing,'SELLER_MARKET_LISTING_FAILED').toBeDefined();
+    expect(listing!.craftedRecipeId).toBe(recipe.id);
+    expect(sim.countItem(id,seller)).toBe(0);
+    bm.copper=ask+250;
+    sim.marketBuy(listing!.id,1,buyer);
+    expect(sim.countItem(id,buyer)).toBe(1);
+    expect(bm.copper).toBe(250);
+    expect(sim.marketListings.find(x=>x.id===listing!.id)).toBeUndefined();
+    const due=sim.marketInfoFor(seller)?.collectionCopper;
+    expect(due).toBe(Math.floor(ask*.95));
+    expect(sm.copper).toBe(sellerCopper);
+    sim.marketCollect(seller);
+    expect(sm.copper).toBe(sellerCopper+due!);
+    expect(bm.inventory.find(x=>x.itemId===id)?.craftedRecipeId).toBe(recipe.id);
+    sim.equipItem(id,buyer);
+    expect(bm.equipment.mainhand).toBe(id);
+    const snapshot=JSON.parse(JSON.stringify(sim.serializeCharacter(buyer)));
+    const restored=new Sim({seed:771122,playerClass:'warrior',noPlayer:true,
+      autoEquip:false,world:WORLD,compulsoryTutorial:false,riftPortals:false});
+    const pid=restored.addPlayer('warrior','BuyerHunter',
+      {state:snapshot,characterId:702,tutorialGreetingSent:true});
+    expect(restored.players.get(pid)?.equipment.mainhand).toBe(id);
+    console.info('HF_SUPREME_PLAYER_MARKET='+JSON.stringify({
+      seller:'MasterBlacksmith',buyer:'BuyerHunter',item:id,ask,
+      sellerNet:due,merchantCut:ask-due!,provenancePreserved:true,
+      classReqPreserved:true,realTwoPartySameSim:true,notLiveInternetCertified:true}));
+  },120000);
+  it('makes normal crafted P16 armor commission-eligible without granting Training stats',()=>{
+    const armor=ITEMS[hfP16ArmorId(90,'cloth')];
+    expect(armor).toBeDefined();
+    expect(armor.soulbound).toBe(false);
+    expect(armor.noMarketList).toBe(false);
+    expect(armor.sellValue).toBeGreaterThan(0);
+    expect(armor.requiredClass).toContain('priest');
+    expect(armor.requiredClass).not.toContain('warrior');
+    expect(Object.keys(armor.stats??{})).toEqual(['armor']);
+    expect(ITEMS[hfP13ItemId(90,'warrior')].requiredClass).not.toContain('mage');
+  });
+});
