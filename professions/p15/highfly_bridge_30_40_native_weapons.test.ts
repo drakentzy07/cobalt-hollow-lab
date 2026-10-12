@@ -57,10 +57,10 @@ describe('GOLDEN DEV1 P15 LV21–49 true native weapon bridge',()=>{
         resultItemId:id,level,professionId:'weaponcrafting',
         stationType:'forge',acquisition:['trainer'],resultCount:1,
       });
-      expect(item.kind==='weapon'?item.weapon.max:0).toBeLessThan(
-        ITEMS[hfP13ItemId(50,track)].kind==='weapon'?
-          ITEMS[hfP13ItemId(50,track)].weapon.max:0
-      );
+      const olderPower=item.kind==='weapon'?item.weapon.max:0;
+      const p13Level50=ITEMS[hfP13ItemId(50,track)];
+      const nextPower=p13Level50.kind==='weapon'?p13Level50.weapon.max:0;
+      expect(olderPower).toBeLessThan(nextPower);
       for(const playerClass of ALL_CLASSES)
         expect(canEquipItem(playerClass,item)).toBe(
           (TRACKS[track].allowed as readonly string[]).includes(playerClass));
