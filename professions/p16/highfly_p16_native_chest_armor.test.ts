@@ -59,8 +59,9 @@ describe('HIGHFLY P16 3 source chest models × 3 levels = 9 native armors',()=>{
       const recipe=recipeById(hfP16ArmorRecipeId(level,track));
       expect(item).toBe(HIGHFLY_P16_ARMOR_ITEMS[id]);
       expect(item?.kind).toBe('armor');
-      expect(item?.slot).toBe('chest');
-      expect(item?.armorType).toBe(track);
+      if(item.kind!=='armor')throw Error('P16_ITEM_NOT_ARMOR:'+id);
+      expect(item.slot).toBe('chest');
+      expect(item.armorType).toBe(track);
       expect(item?.stats).toBeDefined();
       expect(Object.keys(item!.stats??{})).toEqual(['armor']);
       expect(item!.stats!.armor).toBeGreaterThan(0);
