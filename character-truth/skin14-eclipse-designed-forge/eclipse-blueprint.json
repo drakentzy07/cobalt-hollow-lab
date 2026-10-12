@@ -1,0 +1,50 @@
+{
+  "schema": "highfly.skin14.original-eclipse-blueprint/1",
+  "name": "Eclipse Eterno",
+  "newGeometryOnly": true,
+  "artApproved": false,
+  "designSource": "GPT-6 art-directed geometry blueprint authored for this user request; no remote model inference in CI",
+  "intent": {
+    "theme": "ancient eclipse knight",
+    "silhouette": "heroic armored warrior with closed helmet and readable waist",
+    "mood": "elegant dark magic",
+    "armorWeight": "medium",
+    "keyElements": [
+      "angular closed helmet face shield",
+      "twin violet visor cut lines",
+      "subtle helmet metal crest",
+      "layered asymmetric crescent pauldrons",
+      "engraved breastplate with violet diamond core",
+      "shin plates",
+      "embossed spine crystals"
+    ],
+    "colors": {
+      "steelBlack": "#151b2a",
+      "antiqueSilver": "#a9aebd",
+      "eclipseViolet": "#7f45c8"
+    }
+  },
+  "construction": {
+    "originalElevenSlots": true,
+    "referenceRig": "Rig_Medium",
+    "copyLegacyGeometry": false,
+    "sourceGeometryReuse": 0,
+    "materials": [
+      "blackSteel",
+      "brushedSilver",
+      "violetInlaidGlass"
+    ],
+    "minimumPanels": 20,
+    "renderViews": [
+      "front",
+      "profile",
+      "back"
+    ],
+    "visualApprovalRequired": true
+  },
+  "knownLimits": [
+    "Script creates parametric hard-surface prototype, not final sculpt or full semantic AI generator",
+    "Need human aesthetic approval before any game import",
+    "Only original male source fit validated, female pending"
+  ]
+}
