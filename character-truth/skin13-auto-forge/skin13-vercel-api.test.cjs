@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const handler=require('./forge.cjs');
+const handler=require('../../api/forge.cjs');
 const make=(method,body={},query={},headers={})=>{
  let statusCode=null,result=null,headersSent={};
  let res={setHeader(k,v){headersSent[k]=v;return this},status(n){statusCode=n;return this},json(x){result=x;return x}};
