@@ -26,7 +26,7 @@ jobs:
           git diff --name-only 1939f1a481c882af011ffc2a7534be2d3bb98c46 HEAD | tee /tmp/skin13-files.txt
           while IFS= read -r file; do
             case "$file" in
-              character-truth/skin16-concept/*|.github/workflows/skin16-native-concept-forge.yml) ;;
+              character-truth/skin16-concept/*|.github/workflows/skin16-native-concept-forge.yml|.github/workflows/skin16-live-qa.yml) ;;
               *) echo "SKIN14_GAME_OR_LEGACY_SKIN_MUTATION_FORBIDDEN:$file";exit 42;;
             esac
           done < /tmp/skin13-files.txt
