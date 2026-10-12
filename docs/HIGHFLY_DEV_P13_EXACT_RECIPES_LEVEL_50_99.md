@@ -10,10 +10,12 @@ Las recetas están en `professions/p13/highfly_lv99_native_equipment.ts`; el ada
 | Nivel mínimo de equipamiento | Nivel nominal de fórmula | skillReq declarado de herrería | Materiales **por una** de las 3 armas | Rareza | Espada min–max | Daga min–max | Bastón min–max | Bastón spellPower |
 |---:|---:|---:|---|---|---:|---:|---:|---:|
 | 50 | 50 | 75 | `rough_hide ×5`, `arcane_essence ×3`, `smithing_flux ×3` | uncommon | 18–28 | 15–25 | 18–28 | +10 |
-| 60 | 60 | 85 | `sharp_claw ×5`, `curved_tusk ×5`, `smithing_flux ×3` | rare | 22–34 | 17–29 | 22–34 | +12 |
-| 70 | 70 | 95 | `spider_silk ×8`, `arcane_essence ×7`, `smithing_flux ×5` | rare | 25–39 | 20–34 | 25–39 | +14 |
+| 60 | 60 | 85 | `sharp_claw ×6`, `curved_tusk ×6`, `smithing_flux ×3` | rare | 22–34 | 17–29 | 22–34 | +12 |
+| 70 | 70 | 95 | `spider_silk ×8`, `arcane_essence ×5`, `smithing_flux ×5` | rare | 25–39 | 20–34 | 25–39 | +14 |
 | 80 | 80 | 110 | `arcane_shard ×3`, `sharp_claw ×9`, `smithing_flux ×6` | epic | 29–45 | 23–39 | 29–45 | +16 |
-| 90 | 90 | 125 | `arcane_shard ×7`, `arcane_essence ×12`, `smithing_flux ×8` | epic | 32–50 | 26–44 | 32–50 | +18 |
+| 90 | 90 | 125 | `arcane_shard ×2`, `arcane_essence ×6`, `smithing_flux ×8` | epic | 32–50 | 26–44 | 32–50 | +18 |
+
+**DEV2 revisión económica (2026-10-12, RAMA AISLADA, NO PUBLICADA):** La prueba #38187991668 confirmó un circuito LV50 con 49 lobos y 33 revenants a probabilidades normales, y midió el coste de drop estimado por arma LV50/60/70/80/90: **92/84/175/165/550** bajas (mejor fuente individual, sin flux vendor). Se detectó un salto irracional en LV90. Se ajustaron **sólo** las cantidades de reactivos reflejadas arriba, sin agregar ítems, recetas, materiales, mobs o niveles. Presupuesto teórico actualizado sujeto a siguiente CI: **92/100/142/165/200** bajas esperadas por arma. El guard automático exige coste no decreciente por rung y techo **250** bajas esperadas según probabilidades declaradas. Es un indicador económico, NO horas reales certificadas, NO farmeo LV90 físico y NO cambia Sim ni Training Core. El LV50 natural-chance E2E aún acelera combates con HP=1 y usa skill/cobre/flux de fixture.
 
 **Multiplicar ×3** para producir una espada, una daga y un bastón del mismo nivel antes de descuentos nativos de especialización; las cantidades consumidas pueden ser menores al nominal por el sistema ClaudeCraft. Se verificó una **forja real de arma LV50** con consumo y recarga del personaje, no las 15 forjas desde cero. Los requisitos `skillReq` son authored: el donor `src/sim/professions/crafting.ts` dice expresamente que **NO existe una barrera estricta de admisión por skillReq**; el campo afecta experiencia/calidad y no debe prometerse como bloqueo real de nivel de oficio hasta implementarlo/testearlo. La adquisición por entrenador es un contrato declarado, **no** un NPC con la receta añadido/verificado para esas 15 entradas todavía.
 
