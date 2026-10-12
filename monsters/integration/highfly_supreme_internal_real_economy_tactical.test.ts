@@ -830,6 +830,17 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
     mage:['frost','fire','arcane'],warlock:['affliction','destruction','demonology'],
     druid:['balance','feral','restoration'],
   };
+  // These six legal choice rows are available to ANY real player at LV99.
+  // Unlike a debug power grant, selection calls the original Sim talent API.
+  type RowLevel=5|8|11|14|17|20;
+  const PvMOriginalTalentRows:Partial<Record<PlayerClass,readonly [RowLevel,string][]>>={
+    mage:[[5,'mag_r5_ice_floes'],[8,'mag_r8_warded'],
+      [11,'mag_r11_twin_nova'],[14,'mag_r14_power_echo'],
+      [17,'mag_r17_mass_barrier'],[20,'mag_r20_overflowing_power']],
+    druid:[[5,'dru_r5_natures_bounty'],[8,'dru_r8_typhoon'],
+      [11,'dru_r11_innervate'],[14,'dru_r14_moonfury'],
+      [17,'dru_r17_frenzied_regeneration'],[20,'dru_r20_tranquility']],
+  };
   const GUARD:Record<PlayerClass,string[]>={
     warrior:['rallying_cry','iron_resolve','raised_guard'],
     paladin:['divine_protection','holy_shield'],
@@ -863,6 +874,12 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       // Game-authoritative specialization selection, same API as a real user.
       // Do not mint training points or assign unsupported power/talents.
       expect(sim.setSpec(spec,pid),'NATIVE_SPEC_CHOICE_REJECTED_'+cls+'_'+spec).toBe(true);
+      const talentRowsSelected:string[]=[];
+      for(const [rowLevel,option] of PvMOriginalTalentRows[cls]??[]){
+        expect(sim.selectTalentRow(rowLevel,option,pid),
+          'NATIVE_TALENT_ROW_CHOICE_REJECTED_'+cls+'_'+spec+'_'+option).toBe(true);
+        talentRowsSelected.push(option);
+      }
       const training=JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile);
       const weapon=hfP13ItemId(90,WT[cls]),armor=hfP16ArmorId(90,AT[cls]);
       sim.addItem(weapon,1,pid);sim.equipItem(weapon,pid,'mainhand');
@@ -903,7 +920,11 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       const opened:string[]=[];
       // One genuine in-game cast per GCD while preparing, at full HP, before
       // the captain acquires the character. NO direct aura manipulation.
-      for(const buff of OPEN[cls].filter(x=>known.has(x))){
+      const preBuffs=cls==='mage'
+        ? [...OPEN[cls],...(spec==='fire'?['blazing_barrier']:
+          spec==='frost'?['ice_barrier']:['temporal_barrier']),
+          'power_echo','mass_barrier'] : OPEN[cls];
+      for(const buff of preBuffs.filter(x=>known.has(x))){
         sim.castAbility(buff,pid);
         opened.push(buff);
         for(let t=0;t<Math.ceil(1.6/DT);t++)sim.tick();
@@ -919,7 +940,10 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       // movement and most caster auto-attacks in the test bot.
       // Pure test-pilot geometry: for fragile caster specs begin outside the
       // native 5m pulse radius; no teleport after aggro or source-stat changes.
-      const tacticalCaster=cls==='mage'||(cls==='druid'&&spec!=='feral');
+      // The first moving-caster experiment reduced Mage's completed casts.
+      // Keep Mage casting stationary with native barriers; Druid's ORIGINAL
+      // Skylark choice now permits its core damage/heal spells while moving.
+      const tacticalCaster=cls==='druid'&&spec!=='feral';
       const spawnGap=ranged?(cls==='hunter'?12:tacticalCaster?9:4.5):2;
       const captain=createMob(sim.nextId++,def,99,
         {x:p.pos.x+spawnGap,y:p.pos.y,z:p.pos.z+spawnGap/4});
@@ -930,6 +954,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       const castPeriod=Math.max(1,Math.ceil(1.55/DT));
       const maxTicks=Math.ceil(300/DT); // up to FIVE real Sim game-minutes per solo class
       let turns=0,atk=0,defensive=0,heals=0,potions=0,relocations=0,executeAttempts=0;
+      let lastTyphoon=-500,typhoonAttempts=0;
       let attemptedAttacks=0,attemptedHeals=0,attemptedGuard=0;
       let maxRange=0,lastHeal=-500,lastDefend=-500,ticks=0;
       let effectiveHealing=0,healingEvents=0,actualDamageDone=0,actualDamageTaken=0;
@@ -952,7 +977,8 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         // infinitely away or editing its behavior.
         const pulseIncoming=tacticalCaster&&captain.castingAbility===def.bigCast?.castId;
         const pulseDodge=pulseIncoming&&d<8;
-        const canMove=!p.castingAbility||pulseDodge;
+        const mobileDruidCast=tacticalCaster&&talentRowsSelected.includes('dru_r5_natures_bounty');
+        const canMove=!p.castingAbility||pulseDodge||mobileDruidCast;
         const anchorDistance=Math.hypot(p.pos.x-captain.spawnPos.x,
           p.pos.z-captain.spawnPos.z);
         if(tacticalCaster&&anchorDistance>18&&canMove){
@@ -975,7 +1001,11 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         }
         if(ticks%castPeriod===0&&!p.castingAbility){
           const health=p.hp/p.maxHp;
-          if((cls==='priest'||cls==='druid')&&
+          if(cls==='druid'&&known.has('typhoon')&&d<6&&
+            ticks-lastTyphoon>Math.ceil(25/DT)){
+            sim.castAbility('typhoon',pid);
+            lastTyphoon=ticks;typhoonAttempts++;
+          }else if((cls==='priest'||cls==='druid')&&
             health<(cls==='druid'?0.43:0.68)&&healing.length&&
             ticks-lastHeal>Math.ceil(3/DT)){
             const heal=healing[heals++%healing.length];
@@ -1020,7 +1050,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       meta.moveInput.back=false;meta.moveInput.forward=false;
       const win=captain.dead&&!p.dead;
       const row={
-        cls,spec,result:win?'WIN':p.dead?'LOSS':'TIMEOUT',
+        cls,spec,talentRowsSelected,typhoonAttempts,result:win?'WIN':p.dead?'LOSS':'TIMEOUT',
         bossHpStart:startHp,bossHpEnd:Math.max(0,captain.hp),
         bossHpRemainingPct:Math.round(10000*Math.max(0,captain.hp)/startHp)/100,
         heroEndHp:Math.max(0,p.hp),heroMaxHp:p.maxHp,
@@ -1059,6 +1089,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       playtestOnPhysicalS23Needed:true,nineOfNineSoloCertified:bestRows.every(x=>x.result==='WIN'),
       fiveMinuteFightLimit:true,onlyOriginalNativeCastHealDamageMovement:true,
       nativeSpecsChosenViaSim:true,allTalentRowsSelected:false,
+      mageDruidOriginalSixTalentRowsSelected:true,trainingCoreNotMinted:true,
       casterKitingStaysWithinNativeBossLeash:true,noMobAIOrDamageEditing:true,
       nineOriginalClassesPreserved:true,
       rows:bestRows.map(x=>({cls:x.cls,spec:x.spec,result:x.result,
