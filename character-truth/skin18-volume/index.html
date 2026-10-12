@@ -1,0 +1,35 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101724">
+<title>HIGHFLY SKIN18 · ClaudeCraft auténtico restaurado</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#090f1b;color:#eaf1fd;font:14px system-ui,Arial,sans-serif}
+header{padding:14px 18px;background:#111c2f;border-bottom:1px solid #40516c}h1{font-size:18px;color:#efd097;margin:0 0 6px}
+header p{margin:0;color:#b8c8de;font-size:12px}main{max-width:1200px;margin:auto;padding:11px;display:grid;gap:11px}
+.view{height:clamp(380px,65vh,730px);position:relative;background:radial-gradient(ellipse at 50% 44%,#2a3853,#091120 70%);border-radius:15px;border:1px solid #4c6180;overflow:hidden}
+.view canvas{display:block;width:100%;height:100%;touch-action:none}
+#status{position:absolute;left:10px;top:10px;right:10px;z-index:1;border-radius:8px;padding:11px;background:#141d31db;color:#e7d7ae;font-size:13px;pointer-events:none}
+fieldset{border:1px solid #415573;padding:10px;border-radius:12px;display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+button,select{border-radius:8px;background:#22334e;border:1px solid #7188a7;padding:9px 13px;min-height:43px;color:#eaf2fc;font:inherit;cursor:pointer}
+button.active{background:#82623b;color:#fff4da;border-color:#ebc787}button:disabled,select:disabled{opacity:.5;cursor:not-allowed}
+strong{color:#f1d19a}p{margin:4px 2px;color:#bbcee1;line-height:1.6}
+small{font-size:12px;color:#9fb1ca}summary{cursor:pointer}
+@media(max-width:610px){main{padding:6px}.view{height:66vh}header{padding:9px}h1{font-size:15px}button,select{padding:7px 9px;font-size:12px}fieldset{padding:7px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script></head><body>
+<header><h1>⚔️ HIGHFLY · SKIN 18 — Personaje modular original restaurado</h1><p>ClaudeCraft 0.44.0 auténtico · armaduras originales y skin experimental separadas · Rig_Medium · 22 movimientos</p></header>
+<main>
+<div class="view" id="view"><div id="status" role="status">Cargando el personaje ORIGINAL de ClaudeCraft y sus armaduras auténticas…</div></div>
+<fieldset id="controls">
+<button id="original" class="active" disabled>🛡️ Paladín ORIGINAL</button>
+<label for="nativeArmor">Equipo nativo</label><select id="nativeArmor" disabled><option>Paladín</option></select>
+<button id="base" disabled>Hunter base</button>
+<button id="experiment" disabled>🎨 Eclipse anterior (bodypaint)</button>
+<button id="volume" disabled>⚒️ ECLIPSE VOLUMÉTRICO v2</button>
+<label for="clip">Movimiento</label><select id="clip" disabled><option>Esperando Hunter…</option></select>
+<button id="pause" disabled>⏸ Pausa</button>
+<button id="rotate" disabled>↻ Giro</button>
+<button id="focus" disabled>Enfocar</button>
+<label for="speed">Velocidad</label><select id="speed" disabled><option value="0.6">0,6×</option><option value="1" selected>1×</option><option value="1.4">1,4×</option></select>
+</fieldset>
+<p><strong>Volvimos a la base correcta.</strong> Las armaduras ORIGINALES se equipan con las piezas y texturas auténticas del GLB ClaudeCraft, no se reconstruyen con óvalos. Compará la armadura Eclipse anterior con SKIN18: volúmenes 3D sólidos, hombreras separadas, pechera de grosor real y grebas; ambas sobre el mismo Rig_Medium. Podés cambiar de armadura sin perder el Hunter.</p>
+<details><summary>Origen del personaje y alcance de la prueba</summary><p>Fuente ClaudeCraft original inmovilizada en commit 9b57e49c, modelo warrior_modular.glb; se conserva el cuerpo masculino modular, sus materiales nativos, el esqueleto Rig_Medium y 22 clips. Eclipse SKIN16 bodypaint y SKIN18 volumétrico son prototipos separados. SKIN18 mide el espesor respecto al cuerpo y conserva la fuente original; NO es una armadura premium aprobada. Esto es un laboratorio visual, no una prueba de combate ni una publicación en HIGHFLY público.</p></details>
+</main><script type="module" src="./lab.mjs"></script></body></html>
