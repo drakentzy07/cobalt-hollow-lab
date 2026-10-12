@@ -95,7 +95,11 @@ Example: "Armadura de dragón rojo, cuernos, escamas de bronce, pecho con runas 
   {"role":"system","content":instruction},
   {"role":"user","content":"Analyze this independent original armor request:\n"+prompt}
  ],temperature=0.1,top_p=0.9,max_tokens=260,
- response_format={"type":"json_object"})
+ response_format={"type":"json_object","schema":{
+  "type":"object",
+  "properties":{key:{"type":"string","enum":sorted(values)} for key,values in OPTIONS.items()},
+  "required":list(OPTIONS),"additionalProperties":False
+ }})
  raw=out["choices"][0]["message"]["content"] or ""
  raw=raw.strip()
  if raw.startswith("'```") or raw.startswith("```"):
