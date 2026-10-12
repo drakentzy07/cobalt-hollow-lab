@@ -10,6 +10,7 @@ on:
       - highfly-golden-dev3-gold-economy-ledger
       - highfly-golden-dev4-nine-class-gear-gaps
       - highfly-golden-dev5-level35-native-bridge
+      - highfly-golden-dev6-native-armor-50-90
     paths:
       - .github/workflows/highfly-dev-p13-lv99-gear-native.yml
       - professions/p13/highfly_lv99_native_equipment.ts
@@ -21,6 +22,9 @@ on:
       - professions/p15/highfly_p15_native_bridge35.ts
       - professions/p15/highfly_p15_native_bridge35.test.ts
       - professions/p15/activate_p15_bridge35.py
+      - professions/p16/highfly_p16_native_chest_armor.ts
+      - professions/p16/highfly_p16_native_chest_armor.test.ts
+      - professions/p16/activate_p16_armor.py
       - professions/p14/highfly_gem_attribute_expansion_foundation.test.ts
       - professions/p13/highfly_full_227_recipes_catalog.test.ts
       - professions/p13/highfly_complete_native_1_99_catalog.test.ts
@@ -553,9 +557,12 @@ jobs:
           cp ../professions/p13/highfly_full_227_recipes_catalog.test.ts tests/highfly_full_227_recipes_catalog.test.ts
           cp ../professions/p15/highfly_p15_native_bridge35.ts src/sim/content/highfly_p15_native_bridge35.ts
           cp ../professions/p15/highfly_p15_native_bridge35.test.ts tests/highfly_p15_native_bridge35.test.ts
+          cp ../professions/p16/highfly_p16_native_chest_armor.ts src/sim/content/highfly_p16_native_chest_armor.ts
+          cp ../professions/p16/highfly_p16_native_chest_armor.test.ts tests/highfly_p16_native_chest_armor.test.ts
           cp ../professions/p13/highfly_complete_native_1_99_catalog.test.ts tests/highfly_complete_native_1_99_catalog.test.ts
           python3 ../professions/p13/activate_p13.py
           python3 ../professions/p15/activate_p15_bridge35.py
+          python3 ../professions/p16/activate_p16_armor.py
           git diff --check HEAD
           echo 'HF_P13_EXISTING_ITEM_RECIPES_RUNTIME_EXTENDED_50_99_DEV_ONLY=1'
       - name: TypeScript all-source baseline
@@ -670,7 +677,7 @@ jobs:
           VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
         run: |
           set -euo pipefail
-          pnpm exec vitest run tests/highfly_lv99_native_equipment.test.ts tests/highfly_p14_trainer_native_15_paths.test.ts tests/highfly_dev2_lv99_economy_native_loot.test.ts tests/highfly_dev3_native_gold_economy.test.ts tests/highfly_dev4_nine_class_gear_band_audit.test.ts tests/highfly_p15_native_bridge35.test.ts
+          pnpm exec vitest run tests/highfly_lv99_native_equipment.test.ts tests/highfly_p14_trainer_native_15_paths.test.ts tests/highfly_dev2_lv99_economy_native_loot.test.ts tests/highfly_dev3_native_gold_economy.test.ts tests/highfly_dev4_nine_class_gear_band_audit.test.ts tests/highfly_p15_native_bridge35.test.ts tests/highfly_p16_native_chest_armor.test.ts
           test -s ../highfly_golden_dev2_1_99_band_economy_audit.json
           echo 'HF_GOLDEN_DEV2_REAL_CHANCE_CORPSE_TRAINER_FORGE_SAVE_GREEN=1'
           echo 'HF_P13_15_REAL_LV50_99_ITEMS_15_RECIPES_9_CLASS_MATERIAL_NATIVE_GREEN=1'
@@ -717,7 +724,7 @@ jobs:
             HIGHFLY_FULL_1_99_NATIVE_RECIPE_CATALOG.json
           retention-days: 45
           if-no-files-found: warn
-      - name: P15 COMPLETE CATALOG — export 230 original/native recipes and LV1–99 XP
+      - name: P16 COMPLETE CATALOG — export 239 original/native recipes and LV1–99 XP
         working-directory: upstream
         shell: bash
         env:
@@ -727,13 +734,13 @@ jobs:
         run: |
           set -euo pipefail
           pnpm exec vitest run tests/highfly_full_227_recipes_catalog.test.ts
-          test -s ../highfly_dev_p15_full_230_recipes_materials_99_levels.json
-          echo 'HF_NATIVE_EXACT_230_BOM_99_LEVELS_AUDIT_GREEN=1'
+          test -s ../highfly_dev_p16_full_239_recipes_materials_99_levels.json
+          echo 'HF_NATIVE_EXACT_239_BOM_99_LEVELS_AUDIT_GREEN=1'
       - name: P13 archive native full recipe and XP dataset
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-DEV5-FULL-230-RECIPE-MATERIAL-LOOT-XP-LEVEL99-CATALOG
-          path: highfly_dev_p15_full_230_recipes_materials_99_levels.json
+          name: HIGHFLY-DEV6-FULL-239-RECIPE-MATERIAL-LOOT-XP-LEVEL99-CATALOG
+          path: highfly_dev_p16_full_239_recipes_materials_99_levels.json
           retention-days: 30
           if-no-files-found: error
       - name: DEV P14 foundation — three REAL elemental sockets, physical consumption, ATK4 save and unchanged Training
