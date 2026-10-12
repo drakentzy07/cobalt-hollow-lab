@@ -1,4 +1,5 @@
 import {createOriginalCommission} from './skin11-original-factory-core.mjs';
+import {setupForge13} from './skin13-forge-client.mjs';
 const $=id=>document.getElementById(id);
 const KEY='highfly.skin11.original.commissions.v1'; // isolate from SKIN 7/8/9/10
 export const PRESETS=Object.freeze({
@@ -131,4 +132,5 @@ $('copyBrief').onclick=async()=>{
  try{await navigator.clipboard.writeText(current.input.prompt);status('✅ Descripción copiada.')}catch{status('No se pudo copiar en este navegador.')}
 };
 loadHistory();updateCharacters();updateSteps(false);
+setupForge13({getCommission:()=>current});
 window.__HF_SKIN11_FACTORY__=Object.freeze({snapshot,latest:()=>current});

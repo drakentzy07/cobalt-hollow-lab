@@ -24,7 +24,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 #preview{display:none;max-width:100%;max-height:220px;object-fit:contain;border-radius:9px;border:1px solid #516782;background:#0e1d2b}
 #status{color:#f7d089;font-weight:550;min-height:20px}
 #result{white-space:pre-wrap;overflow-wrap:anywhere;background:#0b1a2d;border:1px solid #314762;border-radius:9px;padding:13px;min-height:78px;line-height:1.55;color:#d3e2ed}
-#history{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:7px}#history button{text-align:left;font-size:12px}
+#forge13{border:1px solid #627083;background:linear-gradient(120deg,#17263b,#202332)}#forgeStatus{padding:12px;background:#0d1b2d;border:1px solid #47627b;border-radius:9px;line-height:1.5;color:#d8e8f9}#forgeStatus.offline{border-color:#ac7c46;color:#f5d5a7}#forgeToken{background:#0c1728;border:1px solid #576b86;border-radius:7px;color:#fff;padding:9px;max-width:360px;width:100%}#forgeLive{display:none}#history{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:7px}#history button{text-align:left;font-size:12px}
 .swatches{display:flex;gap:6px;margin:7px 0}.swatches span{width:25px;height:25px;border-radius:7px;border:1px solid #8593a1}
 .note{padding:12px;background:#232d38;border-left:3px solid #caa166;border-radius:7px}
 .good{padding:11px;background:#17322d;border:1px solid #3d806d;border-radius:8px;color:#bee9d0}
@@ -57,6 +57,18 @@ a{color:#9fdbff}footer{padding:15px;color:#a7bbd0;font-size:11px}
 <p class="note">Una foto se procesa localmente para obtener colores e identificación segura. La IA que interpreta sus formas y genera mallas todavía no está conectada.</p>
 <div class="row"><button class="primary" id="build">✨ Preparar mi armadura original</button><button id="export" class="secondary" disabled>⬇ Guardar encargo</button></div>
 <p id="status" role="status">Elegí una idea, escribí tu encargo o subí una referencia.</p></section>
+<section id="forge13" aria-label="Fabricación automática">
+<div class="space"><h2>⚒️ Fabricar en 3D · SKIN 13</h2><span id="forgeBadge" class="kicker">Consultando motor</span></div>
+<p>Una sola acción cuando la forja esté conectada. El servidor recibe el encargo, crea un RUN real en GitHub, ejecuta Blender y devuelve el archivo para revisión. Sin modificar las skins antiguas.</p>
+<div id="forgeStatus" role="status">Conectando con el estado real del servidor…</div>
+<div id="forgeLive">
+<label for="forgeToken">Clave privada del propietario (no se guarda)</label>
+<input id="forgeToken" type="password" autocomplete="off" placeholder="Acceso a la forja">
+</div>
+<div class="row" style="margin-top:10px"><button class="primary" id="fabricate3D" disabled>⚒️ Fabricar armadura en 3D</button><button id="recheckForge">↻ Comprobar motor</button></div>
+<div id="forgeRun" hidden><p>Trabajo en GitHub: <a id="forgeRunLink" href="#" target="_blank" rel="noopener noreferrer">ver RUN</a></p></div>
+<p class="note">El motor de IA visual y los trabajos personalizados necesitan claves seguras del servidor. Mientras no estén configuradas, este botón permanece desactivado. El primer RUN de Eclipse Eterno es un <b>prototipo procedural</b>, no una armadura premium aprobada.</p>
+</section>
 <section id="outcome"><div class="space"><h2>Tu diseño y el avance de fabricación</h2><span id="stageLabel" class="kicker">Sin encargo</span></div>
 <div id="result" role="status" aria-live="polite">Acá aparecerá tu diseño personalizado y lo que falta para verlo en 3D.</div>
 <div class="stage"><div class="mark">✓ Diseño original · sin copiar otras skins</div>
