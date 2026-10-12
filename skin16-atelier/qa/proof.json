@@ -1,0 +1,286 @@
+{
+  "schema": "highfly.skin13.geometry-technical-proof/1",
+  "jobId": "hf13-eclipse-eterno-demonstration-01",
+  "style": "eclipse",
+  "prompt": "Eclipse Eterno: armadura negra de acero pulido y plata vieja, yelmo cerrado proporcional con visor violeta, hombreras curvas asimetricas, pechera anatomica con gema violeta, grebas esculpidas y espaldar articulado sin placas flotantes. Fabricar mallas originales sin usar triangulos del Paladin.",
+  "designBlueprintName": "Eclipse Eterno / Royal Obsidian Violet",
+  "designBlueprintSource": "HUMAN_SELECTED_CONCEPT_ART_DIRECTED",
+  "designReference": "BLACK_SILVER_VIOLET_3_VIEW_APPROVED_VISUAL_REFERENCE",
+  "originalArtworkAdaptation": "UNAPPROVED_GEOMETRY_INTERPRETATION",
+  "worker": "BLENDER_AUTHOR_DIRECTED_ECLIPSE_CONCEPT_RIGGED",
+  "freshOriginalGeometry": true,
+  "copiedSourceTriangles": 0,
+  "donorMeshesUsedOnlyForFitAndWeights": true,
+  "nativeRig": "Rig_Medium",
+  "originalRigBones": 23,
+  "originalAnimationClips": 22,
+  "newSkinnedPieces": 11,
+  "newVertices": 4402,
+  "newPolygonFaces": 4677,
+  "newSculpturalDetails": 64,
+  "nativeBodyParts": 11,
+  "glbSha256": "3279ea4c8aff406b7239925ec1d2ea506da386bcb801b1a96cc85c0620653b81",
+  "glbBytes": 1632628,
+  "skinsInGltf": 1,
+  "animationTracksInGltf": 22,
+  "visualArtQaPassed": false,
+  "maleFemaleFitVerified": false,
+  "reviewScreenshots": [
+    {
+      "view": "front",
+      "filename": "hf13-eclipse-eterno-demonstration-01-front.png",
+      "bytes": 459603
+    },
+    {
+      "view": "profile",
+      "filename": "hf13-eclipse-eterno-demonstration-01-profile.png",
+      "bytes": 439559
+    },
+    {
+      "view": "back",
+      "filename": "hf13-eclipse-eterno-demonstration-01-back.png",
+      "bytes": 421973
+    }
+  ],
+  "reviewAnglesRendered": 3,
+  "qaHiddenOriginalVariants": 237,
+  "qaVisibleBodyPieces": [
+    "M_ArmL",
+    "M_ArmR",
+    "M_FootL",
+    "M_FootR",
+    "M_HandL",
+    "M_HandR",
+    "M_Head",
+    "M_LegL",
+    "M_LegR",
+    "M_Loin",
+    "M_Torso"
+  ],
+  "artistApproved": false,
+  "artApproved": false,
+  "gameDeployed": false,
+  "outcome": "TECHNICAL_GLTF_CREATED_AWAITING_ARTISTIC_AND_MOBILE_REVIEW",
+  "anatomyReferenceBodyMeshes": {
+    "Head": "M_Head",
+    "Chest": "M_Torso",
+    "Back": "M_Torso",
+    "ArmL": "M_ArmL",
+    "ArmR": "M_ArmR",
+    "HandL": "M_HandL",
+    "HandR": "M_HandR",
+    "LegL": "M_LegL",
+    "LegR": "M_LegR",
+    "FootL": "M_FootL",
+    "FootR": "M_FootR"
+  },
+  "pieces": {
+    "Head": {
+      "freshVertices": 614,
+      "freshFaces": 672,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.5289389687776566,
+        0.6079629236459732,
+        0.49511528134346006
+      ],
+      "sculpturalPanels": [
+        "helmet-brow-chevron",
+        "faceplate",
+        "long-violet-visor",
+        "visor-keel",
+        "silver-nose-bevel",
+        "left-helmet-cheek",
+        "right-helmet-cheek",
+        "forehead-chrome-setting",
+        "forehead-violet-crystal",
+        "crown-black-blade",
+        "left-silver-ear-wing",
+        "left-violet-inner-wing",
+        "right-silver-ear-wing",
+        "right-violet-inner-wing"
+      ]
+    },
+    "Chest": {
+      "freshVertices": 584,
+      "freshFaces": 637,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.3077663773298263,
+        0.1741132210493088,
+        0.4949957251548768
+      ],
+      "sculpturalPanels": [
+        "armored-collar",
+        "chest-left-lamella",
+        "chest-right-lamella",
+        "chest-black-center",
+        "chest-inner-silver-vee",
+        "chest-violet-setting",
+        "chest-violet-gem",
+        "abdominal-silver-lamella",
+        "belt-silver",
+        "belt-violet-clasp",
+        "front-purple-tabard",
+        "front-tabard-silver-edge",
+        "front-tabard-emblem"
+      ]
+    },
+    "ArmL": {
+      "freshVertices": 384,
+      "freshFaces": 407,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.1680126631259918,
+        0.12759348899126055,
+        0.12760399580001833
+      ],
+      "sculpturalPanels": [
+        "pauldron-shell",
+        "pauldron-silver-layer",
+        "pauldron-violet-channel",
+        "pauldron-upper-horn",
+        "pauldron-wrist"
+      ]
+    },
+    "ArmR": {
+      "freshVertices": 380,
+      "freshFaces": 402,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.1680126631259918,
+        0.12759348899126055,
+        0.12760399580001833
+      ],
+      "sculpturalPanels": [
+        "pauldron-shell",
+        "pauldron-silver-layer",
+        "pauldron-violet-channel",
+        "pauldron-upper-horn",
+        "pauldron-wrist"
+      ]
+    },
+    "HandL": {
+      "freshVertices": 324,
+      "freshFaces": 337,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.08976339697837829,
+        0.09497406855225564,
+        0.0910644292831421
+      ],
+      "sculpturalPanels": [
+        "gauntlet-core",
+        "gauntlet-finger-silver",
+        "gauntlet-violet-crest"
+      ]
+    },
+    "HandR": {
+      "freshVertices": 324,
+      "freshFaces": 337,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.08976339697837829,
+        0.09497407674789429,
+        0.0910644292831421
+      ],
+      "sculpturalPanels": [
+        "gauntlet-core",
+        "gauntlet-finger-silver",
+        "gauntlet-violet-crest"
+      ]
+    },
+    "LegL": {
+      "freshVertices": 350,
+      "freshFaces": 367,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.11799402303993702,
+        0.0902089111506939,
+        0.22275417223572733
+      ],
+      "sculpturalPanels": [
+        "greave-main",
+        "greave-silver-outer",
+        "greave-violet-diamond",
+        "knee-chevron"
+      ]
+    },
+    "LegR": {
+      "freshVertices": 350,
+      "freshFaces": 367,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.11799403153359889,
+        0.0902089111506939,
+        0.22275420501828194
+      ],
+      "sculpturalPanels": [
+        "greave-main",
+        "greave-silver-outer",
+        "greave-violet-diamond",
+        "knee-chevron"
+      ]
+    },
+    "FootL": {
+      "freshVertices": 328,
+      "freshFaces": 342,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.09746835015714168,
+        0.15652996562421323,
+        0.06980006005614997
+      ],
+      "sculpturalPanels": [
+        "boot-front-shell",
+        "boot-chrome-toe",
+        "boot-violet-line"
+      ]
+    },
+    "FootR": {
+      "freshVertices": 328,
+      "freshFaces": 342,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.09746835440397261,
+        0.15652999430894854,
+        0.06980005595833064
+      ],
+      "sculpturalPanels": [
+        "boot-front-shell",
+        "boot-chrome-toe",
+        "boot-violet-line"
+      ]
+    },
+    "Back": {
+      "freshVertices": 436,
+      "freshFaces": 467,
+      "sourceTrianglesCopied": 0,
+      "allVerticesSkinned": true,
+      "radiiLocal": [
+        0.29266721963882447,
+        0.10828687126636506,
+        0.4949957251548768
+      ],
+      "sculpturalPanels": [
+        "dorsal-plate",
+        "back-shoulder-silver-edge",
+        "back-central-chrome-setting",
+        "back-violet-gem",
+        "purple-back-cloth",
+        "cape-bright-border",
+        "cape-violet-symbol"
+      ]
+    }
+  }
+}

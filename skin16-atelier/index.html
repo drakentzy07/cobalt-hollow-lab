@@ -1,0 +1,85 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0c1627">
+<title>HIGHFLY · SKIN16 · Eclipse Eterno sobre el Hunter modular</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b1323;color:#eaf0fc;font:14px system-ui,-apple-system,sans-serif}
+header{background:#151d31;padding:13px 17px;border-bottom:1px solid #3c4963}h1{font-size:18px;color:#ebd1a2;margin:0 0 6px}
+small{color:#9bb1c9}main{margin:auto;max-width:1250px;padding:12px;display:grid;gap:10px}
+#viewer{height:clamp(360px,66vh,730px);position:relative;border:1px solid #56677e;border-radius:13px;overflow:hidden;background:radial-gradient(ellipse at center,#253049,#0a1120)}
+#viewer canvas{width:100%;height:100%;touch-action:none;display:block}
+#status{position:absolute;top:8px;left:9px;right:9px;padding:9px;color:#ecd49c;background:#121a2ee0;border-radius:8px;font-size:12px;pointer-events:none}
+fieldset{border:1px solid #485974;border-radius:11px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px}
+button,select{background:#233550;border:1px solid #69839f;color:white;padding:9px;border-radius:8px;font:inherit;min-height:41px}
+button.active{background:#80613b;border-color:#e5c28b}button:disabled{opacity:.5}label{color:#ced6e8}
+select{max-width:190px}
+summary{cursor:pointer;color:#c4dffb}p{line-height:1.5;margin:4px 0;color:#bacce0}
+@media(max-width:560px){main{padding:6px}#viewer{height:68vh}header{padding:8px}h1{font-size:15px}fieldset{padding:6px}button,select{padding:7px;font-size:12px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+</head><body>
+<header><h1>⚔️ HIGHFLY · SKIN 16 — Eclipse Eterno · Hunter modular auténtico</h1><small>Laboratorio aislado · ClaudeCraft Rig_Medium · 22 animaciones originales · prototipo artístico NO aprobado</small></header>
+<main>
+<div id="viewer"><div id="status" role="status">Cargando GLB original + armadura nueva del laboratorio…</div></div>
+<fieldset>
+<button id="armor" class="active" disabled>Armadura: SI</button>
+<label for="clips">Movimiento</label><select id="clips" disabled><option>Cargando movimientos…</option></select>
+<button id="play" disabled>⏸ Pausar</button>
+<button id="rotate" disabled>↻ Rotación auto</button>
+<button id="reset" disabled>Enfocar</button>
+<label for="speed">Velocidad</label><select id="speed" disabled><option value=".6">0.6×</option><option value="1" selected>1×</option><option value="1.4">1.4×</option></select>
+</fieldset>
+<p><strong>Prueba auténtica:</strong> el mismo GLB contiene las piezas corporales M_* del Hunter, un único esqueleto Rig_Medium, las piezas de armadura HF16 nuevas y los 22 clips heredados. Apagá la armadura para comparar el cuerpo original. Mové el dedo sobre el personaje para girarlo.</p>
+<details><summary>Alcance y estado de validación</summary><p>El diseño está inspirado en la armadura negra, plata y violeta elegida. El modelado procedural no garantiza una reproducción exacta de la ilustración: requiere evaluación visual humana, pruebas físicas S23 Ultra y verificación adicional de clipping en cada movimiento. No está integrado al juego HIGHFLY público.</p></details>
+</main>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const ASSET='https://raw.githubusercontent.com/drakentzy07/cobalt-hollow-lab/highfly-skin16-preview-assets/skin16-atelier/assets/HF16-ECLIPSE-NATIVE-RIG-22-CLIPS.glb';
+const $=s=>document.querySelector(s),host=$('#viewer');
+let model,mixer,actions=[],clips=[],clock=new THREE.Clock(),auto=false,armor=true,paused=false,center=new THREE.Vector3(),span=2;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0b1424);
+const camera=new THREE.PerspectiveCamera(42,1,.02,100);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.setSize(host.clientWidth,host.clientHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;
+host.append(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xd9e6ff,0x47506b,2.6));
+for(const [color,power,pos] of [[0xffffff,3,[4,-5,8]],[0xa674ff,3,[-4,3,5]],[0x6680ff,2,[0,5,-4]]]){
+const light=new THREE.DirectionalLight(color,power);light.position.set(...pos);scene.add(light)
+}
+const floor=new THREE.GridHelper(12,20,0x42546d,0x203046);scene.add(floor);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.enablePan=false;
+function frame(){
+ if(!model)return;
+ const b=new THREE.Box3().setFromObject(model);b.getCenter(center);span=Math.max(b.getSize(new THREE.Vector3()).length(),.5);
+ controls.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(span*.9,-span*1.35,span*.65));
+ camera.near=Math.max(.01,span*.002);camera.far=span*20;camera.updateProjectionMatrix();controls.update();
+ floor.position.y=b.min.y-.015;
+}
+function displayError(e){$('#status').textContent='NO DISPONIBLE: '+String(e?.message||e).slice(0,240)+' · Revisá el RUN y el enlace del artefacto. La skin no está aprobada.'}
+new GLTFLoader().load(ASSET,gltf=>{
+ model=gltf.scene;scene.add(model);
+ const skeleton=[];let base=0,skin=0;
+ model.traverse(o=>{
+  if(o.isSkinnedMesh){skeleton.push(o.name);if(o.name.startsWith('HF13NEW_'))skin++;if(/^M_(Head|Torso|ArmL|ArmR|HandL|HandR|LegL|LegR|FootL|FootR|Loin)$/.test(o.name))base++}
+  if(o.isMesh){o.frustumCulled=false;if(o.material){const mm=Array.isArray(o.material)?o.material:[o.material];for(const m of mm){if(m.name?.includes('VIOLET')||m.name?.includes('ENERGY')||m.name?.includes('CRYSTAL')){m.emissive=new THREE.Color(0x590baf);m.emissiveIntensity=.6}}}}
+ });
+ clips=gltf.animations;
+ if(skin!==11||base<9||clips.length!==22)throw Error('GLB no conserva el cuerpo, las 11 piezas o las 22 animaciones');
+ mixer=new THREE.AnimationMixer(model);
+ const select=$('#clips');select.replaceChildren();for(let i=0;i<clips.length;i++){let o=document.createElement('option');o.value=i;o.textContent=clips[i].name;select.append(o)}
+ let idle=clips.findIndex(c=>/idle/i.test(c.name));select.value=String(Math.max(0,idle));
+ function start(index){for(const a of actions)a.stop();actions=[];const a=mixer.clipAction(clips[index]);a.reset().play();actions.push(a);mixer.timeScale=Number($('#speed').value);paused=false;$('#play').textContent='⏸ Pausar'}
+ select.onchange=()=>start(Number(select.value));
+ $('#play').onclick=()=>{paused=!paused;mixer.timeScale=paused?0:Number($('#speed').value);$('#play').textContent=paused?'▶ Reanudar':'⏸ Pausar'};
+ $('#speed').onchange=()=>{if(!paused)mixer.timeScale=Number($('#speed').value)};
+ $('#armor').onclick=()=>{armor=!armor;model.traverse(o=>{if(o.isMesh&&o.name.startsWith('HF13NEW_'))o.visible=armor});$('#armor').textContent='Armadura: '+(armor?'SI':'NO');$('#armor').classList.toggle('active',armor)};
+ $('#reset').onclick=frame;$('#rotate').onclick=()=>{auto=!auto;controls.autoRotate=auto;controls.autoRotateSpeed=1;$('#rotate').classList.toggle('active',auto)};
+ for(const ctl of ['#armor','#clips','#play','#speed','#reset','#rotate'])$(ctl).disabled=false;
+ start(Number(select.value));frame();$('#status').textContent='✅ Modelo real cargado: '+base+' piezas corporales, '+skin+' partes nuevas, '+clips.length+' movimientos · REVISIÓN ARTÍSTICA PENDIENTE';
+ window.HIGHFLY_SKIN16={nativeBase:base,uniqueArmor:skin,clips:clips.length,modelLoaded:true};
+},p=>{if(p.total)$('#status').textContent='Cargando armadura '+Math.round(p.loaded/p.total*100)+'%';},displayError);
+function tick(){requestAnimationFrame(tick);const dt=Math.min(.05,clock.getDelta());if(mixer)mixer.update(dt);controls.update();renderer.render(scene,camera)}
+tick();
+const observer=new ResizeObserver(()=>{const w=host.clientWidth,h=host.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h)});observer.observe(host);
+</script></body></html>
