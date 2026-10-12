@@ -198,9 +198,11 @@ export function highflyV91UnawareStealthBackstab(
 }
 """,encoding="utf-8")
 cast="src/sim/combat/casting_lifecycle.ts"
-once(cast,
-    "import {",
-    "import { highflyV91UnawareStealthBackstab } from './highfly_v91_rogue_opener';\nimport {")
+cast_path=Path(cast)
+cast_source=cast_path.read_text(encoding="utf-8")
+if "highfly_v91_rogue_opener" in cast_source:
+    raise SystemExit("V91_ROGUE_IMPORT_ALREADY_PRESENT")
+cast_path.write_text("import { highflyV91UnawareStealthBackstab } from './highfly_v91_rogue_opener';\\n".replace('\\n','\n') + cast_source, encoding="utf-8")
 once(cast,
     """        // Shadow-wreathed (or about to detonate a full Gloam bank), the""",
     """        // V9.1 Rogue: opening from genuine stealth against an UNAWARE mob
