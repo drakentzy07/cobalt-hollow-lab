@@ -1,0 +1,63 @@
+name: HIGHFLY SKIN12 — SIMPLE ARMOR FACTORY UX + ECLIPSE ETERNO (ISOLATED)
+on:
+  push:
+    branches: [highfly-skin12-easy-factory-ux]
+    paths: ['character-truth/skin11-original-factory/**','.github/workflows/skin12-easy-factory-ux.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  mobile-intuitive-factory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0,persist-credentials: false}
+      - name: Hard isolation old skins + public game, check real contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only 7c92db4c61fd4c67bfdf0b3be4252358bf06c08a HEAD | tee /tmp/skin12-diff.txt
+          while IFS= read -r f; do
+            case "$f" in
+              character-truth/skin11-original-factory/*|.github/workflows/skin12-easy-factory-ux.yml) ;;
+              *) echo "SKIN12_PUBLIC_GAME_OR_OTHER_SKIN_MODIFICATION_FORBIDDEN:$f";exit 43;;
+            esac
+          done < /tmp/skin12-diff.txt
+          node character-truth/skin11-original-factory/skin11-original-factory-core.test.mjs
+          node --check character-truth/skin11-original-factory/skin11-original-factory-ui.mjs
+          node --check character-truth/skin11-original-factory/skin12-ux-qa.cjs
+          echo SKIN12_NO_PUBLIC_GAME_OR_LEGACY_DEFORMATION_GREEN=1
+      - name: Mobile browser install
+        shell: bash
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run original input and improved 5-preset easy builder browser QA
+        shell: bash
+        timeout-minutes: 6
+        env:
+          SKIN11_TEST_URL: http://127.0.0.1:4777/
+          SKIN11_QA_DIR: character-truth/skin11-original-factory/qa-proof
+          SKIN12_QA_DIR: character-truth/skin11-original-factory/skin12-qa
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4777 --bind 127.0.0.1 --directory character-truth/skin11-original-factory >/tmp/hf12-server.log 2>&1 &
+          sleep 2
+          node character-truth/skin11-original-factory/skin11-original-factory-browser-qa.cjs
+          node character-truth/skin11-original-factory/skin12-ux-qa.cjs
+          grep -F '"green": true' character-truth/skin11-original-factory/qa-proof/gate.json
+          grep -F '"green": true' character-truth/skin11-original-factory/skin12-qa/gate.json
+          grep -F '"auto3DGenerated": false' character-truth/skin11-original-factory/skin12-qa/gate.json
+          echo HIGHFLY_SKIN12_EASY_ECLIPSE_FIRST_BRIEF_5_PRESETS_BROWSER_GREEN=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-SKIN12-SIMPLE-ORIGINAL-ARMOR-FACTORY-WEB-AND-SCREENSHOTS
+          path: |
+            character-truth/skin11-original-factory/index.html
+            character-truth/skin11-original-factory/skin11-original-factory-core.mjs
+            character-truth/skin11-original-factory/skin11-original-factory-ui.mjs
+            character-truth/skin11-original-factory/qa-proof/
+            character-truth/skin11-original-factory/skin12-qa/
+          retention-days: 21
+          if-no-files-found: warn
