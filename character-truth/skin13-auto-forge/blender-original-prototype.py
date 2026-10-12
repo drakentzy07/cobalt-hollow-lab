@@ -58,18 +58,41 @@ maxima={
  'Back':(.54,.37,.72)
 }
 verts_total=0;faces_total=0;stats={};objects=[]
+BODY_SOURCE={'Head':'M_Head','Chest':'M_Torso','Back':'M_Torso',
+ 'ArmL':'M_ArmL','ArmR':'M_ArmR','HandL':'M_HandL','HandR':'M_HandR',
+ 'LegL':'M_LegL','LegR':'M_LegR','FootL':'M_FootL','FootR':'M_FootR'}
 def create_surface(slot,donor):
  source=[v.co.copy() for v in donor.data.vertices]
- lo=[min(v[k] for v in source) for k in range(3)]
- hi=[max(v[k] for v in source) for k in range(3)]
+ # Critical SKIN13-C improvement: use the *body itself*, not any previous
+ # armor's bounding box, to position and proportion the freshly-made mesh.
+ # These body positions are measurement-only, not vertices for topology.
+ ref=bpy.data.objects.get(BODY_SOURCE[slot])
+ assert ref and ref.type=='MESH' and ref.data.vertices,'NATIVE_BODY_SLOT_MISSING_'+slot
+ into_donor=donor.matrix_world.inverted_safe()
+ body=[into_donor@(ref.matrix_world @ v.co) for v in ref.data.vertices]
+ lo=[min(v[k] for v in body) for k in range(3)]
+ hi=[max(v[k] for v in body) for k in range(3)]
  ctr=[(lo[k]+hi[k])/2 for k in range(3)]
  raw=[max(hi[k]-lo[k],.025) for k in range(3)]
- torso_x=max(tspan.x,.12);torso_z=max(tspan.z,.12)
+ torso_ref=bpy.data.objects['M_Torso']
+ torso_width=max(torso_ref.dimensions.x,.15)
+ torso_height=max(torso_ref.dimensions.z,.20)
  cap=maxima[slot]
- # Bounded by body reference, not unlimited legacy armor bounds.
- sx=min(raw[0]*.49,torso_x*cap[0]);sy=min(raw[1]*.43,torso_x*cap[1])
- sz=min(raw[2]*.49,torso_z*cap[2])
- sx=max(sx,.018);sy=max(sy,.018);sz=max(sz,.025)
+ if slot=='Head':
+  # This must fully encompass the actual native head: no tiny crown perched
+  # above a visible naked face, as happened in the previous technical prototype.
+  sx=raw[0]*.59;sy=raw[1]*.61;sz=raw[2]*.59
+ else:
+  sx=min(raw[0]*.57,torso_width*cap[0])
+  sy=min(raw[1]*.55,torso_width*cap[1])
+  sz=min(raw[2]*.55,torso_height*cap[2])
+ sx=max(sx,.022);sy=max(sy,.022);sz=max(sz,.028)
+ if slot=='Chest':
+  ctr[1]-=raw[1]*.20
+  sy*=.82
+ if slot=='Back':
+  ctr[1]+=raw[1]*.34
+  sy*=.54
  verts=[];faces=[];mi=[]
  rings=11;steps=24
  # Oval hardened shells: 264+ independent vertices and curved faces/slot.
@@ -235,7 +258,7 @@ report={
  'qaHiddenOriginalVariants':len(qa_hidden),'qaVisibleBodyPieces':qa_body,
  'artistApproved':False,'artApproved':False,'gameDeployed':False,
  'outcome':'TECHNICAL_GLTF_CREATED_AWAITING_ARTISTIC_AND_MOBILE_REVIEW',
- 'pieces':stats
+ 'anatomyReferenceBodyMeshes':BODY_SOURCE,'pieces':stats
 }
 proofpath.parent.mkdir(parents=True,exist_ok=True)
 proofpath.write_text(json.dumps(report,ensure_ascii=False,indent=2))
