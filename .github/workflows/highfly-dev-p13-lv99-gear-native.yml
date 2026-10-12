@@ -7,12 +7,14 @@ on:
       - highfly-dev-main
       - highfly-golden-dev1-p14-trainer-e2e
       - highfly-golden-dev2-lv99-economy-real-loot
+      - highfly-golden-dev3-gold-economy-ledger
     paths:
       - .github/workflows/highfly-dev-p13-lv99-gear-native.yml
       - professions/p13/highfly_lv99_native_equipment.ts
       - professions/p13/highfly_lv99_native_equipment.test.ts
       - professions/p14/highfly_p14_trainer_native_15_paths.test.ts
       - professions/p14/highfly_dev2_lv99_economy_native_loot.test.ts
+      - professions/p14/highfly_dev3_native_gold_economy.test.ts
       - professions/p14/highfly_gem_attribute_expansion_foundation.test.ts
       - professions/p13/highfly_full_227_recipes_catalog.test.ts
       - professions/p13/highfly_complete_native_1_99_catalog.test.ts
@@ -539,6 +541,7 @@ jobs:
           cp ../professions/p13/highfly_lv99_native_equipment.test.ts tests/highfly_lv99_native_equipment.test.ts
           cp ../professions/p14/highfly_p14_trainer_native_15_paths.test.ts tests/highfly_p14_trainer_native_15_paths.test.ts
           cp ../professions/p14/highfly_dev2_lv99_economy_native_loot.test.ts tests/highfly_dev2_lv99_economy_native_loot.test.ts
+          cp ../professions/p14/highfly_dev3_native_gold_economy.test.ts tests/highfly_dev3_native_gold_economy.test.ts
           cp ../professions/p14/highfly_gem_attribute_expansion_foundation.test.ts tests/highfly_gem_attribute_expansion_foundation.test.ts
           cp ../professions/p13/highfly_full_227_recipes_catalog.test.ts tests/highfly_full_227_recipes_catalog.test.ts
           cp ../professions/p13/highfly_complete_native_1_99_catalog.test.ts tests/highfly_complete_native_1_99_catalog.test.ts
@@ -657,7 +660,7 @@ jobs:
           VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
         run: |
           set -euo pipefail
-          pnpm exec vitest run tests/highfly_lv99_native_equipment.test.ts tests/highfly_p14_trainer_native_15_paths.test.ts tests/highfly_dev2_lv99_economy_native_loot.test.ts
+          pnpm exec vitest run tests/highfly_lv99_native_equipment.test.ts tests/highfly_p14_trainer_native_15_paths.test.ts tests/highfly_dev2_lv99_economy_native_loot.test.ts tests/highfly_dev3_native_gold_economy.test.ts
           test -s ../highfly_golden_dev2_1_99_band_economy_audit.json
           echo 'HF_GOLDEN_DEV2_REAL_CHANCE_CORPSE_TRAINER_FORGE_SAVE_GREEN=1'
           echo 'HF_P13_15_REAL_LV50_99_ITEMS_15_RECIPES_9_CLASS_MATERIAL_NATIVE_GREEN=1'
@@ -667,6 +670,14 @@ jobs:
         with:
           name: HIGHFLY-GOLDEN-DEV2-REAL-NATIVE-ECONOMY-11-BANDS-NO-DEPLOY
           path: highfly_golden_dev2_1_99_band_economy_audit.json
+          if-no-files-found: warn
+          retention-days: 21
+      - name: Archive native DEV3 gold economy inflow/outflow and progression gaps (NO DEPLOY)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-GOLDEN-DEV3-ORIGINAL-COPPER-MONEY-LEDGER-NO-DEPLOY
+          path: highfly_golden_dev3_lv1_99_gold_faucets_sinks.json
           if-no-files-found: warn
           retention-days: 21
       - name: P13 — emit EVERY native recipe and exact quantities by each Hunter level 1–99
