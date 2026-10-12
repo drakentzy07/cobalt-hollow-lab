@@ -3,7 +3,7 @@ name: HIGHFLY SUPREME — Unified REAL WebGL S23 Preview (NO DEPLOY)
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
   push:
-    branches: [highfly-golden-v4031-predeploy-tar-safe]
+    branches: [highfly-supreme-v9-p0-target-training-rogue]
     paths: [".github/workflows/highfly-supreme-integrated-candidate-s23-no-deploy.yml"]
   workflow_dispatch:
 permissions:
@@ -21,7 +21,7 @@ jobs:
         with:
           # Frozen QA commit: real native captain, nine classes each won.
           # Deliberately immutable to avoid a moving dev branch changing the release.
-          ref: 8a3ddc93c9147e8c3320c04d4d2a13896b11e063
+          ref: ${{ github.sha }}
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
@@ -522,6 +522,24 @@ jobs:
           python3 ../professions/p16/activate_p16_armor.py
           git diff --check HEAD
           echo 'HF_P13_EXISTING_ITEM_RECIPES_RUNTIME_EXTENDED_50_99_DEV_ONLY=1'
+      - name: V9 P0 repairs - real assembled runtime, no LV99 content or save mutations
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../overlays/highfly_v9_p0_corrections.py
+          cp ../game/c1/highfly_v9_p0_regression.test.ts tests/highfly_v9_p0_regression.test.ts
+          git diff --check HEAD
+          grep -Fq 'HIGHFLY V9 P0' src/styles/shell.css
+          grep -Fq 'currentId: number | null = null' src/game/auto_target.ts
+          echo 'HF_V9_P0_TARGET_360_TRAINING_HEADER_ROGUE90_APPLIED=1'
+      - name: V9 P0 targeted automated regression before all existing SUPREME gates
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/highfly_v9_p0_regression.test.ts
+          echo 'HF_V9_P0_NATIVE_TARGET_STEALTH_REGRESSION_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -589,13 +607,14 @@ jobs:
           # Separate release QA metadata, NOT a game-play buff or stats edit.
           import json
           (root/'highfly-supreme-qa.json').write_text(json.dumps({
-            'edition':'HIGHFLY SUPREME LV1-99 INTEGRATED',
+            'edition':'HIGHFLY SUPREME V9 P0 CORRECTIONS LV1-99',
             'qaSourceCommit':'8a3ddc93c9147e8c3320c04d4d2a13896b11e063',
             'nineClassesNativeSoloCaptainLv99':True,
             'bossStatOverride':False,'trainingStatInjection':False,
             'playerLevelAndEquipmentAreTestFixtures':True,
             'multipleSeedsCertified':False,'physicalSamsungS23Tested':False,
             'cooperativeMultiDeviceVerified':False,'extended100PlusEnabled':False,
+            'v9Corrections':{'target360':True,'trainingHeaderGrid':True,'rogueStealth90':True},
             'testType':'native-sim plus simulated S23 browser smoke; player manual QA needed'
           },indent=2),encoding='utf-8')
           assert (root/'index.html').is_file()
