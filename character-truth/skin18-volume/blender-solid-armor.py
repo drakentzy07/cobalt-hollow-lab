@@ -289,11 +289,11 @@ def add_forged_plate(verts,faces,mi,ctr,sx,sy,sz,outline,color,face_side=-1.0):
 # sculpted armor silhouettes, NOT wrapped strips on the body.
 # The source BODY gives dimensions, native Paladin only the bind weights.
 SCALE={
- 'Head':(1.16,1.24,1.13), 'Chest':(1.38,1.47,1.10),
- 'ArmL':(1.40,1.40,1.05),'ArmR':(1.40,1.40,1.05),
- 'HandL':(1.33,1.34,1.12),'HandR':(1.33,1.34,1.12),
- 'LegL':(1.35,1.35,1.08),'LegR':(1.35,1.35,1.08),
- 'FootL':(1.42,1.54,1.16),'FootR':(1.42,1.54,1.16),
+ 'Head':(1.12,1.12,1.08), 'Chest':(1.35,1.30,1.05),
+ 'ArmL':(1.29,1.30,1.05),'ArmR':(1.29,1.30,1.05),
+ 'HandL':(1.26,1.30,1.12),'HandR':(1.26,1.30,1.12),
+ 'LegL':(1.24,1.26,1.08),'LegR':(1.24,1.26,1.08),
+ 'FootL':(1.33,1.42,1.16),'FootR':(1.33,1.42,1.16),
  'Back':(1.20,1.34,1.12)
 }
 solid_counts={};fit_data={}
@@ -394,13 +394,14 @@ def create_surface(slot,donor):
   center.y+=raw[1]*.25
   hy*=.58 # dorsal only; avoid encasing the body twice
  verts=[];faces=[];mi=[];solids=0
- solids+=add_solid_hull(verts,faces,mi,center,hx,hy,hz,0)
+ solids+=add_solid_hull(verts,faces,mi,center,hx,hy,hz,0,
+   profile=[(-1,.65),(-.78,.96),(.38,1.0),(.74,.85),(1,.56)] if slot=='Head' else None)
  # Per-slot real solid, multi-layer armor pieces
  if slot=='Head':
   # Closed helmet with full-face 3D cheek shields and protruding brow/visor
   solids+=add_solid_plate(verts,faces,mi,center,hx,hy,hz,
     [(-.84,.62),(-.40,.82),(.40,.82),(.84,.62),(.78,-.48),
-    (.34,-.90),(0,-1.03),(-.34,-.90),(-.78,-.48)],0,depth=.43)
+    (.34,-.90),(0,-1.03),(-.34,-.90),(-.78,-.48)],0,depth=.32)
   for side in [-1,1]:
    solids+=add_horn(verts,faces,mi,
     center+Vector((side*hx*.80,0,hz*.28)),
@@ -408,19 +409,19 @@ def create_surface(slot,donor):
     min(hx,hy)*.26,1)
   solids+=add_solid_plate(verts,faces,mi,center,hx,hy,hz,
     [(-.68,.33),(-.22,.26),(0,.20),(.22,.26),(.68,.33),
-     (.58,.14),(0,.07),(-.58,.14)],2,depth=.71)
+     (.58,.14),(0,.07),(-.58,.14)],2,depth=.54)
   solids+=add_solid_plate(verts,faces,mi,center,hx,hy,hz,
-    [(-.23,.64),(0,.94),(.23,.64),(0,.34)],2,depth=.68)
+    [(-.23,.64),(0,.94),(.23,.64),(0,.34)],2,depth=.55)
  elif slot=='Chest':
   solids+=add_solid_plate(verts,faces,mi,center,hx,hy,hz,
    [(-.94,.61),(-.42,.90),(0,.68),(.42,.90),(.94,.61),
-    (.77,-.42),(0,-.86),(-.77,-.42)],0,depth=.70)
+    (.77,-.42),(0,-.86),(-.77,-.42)],0,depth=.51)
   solids+=add_solid_plate(verts,faces,mi,center,hx,hy,hz,
-   [(-.9,.58),(-.38,.70),(-.10,.29),(-.42,-.23),(-.80,-.23)],1,depth=.85)
+   [(-.9,.58),(-.38,.70),(-.10,.29),(-.42,-.23),(-.80,-.23)],1,depth=.65)
   solids+=add_solid_plate(verts,faces,mi,center,hx,hy,hz,
-   [(.9,.58),(.38,.70),(.10,.29),(.42,-.23),(.80,-.23)],1,depth=.85)
+   [(.9,.58),(.38,.70),(.10,.29),(.42,-.23),(.80,-.23)],1,depth=.65)
   solids+=add_solid_plate(verts,faces,mi,center,hx,hy,hz,
-   [(0,.52),(.26,.10),(0,-.28),(-.26,.10)],2,depth=.95)
+   [(0,.52),(.26,.10),(0,-.28),(-.26,.10)],2,depth=.74)
   solids+=add_solid_plate(verts,faces,mi,center,hx,hy,hz,
    [(-.70,-.58),(0,-.85),(.70,-.58),(.59,-.92),
     (0,-1.07),(-.59,-.92)],1,depth=.57)
@@ -429,14 +430,14 @@ def create_surface(slot,donor):
   # distinct from arm tube. Asymmetric far-out solid crescent fins.
   outward=1 if slot=='ArmR' else -1
   upper=center+Vector((outward*hx*.22,0,hz*.67))
-  solids+=add_solid_hull(verts,faces,mi,upper,hx*1.28,hy*1.24,hz*.40,1,
+  solids+=add_solid_hull(verts,faces,mi,upper,hx*1.16,hy*1.17,hz*.38,1,
        profile=[(-1,.75),(-.6,1.08),(.38,1.06),(.94,.58)])
-  solids+=add_solid_plate(verts,faces,mi,upper,hx*1.24,hy*1.20,hz*.44,
+  solids+=add_solid_plate(verts,faces,mi,upper,hx*1.16,hy*1.15,hz*.41,
     [(-.94,.26),(-.55,.89),(.27,1.10),(.94,.63),(.90,-.13),
      (.26,-.52),(-.51,-.48)],1,depth=.49)
   solids+=add_horn(verts,faces,mi,
     upper+Vector((outward*hx*.65,0,hz*.16)),
-    upper+Vector((outward*hx*1.54,-hy*.10,hz*.88)),
+    upper+Vector((outward*hx*1.38,-hy*.10,hz*.73)),
     min(hx,hy)*.30,1)
   solids+=add_solid_plate(verts,faces,mi,center,hx,hy,hz,
    [(-.76,-.25),(0,-.09),(.76,-.25),(.63,-.90),
@@ -607,6 +608,7 @@ report={
  'designBlueprintName':design['name'],'designBlueprintSource':design['source'],
  'designReference':design['designReference'],'originalArtworkAdaptation':'UNAPPROVED_GEOMETRY_INTERPRETATION',
  'worker':'BLENDER_SKIN18_REAL_VOLUMETRIC_SOLID_ARMOR_BOUND_TO_NATIVE_RIG',
+ 'designRevision':'VOLUME_BLOCKOUT_V2_ANATOMICAL_PROPORTIONS',
  'freshOriginalGeometry':True,'copiedSourceTriangles':0,'donorMeshesUsedOnlyForFitAndWeights':True,
  'nativeRig':'Rig_Medium','originalRigBones':23,'originalAnimationClips':22,
  'newSkinnedPieces':len(objects),'newVertices':verts_total,'newPolygonFaces':faces_total,
