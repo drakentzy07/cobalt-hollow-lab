@@ -1,4 +1,4 @@
-// QA re-run after live diagnostic GLTF count fix; no public HIGHFLY changes.
+// QA rerun: GLTFLoader splits armor by material into HF13_TRUE_NEW_MESH_* primitives; count unique logical 11 slots.
 const {chromium}=require('playwright');
 const fs=require('fs');const assert=require('node:assert/strict');
 (async()=>{

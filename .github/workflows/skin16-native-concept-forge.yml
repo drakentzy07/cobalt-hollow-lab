@@ -3,7 +3,8 @@ on:
   push:
     branches: [highfly-skin16-eclipse-concept-native-rig]
     paths:
-      - 'character-truth/skin16-concept/**'
+      - 'character-truth/skin16-concept/blender-violet-concept.py'
+      - 'character-truth/skin16-concept/concept.json'
       - '.github/workflows/skin16-native-concept-forge.yml'
   workflow_dispatch:
 permissions: {contents: write, actions: read}
