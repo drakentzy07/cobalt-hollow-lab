@@ -534,6 +534,9 @@ jobs:
         env:
           VITE_COBALT_OFFLINE: "1"
           VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+          VITE_HIGHFLY_HUNT_PREVIEW: "0"
+          VITE_HIGHFLY_NATIVE_HUNT: "1"
+          VITE_HIGHFLY_OPEN_WORLD_HUNTS: "1"
         run: |
           set -euo pipefail
           node scripts/build_bundle_pregen.mjs
