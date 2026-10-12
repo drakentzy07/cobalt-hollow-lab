@@ -14,7 +14,8 @@ describe('DEV full 227 native recipe material source catalog LV1-99',()=>{
     expect(HIGHFLY_PF6_NORMAL_MAX_LEVEL).toBe(99);
     expect(HIGHFLY_PF6_EXTENDED_ENABLED).toBe(false);
     expect(HIGHFLY_PF6_XP_TABLE).toHaveLength(99);
-    // 212 ClaudeCraft+PR native +15 P13 LV50-90 +6 P15 LV30/40; no parallel registries.\n    expect(ALL_RECIPES.length).toBe(233);
+    // 212 ClaudeCraft+PR native +15 P13 LV50-90 +6 P15 LV30/40; no parallel registries.
+    expect(ALL_RECIPES.length).toBe(233);
     const missingOutputs=ALL_RECIPES.filter(x=>!ITEMS[x.resultItemId]).map(x=>x.id);
     const missingMats=ALL_RECIPES.flatMap(x=>x.reagents
       .filter(y=>!ITEMS[y.itemId]).map(y=>x.id+':'+y.itemId));
