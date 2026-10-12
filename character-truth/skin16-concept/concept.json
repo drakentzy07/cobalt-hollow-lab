@@ -1,0 +1,12 @@
+{
+  "schema": "highfly.skin16.elegant-violet-concept/1",
+  "name": "Eclipse Eterno / Royal Obsidian Violet",
+  "source": "HUMAN_SELECTED_CONCEPT_ART_DIRECTED",
+  "designReference": "BLACK_SILVER_VIOLET_3_VIEW_APPROVED_VISUAL_REFERENCE",
+  "newGeometryOnly": true,
+  "artApproved": false,
+  "brief": "New black obsidian stylized game armor with polished silver bevels, glowing purple eye visor, faceted purple forehead / chest diamonds, elegant silver purple layered shoulder pauldrons, silver violet gloves and boots, dark amethyst cloth front and rear, on genuine M_ body Rig_Medium of ClaudeCraft. Reference image design only; no armor geometry reused. Screenshots front/profile/back and 22 original clips. NOT claiming image-perfect 100% reproduction.",
+  "referenceImageDescription": "approved black silver violet 3-angle chibi armored knight concept shown in chat (front profile back), original generated source image not uploaded to GitHub; authored geometric interpretation",
+  "targetBody": "warrior_modular.glb pinned ClaudeCraft SHA 9b57e49c; Rig_Medium 23 bones",
+  "gameDeployAllowed": false
+}
