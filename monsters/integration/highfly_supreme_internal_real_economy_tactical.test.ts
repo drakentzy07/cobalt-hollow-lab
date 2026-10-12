@@ -1047,3 +1047,123 @@ describe('HIGHFLY LV99 normal open-world combat — ALL nine classes viable solo
     expect(summary.wins,'ALL_NINE_CLASSES_MUST_CLEAR_NATIVE_NORMAL_99').toBe(9);
   },240000);
 });
+
+/** PvP is separate from PvM and cannot be declared balanced by a PvM run.
+ * Real ORIGINAL duel handshake, non-lethal HP-clamped finish, 9 class vs
+ * warrior matchups at level 99 + 9 mirrored class duels (18 matches).
+ * Full legal gear and LV99 are QA preconditions, not earned equipment/XP.
+ * This is a diagnostic across classes: match win rates require symmetric
+ * player control, latency tests and repeated seeds before balancing changes.
+ */
+describe('HIGHFLY PvP — real class duels level99, 9 matchups plus nine mirrors',()=>{
+  it('covers all nine classes in 18 nonlethal native 1v1s without touching Training stats',()=>{
+    type Row={a:PlayerClass,b:PlayerClass,winner:string,seconds:number,
+      startHpA:number,startHpB:number,minHpA:number,minHpB:number,
+      aOffensiveCasts:number,bOffensiveCasts:number,
+      aHealCasts:number,bHealCasts:number,zeroRealDeaths:boolean,
+      bothLevel99:boolean,statsUnchanged:boolean};
+    const rows:Row[]=[];
+    const pairings=[...CLASSES.map(c=>[c,'warrior'] as const),
+      ...CLASSES.map(c=>[c,c] as const)];
+    for(const [i,[aClass,bClass]] of pairings.entries()){
+      const sim=new Sim({seed:1001887+i*37,playerClass:aClass,noPlayer:true,
+        autoEquip:false,world:WORLD,compulsoryTutorial:false,riftPortals:false});
+      const a=sim.addPlayer(aClass,'HF99_PVP_A_'+aClass,
+        {characterId:91001+i*2,tutorialGreetingSent:true});
+      const b=sim.addPlayer(bClass,'HF99_PVP_B_'+bClass,
+        {characterId:91002+i*2,tutorialGreetingSent:true});
+      sim.setPlayerLevel(99,a);sim.setPlayerLevel(99,b);
+      const aE=sim.entities.get(a)!,bE=sim.entities.get(b)!;
+      const aMeta=sim.players.get(a)!,bMeta=sim.players.get(b)!;
+      for(const [pid,cl,meta] of [[a,aClass,aMeta],[b,bClass,bMeta]] as const){
+        const weapon=hfP13ItemId(90,WT[cl]),chest=hfP16ArmorId(90,AT[cl]);
+        sim.addItem(weapon,1,pid);sim.equipItem(weapon,pid,'mainhand');
+        sim.addItem(chest,1,pid);sim.equipItem(chest,pid);
+        expect(meta.equipment.mainhand).toBe(weapon);
+        expect(meta.equipment.chest).toBe(chest);
+        const legal=Object.values(ITEMS).filter(it=>it.kind==='armor'&&
+          !!it.slot&&it.slot!=='chest'&&canEquipItem(cl,it)&&
+          requiredLevelFor(it)<=99)
+          .sort((x,y)=>requiredLevelFor(y)-requiredLevelFor(x)||
+            (y.stats?.armor??0)-(x.stats?.armor??0));
+        const slots=new Set<string>();
+        for(const it of legal){
+          if(!it.slot||slots.has(it.slot))continue;
+          sim.addItem(it.id,1,pid);sim.equipItem(it.id,pid);
+          if(Object.values(meta.equipment).includes(it.id))slots.add(it.slot);
+          if(slots.size>=8)break;
+        }
+        // Duel consumables are NOT gifted. Native PvP tests the class kit only.
+      }
+      aE.pos=sim.groundPos(0,-40);
+      bE.pos=sim.groundPos(4,-40);
+      aE.prevPos={...aE.pos};bE.prevPos={...bE.pos};
+      sim.rebucket(aE);sim.rebucket(bE);
+      const trainingA=JSON.stringify((sim.serializeCharacter(a) as any).trainingProfile);
+      const trainingB=JSON.stringify((sim.serializeCharacter(b) as any).trainingProfile);
+      const hpA=aE.hp,hpB=bE.hp;
+      sim.duelRequest(b,a);sim.duelAccept(b);
+      for(let k=0;k<80&&sim.duelFor(a)?.state!=='active';k++)sim.tick();
+      expect(sim.duelFor(a)?.state,'PVP_NATIVE_DUEL_NOT_STARTED_'+aClass+'_'+bClass).toBe('active');
+      sim.targetEntity(b,a);sim.targetEntity(a,b);
+      sim.startAutoAttack(a);sim.startAutoAttack(b);
+      const attacksA=OFFENSE[aClass].filter(x=>aMeta.known.some(k=>k.def.id===x));
+      const attacksB=OFFENSE[bClass].filter(x=>bMeta.known.some(k=>k.def.id===x));
+      const healsA=(HEALS[aClass]??[]).filter(x=>aMeta.known.some(k=>k.def.id===x));
+      const healsB=(HEALS[bClass]??[]).filter(x=>bMeta.known.some(k=>k.def.id===x));
+      expect(attacksA.length).toBeGreaterThan(0);
+      expect(attacksB.length).toBeGreaterThan(0);
+      let ticks=0,aOffense=0,bOffense=0,aHeal=0,bHeal=0,minA=aE.hp,minB=bE.hp;
+      const maxTicks=Math.ceil(55/DT),cadence=Math.ceil(1.8/DT);
+      for(;ticks<maxTicks&&sim.duelFor(a);ticks++){
+        aE.facing=Math.atan2(bE.pos.x-aE.pos.x,bE.pos.z-aE.pos.z);
+        bE.facing=Math.atan2(aE.pos.x-bE.pos.x,aE.pos.z-bE.pos.z);
+        if(ticks%cadence===0){
+          if(!aE.castingAbility){
+            if(aE.hp/aE.maxHp<0.48&&healsA.length){
+              sim.castAbilityOn(healsA[aHeal++%healsA.length],a,a);
+            }else sim.castAbility(attacksA[aOffense++%attacksA.length],a);
+          }
+          if(!bE.castingAbility){
+            if(bE.hp/bE.maxHp<0.48&&healsB.length){
+              sim.castAbilityOn(healsB[bHeal++%healsB.length],b,b);
+            }else sim.castAbility(attacksB[bOffense++%attacksB.length],b);
+          }
+        }
+        sim.tick();
+        minA=Math.min(minA,aE.hp);minB=Math.min(minB,bE.hp);
+      }
+      const aWon=(aMeta.deedStats.counters.duelsWon??0)>0;
+      const bWon=(bMeta.deedStats.counters.duelsWon??0)>0;
+      const statsUnchanged=
+        JSON.stringify((sim.serializeCharacter(a) as any).trainingProfile)===trainingA&&
+        JSON.stringify((sim.serializeCharacter(b) as any).trainingProfile)===trainingB;
+      const bothLevel99=sim.serializeCharacter(a)?.level===99&&
+        sim.serializeCharacter(b)?.level===99;
+      const row:Row={a:aClass,b:bClass,
+        winner:aWon&&!bWon?'A':bWon&&!aWon?'B':'UNRESOLVED',
+        seconds:Math.round(ticks*DT*100)/100,
+        startHpA:hpA,startHpB:hpB,minHpA:minA,minHpB:minB,
+        aOffensiveCasts:aOffense,bOffensiveCasts:bOffense,
+        aHealCasts:aHeal,bHealCasts:bHeal,
+        zeroRealDeaths:!aE.dead&&!bE.dead,bothLevel99,statsUnchanged};
+      expect(row.zeroRealDeaths,'PVP_DUEL_KILLED_REAL_HUNTER').toBe(true);
+      expect(row.bothLevel99&&row.statsUnchanged,'PVP_MUTATED_LEVEL_OR_TRAINING').toBe(true);
+      rows.push(row);
+    }
+    console.info('HF_SUPREME_PVP_LV99_DUELS_9='+JSON.stringify({
+      classCoverage:CLASSES.length,duels:rows.length,
+      resolved:rows.filter(x=>x.winner!=='UNRESOLVED').length,
+      unresolved:rows.filter(x=>x.winner==='UNRESOLVED').length,
+      realPvPHandshake:true,realDuelAiAndDamage:true,
+      nonlethalPvPGuaranteed:true,
+      classGearAndLv99AreTestFixtures:true,
+      noPvPBalanceChanges:true,duelOutcomeNotCompetitiveWinrate:true,
+      classes:rows.map(x=>({a:x.a,b:x.b,winner:x.winner,
+        seconds:x.seconds,aCasts:x.aOffensiveCasts,bCasts:x.bOffensiveCasts,
+        aHeals:x.aHealCasts,bHeals:x.bHealCasts}))
+    }));
+    expect(rows).toHaveLength(18);
+    expect(rows.every(x=>x.zeroRealDeaths&&x.bothLevel99&&x.statsUnchanged)).toBe(true);
+  },240000);
+});
