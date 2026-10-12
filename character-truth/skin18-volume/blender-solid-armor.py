@@ -289,7 +289,7 @@ def add_forged_plate(verts,faces,mi,ctr,sx,sy,sz,outline,color,face_side=-1.0):
 # sculpted armor silhouettes, NOT wrapped strips on the body.
 # The source BODY gives dimensions, native Paladin only the bind weights.
 SCALE={
- 'Head':(1.12,1.12,1.08), 'Chest':(1.35,1.30,1.05),
+ 'Head':(1.12,1.12,1.08), 'Chest':(1.35,1.30,1.10),
  'ArmL':(1.29,1.30,1.05),'ArmR':(1.29,1.30,1.05),
  'HandL':(1.26,1.30,1.12),'HandR':(1.26,1.30,1.12),
  'LegL':(1.24,1.26,1.08),'LegR':(1.24,1.26,1.08),
@@ -502,6 +502,7 @@ def create_surface(slot,donor):
  full=[max(v.co[i] for v in mesh.vertices)-min(v.co[i] for v in mesh.vertices)
         for i in range(3)]
  ratios_out=[full[k]/raw[k] for k in range(3)]
+ print('HF18_SLOT_VOLUME_AUDIT '+slot+': '+','.join(f'{r:.3f}' for r in ratios_out),flush=True)
  assert ratios_out[0]>=1.10, 'ARMOR_NOT_WIDER_THAN_NATIVE_BODY_'+slot
  assert ratios_out[1]>=1.12, 'ARMOR_STILL_BODYPAINT_DEPTH_'+slot
  assert ratios_out[2]>=1.04, 'ARMOR_NOT_THICK_IN_VERTICAL_'+slot
