@@ -788,3 +788,169 @@ describe('HIGHFLY LV99 captain — 9 native class-pair tactical stress; no balan
     expect(rows.every(r=>r.captainStartHp>1&&r.skillsAttempted>0)).toBe(true);
   },240000);
 });
+
+/** HIGHFLY SUPREME SOLO LV99 — CLASS-ROLE-SENSITIVE PLAYER-PILOT REPLAY.
+ * Actual original native cast/movement/AI/HP/attack and potion cooldowns.
+ * No out-of-range teleport, HP edits, free stat increases, class changes,
+ * boss nerfs, fixed damage multipliers or invalid gear. Starting level,
+ * inventory and craftable gear are QA preconditions, NOT a natural playthrough.
+ * "GREEN" here only means fully measured; see win count separately.
+ */
+describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilots',()=>{
+  const OPEN:Record<PlayerClass,string[]>={
+    warrior:['battle_shout'],
+    paladin:['blessing_of_might','seal_of_righteousness'],
+    hunter:['aspect_of_the_hawk','rapid_fire','summon_pet'],
+    rogue:['instant_poison'],
+    priest:['power_word_fortitude','power_word_shield'],
+    shaman:['lightning_shield','flametongue_weapon'],
+    mage:['frost_armor','arcane_intellect'],
+    warlock:['demon_skin','summon_voidwalker'],
+    druid:['mark_of_the_wild','thorns'],
+  };
+  const GUARD:Record<PlayerClass,string[]>={
+    warrior:['iron_resolve','raised_guard'],
+    paladin:['divine_protection','holy_shield'],
+    hunter:['shellskin','aspect_of_the_monkey'],
+    rogue:['evasion'],
+    priest:['power_word_shield'],
+    shaman:['lightning_shield'],
+    mage:['ice_barrier','blazing_barrier','ice_block'],
+    warlock:['demon_skin','bone_armor'],
+    druid:['barkskin'],
+  };
+  const SKILL:Record<PlayerClass,string[]>={
+    warrior:['heroic_strike','slam','sunder_armor','rend'],
+    paladin:['hammer_of_grace','crusader_strike','judgement'],
+    hunter:['serpent_sting','arcane_shot','steady_shot','aimed_shot'],
+    rogue:['sinister_strike','sinister_strike','sinister_strike','eviscerate'],
+    priest:['shadow_word_pain','mind_blast','smite'],
+    shaman:['flame_shock','earth_shock','lightning_bolt','lava_burst'],
+    mage:['fireball','frostbolt','fire_blast','arcane_blast'],
+    warlock:['corruption','immolate','shadow_bolt','drain_life'],
+    druid:['moonfire','wrath','starfire','insect_swarm'],
+  };
+  it('benchmarks each of the NINE independent classes vs native captain with real movement and defenses',()=>{
+    const rows:any[]=[];
+    const def=MOBS[highflyEncounterId('captain',HIGHFLY_HUNT_SCENARIOS.at(-1)!.minLevel)];
+    expect(def.boss).toBe(true);
+    for(const [index,cls] of CLASSES.entries()){
+      const {sim,pid,p,meta}=simFor(cls,947111+index*817);
+      sim.setPlayerLevel(99,pid);
+      const training=JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile);
+      const weapon=hfP13ItemId(90,WT[cls]),armor=hfP16ArmorId(90,AT[cls]);
+      sim.addItem(weapon,1,pid);sim.equipItem(weapon,pid,'mainhand');
+      sim.addItem(armor,1,pid);sim.equipItem(armor,pid);
+      expect(meta.equipment.mainhand).toBe(weapon);
+      expect(meta.equipment.chest).toBe(armor);
+      const candidates=Object.values(ITEMS).filter(item=>
+        item.kind==='armor'&&!!item.slot&&item.slot!=='chest'&&
+        canEquipItem(cls,item)&&requiredLevelFor(item)<=99)
+        .sort((a,b)=>requiredLevelFor(b)-requiredLevelFor(a)||
+          (b.stats?.armor??0)-(a.stats?.armor??0));
+      const slots=new Set<string>();
+      for(const item of candidates){
+        if(!item.slot||slots.has(item.slot))continue;
+        sim.addItem(item.id,1,pid);sim.equipItem(item.id,pid);
+        if(Object.values(meta.equipment).includes(item.id))slots.add(item.slot);
+        if(slots.size>=8)break;
+      }
+      expect(Object.values(meta.equipment).filter(Boolean).length).toBeGreaterThanOrEqual(3);
+      sim.addItem('healing_potion',3,pid);
+      const known=new Set(meta.known.map(x=>x.def.id));
+      const attack=SKILL[cls].filter(x=>known.has(x));
+      const healing=(HEALS[cls]??[]).filter(x=>known.has(x));
+      const guard=GUARD[cls].filter(x=>known.has(x));
+      expect(attack.length,'NO_NATIVE_SOLO_ATTACK_'+cls).toBeGreaterThan(0);
+      const opened:string[]=[];
+      // One genuine in-game cast per GCD while preparing, at full HP, before
+      // the captain acquires the character. NO direct aura manipulation.
+      for(const buff of OPEN[cls].filter(x=>known.has(x))){
+        sim.castAbility(buff,pid);
+        opened.push(buff);
+        for(let t=0;t<Math.ceil(1.6/DT);t++)sim.tick();
+      }
+      const ranged=['hunter','priest','shaman','mage','warlock','druid'].includes(cls);
+      const spawnGap=ranged?10:2;
+      const captain=createMob(sim.nextId++,def,99,
+        {x:p.pos.x+spawnGap,y:p.pos.y,z:p.pos.z+spawnGap/4});
+      captain.hostile=true;sim.addEntity(captain);
+      const startHp=captain.hp;
+      sim.targetEntity(captain.id,pid);
+      sim.startAutoAttack(pid);
+      const castPeriod=Math.max(1,Math.ceil(1.55/DT));
+      const maxTicks=Math.ceil(130/DT);
+      let turns=0,atk=0,defensive=0,heals=0,potions=0,relocations=0;
+      let attemptedAttacks=0,attemptedHeals=0,attemptedGuard=0;
+      let maxRange=0,lastHeal=-500,lastDefend=-500,ticks=0;
+      for(;ticks<maxTicks&&!p.dead&&!captain.dead;ticks++){
+        const d=Math.hypot(p.pos.x-captain.pos.x,p.pos.z-captain.pos.z);
+        maxRange=Math.max(maxRange,d);
+        p.facing=Math.atan2(captain.pos.x-p.pos.x,captain.pos.z-p.pos.z);
+        // PLAYER-LEGAL MOVE INPUT via original stepPlayerMotion, no teleport.
+        // Kite only while not hard casting; remain within attack range.
+        meta.moveInput.back=ranged&&d<5.5&&!p.castingAbility;
+        meta.moveInput.forward=ranged&&d>26&&!p.castingAbility;
+        if(meta.moveInput.back||meta.moveInput.forward)relocations++;
+        if(p.hp/p.maxHp<=0.52&&p.potionCooldownUntil<=sim.time&&
+          sim.countItem('healing_potion',pid)>0){
+          const before=sim.countItem('healing_potion',pid);
+          sim.useItem('healing_potion',pid);
+          if(sim.countItem('healing_potion',pid)<before)potions++;
+        }
+        if(ticks%castPeriod===0&&!p.castingAbility){
+          const health=p.hp/p.maxHp;
+          if(health<0.78&&guard.length&&ticks-lastDefend>Math.ceil(10/DT)){
+            const id=guard[defensive++%guard.length];
+            sim.castAbility(id,pid);
+            attemptedGuard++;lastDefend=ticks;
+          }else if(health<0.52&&healing.length&&ticks-lastHeal>Math.ceil(4.5/DT)){
+            const heal=healing[heals++%healing.length];
+            sim.castAbilityOn(heal,pid,pid);
+            attemptedHeals++;lastHeal=ticks;
+          }else{
+            const id=attack[atk++%attack.length];
+            sim.castAbility(id,pid);
+            attemptedAttacks++;
+          }
+          turns++;
+        }
+        sim.tick();
+      }
+      // Motion bits MUST be released on leaving automated combat, just as
+      // lifting one's thumbs releases both virtual joysticks.
+      meta.moveInput.back=false;meta.moveInput.forward=false;
+      const win=captain.dead&&!p.dead;
+      const row={
+        cls,result:win?'WIN':p.dead?'LOSS':'TIMEOUT',
+        bossHpStart:startHp,bossHpEnd:Math.max(0,captain.hp),
+        bossHpRemainingPct:Math.round(10000*Math.max(0,captain.hp)/startHp)/100,
+        heroEndHp:Math.max(0,p.hp),heroMaxHp:p.maxHp,
+        seconds:Math.round(ticks*DT*100)/100,gearSlots:Object.values(meta.equipment).filter(Boolean).length,
+        opened,guardsAvailable:guard,healsAvailable:healing,
+        attemptedAttacks,attemptedHeals,attemptedGuard,botTurns:turns,
+        potionUses:potions,nativeInputSteps:relocations,
+        maxRange:Math.round(maxRange*10)/10,
+        trainingUnchanged:JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile)===training,
+        level99Preserved:sim.serializeCharacter(pid)?.level===99,
+        noEnemyHpOverride:captain.maxHp===startHp};
+      rows.push(row);
+      console.info('HF_SUPREME_SOLO99_TACTICAL_CLASS='+JSON.stringify(row));
+    }
+    const summary={classes:9,wins:rows.filter(x=>x.result==='WIN').length,
+      losses:rows.filter(x=>x.result==='LOSS').length,
+      timeouts:rows.filter(x=>x.result==='TIMEOUT').length,
+      noBossNerf:true,noTrainingStatBoost:true,
+      roleAppropriateOffenseHealingDefensesAndNativeInput:true,
+      gearAndLevelsAreExplicitFixtures:true,
+      playtestOnPhysicalS23Needed:true,
+      rows:rows.map(x=>({cls:x.cls,result:x.result,
+        bossHpRemainingPct:x.bossHpRemainingPct,heroEndHp:x.heroEndHp,
+        seconds:x.seconds,guardAttempts:x.attemptedGuard,
+        healingAttempts:x.attemptedHeals,potions:x.potionUses}))};
+    console.info('HF_SUPREME_SOLO99_TACTICAL_9='+JSON.stringify(summary));
+    expect(rows).toHaveLength(9);
+    expect(rows.every(x=>x.trainingUnchanged&&x.level99Preserved&&
+      x.noEnemyHpOverride&&x.attemptedAttacks>0)).toBe(true);
+  },240000);
+});
