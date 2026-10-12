@@ -8,6 +8,7 @@
   "designReference": "BLACK_SILVER_VIOLET_3_VIEW_APPROVED_VISUAL_REFERENCE",
   "originalArtworkAdaptation": "UNAPPROVED_GEOMETRY_INTERPRETATION",
   "worker": "BLENDER_SKIN18_REAL_VOLUMETRIC_SOLID_ARMOR_BOUND_TO_NATIVE_RIG",
+  "designRevision": "VOLUME_BLOCKOUT_V2_ANATOMICAL_PROPORTIONS",
   "freshOriginalGeometry": true,
   "copiedSourceTriangles": 0,
   "donorMeshesUsedOnlyForFitAndWeights": true,
@@ -15,8 +16,8 @@
   "originalRigBones": 23,
   "originalAnimationClips": 22,
   "newSkinnedPieces": 11,
-  "newVertices": 1872,
-  "newPolygonFaces": 2233,
+  "newVertices": 1888,
+  "newPolygonFaces": 2249,
   "newSculpturalDetails": 47,
   "nativeBodyParts": 11,
   "closedArmorSolids": 47,
@@ -28,14 +29,14 @@
         0.8391784429550171
       ],
       "armorLocalAxes": [
-        1.331133246421814,
-        1.827588438987732,
-        0.938788890838623
+        1.2852320671081543,
+        1.5376479029655457,
+        0.9199075698852539
       ],
       "armorToBodyAxes": [
-        1.4848000653152968,
-        1.8337120643753264,
-        1.1186999603241063
+        1.4336000263814228,
+        1.5428000365285028,
+        1.096200191518223
       ],
       "closedArmorSolids": 6
     },
@@ -46,13 +47,13 @@
         0.8999922275543213
       ],
       "armorLocalAxes": [
-        0.8252933621406555,
-        0.9073329269886017,
+        0.8073521852493286,
+        0.7497060298919678,
         0.9800915420055389
       ],
       "armorToBodyAxes": [
-        1.5284880060697403,
-        2.350235941910305,
+        1.4952599747403243,
+        1.9419399482910191,
         1.0890000068877073
       ],
       "closedArmorSolids": 6
@@ -64,14 +65,14 @@
         0.23200726509094238
       ],
       "armorLocalAxes": [
-        1.3431439399719238,
-        0.5492490530014038,
-        0.313035786151886
+        1.115165501832962,
+        0.4855864942073822,
+        0.2947651743888855
       ],
       "armorToBodyAxes": [
-        2.108579233439983,
-        2.3675736241640313,
-        1.349249929863972
+        1.7506796919046619,
+        2.093152040323572,
+        1.2704997590198015
       ],
       "closedArmorSolids": 5
     },
@@ -82,14 +83,14 @@
         0.23200726509094238
       ],
       "armorLocalAxes": [
-        1.343143880367279,
-        0.5492490381002426,
-        0.313035786151886
+        1.115165501832962,
+        0.4855865091085434,
+        0.2947651743888855
       ],
       "armorToBodyAxes": [
-        2.108579139867647,
-        2.3675735599316106,
-        1.349249929863972
+        1.7506796919046619,
+        2.0931521045559927,
+        1.2704997590198015
       ],
       "closedArmorSolids": 5
     },
@@ -100,13 +101,13 @@
         0.1655716896057129
       ],
       "armorLocalAxes": [
-        0.23198449611663818,
-        0.3317689299583435,
+        0.21977484226226807,
+        0.32186539471149445,
         0.18080425262451172
       ],
       "armorToBodyAxes": [
-        1.4731078283315733,
-        1.9212919300881652,
+        1.3955761959372766,
+        1.863940018468521,
         1.0919998041638228
       ],
       "closedArmorSolids": 3
@@ -118,13 +119,13 @@
         0.1655716896057129
       ],
       "armorLocalAxes": [
-        0.23198449611663818,
-        0.3317689746618271,
+        0.21977484226226807,
+        0.32186540961265564,
         0.18080425262451172
       ],
       "armorToBodyAxes": [
-        1.4731078283315733,
-        1.9212920231735824,
+        1.3955761959372766,
+        1.8639399439161752,
         1.0919998041638228
       ],
       "closedArmorSolids": 3
@@ -136,13 +137,13 @@
         0.40500758588314056
       ],
       "armorLocalAxes": [
-        0.36524466052651405,
-        0.35049887001514435,
+        0.33548399060964584,
+        0.32713228464126587,
         0.4592786133289337
       ],
       "armorToBodyAxes": [
-        1.7644067990600496,
-        2.1369771128963078,
+        1.620640348729991,
+        1.9945120083772594,
         1.1340000270055492
       ],
       "closedArmorSolids": 4
@@ -154,13 +155,13 @@
         0.40500764548778534
       ],
       "armorLocalAxes": [
-        0.36524470150470734,
-        0.35049887001514435,
+        0.3354840036481619,
+        0.32713228464126587,
         0.4592786878347397
       ],
       "armorToBodyAxes": [
-        1.7644068700068194,
-        2.1369771128963078,
+        1.6206402950559458,
+        1.9945120083772594,
         1.1340000440771707
       ],
       "closedArmorSolids": 4
@@ -172,13 +173,13 @@
         0.12690920010209084
       ],
       "armorLocalAxes": [
-        0.30390545539557934,
-        0.6371771395206451,
+        0.2846438493579626,
+        0.5875269621610641,
         0.14059000834822655
       ],
       "armorToBodyAxes": [
-        1.7772549683687,
-        2.2388520008857973,
+        1.664612090719282,
+        2.064395963418008,
         1.1077999722252627
       ],
       "closedArmorSolids": 3
@@ -190,13 +191,13 @@
         0.12690919265151024
       ],
       "armorLocalAxes": [
-        0.30390546284615993,
-        0.6371772736310959,
+        0.2846438568085432,
+        0.5875270813703537,
         0.1405900027602911
       ],
       "armorToBodyAxes": [
-        1.7772549345026265,
-        2.238852061831758,
+        1.6646120617612146,
+        2.064396003975458,
         1.1077999932309714
       ],
       "closedArmorSolids": 3
@@ -220,8 +221,8 @@
       "closedArmorSolids": 5
     }
   },
-  "glbSha256": "f75cbc66892f0edef2f211e3062b58b86e3b3043fb7f2df1828a62e270463f3e",
-  "glbBytes": 1113104,
+  "glbSha256": "8353b0f48000e5cff24b88e6940e5d02c55f33f500753fbb2787ce12632d6063",
+  "glbBytes": 1116456,
   "skinsInGltf": 1,
   "animationTracksInGltf": 22,
   "visualArtQaPassed": false,
@@ -230,17 +231,17 @@
     {
       "view": "front",
       "filename": "hf13-eclipse-eterno-demonstration-01-front.png",
-      "bytes": 452856
+      "bytes": 455154
     },
     {
       "view": "profile",
       "filename": "hf13-eclipse-eterno-demonstration-01-profile.png",
-      "bytes": 441480
+      "bytes": 444609
     },
     {
       "view": "back",
       "filename": "hf13-eclipse-eterno-demonstration-01-back.png",
-      "bytes": 422801
+      "bytes": 426101
     }
   ],
   "reviewAnglesRendered": 3,
@@ -277,14 +278,14 @@
   },
   "pieces": {
     "Head": {
-      "freshVertices": 202,
-      "freshFaces": 241,
+      "freshVertices": 218,
+      "freshFaces": 257,
       "sourceTrianglesCopied": 0,
       "allVerticesSkinned": true,
       "radiiLocal": [
-        0.5199739015102386,
-        0.6179295289516449,
-        0.4741358202695846
+        0.5020437669754029,
+        0.5581298971176148,
+        0.45315635919570924
       ],
       "closedSolids": 6
     },
@@ -294,8 +295,8 @@
       "sourceTrianglesCopied": 0,
       "allVerticesSkinned": true,
       "radiiLocal": [
-        0.37255929887294764,
-        0.2837543624639511,
+        0.36446018368005756,
+        0.2509392321109772,
         0.4949957251548768
       ],
       "closedSolids": 6
@@ -306,8 +307,8 @@
       "sourceTrianglesCopied": 0,
       "allVerticesSkinned": true,
       "radiiLocal": [
-        0.4458930179476738,
-        0.1623917132616043,
+        0.4108585665374994,
+        0.15079230517148973,
         0.12180381417274476
       ],
       "closedSolids": 5
@@ -318,8 +319,8 @@
       "sourceTrianglesCopied": 0,
       "allVerticesSkinned": true,
       "radiiLocal": [
-        0.4458930179476738,
-        0.1623917132616043,
+        0.4108585665374994,
+        0.15079230517148973,
         0.12180381417274476
       ],
       "closedSolids": 5
@@ -330,8 +331,8 @@
       "sourceTrianglesCopied": 0,
       "allVerticesSkinned": true,
       "radiiLocal": [
-        0.10472396314144135,
-        0.11569568350911141,
+        0.09921217560768128,
+        0.1122420810163021,
         0.09272014617919923
       ],
       "closedSolids": 3
@@ -342,8 +343,8 @@
       "sourceTrianglesCopied": 0,
       "allVerticesSkinned": true,
       "radiiLocal": [
-        0.10472396314144135,
-        0.11569569349288941,
+        0.09921217560768128,
+        0.11224209070205689,
         0.09272014617919923
       ],
       "closedSolids": 3
@@ -354,8 +355,8 @@
       "sourceTrianglesCopied": 0,
       "allVerticesSkinned": true,
       "radiiLocal": [
-        0.13972976412624122,
-        0.11071093641221524,
+        0.1283443759381771,
+        0.10333020731806755,
         0.21870409637689592
       ],
       "closedSolids": 4
@@ -366,8 +367,8 @@
       "sourceTrianglesCopied": 0,
       "allVerticesSkinned": true,
       "radiiLocal": [
-        0.13972977418452504,
-        0.11071093641221524,
+        0.12834438517689706,
+        0.10333020731806755,
         0.2187041285634041
       ],
       "closedSolids": 4
@@ -378,8 +379,8 @@
       "sourceTrianglesCopied": 0,
       "allVerticesSkinned": true,
       "radiiLocal": [
-        0.12140794493257999,
-        0.2191419518738985,
+        0.11371307518333197,
+        0.20206595562398433,
         0.07360733605921269
       ],
       "closedSolids": 3
@@ -390,8 +391,8 @@
       "sourceTrianglesCopied": 0,
       "allVerticesSkinned": true,
       "radiiLocal": [
-        0.1214079502224922,
-        0.21914199203252793,
+        0.11371308013796808,
+        0.20206599265336989,
         0.07360733173787594
       ],
       "closedSolids": 3
