@@ -1,0 +1,148 @@
+name: HIGHFLY SKIN18 — REAL VOLUMETRIC ARMOR ON NATIVE CLAUDECRAFT
+on:
+  push:
+    branches: [highfly-skin18-eclipse-volume-real]
+    paths:
+      - 'character-truth/skin18-volume/**'
+      - '.github/workflows/skin18-real-volume.yml'
+  workflow_dispatch:
+permissions: {contents: write, actions: read}
+concurrency:
+  group: highfly-skin18-${{ github.ref_name }}-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  original-armor-volume:
+    runs-on: ubuntu-latest
+    timeout-minutes: 36
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: false}
+      - name: Hard isolation — never alter game, legacy skins or AI prompts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = highfly-skin18-eclipse-volume-real
+          git diff --name-only 940fd5d18cf3299a8a2313d2d6589da3bb516c0a HEAD | tee /tmp/hf18-changes.txt
+          while IFS= read -r file; do
+            case "$file" in
+              character-truth/skin18-volume/*|.github/workflows/skin18-real-volume.yml) ;;
+              *) echo "HF18_GAME_OR_HISTORICAL_ARMOR_TOUCH_FORBIDDEN:$file"; exit 41 ;;
+            esac
+          done < /tmp/hf18-changes.txt
+          python3 -m py_compile character-truth/skin18-volume/blender-solid-armor.py
+          echo HF18_NO_PUBLIC_GAME_OR_OLD_SKINS_CHANGED_GREEN=1
+      - name: Download SHA-verified genuine ClaudeCraft source and prepare Blender-friendly GLB
+        timeout-minutes: 7
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/skin18-volume/out
+          curl -fLsS --retry 3 --max-time 150 \
+            https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb \
+            -o character-truth/skin18-volume/out/warrior-original-source.glb
+          test "$(git hash-object character-truth/skin18-volume/out/warrior-original-source.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          npm install --no-save --package-lock=false @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer@0.23.0
+          node character-truth/integration-modules/prepare-native-body.mjs \
+            character-truth/skin18-volume/out/warrior-original-source.glb \
+            character-truth/skin18-volume/out/native-source-for-blender.glb
+          test -s character-truth/skin18-volume/out/native-source-for-blender.glb
+          echo HF18_AUTHENTIC_CLAUDECRAFT_SOURCE_VERIFIED_GREEN=1
+      - name: Install verified Blender 4.2 and graphics libraries
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=4.2.23
+          NAME="blender-${VERSION}-linux-x64.tar.xz"
+          ROOT=https://download.blender.org/release/Blender4.2
+          mkdir -p "$RUNNER_TEMP/hf18-blender" "$RUNNER_TEMP/hf18-download"
+          cd "$RUNNER_TEMP/hf18-download"
+          curl -fLsS --retry 3 --max-time 390 "$ROOT/$NAME" -o "$NAME"
+          curl -fLsS --retry 3 --max-time 50 "$ROOT/blender-${VERSION}.sha256" -o SHA256SUMS
+          grep -F "$NAME" SHA256SUMS | head -1 | sha256sum --check
+          tar -xJf "$NAME" --strip-components=1 -C "$RUNNER_TEMP/hf18-blender"
+          echo "$RUNNER_TEMP/hf18-blender" >> "$GITHUB_PATH"
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libegl1 libgl1 libgl1-mesa-dri libgles2 libgbm1 libopengl0 xvfb
+      - name: Blender creates true closed SOLID armor — 11 native skinned pieces
+        timeout-minutes: 9
+        shell: bash
+        run: |
+          set -euo pipefail
+          LIBGL_ALWAYS_SOFTWARE=1 MESA_LOADER_DRIVER_OVERRIDE=llvmpipe xvfb-run -a -s '-screen 0 1280x1024x24' \
+            blender --background --factory-startup --python-exit-code 99 \
+              --python character-truth/skin18-volume/blender-solid-armor.py -- \
+              --job character-truth/skin13-auto-forge/jobs/eclipse-eterno-demo.json \
+              --design character-truth/skin16-concept/concept.json \
+              --source character-truth/skin18-volume/out/native-source-for-blender.glb \
+              --out character-truth/skin18-volume/out/HF18-ECLIPSE-REAL-VOLUME-22-CLIPS.glb \
+              --proof character-truth/skin18-volume/out/proof.json | tee /tmp/hf18-blender.log
+          grep -F HIGHFLY_SKIN18_REAL_THICK_SOLID_ARMOR_SILHOUETTE_11_SLOTS_22_CLIPS_GREEN=1 /tmp/hf18-blender.log
+          grep -F HIGHFLY_SKIN13_FRONT_SIDE_BACK_ART_REVIEW_SCREENSHOTS_SAVED=3 /tmp/hf18-blender.log
+          grep -F HIGHFLY_SKIN13_ART_APPROVED=0 /tmp/hf18-blender.log
+      - name: Enforce measurable anatomical volume before any preview publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const path='character-truth/skin18-volume/out/';
+          const proof=JSON.parse(fs.readFileSync(path+'proof.json','utf8'));
+          const slots=['Head','Chest','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR','Back'];
+          if(proof.schema!=='highfly.skin18.volumetric-armor-proof/1'||
+             proof.originalRigBones!==23||proof.originalAnimationClips!==22||
+             proof.animationTracksInGltf!==22||proof.newSkinnedPieces!==11||
+             proof.nativeBodyParts!==11||proof.copiedSourceTriangles!==0||
+             proof.reviewAnglesRendered!==3||proof.artApproved!==false||
+             proof.visualArtQaPassed!==false||proof.glbBytes<40000||
+             proof.closedArmorSolids<30)throw Error('HF18_FORGE_NON_VOLUME_OR_RIG_INVALID');
+          for(const slot of slots){
+            const p=proof.anatomicalVolumeEvidence?.[slot];
+            if(!p||p.closedArmorSolids<2||
+              p.armorToBodyAxes[0]<1.10||p.armorToBodyAxes[1]<1.12||
+              p.armorToBodyAxes[2]<1.04)throw Error('HF18_BODYPAINT_GATE_REJECTED_'+slot);
+          }
+          fs.writeFileSync(path+'qa-result.json',JSON.stringify({
+            technicalGreen:true,sourceRig:'Rig_Medium',realClosedSolids:proof.closedArmorSolids,
+            elevenSlots:true,realBodyAxesVolumeIncreased:true,clips:22,
+            artworkPremiumApproved:false,phoneS23Tested:false,gameDeployed:false
+          },null,2));
+          console.log('HF18_NO_BODYPAINT_MEASURED_3D_VOLUME_11_SLOTS_22_CLIPS_GREEN=1');
+          JS
+      - name: Upload GLB, anatomical volume report and 3 independent Blender renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN18-REAL-VOLUME-BLENDER-11-PIECES-22-CLIPS-NOT-ART-APPROVED
+          path: |
+            character-truth/skin18-volume/out/HF18-ECLIPSE-REAL-VOLUME-22-CLIPS.glb
+            character-truth/skin18-volume/out/proof.json
+            character-truth/skin18-volume/out/qa-result.json
+            character-truth/skin18-volume/out/*.png
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Publish ONLY to isolated experimental SKIN18 asset branch
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          BRANCH=highfly-skin18-volume-preview-assets
+          DEST="$RUNNER_TEMP/hf18-preview"
+          HEADER="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c http.extraheader="$HEADER" fetch origin "refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
+          git worktree add -B "$BRANCH" "$DEST" "origin/$BRANCH"
+          mkdir -p "$DEST/skin18-volume/assets" "$DEST/skin18-volume/qa"
+          cp character-truth/skin18-volume/out/HF18-ECLIPSE-REAL-VOLUME-22-CLIPS.glb "$DEST/skin18-volume/assets/"
+          cp character-truth/skin18-volume/out/proof.json "$DEST/skin18-volume/qa/"
+          cp character-truth/skin18-volume/out/qa-result.json "$DEST/skin18-volume/qa/"
+          cp character-truth/skin18-volume/out/*.png "$DEST/skin18-volume/qa/"
+          cd "$DEST"
+          git config user.email 'highfly-ci@users.noreply.github.com'
+          git config user.name 'HIGHFLY isolated skin CI'
+          git add skin18-volume/
+          git diff --cached --quiet && exit 0
+          git commit -m "SKIN18: actual thick closed armor geometry, original Rig_Medium and verified 22 motions"
+          git -c http.extraheader="$HEADER" push origin "HEAD:refs/heads/$BRANCH"
+          echo HF18_ISOLATED_VOLUME_GLTF_PUBLISHED_NO_GAME_CHANGE=1
