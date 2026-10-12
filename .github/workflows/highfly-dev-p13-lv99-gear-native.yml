@@ -11,6 +11,7 @@ on:
       - highfly-golden-dev4-nine-class-gear-gaps
       - highfly-golden-dev5-level35-native-bridge
       - highfly-golden-dev6-native-armor-50-90
+      - highfly-golden-dev7-lv99-endgame-native-gate
     paths:
       - .github/workflows/highfly-dev-p13-lv99-gear-native.yml
       - professions/p13/highfly_lv99_native_equipment.ts
@@ -24,6 +25,7 @@ on:
       - professions/p15/activate_p15_bridge35.py
       - professions/p16/highfly_p16_native_chest_armor.ts
       - professions/p16/highfly_p16_native_chest_armor.test.ts
+      - monsters/integration/highfly_dev7_lv99_endgame_native.test.ts
       - professions/p16/activate_p16_armor.py
       - professions/p14/highfly_gem_attribute_expansion_foundation.test.ts
       - professions/p13/highfly_full_227_recipes_catalog.test.ts
@@ -559,6 +561,7 @@ jobs:
           cp ../professions/p15/highfly_p15_native_bridge35.test.ts tests/highfly_p15_native_bridge35.test.ts
           cp ../professions/p16/highfly_p16_native_chest_armor.ts src/sim/content/highfly_p16_native_chest_armor.ts
           cp ../professions/p16/highfly_p16_native_chest_armor.test.ts tests/highfly_p16_native_chest_armor.test.ts
+          cp ../monsters/integration/highfly_dev7_lv99_endgame_native.test.ts tests/highfly_dev7_lv99_endgame_native.test.ts
           cp ../professions/p13/highfly_complete_native_1_99_catalog.test.ts tests/highfly_complete_native_1_99_catalog.test.ts
           python3 ../professions/p13/activate_p13.py
           python3 ../professions/p15/activate_p15_bridge35.py
@@ -681,6 +684,26 @@ jobs:
           test -s ../highfly_golden_dev2_1_99_band_economy_audit.json
           echo 'HF_GOLDEN_DEV2_REAL_CHANCE_CORPSE_TRAINER_FORGE_SAVE_GREEN=1'
           echo 'HF_P13_15_REAL_LV50_99_ITEMS_15_RECIPES_9_CLASS_MATERIAL_NATIVE_GREEN=1'
+      - name: DEV7 — LV99 single Hunter × nine classes, P13+P16 original gear, native captain fights
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_HIGHFLY_NATIVE_HUNT: "1"
+          VITE_HIGHFLY_OPEN_WORLD_HUNTS: "1"
+          VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/highfly_dev7_lv99_endgame_native.test.ts
+          test -s ../highfly_golden_dev7_lv99_native_captain_combat_gear.json
+          echo 'HF_GOLDEN_DEV7_NINE_CLASS_LEVEL99_ENDGAME_NATIVE_GEAR_BASELINE_GREEN=1'
+      - name: Archive DEV7 native LV99 class-balance endgame research only (NO DEPLOY)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-DEV7-LV99-NINE-CLASS-CAPTAIN-COMBAT-TRUE-GEAR-REPORT-NO-DEPLOY
+          path: highfly_golden_dev7_lv99_native_captain_combat_gear.json
+          if-no-files-found: warn
+          retention-days: 21
       - name: Archive DEV2 11-band actual recipe loot economy diagnosis (NO DEPLOY)
         if: always()
         uses: actions/upload-artifact@v4
