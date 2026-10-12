@@ -1,0 +1,47 @@
+name: HIGHFLY SKIN12 — NEW ISOLATED VERCEL ORIGINAL FORGE HTTPS QA
+on:
+  push:
+    branches: [highfly-skin12-easy-factory-ux]
+    paths: ['.github/workflows/skin12-easy-live-gate.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  live-skin12:
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - name: Source contract prohibits mesh deformation and fake generated 3D claims
+        shell: bash
+        run: |
+          set -euo pipefail
+          node character-truth/skin11-original-factory/skin11-original-factory-core.test.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Actual live HTTPS site 915x412 design, image and Eclipse V3 experience
+        env:
+          SKIN11_TEST_URL: https://highfly-skin12-forja-original.vercel.app/
+          SKIN11_QA_DIR: character-truth/skin11-original-factory/live-qa
+          SKIN12_QA_DIR: character-truth/skin11-original-factory/live-skin12-qa
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          curl -fIsS "$SKIN11_TEST_URL" | head -20
+          node character-truth/skin11-original-factory/skin11-original-factory-browser-qa.cjs
+          node character-truth/skin11-original-factory/skin12-ux-qa.cjs
+          grep -F '"green": true' character-truth/skin11-original-factory/live-skin12-qa/gate.json
+          grep -F '"auto3DGenerated": false' character-truth/skin11-original-factory/live-skin12-qa/gate.json
+          echo HIGHFLY_SKIN12_NEW_VERCEL_ISOLATED_ORIGINAL_FORGE_LIVE_GREEN=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-SKIN12-ACTUAL-LIVE-HTTPS-ANDROID-UX-GATE
+          path: |
+            character-truth/skin11-original-factory/live-qa/
+            character-truth/skin11-original-factory/live-skin12-qa/
+          retention-days: 21
+          if-no-files-found: warn
