@@ -25,7 +25,7 @@ jobs:
           git diff --name-only 940fd5d18cf3299a8a2313d2d6589da3bb516c0a HEAD | tee /tmp/hf18-changes.txt
           while IFS= read -r file; do
             case "$file" in
-              character-truth/skin18-volume/*|.github/workflows/skin18-real-volume.yml) ;;
+              character-truth/skin18-volume/*|.github/workflows/skin18-real-volume.yml|.github/workflows/skin18-live-lab-qa.yml) ;;
               *) echo "HF18_GAME_OR_HISTORICAL_ARMOR_TOUCH_FORBIDDEN:$file"; exit 41 ;;
             esac
           done < /tmp/hf18-changes.txt
