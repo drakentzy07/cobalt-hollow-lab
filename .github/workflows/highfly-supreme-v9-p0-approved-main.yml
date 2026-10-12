@@ -1,0 +1,148 @@
+name: HIGHFLY SUPREME V9 — P0 VERIFIED PUBLIC RELEASE
+# Owner approved correction: exact source 28171cc, source RUN 38316899522 GREEN.
+# This workflow only promotes an already tested immutable artifact; no rebuild.
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/highfly-supreme-v9-p0-approved-main.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: highfly-supreme-v9-p0-verified-release
+  cancel-in-progress: false
+
+jobs:
+  promote_verified_v9:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/
+    steps:
+      - name: Verify exact immutable V9 source RUN succeeded and public SUPREME baseline is intact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, urllib.request
+          api='https://api.github.com/repos/drakentzy07/cobalt-hollow-lab/actions/runs/38316899522'
+          req=urllib.request.Request(api,headers={
+              'Authorization':'Bearer '+os.environ['GH_TOKEN'],
+              'Accept':'application/vnd.github+json',
+              'User-Agent':'HIGHFLY-V9-P0-IMMUTABLE-SOURCE-GATE'})
+          with urllib.request.urlopen(req,timeout=40) as response:
+              data=json.load(response)
+          assert data['status']=='completed' and data['conclusion']=='success', data.get('conclusion')
+          assert data['head_sha']=='28171cc4949c32eac53336127ebb932b8f9e4558'
+          assert data['head_branch']=='highfly-supreme-v9-p0-target-training-rogue'
+          assert data['name']=='HIGHFLY SUPREME — Unified REAL WebGL S23 Preview (NO DEPLOY)'
+          old='https://drakentzy07.github.io/cobalt-hollow-lab/highfly-supreme-qa.json?v9_p0_guard=1'
+          req=urllib.request.Request(old,headers={
+              'User-Agent':'HIGHFLY-V9-P0-IMMUTABLE-SOURCE-GATE',
+              'Cache-Control':'no-cache'})
+          with urllib.request.urlopen(req,timeout=40) as response:
+              live=json.load(response)
+          assert live['qaSourceCommit']=='8a3ddc93c9147e8c3320c04d4d2a13896b11e063', live
+          assert live['nineClassesNativeSoloCaptainLv99'] is True
+          assert not live.get('v9Corrections'), 'ALREADY_V9_OR_UNKNOWN_PUBLIC_SITE_ABORT'
+          print('HF_V9_PUBLIC_OLD_CERTIFIED_BASELINE_VERIFIED=1')
+          PY
+      - name: Download exact GREEN V9 S23 integrated candidate with no rebuild
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38316899522
+          github-token: ${{ github.token }}
+          name: HIGHFLY-SUPREME-INTEGRATED-WEBGL-S23-CANDIDATE-NO-DEPLOY
+          path: candidate
+      - name: Strict V9 correction metadata, complete WebGL assets and size gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s candidate/cobalt-hollow-lab/index.html
+          test -s candidate/cobalt-hollow-lab/highfly-supreme-qa.json
+          test -d candidate/cobalt-hollow-lab/assets
+          test -d candidate/cobalt-hollow-lab/media
+          mkdir -p v9-public
+          cp -a candidate/cobalt-hollow-lab/. v9-public/
+          touch v9-public/.nojekyll
+          python3 - <<'PY'
+          import json, hashlib
+          from pathlib import Path
+          root=Path('v9-public')
+          qa=json.loads((root/'highfly-supreme-qa.json').read_text())
+          assert qa['qaSourceCommit']=='8a3ddc93c9147e8c3320c04d4d2a13896b11e063'
+          assert qa['nineClassesNativeSoloCaptainLv99'] is True
+          assert qa['v9Corrections']=={
+            'target360':True,'trainingHeaderGrid':True,'rogueStealth90':True}, qa.get('v9Corrections')
+          assert qa['bossStatOverride'] is False
+          assert qa['trainingStatInjection'] is False
+          assert qa['extended100PlusEnabled'] is False
+          assert qa['physicalSamsungS23Tested'] is False
+          text=(root/'index.html').read_text()
+          assert '/cobalt-hollow-lab/assets/' in text
+          files=[p for p in root.rglob('*') if p.is_file()]
+          assert len(files)>6000,len(files)
+          assert not any(p.is_symlink() for p in root.rglob('*'))
+          total=sum(p.stat().st_size for p in files)
+          assert 500_000_000<total<995_000_000,total
+          print('HF_V9_P0_PRE_DEPLOY_GREEN='+json.dumps({
+            'sourceRun':38316899522,'sourceCommit':'28171cc4949c32eac53336127ebb932b8f9e4558',
+            'artifactId':11777781260,'bytes':total,'fileCount':len(files),
+            'indexSha256':hashlib.sha256((root/'index.html').read_bytes()).hexdigest(),
+            'nativeSolo9of9':True,'realS23TestStillNeeded':True}))
+          PY
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload verified complete new SUPREME replacing old WebGL only
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: v9-public
+      - name: Deploy HIGHFLY SUPREME V9 P0 to owner-approved public Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+      - name: Verify real public root SHA and exact V9 QA metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,hashlib,time,urllib.request
+          root=Path('v9-public')
+          url='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          expected=hashlib.sha256((root/'index.html').read_bytes()).hexdigest()
+          def get(rel):
+            req=urllib.request.Request(url+rel,headers={
+              'User-Agent':'HIGHFLY-V9-P0-DEPLOY-VERIFY',
+              'Cache-Control':'no-cache'})
+            with urllib.request.urlopen(req,timeout=45) as response:
+              assert response.status==200
+              return response.read()
+          for i in range(40):
+            try:
+              seen=hashlib.sha256(get('?v9_verify='+str(i))).hexdigest()
+              if seen==expected:
+                qa=json.loads(get('highfly-supreme-qa.json?v9_verify='+str(i)))
+                assert qa['v9Corrections']['target360']
+                assert qa['v9Corrections']['trainingHeaderGrid']
+                assert qa['v9Corrections']['rogueStealth90']
+                assert qa['nineClassesNativeSoloCaptainLv99']
+                break
+            except Exception as exc:
+              print('HF_V9_P0_VERIFY_RETRY',i,str(exc)[:200])
+            time.sleep(5)
+          else: raise SystemExit('HF_V9_P0_REAL_PUBLIC_SHA_NOT_VERIFIED')
+          print('HF_SUPREME_V9_PUBLIC_VERIFIED='+json.dumps({
+              'url':url,'sha256':expected,'v9RogueStealth90':True,
+              'v9Target360':True,'v9TrainingHeader':True,
+              'physicalS23StillNeedsHumanQA':True,'rollbackSourceRun':38311284190}))
+          PY
