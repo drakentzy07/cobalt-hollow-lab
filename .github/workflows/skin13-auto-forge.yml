@@ -122,7 +122,7 @@ jobs:
           }));
           if(proof.jobId!==json.id||proof.copiedSourceTriangles!==0||
             proof.newSkinnedPieces!==11||proof.originalRigBones!==23||
-            proof.originalAnimationClips!==22||proof.artApproved!==false||
+            proof.originalAnimationClips!==22||proof.artApproved!==false||proof.artistApproved!==false||
             proof.visualArtQaPassed!==false||proof.glbBytes<40000||
             proof.skinsInGltf<1)throw Error('SKIN13_PROVENANCE_OR_RIG_NO_GO');
           const job=newForgeJob({id:json.id,source:json.source,request:json.request,createdAt:json.createdAt});

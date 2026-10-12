@@ -170,7 +170,7 @@ report={
  'skinsInGltf':len(glbjson.get('skins',[])),
  'animationTracksInGltf':len(glbjson.get('animations',[])),
  'visualArtQaPassed':False,'maleFemaleFitVerified':False,
- 'artistApproved':False,'gameDeployed':False,
+ 'artistApproved':False,'artApproved':False,'gameDeployed':False,
  'outcome':'TECHNICAL_GLTF_CREATED_AWAITING_ARTISTIC_AND_MOBILE_REVIEW',
  'pieces':stats
 }
