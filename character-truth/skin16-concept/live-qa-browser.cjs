@@ -1,3 +1,4 @@
+// QA re-run after live diagnostic GLTF count fix; no public HIGHFLY changes.
 const {chromium}=require('playwright');
 const fs=require('fs');const assert=require('node:assert/strict');
 (async()=>{
