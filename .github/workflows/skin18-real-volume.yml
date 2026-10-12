@@ -3,7 +3,7 @@ on:
   push:
     branches: [highfly-skin18-eclipse-volume-real]
     paths:
-      - 'character-truth/skin18-volume/**'
+      - 'character-truth/skin18-volume/blender-solid-armor.py'
       - '.github/workflows/skin18-real-volume.yml'
   workflow_dispatch:
 permissions: {contents: write, actions: read}
