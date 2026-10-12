@@ -13,7 +13,7 @@ import {describe,expect,it} from 'vitest';
 import {Sim} from '../src/sim/sim';
 import {createMob} from '../src/sim/entity';
 import {meleeSwing} from '../src/sim/combat/auto_attack';
-import {BUILTIN_WORLD,ITEMS,MOBS,STATIONS} from '../src/sim/data';
+import {BUILTIN_WORLD,DUNGEONS,ITEMS,MOBS,STATIONS} from '../src/sim/data';
 import {DT,MAX_LEVEL,type PlayerClass} from '../src/sim/types';
 import {canEquipItem} from '../src/sim/equipment_rules';
 import {requiredLevelFor} from '../src/sim/item_level_req';
@@ -24,6 +24,7 @@ import {hfP13ItemId,hfP13RecipeId} from '../src/sim/content/highfly_lv99_native_
 import {hfP16ArmorId,hfP16ArmorRecipeId} from '../src/sim/content/highfly_p16_native_chest_armor';
 import {highflyEncounterId} from '../src/highfly/monsters/hunt_encounters';
 import {HIGHFLY_HUNT_SCENARIOS} from '../src/highfly/monsters/hunt_scenarios';
+import {highflyNativeHuntDungeonId} from '../src/highfly/monsters/hunt_dungeon_registry';
 
 const CLASSES:PlayerClass[]=['warrior','paladin','hunter','rogue','priest',
   'shaman','mage','warlock','druid'];
@@ -569,4 +570,89 @@ describe('HIGHFLY native cooperative party+XP+loot+direct player trade compatibi
     }));
     expect(rows).toHaveLength(9);
   },180000);
+});
+
+/** Original party instance claim across ALL 8 HIGHFLY stage dungeons,
+ * including a rejected underlevel party guest, shared single mob population,
+ * individual leave, no cloning, two character saves. 9 pairings x 8 stages.
+ * Each player is a separate QA identity and own Hunter; levels are fixtures.
+ * No public multiplayer, server deployment, boss balance or navigation claim.
+ */
+describe('HIGHFLY co-op native group dungeon instance: 9 classes x 8 stages',()=>{
+  it('joins both Hunters to ONE original instance per stage and enforces each level gate',()=>{
+    const rows:{guest:PlayerClass,stage:string,level:number,
+      sameParty:boolean,oneInstance:boolean,mobPopulation:number,
+      rejectedUnderlevel:boolean,eachExited:boolean,distinctHunters:boolean}[]=[];
+    for(const [classIndex,cls] of CLASSES.entries()){
+      const {sim,pid:leader,p:le,meta:lm}=simFor('warrior',812600+classIndex*101);
+      const guest=sim.addPlayer(cls,'HF_COOP_DUNGEON_'+cls,
+        {characterId:81000+classIndex,tutorialGreetingSent:true});
+      const ge=sim.entities.get(guest)!;
+      const gm=sim.players.get(guest)!;
+      expect(lm).not.toBe(gm);
+      sim.partyInvite(guest,leader);
+      sim.partyAccept(guest);
+      const party=sim.partyOf(leader);
+      expect(party?.members).toEqual(expect.arrayContaining([leader,guest]));
+      const groupKey='party:'+party!.id;
+      for(const stage of HIGHFLY_HUNT_SCENARIOS){
+        const dungeonId=highflyNativeHuntDungeonId(stage.id);
+        expect(DUNGEONS[dungeonId],'NO_NATIVE_COOP_DUNGEON_'+stage.id).toBeDefined();
+        sim.setPlayerLevel(stage.minLevel,leader); // test fixture only
+        sim.setPlayerLevel(Math.max(1,stage.minLevel-1),guest);
+        const rejectedUnderlevel=sim.enterDungeon(dungeonId,guest)===false;
+        expect(rejectedUnderlevel,'PARTY_LEVEL_GATE_BYPASS_'+cls+'_'+stage.id).toBe(true);
+        sim.setPlayerLevel(stage.minLevel,guest);
+        const first=sim.enterDungeon(dungeonId,leader);
+        expect(first,'LEADER_COOP_INSTANCE_ENTRY_FAILED_'+stage.id).toBe(true);
+        const claimed=sim.instances.find(i=>i.dungeonId===dungeonId&&
+          i.partyKey===groupKey&&i.enteredBy.has(leader));
+        expect(claimed,'NO_SHARED_PARTY_INSTANCE_'+stage.id).toBeDefined();
+        const ids=[...(claimed?.mobIds??[])];
+        expect(ids,'INCORRECT_HIGHFLY_SHARED_MOB_POPULATION').toHaveLength(8);
+        const second=sim.enterDungeon(dungeonId,guest);
+        expect(second,'GUEST_COOP_INSTANCE_ENTRY_FAILED_'+cls+'_'+stage.id).toBe(true);
+        const sameParty=sim.partyOf(guest)?.id===party!.id;
+        const oneInstance=sim.instances.filter(i=>i.dungeonId===dungeonId&&
+          i.partyKey===groupKey).length===1;
+        expect(oneInstance,'DUPLICATE_PARTY_INSTANCE_'+cls+'_'+stage.id).toBe(true);
+        expect(claimed?.enteredBy.has(guest)).toBe(true);
+        expect(claimed?.mobIds).toEqual(ids); // joining cannot respawn pack
+        const everyoneHere=[...claimed!.enteredBy].filter(pid=>pid===leader||pid===guest);
+        expect(everyoneHere).toHaveLength(2);
+        // Leaving individually must not teleport the other Hunter, and both
+        // must keep their own equipment, character ID, class and save state.
+        const guestBefore={...ge.pos};
+        const firstExit=sim.leaveDungeon(leader);
+        expect(firstExit).toBe(true);
+        expect(ge.pos).toEqual(guestBefore);
+        const secondExit=sim.leaveDungeon(guest);
+        expect(secondExit).toBe(true);
+        const distinctHunters=sim.players.get(leader)===lm&&
+          sim.players.get(guest)===gm&&
+          sim.entities.get(leader)===le&&sim.entities.get(guest)===ge&&
+          gm.cls===cls&&lm.cls==='warrior';
+        expect(distinctHunters).toBe(true);
+        expect(sim.serializeCharacter(leader)?.level).toBe(stage.minLevel);
+        expect(sim.serializeCharacter(guest)?.level).toBe(stage.minLevel);
+        rows.push({guest:cls,stage:stage.id,level:stage.minLevel,
+          sameParty,oneInstance,mobPopulation:ids.length,
+          rejectedUnderlevel,eachExited:firstExit&&secondExit,distinctHunters});
+      }
+      expect([...sim.entities.values()].filter(e=>e.kind==='player')).toHaveLength(2);
+    }
+    console.info('HIGHFLY_COOP_SHARED_INSTANCES_72='+JSON.stringify({
+      pairings:CLASSES.length,stages:HIGHFLY_HUNT_SCENARIOS.length,
+      partyDungeonProofs:rows.length,passes:rows.filter(x=>
+        x.sameParty&&x.oneInstance&&x.mobPopulation===8&&
+        x.rejectedUnderlevel&&x.eachExited&&x.distinctHunters).length,
+      nativePartyClaimUsed:true,noDuplicatedDungeonSpawns:true,
+      eachCharacterPersisted:true,levelsFixtures:true,networkUnverified:true,
+      failures:rows.filter(x=>!x.sameParty||!x.oneInstance||
+        x.mobPopulation!==8||!x.rejectedUnderlevel||!x.eachExited||!x.distinctHunters)
+    }));
+    expect(rows).toHaveLength(72);
+    expect(rows.every(x=>x.sameParty&&x.oneInstance&&x.mobPopulation===8&&
+      x.rejectedUnderlevel&&x.eachExited&&x.distinctHunters)).toBe(true);
+  },240000);
 });
