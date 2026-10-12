@@ -8,6 +8,7 @@ const SOURCE='https://raw.githubusercontent.com/drakentzy07/cobalt-hollow-lab/hi
 const ECLIPSE='https://raw.githubusercontent.com/drakentzy07/cobalt-hollow-lab/highfly-skin16-preview-assets/skin16-atelier/assets/HF16-ECLIPSE-NATIVE-RIG-22-CLIPS.glb';
 const slots=['Head','Chest','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR','Back'];
 const armorNames=new Set(slots.map(x=>'Armor_paladin_'+x));
+const armorFamilies=['paladin','knight','rogue','mage','druid','ranger','barbarian','warrior','shaman'];
 const maleNames=new Set(['M_Head','M_Torso','M_ArmL','M_ArmR','M_HandL','M_HandR','M_LegL','M_LegR','M_FootL','M_FootR','M_Loin']);
 const $=s=>document.querySelector(s);
 const host=$('#view');const status=$('#status');
@@ -36,9 +37,18 @@ const tex=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three
 tex.detectSupport(renderer);loader.setKTX2Loader(tex);
 const clock=new THREE.Clock();
 const state={root:null,mixer:null,clips:[],action:null,rig:null,mode:'original',overlay:[],
-  baseVisible:0,armorSlots:0,originalArmorMeshes:0,angle:0,ready:false,playing:true};
+  baseVisible:0,armorSlots:0,originalArmorMeshes:0,originalFamilies:[],family:'paladin',angle:0,ready:false,playing:true};
 function rootArmorName(o){
- let p=o;while(p){if(armorNames.has(p.name))return p.name;p=p.parent}return null;
+ let p=o;
+ while(p){
+  if(/^Armor_([a-z0-9]+)_(.+)$/i.test(p.name))return p.name;
+  p=p.parent;
+ }
+ return null;
+}
+function rootArmorFamily(o){
+ const name=rootArmorName(o);
+ return name?.match(/^Armor_([a-z0-9]+)_/i)?.[1]?.toLowerCase()||null;
 }
 function nativeRootParts(root){
  const witness=root.getObjectByName('M_Torso');
@@ -60,18 +70,18 @@ function selectView(mode){
  let nativeBody=0,originalArmor=0,experiment=0;
  state.root.traverse(o=>{
   if(!o.isMesh)return;
-  const paladin=rootArmorName(o);
+  const family=rootArmorFamily(o);
   const slot=maleNames.has(o.name);
   if(slot){o.visible=true;nativeBody++}
-  else if(paladin){o.visible=mode==='original';if(o.visible)originalArmor++}
+  else if(family){o.visible=mode==='original'&&family===state.family;if(o.visible)originalArmor++}
   else{o.visible=false}
  });
  for(const obj of state.overlay){obj.visible=mode==='experiment';if(obj.visible)experiment++}
  for(const id of ['base','original','experiment'])$('#'+id).classList.toggle('active',id===mode);
- status.textContent='✅ ClaudeCraft ORIGINAL | '+nativeBody+' partes corporales | Paladín original: '+(mode==='original'?originalArmor+' render meshes':'apagado')+
+ status.textContent='✅ ClaudeCraft ORIGINAL | '+nativeBody+' partes corporales | Armadura nativa '+state.family+': '+(mode==='original'?originalArmor+' render meshes':'apagada')+
  ' | Eclipse: '+(mode==='experiment'?experiment+' primitivas skinned':'apagado')+' | '+state.clips.length+' movimientos | '+(mode==='experiment'?'ARTE EXPERIMENTAL NO APROBADO':'ARMADURA NATIVA');
  window.HIGHFLY_SKIN17={ready:true,mode,nativeBody,originalArmorMeshes:originalArmor,
-  newArmorPrimitives:state.overlay.length,newArmorSlots:state.armorSlots,clips:state.clips.length,
+  newArmorPrimitives:state.overlay.length,newArmorSlots:state.armorSlots,availableNativeFamilies:state.originalFamilies,nativeFamily:state.family,clips:state.clips.length,
   originalRigBones:23,sourceOriginal:true,publicGameModified:false,artApproved:false};
 }
 function switchAnimation(index){
@@ -124,18 +134,31 @@ async function load(){
   if(original.animations.length!==22)throw Error('La fuente original no conserva sus 22 clips');
   const root=original.scene;
   const {bones}=nativeRootParts(root);
-  let native=0,armorSlots=new Set(),armorMeshes=0,removed=0;
+  let native=0,armorSlots=new Set(),armorMeshes=0,removed=0;const familyRenderers=new Map();
   const toRemove=[];
   root.traverse(o=>{
    if(!o.isMesh)return;
    if(maleNames.has(o.name)){native++;return}
-   const paladin=rootArmorName(o);
-   if(paladin){armorSlots.add(paladin);armorMeshes++;return}
+   const family=rootArmorFamily(o);
+   if(family){
+    familyRenderers.set(family,(familyRenderers.get(family)||0)+1);
+    if(family==='paladin'){armorSlots.add(rootArmorName(o));armorMeshes++}
+    return;
+   }
    toRemove.push(o);
   });
   if(native!==11||armorSlots.size!==11||armorMeshes!==17)
    throw Error('La fuente original quedó incompleta: '+native+' cuerpo / '+armorSlots.size+' slots / '+armorMeshes+' partes de Paladín');
   for(const item of toRemove){item.removeFromParent();removed++}
+  state.originalFamilies=[...familyRenderers].filter(([,n])=>n>=6).map(([family,count])=>({family,count}));
+  if(!state.originalFamilies.some(x=>x.family==='paladin'))throw Error('Paladín original ya no figura en los equipamientos');
+  const wardrobe=$('#nativeArmor');wardrobe.replaceChildren();
+  for(const entry of state.originalFamilies){
+   const option=document.createElement('option');option.value=entry.family;
+   option.textContent=entry.family.charAt(0).toUpperCase()+entry.family.slice(1)+' · '+entry.count+' piezas';
+   wardrobe.append(option);
+  }
+  wardrobe.value='paladin';
   state.root=root;state.clips=original.animations;state.mixer=new THREE.AnimationMixer(root);
   scene.add(root);
   status.textContent='✅ Hunter auténtico cargado. Preparando armadura nueva sobre el rig existente…';
@@ -155,7 +178,7 @@ async function load(){
   const genericIdle=state.clips.findIndex(c=>/^Idle($|_)/i.test(c.name));
   picker.value=String(exactIdle>=0?exactIdle:Math.max(0,genericIdle));
   state.ready=true;
-  for(const id of ['original','base','experiment','clip','pause','focus','rotate','speed'])$('#'+id).disabled=false;
+  for(const id of ['original','base','experiment','nativeArmor','clip','pause','focus','rotate','speed'])$('#'+id).disabled=false;
   if(state.overlay.length===0)$('#experiment').disabled=true;
   switchAnimation(Number(picker.value));selectView('original');fit();
   window.HIGHFLY_SKIN17.sourceVariantMeshesHidden=removed;
@@ -166,6 +189,7 @@ async function load(){
  }
 }
 for(const key of ['original','base','experiment'])$('#'+key).onclick=()=>selectView(key);
+$('#nativeArmor').onchange=()=>{state.family=$('#nativeArmor').value;selectView('original')};
 $('#clip').onchange=()=>switchAnimation(Number($('#clip').value));
 $('#pause').onclick=()=>{state.playing=!state.playing;state.mixer.timeScale=state.playing?Number($('#speed').value):0;$('#pause').textContent=state.playing?'⏸ Pausa':'▶ Seguir'};
 $('#speed').onchange=()=>{if(state.mixer&&state.playing)state.mixer.timeScale=Number($('#speed').value)};

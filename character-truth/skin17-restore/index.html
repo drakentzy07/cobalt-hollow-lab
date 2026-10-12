@@ -20,6 +20,7 @@ small{font-size:12px;color:#9fb1ca}summary{cursor:pointer}
 <div class="view" id="view"><div id="status" role="status">Cargando el personaje ORIGINAL de ClaudeCraft y sus armaduras auténticas…</div></div>
 <fieldset id="controls">
 <button id="original" class="active" disabled>🛡️ Paladín ORIGINAL</button>
+<label for="nativeArmor">Equipo nativo</label><select id="nativeArmor" disabled><option>Paladín</option></select>
 <button id="base" disabled>Hunter base</button>
 <button id="experiment" disabled>⚒️ Eclipse EXPERIMENTAL</button>
 <label for="clip">Movimiento</label><select id="clip" disabled><option>Esperando Hunter…</option></select>
@@ -28,6 +29,6 @@ small{font-size:12px;color:#9fb1ca}summary{cursor:pointer}
 <button id="focus" disabled>Enfocar</button>
 <label for="speed">Velocidad</label><select id="speed" disabled><option value="0.6">0,6×</option><option value="1" selected>1×</option><option value="1.4">1,4×</option></select>
 </fieldset>
-<p><strong>Volvimos a la base correcta.</strong> El Paladín ORIGINAL se equipa a partir de las piezas y texturas del GLB ClaudeCraft, no se reconstruye con óvalos. Eclipse es una armadura 3D experimental independiente acoplada al mismo esqueleto. Podés cambiar de armadura sin perder el Hunter.</p>
+<p><strong>Volvimos a la base correcta.</strong> Las armaduras ORIGINALES se equipan con las piezas y texturas auténticas del GLB ClaudeCraft, no se reconstruyen con óvalos. Eclipse es una armadura 3D experimental independiente acoplada al mismo esqueleto. Podés cambiar de armadura sin perder el Hunter.</p>
 <details><summary>Origen del personaje y alcance de la prueba</summary><p>Fuente ClaudeCraft original inmovilizada en commit 9b57e49c, modelo warrior_modular.glb; se conserva el cuerpo masculino modular, sus materiales nativos, el esqueleto Rig_Medium y 22 clips. Eclipse SKIN16 se acopla como geometría nueva y está NO APROBADA artísticamente. Esto es un laboratorio visual, no una prueba de combate ni una publicación en HIGHFLY público.</p></details>
 </main><script type="module" src="./lab.mjs"></script></body></html>

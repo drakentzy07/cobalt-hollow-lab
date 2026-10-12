@@ -23,6 +23,13 @@ try{
  assert.equal(original.nativeBody,11);
  assert.equal(original.originalArmorMeshes,17);
  assert.equal(original.nativeArmorRendererCount,17);
+ assert(original.availableNativeFamilies.length>=2,'NEED_MORE_THAN_ONE_REAL_ORIGINAL_CLAUDECRAFT_ARMOR');
+ const other=original.availableNativeFamilies.find(f=>f.family!=='paladin');
+ await page.locator('#nativeArmor').selectOption(other.family);
+ assert.equal(await page.evaluate(()=>window.HIGHFLY_SKIN17.nativeFamily),other.family);
+ assert((await page.evaluate(()=>window.HIGHFLY_SKIN17.originalArmorMeshes))>0);
+ await page.locator('#nativeArmor').selectOption('paladin');
+ assert.equal(await page.evaluate(()=>window.HIGHFLY_SKIN17.originalArmorMeshes),17);
  assert(original.newArmorSlots===11,'ECLIPSE_NOT_ATTACHED_TO_ORIGINAL');
  const dir='character-truth/skin17-restore/qa';
  fs.mkdirSync(dir,{recursive:true});
@@ -43,7 +50,7 @@ try{
  assert.equal(errors.length,0,errors.join(' | '));
  fs.writeFileSync(dir+'/gate.json',JSON.stringify({green:true,url,claudecraftOriginal:true,body:original.nativeBody,paladinNativeMeshes:17,
   experimentalArmorSlots:11,clips:22,animationSelectionVerified:true,originalTextureLoader:'KTX2+Meshopt',
-  originalArmorPreserved:true,artApproved:false,physicalS23Tested:false,errors},null,2));
+  originalArmorPreserved:true,nativeFamilies:original.availableNativeFamilies,allNativeEquipmentsInGame:false,artApproved:false,physicalS23Tested:false,errors},null,2));
  console.log('HIGHFLY_SKIN17_ORIGINAL_CLAUDECRAFT_KTX2_PALADIN_17_MESHES_OVERLAY_11_AND_22_CLIPS_LIVE_GREEN=1');
 }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
