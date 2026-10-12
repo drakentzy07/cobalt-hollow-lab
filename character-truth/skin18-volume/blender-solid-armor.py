@@ -483,7 +483,9 @@ def create_surface(slot,donor):
   p.material_index=material_id;p.use_smooth=False
  instance=donor.copy();instance.data=mesh;instance.name='HF18NEW_'+slot
  bpy.context.collection.objects.link(instance)
- assert len(instance.vertex_groups)==len(donor.vertex_groups)
+ if len(instance.vertex_groups)==0:
+  for group in donor.vertex_groups:instance.vertex_groups.new(name=group.name)
+ assert len(instance.vertex_groups)==len(donor.vertex_groups),'NATIVE_RIG_VERTEX_GROUP_COUNT_MISMATCH'
  kdtree=KDTree(len(source))
  for idx,point in enumerate(source):kdtree.insert(point,idx)
  kdtree.balance()
