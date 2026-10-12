@@ -45,9 +45,14 @@ def validate_decisions(result,expected_prompt):
   if key not in result:raise ValueError("MISSING_AI_DECISION:"+key)
   out[key]=normalize_choice(key,result[key])
  return out
+def hashfile(path):
+ h=hashlib.sha256()
+ with open(path,'rb') as f:
+  for chunk in iter(lambda:f.read(1024*1024),b''):h.update(chunk)
+ return h.hexdigest()
 def build_design(parsed,prompt,model_path,raw):
  model_path=Path(model_path)
- actual=model_path.read_bytes()[:4]
+ actual=model_path.open('rb').read(4)
  if actual!=b"GGUF" or model_path.stat().st_size<300_000_000:
   raise RuntimeError("GGUF_MODEL_NOT_LOADED")
  choices=validate_decisions(parsed,prompt)
@@ -56,7 +61,7 @@ def build_design(parsed,prompt,model_path,raw):
   "source":"LOCAL_QWEN2_5_0_5B_REAL_INFERENCE",
   "model": "Qwen/Qwen2.5-0.5B-Instruct-GGUF:q4_k_m",
   "modelSizeBytes":model_path.stat().st_size,
-  "modelSHA256":hashlib.sha256(model_path.read_bytes()).hexdigest(),
+  "modelSHA256":hashfile(model_path),
   "userPromptSHA256":hashlib.sha256(prompt.encode()).hexdigest(),
   "userPrompt":prompt,"inferenceText":raw,
   "decisions":choices,"newGeometryOnly":True,"artApproved":False,
