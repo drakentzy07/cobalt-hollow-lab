@@ -6,7 +6,7 @@ import {MeshoptDecoder} from 'https://cdn.jsdelivr.net/npm/meshoptimizer@0.23.0/
 
 const SOURCE='https://raw.githubusercontent.com/drakentzy07/cobalt-hollow-lab/highfly-skin7-live-preview-site/skin7-paladin-compare-lab/assets/warrior_modular.glb';
 const ECLIPSE='https://raw.githubusercontent.com/drakentzy07/cobalt-hollow-lab/highfly-skin16-preview-assets/skin16-atelier/assets/HF16-ECLIPSE-NATIVE-RIG-22-CLIPS.glb';
-const ECLIPSE_VOLUME='https://raw.githubusercontent.com/drakentzy07/cobalt-hollow-lab/highfly-skin18-volume-preview-assets/skin18-volume/assets/HF18-ECLIPSE-REAL-VOLUME-22-CLIPS.glb';
+const ECLIPSE_VOLUME='https://raw.githubusercontent.com/drakentzy07/cobalt-hollow-lab/highfly-skin18-volume-preview-assets/skin18-volume/assets/HF18-ECLIPSE-REAL-VOLUME-22-CLIPS.glb?v=8353b0f48000';
 const slots=['Head','Chest','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR','Back'];
 const armorNames=new Set(slots.map(x=>'Armor_paladin_'+x));
 const armorFamilies=['paladin','knight','rogue','mage','druid','ranger','barbarian','warrior','shaman'];
