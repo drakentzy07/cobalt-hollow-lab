@@ -1138,6 +1138,13 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
     expect(rows).toHaveLength(CLASSES.reduce((n,cls)=>n+PvMSpecSweep[cls].length,0));
     expect(rows.every(x=>x.trainingUnchanged&&x.level99Preserved&&
       x.noEnemyHpOverride&&x.attemptedAttacks>0)).toBe(true);
+    // Honest new GOLDEN acceptance: an actual native WIN for each of the
+    // nine original classes, in at least one measured legal spec variant.
+    // This is a meaningful regression gate; never substitute PASS with a
+    // green diagnostics-only suite, boss HP override or artificial damage.
+    expect(bestRows.every(x=>x.result==='WIN')).toBe(true);
+    expect(bestRows.every(x=>x.highestEvadeEpoch===0)).toBe(true);
+    expect(bestRows.every(x=>x.heroEndHp>0&&x.bossHpEnd===0)).toBe(true);
   },240000);
 });
 
