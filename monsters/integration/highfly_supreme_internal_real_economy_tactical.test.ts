@@ -328,7 +328,43 @@ describe('HIGHFLY SUPREME late-economy authentic RNG five rungs and armor',()=>{
         expect(npc,'NO_ORIGINAL_NPC_FOR_FLUX').toBeDefined();
         p.pos=sim.groundPos(npc!.pos.x,npc!.pos.z);
         p.prevPos={...p.pos};sim.rebucket(p);
+        // The last rung's naturally earned loot may fill a beginner's bag.
+        // Sell surplus drops to the ORIGINAL NPC; discard non-sellable
+        // non-reagents through the ORIGINAL player inventory command.
+        // Never grant free bag slots, copper, loot or vendor stock.
+        const keep=new Set(recipe.reagents.map(x=>x.itemId));
+        const preSaleSlots=meta.inventory.length;
+        let soldStacks=0,discardedStacks=0;
+        for(const slot of [...meta.inventory]){
+          if(keep.has(slot.itemId))continue;
+          const before=sim.countItem(slot.itemId,pid);
+          if(before<=0)continue;
+          sim.sellItem(slot.itemId,before,pid);
+          const afterSale=sim.countItem(slot.itemId,pid);
+          if(afterSale<before)soldStacks++;
+          if(afterSale>0){
+            sim.discardItem(slot.itemId,afterSale,pid);
+            if(sim.countItem(slot.itemId,pid)<afterSale)discardedStacks++;
+          }
+        }
+        row.inventoryBeforeVendor=preSaleSlots;
+        row.inventoryAfterLiquidation=meta.inventory.length;
+        row.soldSurplusStacks=soldStacks;
+        row.discardedUnsellableStacks=discardedStacks;
+        const copperBeforeVendor=meta.copper;
         for(let n=0;n<flux;n++)sim.buyItem(npc!.id,'smithing_flux',undefined,pid);
+        row.copperAfterVendor=meta.copper;
+        row.vendorFluxOwned=sim.countItem('smithing_flux',pid);
+        row.shopConsumedCopper=copperBeforeVendor-meta.copper;
+        console.info('HF_SUPREME_LATE_VENDOR='+JSON.stringify({
+          level:c.level,cls:c.cls,kind:c.kind,
+          inventoryBeforeVendor:row.inventoryBeforeVendor,
+          inventoryAfterLiquidation:row.inventoryAfterLiquidation,
+          soldSurplusStacks:soldStacks,
+          discardedUnsellableStacks:discardedStacks,
+          vendorFluxOwned:row.vendorFluxOwned,
+          shopConsumedCopper:row.shopConsumedCopper
+        }));
         expect(sim.countItem('smithing_flux',pid)).toBeGreaterThanOrEqual(flux);
         const forge=STATIONS.find(s=>s.id==='station_eastbrook_forge')!;
         p.pos=sim.groundPos(forge.pos.x,forge.pos.z);
