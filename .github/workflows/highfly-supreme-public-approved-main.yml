@@ -1,0 +1,119 @@
+name: HIGHFLY SUPREME — USER APPROVED PAGES REPLACE (S23 PREVIEW)
+# Explicit owner approval 2026-10-12. Publish exactly GREEN unified WebGL
+# artifact 11766515704 from run 38290551744. Do not rebuild or patch code.
+# Old public site assets are replaced; old Git refs and CI runs remain recoverable.
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/highfly-supreme-public-approved-main.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: highfly-supreme-approved-pages-release
+  cancel-in-progress: false
+
+jobs:
+  approved_supreme_pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout release workflow manifest
+        uses: actions/checkout@v4
+      - name: Download exact previously GREEN integrated SUPREME browser-tested artifact
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38290551744
+          github-token: ${{ github.token }}
+          name: HIGHFLY-SUPREME-INTEGRATED-WEBGL-S23-CANDIDATE-NO-DEPLOY
+          path: approved-candidate
+      - name: Gate genuine unified FULL LV1–99 WebGL and root asset paths before deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s approved-candidate/cobalt-hollow-lab/index.html
+          test -d approved-candidate/cobalt-hollow-lab/media
+          test -d approved-candidate/cobalt-hollow-lab/assets
+          grep -q '/cobalt-hollow-lab/assets/' approved-candidate/cobalt-hollow-lab/index.html
+          mkdir -p supreme-site
+          cp -a approved-candidate/cobalt-hollow-lab/. supreme-site/
+          touch supreme-site/.nojekyll
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          root=Path('supreme-site')
+          files=[p for p in root.rglob('*') if p.is_file()]
+          total=sum(p.stat().st_size for p in files)
+          if not 500_000_000 <= total < 995_000_000:
+            raise SystemExit('BLOCK_SUPREME_SIZE_'+str(total))
+          if len(files)<6000:
+            raise SystemExit('BLOCK_SUPREME_FILES_'+str(len(files)))
+          if any(p.is_symlink() for p in root.rglob('*')):
+            raise SystemExit('BLOCK_SYMLINKS')
+          print('HF_SUPREME_OWNER_APPROVED_RELEASE_READY='+json.dumps({
+            'sourceRun':38290551744,'sourceArtifact':11766515704,
+            'totalBytes':total,'files':len(files),
+            'replacedOldPagesOnly':True,'gitSourcesRetained':True,
+            'normalLevelCap':99,'extended100Enabled':False,
+            'humanBossBalanceNineOfNineCertified':False}))
+          PY
+      - name: Configure original cobalt-hollow-lab GitHub Pages only
+        uses: actions/configure-pages@v5
+      - name: Upload approved SUPREME as FULL site replacing obsolete public files
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: supreme-site
+      - name: Deploy owner-approved SUPREME candidate on GitHub Pages
+        uses: actions/deploy-pages@v4
+        id: deployment
+      - name: Verify deployed HIGHFLY SUPREME root and static assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import urllib.request, hashlib, time, re, json
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          expected=Path('supreme-site/index.html').read_bytes()
+          wanted=hashlib.sha256(expected).hexdigest()
+          headers={'User-Agent':'HIGHFLY-SUPREME-PAGES-RELEASE-VERIFY',
+                   'Cache-Control':'no-cache'}
+          def get(rel,limit=None):
+            req=urllib.request.Request(base+rel,headers=headers)
+            with urllib.request.urlopen(req,timeout=60) as response:
+              assert response.status==200, (rel,response.status)
+              return response.read() if limit is None else response.read(limit)
+          for attempt in range(35):
+            try:
+              body=get('')
+              if hashlib.sha256(body).hexdigest()==wanted:break
+            except Exception as exc:
+              print('HF_SUPREME_DEPLOY_CHECK_RETRY',attempt,str(exc)[:120])
+            time.sleep(5)
+          else:
+            raise SystemExit('SUPREME_NEW_ROOT_NOT_LIVE')
+          text=expected.decode('utf-8')
+          entries=re.findall(r'''(?:src|href)="(/cobalt-hollow-lab/[^"]+)"''',text)
+          assert entries,'NO_ASSET_REFERENCES'
+          inspected=0
+          for asset in entries[:15]:
+            rel=asset.removeprefix('/cobalt-hollow-lab/')
+            if rel.startswith('data:') or not rel or rel=='':continue
+            assert get(rel,2048), 'MISSING_STATIC_ASSET:'+rel
+            inspected+=1
+          assert inspected>0,'NO_ASSET_VERIFIED'
+          print('HF_SUPREME_REAL_PUBLIC_S23_BROWSER_ENTRY_GREEN='+json.dumps({
+            'url':base,'sha256':wanted,'assetsChecked':inspected,
+            'browserTouchTestPriorCI':True,'physicalS23NotYetCertified':True,
+            'bossNineOfNineNotYetCertified':True}))
+          PY
