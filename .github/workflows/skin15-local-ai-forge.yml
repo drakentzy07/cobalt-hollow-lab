@@ -61,6 +61,13 @@ jobs:
           JS
           echo "SKIN13_JOB=$candidate" >> "$GITHUB_ENV"
           echo "SKIN13_JOB_ID=$(basename "$candidate" .json)" >> "$GITHUB_ENV"
+      - name: Cache open CPU model and llama.cpp pip artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ${{ runner.temp }}/hf-qwen/qwen.gguf
+          key: hf15-local-qwen-v1-${{ runner.os }}
       - name: Load a genuine local Qwen2.5 open LLM (no provider API key)
         shell: bash
         timeout-minutes: 12
@@ -68,9 +75,11 @@ jobs:
           set -euo pipefail
           python3 -m pip install --no-input 'llama-cpp-python==0.3.16' --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
           mkdir -p "$RUNNER_TEMP/hf-qwen"
-          curl -fLsS --retry 3 --max-time 390 \
-            https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf \
-            -o "$RUNNER_TEMP/hf-qwen/qwen.gguf"
+          if [[ ! -s "$RUNNER_TEMP/hf-qwen/qwen.gguf" ]] || [[ "$(stat -c '%s' "$RUNNER_TEMP/hf-qwen/qwen.gguf")" -lt 400000000 ]]; then
+            curl -fLsS --retry 3 --max-time 390 \
+              https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf \
+              -o "$RUNNER_TEMP/hf-qwen/qwen.gguf"
+          fi
           test "$(stat -c '%s' "$RUNNER_TEMP/hf-qwen/qwen.gguf")" -gt 400000000
           python3 - <<'PY'
           import os
