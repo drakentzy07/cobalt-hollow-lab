@@ -159,6 +159,54 @@ skin_nodes=[o for o in glbjson.get('nodes',[]) if o.get('name','').startswith('H
 assert len(skin_nodes)>=11,'NEW_ARMOR_NODES_MISSING'
 # The initial demo is a procedural, geometrically new prototype, NOT a
 # high-quality AI rendering nor art-approved armor.
+# Mandatory auto-rendered review angles. Images are *evidence*, NOT art PASS.
+# A workbench rendering does not establish mobile quality or 22 playable clips.
+from mathutils import Vector as V3
+for obj in bpy.data.objects:
+ if obj.type=='MESH' and obj not in objects and obj.name.startswith(('Armor_','HF7RF','HF9NEW')):
+  obj.hide_render=True
+bounds=[]
+for obj in objects:
+ for corner in obj.bound_box:
+  bounds.append(obj.matrix_world @ V3(corner))
+assert bounds, 'EMPTY_ARMOR_SCENE'
+mn=V3(tuple(min(v[i] for v in bounds) for i in range(3)))
+mx=V3(tuple(max(v[i] for v in bounds) for i in range(3)))
+center=(mn+mx)*.5
+dim=mx-mn
+assert all(math.isfinite(v) for v in dim),'NONFINITE_ARMOR_DIMENSIONS'
+scene=bpy.context.scene
+scene.render.engine='BLENDER_WORKBENCH'
+scene.display.shading.light='STUDIO'
+scene.display.shading.color_type='MATERIAL'
+scene.display.shading.show_shadows=True
+scene.display.shading.show_cavity=True
+scene.render.resolution_x=560
+scene.render.resolution_y=700
+scene.render.resolution_percentage=100
+scene.render.image_settings.file_format='PNG'
+scene.render.film_transparent=False
+scene.world.color=(.05,.06,.09)
+camera_data=bpy.data.cameras.new('HF13_QA_REVIEW_CAM')
+camera=bpy.data.objects.new('HF13_QA_REVIEW_CAM',camera_data)
+bpy.context.collection.objects.link(camera)
+scene.camera=camera
+camera_data.type='ORTHO'
+camera_data.ortho_scale=max(dim.z*1.38,dim.x*1.9,.8)
+distance=max(dim.length*2,3.0)
+frames=[]
+for view,direction in [
+  ('front',V3((0,-1,.06))),('profile',V3((1,0,.06))),
+  ('back',V3((0,1,.06)))]:
+ camera.location=center+direction.normalized()*distance
+ camera.rotation_euler=(center-camera.location).to_track_quat('-Z','Y').to_euler()
+ filename=output.parent/(j['id']+'-'+view+'.png')
+ scene.render.filepath=str(filename)
+ bpy.ops.render.render(write_still=True)
+ assert filename.exists() and filename.stat().st_size>1000, 'REVIEW_RENDER_FAILED_'+view
+ frames.append({'view':view,'filename':filename.name,'bytes':filename.stat().st_size})
+print('HIGHFLY_SKIN13_FRONT_SIDE_BACK_ART_REVIEW_SCREENSHOTS_SAVED=3',flush=True)
+
 report={
  'schema':'highfly.skin13.geometry-technical-proof/1',
  'jobId':j['id'],'style':style,'prompt':j['request']['prompt'],
@@ -170,6 +218,7 @@ report={
  'skinsInGltf':len(glbjson.get('skins',[])),
  'animationTracksInGltf':len(glbjson.get('animations',[])),
  'visualArtQaPassed':False,'maleFemaleFitVerified':False,
+ 'reviewScreenshots':frames,'reviewAnglesRendered':len(frames),
  'artistApproved':False,'artApproved':False,'gameDeployed':False,
  'outcome':'TECHNICAL_GLTF_CREATED_AWAITING_ARTISTIC_AND_MOBILE_REVIEW',
  'pieces':stats

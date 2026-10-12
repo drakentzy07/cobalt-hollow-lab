@@ -104,6 +104,7 @@ jobs:
             --proof character-truth/skin13-auto-forge/out/proof.json | tee /tmp/skin13-blender.log
           grep -F HIGHFLY_SKIN13_BLENDER_TRUE_NEW_GEOMETRY_AND_SKINNED_GLTF_TECHNICAL_GREEN=1 /tmp/skin13-blender.log
           grep -F HIGHFLY_SKIN13_ART_APPROVED=0 /tmp/skin13-blender.log
+          grep -F HIGHFLY_SKIN13_FRONT_SIDE_BACK_ART_REVIEW_SCREENSHOTS_SAVED=3 /tmp/skin13-blender.log
       - name: Inspect output and produce machine-auditable progress without fake art approval
         shell: bash
         run: |
@@ -124,7 +125,7 @@ jobs:
             proof.newSkinnedPieces!==11||proof.originalRigBones!==23||
             proof.originalAnimationClips!==22||proof.artApproved!==false||proof.artistApproved!==false||
             proof.visualArtQaPassed!==false||proof.glbBytes<40000||
-            proof.skinsInGltf<1)throw Error('SKIN13_PROVENANCE_OR_RIG_NO_GO');
+            proof.skinsInGltf<1||proof.reviewAnglesRendered!==3)throw Error('SKIN13_PROVENANCE_OR_RIG_NO_GO');
           const job=newForgeJob({id:json.id,source:json.source,request:json.request,createdAt:json.createdAt});
           let staged=job;
           for(const phase of ['designing','design_ready','modeling','rigging','qa']){
@@ -146,5 +147,6 @@ jobs:
             character-truth/skin13-auto-forge/out/HF13-ORIGINAL-FORGE-PROTOTYPE.glb
             character-truth/skin13-auto-forge/out/proof.json
             character-truth/skin13-auto-forge/out/job-status.json
+            character-truth/skin13-auto-forge/out/*.png
           retention-days: 30
           if-no-files-found: warn
