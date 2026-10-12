@@ -65,7 +65,8 @@ new GLTFLoader().load(ASSET,gltf=>{
   if(o.isMesh){o.frustumCulled=false;if(o.material){const mm=Array.isArray(o.material)?o.material:[o.material];for(const m of mm){if(m.name?.includes('VIOLET')||m.name?.includes('ENERGY')||m.name?.includes('CRYSTAL')){m.emissive=new THREE.Color(0x590baf);m.emissiveIntensity=.6}}}}
  });
  clips=gltf.animations;
- if(skin!==11||base<9||clips.length!==22)throw Error('GLB no conserva el cuerpo, las 11 piezas o las 22 animaciones');
+ if(skin!==11||base<9||clips.length!==22)throw Error('GLB Three.js diagnóstico: armadura='+skin+', cuerpo='+base+', clips='+clips.length+', nodos='+skeleton.slice(0,30).join('|'));
+
  mixer=new THREE.AnimationMixer(model);
  const select=$('#clips');select.replaceChildren();for(let i=0;i<clips.length;i++){let o=document.createElement('option');o.value=i;o.textContent=clips[i].name;select.append(o)}
  let idle=clips.findIndex(c=>/idle/i.test(c.name));select.value=String(Math.max(0,idle));
