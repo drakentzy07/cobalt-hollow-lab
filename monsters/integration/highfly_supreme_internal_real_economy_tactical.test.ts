@@ -906,7 +906,8 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         cls==='hunter'&&spec==='survival' ? ['raptor_strike','mongoose_bite','wing_clip','arcane_shot'] :
         cls==='hunter'&&spec==='beast_mastery' ? ['pack_command','serpent_sting','arcane_shot'] :
         cls==='priest'&&spec==='shadow' ? ['shadow_word_pain','mind_blast','mind_flay','smite'] :
-        cls==='mage'&&spec==='fire' ? ['pyroblast','fireball','fire_blast','scorch'] :
+        // Fire Blast is original OFF-GCD; use it alongside a normal Fire cast.
+        cls==='mage'&&spec==='fire' ? ['fireball','scorch','pyroblast'] :
         cls==='mage'&&spec==='arcane' ? ['arcane_surge','arcane_missiles','fireball'] :
         cls==='warlock'&&spec==='destruction' ? ['immolate','conflagrate','chaos_bolt','shadow_bolt'] :
         cls==='warlock'&&spec==='demonology' ? ['raise_graveguard','raise_skeletal_warrior','shadow_bolt','immolate'] :
@@ -914,7 +915,9 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         cls==='druid'&&spec==='feral' ? ['maul','claw','swipe','moonfire'] :
         SKILL[cls];
       const attack=candidateAttacks.filter(x=>known.has(x));
-      const healing=(HEALS[cls]??[]).filter(x=>known.has(x));
+      const healing=(cls==='druid'&&spec==='restoration'
+        ? ['rejuvenation','swiftmend','regrowth','healing_touch']
+        : HEALS[cls]??[]).filter(x=>known.has(x));
       const guard=GUARD[cls].filter(x=>known.has(x));
       expect(attack.length,'NO_NATIVE_SOLO_ATTACK_'+cls).toBeGreaterThan(0);
       const opened:string[]=[];
@@ -955,6 +958,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       const maxTicks=Math.ceil(300/DT); // up to FIVE real Sim game-minutes per solo class
       let turns=0,atk=0,defensive=0,heals=0,potions=0,relocations=0,executeAttempts=0;
       let lastTyphoon=-500,typhoonAttempts=0;
+      let phoenixTranceAttempts=0,fireBlastAttempts=0,meteorAttempts=0;
       let attemptedAttacks=0,attemptedHeals=0,attemptedGuard=0;
       let maxRange=0,lastHeal=-500,lastDefend=-500,ticks=0;
       let effectiveHealing=0,healingEvents=0,actualDamageDone=0,actualDamageTaken=0;
@@ -999,9 +1003,23 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
           sim.useItem('healing_potion',pid);
           if(sim.countItem('healing_potion',pid)<before)potions++;
         }
+        // Use ORIGINAL mage off-GCD Fire tools even while a normal spell is
+        // casting. Every charge/cooldown/resource remains enforced by Sim.
+        if(cls==='mage'&&spec==='fire'){
+          if(ticks===0&&known.has('combustion')){
+            sim.castAbility('combustion',pid);phoenixTranceAttempts++;
+          }
+          if(known.has('fire_blast')&&ticks%Math.max(1,Math.ceil(5/DT))===0){
+            sim.castAbility('fire_blast',pid);fireBlastAttempts++;
+          }
+        }
         if(ticks%castPeriod===0&&!p.castingAbility){
           const health=p.hp/p.maxHp;
-          if(cls==='druid'&&known.has('typhoon')&&d<6&&
+          if(cls==='mage'&&spec==='fire'&&known.has('meteor')&&
+            ticks===0){
+            sim.castAbility('meteor',pid,{x:captain.pos.x,z:captain.pos.z});
+            meteorAttempts++;
+          }else if(cls==='druid'&&spec!=='restoration'&&known.has('typhoon')&&d<6&&
             ticks-lastTyphoon>Math.ceil(25/DT)){
             sim.castAbility('typhoon',pid);
             lastTyphoon=ticks;typhoonAttempts++;
@@ -1050,7 +1068,9 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       meta.moveInput.back=false;meta.moveInput.forward=false;
       const win=captain.dead&&!p.dead;
       const row={
-        cls,spec,talentRowsSelected,typhoonAttempts,result:win?'WIN':p.dead?'LOSS':'TIMEOUT',
+        cls,spec,talentRowsSelected,typhoonAttempts,
+        phoenixTranceAttempts,fireBlastAttempts,meteorAttempts,
+        result:win?'WIN':p.dead?'LOSS':'TIMEOUT',
         bossHpStart:startHp,bossHpEnd:Math.max(0,captain.hp),
         bossHpRemainingPct:Math.round(10000*Math.max(0,captain.hp)/startHp)/100,
         heroEndHp:Math.max(0,p.hp),heroMaxHp:p.maxHp,
@@ -1090,6 +1110,7 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
       fiveMinuteFightLimit:true,onlyOriginalNativeCastHealDamageMovement:true,
       nativeSpecsChosenViaSim:true,allTalentRowsSelected:false,
       mageDruidOriginalSixTalentRowsSelected:true,trainingCoreNotMinted:true,
+      fireOriginalOffGcdAndRestorationNativeSwiftmend:true,
       casterKitingStaysWithinNativeBossLeash:true,noMobAIOrDamageEditing:true,
       nineOriginalClassesPreserved:true,
       rows:bestRows.map(x=>({cls:x.cls,spec:x.spec,result:x.result,
