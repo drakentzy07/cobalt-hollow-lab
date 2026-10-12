@@ -4,7 +4,10 @@ name: HIGHFLY SUPREME — Unified REAL WebGL S23 Preview (NO DEPLOY)
 on:
   push:
     branches: [highfly-supreme-v91-combat-aim-nine-classes]
-    paths: [".github/workflows/highfly-supreme-integrated-candidate-s23-no-deploy.yml"]
+    paths:
+      - ".github/workflows/highfly-supreme-integrated-candidate-s23-no-deploy.yml"
+      - "overlays/highfly_v91_combat_feel.py"
+      - "game/c1/highfly_v91_combat_nine_classes.test.ts"
   workflow_dispatch:
 permissions:
   contents: read
