@@ -871,7 +871,10 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         for(let t=0;t<Math.ceil(1.6/DT);t++)sim.tick();
       }
       const ranged=['hunter','priest','shaman','mage','warlock','druid'].includes(cls);
-      const spawnGap=ranged?10:2;
+      // Use actual class attack distances; stationary bosses do not chase
+      // casters into wand range. A 10m opener previously suppressed all
+      // movement and most caster auto-attacks in the test bot.
+      const spawnGap=ranged?(cls==='hunter'?8:4.5):2;
       const captain=createMob(sim.nextId++,def,99,
         {x:p.pos.x+spawnGap,y:p.pos.y,z:p.pos.z+spawnGap/4});
       captain.hostile=true;sim.addEntity(captain);
@@ -889,8 +892,8 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
         p.facing=Math.atan2(captain.pos.x-p.pos.x,captain.pos.z-p.pos.z);
         // PLAYER-LEGAL MOVE INPUT via original stepPlayerMotion, no teleport.
         // Kite only while not hard casting; remain within attack range.
-        meta.moveInput.back=ranged&&d<5.5&&!p.castingAbility;
-        meta.moveInput.forward=ranged&&d>26&&!p.castingAbility;
+        meta.moveInput.back=ranged&&d<(cls==='hunter'?7.5:3)&&!p.castingAbility;
+        meta.moveInput.forward=ranged&&d>(cls==='hunter'?9.5:5.5)&&!p.castingAbility;
         if(meta.moveInput.back||meta.moveInput.forward)relocations++;
         if(p.hp/p.maxHp<=0.52&&p.potionCooldownUntil<=sim.time&&
           sim.countItem('healing_potion',pid)>0){
@@ -952,5 +955,95 @@ describe('HIGHFLY normal 99 single-Hunter captain: no-cheat tactical class pilot
     expect(rows).toHaveLength(9);
     expect(rows.every(x=>x.trainingUnchanged&&x.level99Preserved&&
       x.noEnemyHpOverride&&x.attemptedAttacks>0)).toBe(true);
+  },240000);
+});
+
+/** NORMAL LV99 solo acceptance separate from OPTIONAL 90-99 elite captain.
+ * A support/healer class must be able to clear ordinary native content
+ * without a Warrior partner. Level + legal equipment is an explicit
+ * precondition; no training stats or enemy HP ever injected/modified.
+ */
+describe('HIGHFLY LV99 normal open-world combat — ALL nine classes viable solo',()=>{
+  it('every class wins a genuine full-HP/AI LV99 wolf encounter with its own legal loadout',()=>{
+    const rows:any[]=[];
+    const def=MOBS.hf_hunt_wolf_90;
+    expect(def).toBeDefined();
+    expect(def.boss).not.toBe(true);
+    expect(def.elite).not.toBe(true);
+    for(const [i,cls] of CLASSES.entries()){
+      const {sim,pid,p,meta}=simFor(cls,936100+i*311);
+      sim.setPlayerLevel(99,pid);
+      const startTraining=JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile);
+      const weapon=hfP13ItemId(90,WT[cls]),chest=hfP16ArmorId(90,AT[cls]);
+      sim.addItem(weapon,1,pid);sim.equipItem(weapon,pid,'mainhand');
+      sim.addItem(chest,1,pid);sim.equipItem(chest,pid);
+      expect(meta.equipment.mainhand).toBe(weapon);
+      expect(meta.equipment.chest).toBe(chest);
+      const extra=Object.values(ITEMS).filter(item=>item.kind==='armor'&&
+        !!item.slot&&item.slot!=='chest'&&canEquipItem(cls,item)&&
+        requiredLevelFor(item)<=99)
+        .sort((a,b)=>requiredLevelFor(b)-requiredLevelFor(a)||
+          (b.stats?.armor??0)-(a.stats?.armor??0));
+      const slots=new Set<string>();
+      for(const it of extra){
+        if(!it.slot||slots.has(it.slot))continue;
+        sim.addItem(it.id,1,pid);sim.equipItem(it.id,pid);
+        if(Object.values(meta.equipment).includes(it.id))slots.add(it.slot);
+        if(slots.size>=8)break;
+      }
+      sim.addItem('healing_potion',3,pid);
+      const known=new Set(meta.known.map(x=>x.def.id));
+      const atk=OFFENSE[cls].filter(x=>known.has(x));
+      const heal=(HEALS[cls]??[]).filter(x=>known.has(x));
+      expect(atk.length).toBeGreaterThan(0);
+      const target=createMob(sim.nextId++,def,99,{
+        x:p.pos.x+2,y:p.pos.y,z:p.pos.z+1});
+      target.hostile=true;sim.addEntity(target);
+      const nativeMonsterHp=target.hp;
+      expect(nativeMonsterHp).toBeGreaterThan(1);
+      p.facing=Math.atan2(target.pos.x-p.pos.x,target.pos.z-p.pos.z);
+      sim.targetEntity(target.id,pid);sim.startAutoAttack(pid);
+      let ticks=0,actions=0,heals=0,potions=0,lastHeal=-500;
+      const n=Math.ceil(115/DT),every=Math.ceil(1.8/DT);
+      for(;ticks<n&&!p.dead&&!target.dead;ticks++){
+        if(p.hp/p.maxHp<0.58&&sim.countItem('healing_potion',pid)>0&&
+          p.potionCooldownUntil<=sim.time){
+          const before=sim.countItem('healing_potion',pid);
+          sim.useItem('healing_potion',pid);
+          if(sim.countItem('healing_potion',pid)<before)potions++;
+        }
+        if(ticks%every===0&&!p.castingAbility){
+          if(p.hp/p.maxHp<0.48&&heal.length&&ticks-lastHeal>Math.ceil(5/DT)){
+            sim.castAbilityOn(heal[heals++%heal.length],pid,pid);
+            lastHeal=ticks;
+          }else sim.castAbility(atk[actions++%atk.length],pid);
+        }
+        sim.tick();
+      }
+      const result=target.dead&&!p.dead?'WIN':p.dead?'LOSS':'TIMEOUT';
+      const row={cls,result,seconds:Math.round(ticks*DT*100)/100,
+        nativeMobHp:nativeMonsterHp,
+        mobEndHp:Math.max(0,target.hp),heroEndHp:Math.max(0,p.hp),
+        gearSlots:Object.values(meta.equipment).filter(Boolean).length,
+        attemptedActions:actions,attemptedHeals:heals,potionsUsed:potions,
+        noMonsterHpOverride:target.maxHp===nativeMonsterHp,
+        levelCapPreserved:sim.serializeCharacter(pid)?.level===99,
+        trainingUnchanged:JSON.stringify((sim.serializeCharacter(pid) as any)?.trainingProfile)===startTraining};
+      console.info('HF_SUPREME_LV99_NORMAL_SOLO_CLASS='+JSON.stringify(row));
+      rows.push(row);
+    }
+    const summary={classes:9,wins:rows.filter(x=>x.result==='WIN').length,
+      losses:rows.filter(x=>x.result==='LOSS').length,
+      timeouts:rows.filter(x=>x.result==='TIMEOUT').length,
+      nativeFullHpAI:true,soloWithoutParty:true,
+      legalEquipmentAndConsumablesFixture:true,
+      noTrainingIncrease:true,bossCaptainIsSeparateOptionalDifficulty:true,
+      rows:rows.map(x=>({cls:x.cls,result:x.result,seconds:x.seconds,
+        heroEndHp:x.heroEndHp,mobEndHp:x.mobEndHp}))};
+    console.info('HF_SUPREME_SOLO99_NORMAL_WOLF_9='+JSON.stringify(summary));
+    expect(rows).toHaveLength(9);
+    expect(rows.every(x=>x.noMonsterHpOverride&&x.levelCapPreserved&&
+      x.trainingUnchanged)).toBe(true);
+    expect(summary.wins,'ALL_NINE_CLASSES_MUST_CLEAR_NATIVE_NORMAL_99').toBe(9);
   },240000);
 });
