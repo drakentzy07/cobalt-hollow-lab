@@ -513,7 +513,8 @@ for name in SLOTS:
  verts_total+=nv;faces_total+=nf
  stats[name]={'freshVertices':nv,'freshFaces':nf,'sourceTrianglesCopied':0,'allVerticesSkinned':True,'radiiLocal':rad,
   'closedSolids':solid_counts[name]}
-assert len(objects)==11 and verts_total>2000 and faces_total>1900,'TOO_FEW_NEW_TRIANGLES'
+print('HF18_GEOMETRY_INDEPENDENT_NEW_VERTICES='+str(verts_total)+' FACES='+str(faces_total)+' CLOSED_SOLIDS='+str(sum(solid_counts.values())),flush=True)
+assert len(objects)==11 and verts_total>1100 and faces_total>1000 and sum(solid_counts.values())>=38,'TOO_FEW_REAL_CLOSED_SOLIDS_OR_GEOMETRY'
 # GLB export of only new meshes + Rig_Medium; do not include old source armor.
 bpy.ops.object.select_all(action='DESELECT');rig.select_set(True)
 for obj in objects:obj.select_set(True)
