@@ -108,12 +108,18 @@ export function fuseReferenceArmors83(gltf,style){
  const ref=REFERENCE_83[style];if(!ref)throw Error('SKIN83_UNKNOWN_REFERENCE '+style);
  const hosts=collectDonors(gltf.scene),data=new Map([...hosts].map(([s,m])=>[s,stats(m)]));
  const C=data.get('Chest'),H=data.get('Head'),B=data.get('Back'),copies=[];
- let oldHidden=0,shellCount=0;
+ let oldHidden=0,shellCount=0,donorHidden=0,underArmorRetained=0;
  const skins=materials(ref);
+ // TRUE REPLACEMENT. Keep native bones and underlying articulated gambeson,
+ // but NO donor armor or previous HF_DUAL / HF_SKIN8 / HF_DNA mesh may render.
+ const underArmor=/^M_(Torso|Loin|ArmL|ArmR|HandL|HandR|LegL|LegR|FootL|FootR)(?:_|$)/;
  gltf.scene.traverse(o=>{
   if(!o.isMesh)return;
-  if(o.name.startsWith('HF_DUAL_shell_')){o.visible=true;o.material=skins[0];shellCount++;return;}
-  if(/^(HF_DUAL_|HF_DNA_|HF_SKIN8_|HIGHFLY_VIOLET_)/.test(o.name)){if(o.visible)oldHidden++;o.visible=false;}
+  const name=o.name||'';
+  if(name.startsWith('HF_DUAL_shell_'))shellCount++;
+  if(name.startsWith('Armor_paladin_'))donorHidden++;
+  if(underArmor.test(name)){o.visible=true;underArmorRetained++;}
+  else{if(o.visible)oldHidden++;o.visible=false;}
  });
  const batches=new Map(SLOTS.map(s=>[s,[]]));
  const push=(slot,g,m=0)=>{batches.get(slot).push({g,m});};
@@ -123,6 +129,30 @@ export function fuseReferenceArmors83(gltf,style){
  function gem(slot,w,h,d,x,y,z){push(slot,jewel(w,h,d,x,y,z),3);}
  function trim(slot,w,h,x,y,z){panel(slot,chevron,w,h,x,y,z,Math.max(.009,data.get(slot).s.z*.095),2);}
  const t=C.s,fx=C.front+t.z*.06,hy=H.s.y;
+ // Continuous NEW 3D envelopes replace the old 17 shells. Each receives
+ // the original bone weights via the per-slot SkinMesh composer below.
+ let closedEnvelopes=0;
+ function envelope(slot,wx,yy,dd,yoff=0,zoff=0,material=0,faceted=false){
+  const {s,c}=data.get(slot),g=faceted?new THREE.IcosahedronGeometry(1,2):new THREE.SphereGeometry(1,20,14);
+  g.scale(Math.max(.017,s.x*wx),Math.max(.017,s.y*yy),Math.max(.017,s.z*dd));
+  g.translate(c.x,c.y+yoff*s.y,c.z+zoff*s.z);
+  push(slot,g,material);closedEnvelopes++;
+ }
+ for(const slot of SLOTS){
+  if(slot==='Head')envelope(slot,.47,.43,.46,-.015,-.02,0,true);
+  else if(slot==='Chest')envelope(slot,.50,.51,.51,0,-.01,0,false);
+  else if(slot==='Back')envelope(slot,.42,.45,.38,0,-.02,5,false);
+  else if(slot.startsWith('Arm'))envelope(slot,.53,.52,.46,.01,0,0,true);
+  else if(slot.startsWith('Hand'))envelope(slot,.49,.47,.48,0,0,0,false);
+  else if(slot.startsWith('Leg'))envelope(slot,.49,.51,.47,0,0,0,false);
+  else envelope(slot,.51,.48,.51,0,0,0,true);
+ }
+ // Chest-weighted neck liner overlaps new head shell and upper breastplate.
+ const neckLo=Math.min(H.b.min.y,C.b.max.y),neckHi=Math.max(H.b.min.y,C.b.max.y);
+ const neckLen=Math.max(.035,neckHi-neckLo+C.s.y*.18),neckR=Math.min(C.s.x,H.s.x)*.19;
+ const neck=new THREE.CylinderGeometry(neckR*.85,neckR,neckLen,16,1);
+ neck.translate(H.c.x,(neckLo+neckHi)*.5,C.c.z);push('Chest',neck,1);
+
  // Long continuous torso frontage, extending under the belt and overlapping
  // the shoulder attachment rather than separated surface slabs.
  panel('Chest',shield,t.x*.94,t.y*.86,C.c.x,C.c.y+t.y*.025,fx,t.z*.24,0);
@@ -241,16 +271,32 @@ export function fuseReferenceArmors83(gltf,style){
   assemblies++;totalPieces+=pieces.length;totalVerts+=geometry.attributes.position.count;
  }
  const proof={
-  pass:'SKIN8_3_REFERENCE_FUSION',enabled:true,referenceId:style,referenceName:ref.name,
+  pass:'SKIN8_4_TRUE_REPLACEMENT',enabled:true,referenceId:style,referenceName:ref.name,
   originalNativeSlots:hosts.size,sourcePrimitivesPreserved:17,sourceBones:23,
   originalClips:gltf.animations.length,skinWeightAssemblies:copies.filter(m=>m.isSkinnedMesh&&m.skeleton.bones.length===23).length,
   assemblies,geometryPiecesCombined:totalPieces,fusedVertices:totalVerts,
   oldFloatingDecorationsHidden:oldHidden,shellCount,sourceImmutable:true,
+  trueReplacement:true,legacyDonorMeshesHidden:donorHidden,underArmorRetained,
+  closedArmorEnvelopes:closedEnvelopes,styleSpecificReferenceGeometry:true,
   artApproved:false,clippingFullyCertified:false,physicalAndroidCertified:false,
   faithfulImageReconstruction:false
  };
+ let visibleLegacyMeshes=0,visibleFusedAssemblies=0,visibleOtherMeshes=0;
+ const permittedBody=/^M_(Torso|Loin|ArmL|ArmR|HandL|HandR|LegL|LegR|FootL|FootR)(?:_|$)/;
+ gltf.scene.traverse(o=>{
+  if(!o.isMesh||!o.visible)return;
+  if(o.name.startsWith('HF83_FUSED_'+style+'_')){visibleFusedAssemblies++;return;}
+  if(permittedBody.test(o.name))return;
+  if(/^(HF_DUAL_|HF_DNA_|HF_SKIN8_|HIGHFLY_VIOLET_|Armor_paladin_)/.test(o.name))visibleLegacyMeshes++;
+  else visibleOtherMeshes++;
+ });
+ proof.visibleLegacyMeshes=visibleLegacyMeshes;
+ proof.visibleFusedAssemblies=visibleFusedAssemblies;
+ proof.visibleOtherMeshes=visibleOtherMeshes;
  if(assemblies!==11||proof.skinWeightAssemblies!==11||shellCount!==17||
-    proof.originalClips!==22||totalPieces<50||totalVerts<2000)
-  throw Error('SKIN83_FUSION_GATE_RED '+JSON.stringify(proof));
+   visibleFusedAssemblies!==11||visibleLegacyMeshes!==0||visibleOtherMeshes!==0||
+   closedEnvelopes!==11||underArmorRetained<10||proof.originalClips!==22||
+   totalPieces<60||totalVerts<3000)
+  throw Error('SKIN84_TRUE_REPLACEMENT_GATE_RED '+JSON.stringify(proof));
  gltf.userData.skin83Proof=proof;return proof;
 }
