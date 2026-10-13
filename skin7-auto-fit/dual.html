@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HIGHFLY SKIN 7.5 · 7.6 — DUAL ARMOR FACTORY</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%238638cb' d='M32 3 58 18v28L32 61 6 46V18Z'/%3E%3Cpath fill='%23f5d6ff' d='m32 12 13 20-13 20-13-20Z'/%3E%3C/svg%3E">
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#121521;color:#ecf0ff;font:14px system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+header{padding:18px 22px;background:#1d2131;border-bottom:1px solid #3c4258}h1{margin:0 0 7px;font-size:23px}header p{margin:0;color:#b9c6dc;line-height:1.45}
+main{max-width:1450px;margin:auto;padding:14px}.bar{padding:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#21283b;border:1px solid #45526a;border-radius:10px}
+button,select{background:#141928;border:1px solid #60718a;color:#edf0ff;border-radius:8px;padding:9px 12px;font:inherit;cursor:pointer}
+button.selected{background:#432763;border-color:#ce8bff;box-shadow:0 0 0 1px #a95be7 inset}
+button.red.selected{background:#702319;border-color:#fc9262;box-shadow:0 0 0 1px #c35a32 inset}
+button:disabled{opacity:.52;cursor:wait}
+input{accent-color:#ba64fe}.bar label{white-space:nowrap}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+article{min-width:0;border:1px solid #46516a;border-radius:11px;background:#222a3e;overflow:hidden}
+article h2{font-size:16px;font-weight:700;margin:0;padding:11px 14px;background:#1d2435;border-bottom:1px solid #424c64}
+.canvas{position:relative;height:min(65vh,660px);min-height:340px}
+.canvas canvas{display:block;width:100%;height:100%}
+.overlay{position:absolute;left:10px;bottom:10px;padding:6px 8px;font:12px monospace;color:#dde7fa;border-radius:6px;background:#131726b8;pointer-events:none}
+.notice{margin-top:12px;padding:12px;border:1px solid #626072;border-radius:9px;color:#ddd4ea;background:#2b293d;line-height:1.6}
+.inspector{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.inspector pre{border:1px solid #42516a;border-radius:9px;background:#181c2a;color:#c3d3f4;padding:12px;white-space:pre-wrap;overflow:auto;max-height:240px}
+@media(max-width:760px){.panels,.inspector{grid-template-columns:1fr}.canvas{height:410px}h1{font-size:20px}header{padding:12px 16px}.bar{gap:7px}.bar button{padding:8px 10px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://esm.sh/three@0.180.0","three/addons/":"https://esm.sh/three@0.180.0/examples/jsm/","meshoptimizer":"https://esm.sh/meshoptimizer@0.23.0"}}</script></head>
+<body>
+<header><h1>HIGHFLY · DUAL ARMOR FACTORY — SKIN 7.5 / 7.6</h1><p>Dos armaduras modulares originales sobre el Hunter real: Obsidiana Violeta v2 y Dragón Rojo con escamas. Rig_Medium intacto · 11 slots nativos · entorno aislado del juego público.</p></header>
+<main>
+<div class="bar">
+  <strong>Armadura:</strong>
+  <button id="show-original" data-variant="original">Paladin original</button>
+  <button id="show-violet" data-variant="violet" class="selected">◆ Obsidiana Violeta v2</button>
+  <button id="show-dragon" data-variant="dragon" class="red">♜ Dragón Rojo</button>
+  <label>Animación <select id="animation"><option value="">En reposo</option></select></label>
+  <label><input type="checkbox" id="play" checked> Animar</label>
+  <label><input type="checkbox" id="bones"> Huesos</label>
+  <button id="front">Frente</button><button id="side">Perfil</button><button id="back">Espalda</button>
+</div>
+<div class="panels">
+<article><h2>CLAUDECRAFT · PALADIN ORIGINAL</h2><div class="canvas" id="left"><div class="overlay">Original, sin modificar · 23 huesos / 22 clips</div></div></article>
+<article><h2 id="candidate-title">HIGHFLY · OBSIDIANA VIOLETA v2</h2><div class="canvas" id="right"><div class="overlay" id="right-overlay">Cargando capas nativas...</div></div></article>
+</div>
+<p class="notice" id="progress" role="status">Descargando ClaudeCraft auténtico y preparando la primera armadura...</p>
+<div class="inspector"><pre id="status">Iniciando WebGL...</pre><pre id="proof">La revisión visual de clipping y Android físico todavía es necesaria.</pre></div>
+<p class="notice">**Alcance experimental:** las placas, cuernos y escamas están construidos como nuevas mallas con pesos del esqueleto nativo. La apariencia, las colisiones, la deformación en combate y el rendimiento del S23 Ultra aún requieren aprobación manual. Ni el juego público ni los GLB originales se modifican.</p>
+</main>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {MeshoptDecoder} from 'meshoptimizer';
+import {forgeDualArmor,VARIANTS} from './dual_shell_factory.mjs';
+
+const originalURL='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb';
+const proof=document.querySelector('#proof'),status=document.querySelector('#status'),progress=document.querySelector('#progress'),animation=document.querySelector('#animation'),overlay=document.querySelector('#right-overlay');
+const state={sourceLoaded:false,active:'violet',variantReady:false,proofs:{},lastError:null,visualOnly:true,camera:{},runs:0};
+window.__HIGHFLY_DUAL_LAB__=state;
+let viewLeft,viewRight,currentVariant='violet',switchToken=0,original;
+const clock=new THREE.Clock(),BASE=new Set(['Head','Torso','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR','Loin','Top','Eye_almond','Brow_soft','Ear_round','Mouth_neutral']);
+const shouldOriginalMesh=(name)=>name.startsWith('Armor_paladin_') || (name.startsWith('M_') && BASE.has(name.slice(2).replace(/_[0-9]+$/,'')));
+function setup(id){
+ const host=document.getElementById(id),scene=new THREE.Scene();
+ scene.background=new THREE.Color('#262e43');
+ const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
+ const camera=new THREE.PerspectiveCamera(36,1,.01,100);
+ const orbit=new OrbitControls(camera,renderer.domElement);orbit.enableDamping=true;
+ scene.add(new THREE.HemisphereLight(0xe9e9ff,0x3c354e,2.8));
+ for(const [loc,intensity] of [[[4,7,5],3.1],[[-4,2,-5],2]]){const d=new THREE.DirectionalLight(0xffffff,intensity);d.position.set(...loc);scene.add(d);}
+ host.prepend(renderer.domElement);
+ return {host,renderer,scene,camera,orbit,actor:null,mixer:null,clips:[],helper:null};
+}
+viewLeft=setup('left');viewRight=setup('right');
+const views=[viewLeft,viewRight],loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+const ktx=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/basis/').detectSupport(viewLeft.renderer);
+loader.setKTX2Loader(ktx);
+function resize(v){
+ const w=Math.max(1,v.host.clientWidth),h=Math.max(1,v.host.clientHeight);
+ v.renderer.setSize(w,h,false);v.camera.aspect=w/h;v.camera.updateProjectionMatrix();
+}
+function visibleBounds(v){
+ if(!v.actor)return null;
+ v.actor.updateMatrixWorld(true);const box=new THREE.Box3();
+ v.actor.traverse(o=>{if(!o.isMesh||!o.visible)return;const b=new THREE.Box3().setFromObject(o,true);if(!b.isEmpty()&&[...b.min,...b.max].every(Number.isFinite))box.union(b);});
+ return box.isEmpty()?null:box;
+}
+function frame(direction='front'){
+ const b=new THREE.Box3();let count=0;
+ for(const v of views){resize(v);const bb=visibleBounds(v);if(bb){b.union(bb);count++;}}
+ if(!count)return;
+ const size=b.getSize(new THREE.Vector3()),center=b.getCenter(new THREE.Vector3()),fov=THREE.MathUtils.degToRad(36);
+ const aspect=Math.min(...views.map(v=>Math.max(.55,v.camera.aspect)));
+ const distance=Math.max(size.y*.5/Math.tan(fov*.5),Math.max(size.x,size.z)*.5/(Math.tan(fov*.5)*aspect)) *1.70;
+ const axis=direction==='side'?new THREE.Vector3(1,.09,0):direction==='back'?new THREE.Vector3(0,.09,-1):new THREE.Vector3(.08,.09,1);
+ axis.normalize().multiplyScalar(distance).add(center);
+ for(const v of views){
+  v.orbit.target.copy(center);v.camera.position.copy(axis);v.camera.near=Math.max(.01,distance/120);v.camera.far=Math.max(60,distance*10);
+  v.camera.lookAt(center);v.camera.updateProjectionMatrix();v.orbit.update();
+ }
+ state.camera={direction,size:size.toArray(),center:center.toArray(),distance};
+}
+function hideExceptOriginal(scene){
+ scene.traverse(o=>{
+  if(o.isMesh){o.visible=shouldOriginalMesh(o.name||'');o.frustumCulled=false;}
+ });
+}
+function animPlay(v){
+ if(!v.mixer)return;v.mixer.stopAllAction();
+ const match=v.clips.find(x=>x.name===animation.value);
+ if(match)v.mixer.clipAction(match).reset().play();
+}
+function install(view,gltf,variant){
+ if(view.actor){view.scene.remove(view.actor);if(view.helper)view.scene.remove(view.helper);}
+ view.actor=gltf.scene;view.clips=gltf.animations;view.mixer=new THREE.AnimationMixer(view.actor);
+ view.scene.add(view.actor);view.helper=new THREE.SkeletonHelper(view.actor);
+ view.helper.visible=document.querySelector('#bones').checked;view.scene.add(view.helper);
+ if(variant==='original')hideExceptOriginal(view.actor);
+ animPlay(view);
+ frame(state.camera.direction||'front');
+}
+async function selectVariant(variant){
+ const token=++switchToken;state.active=variant;state.variantReady=false;
+ for(const b of document.querySelectorAll('[data-variant]'))b.classList.toggle('selected',b.dataset.variant===variant);
+ progress.textContent='Cargando '+(VARIANTS[variant]?.name || 'Paladin original')+'...';
+ state.lastError=null;
+ try{
+  const gltf=await loader.loadAsync(originalURL);
+  if(token!==switchToken)return;
+  let result=null;
+  if(variant!=='original'){
+   result=forgeDualArmor(gltf,variant);
+   state.proofs[variant]=result.proof;
+   const check=result.proof;
+   if(!check.structuralGreen)throw Error('ARMOR_STRUCTURAL_GATE_FAILED');
+   proof.textContent=JSON.stringify(check,null,2);
+  }else{
+   hideExceptOriginal(gltf.scene);proof.textContent='Paladin original ClaudeCraft sin ninguna modificación.';
+  }
+  install(viewRight,gltf,variant);
+  document.querySelector('#candidate-title').textContent=
+   variant==='original'?'CLAUDECRAFT · SIN MODIFICAR':variant==='violet'?'HIGHFLY · OBSIDIANA VIOLETA v2':'HIGHFLY · DRAGÓN ROJO · ESCAMAS';
+  overlay.textContent=variant==='original'?'Original nativo':variant==='violet'?'Capas exteriores + cristales · nativo':'Escamas + cuernos + garras · nativo';
+  state.variantReady=true;state.runs++;
+  progress.textContent='Armado: '+(VARIANTS[variant]?.name||'Original')+
+   (result?' · 11 slots / '+result.proof.shellCount+' shells / '+result.proof.skinnedAdded+' mallas nuevas riggeadas':'')+
+   ' · Inspección visual todavía pendiente.';
+  status.textContent='Estado READY · '+(result?JSON.stringify({variant,rig:23,clips:22,scales:result.proof.scaleCount,horns:result.proof.hornCount}):'Fuente original');
+  frame(state.camera.direction||'front');
+ }catch(e){if(token!==switchToken)return;state.lastError=String(e.stack||e);progress.textContent='Fallo de armadura: '+e.message;status.textContent=state.lastError;console.error(e);}
+}
+for(const b of document.querySelectorAll('[data-variant]'))b.onclick=()=>selectVariant(b.dataset.variant);
+animation.onchange=()=>views.forEach(animPlay);
+document.querySelector('#bones').onchange=e=>views.forEach(v=>{if(v.helper)v.helper.visible=e.target.checked;});
+for(const id of ['front','side','back'])document.getElementById(id).onclick=()=>frame(id);
+let last=performance.now();
+function loop(now){
+ requestAnimationFrame(loop);const dt=Math.min((now-last)/1000,.07);last=now;
+ for(const v of views){resize(v);if(document.querySelector('#play').checked)v.mixer?.update(dt);v.orbit.update();v.renderer.render(v.scene,v.camera);}
+}
+requestAnimationFrame(loop);
+(async()=>{try{
+ await MeshoptDecoder.ready;
+ original=await loader.loadAsync(originalURL);
+ hideExceptOriginal(original.scene);install(viewLeft,original,'original');
+ animation.innerHTML='<option value="">En reposo</option>'+original.animations.map(x=>'<option value="'+x.name+'">'+x.name+'</option>').join('');
+ state.sourceLoaded=true;
+ await selectVariant('violet');
+}catch(e){state.lastError=String(e);progress.textContent='Fallo al abrir el Hunter auténtico: '+e.message;status.textContent=String(e.stack||e);console.error(e);}})();
+</script></body></html>
