@@ -115,7 +115,7 @@ if not sf15_src.is_file() or sf15_dst.exists():
     raise SystemExit('SF15_SOURCE_MISSING_OR_DUPLICATE')
 shutil.copyfile(sf15_src,sf15_dst)
 
-# SF16 eight strict elemental, utility and support adapters (no Pages).
+# SF16: exactly one NEW ability; 28 pre-existing audited stages preserved (no Pages).
 sf16_src=Path('../v9-corrections/game/c1/highfly_sf16_eight_support_elemental.ts')
 sf16_dst=Path('src/highfly/sf16_eight_support_elemental.ts')
 if not sf16_src.is_file() or sf16_dst.exists():
@@ -143,7 +143,7 @@ new_import=("import { installSf4NativePilots } from '../../highfly/sf4_safe_fusi
             "import { installSf13Compatible } from '../../highfly/sf13_mass_native_gate';\n"
             "import { installSf14HandAdapters } from '../../highfly/sf14_hand_native_adapters';\n"
             "import { installSf15EightNative } from '../../highfly/sf15_eight_native_batch';\n"
-            "import { installSf16EightNative } from '../../highfly/sf16_eight_support_elemental';\n")
+            "import { installSf16UniqueNative } from '../../highfly/sf16_eight_support_elemental';\n")
 old_cond="""if (import.meta.env?.VITE_HIGHFLY_SF3 === '1') {
   installHighflySF3Fusions(ABILITIES, CLASSES);
 }"""
@@ -163,7 +163,7 @@ if (import.meta.env?.VITE_HIGHFLY_SF4 === '1') {
         if (import.meta.env?.VITE_HIGHFLY_SF15 === '1') {
           installSf15EightNative(ABILITIES, CLASSES);
           if (import.meta.env?.VITE_HIGHFLY_SF16 === '1') {
-            installSf16EightNative(ABILITIES, CLASSES);
+            installSf16UniqueNative(ABILITIES, CLASSES);
           }
         }
       }

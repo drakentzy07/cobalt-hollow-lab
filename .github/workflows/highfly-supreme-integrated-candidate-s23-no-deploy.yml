@@ -105,6 +105,12 @@ jobs:
             /game/c1/highfly_sf15_eight_native_batch.test.ts
             /game/c1/highfly_sf16_eight_support_elemental.ts
             /game/c1/highfly_sf16_eight_support_elemental.test.ts
+            /overlays/highfly_sf16_preflight.py
+      - name: SF16 PRECHECK unique IDs across SF4-SF16 (fast before 55-minute build)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python v9-corrections/overlays/highfly_sf16_preflight.py
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
@@ -707,7 +713,7 @@ jobs:
           cp ../v9-corrections/game/c1/highfly_sf15_eight_native_batch.test.ts tests/highfly_sf15_eight_native_batch.test.ts
           pnpm exec vitest run tests/highfly_sf15_eight_native_batch.test.ts
           echo 'HF_SF15_EIGHT_NATIVE_FUSIONS_ORIGINAL_COMBAT_SIM_GREEN=1'
-      - name: SF16 three NEW elemental and control original Sim regressions (NO DEPLOY)
+      - name: SF16 ONE genuinely new Paladin speed and stun native Sim (NO DEPLOY) (NO DEPLOY)
         if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
         working-directory: upstream
         shell: bash
@@ -716,7 +722,7 @@ jobs:
           cp ../v9-corrections/game/c1/highfly_sf16_eight_support_elemental.ts src/highfly/sf16_eight_support_elemental.ts
           cp ../v9-corrections/game/c1/highfly_sf16_eight_support_elemental.test.ts tests/highfly_sf16_eight_support_elemental.test.ts
           pnpm exec vitest run tests/highfly_sf16_eight_support_elemental.test.ts
-          echo 'HF_SF16_THREE_NEW_NATIVE_EFFECTS_GREEN=1'
+          echo 'HF_SF16_ONE_NEW_PALADIN_NATIVE_SIM_GREEN=1'
       - name: Upload SF13 47 donor compatibility report (NO DEPLOY)
         if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
         uses: actions/upload-artifact@v4
@@ -818,8 +824,8 @@ jobs:
             grep -R -q 'hf_warrior_s4' dist/assets || { echo 'SF15_WARRIOR_MISSING_FROM_WEBGL'; exit 1; }
             grep -R -q 'hf_warlock_u2' dist/assets || { echo 'SF15_WARLOCK_MISSING_FROM_WEBGL'; exit 1; }
             grep -R -q 'hf_paladin_s5' dist/assets || { echo 'SF16_PALADIN_SPEED_STUN_MISSING'; exit 1; }
-            grep -R -q 'hf_shaman_s2' dist/assets || { echo 'SF16_SHAMAN_LAVA_MISSING'; exit 1; }
-            echo 'HF_SF16_WEBGL_THREE_NEW_NATIVE_SKILLS_PRESENT=1'
+            grep -R -q 'hf_paladin_s5' dist/assets || { echo 'SF16_NEW_PALADIN_SKILL_MISSING'; exit 1; }
+            echo 'HF_SF16_WEBGL_ONE_NEW_NATIVE_SKILL_PRESENT=1'
           fi
           node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune
