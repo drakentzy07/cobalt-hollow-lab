@@ -28,6 +28,14 @@ if not test_source.is_file() or test_destination.exists():
     raise SystemExit("SF4_SIM_TEST_UNAVAILABLE_OR_DUPLICATE:" + str(test_source))
 shutil.copyfile(test_source, test_destination)
 
+# SF7: prove the ORIGINAL spellbook/actionbar data flow and all 10 native casts
+# through level 99. This test does not enable fusion skills in production.
+sf7_test_source = Path("../v9-corrections/game/c1/highfly_sf7_spellbook_actionbar_runtime.test.ts")
+sf7_test_dest = Path("tests/highfly_sf7_spellbook_actionbar_runtime.test.ts")
+if not sf7_test_source.is_file() or sf7_test_dest.exists():
+    raise SystemExit("SF7_NATIVE_HUD_TEST_MISSING_OR_DUPLICATED")
+shutil.copyfile(sf7_test_source, sf7_test_dest)
+
 # Stage the complete read-only 9×7 donor unlock planner and its unit contract.
 stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
 stages_dest = Path("src/highfly/highfly_sf5_unlock_stages.ts")
