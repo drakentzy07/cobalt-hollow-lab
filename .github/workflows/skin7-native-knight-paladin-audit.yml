@@ -1,0 +1,30 @@
+name: HIGHFLY SKIN7 - Native Knight Paladin Source Audit (NO DEPLOY)
+on:
+  push:
+    branches:
+      - highfly-skin7-knight-paladin-native-reset-01
+    paths:
+      - 'character-truth/integration-modules/skin7-native-source-audit.mjs'
+      - '.github/workflows/skin7-native-knight-paladin-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit-native-armors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify original Knight and Paladin GLB anatomy and preserve Rig_Medium
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/skin7-native-source-audit.mjs
+          node character-truth/integration-modules/skin7-native-source-audit.mjs
+      - name: Store truthful native armor inventory (no build, no deploy)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN7-KNIGHT-PALADIN-NATIVE-SOURCE-AUDIT
+          path: character-truth/skin7-evidence/
+          retention-days: 30
+          if-no-files-found: warn
