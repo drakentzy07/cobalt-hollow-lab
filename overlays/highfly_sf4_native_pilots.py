@@ -44,6 +44,15 @@ if not sf8_source.is_file() or sf8_dest.exists():
     raise SystemExit("SF8_NATIVE_COMBAT_OUTCOME_TEST_MISSING_OR_DUPLICATED")
 shutil.copyfile(sf8_source,sf8_dest)
 
+# SF9A: nine authentic LV99 full-HP/AI enemy encounters with a MIXED
+# HIGHFLY+original skill rotation, legal source gear, and Training immutability.
+# Its win/loss diagnostic is NOT the Captain fused-rotation certification.
+sf9_source=Path("../v9-corrections/game/c1/highfly_sf9_mixed_native_combat_rotations.test.ts")
+sf9_dest=Path("tests/highfly_sf9_mixed_native_combat_rotations.test.ts")
+if not sf9_source.is_file() or sf9_dest.exists():
+    raise SystemExit("SF9_MIXED_NATIVE_COMBAT_TEST_MISSING_OR_DUPLICATED")
+shutil.copyfile(sf9_source,sf9_dest)
+
 # Stage the complete read-only 9×7 donor unlock planner and its unit contract.
 stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
 stages_dest = Path("src/highfly/highfly_sf5_unlock_stages.ts")
@@ -63,7 +72,7 @@ new_import="import { installSf4NativePilots } from '../../highfly/sf4_safe_fusio
 old_cond="""if (import.meta.env?.VITE_HIGHFLY_SF3 === '1') {
   installHighflySF3Fusions(ABILITIES, CLASSES);
 }"""
-new_cond="""// SF4: never register the unfinished 61 fusion definitions.
+new_cond="""// SF4: never register the unfinished 53 fusion definitions.
 if (import.meta.env?.VITE_HIGHFLY_SF4 === '1') {
   installSf4NativePilots(ABILITIES, CLASSES);
 }"""
