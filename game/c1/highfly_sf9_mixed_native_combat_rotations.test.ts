@@ -134,10 +134,13 @@ describe('SF9A: nine classes use original+HF abilities against real full-health 
           sim.useItem('healing_potion',pid);
           if(sim.countItem('healing_potion',pid)<before)potionUses++;
         }
-        sim.tick();
+        // Original Sim.tick() RETURNS AND DRAINS the authoritative event
+        // list itself. Calling drainEvents() afterwards sees an empty queue;
+        // the SF9A first run correctly exposed this instrumentation mistake.
+        const events=sim.tick();
         fusionCast||=p.cooldowns.has(c.fusion);
         minEnemyHp=Math.min(minEnemyHp,mob.hp);
-        for(const event of sim.drainEvents()){
+        for(const event of events){
           if(event.type==='damage'&&event.sourceId===pid&&event.targetId===mob.id&&event.amount>0){
             anyDamage+=event.amount;
             if(event.abilityId&&originals.includes(event.abilityId))originalDamage+=event.amount;
