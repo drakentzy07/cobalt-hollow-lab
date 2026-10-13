@@ -20,6 +20,7 @@ stages = [
     ("SF17", "highfly_sf17_three_unique_native.ts", "export const SF17_IDS=[", 3),
     ("SF18", "highfly_sf18_four_native_effects.ts", "export const SF18_IDS=[", 3),
     ("SF19", "highfly_sf19_two_melee_native.ts", "export const SF19_IDS=[", 2),
+    ("SF20", "highfly_sf20_two_source_effects.ts", "export const SF20_IDS=[", 2),
 ]
 id_pattern = re.compile(r"['\"](hf_[a-z]+_[su]\d+)['\"]")
 all_skills: dict[str, str] = {}
@@ -58,7 +59,7 @@ if unknown:
 if duplicates:
     raise SystemExit("SF_PRECHECK_DUPLICATE_SKILL_ID:" + "; ".join(duplicates))
 expected_total = sum(row[3] for row in stages) + len(sf13_ids)
-if len(all_skills) != expected_total or expected_total != 37:
+if len(all_skills) != expected_total or expected_total != 39:
     raise SystemExit(f"SF_PRECHECK_WRONG_ACTUAL_NATIVE_TOTAL:{len(all_skills)}")
 if all_skills.get("hf_paladin_s5") != "SF16":
     raise SystemExit("SF_PRECHECK_SF16_NEW_SKILL_NOT_UNIQUE")
@@ -86,3 +87,11 @@ if {"hf_warrior_s2", "hf_rogue_u1"} != {
 print("HF_SF19_UNIQUE_37_NATIVE_PREFLIGHT_GREEN=1")
 print("HF_SF19_PRIOR_CERTIFIED=35 NEW=2 CANDIDATES=37 OF_63")
 print(f"HF_SF19_REMAINING_IF_SUCCESS={len(catalog_ids)-len(all_skills)}")
+
+if {"hf_mage_u1", "hf_rogue_s5"} != {
+    identifier for identifier, stage in all_skills.items() if stage == "SF20"
+}:
+    raise SystemExit("SF_PRECHECK_UNEXPECTED_SF20_IDS")
+print("HF_SF20_UNIQUE_39_NATIVE_PREFLIGHT_GREEN=1")
+print("HF_SF20_PRIOR_CERTIFIED=37 NEW=2 CANDIDATES=39 OF_CATALOG=63")
+print(f"HF_SF20_REMAINING_IF_SUCCESS={len(catalog_ids)-len(all_skills)}")
