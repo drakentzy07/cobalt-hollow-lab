@@ -46,6 +46,8 @@ on:
       - "game/c1/highfly_sf17_three_unique_native.test.ts"
       - "game/c1/highfly_sf18_four_native_effects.ts"
       - "game/c1/highfly_sf18_four_native_effects.test.ts"
+      - "game/c1/highfly_sf19_two_melee_native.ts"
+      - "game/c1/highfly_sf19_two_melee_native.test.ts"
       - "overlays/highfly_sf16_preflight.py"
   workflow_dispatch:
 permissions:
@@ -114,8 +116,10 @@ jobs:
             /game/c1/highfly_sf17_three_unique_native.test.ts
             /game/c1/highfly_sf18_four_native_effects.ts
             /game/c1/highfly_sf18_four_native_effects.test.ts
+            /game/c1/highfly_sf19_two_melee_native.ts
+            /game/c1/highfly_sf19_two_melee_native.test.ts
             /overlays/highfly_sf16_preflight.py
-      - name: SF18 PRECHECK unique IDs across SF4-SF18 (fast before 55-minute build)
+      - name: SF19 PRECHECK unique IDs across SF4-SF19 (fast before 55-minute build)
         shell: bash
         run: |
           set -euo pipefail
@@ -722,6 +726,16 @@ jobs:
           cp ../v9-corrections/game/c1/highfly_sf15_eight_native_batch.test.ts tests/highfly_sf15_eight_native_batch.test.ts
           pnpm exec vitest run tests/highfly_sf15_eight_native_batch.test.ts
           echo 'HF_SF15_EIGHT_NATIVE_FUSIONS_ORIGINAL_COMBAT_SIM_GREEN=1'
+      - name: SF19 two NEW Warrior and Rogue melee source mechanics (NO DEPLOY)
+        if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_sf19_two_melee_native.ts src/highfly/sf19_two_melee_native.ts
+          cp ../v9-corrections/game/c1/highfly_sf19_two_melee_native.test.ts tests/highfly_sf19_two_melee_native.test.ts
+          pnpm exec vitest run tests/highfly_sf19_two_melee_native.test.ts
+          echo 'HF_SF19_TWO_NEW_MELEE_SIM_SKILLS_GREEN=1'
       - name: SF18 three compatible Hunter Shaman Mage source mechanics (NO DEPLOY)
         if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
         working-directory: upstream
@@ -815,6 +829,7 @@ jobs:
           VITE_HIGHFLY_SF16: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
           VITE_HIGHFLY_SF17: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
           VITE_HIGHFLY_SF18: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
+          VITE_HIGHFLY_SF19: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
           VITE_COBALT_OFFLINE: "1"
           VITE_COBALT_BASE: "/cobalt-hollow-lab/"
           VITE_HIGHFLY_HUNT_PREVIEW: "0"
@@ -836,6 +851,7 @@ jobs:
             test "${VITE_HIGHFLY_SF16}" = "1"
             test "${VITE_HIGHFLY_SF17}" = "1"
             test "${VITE_HIGHFLY_SF18}" = "1"
+            test "${VITE_HIGHFLY_SF19}" = "1"
             # Prove the emitted browser JS embeds a real compiled HF_ skill ID.
             # A green Sim test alone is not proof the preview can learn skills.
             grep -R -q 'hf_paladin_s1' dist/assets || {
@@ -863,6 +879,9 @@ jobs:
             grep -R -q 'hf_hunter_s3' dist/assets || { echo 'SF18_HUNTER_TRAP_NOT_IN_WEBGL'; exit 1; }
             grep -R -q 'hf_mage_s2' dist/assets || { echo 'SF18_MAGE_CHANNEL_NOT_IN_WEBGL'; exit 1; }
             echo 'HF_SF18_WEBGL_THREE_NEW_NATIVE_SKILLS_PRESENT=1'
+            grep -R -q 'hf_warrior_s2' dist/assets || { echo 'SF19_WARRIOR_NOT_IN_WEBGL'; exit 1; }
+            grep -R -q 'hf_rogue_u1' dist/assets || { echo 'SF19_ROGUE_NOT_IN_WEBGL'; exit 1; }
+            echo 'HF_SF19_WEBGL_TWO_NATIVE_MELEE_SKILLS_PRESENT=1'
           fi
           node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune
