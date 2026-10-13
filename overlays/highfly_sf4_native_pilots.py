@@ -122,6 +122,13 @@ if not sf16_src.is_file() or sf16_dst.exists():
     raise SystemExit('SF16_SOURCE_MISSING_OR_DUPLICATE')
 shutil.copyfile(sf16_src,sf16_dst)
 
+# SF17: strict THREE NEW skills; preflight guarantees unique SF4-SF17 IDs.
+sf17_src=Path('../v9-corrections/game/c1/highfly_sf17_three_unique_native.ts')
+sf17_dst=Path('src/highfly/sf17_three_unique_native.ts')
+if not sf17_src.is_file() or sf17_dst.exists():
+    raise SystemExit('SF17_SOURCE_MISSING_OR_DUPLICATE')
+shutil.copyfile(sf17_src,sf17_dst)
+
 # Stage the complete read-only 9×7 donor unlock planner and its unit contract.
 stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
 stages_dest = Path("src/highfly/highfly_sf5_unlock_stages.ts")
@@ -143,7 +150,8 @@ new_import=("import { installSf4NativePilots } from '../../highfly/sf4_safe_fusi
             "import { installSf13Compatible } from '../../highfly/sf13_mass_native_gate';\n"
             "import { installSf14HandAdapters } from '../../highfly/sf14_hand_native_adapters';\n"
             "import { installSf15EightNative } from '../../highfly/sf15_eight_native_batch';\n"
-            "import { installSf16UniqueNative } from '../../highfly/sf16_eight_support_elemental';\n")
+            "import { installSf16UniqueNative } from '../../highfly/sf16_eight_support_elemental';\n"
+            "import { installSf17ThreeNative } from '../../highfly/sf17_three_unique_native';\n")
 old_cond="""if (import.meta.env?.VITE_HIGHFLY_SF3 === '1') {
   installHighflySF3Fusions(ABILITIES, CLASSES);
 }"""
@@ -164,6 +172,9 @@ if (import.meta.env?.VITE_HIGHFLY_SF4 === '1') {
           installSf15EightNative(ABILITIES, CLASSES);
           if (import.meta.env?.VITE_HIGHFLY_SF16 === '1') {
             installSf16UniqueNative(ABILITIES, CLASSES);
+            if (import.meta.env?.VITE_HIGHFLY_SF17 === '1') {
+              installSf17ThreeNative(ABILITIES, CLASSES);
+            }
           }
         }
       }
