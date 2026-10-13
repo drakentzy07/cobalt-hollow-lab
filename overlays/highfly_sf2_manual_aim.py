@@ -32,14 +32,14 @@ replace_one(
   }
 
   /** SF2 opt-in: resolve real donor ability under a ring centre slot. */
-  highflyManualAimSpec(buttonIndex: number): import('./highfly/manual_skill_aim').HfAimSpec | null {
+  highflyManualAimSpec(buttonIndex: number): import('../highfly/manual_skill_aim').HfAimSpec | null {
     if (!Number.isInteger(buttonIndex) || buttonIndex < 0 || buttonIndex >= this.mobileRingSlotBtns.length) return null;
     const slot = this.mobileSourceSlotForButton(buttonIndex);
     const action = this.actionForSlot(slot);
     const ability = this.abilityForSlot(slot);
     if (!action || action.type !== 'ability' || !ability?.def || ability.def.empowerStages) return null;
     const def = ability.def;
-    const shape: import('./highfly/manual_skill_aim').HfAimShape | null =
+    const shape: import('../highfly/manual_skill_aim').HfAimShape | null =
       def.targetMode === 'position' && !def.selfCentered ? 'area' :
       def.requiresTarget ? /charge|leap|dash|step|rush/.test(def.id) ? 'dash' : 'target' :
       def.effects?.some(e => e.type === 'aoeDamage' && 'frontal' in e && e.frontal) ? 'cone' :
