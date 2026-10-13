@@ -61,6 +61,42 @@ function fit(v){
  if(!width||!height)return;
  v.renderer.setSize(width,height,false);v.camera.aspect=width/height;v.camera.updateProjectionMatrix();
 }
+function sceneBounds(v){
+ const box=new THREE.Box3(),scratch=new THREE.Box3();
+ if(!v.actor)return null;
+ v.actor.updateMatrixWorld(true);
+ v.actor.traverse(o=>{
+  if(!o.isMesh||!o.visible)return;
+  scratch.setFromObject(o,true);
+  if([...scratch.min,...scratch.max].every(Number.isFinite))box.union(scratch);
+ });
+ return box.isEmpty()?null:box;
+}
+function reframeBoth(direction='front'){
+ const box=new THREE.Box3();let found=0;
+ for(const v of views){const b=sceneBounds(v);if(b){box.union(b);found++;}}
+ if(!found)return;
+ const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+ const h=Math.max(size.y,0.2),w=Math.max(size.x,size.z,0.2);
+ // Fit by BOTH height and width, with padding for horn tips and mobile aspect.
+ const aspect=Math.max(.55,Math.min(...views.map(v=>Math.max(1,v.host.clientWidth)/Math.max(1,v.host.clientHeight))));
+ const fov=THREE.MathUtils.degToRad(34);
+ const verticalDist=(h*.5)/Math.tan(fov*.5);
+ const horizontalDist=(w*.5)/(Math.tan(fov*.5)*aspect);
+ const dist=Math.max(verticalDist,horizontalDist)*1.65;
+ const eye=new THREE.Vector3();
+ if(direction==='side')eye.set(1,.10,0);
+ else if(direction==='back')eye.set(0,.10,-1);
+ else eye.set(.15,.10,1);
+ eye.normalize().multiplyScalar(dist).add(center);
+ for(const v of views){
+  fit(v);v.orbit.target.copy(center);v.camera.position.copy(eye);
+  v.camera.near=Math.max(.01,dist/100);v.camera.far=Math.max(70,dist*10);
+  v.camera.lookAt(center);v.camera.updateProjectionMatrix();v.orbit.update();
+ }
+ exposed.cameraFrame={direction,center:center.toArray(),size:size.toArray(),distance:dist,aspect};
+}
+
 const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
 const ktx=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/basis/').detectSupport(left.renderer);
 loader.setKTX2Loader(ktx);
@@ -106,6 +142,7 @@ function install(v,gltf,which){
   inspector.textContent=JSON.stringify(m,null,2)+'\n\n'+(m.rigProof?'GLB structure and skin references detected. Art/fit still NOT approved.':'UNSKINNED OR INCOMPLETE IMPORT: not a compatible fitted armor.');
  }
  drawClip(v);exposed.ready=exposed.sourceLoaded&&exposed.candidateLoaded;
+ reframeBoth('front');
  status.textContent=JSON.stringify(exposed.metrics,null,2);
 }
 async function loadOriginal(){
@@ -178,9 +215,7 @@ document.querySelector('#file').addEventListener('change',async(e)=>{
 });
 anim.addEventListener('change',()=>views.forEach(drawClip));
 document.querySelector('#bones').addEventListener('change',e=>views.forEach(v=>{if(v.skeletonHelper)v.skeletonHelper.visible=e.target.checked;}));
-for(const [id,vec] of [['front',[0,1.3,3.7]],['side',[3.7,1.3,0]],['back',[0,1.3,-3.7]]]){
- document.getElementById(id).onclick=()=>views.forEach(v=>{v.camera.position.set(...vec);v.orbit.target.set(0,.77,0);v.orbit.update();});
-}
+for(const id of ['front','side','back'])document.getElementById(id).onclick=()=>reframeBoth(id);
 let last=performance.now();
 function animate(now){
  requestAnimationFrame(animate);
