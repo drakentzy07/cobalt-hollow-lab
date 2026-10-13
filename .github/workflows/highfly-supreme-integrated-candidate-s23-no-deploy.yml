@@ -732,6 +732,7 @@ jobs:
           VITE_HIGHFLY_SF4: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
           VITE_HIGHFLY_SF10: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
           VITE_HIGHFLY_SF12: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
+          VITE_HIGHFLY_SF13: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
           VITE_COBALT_OFFLINE: "1"
           VITE_COBALT_BASE: "/cobalt-hollow-lab/"
           VITE_HIGHFLY_HUNT_PREVIEW: "0"
@@ -747,6 +748,7 @@ jobs:
             test "${VITE_HIGHFLY_SF4}" = "1"
             test "${VITE_HIGHFLY_SF10}" = "1"
             test "${VITE_HIGHFLY_SF12}" = "1"
+            test "${VITE_HIGHFLY_SF13}" = "1"
             # Prove the emitted browser JS embeds a real compiled HF_ skill ID.
             # A green Sim test alone is not proof the preview can learn skills.
             grep -R -q 'hf_paladin_s1' dist/assets || {
@@ -761,7 +763,9 @@ jobs:
               echo 'SF12_BLOCKED_NEW_NATIVE_FUSIONS_ABSENT_FROM_WEBGL_BUNDLE'
               exit 1
             }
-            echo 'HF_V10_SF12_OPTIN_SIXTEEN_SKILL_WEBGL_BUNDLE_VERIFIED=1'
+            grep -R -q 'hf_mage_s1' dist/assets || { echo 'SF13_MAGE_HYBRID_ABSENT_FROM_WEBGL'; exit 1; }
+            grep -R -q 'hf_hunter_s2' dist/assets || { echo 'SF13_HUNTER_HYBRID_ABSENT_FROM_WEBGL'; exit 1; }
+            echo 'HF_SF13_NATIVE_WEBGL_HYBRIDS_VERIFIED=1'
           fi
           node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune
