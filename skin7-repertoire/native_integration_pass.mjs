@@ -9,9 +9,13 @@ const center=b=>b.getCenter(new THREE.Vector3());
 const size=b=>b.getSize(new THREE.Vector3());
 function donors(scene){
  const map=new Map(S.map(s=>[s,[]]));
- scene.traverse(o=>{if(o.isSkinnedMesh&&o.name?.startsWith('Armor_paladin_')){
-  const slot=o.name.slice('Armor_paladin_'.length);if(map.has(slot))map.get(slot).push(o);
- }});
+ scene.traverse(o=>{
+  const slot=o.name?.startsWith('Armor_paladin_')?o.name.slice('Armor_paladin_'.length):'';
+  if(!map.has(slot))return;
+  o.traverse(child=>{
+   if(child.isSkinnedMesh&&child.name?.startsWith('Armor_paladin_')&&!map.get(slot).includes(child))map.get(slot).push(child);
+  });
+ });
  if([...map.values()].flat().length!==17||[...map.values()].some(v=>!v.length))throw Error('SKIN8_NATIVE_17_FAIL');
  return new Map([...map].map(([k,v])=>[k,v.sort((a,b)=>b.geometry.attributes.position.count-a.geometry.attributes.position.count)[0]]));
 }
