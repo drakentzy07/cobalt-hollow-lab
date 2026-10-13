@@ -15,6 +15,27 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch frozen ORIGINAL ClaudeCraft modular armor (SHA verified)
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import urllib.request,hashlib,pathlib,time
+          sha='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2'
+          url='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb'
+          dest=pathlib.Path('public/models/chars/modular/warrior_modular.glb')
+          dest.parent.mkdir(parents=True,exist_ok=True)
+          for attempt in range(3):
+            try:
+              with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'HIGHFLY-SKIN7-Native-Forge/1.0'}),timeout=60) as r:body=r.read()
+              break
+            except Exception:
+              if attempt==2:raise
+              time.sleep(2)
+          actual=hashlib.sha1(b'blob '+str(len(body)).encode()+b'\0'+body).hexdigest()
+          assert actual==sha,(actual,sha)
+          dest.write_bytes(body)
+          print('SKIN7_OFFICIAL_CLAUDECRAFT_MODULAR_GLB_SHA_GREEN=1',len(body))
+          PY
       - name: Verify original Knight and Paladin GLB anatomy and preserve Rig_Medium
         run: |
           set -euo pipefail
