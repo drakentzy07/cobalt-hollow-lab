@@ -1,0 +1,38 @@
+name: HIGHFLY SKIN 7.1 — EXPORT AUTHENTIC ORIGINAL CLAUDECRAFT GLB
+on:
+  push:
+    branches: [highfly-skin7-1-kaykit-integrated-helmet]
+    paths:
+      - '.github/workflows/skin71-export-original-glb.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export-original-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve immutable genuine original KayKit ClaudeCraft modular Hunter
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          curl -fsSL --retry 3 --max-time 120 \
+            'https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb' \
+            -o dist/warrior_modular_ORIGINAL_ClaudeCraft.glb
+          test "$(git hash-object dist/warrior_modular_ORIGINAL_ClaudeCraft.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          test "$(stat -c %s dist/warrior_modular_ORIGINAL_ClaudeCraft.glb)" = 3477500
+          python3 - <<'PY'
+          from pathlib import Path
+          from struct import unpack_from
+          p=Path('dist/warrior_modular_ORIGINAL_ClaudeCraft.glb').read_bytes()
+          assert p[:4]==b'glTF' and unpack_from('<I',p,4)[0]==2 and unpack_from('<I',p,8)[0]==len(p)
+          print('HIGHFLY_ORIGINAL_KAYKIT_GLB_BYTE_IDENTICAL_SHA_GREEN=1',len(p))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-CLAUDECRAFT-ORIGINAL-WARRIOR-MODULAR-GLB
+          path: dist/warrior_modular_ORIGINAL_ClaudeCraft.glb
+          if-no-files-found: error
+          retention-days: 30
