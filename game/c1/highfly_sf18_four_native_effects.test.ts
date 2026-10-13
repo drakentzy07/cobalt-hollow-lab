@@ -86,7 +86,12 @@ describe('SF18 three source-valid original native fusion source mechanics',()=>{
     // training_dummy restores to full out of combat: capture the lowest HP
     // while the original damage event is applied, never just the final tick.
     minHp=Math.min(minHp,m.hp);
-    if(sim.groundAoEs.some(e=>e.hunterTrap?.abilityId===c.id))trap=true;
+    // Read-only diagnostic view of a private native-Sim collection.
+    // Do not modify runtime visibility or fake a trap instance.
+    const realGroundEffects=(sim as unknown as {groundAoEs:readonly {
+      hunterTrap?:{abilityId:string}
+    }[]}).groundAoEs;
+    if(realGroundEffects.some(e=>e.hunterTrap?.abilityId===c.id))trap=true;
     if(p.auras.some(e=>e.kind==='buff_speed'))speed=true;
     if(m.auras.some(e=>e.kind==='slow'))slow=true;
    }
