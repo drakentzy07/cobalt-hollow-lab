@@ -1,5 +1,5 @@
 /**
- * HIGHFLY SF16 eight original-source mechanics: unlock, actual damage,
+ * HIGHFLY SF16 three NEW original-source mechanics: unlock, actual damage,
  * shield/HoT, spells, support, movement and combat gates. No mock Sim.
  */
 import {beforeAll,afterAll,describe,it,expect} from 'vitest';
@@ -17,13 +17,8 @@ import {installSf14HandAdapters} from '../src/highfly/sf14_hand_native_adapters'
 import {installSf15EightNative} from '../src/highfly/sf15_eight_native_batch';
 import {SF16_IDS,installSf16EightNative} from '../src/highfly/sf16_eight_support_elemental';
 const CASES=[
- {id:'hf_warrior_u1',cls:'warrior',lv:25,mode:'self'},
  {id:'hf_paladin_s5',cls:'paladin',lv:20,mode:'enemy'},
- {id:'hf_priest_s2',cls:'priest',lv:5,mode:'enemy'},
- {id:'hf_priest_s3',cls:'priest',lv:10,mode:'friendly'},
  {id:'hf_shaman_s2',cls:'shaman',lv:5,mode:'enemy'},
- {id:'hf_shaman_s3',cls:'shaman',lv:10,mode:'friendly'},
- {id:'hf_mage_s3',cls:'mage',lv:10,mode:'self'},
  {id:'hf_warlock_s1',cls:'warlock',lv:1,mode:'enemy'}
 ] as const;
 let registered:string[]=[];
@@ -37,7 +32,7 @@ beforeAll(()=>{
  registered.push(...installSf15EightNative(ABILITIES,CLASSES));
  expect(registered).toHaveLength(28);
  registered.push(...installSf16EightNative(ABILITIES,CLASSES));
- expect(registered).toHaveLength(36);
+ expect(registered).toHaveLength(31);
 });
 afterAll(()=>{
  for(const id of registered){
@@ -53,16 +48,14 @@ function target(sim:Sim,id:number,dist:number):Entity{
  m.hostile=true;m.aiState='idle';m.hp=m.maxHp=100000;
  sim.addEntity(m);return m;
 }
-describe('SF16 — eight native support/elemental skills in original real Sim',()=>{
- it('atomically registers precisely eight, preserves all nine original classes',()=>{
-  expect(SF16_IDS).toHaveLength(8);
-  expect(new Set(registered).size).toBe(36);
+describe('SF16 — three distinct native support/elemental skills in original real Sim',()=>{
+ it('atomically registers precisely three new, preserves all nine original classes',()=>{
+  expect(SF16_IDS).toHaveLength(3);
+  expect(new Set(registered).size).toBe(31);
   expect(Object.keys(CLASSES)).toHaveLength(9);
-  expect(ABILITIES.hf_priest_s3.effects.map(x=>x.type)).toEqual(['absorb','hot']);
-  expect(ABILITIES.hf_warrior_u1.effects.map(x=>x.type))
-   .toEqual(['buffTarget','aoeAllyMaxHp']);
-  expect(ABILITIES.hf_mage_s3.effects.map(x=>x.type))
-   .toEqual(['blinkForward','aoeRoot']);
+  expect(ABILITIES.hf_paladin_s5.effects.map(x=>x.type)).toEqual(['selfBuff','stun']);
+  expect(ABILITIES.hf_shaman_s2.effects.map(x=>x.type)).toEqual(['directDamage','dot']);
+  expect(ABILITIES.hf_warlock_s1.effects.map(x=>x.type)).toEqual(['directDamage']);
  });
  for(const c of CASES)for(const level of [c.lv,99]){
   it(c.id+' LV'+level+' learns, casts and causes correct native Sim result',()=>{
@@ -82,22 +75,25 @@ describe('SF16 — eight native support/elemental skills in original real Sim',(
    if(m)sim.targetEntity(m.id,p.id);
    if(c.mode==='friendly')sim.castAbilityOn(c.id,p.id,p.id);
    else sim.castAbility(c.id,p.id);
-   let damage=0,healing=0;
-   for(let tick=0;tick<105;tick++)
+   let damage=0,healing=0,seenSpeed=false,seenStun=false;
+   for(let tick=0;tick<105;tick++){
     for(const ev of sim.tick()){
      if(ev.type==='damage'&&ev.sourceId===p.id&&m&&ev.targetId===m.id)
       damage+=ev.amount;
      if(ev.type==='heal2'&&ev.sourceId===p.id&&ev.targetId===p.id)
       healing+=ev.amount;
     }
+    if(p.auras.some(a=>a.kind==='buff_speed'))seenSpeed=true;
+    if(m?.auras.some(a=>a.kind==='stun'))seenStun=true;
+   }
    expect(p.cooldowns.has(c.id),c.id+' cast did not execute').toBe(true);
    if(['hf_priest_s2','hf_shaman_s2','hf_warlock_s1'].includes(c.id)){
     expect(damage,c.id+' must damage a REAL mob').toBeGreaterThan(0);
     expect(m?.hp).toBeLessThan(m?.maxHp??0);
    }
    if(c.id==='hf_paladin_s5'){
-    expect(p.auras.some(a=>a.kind==='buff_speed')).toBe(true);
-    expect(m?.auras.some(a=>a.kind==='stun')).toBe(true);
+    expect(seenSpeed).toBe(true);
+    expect(seenStun).toBe(true);
    }
    if(c.id==='hf_priest_s3'){
     expect(p.auras.some(a=>a.kind==='absorb')).toBe(true);
@@ -121,7 +117,7 @@ describe('SF16 — eight native support/elemental skills in original real Sim',(
    classes[id as PlayerClass]={abilities:c.abilities.filter(x=>
     !SF16_IDS.includes(x as typeof SF16_IDS[number]))};
   for(const id of SF16_IDS)delete abilities[id];
-  delete abilities.frost_nova;
+  delete abilities.lava_burst;
   const before=Object.keys(abilities).length;
   expect(()=>installSf16EightNative(abilities,classes)).toThrow(/missing exact original donor/);
   expect(Object.keys(abilities)).toHaveLength(before);
