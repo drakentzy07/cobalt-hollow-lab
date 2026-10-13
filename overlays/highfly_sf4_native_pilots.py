@@ -11,13 +11,14 @@ The opt-in runtime flag VITE_HIGHFLY_SF4=1 must be explicitly supplied later.
 from pathlib import Path
 import shutil
 
-source = Path("../v9-corrections/game/c1/highfly_sf4_safe_fusions.ts")
-destination = Path("src/highfly/sf4_safe_fusions.ts")
-if not source.is_file() or destination.exists():
-    raise SystemExit("SF4_SOURCE_UNAVAILABLE_OR_DUPLICATED")
 if not Path("src/highfly/sf3_skill_catalog.ts").exists():
     raise SystemExit("SF4_DEPENDENCY_SF3_CATALOG_MISSING")
-shutil.copyfile(source,destination)
+for filename in ["highfly_sf4_safe_fusions.ts", "highfly_sf4_diagnostics.ts"]:
+    source = Path("../v9-corrections/game/c1") / filename
+    destination = Path("src/highfly") / filename.replace("highfly_sf4_", "sf4_")
+    if not source.is_file() or destination.exists():
+        raise SystemExit("SF4_SOURCE_UNAVAILABLE_OR_DUPLICATED:" + str(source))
+    shutil.copyfile(source,destination)
 
 p=Path("src/sim/content/classes.ts")
 s=p.read_text(encoding="utf-8")
