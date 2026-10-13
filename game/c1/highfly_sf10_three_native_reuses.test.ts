@@ -56,17 +56,26 @@ describe('SF10: three safe native compositions — at own HIGHFLY unlock and LV9
     const mob=c.mode==='heal'?null:dummy(sim,100500+lv+MATRIX.indexOf(c)*100);
     if(mob)sim.targetEntity(mob.id,hero.id);
     const hpMob=mob?.hp??0;
+    // Original Sim periodically regenerates player resources and training
+    // dummies restore HP after damage. Track the actual extrema during cast,
+    // rather than incorrectly looking at final values seven seconds later.
     sim.castAbility(c.id,hero.id);
     let damage=0;
+    let minResource=hero.resource,minMobHp=mob?.hp??0;
     for(let k=0;k<145;k++){
       for(const e of sim.tick()){
         if(mob&&e.type==='damage'&&e.sourceId===hero.id&&e.targetId===mob.id)damage+=e.amount;
       }
+      minResource=Math.min(minResource,hero.resource);
+      if(mob)minMobHp=Math.min(minMobHp,mob.hp);
     }
     expect(hero.cooldowns.has(c.id)).toBe(true);
-    expect(hero.resource).toBeLessThan(before.resource);
+    expect(minResource).toBeLessThan(before.resource);
     if(c.mode==='heal')expect(hero.hp).toBeGreaterThan(before.hp);
-    if(mob){expect(mob.hp).toBeLessThan(hpMob);expect(damage).toBeGreaterThan(0);}
+    if(mob){
+      expect(minMobHp).toBeLessThan(hpMob);
+      expect(damage).toBeGreaterThan(0);
+    }
     if(c.mode==='fire'){
       expect(mob?.auras.some(a=>a.kind==='dot'&&a.sourceId===hero.id)).toBe(true);
     }
