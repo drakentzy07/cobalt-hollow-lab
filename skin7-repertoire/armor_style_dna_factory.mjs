@@ -12,6 +12,7 @@ import {balanceNativeArmorSilhouette} from './art_fit_pass.mjs';
 import {fuseReferenceArmors83} from './reference_fusion_83.mjs';
 import {forgeNativeReferenceShells841} from './native_reforge_841.mjs';
 import {applyNativeSurfaceConform85} from './native_surface_conform_85.mjs';
+import {sculptFamilySilhouette86} from './anchored_silhouette_86.mjs';
 
 const specs=[
  {id:'violet',name:'Obsidiana Violeta III · Referencia 8.3',family:'DARK SAINT',base:'violet',colors:[0x10121c,0x30324b,0xd1cce0,0x9b36fa,0x49315e],
@@ -290,6 +291,7 @@ export function forgeArmorRepertoire(gltf,id){
  qa.reference83=fuseReferenceArmors83(gltf,design.id);
  qa.nativeReforge841=forgeNativeReferenceShells841(gltf,design.id);
  qa.surfaceConform85=applyNativeSurfaceConform85(gltf,design.id);
+ qa.silhouette86=sculptFamilySilhouette86(gltf,design.id);
  qa.shellCount=src.proof.shellCount;
  qa.originalNativeSlots=src.proof.nativeSlots;
  qa.originalNativePrimitives=src.proof.nativePrimitives;
