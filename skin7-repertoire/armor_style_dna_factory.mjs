@@ -7,6 +7,7 @@
  */
 import * as THREE from 'three';
 import {forgeDualArmor} from '../skin7-auto-fit/dual_shell_factory.mjs';
+import {integrateNativeArmor} from './native_integration_pass.mjs';
 
 const specs=[
  {id:'violet',name:'Obsidiana Violeta III',family:'DARK SAINT',base:'violet',colors:[0x10121c,0x30324b,0xd1cce0,0x9b36fa,0x49315e],
@@ -280,6 +281,7 @@ export function forgeArmorRepertoire(gltf,id){
  const src=forgeDualArmor(gltf,design.base);
  if(!src.proof.structuralGreen)throw Error('NATIVE_SHELL_BASE_RED');
  const qa=forgeDetails(gltf,design);
+ qa.nativeIntegration=integrateNativeArmor(gltf,design.id);
  qa.shellCount=src.proof.shellCount;
  qa.originalNativeSlots=src.proof.nativeSlots;
  qa.originalNativePrimitives=src.proof.nativePrimitives;
