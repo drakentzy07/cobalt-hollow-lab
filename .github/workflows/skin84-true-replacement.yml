@@ -1,0 +1,48 @@
+name: HIGHFLY SKIN 8.4 — FIVE ARMOR TRUE REPLACEMENT CI (ISOLATED)
+on:
+  push:
+    branches: [highfly-skin84-true-replacement]
+    paths: ['skin7-repertoire/**', '.github/workflows/skin84-reference-fusion.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-rig-five-true-replacement-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 27
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static geometry and upstream rig source guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check skin7-repertoire/reference_fusion_83.mjs
+          node --check skin7-repertoire/armor_style_dna_factory.mjs
+          node --check skin7-repertoire/art_fit_pass.mjs
+          node --check skin7-repertoire/test_repertoire.cjs
+          curl -fsSL --retry 3 --max-time 130 \
+            https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb \
+            -o /tmp/highfly-skin84-original.glb
+          test "$(git hash-object /tmp/highfly-skin84-original.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          test ! -e public/models/chars/modular/warrior_modular.glb
+          echo SKIN84_SOURCE_ORIGINAL_SAFELY_IMMUTABLE_GREEN=1
+      - name: Playwright desktop and S23 landscape simulation — 6 families and 5 true replacements
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+          python3 -m http.server 4917 --bind 127.0.0.1 >/tmp/highfly-skin84-http.log 2>&1 &
+          sleep 2
+          node skin7-repertoire/test_repertoire.cjs
+          test -s skin7-repertoire/evidence/all-families-proof.json
+          grep -F '"reference83"' skin7-repertoire/evidence/all-families-proof.json
+          echo SKIN84_FIVE_ART_REFS_AND_6_VIEWERS_GREEN=1
+      - name: Preserve real screenshots and QA; do NOT publish any Pages from game repo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN84-FIVE-REFERENCE-FUSION-PROOF
+          path: skin7-repertoire/evidence/
+          if-no-files-found: warn
+          retention-days: 30
