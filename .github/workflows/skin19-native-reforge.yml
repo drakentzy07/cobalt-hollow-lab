@@ -16,8 +16,8 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
-        with: {fetch-depth: 0,persist-credentials: false}
-      - name: Isolation gate: original game, source Paladin, old labs, and AI engine unchanged
+        with: {fetch-depth: 0, persist-credentials: false}
+      - name: "Isolation gate: original game, source Paladin, old labs, and AI engine unchanged"
         shell: bash
         run: |
           set -euo pipefail
