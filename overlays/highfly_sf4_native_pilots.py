@@ -53,6 +53,14 @@ if not sf9_source.is_file() or sf9_dest.exists():
     raise SystemExit("SF9_MIXED_NATIVE_COMBAT_TEST_MISSING_OR_DUPLICATED")
 shutil.copyfile(sf9_source,sf9_dest)
 
+# SF9B: demand 9/9 full-HP native wolf wins and genuine original ranged
+# ability damage for Hunter (plus 60s Druid diagnostic). No enemy stat edits.
+sf9b_src=Path("../v9-corrections/game/c1/highfly_sf9b_hunter_druid_9class_native_rotation.test.ts")
+sf9b_dst=Path("tests/highfly_sf9b_hunter_druid_9class_native_rotation.test.ts")
+if not sf9b_src.is_file() or sf9b_dst.exists():
+    raise SystemExit("SF9B_NATIVE_FULL_ROTATION_TEST_MISSING_OR_DUPLICATED")
+shutil.copyfile(sf9b_src,sf9b_dst)
+
 # Stage the complete read-only 9×7 donor unlock planner and its unit contract.
 stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
 stages_dest = Path("src/highfly/highfly_sf5_unlock_stages.ts")
