@@ -1,5 +1,5 @@
 /**
- * HIGHFLY SF18 — FOUR new source-audited original-engine mechanic fusions.
+ * HIGHFLY SF18 — THREE independently validated new source-audited original-engine mechanic fusions.
  * Original ClaudeCraft effects and channel/trap handlers; ZERO parallel engines.
  * Donor-exclusive ID procs, VFX and form model swaps are NOT automatically inherited.
  */
@@ -7,12 +7,13 @@ import type {AbilityDef,AbilityEffect} from '../sim/types';
 import {HIGHFLY_FUSED_SKILLS,type HighflyClass,type HighflyFusionSpec} from './sf3_skill_catalog';
 type Registry=Record<string,AbilityDef>;
 type Classes=Record<HighflyClass,{abilities:string[]}>;
+// Hunter U1 remains UNREGISTERED: channel ticks process only damage, not
+// a composed secondary selfBuff. Needs a native cast-start lifecycle adapter.
 export const SF18_IDS=[
- 'hf_hunter_s3','hf_hunter_u1','hf_shaman_s5','hf_mage_s2'
+ 'hf_hunter_s3','hf_shaman_s5','hf_mage_s2'
 ] as const;
 const EXACT:Record<typeof SF18_IDS[number],string>={
  hf_hunter_s3:'frostjaw_trap,concussive_shot',
- hf_hunter_u1:'rapid_fire,bloodtrail_assault',
  hf_shaman_s5:'ghost_wolf,frost_shock',
  hf_mage_s2:'ice_lance,arcane_missiles'
 };
@@ -38,13 +39,6 @@ function effects(s:HighflyFusionSpec,a:AbilityDef,b:AbilityDef,lv:number):Abilit
   // Projectile contacts the selected mob, dropping the ORIGINAL armed native
   // trap; the other original effects provide ranged impact and slow.
   return [x[0],y[0],y[1]];
- }
- if(s.id==='hf_hunter_u1'){
-  if(x.length!==1||x[0].type!=='directDamage'||
-   y.length!==1||y[0].type!=='selfBuff'||y[0].kind!=='hunter_bloodtrail')
-   throw Error('SF18 native rapid channel / Hunter buff changed at '+lv);
-  // Every original tick keeps native projectile/damage mechanics.
-  return [x[0],{...y[0],duration:8}];
  }
  if(s.id==='hf_shaman_s5'){
   if(x.length!==1||x[0].type!=='selfBuff'||x[0].kind!=='buff_speed'||
@@ -79,11 +73,6 @@ function build(s:HighflyFusionSpec,ds:AbilityDef[]):AbilityDef{
    b.minRange!==8||b.range!==35||!b.projectile||b.scalesWith!=='ranged'||
    !b.requiresTarget||b.school!=='physical'||a.channel||b.channel))
   throw Error('SF18 trap/shot targeting original changed');
- if(id==='hf_hunter_u1'&&(
-   !a.channel||a.channel.duration!==2.4||a.channel.ticks!==6||
-   !a.requiresTarget||a.minRange!==8||a.range!==35||!a.projectile||
-   a.scalesWith!=='ranged'||b.requiresTarget||b.effects[0]?.type!=='selfBuff'))
-  throw Error('SF18 hunter burst source changed');
  if(id==='hf_shaman_s5'&&(
    a.requiresTarget||a.effects[0]?.type!=='selfBuff'||b.requiresTarget!==true||
    b.range!==20||b.school!=='frost'||a.channel||b.channel))
@@ -93,11 +82,10 @@ function build(s:HighflyFusionSpec,ds:AbilityDef[]):AbilityDef{
    !a.requiresTarget||!b.requiresTarget||a.range!==30||b.range!==30||
    a.school!=='frost'||b.school!=='arcane'))
   throw Error('SF18 mage missile channel source changed');
- const start=id==='hf_hunter_s3'?b:
-   id==='hf_hunter_u1'?a:
-   id==='hf_mage_s2'?b:b;
+ // All three safe combinations inherit the original impact/targeting donor.
+ const start=b;
  const cds:Record<typeof SF18_IDS[number],number>={
-  hf_hunter_s3:30,hf_hunter_u1:90,hf_shaman_s5:20,hf_mage_s2:8
+  hf_hunter_s3:30,hf_shaman_s5:20,hf_mage_s2:8
  };
  const levels=stages(s,ds),rows=levels.map(lv=>({
   lv,effects:effects(s,a,b,lv),
@@ -119,9 +107,6 @@ function build(s:HighflyFusionSpec,ds:AbilityDef[]):AbilityDef{
   Object.assign(added,{requiresTarget:true,range:30,minRange:8,
    school:'physical',scalesWith:'ranged'});
  }
- if(id==='hf_hunter_u1'){
-  Object.assign(added,{channel:{...a.channel},castWhileMoving:a.castWhileMoving});
- }
  if(id==='hf_shaman_s5'){
   Object.assign(added,{requiresTarget:true,range:20,castTime:0,
    school:'frost',channel:undefined,offGcd:undefined});
@@ -131,7 +116,7 @@ function build(s:HighflyFusionSpec,ds:AbilityDef[]):AbilityDef{
  }
  return {...start,...added} as AbilityDef;
 }
-export function installSf18FourNative(abilities:Registry,classes:Classes):string[]{
+export function installSf18ThreeNative(abilities:Registry,classes:Classes):string[]{
  const catalog=Object.values(HIGHFLY_FUSED_SKILLS).flat();
  const staged:{id:string;cls:HighflyClass;def:AbilityDef}[]=[];
  for(const id of SF18_IDS){
@@ -141,7 +126,7 @@ export function installSf18FourNative(abilities:Registry,classes:Classes):string
    throw Error('SF18 duplicate/missing recipe '+id);
   staged.push({id,cls:s.classId,def:build(s,s.donors.map(d=>abilities[d]))});
  }
- if(staged.length!==4)throw Error('SF18 expected four');
+ if(staged.length!==3)throw Error('SF18 expected three source-correct skills');
  for(const x of staged){abilities[x.id]=x.def;classes[x.cls].abilities.push(x.id);}
  return staged.map(x=>x.id);
 }

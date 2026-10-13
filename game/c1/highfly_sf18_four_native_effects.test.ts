@@ -1,4 +1,4 @@
-/** HIGHFLY SF18: four NEW original-Sim skills / LV unlock and LV99.
+/** HIGHFLY SF18: three NEW original-Sim skills; Hunter U1 blocked / LV unlock and LV99.
  * No altered monsters or fake damage; inspect actual auras, damage and trap.
  */
 import {beforeAll,afterAll,describe,it,expect} from 'vitest';
@@ -16,10 +16,9 @@ import {installSf14HandAdapters} from '../src/highfly/sf14_hand_native_adapters'
 import {installSf15EightNative} from '../src/highfly/sf15_eight_native_batch';
 import {installSf16UniqueNative} from '../src/highfly/sf16_eight_support_elemental';
 import {installSf17ThreeNative} from '../src/highfly/sf17_three_unique_native';
-import {SF18_IDS,installSf18FourNative} from '../src/highfly/sf18_four_native_effects';
+import {SF18_IDS,installSf18ThreeNative} from '../src/highfly/sf18_four_native_effects';
 const CASES=[
  {id:'hf_hunter_s3',cls:'hunter',lv:10},
- {id:'hf_hunter_u1',cls:'hunter',lv:25},
  {id:'hf_shaman_s5',cls:'shaman',lv:20},
  {id:'hf_mage_s2',cls:'mage',lv:5}
 ] as const;
@@ -36,9 +35,9 @@ beforeAll(()=>{
  registered.push(...installSf17ThreeNative(ABILITIES,CLASSES));
  expect(registered).toHaveLength(32);
  expect(SF18_IDS.some(x=>registered.includes(x))).toBe(false);
- registered.push(...installSf18FourNative(ABILITIES,CLASSES));
- expect(registered).toHaveLength(36);
- expect(new Set(registered).size).toBe(36);
+ registered.push(...installSf18ThreeNative(ABILITIES,CLASSES));
+ expect(registered).toHaveLength(35);
+ expect(new Set(registered).size).toBe(35);
 });
 afterAll(()=>{
  for(const id of registered){
@@ -47,13 +46,16 @@ afterAll(()=>{
   const index=list.indexOf(id);if(index>=0)list.splice(index,1);
  }
 });
-describe('SF18 four fully distinct original native fusion source mechanics',()=>{
+describe('SF18 three source-valid original native fusion source mechanics',()=>{
  it('keeps 9 classes and four correct source shapes',()=>{
   expect(Object.keys(CLASSES)).toHaveLength(9);
-  expect(SF18_IDS).toHaveLength(4);
+  expect(SF18_IDS).toHaveLength(3);
   expect(ABILITIES.hf_hunter_s3.effects.map(e=>e.type))
    .toEqual(['frostjawTrap','directDamage','slow']);
-  expect(ABILITIES.hf_hunter_u1.channel?.ticks).toBe(6);
+  // A six-tick rapid-fire channel cannot dispatch a second selfBuff effect:
+  // fail closed instead of registering an ability that loses half its identity.
+  expect(SF18_IDS).not.toContain('hf_hunter_u1');
+  expect(ABILITIES.hf_hunter_u1).toBeUndefined();
   expect(ABILITIES.hf_mage_s2.channel?.ticks).toBe(3);
   expect(ABILITIES.hf_shaman_s5.effects.map(e=>e.type))
    .toEqual(['selfBuff','directDamage','slow']);
@@ -75,23 +77,29 @@ describe('SF18 four fully distinct original native fusion source mechanics',()=>
    m.hostile=true;m.aiState='idle';m.maxHp=m.hp=100000;
    sim.addEntity(m);sim.targetEntity(m.id,p.id);
    sim.castAbility(c.id,p.id);
-   let damage=0,trap=false,speed=false,bloodtrail=false,slow=false;
+   let damage=0,trap=false,speed=false,slow=false,minHp=m.hp;
    for(let i=0;i<135;i++){
     for(const e of sim.tick()){
      if(e.type==='damage'&&e.sourceId===p.id&&e.targetId===m.id)
       damage+=e.amount;
     }
+    // training_dummy restores to full out of combat: capture the lowest HP
+    // while the original damage event is applied, never just the final tick.
+    minHp=Math.min(minHp,m.hp);
     if(sim.groundAoEs.some(e=>e.hunterTrap?.abilityId===c.id))trap=true;
     if(p.auras.some(e=>e.kind==='buff_speed'))speed=true;
-    if(p.auras.some(e=>e.kind==='hunter_bloodtrail'))bloodtrail=true;
     if(m.auras.some(e=>e.kind==='slow'))slow=true;
    }
    expect(p.cooldowns.has(c.id),c.id+' did not execute').toBe(true);
    expect(damage,c.id+' must hit a REAL mob').toBeGreaterThan(0);
-   expect(m.hp).toBeLessThan(m.maxHp);
+   expect(minHp,c.id+' target must actually lose HP before dummy reset')
+    .toBeLessThan(m.maxHp);
    if(c.id==='hf_hunter_s3')expect(trap,'native armed Frostjaw trap').toBe(true);
-   if(c.id==='hf_hunter_u1')expect(bloodtrail,'native Bloodtrail aura').toBe(true);
-   if(c.id==='hf_shaman_s5')expect(speed,'native Ghost Wolf speed aura').toBe(true);
+   if(c.id==='hf_shaman_s5'){
+    expect(speed,'native Shadewolf mobility buff must apply').toBe(true);
+    expect(slow,'native Frost Shock slow must apply').toBe(true);
+   }
+   if(c.id==='hf_hunter_s3')expect(slow,'native shot slow must apply').toBe(true);
   },25000);
  }
  it('fails atomically without spawning phantom skills when a donor is missing',()=>{
@@ -103,7 +111,7 @@ describe('SF18 four fully distinct original native fusion source mechanics',()=>
    classes[cl as PlayerClass]={abilities:c.abilities.filter(id=>
     !SF18_IDS.includes(id as typeof SF18_IDS[number]))};
   const before=Object.keys(abilities).length;
-  expect(()=>installSf18FourNative(abilities,classes)).toThrow(/missing or changed frozen donor/);
+  expect(()=>installSf18ThreeNative(abilities,classes)).toThrow(/missing or changed frozen donor/);
   expect(Object.keys(abilities)).toHaveLength(before);
   expect(SF18_IDS.every(id=>!abilities[id])).toBe(true);
  });

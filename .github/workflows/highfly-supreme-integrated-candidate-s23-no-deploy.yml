@@ -722,7 +722,7 @@ jobs:
           cp ../v9-corrections/game/c1/highfly_sf15_eight_native_batch.test.ts tests/highfly_sf15_eight_native_batch.test.ts
           pnpm exec vitest run tests/highfly_sf15_eight_native_batch.test.ts
           echo 'HF_SF15_EIGHT_NATIVE_FUSIONS_ORIGINAL_COMBAT_SIM_GREEN=1'
-      - name: SF18 four NEW Hunter Shaman Mage source mechanics (NO DEPLOY)
+      - name: SF18 three compatible Hunter Shaman Mage source mechanics (NO DEPLOY)
         if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
         working-directory: upstream
         shell: bash
@@ -731,7 +731,7 @@ jobs:
           cp ../v9-corrections/game/c1/highfly_sf18_four_native_effects.ts src/highfly/sf18_four_native_effects.ts
           cp ../v9-corrections/game/c1/highfly_sf18_four_native_effects.test.ts tests/highfly_sf18_four_native_effects.test.ts
           pnpm exec vitest run tests/highfly_sf18_four_native_effects.test.ts
-          echo 'HF_SF18_FOUR_NEW_NATIVE_SIM_SKILLS_GREEN=1'
+          echo 'HF_SF18_THREE_NEW_SOURCE_NATIVE_SIM_SKILLS_GREEN=1'
       - name: SF17 three NEW Hunter and Shaman source mechanics (NO DEPLOY)
         if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
         working-directory: upstream
@@ -862,7 +862,7 @@ jobs:
             grep -R -q 'hf_shaman_u2' dist/assets || { echo 'SF17_SHAMAN_HASTE_NOT_IN_WEBGL'; exit 1; }
             grep -R -q 'hf_hunter_s3' dist/assets || { echo 'SF18_HUNTER_TRAP_NOT_IN_WEBGL'; exit 1; }
             grep -R -q 'hf_mage_s2' dist/assets || { echo 'SF18_MAGE_CHANNEL_NOT_IN_WEBGL'; exit 1; }
-            echo 'HF_SF18_WEBGL_FOUR_NEW_NATIVE_SKILLS_PRESENT=1'
+            echo 'HF_SF18_WEBGL_THREE_NEW_NATIVE_SKILLS_PRESENT=1'
           fi
           node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune

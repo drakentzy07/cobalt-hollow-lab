@@ -18,7 +18,7 @@ stages = [
     ("SF15", "highfly_sf15_eight_native_batch.ts", "export const SF15_IDS=[", 8),
     ("SF16", "highfly_sf16_eight_support_elemental.ts", "export const SF16_IDS=[", 1),
     ("SF17", "highfly_sf17_three_unique_native.ts", "export const SF17_IDS=[", 3),
-    ("SF18", "highfly_sf18_four_native_effects.ts", "export const SF18_IDS=[", 4),
+    ("SF18", "highfly_sf18_four_native_effects.ts", "export const SF18_IDS=[", 3),
 ]
 id_pattern = re.compile(r"['\"](hf_[a-z]+_[su]\d+)['\"]")
 all_skills: dict[str, str] = {}
@@ -57,7 +57,7 @@ if unknown:
 if duplicates:
     raise SystemExit("SF_PRECHECK_DUPLICATE_SKILL_ID:" + "; ".join(duplicates))
 expected_total = sum(row[3] for row in stages) + len(sf13_ids)
-if len(all_skills) != expected_total or expected_total != 36:
+if len(all_skills) != expected_total or expected_total != 35:
     raise SystemExit(f"SF_PRECHECK_WRONG_ACTUAL_NATIVE_TOTAL:{len(all_skills)}")
 if all_skills.get("hf_paladin_s5") != "SF16":
     raise SystemExit("SF_PRECHECK_SF16_NEW_SKILL_NOT_UNIQUE")
@@ -67,10 +67,13 @@ if { "hf_hunter_s1", "hf_shaman_u1", "hf_shaman_u2" } != {id for id, stage in al
     raise SystemExit("SF_PRECHECK_UNEXPECTED_SF17_SET")
 print("HF_SF17_REGISTRY_UNIQUE_32_GREEN=1")
 print(f"HF_SF17_PRIOR_CERTIFIED=29 NEW=3 CANDIDATES=32 OF_CATALOG=63")
-if {"hf_hunter_s3", "hf_hunter_u1", "hf_shaman_s5", "hf_mage_s2"} != {
+if {"hf_hunter_s3", "hf_shaman_s5", "hf_mage_s2"} != {
     id for id, stage in all_skills.items() if stage == "SF18"
 }:
     raise SystemExit("SF_PRECHECK_UNEXPECTED_SF18_IDS")
-print("HF_SF18_UNIQUE_36_NATIVE_PREFLIGHT_GREEN=1")
-print(f"HF_SF18_PRIOR_CERTIFIED=32 NEW=4 CANDIDATES=36 OF_CATALOG=63")
+print("HF_SF18_UNIQUE_35_NATIVE_PREFLIGHT_GREEN=1")
+print(f"HF_SF18_PRIOR_CERTIFIED=32 NEW=3 CANDIDATES=35 OF_CATALOG=63")
+if "hf_hunter_u1" in all_skills:
+    raise SystemExit("SF18_INVALID_CHANNEL_SECONDARY_BUFF_WAS_INSTALLED")
+print("HF_SF18_HUNTER_U1_BLOCKED_LIFECYCLE_ADAPTER_REQUIRED=1")
 print(f"HF_SF18_REMAINING_IF_SUCCESS={len(catalog_ids)-len(all_skills)}")
