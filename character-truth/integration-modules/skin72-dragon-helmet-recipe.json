@@ -20,7 +20,7 @@
   "geometry": {
     "radialSegments": 16,
     "profileRings": 11,
-    "frontSnoutExtension": 0.16,
+    "frontSnoutExtension": 0.12,
     "browProjection": 0.07,
     "scaleSurfacePanels": true,
     "faceEyeBand": true,
