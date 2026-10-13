@@ -73,6 +73,18 @@ fs.mkdirSync(dir,{recursive:true});
     assert.equal(p.nativeReforge841?.weightedMeshes,17,'all 17 resculpted pieces retain native rig');
     assert.equal(p.nativeReforge841?.slotCoverage.length,11);
     assert.equal(p.nativeReforge841?.clips,22);
+    assert.equal(p.surfaceConform85?.pass,'SKIN8_5_SURFACE_CONFORM');
+    assert.equal(p.surfaceConform85?.enabled,true);
+    assert.equal(p.surfaceConform85?.originalBones,23);
+    assert.equal(p.surfaceConform85?.clips,22);
+    assert.equal(p.surfaceConform85?.newNativePieces,17);
+    assert.equal(p.surfaceConform85?.visibleNativePieces,17);
+    assert.equal(p.surfaceConform85?.visibleOriginalArmor,0);
+    assert.equal(p.surfaceConform85?.visiblePriorFlatPanels,0,'front cuboid and old cape must be HIDDEN');
+    assert(p.surfaceConform85?.oldFusedFlatPanelsHidden>=11,'all prior flat armatures removed');
+    assert(p.surfaceConform85?.backNativeCapePieces>=1,'cape sourced from Back native rig');
+    assert(p.surfaceConform85?.backTopAnchorVertices>=4,'cape anchored at native Back top');
+    assert(p.surfaceConform85?.maxSurfaceOffsetRatio<=.11,'all reshapes remain near ORIGINAL skin surface');
     assert(p.nativeReforge841?.verticesResculpted>=500);
     assert(p.reference83?.underArmorRetained>=10,'native articulated underarmor remains');
 
@@ -80,7 +92,7 @@ fs.mkdirSync(dir,{recursive:true});
     assert(p.reference83?.oldFloatingDecorationsHidden>=10,'old detached ornaments hidden '+id);
     assert.equal(p.reference83?.artApproved,false);
     assert.equal(p.reference83?.faithfulImageReconstruction,false);
-   }else {assert.equal(p.reference83?.enabled,false,'royal remains legacy comparator');assert.equal(p.nativeReforge841?.enabled,false);}
+   }else {assert.equal(p.reference83?.enabled,false,'royal remains legacy comparator');assert.equal(p.nativeReforge841?.enabled,false);assert.equal(p.surfaceConform85?.enabled,false);}
 
    if(id==='dragon')assert(p.newStyleMeshes>=15);
    if(id==='celestial')assert(p.distinctDesignGeometry.shoulder>=8);
@@ -130,7 +142,7 @@ fs.mkdirSync(dir,{recursive:true});
   mobile,artApproved:false,femaleFitApproved:false,collisionApproved:false,physicalAndroidApproved:false};
  fs.writeFileSync(dir+'/repertoire-qa.json',JSON.stringify(qa,null,2));
  console.log('HIGHFLY_REPERTOIRE_SIX_VARIANTS_CHROME_GREEN=1');
- console.log('HIGHFLY_SKIN84_TRUE_REPLACEMENT_ZERO_LEGACY_VISIBLE_GREEN=1');
+ console.log('HIGHFLY_SKIN85_TRUE_NATIVE_SURFACE_CONFORM_AND_BACK_CAPE_ANCHOR_GREEN=1');
  console.log('HIGHFLY_REPERTOIRE_S23_SIMULATED_VIEWPORT_GREEN=1');
  console.log('HIGHFLY_REPERTOIRE_PHYSICAL_ANDROID_AND_ART_UNAPPROVED=1');
  }finally{await browser.close();}
