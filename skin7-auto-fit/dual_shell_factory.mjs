@@ -39,8 +39,16 @@ function donorCollection(scene){
   const n=o.name||'';
   const slot=n.startsWith('Armor_paladin_')?n.replace('Armor_paladin_',''):null;
   if(!SLOTS.includes(slot))return;
-  o.traverse(child=>{if(child.isSkinnedMesh&&!result.get(slot).includes(child))result.get(slot).push(child);});
+  // Critical: GLTFLoader multi-primitive children retain the ORIGINAL Armor_paladin_
+  // prefix. Previous authored HIGHFLY_VIOLET pieces may share their parent;
+  // NEVER use them as donors or generate shells from those attachments.
+  o.traverse(child=>{
+   if(child.isSkinnedMesh&&(child.name||'').startsWith('Armor_paladin_') &&
+      !result.get(slot).includes(child))result.get(slot).push(child);
+  });
  });
+ const count=[...result.values()].reduce((sum,arr)=>sum+arr.length,0);
+ if(count!==17)throw Error('NATIVE_DONOR_TRUTH_GATE expected 17, found '+count+' (no accessory donors allowed)');
  const missing=SLOTS.filter(s=>result.get(s).length===0);
  if(missing.length)throw Error('MISSING_NATIVE_SLOT '+missing);
  for(const [s,meshes] of result)for(const m of meshes){
