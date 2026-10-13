@@ -88,8 +88,8 @@ for source, destination in [
 p=Path("src/sim/content/classes.ts")
 s=p.read_text(encoding="utf-8")
 old_import="import { installHighflySF3Fusions } from '../../highfly/sf3_fusion_runtime';\n"
-new_import=("import { installSf4NativePilots } from '../../highfly/sf4_safe_fusions';\\n"
-            "import { installSf10NativeExpansion } from '../../highfly/sf10_three_native_reuses';\\n")
+new_import=("import { installSf4NativePilots } from '../../highfly/sf4_safe_fusions';\n"
+            "import { installSf10NativeExpansion } from '../../highfly/sf10_three_native_reuses';\n")
 old_cond="""if (import.meta.env?.VITE_HIGHFLY_SF3 === '1') {
   installHighflySF3Fusions(ABILITIES, CLASSES);
 }"""
