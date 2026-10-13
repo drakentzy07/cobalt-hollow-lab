@@ -88,6 +88,13 @@ jobs:
           print('SKIN7_AUTOFIT_EXPERIMENTAL_NATIVE_STRUCTURE_GREEN=1')
           print('SKIN7_PHYSICAL_OR_VISUAL_ART_APPROVAL=NOT_TESTED')
           PY
+      - name: Real Chrome/WebGL CI — published isolated lab only
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+          node skin7-auto-fit/test_browser.cjs
       - name: Artifact only — NEVER deploy game Pages
         if: always()
         uses: actions/upload-artifact@v4
@@ -97,5 +104,6 @@ jobs:
             tmp/skin7/fixture_proof.json
             tmp/skin7/fixture_autofit.glb
             skin7-auto-fit/index.html
+            tmp/skin7/evidence/
           if-no-files-found: warn
           retention-days: 30
