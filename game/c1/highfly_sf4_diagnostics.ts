@@ -38,6 +38,10 @@ export function traceSf4FusionDonors(
       if(valid.some(x=>x.class!==spec.classId))blockers.push('CROSS_CLASS_DONOR');
       if(valid.some(x=>x.passive || x.hiddenFromPlayer))blockers.push('PASSIVE_OR_HIDDEN_DONOR');
       if(valid.some(x=>x.specs?.length || x.excludeSpecs?.length))blockers.push('SPEC_DEPENDENT_DONOR');
+      if(valid.some(x=>x.learnLevel>spec.unlockLevel))blockers.push('DONOR_LEVEL_AHEAD_OF_UNLOCK');
+      if(valid.some(x=>!!x.actionReplacement))blockers.push('ACTION_REPLACEMENT_HANDLER');
+      if(valid.some(x=>(x.maxCharges??1)>1))blockers.push('MULTI_CHARGE_RECHARGE');
+      if(valid.some(x=>x.requiresStealth))blockers.push('STEALTH_REQUIRED');
       if(valid.some(x=>x.requiresForm))blockers.push('SHAPESHIFT_FORM_GATE');
       if(valid.some(x=>x.requiresAuraKind))blockers.push('AURA_REQUIRED');
       if(valid.some(x=>x.onNextSwing))blockers.push('ON_NEXT_SWING_HANDLER');
@@ -53,8 +57,10 @@ export function traceSf4FusionDonors(
         blockers.push('TARGET_CONTRACT_CONFLICT');
       if(first && valid.some(x=>x.school!==first.school))
         blockers.push('MIXED_DAMAGE_SCHOOLS_NEED_ADAPTER');
-      if(first && valid.some(x=>x.range!==first.range))
+      if(first && valid.some(x=>x.range!==first.range || x.minRange!==first.minRange))
         blockers.push('MIXED_RANGE_REQUIREMENTS');
+      if(valid.some(x=>x.ranks?.some(r=>r.castTime!==undefined && r.castTime!==x.castTime)))
+        blockers.push('RANK_CHANGES_CAST_TIMING');
       if(first && valid.some(x=>x.castTime!==first.castTime))
         blockers.push('MIXED_CAST_TIMINGS');
       // Important: this is only a static audit, NOT a full gameplay proof.
