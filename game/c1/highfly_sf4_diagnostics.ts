@@ -11,7 +11,10 @@ export interface Sf4DonorDiagnostics {
   readonly classId: string;
   readonly sourceIds: readonly string[];
   readonly status: string;
+  /** Mechanics requiring explicit adapters before the unimplemented recipes can be executed. */
   readonly blockers: readonly string[];
+  /** Claude source restrictions are reference metadata, NOT HIGHFLY unlock blockers. */
+  readonly sourceNotes: readonly string[];
   readonly sourceEffectKinds: readonly string[];
 }
 const SPECIAL_EFFECTS = new Set([
@@ -32,13 +35,14 @@ export function traceSf4FusionDonors(
       const donors=spec.donors.map(id=>abilities[id]);
       const valid=donors.filter((x):x is AbilityDef=>!!x);
       const blockers:string[]=[];
+      const sourceNotes:string[]=[];
       const sources=donors.flatMap(x=>(x?.effects??[]).map(effect=>effect.type));
       const missing=spec.donors.filter(id=>!abilities[id]);
       if(missing.length)blockers.push('MISSING_DONOR:'+missing.join(','));
       if(valid.some(x=>x.class!==spec.classId))blockers.push('CROSS_CLASS_DONOR');
-      if(valid.some(x=>x.passive || x.hiddenFromPlayer))blockers.push('PASSIVE_OR_HIDDEN_DONOR');
-      if(valid.some(x=>x.specs?.length || x.excludeSpecs?.length))blockers.push('SPEC_DEPENDENT_DONOR');
-      if(valid.some(x=>x.learnLevel>spec.unlockLevel))blockers.push('DONOR_LEVEL_AHEAD_OF_UNLOCK');
+      if(valid.some(x=>x.passive || x.hiddenFromPlayer))sourceNotes.push('PASSIVE_OR_HIDDEN_DONOR');
+      if(valid.some(x=>x.specs?.length || x.excludeSpecs?.length))sourceNotes.push('SPEC_DEPENDENT_DONOR');
+      if(valid.some(x=>x.learnLevel>spec.unlockLevel))sourceNotes.push('DONOR_LEVEL_AHEAD_OF_UNLOCK');
       if(valid.some(x=>!!x.actionReplacement))blockers.push('ACTION_REPLACEMENT_HANDLER');
       if(valid.some(x=>(x.maxCharges??1)>1))blockers.push('MULTI_CHARGE_RECHARGE');
       if(valid.some(x=>x.requiresStealth))blockers.push('STEALTH_REQUIRED');
@@ -72,7 +76,7 @@ export function traceSf4FusionDonors(
       return {
         id:spec.id,classId:spec.classId,sourceIds:[...spec.donors],
         status:readiness.get(spec.id)?.status??'unknown',
-        blockers,sourceEffectKinds:sources,
+        blockers,sourceNotes,sourceEffectKinds:sources,
       };
     }),
   );
