@@ -62,12 +62,16 @@ function clampMeshToSlot(mesh,box,factor){
 export function balanceNativeArmorSilhouette(gltf,style){
  if(!RIGID[style])throw Error('SKIN8_ART_STYLE_UNKNOWN '+style);
  const bySlot=new Map(SLOTS.map(s=>[s,new THREE.Box3()])),native=new Map(SLOTS.map(s=>[s,0]));
+ const known=new Set();
  gltf.scene.traverse(o=>{
-  const slot=originalSlot(o.name||'');
-  if(slot&&o.isSkinnedMesh&&o.geometry?.getAttribute('position')){
-   bySlot.get(slot).union(new THREE.Box3().setFromBufferAttribute(o.geometry.getAttribute('position')));
+  const slot=o.name?.startsWith('Armor_paladin_')?o.name.slice('Armor_paladin_'.length):'';
+  if(!SLOTS.includes(slot))return;
+  o.traverse(child=>{
+   if(!child.isSkinnedMesh || !child.name?.startsWith('Armor_paladin_') || known.has(child))return;
+   known.add(child);
+   bySlot.get(slot).union(new THREE.Box3().setFromBufferAttribute(child.geometry.getAttribute('position')));
    native.set(slot,native.get(slot)+1);
-  }
+  });
  });
  if([...native.values()].reduce((a,b)=>a+b,0)!==17 || [...native.values()].some(x=>!x))throw Error('SKIN8_ART_NATIVE_TRUTH_RED');
  let inspected=0,constrained=0;const slotFits={};
