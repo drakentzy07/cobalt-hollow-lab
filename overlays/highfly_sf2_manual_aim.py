@@ -76,8 +76,7 @@ p.write_text(
 )
 replace_one(
     main,
-    """  mobileControls.start();
-  const syncOverlayDiagnostics = () => {""",
+    """  mobileControls.start();""",
     """  mobileControls.start();
   // SF2 manual, player-directed skill release: opt-in on preview only.
   // Donor radial, basic ATK and ground reticle remain the authority when off.
@@ -107,7 +106,7 @@ replace_one(
     cancel: () => { hud.cancelGroundAim(); },
     isGroundAimActive: () => hud.isGroundAimActive(),
   });
-  const syncOverlayDiagnostics = () => {"""
+"""
 )
 # Remove unused import to preserve tsc noUnusedLocals policy.
 replace_one(
