@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HIGHFLY SKIN 7 · AUTO-FIT FACTORY · Rig Proof Lab</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#10131d;color:#edf0fd;font:14px system-ui,-apple-system,sans-serif}header{padding:15px 20px;border-bottom:1px solid #363e58;background:#1b2032}h1{font-size:22px;margin:0 0 5px}p{color:#b6c2d9;margin:0;line-height:1.5}
+main{max-width:1500px;margin:auto;padding:12px}.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#20283a;border:1px solid #394562;padding:12px;border-radius:12px;margin-bottom:12px}
+label{color:#dce5f6}input,select,button{color:inherit;background:#151a29;border:1px solid #5b6984;border-radius:7px;padding:8px}button{cursor:pointer}.panels{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+article{border:1px solid #465573;background:#1d2436;border-radius:12px;overflow:hidden}article h2{margin:0;padding:11px;font-size:16px;border-bottom:1px solid #39445b}.viewport{height:min(63vh,610px);min-height:320px;position:relative}.viewport canvas{display:block;width:100%;height:100%}.overlay{position:absolute;left:9px;bottom:9px;color:#d3dfff;background:#171d2bd9;padding:5px 8px;border-radius:6px;font:12px monospace}
+.small{font-size:12px;color:#bbc6d9}.notice{margin:12px 0;border:1px solid #73613a;background:#282439;padding:12px;border-radius:10px;color:#f5dca4}.details{display:grid;grid-template-columns:1fr 1fr;gap:12px}pre{overflow:auto;white-space:pre-wrap;border:1px solid #37445e;border-radius:8px;padding:12px;background:#141925;color:#c9d6ec}
+@media(max-width:780px){.panels,.details{grid-template-columns:1fr}.viewport{height:390px}header h1{font-size:19px}}
+</style>
+<script type="importmap">{"imports":{
+"three":"https://esm.sh/three@0.180.0",
+"three/addons/":"https://esm.sh/three@0.180.0/examples/jsm/",
+"meshoptimizer":"https://esm.sh/meshoptimizer@0.23.0"
+}}</script></head>
+<body><header><h1>HIGHFLY · SKIN 7 / AUTO-FIT FACTORY</h1>
+<p>Laboratorio experimental aislado — modelo auténtico ClaudeCraft vs GLB transformado de SupaVoxel · No modifica el HIGHFLY público</p></header>
+<main><div class="controls">
+<label>Importar GLB procesado <input id="file" type="file" accept=".glb,model/gltf-binary"></label>
+<label>Animación <select id="animation"><option value="">En reposo</option></select></label>
+<label><input id="play" type="checkbox" checked> Reproducir</label>
+<label><input id="bones" type="checkbox"> Mostrar huesos</label>
+<button id="front">Frente</button><button id="side">Perfil</button><button id="back">Espalda</button>
+</div>
+<div class="panels"><article><h2>CLAUDECRAFT · PALADIN ORIGINAL</h2><div class="viewport" id="original"><div class="overlay">Fuente congelada · 23 huesos · 22 clips</div></div></article>
+<article><h2>HIGHFLY · ARMADURA IMPORTADA</h2><div class="viewport" id="candidate"><div class="overlay">Esperando GLB experimental</div></div></article></div>
+<p class="notice"><strong>ALCANCE DE ESTA PRUEBA:</strong> lectura de GLB, mallas, pesos y animaciones, y revisión visual manual. La presencia de huesos NO garantiza calidad de deformación, ni prueba ausencia de intersecciones, colisiones, compatibilidad femenina o rendimiento en S23 Ultra. Las piezas creadas usan un material PBR provisional y no reproducen automáticamente los cristales violetas del concepto.</p>
+<div class="details"><div><h2>Estado del laboratorio</h2><pre id="status">Inicializando Three.js...</pre></div>
+<div><h2>Inspector</h2><pre id="inspector">Abrí un archivo HIGHFLY_AUTO_FIT_EXPERIMENTAL.glb para comparar.</pre></div></div>
+<p class="small">Fuente original: levy-street/world-of-claudecraft @ 9b57e49c9. Las nuevas piezas se identifican con HIGHFLY_AUTO_FIT_*. El visor no guarda, despliega ni cambia personajes.</p></main>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {MeshoptDecoder} from 'meshoptimizer';
+
+const rigURL='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb';
+const status=document.querySelector('#status'),inspector=document.querySelector('#inspector'),anim=document.querySelector('#animation');
+const views=[],clock=new THREE.Clock(),exposed={ready:false,sourceLoaded:false,candidateLoaded:false,metrics:{},error:null};
+window.__SKIN7_AUTOFIT__=exposed;
+const basic=new Set(['Head','Torso','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR','Loin','Top','Eye_almond','Brow_soft','Ear_round','Mouth_neutral']);
+function rigBody(name){return /^M_/.test(name)&&basic.has(name.slice(2).replace(/_[0-9]+$/,''));}
+function view(id){
+ const host=document.getElementById(id),scene=new THREE.Scene();scene.background=new THREE.Color('#252d42');
+ const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(1);
+ renderer.outputColorSpace=THREE.SRGBColorSpace;host.prepend(renderer.domElement);
+ scene.add(new THREE.HemisphereLight(0xe6ebff,0x30364e,2.5));
+ for(const [pos,power] of [[[4,6,7],3],[[-4,3,-5],2]]){const light=new THREE.DirectionalLight(0xffffff,power);light.position.set(...pos);scene.add(light);}
+ const camera=new THREE.PerspectiveCamera(34,1,.01,100);camera.position.set(1.5,1.2,3.7);
+ const orbit=new OrbitControls(camera,renderer.domElement);orbit.enableDamping=true;orbit.target.set(0,.77,0);orbit.update();
+ const v={host,scene,renderer,camera,orbit,actor:null,mixer:null,clips:[],skeletonHelper:null};
+ views.push(v);return v;
+}
+const left=view('original'),right=view('candidate');
+function fit(v){
+ const width=v.host.clientWidth,height=v.host.clientHeight;
+ if(!width||!height)return;
+ v.renderer.setSize(width,height,false);v.camera.aspect=width/height;v.camera.updateProjectionMatrix();
+}
+const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
+const ktx=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/basis/').detectSupport(left.renderer);
+loader.setKTX2Loader(ktx);
+function metric(gltf,which){
+ let meshes=0,parts=0,triangles=0,skinnedParts=0,boneCount=0;
+ const root=gltf.scene;
+ root.traverse(o=>{if(!o.isMesh)return;
+  const name=o.name||'';
+  const native=rigBody(name);
+  const original=which==='original'&&name.startsWith('Armor_paladin_');
+  const imported=which==='candidate'&&name.startsWith('HIGHFLY_AUTO_FIT_');
+  o.visible=native||original||imported;
+  o.frustumCulled=false;
+  if(o.visible){meshes++;triangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;}
+  if(imported){parts++;if(o.isSkinnedMesh&&o.skeleton?.bones?.length===23)skinnedParts++;}
+  if(o.isSkinnedMesh)boneCount=Math.max(boneCount,o.skeleton.bones.length);
+ });
+ return {visibleMeshes:meshes,visibleTriangles:Math.round(triangles),newParts:parts,skinnedNewParts:skinnedParts,rigBones:boneCount,clips:gltf.animations.length,rigProof:which==='candidate'&&parts>=7&&parts===skinnedParts&&gltf.animations.length===22};
+}
+function drawClip(v){
+ if(!v.actor||!v.mixer)return;
+ v.mixer.stopAllAction();
+ const sel=anim.value,clip=v.clips.find(c=>c.name===sel);
+ if(clip){const action=v.mixer.clipAction(clip);action.reset().play();}
+}
+function install(v,gltf,which){
+ if(v.actor){v.scene.remove(v.actor);v.skeletonHelper&&v.scene.remove(v.skeletonHelper);}
+ v.actor=gltf.scene;v.clips=gltf.animations;v.mixer=new THREE.AnimationMixer(v.actor);
+ v.scene.add(v.actor);
+ const m=metric(gltf,which);exposed.metrics[which]=m;
+ v.skeletonHelper=new THREE.SkeletonHelper(v.actor);v.skeletonHelper.visible=document.querySelector('#bones').checked;
+ v.scene.add(v.skeletonHelper);
+ if(which==='original'){
+  anim.innerHTML='<option value="">En reposo</option>'+v.clips.map(c=>'<option value="'+c.name+'">'+c.name+'</option>').join('');
+  exposed.sourceLoaded=true;
+ }else{
+  exposed.candidateLoaded=true;
+  inspector.textContent=JSON.stringify(m,null,2)+'\n\n'+(m.rigProof?'GLB structure and skin references detected. Art/fit still NOT approved.':'UNSKINNED OR INCOMPLETE IMPORT: not a compatible fitted armor.');
+ }
+ drawClip(v);exposed.ready=exposed.sourceLoaded&&exposed.candidateLoaded;
+ status.textContent=JSON.stringify(exposed.metrics,null,2);
+}
+async function loadOriginal(){
+ try{status.textContent='Descargando GLB original auténtico ...';await MeshoptDecoder.ready;
+ const gltf=await loader.loadAsync(rigURL);install(left,gltf,'original');
+ status.textContent='Original cargado · importá ahora el GLB experimental.';
+ }catch(err){exposed.error=String(err);status.textContent='Error original: '+err;console.error(err);}
+}
+loadOriginal();
+let previous;
+document.querySelector('#file').addEventListener('change',async(e)=>{
+ const file=e.target.files?.[0];if(!file)return;
+ if(!/\.glb$/i.test(file.name)){status.textContent='Elegí un archivo GLB';return;}
+ if(previous)URL.revokeObjectURL(previous);
+ previous=URL.createObjectURL(file);
+ try{status.textContent='Validando '+file.name+' ('+(file.size/1e6).toFixed(2)+' MB) ...';
+ const gltf=await loader.loadAsync(previous);install(right,gltf,'candidate');
+ }catch(err){exposed.error=String(err);status.textContent='Error GLB: '+err;console.error(err);}
+});
+anim.addEventListener('change',()=>views.forEach(drawClip));
+document.querySelector('#bones').addEventListener('change',e=>views.forEach(v=>{if(v.skeletonHelper)v.skeletonHelper.visible=e.target.checked;}));
+for(const [id,vec] of [['front',[0,1.3,3.7]],['side',[3.7,1.3,0]],['back',[0,1.3,-3.7]]]){
+ document.getElementById(id).onclick=()=>views.forEach(v=>{v.camera.position.set(...vec);v.orbit.target.set(0,.77,0);v.orbit.update();});
+}
+let last=performance.now();
+function animate(now){
+ requestAnimationFrame(animate);
+ const dt=Math.min((now-last)/1000,.08);last=now;
+ for(const v of views){fit(v);if(document.querySelector('#play').checked)v.mixer?.update(dt);v.orbit.update();v.renderer.render(v.scene,v.camera);}
+}
+requestAnimationFrame(animate);
+</script></body></html>
