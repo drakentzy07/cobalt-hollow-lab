@@ -97,10 +97,14 @@ describe('SF9B: nine full-HP Lv99 native wolf kills with ORIGINAL+HIGHFLY skill 
       const enemyDef=MOBS.hf_hunt_wolf_90;
       expect(enemyDef.boss).not.toBe(true);
       expect(enemyDef.elite).not.toBe(true);
-      // Hunter's new move is a MELEE raptor hit followed by retreat.
-      // Start in melee so its native range gate remains honest.
+      // Hunter opener starts in REAL ranged range (12+ yards), because
+      // Arcane Shot has a native minimum range of 8. Its Raptor is triggered
+      // later only if the live wolf closes into native melee range. No
+      // teleport after aggro; the wolf retains its original chase AI.
+      const hunterOpener=c.cls==='hunter';
       const mob=createMob(sim.nextId++,enemyDef,99,{
-        x:p.pos.x+1,y:p.pos.y,z:p.pos.z+1.2
+        x:p.pos.x+(hunterOpener?12:1),y:p.pos.y,
+        z:p.pos.z+(hunterOpener?1.5:1.2)
       });
       mob.hostile=true;sim.addEntity(mob);
       const originalMobMax=mob.maxHp;
@@ -110,12 +114,16 @@ describe('SF9B: nine full-HP Lv99 native wolf kills with ORIGINAL+HIGHFLY skill 
       p.resource=p.maxResource;
       p.hp=Math.max(1,Math.round(p.maxHp*0.78));
       sim.startAutoAttack(pid);
-      // Give the HIGHFLY skill its own first legal cast window. The original
-      // Sim enforces resource/GCD/range/target, no direct aura/damage writes.
-      if(c.mode==='self')sim.castAbilityOn(c.fusion,pid,pid);
+      // Both source skills and the native HF pilot MUST enter the SAME fight.
+      // Hunter opens with real Arcane Shot at 12 yd, then closes naturally
+      // for HF Raptor melee. Other classes open using their HF fusion.
+      if(hunterOpener)sim.castAbility('arcane_shot',pid);
+      else if(c.mode==='self')sim.castAbilityOn(c.fusion,pid,pid);
       else sim.castAbility(c.fusion,pid);
-      let fusionCast=false,originalDamage=0,anyDamage=0,attemptedNative=0;
-      let hunterRangedAttempts=0,minHunterDistance=Infinity,maxHunterDistance=0;
+      let fusionCast=false,originalDamage=0,anyDamage=0;
+      let attemptedNative=hunterOpener?1:0;
+      let hunterRangedAttempts=hunterOpener?1:0;
+      let minHunterDistance=Infinity,maxHunterDistance=0;
       let potionUses=0,ticks=0,minEnemyHp=mob.hp;
       // Full sixty-second native encounter; SF9A's 32s cutoff prematurely
       // classified a still-living Druid as TIMEOUT despite 77% wolf damage.
@@ -123,16 +131,17 @@ describe('SF9B: nine full-HP Lv99 native wolf kills with ORIGINAL+HIGHFLY skill 
       for(;ticks<maxTicks&&!p.dead&&!mob.dead;ticks++){
         p.facing=Math.atan2(mob.pos.x-p.pos.x,mob.pos.z-p.pos.z);
         const distance=Math.hypot(p.pos.x-mob.pos.x,p.pos.z-mob.pos.z);
-        // Hunter Raptor starts as honest MELEE strike then retreats. Arcane
-        // Shot / Serpent Sting require >=8 yd. Previous SF9A fixture walked
-        // directly back into the mob, preventing all original ranged hits.
-        // SF9B holds 12-23 yd using ORIGINAL directional movement input, not
-        // manually editing positions or weakening the attacking wolf AI.
-        if(c.cls==='hunter'){
+        // Hunter casts the ranged shot at a LEGAL 12+ yard opener, approaches
+        // the real attacking wolf through normal moveInput, then uses its
+        // melee-only HF Raptor, never overriding position / monster speed.
+        if(hunterOpener){
           minHunterDistance=Math.min(minHunterDistance,distance);
           maxHunterDistance=Math.max(maxHunterDistance,distance);
-          meta.moveInput.forward=distance>23&&!p.castingAbility;
-          meta.moveInput.back=distance<12&&!p.castingAbility;
+          if(!p.cooldowns.has(c.fusion)&&distance<=3.0&&!p.castingAbility)
+            sim.castAbility(c.fusion,pid);
+          const retreating=p.cooldowns.has(c.fusion);
+          meta.moveInput.forward=!retreating&&distance>2.4&&!p.castingAbility;
+          meta.moveInput.back=retreating&&distance<12&&!p.castingAbility;
         }else{
           meta.moveInput.forward=distance>4&&!p.castingAbility;
           meta.moveInput.back=false;
