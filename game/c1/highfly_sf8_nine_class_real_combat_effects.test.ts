@@ -59,7 +59,7 @@ function distance(a:{x:number;z:number},b:{x:number;z:number}):number{
   return Math.hypot(a.x-b.x,a.z-b.z);
 }
 function assertBehavior(c:typeof cases[number],sim:Sim,mob:Entity|undefined,initial:{
-  hp:number;maxHp:number;mobHp:number;pos:{x:number;z:number}
+  hp:number;maxHp:number;mobHp:number;minMobHp:number;pos:{x:number;z:number}
 }):void{
   const p=sim.player;
   expect(p.cooldowns.has(c.skill),c.skill+' failed its native cast').toBe(true);
@@ -68,16 +68,16 @@ function assertBehavior(c:typeof cases[number],sim:Sim,mob:Entity|undefined,init
     expect(p.auras.some(a=>a.kind==='buff_maxhp_pct')).toBe(true);
     expect(p.maxHp).toBeGreaterThan(initial.maxHp);
   } else if(c.mode==='seal'){
-    expect(mob?.hp).toBeLessThan(initial.mobHp);
+    expect(initial.minMobHp).toBeLessThan(initial.mobHp);
     expect(p.auras.some(a=>a.id===c.skill&&a.kind==='imbue')).toBe(true);
   } else if(c.mode==='retreat'){
-    expect(mob?.hp).toBeLessThan(initial.mobHp);
+    expect(initial.minMobHp).toBeLessThan(initial.mobHp);
     expect(distance(p.pos,initial.pos)).toBeGreaterThan(1);
   } else if(c.mode==='evasion'){
     expect(p.auras.some(a=>a.kind==='buff_speed')).toBe(true);
     expect(p.auras.some(a=>a.kind==='buff_dodge')).toBe(true);
   } else if(c.mode==='shadow'){
-    expect(mob?.hp).toBeLessThan(initial.mobHp);
+    expect(initial.minMobHp).toBeLessThan(initial.mobHp);
     expect(mob?.auras.some(a=>a.kind==='dot'&&a.sourceId===p.id)).toBe(true);
   } else if(c.mode==='shield'){
     const kinds=p.auras.filter(a=>a.id.startsWith(c.skill)).map(a=>a.kind);
@@ -88,7 +88,7 @@ function assertBehavior(c:typeof cases[number],sim:Sim,mob:Entity|undefined,init
   } else if(c.mode==='blink'){
     expect(distance(p.pos,initial.pos)).toBeGreaterThan(1);
   } else if(c.mode==='curse'){
-    expect(mob?.hp).toBeLessThan(initial.mobHp);
+    expect(initial.minMobHp).toBeLessThan(initial.mobHp);
     expect(mob?.auras.filter(a=>a.id===c.skill&&a.kind==='dot'&&a.sourceId===p.id)).toHaveLength(1);
   } else if(c.mode==='bloom'){
     expect(p.hp).toBeGreaterThan(initial.hp);
@@ -114,13 +114,20 @@ describe('SF8 — 9/9 original classes, 10 HIGHFLY skills, real combat-effect ou
         if(mob)sim.targetEntity(mob.id,hero.id);
         const snapshot={
           hp:hero.hp,maxHp:hero.maxHp,
-          mobHp:mob?.hp??0,pos:{x:hero.pos.x,z:hero.pos.z},
+          mobHp:mob?.hp??0,
+          // Real training dummies can recover to full while out of combat.
+          // Observe genuine HP loss at ANY original Sim tick, not a fake hit.
+          minMobHp:mob?.hp??0,
+          pos:{x:hero.pos.x,z:hero.pos.z},
         };
         // Use the exact action id emitted by the original action-bar controller.
         const selected=bar[2];
         if(!selected||selected.type!=='ability')throw Error('SF8 cannot resolve actionbar skill');
         sim.castAbility(selected.id,hero.id);
-        for(let tick=0;tick<110;tick++)sim.tick();
+        for(let tick=0;tick<110;tick++){
+          sim.tick();
+          if(mob)snapshot.minMobHp=Math.min(snapshot.minMobHp,mob.hp);
+        }
         assertBehavior(c,sim,mob,snapshot);
       },20000);
     }
