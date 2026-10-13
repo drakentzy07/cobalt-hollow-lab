@@ -83,7 +83,7 @@ function metric(gltf,which){
  return {visibleMeshes:meshes,visibleTriangles:Math.round(triangles),newParts:parts,
   skinnedNewParts:skinnedParts,nativeDonors,mode:isBridge?'NATIVE_ARMOR_BRIDGE':'RAW_AUTO_FIT_EXPERIMENTAL',
   rigBones:boneCount,clips:gltf.animations.length,
-  rigProof:which==='candidate'&&parts>=(isBridge?15:7)&&parts===skinnedParts&&gltf.animations.length===22&&(!isBridge||nativeDonors===11)};
+  rigProof:which==='candidate'&&parts>=(isBridge?15:7)&&parts===skinnedParts&&gltf.animations.length===22&&(!isBridge||(nativeDonors>=11&&gltf.userData.nativeBridgeProof.nativePieces===11))};
 }
 function drawClip(v){
  if(!v.actor||!v.mixer)return;
