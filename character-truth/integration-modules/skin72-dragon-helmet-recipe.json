@@ -3,7 +3,7 @@
   "design": "Dragon Helm Compact — Guardian Drake",
   "sourceSlot": "Armor_paladin_Head",
   "rig": "Rig_Medium",
-  "designIntent": "Original compact dragon-head helmet for original modular KayKit/ClaudeCraft Hunter. Sculpt a connected dragon skull shell with short integrated snout, brows, dragon eyes, broad stylized geometric scales and jawline, no long horns nor externally glued on pieces.",
+  "designIntent": "NEW Dragon Helm with continuous polygon shell ENVELOPING native M_Head and F_Head; short dragon snout, angular eyes, scale facets and jaw. The original character head must NEVER protrude through the helmet. No floating attachments.",
   "dimensions": {
     "maxWidthRatio": 1.12,
     "maxHeightRatio": 1.12,
@@ -20,7 +20,7 @@
   "geometry": {
     "radialSegments": 16,
     "profileRings": 11,
-    "frontSnoutExtension": 0.19,
+    "frontSnoutExtension": 0.16,
     "browProjection": 0.07,
     "scaleSurfacePanels": true,
     "faceEyeBand": true,
