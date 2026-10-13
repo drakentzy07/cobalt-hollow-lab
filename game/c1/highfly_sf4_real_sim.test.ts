@@ -18,14 +18,19 @@ beforeAll(() => {
   }
   expect(ABILITIES.hf_priest_s2).toBeDefined();
   expect(ABILITIES.hf_priest_s3).toBeDefined();
+  expect(ABILITIES.hf_warrior_u1).toBeDefined();
+  expect(ABILITIES.hf_rogue_s4).toBeDefined();
+  expect(CLASSES.warrior.abilities).toContain('hf_warrior_u1');
+  expect(CLASSES.rogue.abilities).toContain('hf_rogue_s4');
   expect(CLASSES.priest.abilities).toContain('hf_priest_s2');
   expect(CLASSES.priest.abilities).toContain('hf_priest_s3');
 });
 afterAll(() => {
   for (const id of installedLocally) {
     delete ABILITIES[id];
-    const at = CLASSES.priest.abilities.indexOf(id);
-    if (at >= 0) CLASSES.priest.abilities.splice(at, 1);
+    const classId = id.startsWith('hf_warrior_') ? 'warrior' : id.startsWith('hf_rogue_') ? 'rogue' : 'priest';
+    const at = CLASSES[classId].abilities.indexOf(id);
+    if (at >= 0) CLASSES[classId].abilities.splice(at, 1);
   }
 });
 
@@ -52,6 +57,49 @@ function inertTarget(sim: Sim, id: number, yards: number): Entity {
   (sim as unknown as { addEntity(entity: Entity): void }).addEntity(target);
   return target;
 }
+
+describe('SF4 Warrior and Rogue — original Sim native self/raid effect gates', () => {
+  it('Warrior U1 applies AP raid buff and temporary max HP using its real 180s cooldown', () => {
+    const sim = new Sim({ seed: 43014, playerClass: 'warrior', autoEquip: true });
+    sim.setPlayerLevel(25);
+    sim.tick();
+    const p = sim.player;
+    const maxBefore = p.maxHp;
+    sim.castAbility('hf_warrior_u1', p.id);
+    sim.tick();
+    expect(p.cooldowns.has('hf_warrior_u1')).toBe(true);
+    expect(p.auras.some(a => a.kind === 'buff_ap_pct')).toBe(true);
+    expect(p.auras.some(a => a.kind === 'buff_maxhp_pct')).toBe(true);
+    expect(p.maxHp).toBeGreaterThan(maxBefore);
+  });
+  it('Rogue S4 applies BOTH movement speed and dodge on its true 300s off-GCD', () => {
+    const sim = new Sim({ seed: 43015, playerClass: 'rogue', autoEquip: true });
+    sim.setPlayerLevel(15);
+    sim.tick();
+    const p = sim.player;
+    sim.castAbility('hf_rogue_s4', p.id);
+    sim.tick();
+    expect(p.cooldowns.has('hf_rogue_s4')).toBe(true);
+    expect(p.auras.some(a => a.kind === 'buff_speed')).toBe(true);
+    expect(p.auras.some(a => a.kind === 'buff_dodge')).toBe(true);
+  });
+  it('Warrior U1 and Rogue S4 both reject below-unlock casts', () => {
+    for (const [cl, lv, skill] of [
+      ['warrior',24,'hf_warrior_u1'],
+      ['rogue',14,'hf_rogue_s4'],
+    ] as const) {
+      const sim = new Sim({seed:43016,playerClass:cl,autoEquip:true});
+      sim.setPlayerLevel(lv);
+      sim.tick();
+      const p=sim.player;
+      const before=p.resource;
+      sim.castAbility(skill,p.id);
+      sim.tick();
+      expect(p.resource).toBe(before);
+      expect(p.cooldowns.has(skill)).toBe(false);
+    }
+  });
+});
 
 describe('SF4 two Priest pilots — ORIGINAL Sim effect and cast gates', () => {
   it('LV20 Azote Mental spends resource, enters cooldown, deals damage and applies a DoT', () => {
