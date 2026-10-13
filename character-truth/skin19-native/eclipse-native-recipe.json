@@ -1,0 +1,94 @@
+{
+  "schema": "highfly.skin7.paladin-source-reforge-recipe/2",
+  "id": "eclipse-native-paladin-forge-v1",
+  "title": "HIGHFLY Eclipse — FORJA NATIVA sobre Paladín",
+  "brief": "Recreación sobre los 11 meshes skinned ORIGINALES de Armor_paladin_* en Rig_Medium, reinterpretando sus proporciones y añadiendo geometría hard-surface, metal obsidiana, ribetes plateados y detalles violeta. NO maniquí bodypaint, NO malla tipo minion; evaluación artística pendiente.",
+  "sourceUpstreamCommit": "9b57e49c9676d75962700f828cc00a50a9a988b5",
+  "sourceGlbBlobSha1": "e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2",
+  "sourceRig": "Rig_Medium",
+  "palette": {
+    "enamel": "#232433",
+    "metal": "#9fa9bb",
+    "accent": "#944ae3"
+  },
+  "slots": {
+    "head": {
+      "scale": [
+        1.038,
+        1.042,
+        1.04
+      ],
+      "flare": 0.045,
+      "curvature": 0.1
+    },
+    "chest": {
+      "scale": [
+        1.078,
+        1.075,
+        1.035
+      ],
+      "flare": 0.035,
+      "curvature": 0.09
+    },
+    "arms": {
+      "scale": [
+        1.09,
+        1.075,
+        1.06
+      ],
+      "flare": 0.125,
+      "curvature": 0.15
+    },
+    "hands": {
+      "scale": [
+        1.045,
+        1.045,
+        1.035
+      ],
+      "flare": 0.016,
+      "curvature": 0.05
+    },
+    "legs": {
+      "scale": [
+        1.045,
+        1.05,
+        1.04
+      ],
+      "flare": 0.04,
+      "curvature": 0.06
+    },
+    "feet": {
+      "scale": [
+        1.045,
+        1.048,
+        1.028
+      ],
+      "flare": 0.008,
+      "curvature": 0.03
+    },
+    "back": {
+      "scale": [
+        1.065,
+        1.07,
+        1.04
+      ],
+      "flare": 0.04,
+      "curvature": 0.08
+    }
+  },
+  "artistApproved": false,
+  "automatedForger": "assistant-authored-structured-recipe-followed-by-reproducible-Blender-processing",
+  "gameDeployAllowed": false,
+  "hardSurface": {
+    "style": "sacred-vanguard-hard-surface-v2",
+    "slotIntensity": {
+      "head": 0.65,
+      "chest": 0.72,
+      "arms": 0.67,
+      "hands": 0.42,
+      "legs": 0.48,
+      "feet": 0.42,
+      "back": 0.58
+    }
+  }
+}
