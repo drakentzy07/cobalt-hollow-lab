@@ -1,0 +1,8 @@
+{
+  "schema": "highfly.skin7.text-commission/v1",
+  "base": "Armor_paladin_Head",
+  "description": "Casco paladin oscuro con visor frontal EN V muy marcado, cresta angular de acero, dos protecciones laterales alargadas, cuernos cortos inclinados y detalles dorados. NO agrandar el casco entero.",
+  "palette": {"steel": "#1b263a", "trim": "#d0aa63"},
+  "replacePreviousSwollenPrototype": true,
+  "gameDeployAllowed": false
+}
