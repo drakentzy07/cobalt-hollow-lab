@@ -53,6 +53,21 @@ fs.mkdirSync(dir,{recursive:true});
    assert.equal(p.artFit?.nativePrimitives,17);
    assert.equal(p.artFit?.hiddenSourceUnderPlates,17,'overlapping native layers hidden');
    assert(p.artFit?.compactedHeadPieces>=4,'source-compatible head compacted');
+   assert.equal(p.reference83?.pass,'SKIN8_3_REFERENCE_FUSION','new reference recipe pass '+id);
+   if(id!=='royal'){
+    assert.equal(p.reference83?.enabled,true,'five requested armor replacements '+id);
+    assert.equal(p.reference83?.sourceBones,23);
+    assert.equal(p.reference83?.originalClips,22);
+    assert.equal(p.reference83?.sourcePrimitivesPreserved,17);
+    assert.equal(p.reference83?.assemblies,11,'one skinned fused assembly per source slot '+id);
+    assert.equal(p.reference83?.skinWeightAssemblies,11);
+    assert.equal(p.reference83?.shellCount,17);
+    assert(p.reference83?.geometryPiecesCombined>=50);
+    assert(p.reference83?.oldFloatingDecorationsHidden>=10,'old detached ornaments hidden '+id);
+    assert.equal(p.reference83?.artApproved,false);
+    assert.equal(p.reference83?.faithfulImageReconstruction,false);
+   }else assert.equal(p.reference83?.enabled,false,'royal remains legacy comparator');
+
    if(id==='dragon')assert(p.newStyleMeshes>=15);
    if(id==='celestial')assert(p.distinctDesignGeometry.shoulder>=8);
    if(id==='berserker')assert(p.distinctDesignGeometry.shoulder>=10);
@@ -101,6 +116,7 @@ fs.mkdirSync(dir,{recursive:true});
   mobile,artApproved:false,femaleFitApproved:false,collisionApproved:false,physicalAndroidApproved:false};
  fs.writeFileSync(dir+'/repertoire-qa.json',JSON.stringify(qa,null,2));
  console.log('HIGHFLY_REPERTOIRE_SIX_VARIANTS_CHROME_GREEN=1');
+ console.log('HIGHFLY_SKIN83_FIVE_REFERENCES_FUSED_ASSEMBLIES_VALIDATED=1');
  console.log('HIGHFLY_REPERTOIRE_S23_SIMULATED_VIEWPORT_GREEN=1');
  console.log('HIGHFLY_REPERTOIRE_PHYSICAL_ANDROID_AND_ART_UNAPPROVED=1');
  }finally{await browser.close();}
