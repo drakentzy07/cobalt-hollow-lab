@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HIGHFLY SKIN 7.1.1 · Original vs geometría HIGHFLY</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#131724;color:#e9ebfa;font:16px system-ui}
+header{padding:20px 24px;background:#20283b;border-bottom:1px solid #53617d}
+h1{font-size:26px;margin:0}p{color:#bfc9df;margin:6px 0}
+main{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
+article{border:1px solid #586278;border-radius:12px;background:#242c3d;overflow:hidden}
+h2{font-size:20px;text-align:center;margin:0;padding:12px}
+.viewport{height:660px}canvas{width:100%;height:100%;display:block}
+footer{padding:14px 24px;font-size:13px;color:#bfc9df}
+@media(max-width:700px){main{grid-template-columns:1fr}.viewport{height:440px}}
+</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script></head>
+<body><header><h1>HIGHFLY SKIN 7.1.1 · CASCO PALADIN</h1><p>Misma geometría nativa de origen · Mismo casco nativo, silueta reformada sin accesorios · Rig_Medium intacto · Sin Bodypaint</p></header>
+<main><article><h2>CLAUDECRAFT · ORIGINAL</h2><div id="left" class="viewport"></div></article>
+<article><h2>HIGHFLY · INTEGRACIÓN NATIVA SIN AGREGADOS</h2><div id="right" class="viewport"></div></article></main>
+<footer id="status">Cargando modelos originales y variante desde archivos GLB...</footer>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
+import {MeshoptDecoder} from '/node_modules/meshoptimizer/meshopt_decoder.module.js';
+const result={ready:false,error:null,items:[]};window.__HF_SKIN7_COMPARE__=result;
+const modelRoot='/public/models/chars/modular/warrior_modular.glb';
+const variantRoot='/character-truth/skin71-evidence/HIGHFLY-SKIN71-PALADIN-INTEGRATED-NATIVE.glb';
+const baseNames=new Set(['Head','Torso','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR','Loin','Top','Eye_almond','Brow_soft','Ear_round','Mouth_neutral']);
+async function display(hostId,url,helmetName){
+ const host=document.getElementById(hostId);
+ const scene=new THREE.Scene();scene.background=new THREE.Color('#293048');
+ const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+ renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer.setSize(Math.max(320,host.clientWidth),Math.max(350,host.clientHeight),false);
+ host.appendChild(renderer.domElement);
+ scene.add(new THREE.HemisphereLight(0xffffff,0x555b88,3));
+ for(const v of [[4,6,5],[-4,3,-5]]){const l=new THREE.DirectionalLight(0xffffff,2.3);l.position.set(...v);scene.add(l);}
+ const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+ const ktx=new KTX2Loader().setTranscoderPath('/node_modules/three/examples/jsm/libs/basis/').detectSupport(renderer);
+ loader.setKTX2Loader(ktx);
+ const gltf=await loader.loadAsync(url);const actor=gltf.scene;scene.add(actor);
+ let bodies=0,helmets=0;let helmetObj=null;
+ actor.traverse(o=>{if(!o.isMesh)return;
+  const n=o.name||'';
+  const body=n.startsWith('M_')&&baseNames.has(n.slice(2).replace(/_[0-9]+$/,''));
+  const helm=n.startsWith(helmetName);
+  o.visible=body||helm;o.frustumCulled=false;
+  if(body)bodies++;
+  if(helm){helmets++;helmetObj=o;}
+ });
+ if(!bodies||helmets<1)throw Error(hostId+' INVALID_NATIVE_COMPOSITION bodies='+bodies+' helmets='+helmets);
+ const bones=[];actor.traverse(o=>{if(o.isBone)bones.push(o)});
+ const head=bones.find(b=>b.name.toLowerCase().replace(/[^a-z0-9]/g,'')==='head');
+ const foot=bones.find(b=>b.name.toLowerCase().replace(/[^a-z0-9]/g,'')==='footl');
+ if(!head||!foot)throw Error('Rig_Medium head/foot bone missing');
+ actor.updateMatrixWorld(true);
+ const hp=head.getWorldPosition(new THREE.Vector3());
+ const height=Math.max(.8,hp.distanceTo(foot.getWorldPosition(new THREE.Vector3()))*1.5);
+ const camera=new THREE.PerspectiveCamera(37,host.clientWidth/host.clientHeight,.03,100);
+ const look=hp.clone().add(new THREE.Vector3(0,-height*.16,0));
+ camera.position.copy(look).add(new THREE.Vector3(height*.20,height*.08,height*1.05));
+ camera.lookAt(look);renderer.render(scene,camera);
+ const box=new THREE.Box3().setFromObject(helmetObj);
+ const info={host:hostId,helmetName,bodies,helmets,skinned:helmetObj.isSkinnedMesh,skinJoints:helmetObj.isSkinnedMesh?helmetObj.skeleton.bones.length:0,clips:gltf.animations.length,triangles:renderer.info.render.triangles,finiteBounds:box.min.toArray().concat(box.max.toArray()).every(Number.isFinite)};
+ result.items.push(info);
+ return info;
+}
+(async()=>{try{
+ await MeshoptDecoder.ready;
+ await display('left',modelRoot,'Armor_paladin_Head');
+ await display('right',variantRoot,'HIGHFLY_SKIN71_PALADIN_INTEGRATED_HEAD');
+ if(!result.items.every(x=>x.skinned&&x.skinJoints>0&&x.finiteBounds&&x.clips>0))throw Error('VISUAL_RIG_OR_BOUNDS_FAIL');
+ result.ready=true;document.getElementById('status').textContent='Ambos cascos nativos cargados · Captura diagnóstica (no certifica clipping ni Android físico)';
+}catch(e){result.error=String(e.stack||e);document.getElementById('status').textContent=result.error;console.error(e);}})();
+</script></body></html>
