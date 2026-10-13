@@ -105,6 +105,7 @@ replace_one(
       hud.highflyManualAimCastSlot(spec.slot);
     },
     cancel: () => { hud.cancelGroundAim(); },
+    isGroundAimActive: () => hud.isGroundAimActive(),
   });
   const syncOverlayDiagnostics = () => {"""
 )
