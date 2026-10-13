@@ -78,6 +78,15 @@ fs.mkdirSync(dir,{recursive:true});
     assert.equal(p.surfaceConform85?.originalBones,23);
     assert.equal(p.surfaceConform85?.clips,22);
     assert.equal(p.surfaceConform85?.newNativePieces,17);
+    assert.equal(p.silhouette86?.pass,'SKIN8_6_SCULPT');
+    assert.equal(p.silhouette86?.enabled,true);
+    assert.equal(p.silhouette86?.boneCount,23);
+    assert.equal(p.silhouette86?.clipCount,22);
+    assert(p.silhouette86?.nativeSurfaceAnchors>=13,'new 3D forms must attach to original source surface');
+    assert(p.silhouette86?.newRiggedSculptMeshes>=3,'3D horns, pauldrons, emblems must be new skinned meshes');
+    assert.equal(p.silhouette86?.nonSurfaceBases,0,'no ungrounded accessory meshes');
+    assert.equal(p.silhouette86?.detachedAdditionalCapeMeshes,0,'NO floating cape');
+    assert.equal(p.silhouette86?.unexpectedVisibleMeshes,0,'no old overlay reappears');
     assert.equal(p.surfaceConform85?.visibleNativePieces,17);
     assert.equal(p.surfaceConform85?.visibleOriginalArmor,0);
     assert.equal(p.surfaceConform85?.visiblePriorFlatPanels,0,'front cuboid and old cape must be HIDDEN');
@@ -92,7 +101,7 @@ fs.mkdirSync(dir,{recursive:true});
     assert(p.reference83?.oldFloatingDecorationsHidden>=10,'old detached ornaments hidden '+id);
     assert.equal(p.reference83?.artApproved,false);
     assert.equal(p.reference83?.faithfulImageReconstruction,false);
-   }else {assert.equal(p.reference83?.enabled,false,'royal remains legacy comparator');assert.equal(p.nativeReforge841?.enabled,false);assert.equal(p.surfaceConform85?.enabled,false);}
+   }else {assert.equal(p.reference83?.enabled,false,'royal remains legacy comparator');assert.equal(p.nativeReforge841?.enabled,false);assert.equal(p.surfaceConform85?.enabled,false);assert.equal(p.silhouette86?.enabled,false);}
 
    if(id==='dragon')assert(p.newStyleMeshes>=15);
    if(id==='celestial')assert(p.distinctDesignGeometry.shoulder>=8);
@@ -120,6 +129,8 @@ fs.mkdirSync(dir,{recursive:true});
   }
   assert.equal(new Set(variants.map(id=>proofs[id].signature)).size,6,'every family must have different authored style DNA');
   assert(new Set(variants.map(id=>screenshots[id][0])).size>=5,'front captures must not repeat a single design');
+  assert.equal(new Set(['violet','dragon','celestial','berserker','arcane'].map(id=>proofs[id].silhouette86?.signature)).size,5,'five families MUST have five distinct 3D silhouette recipes');
+  assert.equal(new Set(['violet','dragon','celestial','berserker','arcane'].map(id=>proofs[id].silhouette86?.anchoredDetails)).size,5,'five families MUST have distinct quantities of attached sculpture');
   fs.writeFileSync(dir+'/all-families-proof.json',JSON.stringify({proofs,screenshots},null,2));
   await page.close();
  const mobilePage=await browser.newPage({viewport:{width:915,height:412},deviceScaleFactor:1});
@@ -142,7 +153,7 @@ fs.mkdirSync(dir,{recursive:true});
   mobile,artApproved:false,femaleFitApproved:false,collisionApproved:false,physicalAndroidApproved:false};
  fs.writeFileSync(dir+'/repertoire-qa.json',JSON.stringify(qa,null,2));
  console.log('HIGHFLY_REPERTOIRE_SIX_VARIANTS_CHROME_GREEN=1');
- console.log('HIGHFLY_SKIN85_TRUE_NATIVE_SURFACE_CONFORM_AND_BACK_CAPE_ANCHOR_GREEN=1');
+ console.log('HIGHFLY_SKIN86_FIVE_DIFFERENT_3D_SILHOUETTES_RIGGED_AND_SURFACE_ANCHORED_GREEN=1');
  console.log('HIGHFLY_REPERTOIRE_S23_SIMULATED_VIEWPORT_GREEN=1');
  console.log('HIGHFLY_REPERTOIRE_PHYSICAL_ANDROID_AND_ART_UNAPPROVED=1');
  }finally{await browser.close();}
