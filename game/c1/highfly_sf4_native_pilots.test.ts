@@ -82,6 +82,9 @@ describe('SF4 fail-closed 9/9 fusion integration — no release or save mutation
     const {abilities,classes}=copies();installSf4NativePilots(abilities,classes);
     const p=abilities.hf_paladin_s1,h=abilities.hf_hunter_s5,w=abilities.hf_warlock_s2;
     expect(p.learnLevel).toBe(1);
+    expect(p.hiddenFromPlayer).toBeUndefined();
+    expect(p.passive).toBeUndefined();
+    expect(abilities.crusader_strike.hiddenFromPlayer).toBe(ABILITIES.crusader_strike.hiddenFromPlayer);
     expect(p.effects.map(e=>e.type)).toEqual(['weaponStrike','imbue']);
     expect(p.effects[0]).toMatchObject({type:'weaponStrike',bonus:6});
     expect(p.ranks?.find(x=>x.level===20)?.effects[0]).toMatchObject({type:'weaponStrike',bonus:24});
