@@ -22,8 +22,24 @@ describe('HIGHFLY SF4 native donor compatibility — ALL 9 classes / ALL 63', ()
     expect(byId.get('hf_hunter_s3')?.blockers).toContain('TARGET_CONTRACT_CONFLICT');
     expect(byId.get('hf_druid_u1')?.blockers).toContain('AUTHORED_RECIPE_DESIGN_MISMATCH');
     expect(byId.get('hf_shaman_s4')?.blockers).toContain('PROCEDURAL_NO_EFFECT_ARRAY');
-    expect(byId.get('hf_priest_s4')?.blockers).toContain('DONOR_LEVEL_AHEAD_OF_UNLOCK');
+    expect(byId.get('hf_priest_s4')?.sourceNotes).toContain('DONOR_LEVEL_AHEAD_OF_UNLOCK');
+    expect(byId.get('hf_priest_s4')?.blockers).not.toContain('DONOR_LEVEL_AHEAD_OF_UNLOCK');
     expect(byId.get('hf_rogue_s2')?.blockers).toContain('ACTION_REPLACEMENT_HANDLER');
+  });
+  it('HIGHFLY-first: original LV20/LV50 donor levels, specs and visibility are NEVER unlock blockers',()=>{
+    for(const entry of report){
+      expect(entry.blockers).not.toContain('DONOR_LEVEL_AHEAD_OF_UNLOCK');
+      expect(entry.blockers).not.toContain('PASSIVE_OR_HIDDEN_DONOR');
+      expect(entry.blockers).not.toContain('SPEC_DEPENDENT_DONOR');
+    }
+    const byId=new Map(report.map(x=>[x.id,x]));
+    for(const id of ['hf_paladin_s1','hf_priest_s4','hf_hunter_s2','hf_warlock_s1','hf_druid_s2']){
+      expect(byId.get(id)?.sourceNotes,id).toContain('DONOR_LEVEL_AHEAD_OF_UNLOCK');
+    }
+    // Notes permit SOURCE reuse, not instant gameplay. 53 recipes still require
+    // a mechanical adapter and their authored HIGHFLY unlock level.
+    expect(report.filter(x=>x.status==='native-pilot')).toHaveLength(10);
+    expect(report.filter(x=>x.status!=='native-pilot')).toHaveLength(53);
   });
   it('does not claim the other 53 are playable from the existence of IDs',()=>{
     expect(report.filter(x=>x.status==='native-pilot')).toHaveLength(10);
