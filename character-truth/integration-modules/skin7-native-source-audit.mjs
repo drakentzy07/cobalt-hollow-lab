@@ -28,6 +28,9 @@ const paladinHeadCandidates=all.filter(n=>/^Armor_paladin_/i.test(n)&&/head|helm
 console.log('SKIN7_PALADIN_HEAD_CANDIDATES='+JSON.stringify([...new Set(paladinHeadCandidates)].sort()));
 console.log('SKIN7_PALADIN_PARTS='+JSON.stringify([...new Set(paladin)].sort()));
 console.log('SKIN7_KNIGHT_PARTS='+JSON.stringify([...new Set(knight)].sort()));
+console.log('SKIN7_HELMET_LAYOUT='+JSON.stringify(document.nodes.map((n,i)=>({i,name:n.name,mesh:n.mesh,skin:n.skin,scale:n.scale,translation:n.translation,rotation:n.rotation,children:n.children})).filter(n=>/^Armor_paladin_Head/.test(n.name||''))));
+console.log('SKIN7_HELMET_MESH_LAYOUT='+JSON.stringify(document.meshes.map((m,i)=>({i,name:m.name,primitives:m.primitives?.map(p=>({material:p.material,attributes:p.attributes,mode:p.mode}))})).filter(m=>/^Armor_paladin_Head/.test(m.name||''))));
+
 const result={stage:'SKIN7_NATIVE_SOURCE_AUDIT_ONLY',file,byteLength:bytes.length,skins:document.skins.length,animations:document.animations.length,knightPieceNames:[...new Set(knight)].sort(),paladinPieceNames:[...new Set(paladin)].sort(),nativeSlots:[...new Set(slots)].sort(),rigMediumNames:rigs.length,bodypaintAccepted:false,minionAccepted:false,geometryGenerated:false,publicGameChanged:false};
 fs.mkdirSync('character-truth/skin7-evidence',{recursive:true});
 fs.writeFileSync('character-truth/skin7-evidence/native-armor-audit.json',JSON.stringify(result,null,2));
