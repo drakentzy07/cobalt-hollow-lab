@@ -170,7 +170,7 @@ describe('SF11 all 63 designs inspected against exact original donor engine — 
    'Próximo trabajo: adaptadores de las 50, kits fusionados contra Capitán LV99, VFX/audio con capturas y QA en S23 Ultra.',
   ];
   writeFileSync(join(out,'inspeccion-63-para-anotar.md'),md.join('\n'));
-  const cards=rows.map(r=>`<details class="item ${r.state==='NATIVA_EN_SIM'?'native':'design'}" data-cls="${escapeHtml(r.cls)}" data-state="${escapeHtml(r.state)}"><summary>
+  const cards=rows.map(r=>({cls:r.cls,html:`<details class="item ${r.state==='NATIVA_EN_SIM'?'native':'design'}" data-cls="${escapeHtml(r.cls)}" data-state="${escapeHtml(r.state)}"><summary>
     <span class="slot">S${r.slot}</span><span class="title">${escapeHtml(r.name)}</span><small>LV ${r.unlock}</small>
     <span class="status">${r.state==='NATIVA_EN_SIM'?'MECÁNICA EN SIM':'SOLO DISEÑO'}</span></summary>
     <div class="info"><p><b>Donantes originales:</b> ${r.donors.map(d=>escapeHtml(d.id)).join(' + ')}</p>
@@ -179,7 +179,7 @@ describe('SF11 all 63 designs inspected against exact original donor engine — 
     <p><b>Restricciones / adaptadores:</b> ${escapeHtml(r.knownSourceRisks.join(' · ')||'Auditoría de integración aún necesaria')}</p>
     ${r.donors.map(d=>`<p><small>${escapeHtml(d.id)} · ${escapeHtml(d.school)} · ${escapeHtml(d.effects.join('/'))} · ${escapeHtml(d.target)} · ${d.range} yd · cues originales: ${escapeHtml(d.visualCues.join(', ')||'sin metadata')}</small></p>`).join('')}
     <p><b>VFX / sonido definitivo:</b> PENDIENTE &nbsp; · &nbsp; <b>Samsung S23 Ultra:</b> PENDIENTE</p></div>
-    </details>`).join('\n');
+    </details>`}));
   const html=`<!doctype html><html lang="es"><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>HIGHFLY 63 — QA interno</title>
 <style>:root{color-scheme:dark}body{margin:0;background:#101522;color:#e7ecf8;font:15px/1.5 system-ui,Arial}.wrap{max-width:1120px;margin:auto;padding:30px 18px}header{padding:22px;border:1px solid #34435d;background:#182238;border-radius:14px}h1{margin:0 0 6px;font-size:28px}h2{margin:24px 0 8px;color:#dde8ff}.risk{background:#352c25;border-left:4px solid #f6c469;padding:12px;margin:18px 0}.metrics{display:flex;gap:12px;flex-wrap:wrap}.metric{padding:13px;background:#202b43;border-radius:10px;min-width:126px}.metric b{font-size:25px;display:block}.filter{padding:12px;background:#202b43;color:#fff;border-radius:8px;border:1px solid #60728a;margin:7px}.item{margin:8px 0;background:#182136;border:1px solid #34425b;border-radius:9px}.item.native{border-left:4px solid #60c895}.item.design{border-left:4px solid #b1a66d}.item summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;padding:12px 15px}.slot{background:#2d3b57;padding:3px 7px;border-radius:5px}.title{font-weight:650;flex:1}.status{font-size:11px;letter-spacing:.02em;font-weight:700;color:#a8e6cd}.design .status{color:#e6d49f}.info{padding:4px 17px 16px;border-top:1px solid #34425b}.info p{margin:10px 0}small{color:#a7b7d2}footer{margin-top:30px;color:#a7b7d2}</style>
 <div class="wrap"><header><h1>HIGHFLY · Laboratorio interno de las 63 skills</h1><div>63 recetas auditadas · nueve clases originales · sin despliegue público</div>
@@ -187,7 +187,7 @@ describe('SF11 all 63 designs inspected against exact original donor engine — 
 <div class="risk"><b>Esto es un inspector de diagnóstico, NO 63 habilidades jugables.</b> Las fichas sin implementación muestran las capacidades disponibles en los donantes. No simulan efectos HIGHFLY inexistentes.</div>
 <label>Filtrar clase <select id="cls" class="filter"><option value="">Todas</option>${Object.entries(LANG).map(([k,v])=>`<option value="${k}">${escapeHtml(v)}</option>`).join('')}</select></label>
 <label>Estado <select id="state" class="filter"><option value="">Todos</option><option value="NATIVA_EN_SIM">Nativas</option><option value="SOLO_DISENO">Por implementar</option></select></label></header>
-${Object.entries(LANG).map(([cl,label])=>`<section data-class-section="${cl}"><h2>${escapeHtml(label)}</h2>${rows.filter(r=>r.cls===cl).map(r=>cards.split('\n').find(x=>x.includes('data-cls="'+cl+'"')&&x.includes('>'+escapeHtml(r.name)+'</span>'))||'').join('\n')}</section>`).join('\n')}
+${Object.entries(LANG).map(([cl,label])=>`<section data-class-section="${cl}"><h2>${escapeHtml(label)}</h2>${cards.filter(r=>r.cls===cl).map(r=>r.html).join('\n')}</section>`).join('\n')}
 <footer>HIGHFLY SF11 • original ClaudeCraft v0.44.0 • contrato de diseño, no licencia visual ni QA físico. 27 pasivas diseñadas fuera de las 63 activas.</footer></div>
 <script>const sel=document.getElementById('cls'),status=document.getElementById('state');function filter(){document.querySelectorAll('.item').forEach(e=>{e.hidden=!!((sel.value&&e.dataset.cls!==sel.value)||(status.value&&e.dataset.state!==status.value))});document.querySelectorAll('[data-class-section]').forEach(s=>{s.hidden=!Array.from(s.querySelectorAll('.item')).some(x=>!x.hidden)})}sel.addEventListener('change',filter);status.addEventListener('change',filter);</script></html>`;
   writeFileSync(join(out,'inspector-63-interno.html'),html);
