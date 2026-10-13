@@ -28,6 +28,7 @@ on:
       - "game/c1/highfly_sf7_spellbook_actionbar_runtime.test.ts"
       - "game/c1/highfly_sf8_nine_class_real_combat_effects.test.ts"
       - "game/c1/highfly_sf9_mixed_native_combat_rotations.test.ts"
+      - "game/c1/highfly_sf9b_hunter_druid_9class_native_rotation.test.ts"
   workflow_dispatch:
 permissions:
   contents: read
@@ -77,6 +78,7 @@ jobs:
             /game/c1/highfly_sf7_spellbook_actionbar_runtime.test.ts
             /game/c1/highfly_sf8_nine_class_real_combat_effects.test.ts
             /game/c1/highfly_sf9_mixed_native_combat_rotations.test.ts
+            /game/c1/highfly_sf9b_hunter_druid_9class_native_rotation.test.ts
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
@@ -634,7 +636,7 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_sf3_fusion_9_classes.test.ts
           echo 'HIGHFLY_SF3_NINE_CLASSES_63_FUSION_DESIGN_NATIVE_GATE_GREEN=1'
-      - name: V10 SF9A nine-class LV99 mixed native HF+Claude skill rotation + SF8 effect gates (NO DEPLOY)
+      - name: V10 SF9B nine real LV99 native wolf kills + Hunter ranged rotation + SF8/SF9A gates (NO DEPLOY)
         if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
         working-directory: upstream
         shell: bash
@@ -644,8 +646,8 @@ jobs:
           cp ../v9-corrections/game/c1/highfly_sf4_native_pilots.test.ts tests/highfly_sf4_native_pilots.test.ts
           cp ../v9-corrections/game/c1/highfly_sf4_diagnostics.test.ts tests/highfly_sf4_diagnostics.test.ts
           git diff --check HEAD
-          pnpm exec vitest run tests/highfly_sf4_native_pilots.test.ts tests/highfly_sf4_diagnostics.test.ts tests/highfly_sf4_real_sim.test.ts tests/highfly_sf5_unlock_stages.test.ts tests/highfly_sf7_spellbook_actionbar_runtime.test.ts tests/highfly_sf8_nine_class_real_combat_effects.test.ts tests/highfly_sf9_mixed_native_combat_rotations.test.ts
-          echo 'HF_V10_SF9A_NINE_CLASSES_NATIVE_FUSED_PLUS_ORIGINAL_ROTATION_GATE_GREEN=1'
+          pnpm exec vitest run tests/highfly_sf4_native_pilots.test.ts tests/highfly_sf4_diagnostics.test.ts tests/highfly_sf4_real_sim.test.ts tests/highfly_sf5_unlock_stages.test.ts tests/highfly_sf7_spellbook_actionbar_runtime.test.ts tests/highfly_sf8_nine_class_real_combat_effects.test.ts tests/highfly_sf9_mixed_native_combat_rotations.test.ts tests/highfly_sf9b_hunter_druid_9class_native_rotation.test.ts
+          echo 'HF_V10_SF9B_NINE_NATIVE_LV99_WOLF_WINS_AND_ORIGINAL_CLASS_CASTS_GATE_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
