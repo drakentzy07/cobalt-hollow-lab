@@ -7,6 +7,8 @@ on:
       - 'character-truth/integration-modules/skin7-native-source-audit.mjs'
       - 'character-truth/integration-modules/skin7-native-paladin-helmet-forge.mjs'
       - 'character-truth/integration-modules/skin7-paladin-helmet-recipe.json'
+      - 'character-truth/integration-modules/skin7-visual-gate.cjs'
+      - 'character-truth/skin7-helmet-compare.html'
       - '.github/workflows/skin7-native-knight-paladin-audit.yml'
   workflow_dispatch:
 permissions:
@@ -51,6 +53,17 @@ jobs:
           node character-truth/integration-modules/skin7-native-paladin-helmet-forge.mjs
           test -s character-truth/skin7-evidence/HIGHFLY-SKIN7-PALADIN-HELMET-NATIVE-VARIANT.glb
           node --input-type=module -e "import fs from 'node:fs'; import assert from 'node:assert/strict';const r=JSON.parse(fs.readFileSync('character-truth/skin7-evidence/helmet-forge-report.json')); assert(r.sourceFileUnchanged&&r.skeletonAndAnimationsUnchanged&&r.vertexGeometryReallyModified&&r.totalVerticesChanged>0); console.log('SKIN7_NATIVE_REAL_GEOMETRY_AND_ORIGINAL_PRESERVATION_GREEN=1')"
+      - name: Render true original versus HIGHFLY helmet with real WebGL and screenshot
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false three@0.180.0 playwright@1.55.0 meshoptimizer@0.23.0
+          npx playwright install --with-deps chromium
+          python3 -m http.server 4257 --bind 127.0.0.1 > /tmp/skin7-native-preview.log 2>&1 &
+          sleep 2
+          node character-truth/integration-modules/skin7-visual-gate.cjs
+          test -s character-truth/skin7-evidence/skin7-before-after.png
+          test -s character-truth/skin7-evidence/skin7-browser-proof.json
       - name: Store truthful native armor inventory (no build, no deploy)
         if: always()
         uses: actions/upload-artifact@v4
