@@ -53,7 +53,12 @@ function effect(s:HighflyFusionSpec,a:AbilityDef,b:AbilityDef,lv:number):Ability
    y.length!==1||y[0].type!=='selfBuff'||y[0].kind!=='buff_dr'||
    x[0].spell!==true||x[0].exhaust!==true||x[0].groupOnly!==true)
    throw Error('SF17 raid-haste/exhaust source changed');
-  return [x[0],{...y[0],duration:Math.min(15,y[0].duration)}];
+  // The original full-haste group aura uses ability.id as its native aura ID.
+  // Without an explicit companion auraId the selfBuff uses the SAME ID,
+  // replacing attack+spell haste through the original (id,sourceId) dedupe.
+  // Preserve both original effects by using ClaudeCraft's built-in auraId seam.
+  return [x[0],{...y[0],auraId:s.id+'_buff_dr',
+    duration:Math.min(15,y[0].duration)}];
  }
  throw Error('SF17 unknown skill '+s.id);
 }

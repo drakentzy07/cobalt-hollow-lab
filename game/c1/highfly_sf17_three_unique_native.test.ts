@@ -49,6 +49,11 @@ describe('SF17 three truly NEW native fusions, level 1-99',()=>{
    .toEqual(['groundAoE','aoeDamage','aoeSlow']);
   expect(ABILITIES.hf_shaman_u2.effects.map(e=>e.type))
    .toEqual(['aoeAllyHaste','selfBuff']);
+  // Full haste is keyed to the ability, whereas protection MUST be distinct.
+  const trance=ABILITIES.hf_shaman_u2.effects[1];
+  expect(trance.type).toBe('selfBuff');
+  if(trance.type==='selfBuff')
+   expect(trance.auraId).toBe('hf_shaman_u2_buff_dr');
  });
  for(const c of [
   {id:'hf_hunter_s1',cls:'hunter',lv:1},
@@ -80,7 +85,7 @@ describe('SF17 three truly NEW native fusions, level 1-99',()=>{
     }
     if(p.auras.some(a=>a.kind==='buff_haste'))haste=true;
     if(p.auras.some(a=>a.kind==='buff_spellhaste'))spellHaste=true;
-    if(p.auras.some(a=>a.kind==='buff_dr'))dr=true;
+    if(p.auras.some(a=>a.kind==='buff_dr'&&a.id===c.id+'_buff_dr'))dr=true;
     if(p.auras.some(a=>a.kind==='sated'))sated=true;
     if(m.auras.some(a=>a.kind==='slow'))slow=true;
    }
