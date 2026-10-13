@@ -81,6 +81,19 @@ if not sf11_source.is_file() or sf11_dest.exists():
     raise SystemExit("SF11_INTERNAL_63_AUDIT_TEST_MISSING_OR_DUPLICATED")
 shutil.copyfile(sf11_source,sf11_dest)
 
+# SF12: additional hand-audited native Warrior, Paladin and Mage mechanics.
+# Stage code and tests; opt-in second flag keeps public Pages unaffected.
+sf12_pairs=[
+ ("highfly_sf12_three_native_mechanics.ts","src/highfly/sf12_three_native_mechanics.ts"),
+ ("highfly_sf12_three_native_mechanics.test.ts","tests/highfly_sf12_three_native_mechanics.test.ts"),
+]
+for name,dest in sf12_pairs:
+    src=Path("../v9-corrections/game/c1") / name
+    target=Path(dest)
+    if not src.is_file() or target.exists():
+        raise SystemExit("SF12_SOURCE_MISSING_OR_DUPLICATE:"+name)
+    shutil.copyfile(src,target)
+
 # Stage the complete read-only 9×7 donor unlock planner and its unit contract.
 stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
 stages_dest = Path("src/highfly/highfly_sf5_unlock_stages.ts")
@@ -97,7 +110,8 @@ p=Path("src/sim/content/classes.ts")
 s=p.read_text(encoding="utf-8")
 old_import="import { installHighflySF3Fusions } from '../../highfly/sf3_fusion_runtime';\n"
 new_import=("import { installSf4NativePilots } from '../../highfly/sf4_safe_fusions';\n"
-            "import { installSf10NativeExpansion } from '../../highfly/sf10_three_native_reuses';\n")
+            "import { installSf10NativeExpansion } from '../../highfly/sf10_three_native_reuses';\n"
+            "import { installSf12NativeExpansion } from '../../highfly/sf12_three_native_mechanics';\n")
 old_cond="""if (import.meta.env?.VITE_HIGHFLY_SF3 === '1') {
   installHighflySF3Fusions(ABILITIES, CLASSES);
 }"""
@@ -107,6 +121,9 @@ if (import.meta.env?.VITE_HIGHFLY_SF4 === '1') {
   // SF10 only in candidate builds: three more audited native reuses.
   if (import.meta.env?.VITE_HIGHFLY_SF10 === '1') {
     installSf10NativeExpansion(ABILITIES, CLASSES);
+  }
+  if (import.meta.env?.VITE_HIGHFLY_SF12 === '1') {
+    installSf12NativeExpansion(ABILITIES, CLASSES);
   }
 }"""
 for before,after in [(old_import,new_import),(old_cond,new_cond)]:
