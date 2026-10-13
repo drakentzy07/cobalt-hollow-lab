@@ -31,7 +31,7 @@ try{
  await page.locator('#nativeArmor').selectOption('paladin');
  assert.equal(await page.evaluate(()=>window.HIGHFLY_SKIN19.originalArmorMeshes),17);
  assert(original.nativeSourcePaladinReused===true && original.legacyExperimentsAvailable===false,'WRONG_REFORGE_SOURCE');
- console.log('SKIN19_GLTF_DEBUG',JSON.stringify({newSlots:original.newArmorSlots,newMeshes:original.newArmorPrimitives,status:await page.locator('#status').innerText(),errors}));
+ console.log('SKIN19_GLTF_DEBUG',JSON.stringify({newSlots:original.newArmorSlots,newMeshes:original.newArmorPrimitives,loaderError:await page.evaluate(()=>window.HIGHFLY_SKIN19_LOAD_ERROR),status:await page.locator('#status').innerText(),errors}));
  assert(original.newArmorSlots===11,'ECLIPSE_NATIVE_PALADIN_REFORGE_NOT_ATTACHED');
  assert.equal(await page.locator('#eclipse').count(),1);
  assert.equal(await page.locator('#experiment').count(),0);
