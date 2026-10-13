@@ -108,11 +108,24 @@ function addNewArmor(gltf,nativeBones){
  const byName=new Map(nativeBones.map(b=>[b.name,b]));
  const extras=[];const unique=new Set();
  gltf.scene.updateMatrixWorld(true);state.root.updateMatrixWorld(true);
+ // Blender glTF export keeps object nodes as HF19_PALADIN_* but can
+ // name child skinned material primitives after ORIGINAL mesh datablocks,
+ // e.g. Armor_paladin_Head002_1. Both refer to the SAME source-derived suit.
+ function slotFromSkinnedNode(o){
+  for(let p=o;p;p=p.parent){
+   const name=p.name||'';
+   const authored=name.match(/^HF19_PALADIN_(HEAD|CHEST|ARML|ARMR|HANDL|HANDR|LEGL|LEGR|FOOTL|FOOTR|BACK)(?:_|$)/);
+   if(authored)return authored[1];
+   const native=name.match(/^Armor_paladin_(Head|Chest|ArmL|ArmR|HandL|HandR|LegL|LegR|FootL|FootR|Back)00[0-9](?:_|$)/);
+   if(native)return native[1].toUpperCase();
+  }
+  return null;
+ }
  gltf.scene.traverse(o=>{
-  if(!o.isSkinnedMesh||!/^HF19_PALADIN_(HEAD|CHEST|ARML|ARMR|HANDL|HANDR|LEGL|LEGR|FOOTL|FOOTR|BACK)(?:_|$)/.test(o.name))return;
-  extras.push(o);
-  const m=o.name.match(/^HF19_PALADIN_(HEAD|CHEST|ARML|ARMR|HANDL|HANDR|LEGL|LEGR|FOOTL|FOOTR|BACK)/);
-  if(m)unique.add(m[1]);
+  if(!o.isSkinnedMesh)return;
+  const slot=slotFromSkinnedNode(o);
+  if(!slot)return;
+  extras.push(o);unique.add(slot);
  });
  if(unique.size!==11||extras.length<11)throw Error('GLB Eclipse nativo incompleto: '+unique.size+' slots / '+extras.length+' mallas; skinned='+JSON.stringify((()=>{const found=[];gltf.scene.traverse(o=>{if(o.isSkinnedMesh)found.push(o.name)});return found.slice(0,35)})()));
  for(const o of extras){
