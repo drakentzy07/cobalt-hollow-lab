@@ -108,6 +108,13 @@ if not sf14_src.is_file() or sf14_dst.exists():
     raise SystemExit('SF14_SOURCE_MISSING_OR_DUPLICATE')
 shutil.copyfile(sf14_src,sf14_dst)
 
+# SF15 reusable 8-skill hand adapter, staged ONLY inside disposable native checkout.
+sf15_src=Path('../v9-corrections/game/c1/highfly_sf15_eight_native_batch.ts')
+sf15_dst=Path('src/highfly/sf15_eight_native_batch.ts')
+if not sf15_src.is_file() or sf15_dst.exists():
+    raise SystemExit('SF15_SOURCE_MISSING_OR_DUPLICATE')
+shutil.copyfile(sf15_src,sf15_dst)
+
 # Stage the complete read-only 9×7 donor unlock planner and its unit contract.
 stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
 stages_dest = Path("src/highfly/highfly_sf5_unlock_stages.ts")
@@ -127,7 +134,8 @@ new_import=("import { installSf4NativePilots } from '../../highfly/sf4_safe_fusi
             "import { installSf10NativeExpansion } from '../../highfly/sf10_three_native_reuses';\n"
             "import { installSf12NativeExpansion } from '../../highfly/sf12_three_native_mechanics';\n"
             "import { installSf13Compatible } from '../../highfly/sf13_mass_native_gate';\n"
-            "import { installSf14HandAdapters } from '../../highfly/sf14_hand_native_adapters';\n")
+            "import { installSf14HandAdapters } from '../../highfly/sf14_hand_native_adapters';\n"
+            "import { installSf15EightNative } from '../../highfly/sf15_eight_native_batch';\n")
 old_cond="""if (import.meta.env?.VITE_HIGHFLY_SF3 === '1') {
   installHighflySF3Fusions(ABILITIES, CLASSES);
 }"""
@@ -144,6 +152,9 @@ if (import.meta.env?.VITE_HIGHFLY_SF4 === '1') {
       installSf13Compatible(ABILITIES, CLASSES);
       if (import.meta.env?.VITE_HIGHFLY_SF14 === '1') {
         installSf14HandAdapters(ABILITIES, CLASSES);
+        if (import.meta.env?.VITE_HIGHFLY_SF15 === '1') {
+          installSf15EightNative(ABILITIES, CLASSES);
+        }
       }
     }
   }
