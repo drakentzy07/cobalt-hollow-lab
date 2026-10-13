@@ -58,13 +58,12 @@ fs.mkdirSync(dir,{recursive:true});
   assert(new Set(variants.map(id=>screenshots[id][0])).size>=5,'front captures must not repeat a single design');
   fs.writeFileSync(dir+'/all-families-proof.json',JSON.stringify({proofs,screenshots},null,2));
   await page.close();
- }
  const mobilePage=await browser.newPage({viewport:{width:915,height:412},deviceScaleFactor:1});
  await mobilePage.goto(url,{waitUntil:'domcontentloaded',timeout:60000});
  await mobilePage.waitForFunction(()=>window.__HIGHFLY_ARMOR_REPERTOIRE__?.variantReady===true,null,{timeout:120000});
  await mobilePage.screenshot({path:dir+'/mobile-landscape-violet.png',fullPage:true});
  await mobilePage.locator('[data-id="dragon"]').click();
- await page.waitForFunction(()=>window.__HIGHFLY_ARMOR_REPERTOIRE__?.variantReady&&window.__HIGHFLY_ARMOR_REPERTOIRE__?.variantId==='dragon',null,{timeout:150000});
+ await mobilePage.waitForFunction(()=>window.__HIGHFLY_ARMOR_REPERTOIRE__?.variantReady&&window.__HIGHFLY_ARMOR_REPERTOIRE__?.variantId==='dragon',null,{timeout:150000});
  await mobilePage.screenshot({path:dir+'/mobile-landscape-dragon.png',fullPage:true});
  const mobile=await mobilePage.evaluate(()=>({bounds:document.querySelector('#candidate canvas').getBoundingClientRect().toJSON(),proof:window.__HIGHFLY_ARMOR_REPERTOIRE__?.proofs.dragon}));
  assert(mobile.bounds.width>=200&&mobile.bounds.height>=300);
@@ -81,5 +80,5 @@ fs.mkdirSync(dir,{recursive:true});
  console.log('HIGHFLY_REPERTOIRE_SIX_VARIANTS_CHROME_GREEN=1');
  console.log('HIGHFLY_REPERTOIRE_S23_SIMULATED_VIEWPORT_GREEN=1');
  console.log('HIGHFLY_REPERTOIRE_PHYSICAL_ANDROID_AND_ART_UNAPPROVED=1');
- await browser.close();
+ }finally{await browser.close();}
 })().catch(e=>{console.error('HIGHFLY_REPERTOIRE_GATE_FAIL',e.stack||e);process.exit(1);});
