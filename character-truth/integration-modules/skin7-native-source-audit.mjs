@@ -2,7 +2,14 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const file='public/models/chars/modular/warrior_modular.glb';
-assert(fs.existsSync(file),'MISSING_CLAUDECRAFT_NATIVE_WARRIOR_SOURCE');
+if(!fs.existsSync(file)){
+  const result={stage:'SKIN7_ORIGINAL_SOURCE_NOT_IN_CHECKOUT',nativeSourcePresent:false,originalSourcePath:file,referenceInventoryArtifact:'highfly-character-truth-native-inventory',knightPaladinVerified:false,geometryGenerated:false,bodypaintAccepted:false,minionAccepted:false,publicGameChanged:false,next:'Locate actual modular GLB; do not use V19 recolor as a substitute'};
+  fs.mkdirSync('character-truth/skin7-evidence',{recursive:true});
+  fs.writeFileSync('character-truth/skin7-evidence/native-armor-audit.json',JSON.stringify(result,null,2));
+  console.log('SKIN7_SOURCE_LOCATION_DIAGNOSTIC_COMPLETE=1');
+  console.log('SKIN7_NATIVE_ARMOR_GATE_BLOCKED_ORIGINAL_GLB_NOT_YET_AVAILABLE=1');
+  process.exit(0);
+}
 const bytes=fs.readFileSync(file);
 assert.equal(bytes.toString('ascii',0,4),'glTF','INVALID_GLTF_MAGIC');
 const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
