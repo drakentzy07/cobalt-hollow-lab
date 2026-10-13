@@ -4,6 +4,7 @@ import {ABILITIES,CLASSES,abilitiesKnownAt} from '../src/sim/content/classes';
 import {Sim} from '../src/sim/sim';
 import {createMob} from '../src/sim/entity';
 import {MOBS} from '../src/sim/data';
+import {STAMPEDE_GUARDIAN_KEY_PREFIX} from '../src/sim/combat/hunter_packlord';
 import type {PlayerClass} from '../src/sim/types';
 import {placeAbilityOnSlot,isAbilityActionBarEligible} from '../src/ui/hud/action_bar/hotbar';
 import {installSf4NativePilots} from '../src/highfly/sf4_safe_fusions';
@@ -105,7 +106,7 @@ describe('SF21 3 original-source guardians/devotion/affliction fusions',()=>{
     if(p.auras.some(x=>x.kind==='buff_dmg_done'))damageBuff=true;
     if(p.auras.some(x=>x.kind==='buff_healing_done'))healBuff=true;
     guardianCount=Math.max(guardianCount,[...sim.entities.values()]
-     .filter(x=>x.ownerId===p.id&&x.guardianState?.key.startsWith('stampede')).length);
+     .filter(x=>x.ownerId===p.id&&x.guardianState?.key.startsWith(STAMPEDE_GUARDIAN_KEY_PREFIX)).length);
     if(p.auras.some(x=>x.id==='pack_ferocity'))ferocity=true;
     if(m.auras.some(x=>x.kind==='affliction_eye'))eye=true;
     if(m.auras.some(x=>x.kind==='incapacitate'))fear=true;
