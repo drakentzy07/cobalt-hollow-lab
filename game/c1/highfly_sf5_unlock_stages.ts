@@ -20,9 +20,9 @@ export interface Sf5SkillStage {
   readonly mechanicAdapterStillRequired: true;
 }
 
-function sourceIsEligible(donor: AbilityDef): boolean {
-  return !donor.passive && !donor.hiddenFromPlayer;
-}
+// Donors are verified templates, not directly unlocked actions. A hidden or
+// passive donor can inspire a fusion, but an explicit adapter must prove the
+// copied mechanic safe; original access restrictions remain unchanged.
 export function highflySf5SkillStage(
   spec: HighflyFusionSpec,
   level: number,
@@ -30,15 +30,14 @@ export function highflySf5SkillStage(
 ): Sf5SkillStage {
   if (!Number.isInteger(level) || level < 1)
     throw new Error('SF5 invalid Hunter level: ' + level);
-  const donors = spec.donors.map(id => {
+  spec.donors.forEach(id => {
     const ability = abilities[id];
     if (!ability || ability.class !== spec.classId)
       throw new Error('SF5 absent or foreign source: ' + spec.id + ' / ' + id);
-    return ability;
   });
   const unlocked=level >= spec.unlockLevel;
-  const usableSourceIds = unlocked ? spec.donors.filter((_,i)=>sourceIsEligible(donors[i])) : [];
-  const futureSourceIds = spec.donors.filter((_,i)=>!unlocked || !sourceIsEligible(donors[i]));
+  const usableSourceIds = unlocked ? [...spec.donors] : [];
+  const futureSourceIds = unlocked ? [] : [...spec.donors];
   const status: Sf5StageStatus = level < spec.unlockLevel ? 'recipe-locked'
     : usableSourceIds.length === 0 ? 'needs-starter'
     : usableSourceIds.length === 1 ? 'one-source'
