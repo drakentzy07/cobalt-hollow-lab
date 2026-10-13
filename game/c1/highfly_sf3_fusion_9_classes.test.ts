@@ -44,7 +44,11 @@ describe('HIGHFLY SF3 9/9 native donor kit contracts',()=>{
       expect(native.learnLevel).toBe(def.unlockLevel);
       expect(native.name).toBe(def.name);
       expect(native.passive).toBe(false);
-      expect(native.effects?.length).toBeGreaterThan(0);
+      // Some native ClaudeCraft abilities (e.g. Unleash Weapon) resolve via
+      // custom cast handlers with effects:[], not through effect arrays.
+      // Their composite REQUIRES an explicit adapter; do not claim it works.
+      if (!native.effects?.length)
+        expect(audit.needsSpecialHandling,def.id).toContain(def.id);
       if(def.ultimate)expect(native.cooldown).toBeGreaterThanOrEqual(25);
       for(const donor of def.donors)expect(existing.has(donor)).toBe(true);
     }
