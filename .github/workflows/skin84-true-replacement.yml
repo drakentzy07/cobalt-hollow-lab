@@ -2,7 +2,7 @@ name: HIGHFLY SKIN 8.4 — FIVE ARMOR TRUE REPLACEMENT CI (ISOLATED)
 on:
   push:
     branches: [highfly-skin84-true-replacement]
-    paths: ['skin7-repertoire/**', '.github/workflows/skin84-reference-fusion.yml']
+    paths: ['skin7-repertoire/**', '.github/workflows/skin84-true-replacement.yml']
   workflow_dispatch:
 permissions:
   contents: read
