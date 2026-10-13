@@ -114,7 +114,7 @@ function addNewArmor(gltf,nativeBones){
   const m=o.name.match(/^HF19_PALADIN_(HEAD|CHEST|ARML|ARMR|HANDL|HANDR|LEGL|LEGR|FOOTL|FOOTR|BACK)/);
   if(m)unique.add(m[1]);
  });
- if(unique.size!==11||extras.length<11)throw Error('GLB experimental incompleto: '+unique.size+' slots / '+extras.length+' primitivas');
+ if(unique.size!==11||extras.length<11)throw Error('GLB Eclipse nativo incompleto: '+unique.size+' slots / '+extras.length+' mallas; skinned='+JSON.stringify((()=>{const found=[];gltf.scene.traverse(o=>{if(o.isSkinnedMesh)found.push(o.name)});return found.slice(0,35)})()));
  for(const o of extras){
   const original=o.skeleton;
   const remapped=original.bones.map(b=>byName.get(b.name));
@@ -176,6 +176,8 @@ async function load(){
    addNewArmor(experimental,bones);
   }catch(e){
    status.textContent='Paladín ORIGINAL disponible. Eclipse de Paladín nativo no cargó: '+e.message;
+   window.HIGHFLY_SKIN19_LOAD_ERROR=e.message;
+   console.error('HF19_OVERLAY_LOAD',e.message);
    // Base remains available even if the experimental overlay fails.
   }
   const picker=$('#clip');picker.replaceChildren();
