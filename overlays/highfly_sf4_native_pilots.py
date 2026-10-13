@@ -101,6 +101,13 @@ if not sf13_src.is_file() or sf13_dst.exists():
     raise SystemExit('SF13_SOURCE_MISSING_OR_DUPLICATE')
 shutil.copyfile(sf13_src,sf13_dst)
 
+# SF14 native hand adapters and opt-in integration (NO public deploy).
+sf14_src=Path('../v9-corrections/game/c1/highfly_sf14_hand_native_adapters.ts')
+sf14_dst=Path('src/highfly/sf14_hand_native_adapters.ts')
+if not sf14_src.is_file() or sf14_dst.exists():
+    raise SystemExit('SF14_SOURCE_MISSING_OR_DUPLICATE')
+shutil.copyfile(sf14_src,sf14_dst)
+
 # Stage the complete read-only 9×7 donor unlock planner and its unit contract.
 stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
 stages_dest = Path("src/highfly/highfly_sf5_unlock_stages.ts")
@@ -119,7 +126,8 @@ old_import="import { installHighflySF3Fusions } from '../../highfly/sf3_fusion_r
 new_import=("import { installSf4NativePilots } from '../../highfly/sf4_safe_fusions';\n"
             "import { installSf10NativeExpansion } from '../../highfly/sf10_three_native_reuses';\n"
             "import { installSf12NativeExpansion } from '../../highfly/sf12_three_native_mechanics';\n"
-            "import { installSf13Compatible } from '../../highfly/sf13_mass_native_gate';\n")
+            "import { installSf13Compatible } from '../../highfly/sf13_mass_native_gate';\n"
+            "import { installSf14HandAdapters } from '../../highfly/sf14_hand_native_adapters';\n")
 old_cond="""if (import.meta.env?.VITE_HIGHFLY_SF3 === '1') {
   installHighflySF3Fusions(ABILITIES, CLASSES);
 }"""
@@ -134,6 +142,9 @@ if (import.meta.env?.VITE_HIGHFLY_SF4 === '1') {
     installSf12NativeExpansion(ABILITIES, CLASSES);
     if (import.meta.env?.VITE_HIGHFLY_SF13 === '1') {
       installSf13Compatible(ABILITIES, CLASSES);
+      if (import.meta.env?.VITE_HIGHFLY_SF14 === '1') {
+        installSf14HandAdapters(ABILITIES, CLASSES);
+      }
     }
   }
 }"""

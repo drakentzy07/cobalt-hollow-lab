@@ -36,6 +36,8 @@ on:
       - "game/c1/highfly_sf12_three_native_mechanics.test.ts"
       - "game/c1/highfly_sf13_mass_native_gate.ts"
       - "game/c1/highfly_sf13_mass_native_gate.test.ts"
+      - "game/c1/highfly_sf14_hand_native_adapters.ts"
+      - "game/c1/highfly_sf14_hand_native_adapters.test.ts"
   workflow_dispatch:
 permissions:
   contents: read
@@ -93,6 +95,8 @@ jobs:
             /game/c1/highfly_sf12_three_native_mechanics.test.ts
             /game/c1/highfly_sf13_mass_native_gate.ts
             /game/c1/highfly_sf13_mass_native_gate.test.ts
+            /game/c1/highfly_sf14_hand_native_adapters.ts
+            /game/c1/highfly_sf14_hand_native_adapters.test.ts
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
@@ -675,6 +679,16 @@ jobs:
           pnpm exec vitest run tests/highfly_sf13_mass_native_gate.test.ts
           test -s ../highfly-sf13-native-audit/47_source_contracts.json
           echo 'HIGHFLY_SF13_ALL_47_AUDITED_STRICT_NATIVE_GATE=1'
+      - name: SF14 Priest dual-purpose and Shaman chain ORIGINAL-Sim regression (NO DEPLOY)
+        if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_sf14_hand_native_adapters.ts src/highfly/sf14_hand_native_adapters.ts
+          cp ../v9-corrections/game/c1/highfly_sf14_hand_native_adapters.test.ts tests/highfly_sf14_hand_native_adapters.test.ts
+          pnpm exec vitest run tests/highfly_sf14_hand_native_adapters.test.ts
+          echo 'HF_SF14_TWENTY_NATIVE_SKILLS_REAL_SIM_GATE_GREEN=1'
       - name: Upload SF13 47 donor compatibility report (NO DEPLOY)
         if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
         uses: actions/upload-artifact@v4
@@ -733,6 +747,7 @@ jobs:
           VITE_HIGHFLY_SF10: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
           VITE_HIGHFLY_SF12: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
           VITE_HIGHFLY_SF13: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
+          VITE_HIGHFLY_SF14: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
           VITE_COBALT_OFFLINE: "1"
           VITE_COBALT_BASE: "/cobalt-hollow-lab/"
           VITE_HIGHFLY_HUNT_PREVIEW: "0"
@@ -749,6 +764,7 @@ jobs:
             test "${VITE_HIGHFLY_SF10}" = "1"
             test "${VITE_HIGHFLY_SF12}" = "1"
             test "${VITE_HIGHFLY_SF13}" = "1"
+            test "${VITE_HIGHFLY_SF14}" = "1"
             # Prove the emitted browser JS embeds a real compiled HF_ skill ID.
             # A green Sim test alone is not proof the preview can learn skills.
             grep -R -q 'hf_paladin_s1' dist/assets || {
@@ -765,7 +781,9 @@ jobs:
             }
             grep -R -q 'hf_mage_s1' dist/assets || { echo 'SF13_MAGE_HYBRID_ABSENT_FROM_WEBGL'; exit 1; }
             grep -R -q 'hf_hunter_s2' dist/assets || { echo 'SF13_HUNTER_HYBRID_ABSENT_FROM_WEBGL'; exit 1; }
-            echo 'HF_SF13_NATIVE_WEBGL_HYBRIDS_VERIFIED=1'
+            grep -R -q 'hf_priest_s1' dist/assets || { echo 'SF14_PRIEST_MISSING_FROM_WEBGL'; exit 1; }
+            grep -R -q 'hf_shaman_s1' dist/assets || { echo 'SF14_SHAMAN_MISSING_FROM_WEBGL'; exit 1; }
+            echo 'HF_SF14_WEBGL_TWENTY_NATIVE_SKILLS_PRESENT=1'
           fi
           node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune
