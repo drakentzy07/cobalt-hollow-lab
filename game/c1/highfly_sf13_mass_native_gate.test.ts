@@ -87,8 +87,8 @@ describe('SF13 47 full audit and conservative native effect composition',()=>{
   }
  });
  it('does not accept a missing original donor or mutate original source abilities',()=>{
-  const report=auditSf13FortySeven(ABILITIES);
-  expect(report.length+extras.length).toBe(47);
+  const pending=Object.values(HIGHFLY_FUSED_SKILLS).flat().filter(s=>!ABILITIES[s.id]);
+  expect(pending.length+extras.length).toBe(47);
   expect(Object.keys(CLASSES)).toHaveLength(9);
  });
 });
