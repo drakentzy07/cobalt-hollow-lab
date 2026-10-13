@@ -1,0 +1,25 @@
+{
+  "schema": "highfly.skin7.native-helmet/v1",
+  "name": "Paladin Nocturno — prueba geometría nativa",
+  "sourceNode": "Armor_paladin_Head",
+  "rig": "Rig_Medium",
+  "method": "duplicate-original-skinned-mesh-and-edit-POSITION-on-variant-only",
+  "geometry": {
+    "crownLift": 0.14,
+    "upperFlare": 0.12,
+    "visorProjection": 0.08
+  },
+  "colors": {
+    "base": "#293347",
+    "trim": "#c0a56c"
+  },
+  "guardrails": {
+    "sourceOriginalUnchanged": true,
+    "originalSkinWeightsPreserved": true,
+    "originalAnimationsPreserved": true,
+    "bodypaint": false,
+    "minion": false,
+    "publicGameDeploy": false
+  },
+  "notes": "Receta determinista V1 editable; futuras IA pueden proponer parámetros compatibles, pero no se atribuye IA generativa a esta primera forja."
+}
