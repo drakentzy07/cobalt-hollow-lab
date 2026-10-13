@@ -15,7 +15,7 @@ const OUTPUT='character-truth/skin7-evidence/HIGHFLY-SKIN7-PALADIN-HELMET-NATIVE
 const RECIPE='character-truth/integration-modules/skin7-paladin-helmet-recipe.json';
 const raw=fs.readFileSync(INPUT);
 const actualSha=crypto.createHash('sha1').update(Buffer.concat([
- Buffer.from('blob '+raw.length+'\\0'),raw])).digest('hex');
+ Buffer.from('blob '+raw.length),Buffer.from([0]),raw])).digest('hex');
 assert.equal(actualSha,'e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2','SOURCE_SHA_DRIFT');
 assert.equal(raw.toString('ascii',0,4),'glTF');
 assert.equal(raw.readUInt32LE(4),2);
