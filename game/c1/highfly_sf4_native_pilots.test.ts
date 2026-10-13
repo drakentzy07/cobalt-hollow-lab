@@ -85,6 +85,27 @@ describe('SF4 fail-closed 9/9 fusion integration — no release or save mutation
     expect(Object.keys(abilities).filter(id=>id.startsWith('hf_'))).toEqual([]);
     for(const cl of clsIds)expect(classes[cl].abilities).toEqual(CLASSES[cl].abilities);
   });
+  it('fails atomically when a class destination is absent (no half-install)',()=>{
+    const {abilities, classes}=copies();
+    classes.priest = undefined as unknown as typeof classes.priest;
+    expect(()=>installSf4NativePilots(abilities,classes)).toThrow(/missing class registry/);
+    expect(abilities.hf_priest_s2).toBeUndefined();
+    expect(abilities.hf_priest_s3).toBeUndefined();
+  });
+  it('fails atomically when a class list already contains the fusion slot',()=>{
+    const {abilities, classes}=copies();
+    classes.priest.abilities.push('hf_priest_s3');
+    expect(()=>installSf4NativePilots(abilities,classes)).toThrow(/duplicate class slot/);
+    expect(abilities.hf_priest_s2).toBeUndefined();
+    expect(abilities.hf_priest_s3).toBeUndefined();
+  });
+  it('does not unlock mechanics before the source ability is learned',()=>{
+    const {abilities, classes}=copies();
+    abilities.renew = {...abilities.renew,learnLevel:11};
+    expect(()=>installSf4NativePilots(abilities,classes)).toThrow(/donor level exceeds fusion unlock/);
+    expect(abilities.hf_priest_s2).toBeUndefined();
+    expect(abilities.hf_priest_s3).toBeUndefined();
+  });
   it('a duplicated SF3 slot aborts rather than quietly replacing the old skill',()=>{
     const { abilities, classes }=copies();
     abilities.hf_priest_s2 = ABILITIES.mind_blast;
