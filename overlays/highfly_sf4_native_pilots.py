@@ -73,6 +73,14 @@ for source,destination in [(sf10_src,sf10_dst),(sf10_test_src,sf10_test_dst)]:
         raise SystemExit("SF10_NATIVE_FUSION_SOURCE_MISSING_OR_DUPLICATE:"+str(source))
     shutil.copyfile(source,destination)
 
+# SF11: read-only 63 donor contract and complete offline internal inspector.
+# Explicitly separate 13 real fusions from 50 still designs; no VFX claims.
+sf11_source=Path("../v9-corrections/game/c1/highfly_sf11_internal_63_inspection.test.ts")
+sf11_dest=Path("tests/highfly_sf11_internal_63_inspection.test.ts")
+if not sf11_source.is_file() or sf11_dest.exists():
+    raise SystemExit("SF11_INTERNAL_63_AUDIT_TEST_MISSING_OR_DUPLICATED")
+shutil.copyfile(sf11_source,sf11_dest)
+
 # Stage the complete read-only 9×7 donor unlock planner and its unit contract.
 stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
 stages_dest = Path("src/highfly/highfly_sf5_unlock_stages.ts")
