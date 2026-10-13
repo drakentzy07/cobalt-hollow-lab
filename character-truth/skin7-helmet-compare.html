@@ -48,7 +48,7 @@ async function display(hostId,url,helmetName){
   if(body)bodies++;
   if(helm){helmets++;helmetObj=o;}
  });
- if(!bodies||helmets!==1)throw Error(hostId+' INVALID_NATIVE_COMPOSITION bodies='+bodies+' helmets='+helmets);
+ if(!bodies||helmets<1)throw Error(hostId+' INVALID_NATIVE_COMPOSITION bodies='+bodies+' helmets='+helmets);
  const bones=[];actor.traverse(o=>{if(o.isBone)bones.push(o)});
  const head=bones.find(b=>b.name.toLowerCase().replace(/[^a-z0-9]/g,'')==='head');
  const foot=bones.find(b=>b.name.toLowerCase().replace(/[^a-z0-9]/g,'')==='footl');
