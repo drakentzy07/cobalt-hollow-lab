@@ -32,6 +32,8 @@ on:
       - "game/c1/highfly_sf10_three_native_reuses.ts"
       - "game/c1/highfly_sf10_three_native_reuses.test.ts"
       - "game/c1/highfly_sf11_internal_63_inspection.test.ts"
+      - "game/c1/highfly_sf12_three_native_mechanics.ts"
+      - "game/c1/highfly_sf12_three_native_mechanics.test.ts"
   workflow_dispatch:
 permissions:
   contents: read
@@ -85,6 +87,8 @@ jobs:
             /game/c1/highfly_sf10_three_native_reuses.ts
             /game/c1/highfly_sf10_three_native_reuses.test.ts
             /game/c1/highfly_sf11_internal_63_inspection.test.ts
+            /game/c1/highfly_sf12_three_native_mechanics.ts
+            /game/c1/highfly_sf12_three_native_mechanics.test.ts
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
@@ -642,7 +646,7 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_sf3_fusion_9_classes.test.ts
           echo 'HIGHFLY_SF3_NINE_CLASSES_63_FUSION_DESIGN_NATIVE_GATE_GREEN=1'
-      - name: V10 SF11 inspect all 63 donor sources + 13 native SF10 casts + SF9B combat (NO DEPLOY)
+      - name: V10 SF12 16 real native abilities + SF11 63 audit + SF9B nine-class combat (NO DEPLOY)
         if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
         working-directory: upstream
         shell: bash
@@ -652,10 +656,10 @@ jobs:
           cp ../v9-corrections/game/c1/highfly_sf4_native_pilots.test.ts tests/highfly_sf4_native_pilots.test.ts
           cp ../v9-corrections/game/c1/highfly_sf4_diagnostics.test.ts tests/highfly_sf4_diagnostics.test.ts
           git diff --check HEAD
-          pnpm exec vitest run tests/highfly_sf4_native_pilots.test.ts tests/highfly_sf4_diagnostics.test.ts tests/highfly_sf4_real_sim.test.ts tests/highfly_sf5_unlock_stages.test.ts tests/highfly_sf7_spellbook_actionbar_runtime.test.ts tests/highfly_sf8_nine_class_real_combat_effects.test.ts tests/highfly_sf9_mixed_native_combat_rotations.test.ts tests/highfly_sf9b_hunter_druid_9class_native_rotation.test.ts tests/highfly_sf10_three_native_reuses.test.ts tests/highfly_sf11_internal_63_inspection.test.ts
+          pnpm exec vitest run tests/highfly_sf4_native_pilots.test.ts tests/highfly_sf4_diagnostics.test.ts tests/highfly_sf4_real_sim.test.ts tests/highfly_sf5_unlock_stages.test.ts tests/highfly_sf7_spellbook_actionbar_runtime.test.ts tests/highfly_sf8_nine_class_real_combat_effects.test.ts tests/highfly_sf9_mixed_native_combat_rotations.test.ts tests/highfly_sf9b_hunter_druid_9class_native_rotation.test.ts tests/highfly_sf10_three_native_reuses.test.ts tests/highfly_sf11_internal_63_inspection.test.ts tests/highfly_sf12_three_native_mechanics.test.ts
           test -s ../highfly-sf11-internal-audit/inspector-63-interno.html
           test -s ../highfly-sf11-internal-audit/catalogo-63-interno.json
-          echo 'HF_V10_SF11_ALL_63_DONORS_AUDITED_13_NATIVE_SIM_50_DESIGN_ONLY_GREEN=1'
+          echo 'HF_V10_SF12_SIXTEEN_NATIVE_FUSIONS_AND_SF11_ALL_63_DONORS_AUDITED_GREEN=1'
       - name: Upload SF11 OFFLINE internal 63-skill inspection (NOT live gameplay, NO DEPLOY)
         if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
         uses: actions/upload-artifact@v4
@@ -705,6 +709,7 @@ jobs:
           # SF7 lab build. No normal PUBLIC Pages branch has this flag set.
           VITE_HIGHFLY_SF4: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
           VITE_HIGHFLY_SF10: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
+          VITE_HIGHFLY_SF12: "${{ github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' && '1' || '0' }}"
           VITE_COBALT_OFFLINE: "1"
           VITE_COBALT_BASE: "/cobalt-hollow-lab/"
           VITE_HIGHFLY_HUNT_PREVIEW: "0"
@@ -719,6 +724,7 @@ jobs:
           if [[ "${GITHUB_REF_NAME}" == "highfly-sf4-native-fusion-safe-implementation" ]]; then
             test "${VITE_HIGHFLY_SF4}" = "1"
             test "${VITE_HIGHFLY_SF10}" = "1"
+            test "${VITE_HIGHFLY_SF12}" = "1"
             # Prove the emitted browser JS embeds a real compiled HF_ skill ID.
             # A green Sim test alone is not proof the preview can learn skills.
             grep -R -q 'hf_paladin_s1' dist/assets || {
@@ -729,7 +735,11 @@ jobs:
               echo 'SF10_BLOCKED_NEW_NATIVE_FUSIONS_ABSENT_FROM_WEBGL_BUNDLE'
               exit 1
             }
-            echo 'HF_V10_SF10_OPTIN_THIRTEEN_SKILL_WEBGL_BUNDLE_VERIFIED=1'
+            grep -R -q 'hf_warrior_s3' dist/assets || {
+              echo 'SF12_BLOCKED_NEW_NATIVE_FUSIONS_ABSENT_FROM_WEBGL_BUNDLE'
+              exit 1
+            }
+            echo 'HF_V10_SF12_OPTIN_SIXTEEN_SKILL_WEBGL_BUNDLE_VERIFIED=1'
           fi
           node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune
