@@ -1,6 +1,6 @@
 /**
  * HIGHFLY V10 / SF5 — three explicit, class-specific SAFE adaptations.
- * Tested only in frozen original ClaudeCraft Sim; NO implied production release.
+ * Prototype only; verified by CI only once the native original-Sim tests pass.
  * No cloning arbitrary donor chains, party/saves/training remain untouched.
  */
 import type {AbilityDef, AbilityEffect} from '../sim/types';
@@ -44,7 +44,7 @@ export function sf5MageArrivalNova(
   spec:HighflyFusionSpec,blink:AbilityDef,nova:AbilityDef,
 ):AbilityDef{
   if(spec.id!=='hf_mage_s3' || spec.donors.join(',')!=='blink,frost_nova'
-    || [blink,nova].some(x=>x.class!=='mage' || x.learnLevel>spec.unlockLevel
+    || [blink,nova].some(x=>x.class!=='mage'
        || x.requiresTarget || x.range!==0 || x.castTime!==0 || !safeSolo(x))
     || blink.school!=='arcane' || nova.school!=='frost'
     || blink.targetMode!==nova.targetMode || blink.minRange!==nova.minRange)
@@ -71,7 +71,7 @@ export function sf5ShamanTidalMend(
 ):AbilityDef{
   if(spec.id!=='hf_shaman_s3' || spec.donors.join(',')!=='healing_wave,tidecall'
     || [wave,tide].some(x=>x.class!=='shaman' || x.school!=='nature'
-       || x.learnLevel>spec.unlockLevel || !x.requiresTarget
+       || !x.requiresTarget
        || x.targetType!=='friendly' || x.range!==30)
     || !safeSolo(wave) || tide.specs?.join(',')!=='restoration'
     || tide.maxCharges!==2 || wave.effects.length!==1 || tide.effects.length!==1)
@@ -94,7 +94,7 @@ export function sf5ShamanTidalMend(
     description:'HIGHFLY SF5 PILOTO: un solo heal combinado. No hereda cargas o procs exclusivos de Tidecall.',
   };
 }
-/** LV10 heal+HoT, LV14 Regrowth begins contributing, not before. */
+/** All three donors are available at HIGHFLY LV10; original learning levels do NOT gate fused skills. */
 export function sf5DruidBloomMend(
   spec:HighflyFusionSpec,bloom:AbilityDef,regrowth:AbilityDef,touch:AbilityDef,
 ):AbilityDef{
@@ -103,16 +103,15 @@ export function sf5DruidBloomMend(
     || [bloom,regrowth,touch].some(x=>x.class!=='druid'
       || x.school!=='nature'|| x.targetType!=='friendly'
       || !x.requiresTarget || x.range!==30 || !safeSolo(x))
-    || bloom.learnLevel>spec.unlockLevel || touch.learnLevel>spec.unlockLevel
-    || regrowth.learnLevel!==14 || effectsAt(regrowth,14).map(x=>x.type).join(',')!=='heal,hot')
+    || effectsAt(regrowth,spec.unlockLevel).map(x=>x.type).join(',')!=='heal,hot')
     throw new Error('SF5 Druid heal+HoT donor contract changed');
-  const snap=[...new Set([...levels(spec.unlockLevel,bloom,regrowth,touch),14])]
+  const snap=[...new Set([...levels(spec.unlockLevel,bloom,regrowth,touch)])]
     .sort((a,b)=>a-b).map(level=>{
       const hot=only(bloom,level,'hot'),heal=only(touch,level,'heal');
       if(hot.type!=='hot'||heal.type!=='heal')
         throw new Error('SF5 Druid base heal or hot changed');
       let minBonus=0,maxBonus=0,hotBonus=0;
-      if(level>=14){
+      {
         const rank=effectsAt(regrowth,level);
         if(rank.length!==2 || rank[0].type!=='heal' || rank[1].type!=='hot')
           throw new Error('SF5 Druid late regrowth changed');
@@ -122,7 +121,7 @@ export function sf5DruidBloomMend(
       }
       return {level,castTime:castAt(touch,level),
         cost:costAt(touch,level)+Math.ceil(costAt(bloom,level)*0.5)
-          +(level>=14?Math.ceil(costAt(regrowth,level)*0.15):0),
+          +Math.ceil(costAt(regrowth,level)*0.15),
         effects:[
           {...heal,min:heal.min+minBonus,max:heal.max+maxBonus},
           {...hot,total:hot.total+hotBonus},
@@ -133,6 +132,6 @@ export function sf5DruidBloomMend(
     cost:snap[0].cost,castTime:snap[0].castTime,effects:snap[0].effects,
     ranks:snap.slice(1).map((s,i)=>({rank:i+2,level:s.level,cost:s.cost,
       castTime:s.castTime,effects:s.effects})),
-    description:'HIGHFLY SF5 PILOTO: un heal + HoT; segundo crecimiento Regrowth desde LV14.',
+    description:'HIGHFLY SF5 PILOTO: un heal + HoT; los tres donantes disponibles al desbloquearse en HIGHFLY LV10.',
   };
 }

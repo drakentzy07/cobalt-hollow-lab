@@ -4,7 +4,7 @@
  * IMPORTANT: The previous SF3 registry proved that 63 donor IDs exist; it did
  * NOT prove that 63 skills can be mechanically fused. Never copy the entire
  * donor's effects onto arbitrary targets. Only hand-audited, explicit pilot
- * recipes below can be registered. Other 59 definitions remain locked.
+ * recipes below can be registered. Other 56 definitions remain locked.
  *
  * Opt-in code path is installed only when VITE_HIGHFLY_SF4 === '1' by the
  * isolated overlay. No mutation of Training, inventory, saves or world data.
@@ -15,6 +15,7 @@ import {
   type HighflyFusionSpec,
   type HighflyClass,
 } from './sf3_skill_catalog';
+import {sf5MageArrivalNova,sf5ShamanTidalMend,sf5DruidBloomMend} from './sf5_native_adapters';
 
 export type Sf4Status = 'native-pilot' | 'blocked-needs-adapter' | 'design-mismatch';
 export interface Sf4Readiness {
@@ -33,6 +34,9 @@ const PILOT_IDS = new Set([
   'hf_rogue_s4',  // two distinct off-GCD self-buff effects
   'hf_priest_s2', // shadow damage + reduced periodic shadow damage
   'hf_priest_s3', // absorb + reduced healing over time
+  'hf_mage_s3',   // native frost nova at blink landing
+  'hf_shaman_s3', // one Nature heal merging Tidecall numeric component
+  'hf_druid_s3',  // one direct heal + one HoT; 3 donors at HIGHFLY unlock
 ]);
 const DESIGN_MISMATCHES: Readonly<Record<string, string>> = {
   hf_druid_u1:
@@ -58,7 +62,7 @@ export function sf4Readiness(): readonly Sf4Readiness[] {
           ? 'design-mismatch'
           : 'blocked-needs-adapter') as Sf4Status,
       note: PILOT_IDS.has(skill.id)
-        ? 'Efectos nativos candidatos para simulación de combate; aún no certificados.'
+        ? 'Piloto nativo bajo nivel HIGHFLY; requiere simulación y QA de VFX/HUD.'
         : DESIGN_MISMATCHES[skill.id]
           ?? 'Donantes registrados, pero falta un adaptador de efecto/objetivo/forma o VFX validado.',
     })),
@@ -122,9 +126,9 @@ function safelyUnrestricted(def: AbilityDef, allowOffGcd = false): boolean {
 function composePilot(
   spec: HighflyFusionSpec, primary: AbilityDef, second: AbilityDef,
 ): AbilityDef {
-  // Never unlock a donor's LV20 mechanics through an LV15 fusion.
-  if (primary.learnLevel > spec.unlockLevel || second.learnLevel > spec.unlockLevel)
-    throw new Error('SF4 donor level exceeds fusion unlock: ' + spec.id);
+  // HIGHFLY's own unlock level is authoritative. Original ClaudeCraft learnLevel
+  // applies to the ORIGINAL ability only, never to a distinct hf_* fusion.
+  // The new skill takes a conservative numerical source snapshot at HIGHFLY level.
   // Rank-specific cast times cannot silently revert to the base cast clock.
   if ([primary, second].some(donor =>
     donor.ranks?.some(rank => rank.castTime !== undefined && rank.castTime !== donor.castTime)))
@@ -207,7 +211,7 @@ function composePilot(
   };
 }
 
-/** Add ONLY four audited pilot definitions to the ONE original Sim registry. */
+/** Add ONLY seven audited pilots (six original classes) to the original Sim registry. */
 export function installSf4NativePilots(
   abilities: Record<string, AbilityDef>,
   classes: Record<HighflyClass, { abilities: string[] }>,
@@ -221,7 +225,7 @@ export function installSf4NativePilots(
       throw new Error('SF4 missing class registry: ' + spec.classId);
     if (classes[spec.classId].abilities.includes(spec.id))
       throw new Error('SF4 duplicate class slot: ' + spec.id);
-    // Donor truth must hold for ALL 63 even though only two are enabled.
+    // Validate donor IDs/ownership for ALL 63 even though seven are enabled.
     for (const id of spec.donors) {
       if (!abilities[id] || abilities[id].class !== spec.classId)
         throw new Error('SF4 missing or foreign donor: ' + spec.id + ' / ' + id);
@@ -229,15 +233,22 @@ export function installSf4NativePilots(
     if (abilities[spec.id])
       throw new Error('SF4 duplicate skill: ' + spec.id);
     if (!PILOT_IDS.has(spec.id)) continue;
-    if (spec.donors.length !== 2)
-      throw new Error('SF4 unexpected pilot donor count: ' + spec.id);
-    prepared.push({
-      def: composePilot(spec, abilities[spec.donors[0]], abilities[spec.donors[1]]),
-      classId: spec.classId,
-    });
+    let def:AbilityDef;
+    if(spec.id==='hf_mage_s3')
+      def=sf5MageArrivalNova(spec,abilities.blink,abilities.frost_nova);
+    else if(spec.id==='hf_shaman_s3')
+      def=sf5ShamanTidalMend(spec,abilities.healing_wave,abilities.tidecall);
+    else if(spec.id==='hf_druid_s3')
+      def=sf5DruidBloomMend(spec,abilities.rejuvenation,abilities.regrowth,abilities.healing_touch);
+    else {
+      if (spec.donors.length !== 2)
+        throw new Error('SF4 unexpected pilot donor count: ' + spec.id);
+      def=composePilot(spec,abilities[spec.donors[0]],abilities[spec.donors[1]]);
+    }
+    prepared.push({def,classId:spec.classId});
   }
-  if (prepared.length !== 4)
-    throw new Error('SF4 expected exactly 4 native pilots');
+  if (prepared.length !== 7)
+    throw new Error('SF4 expected exactly 7 native pilots');
   // Commit only after complete validation: fail without half-registering kits.
   for (const { def, classId } of prepared) {
     abilities[def.id] = def;

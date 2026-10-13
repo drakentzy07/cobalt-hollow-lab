@@ -14,7 +14,7 @@ describe('HIGHFLY SF5 / V10 nine-class progressive fusion unlock truth',()=>{
       for(const cls of classes)expect(stages.filter(s=>s.classId===cls)).toHaveLength(7);
     }
   });
-  it('keeps locked sources out of each level without changing authored kit order',()=>{
+  it('keeps HIGHFLY-locked sources out without changing authored kit order',()=>{
     for(const level of [1,4,5,9,10,14,15,19,20,24,25,29,30,99]){
       for(const cls of classes){
         const steps=highflySf5ClassStages(cls,level,ABILITIES);
@@ -22,24 +22,31 @@ describe('HIGHFLY SF5 / V10 nine-class progressive fusion unlock truth',()=>{
         expect(steps.filter(s=>s.status!=='recipe-locked').map(s=>s.specId))
           .toEqual(alreadyUnlocked);
         for(const stage of steps){
-          expect(stage.usableSourceIds.every(id=>ABILITIES[id].learnLevel<=level)).toBe(true);
-          expect(stage.futureSourceIds.every(id=>
-            ABILITIES[id].learnLevel>level ||
-            ABILITIES[id].passive || ABILITIES[id].hiddenFromPlayer)).toBe(true);
+          expect(stage.status==='recipe-locked' ? stage.usableSourceIds.length===0 : true).toBe(true);
+          expect(stage.usableSourceIds.every(id=>ABILITIES[id].class===cls)).toBe(true);
+          expect(stage.futureSourceIds.every(id=>ABILITIES[id].class===cls)).toBe(true);
           expect(stage.mechanicAdapterStillRequired).toBe(true);
         }
       }
     }
   });
-  it('explicitly reveals late donor blockers at low unlock levels',()=>{
+  it('authorizes later Claude donors precisely at HIGHFLY recipe unlock without releasing originals',()=>{
     const at=(id:string,level:number)=>highflySf5AllStages(level,ABILITIES).find(s=>s.specId===id)!;
-    expect(at('hf_paladin_s1',1).futureSourceIds).toContain('crusader_strike');
-    expect(at('hf_hunter_s2',5).futureSourceIds).toContain('aimed_shot');
-    expect(at('hf_priest_s4',15).futureSourceIds).toContain('flash_heal');
-    expect(at('hf_warlock_s1',1).futureSourceIds).toContain('soul_lance');
-    expect(at('hf_druid_s2',5).futureSourceIds).toContain('insect_swarm');
-    expect(at('hf_priest_s2',5).futureSourceIds).not.toContain('mind_blast');
-    expect(at('hf_priest_s3',10).futureSourceIds).toEqual([]);
+    for(const [id,level,donor] of [
+      ['hf_paladin_s1',1,'crusader_strike'],
+      ['hf_hunter_s2',5,'aimed_shot'],
+      ['hf_priest_s4',15,'flash_heal'],
+      ['hf_warlock_s1',1,'soul_lance'],
+      ['hf_druid_s2',5,'insect_swarm'],
+    ] as const){
+      expect(at(id,level).usableSourceIds).toContain(donor);
+      expect(at(id,level).futureSourceIds).not.toContain(donor);
+      expect(ABILITIES[donor].learnLevel).toBeGreaterThan(level);
+    }
+    expect(at('hf_druid_s3',9).status).toBe('recipe-locked');
+    expect(at('hf_druid_s3',9).usableSourceIds).toEqual([]);
+    expect(at('hf_druid_s3',10).usableSourceIds).toEqual(['rejuvenation','regrowth','healing_touch']);
+    expect(ABILITIES.regrowth.learnLevel).toBe(14);
   });
   it('never passes bogus donor registry or invalid levels',()=>{
     expect(()=>highflySf5AllStages(0,ABILITIES)).toThrow(/invalid Hunter level/);

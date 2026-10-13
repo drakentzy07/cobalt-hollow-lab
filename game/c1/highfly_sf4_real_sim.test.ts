@@ -20,15 +20,21 @@ beforeAll(() => {
   expect(ABILITIES.hf_priest_s3).toBeDefined();
   expect(ABILITIES.hf_warrior_u1).toBeDefined();
   expect(ABILITIES.hf_rogue_s4).toBeDefined();
+  expect(ABILITIES.hf_mage_s3).toBeDefined();
+  expect(ABILITIES.hf_shaman_s3).toBeDefined();
+  expect(ABILITIES.hf_druid_s3).toBeDefined();
   expect(CLASSES.warrior.abilities).toContain('hf_warrior_u1');
   expect(CLASSES.rogue.abilities).toContain('hf_rogue_s4');
+  expect(CLASSES.mage.abilities).toContain('hf_mage_s3');
+  expect(CLASSES.shaman.abilities).toContain('hf_shaman_s3');
+  expect(CLASSES.druid.abilities).toContain('hf_druid_s3');
   expect(CLASSES.priest.abilities).toContain('hf_priest_s2');
   expect(CLASSES.priest.abilities).toContain('hf_priest_s3');
 });
 afterAll(() => {
   for (const id of installedLocally) {
     delete ABILITIES[id];
-    const classId = id.startsWith('hf_warrior_') ? 'warrior' : id.startsWith('hf_rogue_') ? 'rogue' : 'priest';
+    const classId=id.split('_')[1] as keyof typeof CLASSES;
     const at = CLASSES[classId].abilities.indexOf(id);
     if (at >= 0) CLASSES[classId].abilities.splice(at, 1);
   }
@@ -97,6 +103,48 @@ describe('SF4 Warrior and Rogue — original Sim native self/raid effect gates',
       sim.tick();
       expect(p.resource).toBe(before);
       expect(p.cooldowns.has(skill)).toBe(false);
+    }
+  });
+});
+
+describe('SF5 Mage, Shaman and Druid adapters — ORIGINAL Sim',()=>{
+  it('Mage LV10 blink changes position and casts an arrival-root AoE',()=>{
+    const sim=new Sim({seed:46001,playerClass:'mage',autoEquip:true});
+    sim.setPlayerLevel(10);sim.tick();const p=sim.player;
+    p.resource=p.maxResource;
+    const origin={...p.pos};
+    sim.castAbility('hf_mage_s3',p.id);sim.tick();
+    expect(p.cooldowns.has('hf_mage_s3')).toBe(true);
+    expect(Math.hypot(p.pos.x-origin.x,p.pos.z-origin.z)).toBeGreaterThan(1);
+  });
+  it('Shaman LV20 one direct heal casts and restores health',()=>{
+    const sim=new Sim({seed:46002,playerClass:'shaman',autoEquip:true});
+    sim.setPlayerLevel(20);sim.tick();const p=sim.player;
+    p.hp=Math.round(p.maxHp/3);p.resource=p.maxResource;
+    const initial=p.hp;
+    sim.castAbility('hf_shaman_s3',p.id);
+    for(let i=0;i<110;i++)sim.tick();
+    expect(p.cooldowns.has('hf_shaman_s3')).toBe(true);
+    expect(p.hp).toBeGreaterThan(initial);
+  });
+  it('Druid LV20 produces a direct heal plus native HoT on same caster',()=>{
+    const sim=new Sim({seed:46003,playerClass:'druid',autoEquip:true});
+    sim.setPlayerLevel(20);sim.tick();const p=sim.player;
+    p.hp=Math.round(p.maxHp/3);p.resource=p.maxResource;
+    const initial=p.hp;
+    sim.castAbility('hf_druid_s3',p.id);
+    for(let i=0;i<110;i++)sim.tick();
+    expect(p.cooldowns.has('hf_druid_s3')).toBe(true);
+    expect(p.hp).toBeGreaterThan(initial);
+    expect(p.auras.some(a=>a.kind==='hot'&&a.id==='hf_druid_s3')).toBe(true);
+  });
+  it('all three refuse to cast before their HIGHFLY LV10 unlock',()=>{
+    for(const cls of ['mage','shaman','druid'] as const){
+      const sim=new Sim({seed:46004,playerClass:cls,autoEquip:true});
+      sim.setPlayerLevel(9);sim.tick();const p=sim.player;
+      const id='hf_'+cls+'_s3';
+      sim.castAbility(id,p.id);sim.tick();
+      expect(p.cooldowns.has(id)).toBe(false);
     }
   });
 });

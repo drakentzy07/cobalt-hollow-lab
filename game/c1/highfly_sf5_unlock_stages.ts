@@ -1,7 +1,7 @@
 /**
- * HIGHFLY V10 / SF5 — Stage all 9×7 authored fusion recipes against REAL donor
- * learn levels. This is read-only planning, NOT an ability registration engine.
- * Later source abilities must never leak into early player unlock tiers.
+ * HIGHFLY V10 / SF5 — HIGHFLY unlock levels, not ClaudeCraft donor learn levels,
+ * govern the 9×7 fusion recipes. READ ONLY: does not register any ability.
+ * Original source abilities keep their own requirements intact.
  */
 import { HIGHFLY_FUSED_SKILLS, type HighflyClass, type HighflyFusionSpec } from './sf3_skill_catalog';
 import type { AbilityDef } from '../sim/types';
@@ -20,8 +20,8 @@ export interface Sf5SkillStage {
   readonly mechanicAdapterStillRequired: true;
 }
 
-function sourceIsAvailable(donor: AbilityDef, level: number): boolean {
-  return donor.learnLevel <= level && !donor.passive && !donor.hiddenFromPlayer;
+function sourceIsEligible(donor: AbilityDef): boolean {
+  return !donor.passive && !donor.hiddenFromPlayer;
 }
 export function highflySf5SkillStage(
   spec: HighflyFusionSpec,
@@ -36,8 +36,9 @@ export function highflySf5SkillStage(
       throw new Error('SF5 absent or foreign source: ' + spec.id + ' / ' + id);
     return ability;
   });
-  const usableSourceIds = spec.donors.filter((_,i)=>sourceIsAvailable(donors[i],level));
-  const futureSourceIds = spec.donors.filter((_,i)=>!sourceIsAvailable(donors[i],level));
+  const unlocked=level >= spec.unlockLevel;
+  const usableSourceIds = unlocked ? spec.donors.filter((_,i)=>sourceIsEligible(donors[i])) : [];
+  const futureSourceIds = spec.donors.filter((_,i)=>!unlocked || !sourceIsEligible(donors[i]));
   const status: Sf5StageStatus = level < spec.unlockLevel ? 'recipe-locked'
     : usableSourceIds.length === 0 ? 'needs-starter'
     : usableSourceIds.length === 1 ? 'one-source'

@@ -19,20 +19,20 @@ describe('SF4 fail-closed 9/9 fusion integration — no release or save mutation
     expect(data).toHaveLength(63);
     expect(new Set(data.map(s=>s.id)).size).toBe(63);
     expect(data.filter(s=>s.status==='native-pilot').map(s=>s.id).sort())
-      .toEqual(['hf_priest_s2','hf_priest_s3','hf_rogue_s4','hf_warrior_u1']);
-    expect(data.filter(s=>s.status!=='native-pilot')).toHaveLength(59);
+      .toEqual(['hf_druid_s3','hf_mage_s3','hf_priest_s2','hf_priest_s3','hf_rogue_s4','hf_shaman_s3','hf_warrior_u1']);
+    expect(data.filter(s=>s.status!=='native-pilot')).toHaveLength(56);
     expect(data.find(s=>s.id==='hf_druid_u1')?.status).toBe('design-mismatch');
     expect(data.find(s=>s.id==='hf_shaman_s4')?.status).toBe('design-mismatch');
   });
-  it('registers precisely four audited multi-effect prototypes with native class ownership', () => {
+  it('registers seven audited prototypes across six original classes with native class ownership', () => {
     const { abilities, classes }=copies();
     const result=installSf4NativePilots(abilities,classes);
-    expect(result.registered).toEqual(['hf_warrior_u1','hf_rogue_s4','hf_priest_s2','hf_priest_s3']);
-    expect(result.blocked.length + result.mismatchedDesign.length).toBe(59);
+    expect(result.registered).toEqual(['hf_warrior_u1','hf_rogue_s4','hf_priest_s2','hf_priest_s3','hf_shaman_s3','hf_mage_s3','hf_druid_s3']);
+    expect(result.blocked.length + result.mismatchedDesign.length).toBe(56);
     const outputSkills=clsIds.flatMap(cl=>classes[cl].abilities.filter(id=>id.startsWith('hf_')));
-    expect(outputSkills.sort()).toEqual(['hf_priest_s2','hf_priest_s3','hf_rogue_s4','hf_warrior_u1']);
+    expect(outputSkills.sort()).toEqual(['hf_druid_s3','hf_mage_s3','hf_priest_s2','hf_priest_s3','hf_rogue_s4','hf_shaman_s3','hf_warrior_u1']);
     for (const cl of clsIds) {
-      if (cl !== 'priest' && cl !== 'warrior' && cl !== 'rogue')
+      if (!['priest','warrior','rogue','mage','shaman','druid'].includes(cl))
         expect(classes[cl].abilities).toEqual(CLASSES[cl].abilities);
       expect(CLASSES[cl].abilities.every(id => classes[cl].abilities.includes(id))).toBe(true);
     }
@@ -63,6 +63,21 @@ describe('SF4 fail-closed 9/9 fusion integration — no release or save mutation
     expect(rogue.cooldown).toBe(300);
     expect(rogue.effects.map(x=>x.type)).toEqual(['selfBuff','selfBuff']);
     expect(rogue.effects.map(x=>x.type==='selfBuff'?x.kind:'')).toEqual(['buff_speed','buff_dodge']);
+  });
+  it('certifies three SF5 source adapters without duplicating native scaling',()=>{
+    const {abilities,classes}=copies();installSf4NativePilots(abilities,classes);
+    const mage=abilities.hf_mage_s3,shaman=abilities.hf_shaman_s3,druid=abilities.hf_druid_s3;
+    expect(mage.learnLevel).toBe(10);
+    expect(mage.school).toBe('frost');
+    expect(mage.effects.map(x=>x.type)).toEqual(['blinkForward','aoeRoot']);
+    expect(mage.cooldown).toBe(22);
+    expect(shaman.learnLevel).toBe(10);
+    expect(shaman.maxCharges).toBeUndefined();
+    expect(shaman.effects.map(x=>x.type)).toEqual(['heal']);
+    expect(shaman.ranks?.find(x=>x.level===12)?.castTime).toBe(2.5);
+    expect(druid.learnLevel).toBe(10);
+    expect(druid.effects.map(x=>x.type)).toEqual(['heal','hot']);
+    expect(druid.ranks?.find(x=>x.level===14)?.effects.map(x=>x.type)).toEqual(['heal','hot']);
   });
   it('maintains donor rank scaling and never zeroes out the old rank progression', () => {
     const { abilities, classes }=copies();
@@ -115,12 +130,16 @@ describe('SF4 fail-closed 9/9 fusion integration — no release or save mutation
     expect(abilities.hf_priest_s2).toBeUndefined();
     expect(abilities.hf_priest_s3).toBeUndefined();
   });
-  it('does not unlock mechanics before the source ability is learned',()=>{
+  it('uses HIGHFLY unlock regardless of Claude donor level without mutating the original',()=>{
     const {abilities, classes}=copies();
-    abilities.renew = {...abilities.renew,learnLevel:11};
-    expect(()=>installSf4NativePilots(abilities,classes)).toThrow(/donor level exceeds fusion unlock/);
-    expect(abilities.hf_priest_s2).toBeUndefined();
-    expect(abilities.hf_priest_s3).toBeUndefined();
+    abilities.renew = {...abilities.renew,learnLevel:50};
+    abilities.healing_wave={...abilities.healing_wave,learnLevel:50};
+    const result=installSf4NativePilots(abilities,classes);
+    expect(result.registered).toHaveLength(7);
+    expect(abilities.hf_priest_s3.learnLevel).toBe(10);
+    expect(abilities.hf_shaman_s3.learnLevel).toBe(10);
+    expect(abilities.renew.learnLevel).toBe(50);
+    expect(abilities.healing_wave.learnLevel).toBe(50);
   });
   it('a duplicated SF3 slot aborts rather than quietly replacing the old skill',()=>{
     const { abilities, classes }=copies();

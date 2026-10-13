@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HIGHFLY SF4: replace the SF3 unsafe all-63 registry with two guarded native pilots.
+"""HIGHFLY SF4: replace the SF3 unsafe all-63 registry with seven guarded native pilots.
 
 Prerequisite: the original frozen V9.1 assembly, plus SF2 and SF3 source file
 copies applied into an isolated throwaway WebGL build checkout.
@@ -13,9 +13,9 @@ import shutil
 
 if not Path("src/highfly/sf3_skill_catalog.ts").exists():
     raise SystemExit("SF4_DEPENDENCY_SF3_CATALOG_MISSING")
-for filename in ["highfly_sf4_safe_fusions.ts", "highfly_sf4_diagnostics.ts"]:
+for filename in ["highfly_sf4_safe_fusions.ts", "highfly_sf4_diagnostics.ts", "highfly_sf5_native_adapters.ts"]:
     source = Path("../v9-corrections/game/c1") / filename
-    destination = Path("src/highfly") / filename.replace("highfly_sf4_", "sf4_")
+    destination = Path("src/highfly") / filename.replace("highfly_sf4_", "sf4_").replace("highfly_sf5_", "sf5_")
     if not source.is_file() or destination.exists():
         raise SystemExit("SF4_SOURCE_UNAVAILABLE_OR_DUPLICATED:" + str(source))
     shutil.copyfile(source,destination)
@@ -58,4 +58,4 @@ for before,after in [(old_import,new_import),(old_cond,new_cond)]:
 if "installHighflySF3Fusions(ABILITIES, CLASSES)" in s:
     raise SystemExit("SF4_UNSAFE_INSTALLER_STILL_LIVE")
 p.write_text(s,encoding="utf-8")
-print("HIGHFLY_SF4_FOUR_NATIVE_PILOTS_GUARDED_WITHOUT_PUBLIC_GAME_CHANGE=1")
+print("HIGHFLY_SF4_SEVEN_NATIVE_PILOTS_GUARDED_WITHOUT_PUBLIC_GAME_CHANGE=1")
