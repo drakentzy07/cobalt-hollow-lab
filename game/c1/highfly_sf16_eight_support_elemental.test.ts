@@ -17,9 +17,9 @@ import {installSf14HandAdapters} from '../src/highfly/sf14_hand_native_adapters'
 import {installSf15EightNative} from '../src/highfly/sf15_eight_native_batch';
 import {SF16_IDS,installSf16EightNative} from '../src/highfly/sf16_eight_support_elemental';
 const CASES=[
- {id:'hf_paladin_s5',cls:'paladin',lv:20,mode:'enemy'},
- {id:'hf_shaman_s2',cls:'shaman',lv:5,mode:'enemy'},
- {id:'hf_warlock_s1',cls:'warlock',lv:1,mode:'enemy'}
+ {id:'hf_paladin_s5',cls:'paladin',lv:20},
+ {id:'hf_shaman_s2',cls:'shaman',lv:5},
+ {id:'hf_warlock_s1',cls:'warlock',lv:1}
 ] as const;
 let registered:string[]=[];
 beforeAll(()=>{
@@ -69,25 +69,21 @@ describe('SF16 — three distinct native support/elemental skills in original re
    sim.setPlayerLevel(level);sim.tick();
    const p=sim.player;p.resource=p.maxResource;p.hitBonus=1;p.facing=0;
    p.hp=Math.max(1,Math.round(p.maxHp*.4));
-   const oldHp=p.hp,oldMaxHp=p.maxHp,oldZ=p.pos.z;
-   const m=c.mode==='enemy'?target(sim,161000+level+CASES.indexOf(c)*211,
-    c.id==='hf_paladin_s5'?8:12):null;
-   if(m)sim.targetEntity(m.id,p.id);
-   if(c.mode==='friendly')sim.castAbilityOn(c.id,p.id,p.id);
-   else sim.castAbility(c.id,p.id);
-   let damage=0,healing=0,seenSpeed=false,seenStun=false;
+   const m=target(sim,161000+level+CASES.indexOf(c)*211,
+    c.id==='hf_paladin_s5'?8:12);
+   sim.targetEntity(m.id,p.id);
+   sim.castAbility(c.id,p.id);
+   let damage=0,seenSpeed=false,seenStun=false;
    for(let tick=0;tick<105;tick++){
     for(const ev of sim.tick()){
      if(ev.type==='damage'&&ev.sourceId===p.id&&m&&ev.targetId===m.id)
       damage+=ev.amount;
-     if(ev.type==='heal2'&&ev.sourceId===p.id&&ev.targetId===p.id)
-      healing+=ev.amount;
     }
     if(p.auras.some(a=>a.kind==='buff_speed'))seenSpeed=true;
     if(m?.auras.some(a=>a.kind==='stun'))seenStun=true;
    }
    expect(p.cooldowns.has(c.id),c.id+' cast did not execute').toBe(true);
-   if(['hf_priest_s2','hf_shaman_s2','hf_warlock_s1'].includes(c.id)){
+   if(['hf_shaman_s2','hf_warlock_s1'].includes(c.id)){
     expect(damage,c.id+' must damage a REAL mob').toBeGreaterThan(0);
     expect(m?.hp).toBeLessThan(m?.maxHp??0);
    }
@@ -95,19 +91,6 @@ describe('SF16 — three distinct native support/elemental skills in original re
     expect(seenSpeed).toBe(true);
     expect(seenStun).toBe(true);
    }
-   if(c.id==='hf_priest_s3'){
-    expect(p.auras.some(a=>a.kind==='absorb')).toBe(true);
-    expect(p.auras.some(a=>a.kind==='hot')).toBe(true);
-   }
-   if(c.id==='hf_shaman_s3'){
-    expect(healing).toBeGreaterThan(0);
-    expect(p.hp).toBeGreaterThan(oldHp);
-   }
-   if(c.id==='hf_warrior_u1'){
-    expect(p.maxHp).toBeGreaterThanOrEqual(oldMaxHp);
-    expect(p.auras.some(a=>a.kind==='buff_ap_pct')).toBe(true);
-   }
-   if(c.id==='hf_mage_s3')expect(Math.abs(p.pos.z-oldZ)).toBeGreaterThan(5);
   },25000);
  }
  it('fails as a unit on missing donors without half-registering',()=>{
