@@ -81,13 +81,25 @@ function sameTargetAndSchool(a: AbilityDef, b: AbilityDef): boolean {
     && a.requiresTarget === b.requiresTarget
     && (a.targetType ?? 'enemy') === (b.targetType ?? 'enemy')
     && (a.targetMode ?? 'entity') === (b.targetMode ?? 'entity')
-    && (a.selfCentered ?? false) === (b.selfCentered ?? false);
+    && (a.selfCentered ?? false) === (b.selfCentered ?? false)
+    && a.range === b.range
+    && a.minRange === b.minRange
+    && a.scalesWith === b.scalesWith
+    && a.projectile === b.projectile
+    && a.partyOnlyTarget === b.partyOnlyTarget
+    && a.targetsDead === b.targetsDead;
 }
 function safelyUnrestricted(def: AbilityDef): boolean {
   return !def.passive && !def.hiddenFromPlayer && !def.onNextSwing
-    && !def.empowerStages && !def.channel && !def.specs
+    && !def.empowerStages && !def.channel && !def.specs && !def.excludeSpecs
     && !def.requiresQuest && !def.requiresForm && !def.requiresAuraKind
-    && !def.requiresOutOfCombat && !def.spendsCombo;
+    && !def.requiresOutOfCombat && !def.requiresStealth
+    && !def.requiresOutsideInstance && !def.requiresShield
+    && !def.requiresDodgeProc && !def.requiresTargetHpBelow
+    && !def.executeThreshold && !def.spendsCombo && !def.awardsCombo
+    && !def.actionReplacement && !def.offGcd && !def.usableWhileCasting
+    && !def.soulFragmentCost && !def.devotionCost && !def.ruinCost
+    && !def.spendsAllResource && !def.maxCharges;
 }
 /**
  * The only two certified *composition shapes*, NOT certified combat outcomes.
@@ -102,6 +114,13 @@ function safelyUnrestricted(def: AbilityDef): boolean {
 function composePilot(
   spec: HighflyFusionSpec, primary: AbilityDef, second: AbilityDef,
 ): AbilityDef {
+  // Never unlock a donor's LV20 mechanics through an LV15 fusion.
+  if (primary.learnLevel > spec.unlockLevel || second.learnLevel > spec.unlockLevel)
+    throw new Error('SF4 donor level exceeds fusion unlock: ' + spec.id);
+  // Rank-specific cast times cannot silently revert to the base cast clock.
+  if ([primary, second].some(donor =>
+    donor.ranks?.some(rank => rank.castTime !== undefined && rank.castTime !== donor.castTime)))
+    throw new Error('SF4 rank cast timing requires adapter: ' + spec.id);
   if (!sameTargetAndSchool(primary, second)
     || !safelyUnrestricted(primary) || !safelyUnrestricted(second)) {
     throw new Error('SF4 incompatible pilot definitions: ' + spec.id);
@@ -161,6 +180,12 @@ export function installSf4NativePilots(
   const catalog = Object.values(HIGHFLY_FUSED_SKILLS).flat();
   const prepared: { def: AbilityDef; classId: HighflyClass }[] = [];
   for (const spec of catalog) {
+    // Validate the entire destination BEFORE the first write. Otherwise a
+    // missing/duplicate class list could leave one Priest skill half installed.
+    if (!classes[spec.classId] || !Array.isArray(classes[spec.classId].abilities))
+      throw new Error('SF4 missing class registry: ' + spec.classId);
+    if (classes[spec.classId].abilities.includes(spec.id))
+      throw new Error('SF4 duplicate class slot: ' + spec.id);
     // Donor truth must hold for ALL 63 even though only two are enabled.
     for (const id of spec.donors) {
       if (!abilities[id] || abilities[id].class !== spec.classId)
