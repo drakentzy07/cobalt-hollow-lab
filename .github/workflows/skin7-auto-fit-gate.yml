@@ -1,0 +1,101 @@
+name: HIGHFLY SKIN7 — Auto-Fit Factory Experimental Gate (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-skin7-auto-fit-factory-01]
+    paths:
+      - 'skin7-auto-fit/**'
+      - '.github/workflows/skin7-auto-fit-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-autofit-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python syntax and deterministic dependencies
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check numpy scipy
+          python3 -m py_compile skin7-auto-fit/auto_fit.py
+      - name: Download EXACT upstream rig and verify frozen asset SHA
+        run: |
+          set -euo pipefail
+          mkdir -p tmp/skin7
+          curl -fsSL --retry 3 --max-time 120 \
+           https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb \
+           -o tmp/skin7/warrior_modular.glb
+          test "$(git hash-object tmp/skin7/warrior_modular.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          echo HIGHFLY_ORIGINAL_RIG_BYTE_IDENTITY_GREEN=1
+      - name: Generate three-part procedural test fixture (NOT user SupaVoxel GLB)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,struct,math
+          from pathlib import Path
+          import numpy as np
+          verts=[];faces=[]
+          for group,cx in enumerate([-.66,0,.66]):
+           start=len(verts)
+           for yy in range(70):
+            y=-.625+yy*1.20/69
+            radius=.17 + .10*math.exp(-((y+.12)/.19)**2)
+            for k in range(40):
+             angle=2*math.pi*k/40
+             verts.append([cx+radius*math.cos(angle),y,.18*math.sin(angle)])
+           for yy in range(69):
+            for k in range(40):
+             a=start+yy*40+k;b=start+yy*40+(k+1)%40;c=a+40;d=b+40
+             faces.extend([[a,b,c],[b,d,c]])
+          f=np.array(faces,dtype='<u4').reshape(-1)
+          v=np.array(verts,dtype='<f4').reshape(-1)
+          data=f.tobytes()+v.tobytes()
+          j={'asset':{'version':'2.0','generator':'HIGHFLY CI synthetic fixture'},'scenes':[{'nodes':[0]}],'scene':0,
+            'nodes':[{'name':'synthetic triptych','mesh':0}],
+            'meshes':[{'primitives':[{'attributes':{'POSITION':1},'indices':0}]}],
+            'buffers':[{'byteLength':len(data)}],
+            'bufferViews':[{'buffer':0,'byteOffset':0,'byteLength':f.nbytes,'target':34963},
+                           {'buffer':0,'byteOffset':f.nbytes,'byteLength':v.nbytes,'byteStride':12,'target':34962}],
+            'accessors':[{'bufferView':0,'componentType':5125,'count':len(f),'type':'SCALAR'},
+                         {'bufferView':1,'componentType':5126,'count':len(verts),'type':'VEC3'}]}
+          js=json.dumps(j,separators=(',',':')).encode()
+          js+=b' '*((-len(js))%4)
+          chunks=struct.pack('<I4s',len(js),b'JSON')+js+struct.pack('<I4s',len(data),b'BIN\0')+data
+          Path('tmp/skin7/fixture_triptych.glb').write_bytes(struct.pack('<4sII',b'glTF',2,len(chunks)+12)+chunks)
+          PY
+      - name: Test actual rigged GLB export and non-destructive invariants
+        run: |
+          set -euo pipefail
+          python3 skin7-auto-fit/auto_fit.py \
+            --source tmp/skin7/fixture_triptych.glb \
+            --rig tmp/skin7/warrior_modular.glb \
+            --output tmp/skin7/fixture_autofit.glb \
+            --report tmp/skin7/fixture_proof.json
+          python3 - <<'PY'
+          import json,struct
+          from pathlib import Path
+          p=Path('tmp/skin7/fixture_proof.json')
+          r=json.loads(p.read_text())
+          assert r['component_count']==3 and len(r['parts'])>=7
+          assert r['triangle_count']<=30800
+          assert r['joint_count']==23 and r['animation_count']==22
+          assert all(s['hasSkin'] for s in r['parts'])
+          assert r['gates']['visual_fit'] is False and r['gates']['android'] is False
+          data=Path('tmp/skin7/fixture_autofit.glb').read_bytes()
+          assert data[:4]==b'glTF' and struct.unpack_from('<I',data,8)[0]==len(data)
+          print('SKIN7_AUTOFIT_EXPERIMENTAL_NATIVE_STRUCTURE_GREEN=1')
+          print('SKIN7_PHYSICAL_OR_VISUAL_ART_APPROVAL=NOT_TESTED')
+          PY
+      - name: Artifact only — NEVER deploy game Pages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN7-AUTOFIT-STRUCTURE-ONLY
+          path: |
+            tmp/skin7/fixture_proof.json
+            tmp/skin7/fixture_autofit.glb
+            skin7-auto-fit/index.html
+          if-no-files-found: warn
+          retention-days: 30
