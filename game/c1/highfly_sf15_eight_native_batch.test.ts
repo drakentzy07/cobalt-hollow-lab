@@ -94,7 +94,7 @@ describe('SF15 eight REAL source-effect special adapters',()=>{
    for(let tick=0;tick<95;tick++){
     for(const e of sim.tick()){
      if(e.type==='damage'&&e.sourceId===hero.id) {damage+=e.amount;observedDamage=true;}
-     if(e.type==='heal'&&e.targetId===hero.id)observedHeal=true;
+     if(e.type==='heal2'&&e.sourceId===hero.id&&e.targetId===hero.id&&e.amount>0)observedHeal=true;
     }
     if(hero.auras.length>0)observedAura=true;
    }
