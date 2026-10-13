@@ -58,4 +58,4 @@ for before,after in [(old_import,new_import),(old_cond,new_cond)]:
 if "installHighflySF3Fusions(ABILITIES, CLASSES)" in s:
     raise SystemExit("SF4_UNSAFE_INSTALLER_STILL_LIVE")
 p.write_text(s,encoding="utf-8")
-print("HIGHFLY_SF4_TWO_NATIVE_PILOTS_GUARDED_WITHOUT_PUBLIC_GAME_CHANGE=1")
+print("HIGHFLY_SF4_FOUR_NATIVE_PILOTS_GUARDED_WITHOUT_PUBLIC_GAME_CHANGE=1")

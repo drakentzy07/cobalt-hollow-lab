@@ -126,6 +126,8 @@ describe('SF4 two Priest pilots — ORIGINAL Sim effect and cast gates', () => {
     expect(priest.resource).toBeLessThan(startResource);
     expect(priest.auras.some(a => a.kind === 'absorb')).toBe(true);
     expect(priest.auras.some(a => a.kind === 'hot')).toBe(true);
+    expect(priest.auras.filter(a => a.id.startsWith('hf_priest_s3'))
+      .map(a => a.kind).sort()).toEqual(['absorb','hot']);
     const startHp = priest.hp;
     for (let i = 0; i < 70; i++) sim.tick();
     expect(priest.hp).toBeGreaterThan(startHp);

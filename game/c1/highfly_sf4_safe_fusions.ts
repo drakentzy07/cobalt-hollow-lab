@@ -177,7 +177,14 @@ function composePilot(
     const rider: AbilityEffect = secondEffect.type === 'dot' || secondEffect.type === 'hot'
       ? { ...secondEffect, total: Math.max(1, Math.round(secondEffect.total * 0.3)) }
       : secondEffect;
-    return { level, cost: costAt(primary, level), effects: [...first, rider] };
+    // Native Sim deduplicates auras by (id, sourceId): a shield and HoT
+    // sharing this fusion's id would silently erase the shield. Give the
+    // absorb arm a distinct id while leaving the HoT on its cast id.
+    const lead = spec.id === 'hf_priest_s3'
+      ? first.map(effect => effect.type === 'absorb'
+          ? { ...effect, auraId: spec.id + '_absorb' } : effect)
+      : first;
+    return { level, cost: costAt(primary, level), effects: [...lead, rider] };
   });
   return {
     ...primary,

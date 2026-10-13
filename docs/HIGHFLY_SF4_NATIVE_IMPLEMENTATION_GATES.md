@@ -16,6 +16,11 @@
 - `game/c1/highfly_sf4_real_sim.test.ts`: **7 pruebas redactadas** (sin certificación todavía): grito Warrior con AP/HP temporal, Rogue con velocidad/esquiva, 2 bloqueos por nivel, Azote daño/DoT/coste/CD, Escudo absorb/HoT, rechazo por rango, bloqueo Priest temprano. Reutiliza `Sim`, no crea combate paralelo.
 - `overlays/highfly_sf4_native_pilots.py`: instalación opcional en *checkout desechable*, que sustituye el registro inseguro `installHighflySF3Fusions` por `installSf4NativePilots`; requiere `VITE_HIGHFLY_SF4=1` para habilitarlo en producción. La ejecución de tests no modifica la versión pública.
 
+## V10 — hallazgo real del RUN #38408956435
+- Auditoría estática SF4 y matriz SF5: 18/18 tests GREEN; 6 de 7 pruebas dentro del Sim real GREEN.
+- Fallo encontrado: Escudo Renovador aplicaba un HoT que reemplazaba el escudo absorbente: ambos tenían el mismo aura id y el Sim deduplica por id/sourceId.
+- Corrección: `hf_priest_s3_absorb` como `auraId` exclusivo en el efecto absorbente y `hf_priest_s3` para el HoT. Prueba de coexistencia añadida; requiere nuevo RUN antes de certificar GREEN.
+
 ## V10 — controles y pruebas adicionales (NO ejecutados)
 - Registro previo atómico: validar destino de las nueve clases y slots duplicados antes de escribir la primera habilidad.
 - Comprobar que ningún donante tenga `learnLevel` superior al nivel de desbloqueo de la fusión.

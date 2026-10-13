@@ -47,6 +47,7 @@ describe('SF4 fail-closed 9/9 fusion integration — no release or save mutation
     expect(shield.school).toBe('holy');
     expect(shield.targetType).toBe('friendly');
     expect(shield.effects.map(e=>e.type)).toEqual(['absorb','hot']);
+    expect(shield.effects[0]).toMatchObject({type:'absorb',auraId:'hf_priest_s3_absorb'});
     expect(shield.effects[1]).toMatchObject({type:'hot',total:14,duration:15,interval:3});
   });
   it('keeps the actual 180s Warrior and 300s Rogue cooldowns, aura identities and off-GCD mechanics', () => {
@@ -78,7 +79,7 @@ describe('SF4 fail-closed 9/9 fusion integration — no release or save mutation
     ]);
     const shield20=shield.ranks?.find(r=>r.level===20);
     expect(shield20?.effects).toEqual([
-      expect.objectContaining({type:'absorb',amount:210}),
+      expect.objectContaining({type:'absorb',amount:210,auraId:'hf_priest_s3_absorb'}),
       expect.objectContaining({type:'hot',total:62}),
     ]);
   });
