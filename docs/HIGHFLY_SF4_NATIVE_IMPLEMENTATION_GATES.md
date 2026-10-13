@@ -13,7 +13,15 @@
 - `game/c1/highfly_sf4_native_pilots.test.ts`: expectativas de 9 clases, 63 declaradas, 61 bloqueadas, daño/DoT, absorb/HoT, ranks, entrenamiento intacto y registro atómico.
 - `game/c1/highfly_sf4_diagnostics.ts`: diagnóstico para las 63 recetas por ID, objetivo, elemento, rango, tiempos, requisitos de forma/aura, efectos especiales.
 - `game/c1/highfly_sf4_diagnostics.test.ts`: contrato de 9×7, sin donantes extranjeros y detección de errores conocidos.
+- `game/c1/highfly_sf4_real_sim.test.ts`: **4 pruebas nuevas redactadas pero NO ejecutadas**: Azote daño/DoT/coste/CD, Escudo absorb/HoT, rechazo de rango y bloqueo de desbloqueo temprano. Reutiliza `Sim`, no crea combate paralelo.
 - `overlays/highfly_sf4_native_pilots.py`: instalación opcional en *checkout desechable*, que sustituye el registro inseguro `installHighflySF3Fusions` por `installSf4NativePilots`; requiere `VITE_HIGHFLY_SF4=1` para habilitarlo. **No ejecutar sin permiso para probar.**
+
+## V10 — controles y pruebas adicionales (NO ejecutados)
+- Registro previo atómico: validar destino de las nueve clases y slots duplicados antes de escribir la primera habilidad.
+- Comprobar que ningún donante tenga `learnLevel` superior al nivel de desbloqueo de la fusión.
+- Verificar escuela, geometría de objetivo, rango, escalado, proyectiles y condiciones de lanzamiento.
+- Detectar action replacements, habilidades con cargas, donantes de nivel futuro y variaciones de casteo por rango en la matriz 9×7.
+- El overlay aislado instala opcionalmente `tests/highfly_sf4_real_sim.test.ts` para futuro test; **ninguna prueba se ha ejecutado en SF4/V10, ningún RUN fue lanzado**.
 
 ## Prototipos candidatos a simulación (NO certificados)
 1. Priest S2, **Azote Mental** (`mind_blast` + `shadow_word_pain`): usa un impacto de sombra más 30% del daño periódico original del donante. La combinación hereda enfriamiento y coste del golpe principal; snapshots actualizados por rangos. No se asegura la activación de procs específicos de la definición vieja.
