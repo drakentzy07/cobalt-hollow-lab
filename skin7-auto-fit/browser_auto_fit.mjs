@@ -104,11 +104,14 @@ function voxelReduce(coords,faces,limit){
 }
 function transferSkin(position,part,reference){
  const bones=reference.skeleton.bones;
- const boneNames=bones.map(b=>b.name);
- const choices=JOINTS[part].filter(name=>boneNames.includes(name));
- if(!choices.length)throw Error('Huesos nativos ausentes en '+part);
- const anchors=choices.map(name=>{
-  const index=boneNames.indexOf(name),p=new THREE.Vector3();
+ // GLTFLoader sanitizes node names for animation bindings: "upperarm.l" -> "upperarm_l".
+ // Never assume glTF node names and Three.js Object3D names are byte-identical.
+ const normalize=name=>String(name||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ const boneIds=new Map(bones.map((bone,index)=>[normalize(bone.name),index]));
+ const choices=JOINTS[part].map(name=>boneIds.get(normalize(name))).filter(index=>index!==undefined);
+ if(!choices.length)throw Error('Huesos nativos ausentes en '+part+'; encontrados: '+bones.map(b=>b.name).join(', '));
+ const anchors=choices.map(index=>{
+  const p=new THREE.Vector3();
   bones[index].getWorldPosition(p);
   return {index,x:p.x,y:p.y,z:p.z};
  });
