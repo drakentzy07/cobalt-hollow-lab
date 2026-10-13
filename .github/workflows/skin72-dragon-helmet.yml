@@ -1,0 +1,55 @@
+name: HIGHFLY SKIN7.2 — ORIGINAL DRAGON HELMET NATIVE SLOT (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-skin7-2-dragon-helmet-native-slot]
+    paths:
+      - 'character-truth/integration-modules/skin72-*'
+      - 'character-truth/skin72-helmet-compare.html'
+      - '.github/workflows/skin72-dragon-helmet.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dragon-helm-original-kaykit-slot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch authentic frozen ClaudeCraft modular and validate exact source SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/models/chars/modular
+          curl -fsSL --retry 3 --max-time 90 \
+           https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb \
+           -o public/models/chars/modular/warrior_modular.glb
+          test "$(git hash-object public/models/chars/modular/warrior_modular.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          echo SKIN72_AUTHENTIC_KAYKIT_SOURCE_GLB_GREEN=1
+      - name: Forge genuinely NEW compact dragon skull; replace Paladin helmet in native rig slot
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/skin72-dragon-helmet-forge.mjs
+          node character-truth/integration-modules/skin72-dragon-helmet-forge.mjs
+          node --input-type=module -e "import fs from 'node:fs';import assert from 'node:assert/strict';const p=JSON.parse(fs.readFileSync('character-truth/skin72-evidence/dragon-helmet-proof.json'));assert(p.newGeometry&&p.originalHelmetReplacedNotStacked&&p.originalNativeBones===23&&p.originalAnimations===22&&p.newTriangles>300&&p.sourceFileUnchanged&&p.rigAndAnimationUnchanged&&p.artApproved===false);console.log('SKIN72_REAL_ORIGINAL_HEAD_SLOT_RIG_GATE_GREEN=1')"
+          test -s character-truth/skin72-evidence/HIGHFLY-SKIN72-DRAGON-HELM-ORIGINAL.glb
+      - name: Run real Chrome Three.js original vs dragon on skinned Hunter
+        shell: bash
+        timeout-minutes: 9
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false three@0.180.0 playwright@1.55.0 meshoptimizer@0.23.0
+          npx playwright install --with-deps chromium
+          python3 -m http.server 4257 --bind 127.0.0.1 >/tmp/skin72-dragon-browser.log 2>&1 &
+          sleep 2
+          node character-truth/integration-modules/skin72-visual-gate.cjs
+          test -s character-truth/skin72-evidence/skin72-before-after.png
+          echo SKIN72_DRAGON_HELM_WEBGL_REAL_GEOMETRY_GREEN=1
+      - name: Evidence only, no game deployment and no artist approval
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN72-DRAGON-HEAD-ORIGINAL-MESH-REAL-GLB
+          path: character-truth/skin72-evidence/
+          if-no-files-found: warn
+          retention-days: 30
