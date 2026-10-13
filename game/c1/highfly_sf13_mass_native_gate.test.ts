@@ -47,6 +47,8 @@ describe('SF13 47 full audit and conservative native effect composition',()=>{
  it('installs only sound compositions atomically and keeps all original 16',()=>{
   const signatures=Object.fromEntries(installed.map(x=>[x,JSON.stringify(ABILITIES[x])]));
   extras=installSf13Compatible(ABILITIES,CLASSES);
+  expect(extras).toContain('hf_mage_s1');
+  expect(extras).toContain('hf_hunter_s2');
   expect(extras.length).toBeGreaterThanOrEqual(0);
   expect(extras.every(x=>!installed.includes(x))).toBe(true);
   expect(new Set([...extras,...installed]).size).toBe(extras.length+16);
@@ -67,22 +69,27 @@ describe('SF13 47 full audit and conservative native effect composition',()=>{
     const sim=new Sim({seed:130000+level+extras.indexOf(id)*101,playerClass:d.class,autoEquip:true});
     sim.setPlayerLevel(level);sim.tick();
     const hero=sim.player;hero.resource=hero.maxResource;hero.hitBonus=1;
+    let targetMob:ReturnType<typeof createMob>|undefined;
     if(d.requiresTarget && d.targetType!=='friendly'){
      const dist=Math.max(3,Math.min(d.range,Math.max(d.minRange??0,8)));
      const mob=createMob(133000+level+extras.indexOf(id)*101,MOBS.training_dummy,20,
        {x:hero.pos.x,y:hero.pos.y,z:hero.pos.z+dist});
      mob.hostile=true;mob.aiState='idle';mob.maxHp=mob.hp=100000;
-     sim.addEntity(mob);sim.targetEntity(mob.id,hero.id);
+     sim.addEntity(mob);sim.targetEntity(mob.id,hero.id);targetMob=mob;
     }
     if(d.targetType==='friendly')sim.castAbilityOn(id,hero.id,hero.id);
     else sim.castAbility(id,hero.id);
-    let seen=false;
+    let seen=false,elementalDot=false;
     for(let i=0;i<85;i++) {
      const events=sim.tick();
+     if(targetMob?.auras.some(a=>a.kind==='dot'&&
+       a.id===id+(id==='hf_mage_s1'?'_ignite':'_venom')))elementalDot=true;
      if(events.some(e=>['damage','heal','auraApply','auraAdd','castComplete'].includes(e.type)))seen=true;
     }
     expect(hero.cooldowns.has(id),id+' LV'+level+' was not cast in native Sim').toBe(true);
     expect(seen||hero.auras.some(a=>a.id===id),id+' LV'+level+' had no native effects').toBe(true);
+    if(id==='hf_mage_s1'||id==='hf_hunter_s2')
+     expect(elementalDot,id+' LV'+level+' no real elemental DoT').toBe(true);
    }
   }
  });
