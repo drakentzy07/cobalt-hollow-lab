@@ -25,9 +25,9 @@ describe('HIGHFLY SF4 native donor compatibility — ALL 9 classes / ALL 63', ()
     expect(byId.get('hf_priest_s4')?.blockers).toContain('DONOR_LEVEL_AHEAD_OF_UNLOCK');
     expect(byId.get('hf_rogue_s2')?.blockers).toContain('ACTION_REPLACEMENT_HANDLER');
   });
-  it('does not claim the other 56 are playable from the existence of IDs',()=>{
-    expect(report.filter(x=>x.status==='native-pilot')).toHaveLength(7);
-    expect(report.filter(x=>x.status!=='native-pilot')).toHaveLength(56);
+  it('does not claim the other 53 are playable from the existence of IDs',()=>{
+    expect(report.filter(x=>x.status==='native-pilot')).toHaveLength(10);
+    expect(report.filter(x=>x.status!=='native-pilot')).toHaveLength(53);
     expect(report.filter(x=>x.status!=='native-pilot' && x.blockers.length===0)).toEqual([]);
   });
 });
