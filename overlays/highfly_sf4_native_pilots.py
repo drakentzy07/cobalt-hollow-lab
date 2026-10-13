@@ -94,6 +94,13 @@ for name,dest in sf12_pairs:
         raise SystemExit("SF12_SOURCE_MISSING_OR_DUPLICATE:"+name)
     shutil.copyfile(src,target)
 
+# SF13 strict lab-only native fusion gate. Must be imported after the 16 pilots.
+sf13_src=Path('../v9-corrections/game/c1/highfly_sf13_mass_native_gate.ts')
+sf13_dst=Path('src/highfly/sf13_mass_native_gate.ts')
+if not sf13_src.is_file() or sf13_dst.exists():
+    raise SystemExit('SF13_SOURCE_MISSING_OR_DUPLICATE')
+shutil.copyfile(sf13_src,sf13_dst)
+
 # Stage the complete read-only 9×7 donor unlock planner and its unit contract.
 stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
 stages_dest = Path("src/highfly/highfly_sf5_unlock_stages.ts")
@@ -111,7 +118,8 @@ s=p.read_text(encoding="utf-8")
 old_import="import { installHighflySF3Fusions } from '../../highfly/sf3_fusion_runtime';\n"
 new_import=("import { installSf4NativePilots } from '../../highfly/sf4_safe_fusions';\n"
             "import { installSf10NativeExpansion } from '../../highfly/sf10_three_native_reuses';\n"
-            "import { installSf12NativeExpansion } from '../../highfly/sf12_three_native_mechanics';\n")
+            "import { installSf12NativeExpansion } from '../../highfly/sf12_three_native_mechanics';\n"
+            "import { installSf13Compatible } from '../../highfly/sf13_mass_native_gate';\n")
 old_cond="""if (import.meta.env?.VITE_HIGHFLY_SF3 === '1') {
   installHighflySF3Fusions(ABILITIES, CLASSES);
 }"""
@@ -124,6 +132,9 @@ if (import.meta.env?.VITE_HIGHFLY_SF4 === '1') {
   }
   if (import.meta.env?.VITE_HIGHFLY_SF12 === '1') {
     installSf12NativeExpansion(ABILITIES, CLASSES);
+    if (import.meta.env?.VITE_HIGHFLY_SF13 === '1') {
+      installSf13Compatible(ABILITIES, CLASSES);
+    }
   }
 }"""
 for before,after in [(old_import,new_import),(old_cond,new_cond)]:
