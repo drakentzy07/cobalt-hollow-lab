@@ -1,0 +1,32 @@
+{
+  "schema": "highfly.skin7-1.integrated-paladin-helmet/1",
+  "name": "Paladin Centinela — KayKit native reinterpretation",
+  "sourceNode": "Armor_paladin_Head",
+  "rig": "Rig_Medium",
+  "designBrief": "Reformar la MALLA NATIVA compacta: visor V integrado en la cara, frente mas cerrado y afilado, sienes mas suaves, mandibula sobria, nuca mas protegida. Sin cuernos, crestas, proyecciones, volumen inflado ni nuevas piezas.",
+  "geometry": {
+    "visorV": 0.12,
+    "browDefinition": 0.1,
+    "templeStreamline": 0.12,
+    "chinTaper": 0.17,
+    "napeTuck": 0.12,
+    "crownFlatten": 0.07
+  },
+  "colors": {
+    "base": "#293749",
+    "trim": "#a5abb0"
+  },
+  "constraints": {
+    "sourceOnly": true,
+    "noNewMeshes": true,
+    "noNewPrimitives": true,
+    "noExtrusions": true,
+    "noAddOns": true,
+    "noBodypaint": true,
+    "sourceUnchanged": true,
+    "preserveJointAndWeightAccessors": true,
+    "artApprovalRequired": true,
+    "gameDeployAllowed": false
+  },
+  "references": "Native KayKit Adventurers/ClaudeCraft original Knight and Paladin; avoid V2 spiky helmet"
+}
