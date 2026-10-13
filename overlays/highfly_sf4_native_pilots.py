@@ -36,6 +36,14 @@ if not sf7_test_source.is_file() or sf7_test_dest.exists():
     raise SystemExit("SF7_NATIVE_HUD_TEST_MISSING_OR_DUPLICATED")
 shutil.copyfile(sf7_test_source, sf7_test_dest)
 
+# SF8: 10 fusion mechanics at the exact HIGHFLY unlock LV and at LV99,
+# including direct/periodic damage, self buffs, heal, shield, teleport.
+sf8_source=Path("../v9-corrections/game/c1/highfly_sf8_nine_class_real_combat_effects.test.ts")
+sf8_dest=Path("tests/highfly_sf8_nine_class_real_combat_effects.test.ts")
+if not sf8_source.is_file() or sf8_dest.exists():
+    raise SystemExit("SF8_NATIVE_COMBAT_OUTCOME_TEST_MISSING_OR_DUPLICATED")
+shutil.copyfile(sf8_source,sf8_dest)
+
 # Stage the complete read-only 9×7 donor unlock planner and its unit contract.
 stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
 stages_dest = Path("src/highfly/highfly_sf5_unlock_stages.ts")
