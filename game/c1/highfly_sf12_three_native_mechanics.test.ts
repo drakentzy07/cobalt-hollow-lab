@@ -42,7 +42,7 @@ describe('SF12 — Warrior arrival hit+slow, Paladin dual-target, Mage absorb, a
  for(const c of CASES)for(const lv of [c.lv,99]){
   it(c.id+' LV'+lv+' learns and appears in ORIGINAL ten-slot hotbar',()=>{
    expect(abilitiesKnownAt(c.cls,lv).some(x=>x.def.id===c.id)).toBe(true);
-   expect(abilitiesKnownAt(c.cls,lv-1).some(x=>x.def.id===c.id)).toBe(false);
+   expect(abilitiesKnownAt(c.cls,c.lv-1).some(x=>x.def.id===c.id)).toBe(false);
    expect(placeAbilityOnSlot(Array.from({length:10},()=>null),c.id,3)[3]).toEqual({type:'ability',id:c.id});
    expect(isAbilityActionBarEligible(ABILITIES[c.id])).toBe(true);
   });
@@ -67,7 +67,7 @@ describe('SF12 — Warrior arrival hit+slow, Paladin dual-target, Mage absorb, a
     if(mob)minMobHp=Math.min(minMobHp,mob.hp);
    }
    expect(p.cooldowns.has(c.id),c.id+' did not execute a real native cast').toBe(true);
-   expect(minResource).toBeLessThan(p.maxResource);
+   // Warrior uses rage: a charge can generate rage rather than spend it.\n   // Other resource classes must show actual resource spend.\n   if(c.cls!=='warrior')expect(minResource).toBeLessThan(p.maxResource);
    if(c.cls==='warrior'){
     expect(Math.hypot(p.pos.x-before.pos.x,p.pos.z-before.pos.z)).toBeGreaterThan(2);
     expect(minMobHp).toBeLessThan(oldHp);
