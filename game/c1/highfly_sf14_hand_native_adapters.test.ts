@@ -96,9 +96,11 @@ describe('SF14 exact two-original-mechanic adapters in REAL Sim',()=>{
  it('atomic error for absent original donor preserves other registry entries',()=>{
   const defs={...ABILITIES};delete defs.hf_priest_s1;delete defs.hf_shaman_s1;
   delete defs.chain_lightning;
-  const classes=Object.fromEntries(Object.entries(CLASSES).map(([id,c])=>
-   [id,{abilities:c.abilities.filter(x=>x!=='hf_priest_s1'&&x!=='hf_shaman_s1')}]))
-   as Record<PlayerClass,{abilities:string[]}>;
+  const classes={} as Record<PlayerClass,{abilities:string[]}>;
+  for(const [id,c] of Object.entries(CLASSES)){
+   classes[id as PlayerClass]={abilities:c.abilities.filter(x=>
+    x!=='hf_priest_s1'&&x!=='hf_shaman_s1')};
+  }
   const n=Object.keys(defs).length;
   expect(()=>installSf14HandAdapters(defs,classes)).toThrow(/original donor contract/);
   expect(Object.keys(defs)).toHaveLength(n);
