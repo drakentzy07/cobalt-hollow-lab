@@ -1,0 +1,41 @@
+{
+  "schema": "highfly.skin7.2.original-compatible-helmet/1",
+  "design": "Dragon Helm Compact — Guardian Drake",
+  "sourceSlot": "Armor_paladin_Head",
+  "rig": "Rig_Medium",
+  "designIntent": "Original compact dragon-head helmet for original modular KayKit/ClaudeCraft Hunter. Sculpt a connected dragon skull shell with short integrated snout, brows, dragon eyes, broad stylized geometric scales and jawline, no long horns nor externally glued on pieces.",
+  "dimensions": {
+    "maxWidthRatio": 1.12,
+    "maxHeightRatio": 1.12,
+    "maxDepthRatio": 1.25
+  },
+  "palette": {
+    "main": "#336a62",
+    "scale": "#4f9280",
+    "ridge": "#799f82",
+    "shadow": "#193c3c",
+    "bone": "#c8b99a",
+    "eyes": "#142c38"
+  },
+  "geometry": {
+    "radialSegments": 16,
+    "profileRings": 11,
+    "frontSnoutExtension": 0.19,
+    "browProjection": 0.07,
+    "scaleSurfacePanels": true,
+    "faceEyeBand": true,
+    "lowerJawBand": true
+  },
+  "rules": {
+    "baseGlbImmutable": true,
+    "replaceOriginalHelmetNotOverlay": true,
+    "new3dMeshRequired": true,
+    "skinHeadJoint": true,
+    "preserveOriginalRig": true,
+    "preserveAnimations": true,
+    "sharedWithMaleAndFemale": true,
+    "manualArtApprovalRequired": true,
+    "noPublicGameDeployment": true
+  },
+  "compiler": "reproducible procedural mesh generation within native head-slot contract; no LLM image-to-3D claimed"
+}
