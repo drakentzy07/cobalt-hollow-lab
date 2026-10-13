@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HIGHFLY SKIN 7.3 · AUTO-FIT FACTORY · Importador automático</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%238a50dd' d='M32 2 56 16v32L32 62 8 48V16Z'/%3E%3Cpath fill='%23fff' d='m32 13 13 19-13 19-13-19Z'/%3E%3C/svg%3E">
+<title>HIGHFLY SKIN 7.4 · NATIVE ARMOR BRIDGE</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%238a50dd' d='M32 2 56 16v32L32 62 8 48V16Z'/%3E%3Cpath fill='%23fff' d='m32 13 13 19-13 19-13-19Z'/%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#10131d;color:#edf0fd;font:14px system-ui,-apple-system,sans-serif}header{padding:15px 20px;border-bottom:1px solid #363e58;background:#1b2032}h1{font-size:22px;margin:0 0 5px}p{color:#b6c2d9;margin:0;line-height:1.5}
 main{max-width:1500px;margin:auto;padding:12px}.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#20283a;border:1px solid #394562;padding:12px;border-radius:12px;margin-bottom:12px}
@@ -14,23 +14,24 @@ article{border:1px solid #465573;background:#1d2436;border-radius:12px;overflow:
 "three/addons/":"https://esm.sh/three@0.180.0/examples/jsm/",
 "meshoptimizer":"https://esm.sh/meshoptimizer@0.23.0"
 }}</script></head>
-<body><header><h1>HIGHFLY · SKIN 7 / AUTO-FIT FACTORY</h1>
-<p>Elegí el archivo original de SupaVoxel: detectamos las tres vistas, aislamos la frontal y la conectamos automáticamente a Rig_Medium. También acepta GLB previamente convertido. No modifica HIGHFLY público.</p></header>
-<main><div class="notice" id="import-progress" role="status">Seleccioná <strong>New_Project_13102026.glb</strong> directamente: el modelo original de ClaudeCraft se cargará en ambos paneles y la nueva geometría se adaptará al rig. La conversión es experimental, no una armadura artística aprobada.</div><div class="controls">
-<label><strong>IMPORTAR GLB (SupaVoxel original o armadura adaptada)</strong> <input id="file" type="file" accept=".glb,model/gltf-binary"></label>
+<body><header><h1>HIGHFLY · SKIN 7.4 / NATIVE ARMOR BRIDGE</h1>
+<p>Primera armadura negra con cristales violetas, reconstruida sobre 11 slots nativos Paladin y 23 huesos Rig_Medium. SupaVoxel continúa como prueba opcional. HIGHFLY público permanece intacto.</p></header>
+<main><div class="notice" id="import-progress" role="status">Preparando la nueva armadura sobre el template nativo ClaudeCraft… No hace falta importar nada para ver el diseño.</div><div class="controls"><button id="native" style="background:#463067;border:1px solid #9f7ded;font-weight:700">Ver armadura OBSIDIANA VIOLETA</button>
+<label><strong>Experimento opcional: cargar SupaVoxel</strong> <input id="file" type="file" accept=".glb,model/gltf-binary"></label>
 <label>Animación <select id="animation"><option value="">En reposo</option></select></label>
 <label><input id="play" type="checkbox" checked> Reproducir</label>
 <label><input id="bones" type="checkbox"> Mostrar huesos</label>
 <button id="front">Frente</button><button id="side">Perfil</button><button id="back">Espalda</button>
 </div>
 <div class="panels"><article><h2>CLAUDECRAFT · PALADIN ORIGINAL</h2><div class="viewport" id="original"><div class="overlay">Fuente congelada · 23 huesos · 22 clips</div></div></article>
-<article><h2>HIGHFLY · ARMADURA IMPORTADA</h2><div class="viewport" id="candidate"><div class="overlay">Seleccioná tu GLB; convertimos automáticamente si no tiene huesos</div></div></article></div>
-<p class="notice"><strong>ALCANCE DE ESTA PRUEBA:</strong> conversión de geometría indexada y vinculación a los 23 huesos, más revisión visual manual. La conversión automática es geométrica y heurística: NO garantiza fidelidad del diseño, anatomía, ausencia de intersecciones, colisiones, compatibilidad femenina ni rendimiento en S23 Ultra. Las piezas creadas usan un material PBR provisional y no reproducen automáticamente los cristales violetas del concepto.</p>
+<article><h2>HIGHFLY · OBSIDIANA VIOLETA · NATIVA SKIN 7.4</h2><div class="viewport" id="candidate"><div class="overlay">11 slots + diseño nuevo HIGHFLY / Rig_Medium</div></div></article></div>
+<p class="notice"><strong>ALCANCE DE ESTA PRUEBA:</strong> reconstrucción guiada sobre piezas nativas skinned, más revisión visual manual. La primera armadura se fabrica sobre ClaudeCraft auténtico, conservando pesos originales. Falta certificar movimiento sin clipping, aprobación artística, cuerpo femenino y rendimiento S23 Ultra. El diseño experimental nuevo incluye materiales metálicos y cristales violetas originales (no copia exacta de la imagen).</p>
 <div class="details"><div><h2>Estado del laboratorio</h2><pre id="status">Inicializando Three.js...</pre></div>
-<div><h2>Inspector</h2><pre id="inspector">Importá tu GLB original de SupaVoxel para que AUTO-FIT genere el prototipo sobre Rig_Medium, o cargá uno ya convertido.</pre></div></div>
-<p class="small">Fuente original: levy-street/world-of-claudecraft @ 9b57e49c9. Las nuevas piezas se identifican con HIGHFLY_AUTO_FIT_*. El visor no guarda, despliega ni cambia personajes.</p></main>
+<div><h2>Inspector</h2><pre id="inspector">La nueva armadura nativa se genera sola. El importador SupaVoxel de la versión anterior permanece solo como experimento.</pre></div></div>
+<p class="small">Fuente original: levy-street/world-of-claudecraft @ 9b57e49c9. Las piezas nativas se identifican como Armor_paladin_* y las piezas nuevas HIGHFLY_VIOLET_*. El visor no guarda, despliega ni cambia personajes.</p></main>
 <script type="module">
 import {autoFitRawGLB} from './browser_auto_fit.mjs';
+import {applyNativeArmorBridge} from './native_armor_bridge.mjs';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
@@ -64,20 +65,25 @@ const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
 const ktx=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/basis/').detectSupport(left.renderer);
 loader.setKTX2Loader(ktx);
 function metric(gltf,which){
- let meshes=0,parts=0,triangles=0,skinnedParts=0,boneCount=0;
- const root=gltf.scene;
+ let meshes=0,parts=0,triangles=0,skinnedParts=0,boneCount=0,nativeDonors=0;
+ const root=gltf.scene,isBridge=which==='candidate'&&!!gltf.userData?.nativeBridgeProof;
  root.traverse(o=>{if(!o.isMesh)return;
   const name=o.name||'';
-  const native=rigBody(name);
-  const original=which==='original'&&name.startsWith('Armor_paladin_');
-  const imported=which==='candidate'&&name.startsWith('HIGHFLY_AUTO_FIT_');
-  o.visible=native||original||imported;
+  const original=which==='original'&&(rigBody(name)||name.startsWith('Armor_paladin_'));
+  const native=which==='candidate'&&isBridge&&(name.startsWith('Armor_paladin_')||name.startsWith('HIGHFLY_VIOLET_'));
+  const imported=which==='candidate'&&!isBridge&&(rigBody(name)||name.startsWith('HIGHFLY_AUTO_FIT_'));
+  o.visible=original||native||imported;
   o.frustumCulled=false;
   if(o.visible){meshes++;triangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;}
-  if(imported){parts++;if(o.isSkinnedMesh&&o.skeleton?.bones?.length===23)skinnedParts++;}
+  const accessory=name.startsWith(isBridge?'HIGHFLY_VIOLET_':'HIGHFLY_AUTO_FIT_');
+  if(accessory&&which==='candidate'){parts++;if(o.isSkinnedMesh&&o.skeleton?.bones?.length===23)skinnedParts++;}
+  if(isBridge&&name.startsWith('Armor_paladin_'))nativeDonors++;
   if(o.isSkinnedMesh)boneCount=Math.max(boneCount,o.skeleton.bones.length);
  });
- return {visibleMeshes:meshes,visibleTriangles:Math.round(triangles),newParts:parts,skinnedNewParts:skinnedParts,rigBones:boneCount,clips:gltf.animations.length,rigProof:which==='candidate'&&parts>=7&&parts===skinnedParts&&gltf.animations.length===22};
+ return {visibleMeshes:meshes,visibleTriangles:Math.round(triangles),newParts:parts,
+  skinnedNewParts:skinnedParts,nativeDonors,mode:isBridge?'NATIVE_ARMOR_BRIDGE':'RAW_AUTO_FIT_EXPERIMENTAL',
+  rigBones:boneCount,clips:gltf.animations.length,
+  rigProof:which==='candidate'&&parts>=(isBridge?15:7)&&parts===skinnedParts&&gltf.animations.length===22&&(!isBridge||nativeDonors===11)};
 }
 function drawClip(v){
  if(!v.actor||!v.mixer)return;
@@ -105,9 +111,31 @@ function install(v,gltf,which){
 async function loadOriginal(){
  try{status.textContent='Descargando GLB original auténtico ...';await MeshoptDecoder.ready;
  const gltf=await loader.loadAsync(rigURL);install(left,gltf,'original');
- status.textContent='Original cargado · importá ahora el GLB experimental.';
+ await loadNativePreview();
  }catch(err){exposed.error=String(err);status.textContent='Error original: '+err;console.error(err);}
 }
+let loadingNative=false;
+async function loadNativePreview(){
+ if(loadingNative)return;
+ loadingNative=true;
+ try{
+  progress.textContent='Construyendo geometría de armadura nativa Paladin (no usa SupaVoxel crudo)…';
+  const gltf=await loader.loadAsync(rigURL);
+  const built=applyNativeArmorBridge(gltf);
+  built.gltf.userData={...(built.gltf.userData||{}),nativeBridgeProof:built.proof};
+  install(right,built.gltf,'candidate');
+  exposed.nativeBridgeProof=built.proof;
+  inspector.textContent=JSON.stringify({...exposed.metrics.candidate,nativeBridgeProof:built.proof},null,2);
+  progress.textContent='SKIN 7.4: '+built.proof.nativePieces+' piezas nativas originales, '+
+   built.proof.newAuthoredGeometry+' accesorios nuevos con skinning, '+built.proof.originalBones+
+   ' huesos y 22 animaciones. Arte experimental: ver las animaciones antes de aprobar.';
+  exposed.error=null;
+ }catch(err){
+  exposed.error=String(err);progress.textContent='Puente nativo falló: '+err.message;
+  status.textContent=String(err.stack||err);console.error(err);
+ }finally{loadingNative=false;}
+}
+document.getElementById('native').onclick=()=>loadNativePreview();
 loadOriginal();
 let previous;
 const progress=document.querySelector('#import-progress');
