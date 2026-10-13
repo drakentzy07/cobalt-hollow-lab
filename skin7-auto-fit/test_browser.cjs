@@ -17,7 +17,26 @@ const url = process.env.SKIN7_LAB_URL || 'https://highfly-skin7-autofit-factory.
     page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
     const res=await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
     assert(res?.ok(), 'lab URL must return 2xx');
-    await page.waitForFunction(()=>window.__SKIN7_AUTOFIT__?.sourceLoaded === true,{timeout:100000});
+    await page.waitForFunction(()=>window.__SKIN7_AUTOFIT__?.sourceLoaded === true,null,{timeout:100000});
+    await page.waitForFunction(()=>window.__SKIN7_AUTOFIT__?.nativeBridgeProof?.safeRuntime === true ||
+      window.__SKIN7_AUTOFIT__?.error!==null,null,{timeout:140000});
+    const nativeState=await page.evaluate(()=>window.__SKIN7_AUTOFIT__);
+    if(nativeState.error)throw Error('NATIVE_BRIDGE_FAILED '+nativeState.error);
+    assert.equal(nativeState.nativeBridgeProof.nativePieces,11);
+    assert(nativeState.nativeBridgeProof.newAuthoredGeometry>=15);
+    assert.equal(nativeState.nativeBridgeProof.originalClips,22);
+    assert.equal(nativeState.nativeBridgeProof.bodyHidden,true);
+    assert.equal(nativeState.metrics.candidate.nativeDonors,11);
+    assert.equal(nativeState.metrics.candidate.rigProof,true);
+    console.log('SKIN74_NATIVE_BRIDGE_REAL_CHROME_GREEN=1',JSON.stringify(nativeState.metrics.candidate));
+    await page.screenshot({path:'tmp/skin7/evidence/native-armor-violet-front.png',fullPage:true});
+    await page.click('#side');
+    await page.waitForTimeout(150);
+    await page.screenshot({path:'tmp/skin7/evidence/native-armor-violet-profile.png',fullPage:true});
+    await page.click('#back');
+    await page.waitForTimeout(150);
+    await page.screenshot({path:'tmp/skin7/evidence/native-armor-violet-back.png',fullPage:true});
+    await page.click('#front');
     // Critical UX regression: upload UNRIGGED 3-view source as the user actually does.
     await page.locator('#file').setInputFiles('tmp/skin7/fixture_triptych.glb');
     const started=Date.now();
@@ -57,6 +76,11 @@ const url = process.env.SKIN7_LAB_URL || 'https://highfly-skin7-autofit-factory.
     await page.screenshot({path:'tmp/skin7/evidence/native-autofit-browser.png',fullPage:true});
     fs.writeFileSync('tmp/skin7/evidence/native-autofit-browser.json',JSON.stringify({result,errors},null,2));
     console.log('SKIN7_BROWSER_REAL_WEBGL_LOAD_GREEN=1',JSON.stringify(result.metrics));
+    await page.click('#native');
+    await page.waitForFunction(()=>window.__SKIN7_AUTOFIT__?.metrics.candidate.mode==='NATIVE_ARMOR_BRIDGE',null,{timeout:100000});
+    const reloaded=await page.evaluate(()=>window.__SKIN7_AUTOFIT__?.metrics.candidate);
+    assert.equal(reloaded.rigProof,true);
+    console.log('SKIN74_RETURN_TO_NATIVE_GREEN=1',reloaded.nativeDonors);
     if(errors.length)console.log('NON_FATAL_PAGE_ERRORS',JSON.stringify(errors.slice(0,8)));
   } finally {await browser.close();}
 })().catch(e=>{console.error('SKIN7_BROWSER_GATE_FAIL',e.stack||e);process.exit(1)});
