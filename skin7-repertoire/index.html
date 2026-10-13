@@ -1,5 +1,5 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HIGHFLY — SKIN 7.7 / ARMOR REPERTOIRE · 6 familias</title>
+<title>HIGHFLY — SKIN 8.1 / EPIC ARMOR FACTORY · 6 familias</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%237f50e0' d='M32 1 59 17v30L32 63 5 47V17Z'/%3E%3Cpath fill='white' d='M32 9 49 28 32 55 15 28Z'/%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#141723;color:#eaf0ff;font:14px system-ui,-apple-system,Segoe UI,sans-serif}
@@ -24,7 +24,7 @@ pre{white-space:pre-wrap;overflow:auto;max-height:220px;background:#1a1f2b;color
 </style>
 <script type="importmap">{"imports":{"three":"https://esm.sh/three@0.180.0","three/addons/":"https://esm.sh/three@0.180.0/examples/jsm/","meshoptimizer":"https://esm.sh/meshoptimizer@0.23.0"}}</script>
 </head><body>
-<header><h1>HIGHFLY · ARMOR REPERTOIRE <span style="color:#c8aaff">SKIN 7.7–7.9</span></h1>
+<header><h1>HIGHFLY · ARMOR REPERTOIRE <span style="color:#c8aaff">SKIN 8.1 · ART FIT</span></h1>
 <p>Seis familias con geometría propia inspiradas en lenguajes visuales del anime fantástico, no reproducciones de personajes existentes. Reutilizan Rig_Medium y piezas nativas ClaudeCraft. Laboratorio independiente; HIGHFLY público intacto.</p></header>
 <main><nav id="families" aria-label="Familias de armaduras"></nav>
 <div class="control">
@@ -40,7 +40,7 @@ pre{white-space:pre-wrap;overflow:auto;max-height:220px;background:#1a1f2b;color
 </div>
 <div class="info" id="progress" role="status">Cargando modelo auténtico de ClaudeCraft…</div>
 <div class="split"><div><strong>Inspección</strong><pre id="status">Inicializando WebGL...</pre></div><div><strong>Auditoría de la variante</strong><pre id="proof">Pendiente…</pre></div></div>
-<p class="info">**Estado artístico: prototipo.** Cada familia incluye superficies, adornos y geometrías separadas con skinning, pero el ajuste final de silueta, clipping con golpes, simulación de tela/capa, versión femenina y rendimiento físico Android necesitan revisión posterior. El original y el juego público no se modifican.</p>
+<p class="info">Estado artístico: revisión de encastres y proporciones (sin aprobación humana). Cada familia incluye superficies, adornos y geometrías separadas con skinning, pero el ajuste final de silueta, clipping con golpes, simulación de tela/capa, versión femenina y rendimiento físico Android necesitan revisión posterior. El original y el juego público no se modifican.</p>
 </main>
 <script type="module">
 import * as THREE from 'three';
@@ -89,7 +89,7 @@ function frame(which='front'){
  if(!n)return;
  const s=all.getSize(new THREE.Vector3()),center=all.getCenter(new THREE.Vector3());
  const a=Math.min(...views.map(v=>Math.max(.5,v.camera.aspect)));
- const d=Math.max(s.y*.5/Math.tan(THREE.MathUtils.degToRad(35/2)),Math.max(s.x,s.z)*.5/(Math.tan(THREE.MathUtils.degToRad(35/2))*a))*1.75;
+ const d=Math.max(s.y*.5/Math.tan(THREE.MathUtils.degToRad(35/2)),Math.max(s.x,s.z)*.5/(Math.tan(THREE.MathUtils.degToRad(35/2))*a))*1.48;
  const eye=which==='side'?new THREE.Vector3(1,.09,0):which==='back'?new THREE.Vector3(0,.09,-1):new THREE.Vector3(.05,.09,1);
  eye.normalize().multiplyScalar(d).add(center);
  for(const v of views){v.controls.target.copy(center);v.camera.position.copy(eye);v.camera.near=Math.max(.01,d/130);v.camera.far=d*14+40;v.camera.lookAt(center);v.camera.updateProjectionMatrix();v.controls.update();}
