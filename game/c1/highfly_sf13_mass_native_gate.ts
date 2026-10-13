@@ -83,7 +83,67 @@ function merge(base:AbilityEffect[],extra:AbilityEffect[]):AbilityEffect[]|null 
  }
  return contribution===extra.length?out:null;
 }
+/** Two explicit hybrid-element adapters. Do not flatten the DoT into the
+ * primary spell school: original Sim honors dot.school independently.
+ * Fire/frost and physical/nature impacts remain source-faithful.
+ */
+function hybrid(s:HighflyFusionSpec,defs:AbilityDef[]):AbilityDef{
+ const mage=s.id==='hf_mage_s1';
+ const lead=mage?defs[0]:defs[1];
+ const rider=mage?defs[1]:defs[0];
+ const result=sampleLevels(s,defs).map(lv=>{
+  const fx=fxAt(lead,lv),other=fxAt(rider,lv);
+  if(fx.length!==(mage?2:1)||fx[0].type!=='directDamage'
+   ||(mage&&fx[1].type!=='slow')||
+   other.length!==(mage?2:1)||
+   other[0].type!==(mage?'directDamage':'dot')||
+   (mage&&other[1].type!=='dot'))throw Error('SF13 hybrid original donor ranks changed '+s.id);
+  const dot=(mage?other[1]:other[0]);
+  if(dot.type!=='dot')throw Error('SF13 missing real elemental DoT '+s.id);
+  const bonus=mage&&other[0].type==='directDamage'
+   ?{...fx[0],min:fx[0].min+Math.round(other[0].min*.25),
+      max:fx[0].max+Math.round(other[0].max*.25)}:fx[0];
+  const effects=[bonus,...(mage?[fx[1]]:[]),
+   {...dot,total:Math.max(1,Math.round(dot.total*.35)),
+     school:mage?'fire' as const:'nature' as const,
+     auraId:s.id+(mage?'_ignite':'_venom')}];
+  return {lv,effects,cost:costAt(lead,lv)+Math.ceil(costAt(rider,lv)*.25),
+   castTime:castAt(lead,lv)};
+ });
+ return {...lead,id:s.id,name:s.name,class:s.classId,learnLevel:s.unlockLevel,
+  specs:undefined,excludeSpecs:undefined,excludeSpecsAtLevel:undefined,
+  cooldown:mage?6:9,cost:result[0].cost,castTime:result[0].castTime,
+  effects:result[0].effects,
+  ranks:result.slice(1).map((x,i)=>({rank:i+2,level:x.lv,cost:x.cost,
+   castTime:x.castTime,effects:x.effects})),
+  description:mage
+   ?'SF13 híbrido nativo: impacto helado, slow y quemadura con escuela de Fuego separada, hereda donantes Frostbolt/Fireball; VFX pendiente.'
+   :'SF13 híbrido nativo: proyectil Aimed Shot con veneno de Serpent Sting (escuela Naturaleza) independiente; VFX pendiente.'
+ };
+}
+function hybridSafe(s:HighflyFusionSpec,defs:AbilityDef[]):boolean{
+ const mage=s.id==='hf_mage_s1',hunter=s.id==='hf_hunter_s2';
+ if((!mage&&!hunter)||defs.length!==2||defs.some(x=>!x))return false;
+ const wanted=mage?['frostbolt','fireball']:['serpent_sting','aimed_shot'];
+ if(defs.some((d,i)=>d.id!==wanted[i]||d.class!==s.classId||
+  d.passive||d.channel||d.onNextSwing||d.requiresForm||d.requiresStealth||
+  d.requiresOutOfCombat||d.maxCharges))return false;
+ const lead=mage?defs[0]:defs[1],other=mage?defs[1]:defs[0];
+ if(lead.range!== (mage?30:35)||other.range!==lead.range||
+  !lead.requiresTarget||!other.requiresTarget||
+  (mage?(lead.school!=='frost'||other.school!=='fire'):
+        (lead.school!=='physical'||other.school!=='nature')))return false;
+ return sampleLevels(s,defs).every(lv=>{
+  const a=fxAt(lead,lv),b=fxAt(other,lv);
+  return mage
+   ? a.length===2&&a[0].type==='directDamage'&&a[1].type==='slow'&&
+     b.length===2&&b[0].type==='directDamage'&&b[1].type==='dot'
+   : a.length===1&&a[0].type==='directDamage'&&b.length===1&&b[0].type==='dot';
+ });
+}
+
 function blockers(s:HighflyFusionSpec,defs:AbilityDef[]):string[]{
+ if(hybridSafe(s,defs))return [];
  const problems:string[]=[];
  if(defs.length!==s.donors.length||defs.some(d=>!d))return ['MISSING_DONOR'];
  for(let i=0;i<defs.length;i++) {
@@ -91,7 +151,7 @@ function blockers(s:HighflyFusionSpec,defs:AbilityDef[]):string[]{
   if(d.id!==s.donors[i]||d.class!==s.classId)problems.push('SOURCE_ID_OR_CLASS_CHANGED:'+s.donors[i]);
   for(const field of FRAGILE)if(Boolean((d as unknown as Record<string,unknown>)[field]))
     problems.push('REQUIRES_CUSTOM_ADAPTER:'+d.id+':'+field);
-  if(d.specs?.length||d.excludeSpecs?.length||d.excludeSpecsAtLevel?.length)
+  if(d.specs?.length||d.excludeSpecs?.length||d.excludeSpecsAtLevel!==undefined)
     problems.push('SPEC_GATED:'+d.id);
   if(!d.effects.length)problems.push('PROCEDURAL_EFFECTS:'+d.id);
   if(d.effects.some(e=>!CORE.has(e.type)))problems.push('CUSTOM_EFFECT_TYPE:'+d.id);
@@ -108,6 +168,7 @@ function blockers(s:HighflyFusionSpec,defs:AbilityDef[]):string[]{
  return [...new Set(problems)];
 }
 function build(s:HighflyFusionSpec,defs:AbilityDef[]):AbilityDef{
+ if(hybridSafe(s,defs))return hybrid(s,defs);
  const lead=defs[0];
  const snaps=sampleLevels(s,defs).map(lv=>{
   const effects=merge(fxAt(lead,lv),defs.slice(1).flatMap(d=>fxAt(d,lv)));
