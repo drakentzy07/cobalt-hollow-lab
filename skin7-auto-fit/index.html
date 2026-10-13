@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HIGHFLY SKIN 7 · AUTO-FIT FACTORY · Rig Proof Lab</title>
+<title>HIGHFLY SKIN 7.3 · AUTO-FIT FACTORY · Importador automático</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%238a50dd' d='M32 2 56 16v32L32 62 8 48V16Z'/%3E%3Cpath fill='%23fff' d='m32 13 13 19-13 19-13-19Z'/%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#10131d;color:#edf0fd;font:14px system-ui,-apple-system,sans-serif}header{padding:15px 20px;border-bottom:1px solid #363e58;background:#1b2032}h1{font-size:22px;margin:0 0 5px}p{color:#b6c2d9;margin:0;line-height:1.5}
 main{max-width:1500px;margin:auto;padding:12px}.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#20283a;border:1px solid #394562;padding:12px;border-radius:12px;margin-bottom:12px}
@@ -15,21 +15,22 @@ article{border:1px solid #465573;background:#1d2436;border-radius:12px;overflow:
 "meshoptimizer":"https://esm.sh/meshoptimizer@0.23.0"
 }}</script></head>
 <body><header><h1>HIGHFLY · SKIN 7 / AUTO-FIT FACTORY</h1>
-<p>Laboratorio experimental aislado — modelo auténtico ClaudeCraft vs GLB transformado de SupaVoxel · No modifica el HIGHFLY público</p></header>
-<main><div class="controls">
-<label>Importar GLB procesado <input id="file" type="file" accept=".glb,model/gltf-binary"></label>
+<p>Elegí el archivo original de SupaVoxel: detectamos las tres vistas, aislamos la frontal y la conectamos automáticamente a Rig_Medium. También acepta GLB previamente convertido. No modifica HIGHFLY público.</p></header>
+<main><div class="notice" id="import-progress" role="status">Seleccioná <strong>New_Project_13102026.glb</strong> directamente: el modelo original de ClaudeCraft se cargará en ambos paneles y la nueva geometría se adaptará al rig. La conversión es experimental, no una armadura artística aprobada.</div><div class="controls">
+<label><strong>IMPORTAR GLB (SupaVoxel original o armadura adaptada)</strong> <input id="file" type="file" accept=".glb,model/gltf-binary"></label>
 <label>Animación <select id="animation"><option value="">En reposo</option></select></label>
 <label><input id="play" type="checkbox" checked> Reproducir</label>
 <label><input id="bones" type="checkbox"> Mostrar huesos</label>
 <button id="front">Frente</button><button id="side">Perfil</button><button id="back">Espalda</button>
 </div>
 <div class="panels"><article><h2>CLAUDECRAFT · PALADIN ORIGINAL</h2><div class="viewport" id="original"><div class="overlay">Fuente congelada · 23 huesos · 22 clips</div></div></article>
-<article><h2>HIGHFLY · ARMADURA IMPORTADA</h2><div class="viewport" id="candidate"><div class="overlay">Esperando GLB experimental</div></div></article></div>
-<p class="notice"><strong>ALCANCE DE ESTA PRUEBA:</strong> lectura de GLB, mallas, pesos y animaciones, y revisión visual manual. La presencia de huesos NO garantiza calidad de deformación, ni prueba ausencia de intersecciones, colisiones, compatibilidad femenina o rendimiento en S23 Ultra. Las piezas creadas usan un material PBR provisional y no reproducen automáticamente los cristales violetas del concepto.</p>
+<article><h2>HIGHFLY · ARMADURA IMPORTADA</h2><div class="viewport" id="candidate"><div class="overlay">Seleccioná tu GLB; convertimos automáticamente si no tiene huesos</div></div></article></div>
+<p class="notice"><strong>ALCANCE DE ESTA PRUEBA:</strong> conversión de geometría indexada y vinculación a los 23 huesos, más revisión visual manual. La conversión automática es geométrica y heurística: NO garantiza fidelidad del diseño, anatomía, ausencia de intersecciones, colisiones, compatibilidad femenina ni rendimiento en S23 Ultra. Las piezas creadas usan un material PBR provisional y no reproducen automáticamente los cristales violetas del concepto.</p>
 <div class="details"><div><h2>Estado del laboratorio</h2><pre id="status">Inicializando Three.js...</pre></div>
-<div><h2>Inspector</h2><pre id="inspector">Abrí un archivo HIGHFLY_AUTO_FIT_EXPERIMENTAL.glb para comparar.</pre></div></div>
+<div><h2>Inspector</h2><pre id="inspector">Importá tu GLB original de SupaVoxel para que AUTO-FIT genere el prototipo sobre Rig_Medium, o cargá uno ya convertido.</pre></div></div>
 <p class="small">Fuente original: levy-street/world-of-claudecraft @ 9b57e49c9. Las nuevas piezas se identifican con HIGHFLY_AUTO_FIT_*. El visor no guarda, despliega ni cambia personajes.</p></main>
 <script type="module">
+import {autoFitRawGLB} from './browser_auto_fit.mjs';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
@@ -109,14 +110,43 @@ async function loadOriginal(){
 }
 loadOriginal();
 let previous;
+const progress=document.querySelector('#import-progress');
 document.querySelector('#file').addEventListener('change',async(e)=>{
  const file=e.target.files?.[0];if(!file)return;
  if(!/\.glb$/i.test(file.name)){status.textContent='Elegí un archivo GLB';return;}
  if(previous)URL.revokeObjectURL(previous);
  previous=URL.createObjectURL(file);
- try{status.textContent='Validando '+file.name+' ('+(file.size/1e6).toFixed(2)+' MB) ...';
- const gltf=await loader.loadAsync(previous);install(right,gltf,'candidate');
- }catch(err){exposed.error=String(err);status.textContent='Error GLB: '+err;console.error(err);}
+ try{
+  const label='Cargando '+file.name+' ('+(file.size/1e6).toFixed(2)+' MB)...';
+  status.textContent=label;progress.textContent=label;
+  const candidate=await loader.loadAsync(previous);
+  let fitted=false;candidate.scene.traverse(o=>{if(o.isMesh&&o.name?.startsWith('HIGHFLY_AUTO_FIT_'))fitted=true});
+  if(!fitted && candidate.animations.length===0){
+   progress.textContent='Archivo sin huesos detectado. Preparando ajuste automático real sobre el Hunter original...';
+   if(!exposed.sourceLoaded)await new Promise((resolve,reject)=>{
+    let count=0;const next=()=>{
+     if(exposed.sourceLoaded)return resolve();
+     if(exposed.error||++count>150)return reject(Error('No cargó el Hunter original'));
+     setTimeout(next,200);
+    };next();
+   });
+   const originalRig=await loader.loadAsync(rigURL);
+   const result=await autoFitRawGLB(candidate,originalRig,(text)=>{
+    progress.textContent=text;status.textContent=text;
+   });
+   install(right,result.gltf,'candidate');
+   inspector.textContent=JSON.stringify({...exposed.metrics.candidate,autoFitProof:result.proof},null,2)+
+    '\nLa fuente original no se modificó. Ajuste visual aún NO aprobado.';
+   progress.textContent='Conversión experimental completada: '+result.proof.parts.length+
+    ' regiones / '+result.proof.newTriangles+' triángulos. Probá las 22 animaciones y mirá las intersecciones.';
+  }else{
+   install(right,candidate,'candidate');
+   progress.textContent='GLB ya adaptado cargado. Mostrando piezas sobre el Hunter original.';
+  }
+ }catch(err){
+  exposed.error=String(err);progress.textContent='No se pudo convertir: '+err.message;
+  status.textContent='Error GLB: '+err;inspector.textContent=String(err.stack||err);console.error(err);
+ }
 });
 anim.addEventListener('change',()=>views.forEach(drawClip));
 document.querySelector('#bones').addEventListener('change',e=>views.forEach(v=>{if(v.skeletonHelper)v.skeletonHelper.visible=e.target.checked;}));
