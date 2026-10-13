@@ -13,9 +13,9 @@ footer{padding:14px 24px;font-size:13px;color:#bfc9df}
 @media(max-width:700px){main{grid-template-columns:1fr}.viewport{height:440px}}
 </style>
 <script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script></head>
-<body><header><h1>HIGHFLY SKIN 7 · CASCO PALADIN</h1><p>Misma geometría nativa de origen · Copia con deformación real · Rig_Medium intacto · Sin Bodypaint</p></header>
+<body><header><h1>HIGHFLY SKIN 7 · CASCO PALADIN</h1><p>Misma geometría nativa de origen · Copia rediseñada con geometría 3D añadida · Rig_Medium intacto · Sin Bodypaint</p></header>
 <main><article><h2>CLAUDECRAFT · ORIGINAL</h2><div id="left" class="viewport"></div></article>
-<article><h2>HIGHFLY · VARIANTE NATIVA</h2><div id="right" class="viewport"></div></article></main>
+<article><h2>HIGHFLY · VISOR V + CRESTA + PLACAS 3D</h2><div id="right" class="viewport"></div></article></main>
 <footer id="status">Cargando modelos originales y variante desde archivos GLB...</footer>
 <script type="module">
 import * as THREE from 'three';
@@ -24,7 +24,7 @@ import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from '/node_modules/meshoptimizer/meshopt_decoder.module.js';
 const result={ready:false,error:null,items:[]};window.__HF_SKIN7_COMPARE__=result;
 const modelRoot='/public/models/chars/modular/warrior_modular.glb';
-const variantRoot='/character-truth/skin7-evidence/HIGHFLY-SKIN7-PALADIN-HELMET-NATIVE-VARIANT.glb';
+const variantRoot='/character-truth/skin7-evidence/HIGHFLY-SKIN7-PALADIN-TEXT-DESIGN-REAL-GEOMETRY.glb';
 const baseNames=new Set(['Head','Torso','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR','Loin','Top','Eye_almond','Brow_soft','Ear_round','Mouth_neutral']);
 async function display(hostId,url,helmetName){
  const host=document.getElementById(hostId);
