@@ -6,6 +6,8 @@ on:
     paths:
       - 'character-truth/integration-modules/skin7-native-source-audit.mjs'
       - 'character-truth/integration-modules/skin7-native-paladin-helmet-forge.mjs'
+      - 'character-truth/integration-modules/skin7-text-to-real-geometry.mjs'
+      - 'character-truth/integration-modules/skin7-helmet-commission.json'
       - 'character-truth/integration-modules/skin7-paladin-helmet-recipe.json'
       - 'character-truth/integration-modules/skin7-visual-gate.cjs'
       - 'character-truth/skin7-helmet-compare.html'
@@ -53,6 +55,13 @@ jobs:
           node character-truth/integration-modules/skin7-native-paladin-helmet-forge.mjs
           test -s character-truth/skin7-evidence/HIGHFLY-SKIN7-PALADIN-HELMET-NATIVE-VARIANT.glb
           node --input-type=module -e "import fs from 'node:fs'; import assert from 'node:assert/strict';const r=JSON.parse(fs.readFileSync('character-truth/skin7-evidence/helmet-forge-report.json')); assert(r.sourceFileUnchanged&&r.skeletonAndAnimationsUnchanged&&r.vertexGeometryReallyModified&&r.totalVerticesChanged>0); console.log('SKIN7_NATIVE_REAL_GEOMETRY_AND_ORIGINAL_PRESERVATION_GREEN=1')"
+      - name: Compile text into new V visor crown horns and cheek meshes SKINNED to original head
+        run: |
+          set -euo pipefail
+          node --check character-truth/integration-modules/skin7-text-to-real-geometry.mjs
+          node character-truth/integration-modules/skin7-text-to-real-geometry.mjs
+          test -s character-truth/skin7-evidence/HIGHFLY-SKIN7-PALADIN-TEXT-DESIGN-REAL-GEOMETRY.glb
+          node --input-type=module -e "import fs from 'node:fs';import assert from 'node:assert/strict';const p=JSON.parse(fs.readFileSync('character-truth/skin7-evidence/skin7-text-geometry-proof.json'));assert(p.actualNewPrimitives>=4 && p.actualNewTriangles>=20 && p.nativeMesh && p.rigAndAnimationUnchanged && p.sourceUnchanged); console.log('SKIN7_TRUE_VISOR_CREST_CHEEKPLATES_NEW_3D_GEOMETRY_GATE_GREEN=1')"
       - name: Render true original versus HIGHFLY helmet with real WebGL and screenshot
         timeout-minutes: 12
         run: |
@@ -64,6 +73,7 @@ jobs:
           node character-truth/integration-modules/skin7-visual-gate.cjs
           test -s character-truth/skin7-evidence/skin7-before-after.png
           test -s character-truth/skin7-evidence/skin7-browser-proof.json
+          test -s character-truth/skin7-evidence/skin7-text-geometry-proof.json
       - name: Store truthful native armor inventory (no build, no deploy)
         if: always()
         uses: actions/upload-artifact@v4
