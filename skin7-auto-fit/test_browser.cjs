@@ -20,8 +20,20 @@ const url = process.env.SKIN7_LAB_URL || 'https://highfly-skin7-autofit-factory.
     await page.waitForFunction(()=>window.__SKIN7_AUTOFIT__?.sourceLoaded === true,{timeout:100000});
     // Critical UX regression: upload UNRIGGED 3-view source as the user actually does.
     await page.locator('#file').setInputFiles('tmp/skin7/fixture_triptych.glb');
-    await page.waitForFunction(()=>document.querySelector('#import-progress')?.textContent.includes('Conversión experimental completada'),
-      {timeout:180000});
+    const started=Date.now();
+    const pulse=setInterval(async()=>{
+      try{console.log('SKIN7_REAL_IMPORT_PROGRESS', Math.round((Date.now()-started)/1000)+'s',await page.locator('#import-progress').innerText());}
+      catch(e){console.log('SKIN7_PROGRESS_UNAVAILABLE',String(e));}
+    },15000);
+    try{
+      await page.waitForFunction(()=>document.querySelector('#import-progress')?.textContent.includes('Conversión experimental completada') ||
+         document.querySelector('#import-progress')?.textContent.includes('No se pudo convertir'),null,{timeout:180000});
+    }finally{clearInterval(pulse);}
+    const outcome=await page.locator('#import-progress').innerText();
+    console.log('SKIN7_RAW_OUTCOME',outcome);
+    if(outcome.includes('No se pudo convertir')){
+      throw Error('Real direct import browser conversion: '+outcome);
+    }
     const autofit=await page.evaluate(()=>window.__SKIN7_AUTOFIT__);
     assert.equal(autofit.metrics.candidate.rigProof,true);
     assert(autofit.metrics.candidate.newParts>=7);
