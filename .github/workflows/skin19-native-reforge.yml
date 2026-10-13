@@ -1,0 +1,160 @@
+name: HIGHFLY SKIN19 — NATIVE CLAUDECRAFT PALADIN → ECLIPSE REFORGE
+on:
+  push:
+    branches: [highfly-skin19-native-paladin-eclipse]
+    paths:
+      - 'character-truth/skin19-native/**'
+      - '.github/workflows/skin19-native-reforge.yml'
+  workflow_dispatch:
+permissions: {contents: write, actions: read}
+concurrency:
+  group: highfly-skin19-${{ github.ref_name }}-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  real-native-paladin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0,persist-credentials: false}
+      - name: Isolation gate: original game, source Paladin, old labs, and AI engine unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = highfly-skin19-native-paladin-eclipse
+          git diff --name-only 940fd5d18cf3299a8a2313d2d6589da3bb516c0a HEAD | tee /tmp/hf19-files
+          while IFS= read -r f;do
+            case "$f" in
+              character-truth/skin19-native/*|.github/workflows/skin19-native-reforge.yml) ;;
+              *) echo "HF19_ORIGINAL_OR_PUBLIC_GAME_CHANGE_DENIED:$f";exit 42;;
+            esac
+          done < /tmp/hf19-files
+          python3 -m py_compile character-truth/skin19-native/blender-native-eclipse.py
+          python3 -m py_compile character-truth/skin19-native/visual-review.py
+          echo HF19_CLAUDECRAFT_SOURCE_AND_PUBLIC_GAME_UNTOUCHED=1
+      - name: Fetch pinned official ClaudeCraft modular GLB with exact Git blob checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/skin19-native/out
+          curl -fLsS --retry 3 --max-time 150 \
+            https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb \
+            -o character-truth/skin19-native/out/warrior-source.glb
+          test "$(git hash-object character-truth/skin19-native/out/warrior-source.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          npm install --no-save --package-lock=false @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer@0.23.0
+          node character-truth/integration-modules/prepare-native-body.mjs \
+            character-truth/skin19-native/out/warrior-source.glb \
+            character-truth/skin19-native/out/warrior-decoded.glb
+          test -s character-truth/skin19-native/out/warrior-decoded.glb
+          echo HF19_ORIGINAL_NATIVE_3D_SOURCE_VERIFIED=1
+      - name: Install verified Blender 4.2 LTS and software OpenGL
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=4.2.23
+          NAME=blender-${VERSION}-linux-x64.tar.xz
+          ROOT=https://download.blender.org/release/Blender4.2
+          mkdir -p "$RUNNER_TEMP/hf19-blender" "$RUNNER_TEMP/hf19-dl"
+          cd "$RUNNER_TEMP/hf19-dl"
+          curl -fLsS --retry 3 --max-time 390 "$ROOT/$NAME" -o "$NAME"
+          curl -fLsS --retry 3 --max-time 50 "$ROOT/blender-${VERSION}.sha256" -o SHA256SUMS
+          grep -F "$NAME" SHA256SUMS | head -1 | sha256sum --check
+          tar -xJf "$NAME" --strip-components=1 -C "$RUNNER_TEMP/hf19-blender"
+          echo "$RUNNER_TEMP/hf19-blender" >> "$GITHUB_PATH"
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq libegl1 libgl1 libgl1-mesa-dri libopengl0 xvfb
+      - name: Reforge the 11 ORIGINAL Paladin meshes into Eclipse, preserving native rig
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          blender --background --factory-startup --python-exit-code 99 \
+            --python character-truth/skin19-native/blender-native-eclipse.py -- \
+            --source character-truth/skin19-native/out/warrior-decoded.glb \
+            --recipe character-truth/skin19-native/eclipse-native-recipe.json \
+            --baseline character-truth/skin19-native/out/PALADIN-NATIVE-ORIGINAL.glb \
+            --reforge character-truth/skin19-native/out/HF19-ECLIPSE-NATIVE-PALADIN-22-CLIPS.glb \
+            --report character-truth/skin19-native/out/proof.json | tee /tmp/hf19-blender.log
+          grep -F 'HIGHFLY_SKIN19_PALADIN_11_NATIVE_SKINNED_MESHES_DEFORMED_AND_RECOLORED_GREEN=1' /tmp/hf19-blender.log
+      - name: Provenance and GLB structural QA (forbid new capsule body)
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,struct,pathlib
+          folder=pathlib.Path('character-truth/skin19-native/out')
+          report=json.loads((folder/'proof.json').read_text())
+          assert report['schema']=='highfly.skin19.native-paladin-eclipse-reforge/1'
+          assert report['sourceOriginalGeometryReused'] is True
+          assert report['sourceFaceTopologyPreserved'] is True
+          assert report['paladinSourceMeshes']==11 and report['reforgedMeshes']==11
+          assert report['nativeJoints']==23 and report['actualSculptTopologyGenerated']
+          assert report['sculptPanelsAdded']>=25 and report['newWeightedVertices']>=200
+          assert report['artReviewed'] is False and report['nativeSourceFilesModified'] is False
+          p=folder/'HF19-ECLIPSE-NATIVE-PALADIN-22-CLIPS.glb'
+          b=p.read_bytes()
+          assert b[:4]==b'glTF' and struct.unpack_from('<I',b,4)[0]==2
+          length,kind=struct.unpack_from('<II',b,12)
+          assert kind==0x4e4f534a
+          gltf=json.loads(b[20:20+length])
+          assert len(gltf.get('animations',[]))==22,'LOSS_OF_22_ORIGINAL_CLAUDECRAFT_CLIPS'
+          names=[n.get('name','') for n in gltf['nodes']]
+          assert all(any(n.startswith('HF19_PALADIN_'+slot) for n in names) for slot in ['HEAD','CHEST','ARML','ARMR','HANDL','HANDR','LEGL','LEGR','FOOTL','FOOTR','BACK'])
+          assert not any(n.startswith('HF18NEW_') or n.startswith('HF13NEW_') for n in names)
+          (folder/'acceptance.json').write_text(json.dumps({'technicalGreen':True,'rig':'Rig_Medium','clips':22,
+            'nativePaladinMeshesReused':11,'newSkinnedSculptVertices':report['newWeightedVertices'],
+            'oldBodypaintRemovedFromNewLab':True,'oldMinionRemovedFromNewLab':True,
+            'artApproved':False,'publicGameUnchanged':True},indent=2))
+          print('HIGHFLY_SKIN19_REAL_NATIVE_ARMOR_SOURCE_11_MESHES_22_CLIPS_GREEN=1')
+          PY
+      - name: Render 16 native original vs remade armor review images in Blender
+        shell: bash
+        timeout-minutes: 9
+        run: |
+          set -euo pipefail
+          mkdir -p character-truth/skin19-native/out/screenshots
+          LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a -s '-screen 0 1280x1024x24' \
+          blender --background --factory-startup --python-exit-code 99 \
+            --python character-truth/skin19-native/visual-review.py -- \
+            --source character-truth/skin19-native/out/warrior-decoded.glb \
+            --reforged character-truth/skin19-native/out/HF19-ECLIPSE-NATIVE-PALADIN-22-CLIPS.glb \
+            --out character-truth/skin19-native/out/screenshots | tee /tmp/hf19-render.log
+          test "$(find character-truth/skin19-native/out/screenshots -name '*.png' | wc -l)" -eq 16
+          echo HIGHFLY_SKIN19_REAL_NATIVE_PALADIN_VS_ECLIPSE_16_RENDER_QA_GREEN=1
+      - name: Package actual GLBs, per-mesh technical proofs and renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN19-PALADIN-NATIVE-ECLIPSE-3D-22CLIPS-NOT-ART-APPROVED
+          path: |
+            character-truth/skin19-native/out/HF19-ECLIPSE-NATIVE-PALADIN-22-CLIPS.glb
+            character-truth/skin19-native/out/PALADIN-NATIVE-ORIGINAL.glb
+            character-truth/skin19-native/out/proof.json
+            character-truth/skin19-native/out/acceptance.json
+            character-truth/skin19-native/out/screenshots/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Publish only to isolated SKIN19 lab assets — never public HIGHFLY game
+        if: success()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          BRANCH=highfly-skin19-native-eclipse-assets
+          DEST="$RUNNER_TEMP/hf19-assets"
+          AUTH="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c http.extraheader="$AUTH" fetch origin "refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
+          git worktree add -B "$BRANCH" "$DEST" "origin/$BRANCH"
+          mkdir -p "$DEST/skin19/assets" "$DEST/skin19/qa"
+          cp character-truth/skin19-native/out/HF19-ECLIPSE-NATIVE-PALADIN-22-CLIPS.glb "$DEST/skin19/assets/"
+          cp character-truth/skin19-native/out/proof.json character-truth/skin19-native/out/acceptance.json "$DEST/skin19/qa/"
+          cp character-truth/skin19-native/out/screenshots/*.png "$DEST/skin19/qa/"
+          cd "$DEST"
+          git config user.email 'highfly-skin-ci@users.noreply.github.com'
+          git config user.name 'HIGHFLY isolated SKIN19 forge'
+          git add skin19/
+          git diff --cached --quiet && exit 0
+          git commit -m "SKIN19 experimental armor: real Paladin deformation + new weighted details, no replacement character"
+          git -c http.extraheader="$AUTH" push origin "HEAD:refs/heads/$BRANCH"
+          echo HIGHFLY_SKIN19_NATIVE_ECLIPSE_ARTIFACT_PUBLISHED_TO_ISOLATED_LAB=1
