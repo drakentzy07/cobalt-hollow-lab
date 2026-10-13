@@ -24,10 +24,15 @@ function only<T extends AbilityEffect['type']>(def:AbilityDef,lv:number,kind:T):
   return e[0] as Extract<AbilityEffect,{type:T}>;
 }
 function validatePair(spec:HighflyFusionSpec,expected:string,cl:string,a:AbilityDef,b:AbilityDef):void{
+  // Donors are effect-source templates. The original ClaudeCraft visibility,
+  // passive, spec or learn-level flags are NOT restrictions for a separate
+  // HF_* skill. Exact class/ID ownership and the native effect shapes below
+  // remain mandatory; no donor definition is mutated.
   if(spec.id!==expected || spec.classId!==cl || spec.donors.join(',')!==[a.id,b.id].join(',')
-    || a.class!==cl || b.class!==cl || a.passive || b.passive
-    || a.hiddenFromPlayer || b.hiddenFromPlayer)
-    throw new Error('SF6 wrong or hidden original source: '+spec.id);
+    || a.class!==cl || b.class!==cl)
+    throw new Error('SF6 wrong original source identity: '+spec.id
+      + ' spec='+spec.donors.join(',')+' actual='+[a.id,b.id].join(',')
+      + ' classes='+[a.class,b.class].join(','));
 }
 
 /** Paladin S1: targeted Holy strike + self-seal on the SAME cast.
