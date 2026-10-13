@@ -19,21 +19,20 @@ describe('SF4 fail-closed 9/9 fusion integration — no release or save mutation
     expect(data).toHaveLength(63);
     expect(new Set(data.map(s=>s.id)).size).toBe(63);
     expect(data.filter(s=>s.status==='native-pilot').map(s=>s.id).sort())
-      .toEqual(['hf_druid_s3','hf_mage_s3','hf_priest_s2','hf_priest_s3','hf_rogue_s4','hf_shaman_s3','hf_warrior_u1']);
-    expect(data.filter(s=>s.status!=='native-pilot')).toHaveLength(56);
+      .toEqual(['hf_druid_s3','hf_hunter_s5','hf_mage_s3','hf_paladin_s1','hf_priest_s2','hf_priest_s3','hf_rogue_s4','hf_shaman_s3','hf_warlock_s2','hf_warrior_u1']);
+    expect(data.filter(s=>s.status!=='native-pilot')).toHaveLength(53);
     expect(data.find(s=>s.id==='hf_druid_u1')?.status).toBe('design-mismatch');
     expect(data.find(s=>s.id==='hf_shaman_s4')?.status).toBe('design-mismatch');
   });
-  it('registers seven audited prototypes across six original classes with native class ownership', () => {
+  it('registers ten guarded native pilots across all nine original classes with native class ownership', () => {
     const { abilities, classes }=copies();
     const result=installSf4NativePilots(abilities,classes);
-    expect(result.registered).toEqual(['hf_warrior_u1','hf_rogue_s4','hf_priest_s2','hf_priest_s3','hf_shaman_s3','hf_mage_s3','hf_druid_s3']);
-    expect(result.blocked.length + result.mismatchedDesign.length).toBe(56);
+    expect(result.registered).toEqual(['hf_warrior_u1','hf_paladin_s1','hf_hunter_s5','hf_rogue_s4','hf_priest_s2','hf_priest_s3','hf_shaman_s3','hf_mage_s3','hf_warlock_s2','hf_druid_s3']);
+    expect(result.blocked.length + result.mismatchedDesign.length).toBe(53);
     const outputSkills=clsIds.flatMap(cl=>classes[cl].abilities.filter(id=>id.startsWith('hf_')));
-    expect(outputSkills.sort()).toEqual(['hf_druid_s3','hf_mage_s3','hf_priest_s2','hf_priest_s3','hf_rogue_s4','hf_shaman_s3','hf_warrior_u1']);
+    expect(outputSkills.sort()).toEqual(['hf_druid_s3','hf_hunter_s5','hf_mage_s3','hf_paladin_s1','hf_priest_s2','hf_priest_s3','hf_rogue_s4','hf_shaman_s3','hf_warlock_s2','hf_warrior_u1']);
     for (const cl of clsIds) {
-      if (!['priest','warrior','rogue','mage','shaman','druid'].includes(cl))
-        expect(classes[cl].abilities).toEqual(CLASSES[cl].abilities);
+      expect(classes[cl].abilities.some(id=>id.startsWith('hf_'))).toBe(true);
       expect(CLASSES[cl].abilities.every(id => classes[cl].abilities.includes(id))).toBe(true);
     }
     const blast = abilities.hf_priest_s2;
@@ -78,6 +77,27 @@ describe('SF4 fail-closed 9/9 fusion integration — no release or save mutation
     expect(druid.learnLevel).toBe(10);
     expect(druid.effects.map(x=>x.type)).toEqual(['heal','hot']);
     expect(druid.ranks?.find(x=>x.level===14)?.effects.map(x=>x.type)).toEqual(['heal','hot']);
+  });
+  it('SF6 9/9 native-class coverage verifies source payload and preserves Claude restrictions',()=>{
+    const {abilities,classes}=copies();installSf4NativePilots(abilities,classes);
+    const p=abilities.hf_paladin_s1,h=abilities.hf_hunter_s5,w=abilities.hf_warlock_s2;
+    expect(p.learnLevel).toBe(1);
+    expect(p.effects.map(e=>e.type)).toEqual(['weaponStrike','imbue']);
+    expect(p.effects[0]).toMatchObject({type:'weaponStrike',bonus:6});
+    expect(p.ranks?.find(x=>x.level===20)?.effects[0]).toMatchObject({type:'weaponStrike',bonus:24});
+    expect(h.learnLevel).toBe(20);
+    expect(h.cooldown).toBe(15);
+    expect(h.offGcd).toBeUndefined();
+    expect(h.excludeSpecs).toBeUndefined();
+    expect(h.effects.map(e=>e.type)).toEqual(['weaponStrike','hunterTrailbreak']);
+    expect(w.learnLevel).toBe(5);
+    expect(w.excludeSpecs).toBeUndefined();
+    expect(w.effects).toHaveLength(1);
+    expect(w.effects[0]).toMatchObject({type:'dot',total:49,duration:18,interval:3});
+    expect(w.ranks?.some(rank=>rank.level===14)).toBe(true);
+    expect(abilities.corruption.excludeSpecs).toContain('affliction');
+    expect(abilities.crusader_strike.learnLevel).toBe(10);
+    expect(abilities.curse_of_agony.learnLevel).toBe(8);
   });
   it('maintains donor rank scaling and never zeroes out the old rank progression', () => {
     const { abilities, classes }=copies();
@@ -135,7 +155,7 @@ describe('SF4 fail-closed 9/9 fusion integration — no release or save mutation
     abilities.renew = {...abilities.renew,learnLevel:50};
     abilities.healing_wave={...abilities.healing_wave,learnLevel:50};
     const result=installSf4NativePilots(abilities,classes);
-    expect(result.registered).toHaveLength(7);
+    expect(result.registered).toHaveLength(10);
     expect(abilities.hf_priest_s3.learnLevel).toBe(10);
     expect(abilities.hf_shaman_s3.learnLevel).toBe(10);
     expect(abilities.renew.learnLevel).toBe(50);
