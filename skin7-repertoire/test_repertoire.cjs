@@ -53,7 +53,7 @@ fs.mkdirSync(dir,{recursive:true});
    assert.equal(p.artFit?.nativePrimitives,17);
    assert.equal(p.artFit?.hiddenSourceUnderPlates,17,'overlapping native layers hidden');
    assert(p.artFit?.compactedHeadPieces>=4,'source-compatible head compacted');
-   assert.equal(p.reference83?.pass,'SKIN8_3_REFERENCE_FUSION','new reference recipe pass '+id);
+   assert.equal(p.reference83?.pass,id==='royal'?'SKIN8_3_REFERENCE_FUSION':'SKIN8_4_TRUE_REPLACEMENT','true replacement pass '+id);
    if(id!=='royal'){
     assert.equal(p.reference83?.enabled,true,'five requested armor replacements '+id);
     assert.equal(p.reference83?.sourceBones,23);
@@ -62,6 +62,13 @@ fs.mkdirSync(dir,{recursive:true});
     assert.equal(p.reference83?.assemblies,11,'one skinned fused assembly per source slot '+id);
     assert.equal(p.reference83?.skinWeightAssemblies,11);
     assert.equal(p.reference83?.shellCount,17);
+    assert.equal(p.reference83?.trueReplacement,true,'five NEW armors must fully replace old overlays');
+    assert.equal(p.reference83?.visibleLegacyMeshes,0,'NO original armor or previous skin shells allowed');
+    assert.equal(p.reference83?.visibleOtherMeshes,0,'NO unexpected floating mesh allowed');
+    assert.equal(p.reference83?.visibleFusedAssemblies,11,'only the 11 new armature slots render');
+    assert.equal(p.reference83?.closedArmorEnvelopes,11,'new volume for each slot');
+    assert(p.reference83?.underArmorRetained>=10,'native articulated underarmor remains');
+
     assert(p.reference83?.geometryPiecesCombined>=50);
     assert(p.reference83?.oldFloatingDecorationsHidden>=10,'old detached ornaments hidden '+id);
     assert.equal(p.reference83?.artApproved,false);
@@ -116,7 +123,7 @@ fs.mkdirSync(dir,{recursive:true});
   mobile,artApproved:false,femaleFitApproved:false,collisionApproved:false,physicalAndroidApproved:false};
  fs.writeFileSync(dir+'/repertoire-qa.json',JSON.stringify(qa,null,2));
  console.log('HIGHFLY_REPERTOIRE_SIX_VARIANTS_CHROME_GREEN=1');
- console.log('HIGHFLY_SKIN83_FIVE_REFERENCES_FUSED_ASSEMBLIES_VALIDATED=1');
+ console.log('HIGHFLY_SKIN84_TRUE_REPLACEMENT_ZERO_LEGACY_VISIBLE_GREEN=1');
  console.log('HIGHFLY_REPERTOIRE_S23_SIMULATED_VIEWPORT_GREEN=1');
  console.log('HIGHFLY_REPERTOIRE_PHYSICAL_ANDROID_AND_ART_UNAPPROVED=1');
  }finally{await browser.close();}
