@@ -47,6 +47,10 @@ fs.mkdirSync(dir,{recursive:true});
    assert.equal(p.nativeIntegration?.allConnectorsSkinned,true);
    assert(p.nativeIntegration?.connectors>=10,'minimum articulated parts '+id);
    assert.equal(p.nativeIntegration?.artReviewed,false);
+   assert.equal(p.artFit?.pass,'SKIN8_1_ART_FIT');
+   assert(p.artFit?.correctedOverlays>0,'bounds fitting must move geometry '+id);
+   assert(p.artFit?.underArmor>=6,'continuous native under-armor '+id);
+   assert.equal(p.artFit?.nativePrimitives,17);
    if(id==='dragon')assert(p.newStyleMeshes>=15);
    if(id==='celestial')assert(p.distinctDesignGeometry.shoulder>=8);
    if(id==='berserker')assert(p.distinctDesignGeometry.shoulder>=10);
@@ -57,9 +61,18 @@ fs.mkdirSync(dir,{recursive:true});
     await page.waitForTimeout(160);
     const path=dir+'/'+id+'-'+view+'.png';
     await page.screenshot({path,fullPage:true});
+    await page.locator('#candidate').screenshot({path:dir+'/'+id+'-'+view+'-detail.png'});
     hashes.push(crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex').slice(0,12));
    }
    screenshots[id]=hashes;
+   if(['violet','dragon','berserker'].includes(id)){
+    for(const pose of ['Running_A','Jump_Idle','1H_Melee_Attack_Chop']){
+     await page.selectOption('#animation',{label:pose});
+     await page.waitForTimeout(280);
+     await page.locator('#candidate').screenshot({path:dir+'/'+id+'-motion-'+pose.replace(/[^a-zA-Z0-9]/g,'_')+'.png'});
+    }
+    await page.selectOption('#animation',{label:'Reposo'});
+   }
    console.log('HIGHFLY_STYLE_DNA_VARIANT_GREEN',id,p.newStyleMeshes,p.signature,JSON.stringify(hashes));
   }
   assert.equal(new Set(variants.map(id=>proofs[id].signature)).size,6,'every family must have different authored style DNA');
