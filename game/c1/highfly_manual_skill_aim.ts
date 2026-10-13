@@ -76,6 +76,7 @@ export interface HfAimHooks {
   preview(spec:HfAimSpec, vector:HfAimVector): void;
   commit(spec:HfAimSpec, vector:HfAimVector, wasDrag:boolean): void;
   cancel(): void;
+  isGroundAimActive(): boolean;
 }
 export function installHighflyManualAim(hooks:HfAimHooks): void {
   // Opt-in LAB only. Default v9.1 controls retain native radial/petal behavior.
@@ -201,7 +202,10 @@ export function installHighflyManualAim(hooks:HfAimHooks): void {
     const drag=Math.hypot(v.dx,v.dy)>22;
     // Ground spells: tap arms the existing reticle, drag commits immediately.
     if (a.spec.shape==='area' && !drag) {
-      hide(); return; // existing aim remains active for a second world tap or CANCELAR.
+      hide();
+      // Keep CANCELAR visible while donor's original reticle awaits a world tap.
+      cancel.style.display='block';
+      return;
     }
     hooks.commit(a.spec,v,drag);
     hide();
@@ -210,6 +214,11 @@ export function installHighflyManualAim(hooks:HfAimHooks): void {
     if(active && e.pointerId===active.pointer){e.stopImmediatePropagation();cancelNow();}
   };
   document.addEventListener('pointercancel',interrupted,true);
+  document.addEventListener('pointerup',()=>{
+    if (!active && cancel.style.display==='block' && !hooks.isGroundAimActive()) {
+      cancel.style.display='none';
+    }
+  });
   window.addEventListener('blur',()=>{if(active)cancelNow();});
   window.addEventListener('keydown',(e)=>{
     if(e.key==='Escape' && (active || cancel.style.display==='block')){cancelNow();}
