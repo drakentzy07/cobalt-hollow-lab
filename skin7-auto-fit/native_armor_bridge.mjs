@@ -168,17 +168,27 @@ export function applyNativeArmorBridge(gltf,recipe=ARMOR_BRIDGE_RECIPE){
  if(!gltf?.scene||gltf.animations?.length!==22)throw Error('Se requieren 22 animaciones originales ClaudeCraft');
  if(recipe.donor!=='Armor_paladin_')throw Error('Donor no aprobado');
  const donorMeshes={},nativeBody=[];
+ // ClaudeCraft Paladin has 11 canonical parts but 17 actual primitives:
+ // Head/Chest/Arms/Legs are MULTI-PRIMITIVE GLTF GROUPS, not SkinnedMeshes.
+ const buckets=new Map();
  gltf.scene.traverse(o=>{
-  if(!o.isMesh)return;
+  if(!o.isObject3D)return;
+  if(o.isMesh&&o.name?.startsWith('M_'))nativeBody.push(o);
   const slot=nativeName(o,recipe.donor);
-  if(slot&&NAMES.has(slot))donorMeshes[slot]=o;
-  if(o.name?.startsWith('M_'))nativeBody.push(o);
+  if(!slot||!NAMES.has(slot))return;
+  const target=buckets.get(slot)||new Set();
+  if(o.isSkinnedMesh)target.add(o);
+  o.traverse(n=>{if(n.isSkinnedMesh)target.add(n);});
+  buckets.set(slot,target);
  });
- const missing=[...NAMES].filter(slot=>!donorMeshes[slot]||!donorMeshes[slot].isSkinnedMesh);
- if(missing.length)throw Error('SLOT_NATIVE_MISSING: '+missing.join(', '));
- for(const part of Object.values(donorMeshes)){
-  if(part.skeleton?.bones?.length!==23)throw Error('Rig_Medium inválido en '+part.name);
+ const missing=[];
+ for(const slot of NAMES){
+  const arr=[...(buckets.get(slot)||[])];
+  if(!arr.length||arr.some(o=>o.skeleton?.bones?.length!==23))missing.push(slot);
+  else donorMeshes[slot]=arr;
  }
+ if(missing.length)throw Error('SLOT_NATIVE_MISSING: '+missing.join(', ')+
+  ' (multi-primitives supported; found: '+[...buckets].map(([k,v])=>k+':'+v.size).join(', ')+')');
  const mats={
   metal:makeMaterial(recipe.colors.metal,.82,.24),
   trim:makeMaterial(recipe.colors.trim,.79,.24),
@@ -188,28 +198,32 @@ export function applyNativeArmorBridge(gltf,recipe=ARMOR_BRIDGE_RECIPE){
  };
  const shapes=[];
  let mutated=0;
- for(const [slot,part] of Object.entries(donorMeshes)){
-  mutated+=reformSurface(part,slot);
-  part.material=(slot==='Back'?mats.cape:mats.metal);
-  part.visible=true;
-  artisanDetail(part,slot,mats,shapes);
+ const whitelist=new Set();
+ for(const [slot,parts] of Object.entries(donorMeshes)){
+  for(const part of parts){
+   whitelist.add(part);
+   mutated+=reformSurface(part,slot);
+   part.material=(slot==='Back'?mats.cape:mats.metal);
+   part.visible=true;
+  }
+  // Only one host per canonical piece, even when glTF splits it into 2 primitives.
+  const primary=[...parts].sort((a,b)=>b.geometry.getAttribute('position').count-a.geometry.getAttribute('position').count)[0];
+  artisanDetail(primary,slot,mats,shapes);
  }
- // The native appearance is only these authentic Paladin skinned donor pieces plus
- // custom geometry. Hide ALL alternatives and naked body, preventing a white-face T-pose.
+ // Hide alternative outfits and exposed body. Original donor GLTF itself stays unchanged.
  gltf.scene.traverse(o=>{
   if(!o.isMesh)return;
   const original=o.name||'';
   if(original.startsWith('HIGHFLY_VIOLET_'))return;
-  if(original.startsWith('Armor_paladin_')){o.visible=!!donorMeshes[original.slice('Armor_paladin_'.length)];return;}
-  if(original.startsWith('M_')){o.visible=false;return;}
-  if(original.startsWith('Armor_')||original.startsWith('F_'))o.visible=false;
+  if(whitelist.has(o)){o.visible=true;return;}
+  if(original.startsWith('M_')||original.startsWith('Armor_')||original.startsWith('F_'))o.visible=false;
  });
  gltf.scene.updateMatrixWorld(true);
- const validated=[...NAMES].every(slot=>donorMeshes[slot].visible&&donorMeshes[slot].isSkinnedMesh);
+ const validated=[...NAMES].every(slot=>donorMeshes[slot].every(o=>o.visible&&o.isSkinnedMesh));
  const proof={
   version:'SKIN7.4',artApproved:false,mode:'GUIDED_NATIVE_RECONSTRUCTION',
   recipe:recipe.id,donor:recipe.donor,pieces:[...NAMES],
-  nativePieces:Object.keys(donorMeshes).length,newAuthoredGeometry:shapes.length,
+  nativePieces:Object.keys(donorMeshes).length,nativePrimitives:whitelist.size,newAuthoredGeometry:shapes.length,
   movedNativeVertices:mutated,skinnedDetailMeshes:shapes.filter(x=>x.isSkinnedMesh&&x.skeleton?.bones.length===23).length,
   originalBones:23,originalClips:gltf.animations.length,
   bodyHidden:nativeBody.every(x=>!x.visible),safeRuntime:validated&&shapes.length>=15,
