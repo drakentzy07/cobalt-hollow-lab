@@ -70,6 +70,9 @@ function selectView(mode){
  let nativeBody=0,originalArmor=0,eclipseCount=0;
  state.root.traverse(o=>{
   if(!o.isMesh)return;
+  // Reforged Paladin children retain original mesh datablock names.
+  // Never count them as native suit renderers during mode switches.
+  if(state.overlay.includes(o)){o.visible=false;return}
   const family=rootArmorFamily(o);
   const slot=maleNames.has(o.name);
   if(slot){o.visible=true;nativeBody++}
