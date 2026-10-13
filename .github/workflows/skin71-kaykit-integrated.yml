@@ -1,0 +1,67 @@
+name: HIGHFLY SKIN 7.1 — KAYKIT INTEGRATED PALADIN NATIVE GEOMETRY (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-skin7-1-kaykit-integrated-helmet]
+    paths:
+      - 'character-truth/integration-modules/skin71-*'
+      - 'character-truth/skin71-helmet-compare.html'
+      - '.github/workflows/skin71-kaykit-integrated.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  kaykit-integrated-native-forge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recover actual frozen ClaudeCraft source and verify Git blob checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib,urllib.request,hashlib,time
+          url='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb'
+          target=pathlib.Path('public/models/chars/modular/warrior_modular.glb')
+          target.parent.mkdir(parents=True,exist_ok=True)
+          for retry in range(3):
+            try:
+              with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'HIGHFLY-SKIN71-KayKit/1.0'}),timeout=60) as r:data=r.read()
+              break
+            except Exception:
+              if retry==2:raise
+              time.sleep(3)
+          sha=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          assert sha=='e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2',(sha,len(data))
+          target.write_bytes(data)
+          print('SKIN71_SOURCE_NATIVE_GIT_SHA_VERIFIED_GREEN=1',len(data))
+          PY
+      - name: Forge INTEGRATED native helmet only; original unchanged; zero new submeshes
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false meshoptimizer@0.23.0
+          node --check character-truth/integration-modules/skin71-integrated-helmet-forge.mjs
+          node character-truth/integration-modules/skin71-integrated-helmet-forge.mjs
+          node --input-type=module -e "import fs from 'node:fs';import assert from 'node:assert/strict';const p=JSON.parse(fs.readFileSync('character-truth/skin71-evidence/integrated-helmet-proof.json'));assert(p.noNewPrimitives&&p.noNewMeshInflation&&p.noNewNodesExceptVariant&&p.noExternalAddOns&&p.skeletonAndAnimationsUnchanged&&p.sourceFileUnchanged&&p.totalVerticesChanged>200&&!p.artisticApproval);console.log('SKIN71_NATIVE_NO_ADDONS_TOPOLOGY_JOINTS_GREEN=1')"
+          test -s character-truth/skin71-evidence/HIGHFLY-SKIN71-PALADIN-INTEGRATED-NATIVE.glb
+      - name: Browser compare actual source and KayKit integrated variant on same Hunter
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false three@0.180.0 playwright@1.55.0 meshoptimizer@0.23.0
+          npx playwright install --with-deps chromium
+          python3 -m http.server 4257 --bind 127.0.0.1 >/tmp/skin71-http.log 2>&1 &
+          sleep 2
+          node character-truth/integration-modules/skin71-visual-gate.cjs
+          test -s character-truth/skin71-evidence/skin71-before-after.png
+          test -s character-truth/skin71-evidence/skin71-browser-proof.json
+      - name: Archive new native-only GLB and visual proof, NOT public game
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN71-NATIVE-INTEGRATED-PALADIN-NO-ADDONS
+          path: character-truth/skin71-evidence/
+          retention-days: 30
+          if-no-files-found: warn
