@@ -123,7 +123,7 @@ export function balanceNativeArmorSilhouette(gltf,style){
   o.geometry=g;o.frustumCulled=false;compactedHead++;
  });
  gltf.scene.updateMatrixWorld(true);
- const proof={pass:'SKIN8_1_ART_FIT',nativePrimitives:17,authoredInspected:inspected,
+ const proof={pass:'SKIN8_2_ART_FIT',nativePrimitives:17,authoredInspected:inspected,
   correctedOverlays:constrained,sourceBoundsSlots:bySlot.size,underArmor,underArmorNames:names,
   hiddenSourceUnderPlates:hiddenNative,sourceSkinnedPrimitivesPreserved:known.size,compactedHeadPieces:compactedHead,
   fittedSlots:slotFits,clips:gltf.animations.length,artReviewed:false,
