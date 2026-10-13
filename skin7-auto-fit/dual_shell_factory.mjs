@@ -228,9 +228,16 @@ export function forgeDualArmor(gltf,variant='violet'){
   light:mat(v.glow,.42,.2,v.glow,1),
   horn:mat(variant==='dragon'?0x47100d:0xc9c8d7,.55,.3)
  };
- // Old SKIN 7.4 violet "stick-on" shapes are withdrawn from BOTH new variants.
- // The 11 native donor slots remain visible as inner structure.
- gltf.scene.traverse(o=>{if(o.isMesh&&o.name.startsWith('HIGHFLY_VIOLET_'))o.visible=false;});
+ // We retain only recessed gems from 7.4 in VIOLET mode; no T visor,
+ // giant wing cones, leftover spires or floating embellishments. The dragon
+ // must contain no violet pieces at all.
+ const crystalRegex=/(FOREHEAD_CRYSTAL|HEART_CRYSTAL|SHOULDER_GEM|GAUNTLET_GEM|KNEE_GEM)/;
+ const originalCrystals=new Set();
+ gltf.scene.traverse(o=>{
+  if(!o.isMesh||!o.name.startsWith('HIGHFLY_VIOLET_'))return;
+  const keep=variant==='violet'&&crystalRegex.test(o.name);
+  o.visible=keep;if(keep)originalCrystals.add(o);
+ });
  for(const [slot,meshes] of donors){
   for(const donor of meshes){
    donor.material=materials.inner;
@@ -243,11 +250,27 @@ export function forgeDualArmor(gltf,variant='violet'){
   }
  }
  const authored=armorArt(donors,variant,added,materials);
+ // Explicit allowlist: hair, exposed skin and non-Paladin outfits are hidden,
+ // including meshes not named M_* (e.g. hair variants). Only real equipped
+ // native pieces and their newly authored weighted overlays can remain visible.
+ const keep=new Set([...donors.values()].flat().concat([...originalCrystals],added.map(x=>x.mesh)));
+ let hiddenNonArmor=0;
+ gltf.scene.traverse(o=>{
+  if(!o.isMesh)return;
+  if(keep.has(o)){o.visible=true;return;}
+  if(o.visible)hiddenNonArmor++;
+  o.visible=false;
+ });
+ const leaking=[];
+ gltf.scene.traverse(o=>{if(o.isMesh&&o.visible&&!keep.has(o))leaking.push(o.name);});
+ if(leaking.length)throw Error('BODY_LEAK_'+leaking.join(','));
  const shellCount=added.filter(e=>e.type==='shell').length;
  const addedVisible=added.filter(e=>e.mesh.visible&&e.mesh.isSkinnedMesh&&e.mesh.skeleton.bones.length===23);
  const proof={
   variant,variantName:v.name,version:'7.5-7.6',
   nativeSlots:donors.size,nativePrimitives:[...donors.values()].reduce((s,m)=>s+m.length,0),
+  retainedNativeCrystals:originalCrystals.size,hiddenNonArmor,
+  unwantedVisibleMeshes:leaking.length,
   authoredGeometry:authored.artObjects+shellCount,scaleCount:authored.scales,hornCount:authored.horns,
   shellCount,plateCount:authored.plates,skinnedAdded:addedVisible.length,
   originalBones:23,originalClips:gltf.animations.length,
@@ -256,7 +279,7 @@ export function forgeDualArmor(gltf,variant='violet'){
    clippingApproved:false,femaleApproved:false,physicalAndroidApproved:false},
   structuralGreen:donors.size===11&&addedVisible.length===added.length&&
    gltf.animations.length===22&&original.proof.bodyHidden&&
-   (variant!=='dragon'||authored.scales>=35)&&shellCount>=11
+   (variant!=='dragon'||authored.scales>=35)&&shellCount===17&&leaking.length===0
  };
  if(!proof.structuralGreen)throw Error('DUAL_ARMOR_NATIVE_GATE_FAIL '+JSON.stringify(proof));
  gltf.userData={...(gltf.userData||{}),dualArmorProof:proof};
