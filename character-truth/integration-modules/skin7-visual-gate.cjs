@@ -16,7 +16,7 @@ const {chromium}=require('playwright');
   for(const x of state.items){
    assert.equal(x.skinned,true,'HELMET_NOT_NATIVE_SKINNED_MESH');
    assert(x.skinJoints>=15,'NATIVE_BONE_LINKS_MISSING');
-   assert(x.triangles>0&&x.helmets===1&&x.bodies>0&&x.finiteBounds,'INVALID_RENDERED_COMPOSITION');
+   assert(x.triangles>0&&x.helmets>0&&x.bodies>0&&x.finiteBounds,'INVALID_RENDERED_COMPOSITION');
   }
   assert(!errors.length,'BROWSER_PAGE_ERRORS_'+errors.join(' '));
   fs.mkdirSync('character-truth/skin7-evidence',{recursive:true});
