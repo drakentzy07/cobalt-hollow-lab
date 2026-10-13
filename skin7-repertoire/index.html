@@ -1,5 +1,5 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HIGHFLY — SKIN 8.3 / EPIC ARMOR FACTORY · 6 familias</title>
+<title>HIGHFLY — SKIN 8.4 / EPIC ARMOR FACTORY · 6 familias</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%237f50e0' d='M32 1 59 17v30L32 63 5 47V17Z'/%3E%3Cpath fill='white' d='M32 9 49 28 32 55 15 28Z'/%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#141723;color:#eaf0ff;font:14px system-ui,-apple-system,Segoe UI,sans-serif}
@@ -24,8 +24,8 @@ pre{white-space:pre-wrap;overflow:auto;max-height:220px;background:#1a1f2b;color
 </style>
 <script type="importmap">{"imports":{"three":"https://esm.sh/three@0.180.0","three/addons/":"https://esm.sh/three@0.180.0/examples/jsm/","meshoptimizer":"https://esm.sh/meshoptimizer@0.23.0"}}</script>
 </head><body>
-<header><h1>HIGHFLY · ARMOR REPERTOIRE <span style="color:#c8aaff">SKIN 8.3 · REFERENCE FUSION</span></h1>
-<p>Cinco nuevas familias experimentales inspiradas en referencias de cuatro vistas: Obsidiana, Infernal, Dragón, Celestial y Astral; Royal se conserva como comparador. Reutilizan Rig_Medium y piezas nativas ClaudeCraft. Laboratorio independiente; HIGHFLY público intacto.</p></header>
+<header><h1>HIGHFLY · ARMOR REPERTOIRE <span style="color:#c8aaff">SKIN 8.4 · REFERENCE FUSION</span></h1>
+<p>SKIN 8.4 TRUE REPLACEMENT: cinco nuevas armaduras 3D referenciadas en las cuatro vistas (Obsidiana, Infernal, Dragón, Celestial, Astral). Las armaduras 8.2 y sus 17 shells YA NO SE RENDERIZAN en estas cinco; Royal queda como comparador. No son conversiones 3D exactas de las imágenes. Reutilizan Rig_Medium y piezas nativas ClaudeCraft. Laboratorio independiente; HIGHFLY público intacto.</p></header>
 <main><nav id="families" aria-label="Familias de armaduras"></nav>
 <div class="control">
 <label>Animación <select id="animation"><option value="">Reposo</option></select></label>
@@ -40,7 +40,7 @@ pre{white-space:pre-wrap;overflow:auto;max-height:220px;background:#1a1f2b;color
 </div>
 <div class="info" id="progress" role="status">Cargando modelo auténtico de ClaudeCraft…</div>
 <div class="split"><div><strong>Inspección</strong><pre id="status">Inicializando WebGL...</pre></div><div><strong>Auditoría de la variante</strong><pre id="proof">Pendiente…</pre></div></div>
-<p class="info">Estado artístico: revisión de encastres y proporciones (sin aprobación humana). Cada familia incluye superficies, adornos y geometrías separadas con skinning, pero el ajuste final de silueta, clipping con golpes, simulación de tela/capa, versión femenina y rendimiento físico Android necesitan revisión posterior. El original y el juego público no se modifican.</p>
+<p class="info">Estado artístico: revisión de encastres y proporciones (sin aprobación humana). Cinco familias muestran 11 conjuntos 3D de sustitución animados, sin las antiguas capas visibles, pero el ajuste final de silueta, clipping con golpes, simulación de tela/capa, versión femenina y rendimiento físico Android necesitan revisión posterior. El original y el juego público no se modifican.</p>
 </main>
 <script type="module">
 import * as THREE from 'three';
@@ -123,7 +123,7 @@ async function choose(id){
   present(right,result.gltf);
   state.proofs[id]=result.proof;state.variantReady=true;state.variationCount++;
   $('#variant-title').textContent='HIGHFLY · '+result.proof.name;
-  $('#variant-caption').textContent=result.proof.reference83?.enabled ? 'SKIN 8.3 · '+result.proof.reference83.assemblies+' módulos fusionados al rig · 17 donantes originales' : 'Comparador Royal anterior · 17 donantes';
+  $('#variant-caption').textContent=result.proof.reference83?.enabled ? 'SKIN 8.4 · '+result.proof.reference83.assemblies+' módulos NUEVOS sobre el rig · 0 mallas viejas visibles' : 'Comparador Royal anterior · 17 donantes';
   $('#proof').textContent=JSON.stringify(result.proof,null,2);
   $('#progress').textContent=result.proof.name+' · '+(result.proof.reference83?.enabled ? result.proof.reference83.geometryPiecesCombined+' detalles agrupados en 11 mallas por slot' : 'comparador antiguo')+' · 23 huesos · 22 animaciones · aprobación artística pendiente.';
   $('#status').textContent='LISTO · '+id+' · '+result.proof.signature;
