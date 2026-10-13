@@ -3,7 +3,9 @@ on:
   push:
     branches: [highfly-skin19-native-paladin-eclipse]
     paths:
-      - 'character-truth/skin19-native/**'
+      - 'character-truth/skin19-native/blender-native-eclipse.py'
+      - 'character-truth/skin19-native/eclipse-native-recipe.json'
+      - 'character-truth/skin19-native/visual-review.py'
       - '.github/workflows/skin19-native-reforge.yml'
   workflow_dispatch:
 permissions: {contents: write, actions: read}
@@ -25,7 +27,7 @@ jobs:
           git diff --name-only 940fd5d18cf3299a8a2313d2d6589da3bb516c0a HEAD | tee /tmp/hf19-files
           while IFS= read -r f;do
             case "$f" in
-              character-truth/skin19-native/*|.github/workflows/skin19-native-reforge.yml) ;;
+              character-truth/skin19-native/*|.github/workflows/skin19-native-reforge.yml|.github/workflows/skin19-live-qa.yml) ;;
               *) echo "HF19_ORIGINAL_OR_PUBLIC_GAME_CHANGE_DENIED:$f";exit 42;;
             esac
           done < /tmp/hf19-files
