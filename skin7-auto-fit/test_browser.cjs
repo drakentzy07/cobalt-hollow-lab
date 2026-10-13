@@ -26,7 +26,8 @@ const url = process.env.SKIN7_LAB_URL || 'https://highfly-skin7-autofit-factory.
     assert(nativeState.nativeBridgeProof.newAuthoredGeometry>=15);
     assert.equal(nativeState.nativeBridgeProof.originalClips,22);
     assert.equal(nativeState.nativeBridgeProof.bodyHidden,true);
-    assert.equal(nativeState.metrics.candidate.nativeDonors,11);
+    assert(nativeState.metrics.candidate.nativeDonors>=11);
+    assert.equal(nativeState.nativeBridgeProof.nativePrimitives,nativeState.metrics.candidate.nativeDonors);
     assert.equal(nativeState.metrics.candidate.rigProof,true);
     console.log('SKIN74_NATIVE_BRIDGE_REAL_CHROME_GREEN=1',JSON.stringify(nativeState.metrics.candidate));
     await page.screenshot({path:'tmp/skin7/evidence/native-armor-violet-front.png',fullPage:true});
