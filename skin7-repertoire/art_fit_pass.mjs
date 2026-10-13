@@ -91,11 +91,43 @@ export function balanceNativeArmorSilhouette(gltf,style){
    o.visible=true;o.material=cloth;underArmor++;names.push(o.name);
   }
  });
+ // SKIN8.2: remove overlapping original under-plates from the render only.
+ // All 17 source primitives stay in the scene and retain their native rig; 
+ // the corresponding 17 independently weighted native outer shells remain visible.
+ const hiddenNative=known.size;
+ for(const donor of known)donor.visible=false;
+ // The stock Rig_Medium is a stylized, oversized-head Hunter. Compact the head
+ // geometry only; the skeleton, head bone, skin weights and animation tracks remain.
+ const headCenter=bySlot.get('Head').getCenter(new THREE.Vector3());
+ const headParents=new Set();
+ gltf.scene.traverse(o=>{
+  if(o.name==='Armor_paladin_Head')o.traverse(child=>{if(known.has(child))headParents.add(child);});
+ });
+ let compactedHead=0;
+ gltf.scene.traverse(o=>{
+  if(!o.isSkinnedMesh||!o.geometry?.getAttribute('position'))return;
+  const n=o.name||'';
+  const headPiece=headParents.has(o)||
+   (n.startsWith('HF_DUAL_')&&n.includes('_Head_'))||
+   n.startsWith('HF_DNA_'+style+'_Head_')||
+   n.startsWith('HF_SKIN8_'+style+'_Head_')||
+   n.startsWith('HIGHFLY_VIOLET_Head_');
+  if(!headPiece)return;
+  const g=o.geometry.clone(),p=g.getAttribute('position');
+  for(let i=0;i<p.count;i++){
+   p.setXYZ(i,headCenter.x+(p.getX(i)-headCenter.x)*.83,
+    headCenter.y+(p.getY(i)-headCenter.y)*.88,
+    headCenter.z+(p.getZ(i)-headCenter.z)*.85);
+  }
+  p.needsUpdate=true;g.computeVertexNormals();g.computeBoundingBox();g.computeBoundingSphere();
+  o.geometry=g;o.frustumCulled=false;compactedHead++;
+ });
  gltf.scene.updateMatrixWorld(true);
  const proof={pass:'SKIN8_1_ART_FIT',nativePrimitives:17,authoredInspected:inspected,
   correctedOverlays:constrained,sourceBoundsSlots:bySlot.size,underArmor,underArmorNames:names,
+  hiddenSourceUnderPlates:hiddenNative,sourceSkinnedPrimitivesPreserved:known.size,compactedHeadPieces:compactedHead,
   fittedSlots:slotFits,clips:gltf.animations.length,artReviewed:false,
   noFloatingPartsCertified:false,physicalAndroid:false};
- if(proof.clips!==22||inspected<30||underArmor<6)throw Error('SKIN8_ART_FIT_GATE_RED '+JSON.stringify(proof));
+ if(proof.clips!==22||inspected<30||underArmor<6||hiddenNative!==17||compactedHead<4)throw Error('SKIN8_ART_FIT_GATE_RED '+JSON.stringify(proof));
  return proof;
 }
