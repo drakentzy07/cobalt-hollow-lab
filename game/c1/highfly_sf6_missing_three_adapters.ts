@@ -63,6 +63,9 @@ export function sf6PaladinCrusaderSeal(
     });
   return {...strike,
     id:spec.id,name:spec.name,class:spec.classId,learnLevel:spec.unlockLevel,
+    // A donor may be hidden/passive within Claude's tree, but HF_* is an
+    // explicitly learned ACTIVE skill with its own unlock and visibility.
+    hiddenFromPlayer:undefined,passive:undefined,
     specs:undefined,excludeSpecs:undefined,excludeSpecsAtLevel:undefined,
     cost:snaps[0].cost,cooldown:8,effects:snaps[0].effects,
     ranks:snaps.slice(1).map((s,i)=>({rank:i+2,level:s.lv,cost:s.cost,effects:s.effects})),
@@ -93,6 +96,9 @@ export function sf6HunterRaptorRetreat(
   });
   return {...raptor,
     id:spec.id,name:spec.name,class:spec.classId,learnLevel:spec.unlockLevel,
+    // A donor may be hidden/passive within Claude's tree, but HF_* is an
+    // explicitly learned ACTIVE skill with its own unlock and visibility.
+    hiddenFromPlayer:undefined,passive:undefined,
     specs:undefined,excludeSpecs:undefined,excludeSpecsAtLevel:undefined,
     offGcd:undefined,cooldown:15,cost:snaps[0].cost,effects:snaps[0].effects,
     ranks:snaps.slice(1).map((s,i)=>({rank:i+2,level:s.lv,cost:s.cost,effects:s.effects})),
@@ -125,6 +131,9 @@ export function sf6WarlockTwinCurse(
   });
   return {...rot,
     id:spec.id,name:spec.name,class:spec.classId,learnLevel:spec.unlockLevel,
+    // A donor may be hidden/passive within Claude's tree, but HF_* is an
+    // explicitly learned ACTIVE skill with its own unlock and visibility.
+    hiddenFromPlayer:undefined,passive:undefined,
     specs:undefined,excludeSpecs:undefined,excludeSpecsAtLevel:undefined,
     cooldown:6,cost:snaps[0].cost,effects:snaps[0].effects,
     ranks:snaps.slice(1).map((s,i)=>({rank:i+2,level:s.lv,cost:s.cost,effects:s.effects})),
