@@ -61,6 +61,18 @@ if not sf9b_src.is_file() or sf9b_dst.exists():
     raise SystemExit("SF9B_NATIVE_FULL_ROTATION_TEST_MISSING_OR_DUPLICATED")
 shutil.copyfile(sf9b_src,sf9b_dst)
 
+# SF10 - opt-in THREE audited native compositions; the first ten remain
+# unchanged and 50 other SF3 designs remain unregistered. All tests run in
+# isolated original Sim without any mutation of Pages, training or main.
+sf10_src=Path("../v9-corrections/game/c1/highfly_sf10_three_native_reuses.ts")
+sf10_dst=Path("src/highfly/sf10_three_native_reuses.ts")
+sf10_test_src=Path("../v9-corrections/game/c1/highfly_sf10_three_native_reuses.test.ts")
+sf10_test_dst=Path("tests/highfly_sf10_three_native_reuses.test.ts")
+for source,destination in [(sf10_src,sf10_dst),(sf10_test_src,sf10_test_dst)]:
+    if not source.is_file() or destination.exists():
+        raise SystemExit("SF10_NATIVE_FUSION_SOURCE_MISSING_OR_DUPLICATE:"+str(source))
+    shutil.copyfile(source,destination)
+
 # Stage the complete read-only 9×7 donor unlock planner and its unit contract.
 stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
 stages_dest = Path("src/highfly/highfly_sf5_unlock_stages.ts")
@@ -76,13 +88,18 @@ for source, destination in [
 p=Path("src/sim/content/classes.ts")
 s=p.read_text(encoding="utf-8")
 old_import="import { installHighflySF3Fusions } from '../../highfly/sf3_fusion_runtime';\n"
-new_import="import { installSf4NativePilots } from '../../highfly/sf4_safe_fusions';\n"
+new_import=("import { installSf4NativePilots } from '../../highfly/sf4_safe_fusions';\\n"
+            "import { installSf10NativeExpansion } from '../../highfly/sf10_three_native_reuses';\\n")
 old_cond="""if (import.meta.env?.VITE_HIGHFLY_SF3 === '1') {
   installHighflySF3Fusions(ABILITIES, CLASSES);
 }"""
 new_cond="""// SF4: never register the unfinished 53 fusion definitions.
 if (import.meta.env?.VITE_HIGHFLY_SF4 === '1') {
   installSf4NativePilots(ABILITIES, CLASSES);
+  // SF10 only in candidate builds: three more audited native reuses.
+  if (import.meta.env?.VITE_HIGHFLY_SF10 === '1') {
+    installSf10NativeExpansion(ABILITIES, CLASSES);
+  }
 }"""
 for before,after in [(old_import,new_import),(old_cond,new_cond)]:
     if s.count(before)!=1:
@@ -91,4 +108,4 @@ for before,after in [(old_import,new_import),(old_cond,new_cond)]:
 if "installHighflySF3Fusions(ABILITIES, CLASSES)" in s:
     raise SystemExit("SF4_UNSAFE_INSTALLER_STILL_LIVE")
 p.write_text(s,encoding="utf-8")
-print("HIGHFLY_SF6_TEN_NATIVE_PILOTS_NINE_CLASSES_GUARDED_NO_PUBLIC_CHANGE=1")
+print("HIGHFLY_SF10_13_NATIVE_PILOTS_NINE_CLASSES_OPTIN_NO_PUBLIC_CHANGE=1")
