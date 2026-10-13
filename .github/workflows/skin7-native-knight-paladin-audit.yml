@@ -5,6 +5,8 @@ on:
       - highfly-skin7-knight-paladin-native-reset-01
     paths:
       - 'character-truth/integration-modules/skin7-native-source-audit.mjs'
+      - 'character-truth/integration-modules/skin7-native-paladin-helmet-forge.mjs'
+      - 'character-truth/integration-modules/skin7-paladin-helmet-recipe.json'
       - '.github/workflows/skin7-native-knight-paladin-audit.yml'
   workflow_dispatch:
 permissions:
@@ -41,6 +43,14 @@ jobs:
           set -euo pipefail
           node --check character-truth/integration-modules/skin7-native-source-audit.mjs
           node character-truth/integration-modules/skin7-native-source-audit.mjs
+      - name: Forge genuine Paladin native helmet VARIANT with unchanged Rig_Medium
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false meshoptimizer@0.23.0
+          node --check character-truth/integration-modules/skin7-native-paladin-helmet-forge.mjs
+          node character-truth/integration-modules/skin7-native-paladin-helmet-forge.mjs
+          test -s character-truth/skin7-evidence/HIGHFLY-SKIN7-PALADIN-HELMET-NATIVE-VARIANT.glb
+          node --input-type=module -e "import fs from 'node:fs'; import assert from 'node:assert/strict';const r=JSON.parse(fs.readFileSync('character-truth/skin7-evidence/helmet-forge-report.json')); assert(r.sourceFileUnchanged&&r.skeletonAndAnimationsUnchanged&&r.vertexGeometryReallyModified&&r.totalVerticesChanged>0); console.log('SKIN7_NATIVE_REAL_GEOMETRY_AND_ORIGINAL_PRESERVATION_GREEN=1')"
       - name: Store truthful native armor inventory (no build, no deploy)
         if: always()
         uses: actions/upload-artifact@v4
