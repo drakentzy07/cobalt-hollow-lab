@@ -150,6 +150,11 @@ sf21_dst=Path('src/highfly/sf21_three_complex_source.ts')
 if not sf21_src.is_file() or sf21_dst.exists():
     raise SystemExit('SF21_SOURCE_MISSING_OR_DUPLICATE')
 shutil.copyfile(sf21_src,sf21_dst)
+sf22_src=Path('../v9-corrections/game/c1/highfly_sf22_three_original_compat.ts')
+sf22_dst=Path('src/highfly/sf22_three_original_compat.ts')
+if not sf22_src.is_file() or sf22_dst.exists():
+    raise SystemExit('SF22_SOURCE_MISSING_OR_DUPLICATE')
+shutil.copyfile(sf22_src,sf22_dst)
 
 # Stage the complete read-only 9×7 donor unlock planner and its unit contract.
 stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
@@ -177,7 +182,8 @@ new_import=("import { installSf4NativePilots } from '../../highfly/sf4_safe_fusi
             "import { installSf18ThreeNative } from '../../highfly/sf18_four_native_effects';\n"
             "import { installSf19TwoNative } from '../../highfly/sf19_two_melee_native';\n"
             "import { installSf20TwoNative } from '../../highfly/sf20_two_source_effects';\n"
-            "import { installSf21ThreeNative } from '../../highfly/sf21_three_complex_source';\n")
+            "import { installSf21ThreeNative } from '../../highfly/sf21_three_complex_source';\n"
+            "import { installSf22ThreeNative } from '../../highfly/sf22_three_original_compat';\n")
 old_cond="""if (import.meta.env?.VITE_HIGHFLY_SF3 === '1') {
   installHighflySF3Fusions(ABILITIES, CLASSES);
 }"""
@@ -208,6 +214,9 @@ if (import.meta.env?.VITE_HIGHFLY_SF4 === '1') {
                     installSf20TwoNative(ABILITIES, CLASSES);
                     if (import.meta.env?.VITE_HIGHFLY_SF21 === '1') {
                       installSf21ThreeNative(ABILITIES, CLASSES);
+                      if (import.meta.env?.VITE_HIGHFLY_SF22 === '1') {
+                        installSf22ThreeNative(ABILITIES, CLASSES);
+                      }
                     }
                   }
                 }
