@@ -94,7 +94,7 @@ describe('SF15 eight REAL source-effect special adapters',()=>{
    for(let tick=0;tick<95;tick++){
     for(const e of sim.tick()){
      if(e.type==='damage'&&e.sourceId===hero.id) {damage+=e.amount;observedDamage=true;}
-     if(e.type==='heal'&&e.sourceId===hero.id)observedHeal=true;
+     if(e.type==='heal'&&e.targetId===hero.id)observedHeal=true;
     }
     if(hero.auras.length>0)observedAura=true;
    }
@@ -106,7 +106,11 @@ describe('SF15 eight REAL source-effect special adapters',()=>{
    }
    if(['hf_paladin_s3','hf_druid_s5'].includes(c.id))
     expect(observedAura,c.id+' LV'+level+' missing actual defensive/form auras').toBe(true);
-   if(c.id==='hf_rogue_s1')expect(d.effects[0].type).toBe('weaponStrike');
+   if(c.id==='hf_rogue_s1'){
+    expect(d.effects[0].type).toBe('weaponStrike');
+    expect(observedDamage).toBe(true);
+   }
+   if(c.id==='hf_priest_s5')expect(observedHeal).toBe(true);
    if(c.id==='hf_warlock_u2')expect(d.effects.length).toBe(2);
   },25000);
  }
