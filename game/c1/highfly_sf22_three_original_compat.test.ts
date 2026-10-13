@@ -87,7 +87,7 @@ describe('SF22 original Paladin/Hunter/Mage native source compatibility',()=>{
    if(def.requiresTarget)sim.targetEntity(target.id,hero.id);
    if(c.cls==='mage')sim.castAbility(c.id,hero.id,{x:target.pos.x,z:target.pos.z});
    else sim.castAbility(c.id,hero.id);
-   let hurt=false,marked=false,aura=false,ground=false,neighbor=false,fxAtTarget=false;
+   let hurt=false,marked=false,aura=false,suspended=false,neighbor=false,fxAtTarget=false;
    for(let k=0;k<110;k++){
     for(const ev of sim.tick()){
      if(ev.type==='damage'&&ev.targetId===target.id&&ev.amount>0)hurt=true;
@@ -98,8 +98,10 @@ describe('SF22 original Paladin/Hunter/Mage native source compatibility',()=>{
     if(target.auras.some(a=>a.kind==='sun_verdict'))marked=true;
     if(hero.auras.some(a=>a.kind==='combustion'))aura=true;
     if(other&&other.hp<other.maxHp)neighbor=true;
-    const zones=(sim as unknown as {groundAoEs:readonly {temporalHourglass?:unknown}[]}).groundAoEs;
-    if(zones.some(a=>a.temporalHourglass!==undefined))ground=true;
+    // Original Hourglass routes an aimed cast ON a living enemy to hostile
+    // temporal suspension immediately, NOT to an empty-ground hourglass.
+    if(target.auras.some(a=>a.id==='temporal_hourglass'&&
+     a.kind==='incapacitate'&&a.sourceId===hero.id))suspended=true;
    }
    expect(hero.cooldowns.has(c.id),c.id+' original Sim cast failed').toBe(true);
    if(c.cls==='paladin'){
@@ -112,9 +114,28 @@ describe('SF22 original Paladin/Hunter/Mage native source compatibility',()=>{
     expect(fxAtTarget,'native original nova centered on selected mob').toBe(true);
    }
    if(c.cls==='mage'){
-    expect(ground,'real original Hourglass ground-zone state').toBe(true);
+    expect(suspended,'native Hourglass must suspend the aimed living mob').toBe(true);
     expect(aura,'real original Phoenix selfBuff aura').toBe(true);
    }
+  },25000);
+ }
+ for(const level of [30,99]){
+  it('hf_mage_u2 LV'+level+' places ORIGINAL pending hourglass on EMPTY ground',()=>{
+   const sim=new Sim({seed:222211+level,playerClass:'mage',autoEquip:true});
+   sim.setPlayerLevel(level);sim.tick();
+   const hero=sim.player;hero.resource=hero.maxResource;
+   const aim={x:hero.pos.x+16,z:hero.pos.z+8};
+   sim.castAbility('hf_mage_u2',hero.id,aim);
+   let field=false;
+   for(let tick=0;tick<6;tick++){
+    sim.tick();
+    // Native pending area exists ONLY for unoccupied ground; never invent
+    // a synthetic zone to make the targeted-hostile test appear to pass.
+    if(sim.activeTemporalHourglasses.some(h=>
+      Math.abs(h.pos.x-aim.x)<0.5&&Math.abs(h.pos.z-aim.z)<0.5))field=true;
+   }
+   expect(hero.cooldowns.has('hf_mage_u2')).toBe(true);
+   expect(field,'source Hourglass pending area must appear on EMPTY ground').toBe(true);
   },25000);
  }
  it('rejects missing original donor without any partial registration',()=>{
