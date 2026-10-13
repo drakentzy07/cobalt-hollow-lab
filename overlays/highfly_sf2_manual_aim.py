@@ -13,7 +13,7 @@ def replace_one(path: str, old: str, new: str) -> None:
         raise SystemExit(f"SF2_ANCHOR_CHANGED:{path}:{count}:{old[:90]!r}")
     p.write_text(source.replace(old, new, 1), encoding="utf-8")
 
-helper = Path("../sf2-lab/game/c1/highfly_manual_skill_aim.ts")
+helper = Path("../v9-corrections/game/c1/highfly_manual_skill_aim.ts")
 target = Path("src/highfly/manual_skill_aim.ts")
 if not helper.exists() or target.exists():
     raise SystemExit("SF2_SOURCE_MISSING_OR_ALREADY_INSTALLED")
