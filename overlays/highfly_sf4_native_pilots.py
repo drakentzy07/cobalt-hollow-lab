@@ -20,6 +20,14 @@ for filename in ["highfly_sf4_safe_fusions.ts", "highfly_sf4_diagnostics.ts"]:
         raise SystemExit("SF4_SOURCE_UNAVAILABLE_OR_DUPLICATED:" + str(source))
     shutil.copyfile(source,destination)
 
+# Stage a real original-Sim cast test, not just registry shape checks.
+# This creates no run: a future authorized isolated workflow must execute it.
+test_source = Path("../v9-corrections/game/c1/highfly_sf4_real_sim.test.ts")
+test_destination = Path("tests/highfly_sf4_real_sim.test.ts")
+if not test_source.is_file() or test_destination.exists():
+    raise SystemExit("SF4_SIM_TEST_UNAVAILABLE_OR_DUPLICATE:" + str(test_source))
+shutil.copyfile(test_source, test_destination)
+
 p=Path("src/sim/content/classes.ts")
 s=p.read_text(encoding="utf-8")
 old_import="import { installHighflySF3Fusions } from '../../highfly/sf3_fusion_runtime';\n"
