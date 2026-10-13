@@ -18,6 +18,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check skin7-repertoire/native_integration_pass.mjs
+          node --check skin7-repertoire/art_fit_pass.mjs
           node --check skin7-repertoire/armor_style_dna_factory.mjs
           node --check skin7-repertoire/test_repertoire.cjs
           curl -fsSL --retry 3 --max-time 120 https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb -o /tmp/highfly-skin8-rig.glb
