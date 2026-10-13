@@ -25,7 +25,7 @@ pre{white-space:pre-wrap;overflow:auto;max-height:220px;background:#1a1f2b;color
 <script type="importmap">{"imports":{"three":"https://esm.sh/three@0.180.0","three/addons/":"https://esm.sh/three@0.180.0/examples/jsm/","meshoptimizer":"https://esm.sh/meshoptimizer@0.23.0"}}</script>
 </head><body>
 <header><h1>HIGHFLY · ARMOR REPERTOIRE <span style="color:#c8aaff">SKIN 8.6 · REFERENCE FUSION</span></h1>
-<p>SKIN 8.5 TRUE REPLACEMENT: cinco armaduras 3D conformadas sobre la SUPERFICIE REAL de las 17 piezas originales en las cuatro vistas (Obsidiana, Infernal, Dragón, Celestial, Astral). Sin paneles extruidos 8.3 ni capa separada: capa articulada sobre Back. Las armaduras 8.2 y sus 17 shells YA NO SE RENDERIZAN en estas cinco; Royal queda como comparador. Las cinco variantes incluyen GEOMETRÍA 3D distinta anclada a la malla original; NO son conversiones exactas de las referencias. Reutilizan Rig_Medium y piezas nativas ClaudeCraft. Laboratorio independiente; HIGHFLY público intacto.</p></header>
+<p>SKIN 8.6 TRUE REPLACEMENT: cinco armaduras 3D conformadas sobre la SUPERFICIE REAL de las 17 piezas originales en las cuatro vistas (Obsidiana, Infernal, Dragón, Celestial, Astral). Sin paneles extruidos 8.3 ni capa separada: capa articulada sobre Back. Las armaduras 8.2 y sus 17 shells YA NO SE RENDERIZAN en estas cinco; Royal queda como comparador. Las cinco variantes incluyen GEOMETRÍA 3D distinta anclada a la malla original; NO son conversiones exactas de las referencias. Reutilizan Rig_Medium y piezas nativas ClaudeCraft. Laboratorio independiente; HIGHFLY público intacto.</p></header>
 <main><nav id="families" aria-label="Familias de armaduras"></nav>
 <div class="control">
 <label>Animación <select id="animation"><option value="">Reposo</option></select></label>
@@ -123,8 +123,11 @@ async function choose(id){
   present(right,result.gltf);
   state.proofs[id]=result.proof;state.variantReady=true;state.variationCount++;
   $('#variant-title').textContent='HIGHFLY · '+result.proof.name;
-  $('#variant-caption').textContent=result.proof.reference83?.enabled ? 'SKIN 8.5 · '+result.proof.reference83.assemblies+' piezas NATIVAS conformadas a superficie · 0 paneles flotantes visibles · cuernos/plumas/crestas 3D nuevos y articulados' : 'Comparador Royal anterior · 17 donantes';
+  $('#variant-caption').textContent=result.proof.reference83?.enabled ? 'SKIN 8.6 · '+result.proof.reference83.assemblies+' piezas NATIVAS + formas 3D propias · 0 paneles flotantes visibles · cuernos/plumas/crestas 3D nuevos y articulados' : 'Comparador Royal anterior · 17 donantes';
   $('#proof').textContent=JSON.stringify(result.proof,null,2);
+  if(result.proof.silhouette86?.enabled){
+    $('#variant-caption').textContent='SKIN 8.6 · '+result.proof.silhouette86.anchoredDetails+' adornos 3D anclados · 23 huesos';
+  }
   $('#progress').textContent=result.proof.name+' · '+(result.proof.reference83?.enabled ? result.proof.reference83.geometryPiecesCombined+' detalles agrupados en 11 mallas por slot' : 'comparador antiguo')+' · 23 huesos · 22 animaciones · aprobación artística pendiente.';
   $('#status').textContent='LISTO · '+id+' · '+result.proof.signature;
  }catch(err){if(key!==generation)return;state.error=String(err);$('#status').textContent=String(err.stack||err);$('#progress').textContent='Falló '+id+': '+err.message;console.error(err);}
