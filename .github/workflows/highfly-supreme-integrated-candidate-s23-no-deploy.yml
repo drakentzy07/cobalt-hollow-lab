@@ -3,7 +3,7 @@ name: HIGHFLY SUPREME — Unified REAL WebGL S23 Preview (NO DEPLOY)
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
   push:
-    branches: [highfly-supreme-v91-combat-aim-nine-classes, highfly-sf2-manual-aim-cancel-lab, highfly-sf3-nine-classes-fusion-integration]
+    branches: [highfly-supreme-v91-combat-aim-nine-classes, highfly-sf2-manual-aim-cancel-lab, highfly-sf3-nine-classes-fusion-integration, highfly-sf4-native-fusion-safe-implementation]
     paths:
       - ".github/workflows/highfly-supreme-integrated-candidate-s23-no-deploy.yml"
       - "overlays/highfly_v91_combat_feel.py"
@@ -15,6 +15,14 @@ on:
       - "game/c1/highfly_sf3_skill_catalog.ts"
       - "game/c1/highfly_sf3_fusion_runtime.ts"
       - "game/c1/highfly_sf3_fusion_9_classes.test.ts"
+      - "overlays/highfly_sf4_native_pilots.py"
+      - "game/c1/highfly_sf4_safe_fusions.ts"
+      - "game/c1/highfly_sf4_native_pilots.test.ts"
+      - "game/c1/highfly_sf4_diagnostics.ts"
+      - "game/c1/highfly_sf4_diagnostics.test.ts"
+      - "game/c1/highfly_sf4_real_sim.test.ts"
+      - "game/c1/highfly_sf5_unlock_stages.ts"
+      - "game/c1/highfly_sf5_unlock_stages.test.ts"
   workflow_dispatch:
 permissions:
   contents: read
@@ -51,6 +59,14 @@ jobs:
             /game/c1/highfly_sf3_skill_catalog.ts
             /game/c1/highfly_sf3_fusion_runtime.ts
             /game/c1/highfly_sf3_fusion_9_classes.test.ts
+            /overlays/highfly_sf4_native_pilots.py
+            /game/c1/highfly_sf4_safe_fusions.ts
+            /game/c1/highfly_sf4_native_pilots.test.ts
+            /game/c1/highfly_sf4_diagnostics.ts
+            /game/c1/highfly_sf4_diagnostics.test.ts
+            /game/c1/highfly_sf4_real_sim.test.ts
+            /game/c1/highfly_sf5_unlock_stages.ts
+            /game/c1/highfly_sf5_unlock_stages.test.ts
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
@@ -587,7 +603,7 @@ jobs:
           pnpm exec vitest run tests/highfly_v9_p0_regression.test.ts tests/highfly_v91_combat_nine_classes.test.ts
           echo 'HF_V91_ALL_NINE_CLASSES_AIM_AND_ROGUE_SKILL_GREEN=1'
       - name: SF2 opt-in manual aim, shared native 9-class pointer/cancel pilot
-        if: github.ref_name == 'highfly-sf2-manual-aim-cancel-lab' || github.ref_name == 'highfly-sf3-nine-classes-fusion-integration'
+        if: github.ref_name == 'highfly-sf2-manual-aim-cancel-lab' || github.ref_name == 'highfly-sf3-nine-classes-fusion-integration' || github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
         working-directory: upstream
         shell: bash
         run: |
@@ -598,7 +614,7 @@ jobs:
           pnpm exec vitest run tests/highfly_manual_skill_aim.test.ts
           echo 'HIGHFLY_SF2_MANUAL_AIM_CANCEL_PURE_NATIVE_GATE_GREEN=1'
       - name: SF3 9/9 fusion donor catalogue + native ability preview (NO PUBLIC CHANGE)
-        if: github.ref_name == 'highfly-sf3-nine-classes-fusion-integration'
+        if: github.ref_name == 'highfly-sf3-nine-classes-fusion-integration' || github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
         working-directory: upstream
         shell: bash
         run: |
@@ -608,6 +624,18 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_sf3_fusion_9_classes.test.ts
           echo 'HIGHFLY_SF3_NINE_CLASSES_63_FUSION_DESIGN_NATIVE_GATE_GREEN=1'
+      - name: V10 SF4 four guarded class-fusion pilots + SF5 nine-class unlock matrix (NO DEPLOY)
+        if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_sf4_native_pilots.py
+          cp ../v9-corrections/game/c1/highfly_sf4_native_pilots.test.ts tests/highfly_sf4_native_pilots.test.ts
+          cp ../v9-corrections/game/c1/highfly_sf4_diagnostics.test.ts tests/highfly_sf4_diagnostics.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_sf4_native_pilots.test.ts tests/highfly_sf4_diagnostics.test.ts tests/highfly_sf4_real_sim.test.ts tests/highfly_sf5_unlock_stages.test.ts
+          echo 'HF_V10_SF4_FOUR_CLASS_PILOTS_SF5_NINE_CLASS_UNLOCK_TEST_GATE_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
