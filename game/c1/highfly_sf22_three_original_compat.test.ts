@@ -132,7 +132,7 @@ describe('SF22 original Paladin/Hunter/Mage native source compatibility',()=>{
     // Native pending area exists ONLY for unoccupied ground; never invent
     // a synthetic zone to make the targeted-hostile test appear to pass.
     if(sim.activeTemporalHourglasses.some(h=>
-      Math.abs(h.pos.x-aim.x)<0.5&&Math.abs(h.pos.z-aim.z)<0.5))field=true;
+      Math.abs(h.x-aim.x)<0.5&&Math.abs(h.z-aim.z)<0.5))field=true;
    }
    expect(hero.cooldowns.has('hf_mage_u2')).toBe(true);
    expect(field,'source Hourglass pending area must appear on EMPTY ground').toBe(true);
