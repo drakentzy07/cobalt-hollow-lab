@@ -1,0 +1,163 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HIGHFLY — SKIN 7.7 / ARMOR REPERTOIRE · 6 familias</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%237f50e0' d='M32 1 59 17v30L32 63 5 47V17Z'/%3E%3Cpath fill='white' d='M32 9 49 28 32 55 15 28Z'/%3E%3C/svg%3E">
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#141723;color:#eaf0ff;font:14px system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:16px 18px;background:#1d2231;border-bottom:1px solid #3f4a67}header h1{margin:0;font-size:22px}header p{margin:6px 0 0;line-height:1.5;color:#b9c9e1}
+main{max-width:1500px;margin:0 auto;padding:12px}
+nav{display:flex;flex-wrap:wrap;gap:8px;background:#20283c;border:1px solid #485b7a;border-radius:12px;padding:10px}
+button,select{border:1px solid #607394;background:#141a2a;color:#eaf0ff;border-radius:8px;padding:9px 10px;font:inherit;cursor:pointer}
+button.selected{background:#4b2a75;border-color:#c78cff;box-shadow:inset 0 0 0 1px #ba76f7}
+button:focus-visible,select:focus-visible{outline:3px solid #baa0ff}
+.control{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 0;background:#1d2538;border:1px solid #485875;padding:10px;border-radius:12px}
+input{accent-color:#9d63f6}
+.viewgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+article{border:1px solid #495875;border-radius:12px;background:#20283c;overflow:hidden;min-width:0}
+article h2{font-size:16px;margin:0;padding:12px;background:#1a2130;border-bottom:1px solid #46536b}
+.canvas{height:min(60vh,600px);min-height:340px;position:relative}
+.canvas canvas{display:block;width:100%;height:100%}
+.hud{position:absolute;bottom:8px;left:9px;font:12px monospace;padding:7px 9px;background:#101625bd;border-radius:7px}
+.info{border:1px solid #554c73;border-radius:10px;background:#28243e;padding:10px;margin-top:10px;line-height:1.5}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+pre{white-space:pre-wrap;overflow:auto;max-height:220px;background:#1a1f2b;color:#c1d3f5;padding:10px;border-radius:9px}
+@media(max-width:780px){.viewgrid,.split{grid-template-columns:1fr}.canvas{height:365px}header h1{font-size:19px}main{padding:7px}nav{gap:5px}nav button{padding:8px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://esm.sh/three@0.180.0","three/addons/":"https://esm.sh/three@0.180.0/examples/jsm/","meshoptimizer":"https://esm.sh/meshoptimizer@0.23.0"}}</script>
+</head><body>
+<header><h1>HIGHFLY · ARMOR REPERTOIRE <span style="color:#c8aaff">SKIN 7.7–7.9</span></h1>
+<p>Seis familias con geometría propia inspiradas en lenguajes visuales del anime fantástico, no reproducciones de personajes existentes. Reutilizan Rig_Medium y piezas nativas ClaudeCraft. Laboratorio independiente; HIGHFLY público intacto.</p></header>
+<main><nav id="families" aria-label="Familias de armaduras"></nav>
+<div class="control">
+<label>Animación <select id="animation"><option value="">Reposo</option></select></label>
+<label><input type="checkbox" id="play" checked/> Reproducir</label>
+<label><input type="checkbox" id="bones"/> Mostrar huesos</label>
+<button id="front">Frente</button><button id="side">Perfil</button><button id="back">Espalda</button>
+<button id="reset">Restablecer cámara</button>
+</div>
+<div class="viewgrid">
+<article><h2>CLAUDECRAFT · PALADIN ORIGINAL</h2><div class="canvas" id="original"><span class="hud">Fuente verificada · 23 huesos · 22 animaciones</span></div></article>
+<article><h2 id="variant-title">HIGHFLY · Cargando armadura…</h2><div class="canvas" id="candidate"><span class="hud" id="variant-caption">17 donantes nativos · 11 slots</span></div></article>
+</div>
+<div class="info" id="progress" role="status">Cargando modelo auténtico de ClaudeCraft…</div>
+<div class="split"><div><strong>Inspección</strong><pre id="status">Inicializando WebGL...</pre></div><div><strong>Auditoría de la variante</strong><pre id="proof">Pendiente…</pre></div></div>
+<p class="info">**Estado artístico: prototipo.** Cada familia incluye superficies, adornos y geometrías separadas con skinning, pero el ajuste final de silueta, clipping con golpes, simulación de tela/capa, versión femenina y rendimiento físico Android necesitan revisión posterior. El original y el juego público no se modifican.</p>
+</main>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {MeshoptDecoder} from 'meshoptimizer';
+import {ARMOR_FAMILIES,forgeArmorRepertoire} from './armor_style_dna_factory.mjs';
+const repo='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb';
+const $=selector=>document.querySelector(selector);
+const state={sourceLoaded:false,variantReady:false,variantId:null,proofs:{},error:null,frame:null,variationCount:0,animationList:[],artApproved:false};
+window.__HIGHFLY_ARMOR_REPERTOIRE__=state;
+const mount=(id)=>{
+ const host=$(id),scene=new THREE.Scene();scene.background=new THREE.Color('#263047');
+ const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+ renderer.setPixelRatio(Math.min(1.5,window.devicePixelRatio||1));renderer.outputColorSpace=THREE.SRGBColorSpace;
+ host.prepend(renderer.domElement);
+ scene.add(new THREE.HemisphereLight(0xdce8ff,0x343144,2.9));
+ for(const [pos,intensity] of [[[4,6,6],3], [[-5,2,-5],2.4]]){const light=new THREE.DirectionalLight(0xffffff,intensity);light.position.set(...pos);scene.add(light);}
+ const camera=new THREE.PerspectiveCamera(35,1,.01,100),controls=new OrbitControls(camera,renderer.domElement);
+ controls.enableDamping=true;controls.target.set(0,.75,0);camera.position.set(0,1,4);
+ return {host,scene,renderer,camera,controls,root:null,mixer:null,clips:[],bones:null};
+};
+const left=mount('#original'),right=mount('#candidate'),views=[left,right],loader=new GLTFLoader();
+loader.setMeshoptDecoder(MeshoptDecoder);
+const transcoder=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/basis/').detectSupport(left.renderer);
+loader.setKTX2Loader(transcoder);
+const bodyBase=new Set(['Head','Torso','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR','Loin','Top','Eye_almond','Brow_soft','Ear_round','Mouth_neutral']);
+const sourceShown=name=>name.startsWith('Armor_paladin_')||(name.startsWith('M_')&&bodyBase.has(name.slice(2).replace(/_[0-9]+$/,'')));
+let direction='front',generation=0;
+function resize(v){
+ const w=Math.max(v.host.clientWidth,1),h=Math.max(v.host.clientHeight,1);
+ v.renderer.setSize(w,h,false);v.camera.aspect=w/h;v.camera.updateProjectionMatrix();
+}
+function frame(which='front'){
+ direction=which;const all=new THREE.Box3();let n=0;
+ for(const v of views){
+  resize(v);if(!v.root)continue;v.root.updateMatrixWorld(true);
+  const b=new THREE.Box3();v.root.traverse(o=>{
+   if(!o.isMesh||!o.visible)return;
+   const sub=new THREE.Box3().setFromObject(o,true);
+   if(!sub.isEmpty()&&[...sub.min,...sub.max].every(Number.isFinite))b.union(sub);
+  });
+  if(!b.isEmpty()){all.union(b);n++;}
+ }
+ if(!n)return;
+ const s=all.getSize(new THREE.Vector3()),center=all.getCenter(new THREE.Vector3());
+ const a=Math.min(...views.map(v=>Math.max(.5,v.camera.aspect)));
+ const d=Math.max(s.y*.5/Math.tan(THREE.MathUtils.degToRad(35/2)),Math.max(s.x,s.z)*.5/(Math.tan(THREE.MathUtils.degToRad(35/2))*a))*1.75;
+ const eye=which==='side'?new THREE.Vector3(1,.09,0):which==='back'?new THREE.Vector3(0,.09,-1):new THREE.Vector3(.05,.09,1);
+ eye.normalize().multiplyScalar(d).add(center);
+ for(const v of views){v.controls.target.copy(center);v.camera.position.copy(eye);v.camera.near=Math.max(.01,d/130);v.camera.far=d*14+40;v.camera.lookAt(center);v.camera.updateProjectionMatrix();v.controls.update();}
+ state.frame={view:which,distance:d,height:s.y,width:s.x};
+}
+function animateClip(view){
+ if(!view.mixer)return;view.mixer.stopAllAction();
+ const name=$('#animation').value;
+ const clip=view.clips.find(c=>c.name===name);
+ if(clip)view.mixer.clipAction(clip).reset().play();
+}
+function present(view,gltf,original=false){
+ if(view.root){view.scene.remove(view.root);if(view.bones)view.scene.remove(view.bones);view.mixer?.stopAllAction();}
+ view.root=gltf.scene;view.clips=gltf.animations;
+ if(original)view.root.traverse(o=>{if(o.isMesh)o.visible=sourceShown(o.name||'');});
+ view.scene.add(view.root);view.mixer=new THREE.AnimationMixer(view.root);
+ view.bones=new THREE.SkeletonHelper(view.root);view.bones.visible=$('#bones').checked;view.scene.add(view.bones);
+ animateClip(view);frame(direction);
+}
+async function choose(id){
+ const key=++generation;
+ state.variantReady=false;state.variantId=id;state.error=null;
+ for(const b of $('#families').querySelectorAll('button'))b.classList.toggle('selected',b.dataset.id===id);
+ $('#progress').textContent='Construyendo la familia '+id+' sobre los 17 donantes originales…';
+ try{
+  const gltf=await loader.loadAsync(repo);
+  if(key!==generation)return;
+  const result=forgeArmorRepertoire(gltf,id);
+  if(!result.proof.structuralGreen)throw Error('STYLE_RED');
+  if(key!==generation)return;
+  present(right,result.gltf);
+  state.proofs[id]=result.proof;state.variantReady=true;state.variationCount++;
+  $('#variant-title').textContent='HIGHFLY · '+result.proof.name;
+  $('#variant-caption').textContent=result.proof.family+' · '+result.proof.newStyleMeshes+' detalles exclusivos · 17 donantes';
+  $('#proof').textContent=JSON.stringify(result.proof,null,2);
+  $('#progress').textContent=result.proof.name+' generada · '+result.proof.newStyleMeshes+
+   ' mallas exclusivas · 17 donantes · 23 huesos · 22 animaciones. Falta aprobar el arte final.';
+  $('#status').textContent='LISTO · '+id+' · '+result.proof.signature;
+ }catch(err){if(key!==generation)return;state.error=String(err);$('#status').textContent=String(err.stack||err);$('#progress').textContent='Falló '+id+': '+err.message;console.error(err);}
+}
+const labels={violet:'◆ Obsidiana Violeta',dragon:'♜ Dragón Rojo',celestial:'✦ Saint Celestial',royal:'♛ Royal Paladin',berserker:'⚔ Shadow Berserker',arcane:'✧ Arcane Mage'};
+for(const spec of ARMOR_FAMILIES){
+ const b=document.createElement('button');b.dataset.id=spec.id;b.textContent=labels[spec.id];b.onclick=()=>choose(spec.id);
+ $('#families').appendChild(b);
+}
+$('#animation').onchange=()=>views.forEach(animateClip);
+$('#bones').onchange=e=>views.forEach(v=>{if(v.bones)v.bones.visible=e.target.checked;});
+for(const id of ['front','side','back'])$('#'+id).onclick=()=>frame(id);
+$('#reset').onclick=()=>frame('front');
+let last=performance.now();
+function loop(now){
+ requestAnimationFrame(loop);
+ const dt=Math.min((now-last)/1000,.075);last=now;
+ for(const v of views){
+  resize(v);
+  if($('#play').checked)v.mixer?.update(dt);
+  v.controls.update();v.renderer.render(v.scene,v.camera);
+ }
+}
+requestAnimationFrame(loop);
+(async()=>{
+ try{
+  await MeshoptDecoder.ready;
+  const gltf=await loader.loadAsync(repo);
+  present(left,gltf,true);
+  state.animationList=gltf.animations.map(c=>c.name);
+  $('#animation').innerHTML='<option value="">Reposo</option>'+gltf.animations.map(c=>'<option value="'+c.name+'">'+c.name+'</option>').join('');
+  state.sourceLoaded=true;await choose('violet');
+ }catch(err){state.error=String(err);$('#progress').textContent='Error de Hunter original: '+err.message;$('#status').textContent=String(err.stack||err);}
+})();
+</script></body></html>
