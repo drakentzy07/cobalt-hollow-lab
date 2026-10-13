@@ -1,0 +1,50 @@
+name: HIGHFLY SKIN 7.7-7.9 — SIX ARMOR REPERTOIRE CI (LAB ONLY)
+on:
+  push:
+    branches: [highfly-skin77-79-armor-style-dna-repertoire]
+    paths:
+      - 'skin7-repertoire/**'
+      - '.github/workflows/skin77-79-armor-repertoire.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  six-armors-chrome-webgl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify native source remains byte-identical
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 --max-time 120 \
+            https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb \
+            -o /tmp/highfly-skin-repertoire-rig.glb
+          test "$(git hash-object /tmp/highfly-skin-repertoire-rig.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          test "$(stat -c %s /tmp/highfly-skin-repertoire-rig.glb)" = 3477500
+          echo HIGHFLY_UPSTREAM_IMMUTABLE_GREEN=1
+      - name: Browser dependencies and test syntax
+        run: |
+          set -euo pipefail
+          node --check skin7-repertoire/test_repertoire.cjs
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Six distinct designs, 18 screenshots, rig and animations (NO PAGES DEPLOY)
+        timeout-minutes: 18
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4917 --bind 127.0.0.1 >/tmp/skin-repertoire-http.log 2>&1 &
+          sleep 2
+          node skin7-repertoire/test_repertoire.cjs
+          echo HIGHFLY_ARMOR_REPERTOIRE_6_OF_6_WEBGL_GREEN=1
+      - name: Preserve 6x3 views + two mobile viewport captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN77-79-SIX-FAMILIES-VISUAL-AND-RIG-QA
+          path: |
+            skin7-repertoire/evidence/
+            skin7-repertoire/index.html
+            skin7-repertoire/armor_style_dna_factory.mjs
+          if-no-files-found: warn
+          retention-days: 30
