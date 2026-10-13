@@ -1,0 +1,50 @@
+name: HIGHFLY SKIN 7.5/7.6 — DUAL SHELL ARMOR CI (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-skin75-76-dual-armor-shell-factory]
+    paths:
+      - 'skin7-auto-fit/**'
+      - '.github/workflows/skin75-76-dual-shell.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dual-armor-real-webgl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Frozen immutable ClaudeCraft rig verification
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 --max-time 120 \
+            https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb \
+            -o /tmp/dual-warrior.glb
+          test "$(git hash-object /tmp/dual-warrior.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          test "$(stat -c %s /tmp/dual-warrior.glb)" = 3477500
+          echo HF_DUAL_UPSTREAM_ASSET_UNMODIFIED_GREEN=1
+      - name: Install browser runtime only
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+          node --check skin7-auto-fit/test_dual.cjs
+      - name: Start isolated site and test BOTH armors in real WebGL
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4765 --bind 127.0.0.1 >/tmp/hf-dual-site.log 2>&1 &
+          sleep 2
+          node skin7-auto-fit/test_dual.cjs
+          echo HF_DUAL_STRUCTURAL_AND_BROWSER_GREEN=1
+      - name: Upload front profile back + S23-landscape evidence (NO GAME DEPLOY)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN75-76-DUAL-SHELL-ARMORS-QA
+          path: |
+            skin7-auto-fit/dual-evidence/
+            skin7-auto-fit/dual.html
+            skin7-auto-fit/dual_shell_factory.mjs
+          if-no-files-found: warn
+          retention-days: 30
