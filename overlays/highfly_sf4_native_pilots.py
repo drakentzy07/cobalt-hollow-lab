@@ -28,6 +28,18 @@ if not test_source.is_file() or test_destination.exists():
     raise SystemExit("SF4_SIM_TEST_UNAVAILABLE_OR_DUPLICATE:" + str(test_source))
 shutil.copyfile(test_source, test_destination)
 
+# Stage the complete read-only 9×7 donor unlock planner and its unit contract.
+stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
+stages_dest = Path("src/highfly/highfly_sf5_unlock_stages.ts")
+stages_test_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.test.ts")
+stages_test_dest = Path("tests/highfly_sf5_unlock_stages.test.ts")
+for source, destination in [
+    (stages_source, stages_dest), (stages_test_source, stages_test_dest)
+]:
+    if not source.is_file() or destination.exists():
+        raise SystemExit("SF5_UNLOCK_SOURCE_UNAVAILABLE_OR_DUPLICATE:" + str(source))
+    shutil.copyfile(source, destination)
+
 p=Path("src/sim/content/classes.ts")
 s=p.read_text(encoding="utf-8")
 old_import="import { installHighflySF3Fusions } from '../../highfly/sf3_fusion_runtime';\n"
