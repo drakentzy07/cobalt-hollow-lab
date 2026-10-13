@@ -1,0 +1,40 @@
+name: HIGHFLY SKIN 8 — NATIVE INTEGRATION CI (ISOLATED LAB)
+on:
+  push:
+    branches: [highfly-skin8-native-integration-pass]
+    paths:
+      - 'skin7-repertoire/**'
+      - '.github/workflows/skin8-native-integration.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  six-armors-native-continuity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static module and original rig validation
+        run: |
+          set -euo pipefail
+          node --check skin7-repertoire/native_integration_pass.mjs
+          node --check skin7-repertoire/armor_style_dna_factory.mjs
+          node --check skin7-repertoire/test_repertoire.cjs
+          curl -fsSL --retry 3 --max-time 120 https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb -o /tmp/highfly-skin8-rig.glb
+          test "$(git hash-object /tmp/highfly-skin8-rig.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+      - name: Install browser and execute 6 family viewport matrix
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+          python3 -m http.server 4917 --bind 127.0.0.1 >/tmp/skin8-http.log 2>&1 &
+          sleep 2
+          node skin7-repertoire/test_repertoire.cjs
+      - name: Upload evidence only; NEVER deploy the public game
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN8-NATIVE-INTEGRATION-EVIDENCE
+          path: skin7-repertoire/evidence/
+          if-no-files-found: warn
+          retention-days: 30
