@@ -137,10 +137,10 @@ export function fuseReferenceArmors83(gltf,style){
  // Helmet: compact face visor and eyebrow with continuous faceplate underlay.
  // No protruding nose/ball at all. Mouth slit is a recessed dark V chevron.
  const hz=H.front-H.s.z*.01;
- panel('Head',shield,H.s.x*.79,H.s.y*.67,H.c.x,H.c.y-H.s.y*.085,hz,H.s.z*.16,0);
- panel('Head',chevron,H.s.x*.78,H.s.y*.20,H.c.x,H.c.y+H.s.y*.06,hz+H.s.z*.12,H.s.z*.085,1);
- panel('Head',chevron,H.s.x*.68,H.s.y*.075,H.c.x,H.c.y+H.s.y*.085,hz+H.s.z*.20,H.s.z*.06,3);
- panel('Head',blade,H.s.x*.13,H.s.y*.56,H.c.x,H.c.y+H.s.y*.29,hz+H.s.z*.12,H.s.z*.075,2);
+ panel('Head',facet,H.s.x*.66,H.s.y*.48,H.c.x,H.c.y-H.s.y*.13,hz-H.s.z*.07,H.s.z*.105,0);
+ panel('Head',chevron,H.s.x*.79,H.s.y*.14,H.c.x,H.c.y+H.s.y*.06,hz+H.s.z*.07,H.s.z*.05,1);
+ panel('Head',chevron,H.s.x*.74,H.s.y*.052,H.c.x,H.c.y+H.s.y*.08,hz+H.s.z*.10,H.s.z*.025,3);
+ panel('Head',blade,H.s.x*.09,H.s.y*.41,H.c.x,H.c.y+H.s.y*.25,hz+H.s.z*.07,H.s.z*.065,2);
  for(const dir of [-1,1]){
   panel('Head',fang,H.s.x*.26,H.s.y*.45,H.c.x+dir*H.s.x*.36,H.c.y-H.s.y*.06,hz+H.s.z*.06,H.s.z*.13,0);
   gem('Head',H.s.x*.055,H.s.y*.073,H.s.z*.045,H.c.x+dir*H.s.x*.27,H.c.y+H.s.y*.10,hz+H.s.z*.20);
