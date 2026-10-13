@@ -3,7 +3,7 @@ name: HIGHFLY SUPREME — Unified REAL WebGL S23 Preview (NO DEPLOY)
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
   push:
-    branches: [highfly-supreme-v91-combat-aim-nine-classes, highfly-sf2-manual-aim-cancel-lab]
+    branches: [highfly-supreme-v91-combat-aim-nine-classes, highfly-sf2-manual-aim-cancel-lab, highfly-sf3-nine-classes-fusion-integration]
     paths:
       - ".github/workflows/highfly-supreme-integrated-candidate-s23-no-deploy.yml"
       - "overlays/highfly_v91_combat_feel.py"
@@ -11,6 +11,10 @@ on:
       - "overlays/highfly_sf2_manual_aim.py"
       - "game/c1/highfly_manual_skill_aim.ts"
       - "game/c1/highfly_manual_skill_aim.test.ts"
+      - "overlays/highfly_sf3_fusion_integration.py"
+      - "game/c1/highfly_sf3_skill_catalog.ts"
+      - "game/c1/highfly_sf3_fusion_runtime.ts"
+      - "game/c1/highfly_sf3_fusion_9_classes.test.ts"
   workflow_dispatch:
 permissions:
   contents: read
@@ -43,6 +47,10 @@ jobs:
             /overlays/highfly_sf2_manual_aim.py
             /game/c1/highfly_manual_skill_aim.ts
             /game/c1/highfly_manual_skill_aim.test.ts
+            /overlays/highfly_sf3_fusion_integration.py
+            /game/c1/highfly_sf3_skill_catalog.ts
+            /game/c1/highfly_sf3_fusion_runtime.ts
+            /game/c1/highfly_sf3_fusion_9_classes.test.ts
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
@@ -579,7 +587,7 @@ jobs:
           pnpm exec vitest run tests/highfly_v9_p0_regression.test.ts tests/highfly_v91_combat_nine_classes.test.ts
           echo 'HF_V91_ALL_NINE_CLASSES_AIM_AND_ROGUE_SKILL_GREEN=1'
       - name: SF2 opt-in manual aim, shared native 9-class pointer/cancel pilot
-        if: github.ref_name == 'highfly-sf2-manual-aim-cancel-lab'
+        if: github.ref_name == 'highfly-sf2-manual-aim-cancel-lab' || github.ref_name == 'highfly-sf3-nine-classes-fusion-integration'
         working-directory: upstream
         shell: bash
         run: |
@@ -589,6 +597,17 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_manual_skill_aim.test.ts
           echo 'HIGHFLY_SF2_MANUAL_AIM_CANCEL_PURE_NATIVE_GATE_GREEN=1'
+      - name: SF3 9/9 fusion donor catalogue + native ability preview (NO PUBLIC CHANGE)
+        if: github.ref_name == 'highfly-sf3-nine-classes-fusion-integration'
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_sf3_fusion_integration.py
+          cp ../v9-corrections/game/c1/highfly_sf3_fusion_9_classes.test.ts tests/highfly_sf3_fusion_9_classes.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_sf3_fusion_9_classes.test.ts
+          echo 'HIGHFLY_SF3_NINE_CLASSES_63_FUSION_DESIGN_NATIVE_GATE_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
