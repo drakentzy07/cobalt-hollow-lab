@@ -87,7 +87,7 @@ function sourceAccessorPositions(accessorIndex){
 const align4=n=>(n+3)&~3;
 let outputBin=Buffer.from(bin);
 const mesh=structuredClone(originalMesh);
-mesh.name='HIGHFLY_SKIN71_PALADIN_INTEGRATED_HELMET_MESH';
+mesh.name='HIGHFLY_SKIN71_PALADIN_INTEGRATED_HEAD_MESH';
 const globalLo=[Infinity,Infinity,Infinity],globalHi=[-Infinity,-Infinity,-Infinity];
 for(const p of mesh.primitives){
  for(const xyz of sourceAccessorPositions(p.attributes.POSITION)){
