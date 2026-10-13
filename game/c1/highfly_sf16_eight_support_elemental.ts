@@ -127,7 +127,10 @@ function mix(s:HighflyFusionSpec,a:AbilityDef,b:AbilityDef,lv:number):AbilityEff
   return [{...x[0],min:x[0].min+Math.round(y[0].min*.35),
     max:x[0].max+Math.round(y[0].max*.35)}];
  }
- if(id==='hf_mage_s3')return [x[0],{...y[0],duration:Math.min(3,y[0].duration)}];
+ if(id==='hf_mage_s3'){
+  if(y[0].type!=='aoeRoot')throw Error('SF16 frost nova rank drift');
+  return [x[0],{...y[0],duration:Math.min(3,y[0].duration)}];
+ }
  if(id==='hf_warlock_s1'){
   if(x[0].type!=='directDamage'||y[0].type!=='directDamage')
    throw Error('SF16 warlock damage mismatch');
