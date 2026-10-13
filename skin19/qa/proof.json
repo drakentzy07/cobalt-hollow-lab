@@ -1,0 +1,687 @@
+{
+  "schema": "highfly.skin19.native-paladin-eclipse-reforge/1",
+  "status": "TECHNICAL_PROTOTYPE_NOT_LEGENDARY_APPROVED",
+  "appliedRecipe": "eclipse-native-paladin-forge-v1",
+  "recipeSha256": "26f311d617f0f8e4459b6ee7e550ff5c8bb9d376feaea9e6cc86dcb87c3237a1",
+  "recipeBrief": "Recreación sobre los 11 meshes skinned ORIGINALES de Armor_paladin_* en Rig_Medium, reinterpretando sus proporciones y añadiendo geometría hard-surface, metal obsidiana, ribetes plateados y detalles violeta. NO maniquí bodypaint, NO malla tipo minion; evaluación artística pendiente.",
+  "recipeDrivenGeometry": true,
+  "recipeControlsActuallyApplied": true,
+  "actualSculptTopologyGenerated": true,
+  "sculptPanelsAdded": 32,
+  "newWeightedVertices": 384,
+  "materialsReplacedOnExportForPrototype": true,
+  "sourceFaceTopologyPreserved": true,
+  "originalPaladinRetainedInSource": true,
+  "sourceArmorGeometryPercentPreserved": 100,
+  "isNotBodypaint": true,
+  "sourcePath": "public/models/chars/modular/warrior_modular.glb",
+  "nativeRig": "Rig_Medium",
+  "nativeJoints": 23,
+  "paladinSourceMeshes": 11,
+  "reforgedMeshes": 11,
+  "sourcePaladinSlots": [
+    "head",
+    "chest",
+    "arms",
+    "hands",
+    "legs",
+    "feet",
+    "back"
+  ],
+  "sourceOriginalGeometryReused": true,
+  "originalBodyMeshesExported": false,
+  "otherClassArmorExported": false,
+  "NightfallOverlaid": false,
+  "nativeSourceFilesModified": false,
+  "artReviewed": false,
+  "unityImportValidated": false,
+  "sourceBasedModifiedMeshes": {
+    "head::Armor_paladin_Head": {
+      "sourceNode": "Armor_paladin_Head",
+      "reforgedNode": "HF19_PALADIN_HEAD",
+      "topologySculpt": {
+        "newVertices": 52,
+        "newFaces": 34,
+        "sourceVerticesPreserved": 1741,
+        "totalVertices": 1793,
+        "weightedNewVertices": 52,
+        "motifPanels": 4,
+        "slotIntensity": 0.65,
+        "nativeSkinnedSameMesh": true
+      },
+      "nativeWeightGroups": [
+        "chest",
+        "foot.l",
+        "foot.r",
+        "hand.l",
+        "hand.r",
+        "handslot.l",
+        "handslot.r",
+        "head",
+        "hips",
+        "lowerarm.l",
+        "lowerarm.r",
+        "lowerleg.l",
+        "lowerleg.r",
+        "root",
+        "spine",
+        "toes.l",
+        "toes.r",
+        "upperarm.l",
+        "upperarm.r",
+        "upperleg.l",
+        "upperleg.r",
+        "wrist.l",
+        "wrist.r"
+      ],
+      "sourceVertices": 1741,
+      "changedVertices": 1741,
+      "sourceLocalMin": [
+        -0.7538755536079407,
+        -0.7098195552825928,
+        1.0600662231445312
+      ],
+      "sourceLocalMax": [
+        0.7485129237174988,
+        0.6121007204055786,
+        2.3922572135925293
+      ],
+      "localScaleAroundOriginalCenter": [
+        1.038,
+        1.042,
+        1.04
+      ],
+      "curvature": 0.1,
+      "flare": 0.045
+    },
+    "chest::Armor_paladin_Chest": {
+      "sourceNode": "Armor_paladin_Chest",
+      "reforgedNode": "HF19_PALADIN_CHEST",
+      "topologySculpt": {
+        "newVertices": 48,
+        "newFaces": 32,
+        "sourceVerticesPreserved": 1231,
+        "totalVertices": 1279,
+        "weightedNewVertices": 48,
+        "motifPanels": 4,
+        "slotIntensity": 0.72,
+        "nativeSkinnedSameMesh": true
+      },
+      "nativeWeightGroups": [
+        "chest",
+        "foot.l",
+        "foot.r",
+        "hand.l",
+        "hand.r",
+        "handslot.l",
+        "handslot.r",
+        "head",
+        "hips",
+        "lowerarm.l",
+        "lowerarm.r",
+        "lowerleg.l",
+        "lowerleg.r",
+        "root",
+        "spine",
+        "toes.l",
+        "toes.r",
+        "upperarm.l",
+        "upperarm.r",
+        "upperleg.l",
+        "upperleg.r",
+        "wrist.l",
+        "wrist.r"
+      ],
+      "sourceVertices": 1231,
+      "changedVertices": 1231,
+      "sourceLocalMin": [
+        -0.38673990964889526,
+        -0.3600391745567322,
+        0.3614117503166199
+      ],
+      "sourceLocalMax": [
+        0.3867376446723938,
+        0.31238818168640137,
+        1.2718086242675781
+      ],
+      "localScaleAroundOriginalCenter": [
+        1.078,
+        1.075,
+        1.035
+      ],
+      "curvature": 0.09,
+      "flare": 0.035
+    },
+    "arms::Armor_paladin_ArmL": {
+      "sourceNode": "Armor_paladin_ArmL",
+      "reforgedNode": "HF19_PALADIN_ARML",
+      "topologySculpt": {
+        "newVertices": 48,
+        "newFaces": 32,
+        "sourceVerticesPreserved": 728,
+        "totalVertices": 776,
+        "weightedNewVertices": 48,
+        "motifPanels": 4,
+        "slotIntensity": 0.67,
+        "nativeSkinnedSameMesh": true
+      },
+      "nativeWeightGroups": [
+        "chest",
+        "foot.l",
+        "foot.r",
+        "hand.l",
+        "hand.r",
+        "handslot.l",
+        "handslot.r",
+        "head",
+        "hips",
+        "lowerarm.l",
+        "lowerarm.r",
+        "lowerleg.l",
+        "lowerleg.r",
+        "root",
+        "spine",
+        "toes.l",
+        "toes.r",
+        "upperarm.l",
+        "upperarm.r",
+        "upperleg.l",
+        "upperleg.r",
+        "wrist.l",
+        "wrist.r"
+      ],
+      "sourceVertices": 728,
+      "changedVertices": 728,
+      "sourceLocalMin": [
+        0.052082061767578125,
+        -0.143952876329422,
+        0.9753265380859375
+      ],
+      "sourceLocalMax": [
+        0.7870002388954163,
+        0.16854484379291534,
+        1.3590798377990723
+      ],
+      "localScaleAroundOriginalCenter": [
+        1.09,
+        1.075,
+        1.06
+      ],
+      "curvature": 0.15,
+      "flare": 0.125
+    },
+    "arms::Armor_paladin_ArmR": {
+      "sourceNode": "Armor_paladin_ArmR",
+      "reforgedNode": "HF19_PALADIN_ARMR",
+      "topologySculpt": {
+        "newVertices": 48,
+        "newFaces": 32,
+        "sourceVerticesPreserved": 728,
+        "totalVertices": 776,
+        "weightedNewVertices": 48,
+        "motifPanels": 4,
+        "slotIntensity": 0.67,
+        "nativeSkinnedSameMesh": true
+      },
+      "nativeWeightGroups": [
+        "chest",
+        "foot.l",
+        "foot.r",
+        "hand.l",
+        "hand.r",
+        "handslot.l",
+        "handslot.r",
+        "head",
+        "hips",
+        "lowerarm.l",
+        "lowerarm.r",
+        "lowerleg.l",
+        "lowerleg.r",
+        "root",
+        "spine",
+        "toes.l",
+        "toes.r",
+        "upperarm.l",
+        "upperarm.r",
+        "upperleg.l",
+        "upperleg.r",
+        "wrist.l",
+        "wrist.r"
+      ],
+      "sourceVertices": 728,
+      "changedVertices": 728,
+      "sourceLocalMin": [
+        -0.7870001792907715,
+        -0.1439526379108429,
+        0.9753265380859375
+      ],
+      "sourceLocalMax": [
+        -0.05208209156990051,
+        0.16854508221149445,
+        1.3590798377990723
+      ],
+      "localScaleAroundOriginalCenter": [
+        1.09,
+        1.075,
+        1.06
+      ],
+      "curvature": 0.15,
+      "flare": 0.125
+    },
+    "hands::Armor_paladin_HandL": {
+      "sourceNode": "Armor_paladin_HandL",
+      "reforgedNode": "HF19_PALADIN_HANDL",
+      "topologySculpt": {
+        "newVertices": 24,
+        "newFaces": 16,
+        "sourceVerticesPreserved": 118,
+        "totalVertices": 142,
+        "weightedNewVertices": 24,
+        "motifPanels": 2,
+        "slotIntensity": 0.42,
+        "nativeSkinnedSameMesh": true
+      },
+      "nativeWeightGroups": [
+        "chest",
+        "foot.l",
+        "foot.r",
+        "hand.l",
+        "hand.r",
+        "handslot.l",
+        "handslot.r",
+        "head",
+        "hips",
+        "lowerarm.l",
+        "lowerarm.r",
+        "lowerleg.l",
+        "lowerleg.r",
+        "root",
+        "spine",
+        "toes.l",
+        "toes.r",
+        "upperarm.l",
+        "upperarm.r",
+        "upperleg.l",
+        "upperleg.r",
+        "wrist.l",
+        "wrist.r"
+      ],
+      "sourceVertices": 118,
+      "changedVertices": 118,
+      "sourceLocalMin": [
+        0.7870029807090759,
+        -0.11613903194665909,
+        0.9845739603042603
+      ],
+      "sourceLocalMax": [
+        0.9712510704994202,
+        0.11614345759153366,
+        1.206138014793396
+      ],
+      "localScaleAroundOriginalCenter": [
+        1.045,
+        1.045,
+        1.035
+      ],
+      "curvature": 0.05,
+      "flare": 0.016
+    },
+    "hands::Armor_paladin_HandR": {
+      "sourceNode": "Armor_paladin_HandR",
+      "reforgedNode": "HF19_PALADIN_HANDR",
+      "topologySculpt": {
+        "newVertices": 24,
+        "newFaces": 16,
+        "sourceVerticesPreserved": 118,
+        "totalVertices": 142,
+        "weightedNewVertices": 24,
+        "motifPanels": 2,
+        "slotIntensity": 0.42,
+        "nativeSkinnedSameMesh": true
+      },
+      "nativeWeightGroups": [
+        "chest",
+        "foot.l",
+        "foot.r",
+        "hand.l",
+        "hand.r",
+        "handslot.l",
+        "handslot.r",
+        "head",
+        "hips",
+        "lowerarm.l",
+        "lowerarm.r",
+        "lowerleg.l",
+        "lowerleg.r",
+        "root",
+        "spine",
+        "toes.l",
+        "toes.r",
+        "upperarm.l",
+        "upperarm.r",
+        "upperleg.l",
+        "upperleg.r",
+        "wrist.l",
+        "wrist.r"
+      ],
+      "sourceVertices": 118,
+      "changedVertices": 118,
+      "sourceLocalMin": [
+        -0.9712510108947754,
+        -0.11613862961530685,
+        0.9845739603042603
+      ],
+      "sourceLocalMax": [
+        -0.7870029211044312,
+        0.11614391952753067,
+        1.206138014793396
+      ],
+      "localScaleAroundOriginalCenter": [
+        1.045,
+        1.045,
+        1.035
+      ],
+      "curvature": 0.05,
+      "flare": 0.016
+    },
+    "legs::Armor_paladin_LegL": {
+      "sourceNode": "Armor_paladin_LegL",
+      "reforgedNode": "HF19_PALADIN_LEGL",
+      "topologySculpt": {
+        "newVertices": 22,
+        "newFaces": 15,
+        "sourceVerticesPreserved": 347,
+        "totalVertices": 369,
+        "weightedNewVertices": 22,
+        "motifPanels": 2,
+        "slotIntensity": 0.48,
+        "nativeSkinnedSameMesh": true
+      },
+      "nativeWeightGroups": [
+        "chest",
+        "foot.l",
+        "foot.r",
+        "hand.l",
+        "hand.r",
+        "handslot.l",
+        "handslot.r",
+        "head",
+        "hips",
+        "lowerarm.l",
+        "lowerarm.r",
+        "lowerleg.l",
+        "lowerleg.r",
+        "root",
+        "spine",
+        "toes.l",
+        "toes.r",
+        "upperarm.l",
+        "upperarm.r",
+        "upperleg.l",
+        "upperleg.r",
+        "wrist.l",
+        "wrist.r"
+      ],
+      "sourceVertices": 347,
+      "changedVertices": 347,
+      "sourceLocalMin": [
+        0.04597489535808563,
+        -0.26718538999557495,
+        0.14500495791435242
+      ],
+      "sourceLocalMax": [
+        0.291339635848999,
+        0.12859414517879486,
+        0.5291892886161804
+      ],
+      "localScaleAroundOriginalCenter": [
+        1.045,
+        1.05,
+        1.04
+      ],
+      "curvature": 0.06,
+      "flare": 0.04
+    },
+    "legs::Armor_paladin_LegR": {
+      "sourceNode": "Armor_paladin_LegR",
+      "reforgedNode": "HF19_PALADIN_LEGR",
+      "topologySculpt": {
+        "newVertices": 22,
+        "newFaces": 15,
+        "sourceVerticesPreserved": 347,
+        "totalVertices": 369,
+        "weightedNewVertices": 22,
+        "motifPanels": 2,
+        "slotIntensity": 0.48,
+        "nativeSkinnedSameMesh": true
+      },
+      "nativeWeightGroups": [
+        "chest",
+        "foot.l",
+        "foot.r",
+        "hand.l",
+        "hand.r",
+        "handslot.l",
+        "handslot.r",
+        "head",
+        "hips",
+        "lowerarm.l",
+        "lowerarm.r",
+        "lowerleg.l",
+        "lowerleg.r",
+        "root",
+        "spine",
+        "toes.l",
+        "toes.r",
+        "upperarm.l",
+        "upperarm.r",
+        "upperleg.l",
+        "upperleg.r",
+        "wrist.l",
+        "wrist.r"
+      ],
+      "sourceVertices": 347,
+      "changedVertices": 347,
+      "sourceLocalMin": [
+        -0.291339635848999,
+        -0.2671853005886078,
+        0.14500495791435242
+      ],
+      "sourceLocalMax": [
+        -0.045974910259246826,
+        0.12859424948692322,
+        0.5291892886161804
+      ],
+      "localScaleAroundOriginalCenter": [
+        1.045,
+        1.05,
+        1.04
+      ],
+      "curvature": 0.06,
+      "flare": 0.04
+    },
+    "feet::Armor_paladin_FootL": {
+      "sourceNode": "Armor_paladin_FootL",
+      "reforgedNode": "HF19_PALADIN_FOOTL",
+      "topologySculpt": {
+        "newVertices": 24,
+        "newFaces": 16,
+        "sourceVerticesPreserved": 187,
+        "totalVertices": 211,
+        "weightedNewVertices": 24,
+        "motifPanels": 2,
+        "slotIntensity": 0.42,
+        "nativeSkinnedSameMesh": true
+      },
+      "nativeWeightGroups": [
+        "chest",
+        "foot.l",
+        "foot.r",
+        "hand.l",
+        "hand.r",
+        "handslot.l",
+        "handslot.r",
+        "head",
+        "hips",
+        "lowerarm.l",
+        "lowerarm.r",
+        "lowerleg.l",
+        "lowerleg.r",
+        "root",
+        "spine",
+        "toes.l",
+        "toes.r",
+        "upperarm.l",
+        "upperarm.r",
+        "upperleg.l",
+        "upperleg.r",
+        "wrist.l",
+        "wrist.r"
+      ],
+      "sourceVertices": 187,
+      "changedVertices": 187,
+      "sourceLocalMin": [
+        0.04483266919851303,
+        -0.3068532943725586,
+        -2.9340386390686035e-05
+      ],
+      "sourceLocalMax": [
+        0.29229840636253357,
+        0.1391211897134781,
+        0.14790302515029907
+      ],
+      "localScaleAroundOriginalCenter": [
+        1.045,
+        1.048,
+        1.028
+      ],
+      "curvature": 0.03,
+      "flare": 0.008
+    },
+    "feet::Armor_paladin_FootR": {
+      "sourceNode": "Armor_paladin_FootR",
+      "reforgedNode": "HF19_PALADIN_FOOTR",
+      "topologySculpt": {
+        "newVertices": 24,
+        "newFaces": 16,
+        "sourceVerticesPreserved": 187,
+        "totalVertices": 211,
+        "weightedNewVertices": 24,
+        "motifPanels": 2,
+        "slotIntensity": 0.42,
+        "nativeSkinnedSameMesh": true
+      },
+      "nativeWeightGroups": [
+        "chest",
+        "foot.l",
+        "foot.r",
+        "hand.l",
+        "hand.r",
+        "handslot.l",
+        "handslot.r",
+        "head",
+        "hips",
+        "lowerarm.l",
+        "lowerarm.r",
+        "lowerleg.l",
+        "lowerleg.r",
+        "root",
+        "spine",
+        "toes.l",
+        "toes.r",
+        "upperarm.l",
+        "upperarm.r",
+        "upperleg.l",
+        "upperleg.r",
+        "wrist.l",
+        "wrist.r"
+      ],
+      "sourceVertices": 187,
+      "changedVertices": 187,
+      "sourceLocalMin": [
+        -0.2922986149787903,
+        -0.3068532347679138,
+        -2.9414892196655273e-05
+      ],
+      "sourceLocalMax": [
+        -0.044832855463027954,
+        0.13912135362625122,
+        0.14790299534797668
+      ],
+      "localScaleAroundOriginalCenter": [
+        1.045,
+        1.048,
+        1.028
+      ],
+      "curvature": 0.03,
+      "flare": 0.008
+    },
+    "back::Armor_paladin_Back": {
+      "sourceNode": "Armor_paladin_Back",
+      "reforgedNode": "HF19_PALADIN_BACK",
+      "topologySculpt": {
+        "newVertices": 48,
+        "newFaces": 32,
+        "sourceVerticesPreserved": 59,
+        "totalVertices": 107,
+        "weightedNewVertices": 48,
+        "motifPanels": 4,
+        "slotIntensity": 0.58,
+        "nativeSkinnedSameMesh": true
+      },
+      "nativeWeightGroups": [
+        "chest",
+        "foot.l",
+        "foot.r",
+        "hand.l",
+        "hand.r",
+        "handslot.l",
+        "handslot.r",
+        "head",
+        "hips",
+        "lowerarm.l",
+        "lowerarm.r",
+        "lowerleg.l",
+        "lowerleg.r",
+        "root",
+        "spine",
+        "toes.l",
+        "toes.r",
+        "upperarm.l",
+        "upperarm.r",
+        "upperleg.l",
+        "upperleg.r",
+        "wrist.l",
+        "wrist.r"
+      ],
+      "sourceVertices": 59,
+      "changedVertices": 59,
+      "sourceLocalMin": [
+        -0.4853936731815338,
+        0.046106964349746704,
+        0.13467401266098022
+      ],
+      "sourceLocalMax": [
+        0.48541495203971863,
+        0.42168956995010376,
+        1.23970365524292
+      ],
+      "localScaleAroundOriginalCenter": [
+        1.065,
+        1.07,
+        1.04
+      ],
+      "curvature": 0.08,
+      "flare": 0.04
+    }
+  },
+  "baselineSha256": "068838ae496c9a6431521cf4da5c090bd96ee63b0ad238c2e3c7f2fc3c192ebb",
+  "reforgeSha256": "8313df78b755083098d9f0d150cf4ce168849eaff9d91d6d0f3a0f1023acc4fa",
+  "limitations": [
+    "Hard-surface geometry is genuinely added into the 11 native skinned armor meshes, but artist approval is still pending",
+    "Palette is a development PBR material; source GLB remained untouched",
+    "Native character base body must be separately composed using original modularPartNames",
+    "Collision/fit and animations on real complete player require visual QA and end-to-end staging",
+    "No arbitrary image-to-mesh learning or automated quality improvement is claimed"
+  ]
+}

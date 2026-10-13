@@ -1,0 +1,11 @@
+{
+  "technicalGreen": true,
+  "rig": "Rig_Medium",
+  "clips": 22,
+  "nativePaladinMeshesReused": 11,
+  "newSkinnedSculptVertices": 384,
+  "oldBodypaintRemovedFromNewLab": true,
+  "oldMinionRemovedFromNewLab": true,
+  "artApproved": false,
+  "publicGameUnchanged": true
+}
