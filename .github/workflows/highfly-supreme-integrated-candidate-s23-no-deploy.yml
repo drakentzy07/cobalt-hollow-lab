@@ -34,6 +34,8 @@ on:
       - "game/c1/highfly_sf11_internal_63_inspection.test.ts"
       - "game/c1/highfly_sf12_three_native_mechanics.ts"
       - "game/c1/highfly_sf12_three_native_mechanics.test.ts"
+      - "game/c1/highfly_sf13_mass_native_gate.ts"
+      - "game/c1/highfly_sf13_mass_native_gate.test.ts"
   workflow_dispatch:
 permissions:
   contents: read
@@ -89,6 +91,8 @@ jobs:
             /game/c1/highfly_sf11_internal_63_inspection.test.ts
             /game/c1/highfly_sf12_three_native_mechanics.ts
             /game/c1/highfly_sf12_three_native_mechanics.test.ts
+            /game/c1/highfly_sf13_mass_native_gate.ts
+            /game/c1/highfly_sf13_mass_native_gate.test.ts
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
@@ -660,6 +664,24 @@ jobs:
           test -s ../highfly-sf11-internal-audit/inspector-63-interno.html
           test -s ../highfly-sf11-internal-audit/catalogo-63-interno.json
           echo 'HF_V10_SF12_SIXTEEN_NATIVE_FUSIONS_AND_SF11_ALL_63_DONORS_AUDITED_GREEN=1'
+      - name: SF13 all remaining 47 donor contracts, safe native simulations (NO DEPLOY)
+        if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_sf13_mass_native_gate.ts src/highfly/sf13_mass_native_gate.ts
+          cp ../v9-corrections/game/c1/highfly_sf13_mass_native_gate.test.ts tests/highfly_sf13_mass_native_gate.test.ts
+          pnpm exec vitest run tests/highfly_sf13_mass_native_gate.test.ts
+          test -s ../highfly-sf13-native-audit/47_source_contracts.json
+          echo 'HIGHFLY_SF13_ALL_47_AUDITED_STRICT_NATIVE_GATE=1'
+      - name: Upload SF13 47 donor compatibility report (NO DEPLOY)
+        if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SF13-47-REAL-NATIVE-COMPATIBILITY
+          path: highfly-sf13-native-audit/
+          if-no-files-found: error
       - name: Upload SF11 OFFLINE internal 63-skill inspection (NOT live gameplay, NO DEPLOY)
         if: github.ref_name == 'highfly-sf4-native-fusion-safe-implementation'
         uses: actions/upload-artifact@v4
