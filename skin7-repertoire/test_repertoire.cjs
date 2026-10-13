@@ -67,13 +67,20 @@ fs.mkdirSync(dir,{recursive:true});
     assert.equal(p.reference83?.visibleOtherMeshes,0,'NO unexpected floating mesh allowed');
     assert.equal(p.reference83?.visibleFusedAssemblies,11,'only the 11 new armature slots render');
     assert.equal(p.reference83?.closedArmorEnvelopes,11,'new volume for each slot');
+    assert.equal(p.nativeReforge841?.pass,'SKIN8_4_1_NATIVE_REFORGE');
+    assert.equal(p.nativeReforge841?.sourceOriginalInvisible,true,'all old native armor hidden');
+    assert.equal(p.nativeReforge841?.resculptedNewMeshes,17,'every original armor piece resculpted');
+    assert.equal(p.nativeReforge841?.weightedMeshes,17,'all 17 resculpted pieces retain native rig');
+    assert.equal(p.nativeReforge841?.slotCoverage.length,11);
+    assert.equal(p.nativeReforge841?.clips,22);
+    assert(p.nativeReforge841?.verticesResculpted>=500);
     assert(p.reference83?.underArmorRetained>=10,'native articulated underarmor remains');
 
     assert(p.reference83?.geometryPiecesCombined>=50);
     assert(p.reference83?.oldFloatingDecorationsHidden>=10,'old detached ornaments hidden '+id);
     assert.equal(p.reference83?.artApproved,false);
     assert.equal(p.reference83?.faithfulImageReconstruction,false);
-   }else assert.equal(p.reference83?.enabled,false,'royal remains legacy comparator');
+   }else {assert.equal(p.reference83?.enabled,false,'royal remains legacy comparator');assert.equal(p.nativeReforge841?.enabled,false);}
 
    if(id==='dragon')assert(p.newStyleMeshes>=15);
    if(id==='celestial')assert(p.distinctDesignGeometry.shoulder>=8);
