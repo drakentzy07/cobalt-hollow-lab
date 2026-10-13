@@ -56,7 +56,11 @@ afterAll(()=>{
 });
 function makeTarget(sim:Sim,id:number,dist:number){
  const p=sim.player;
- const t=createMob(id,MOBS.training_dummy,20,
+ // Original LV1 melee miss/defense tables assume an equal-level training target.
+ // Do not validate a LV1 ability against a LV20 training dummy: a zero-damage
+ // miss would be a valid outcome, not a native-fusion failure.
+ const dummyLevel=Math.min(20,Math.max(1,p.level));
+ const t=createMob(id,MOBS.training_dummy,dummyLevel,
   {x:p.pos.x,y:p.pos.y,z:p.pos.z+dist});
  t.hostile=true;t.aiState='idle';t.maxHp=t.hp=500000;
  sim.addEntity(t);sim.targetEntity(t.id,p.id);
