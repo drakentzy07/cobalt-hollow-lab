@@ -43,7 +43,7 @@ async function display(hostId,url,helmetName){
  actor.traverse(o=>{if(!o.isMesh)return;
   const n=o.name||'';
   const body=n.startsWith('M_')&&baseNames.has(n.slice(2).replace(/_[0-9]+$/,''));
-  const helm=n===helmetName||n.startsWith(helmetName+'_')||n.startsWith(helmetName+'.');
+  const helm=n.startsWith(helmetName);
   o.visible=body||helm;o.frustumCulled=false;
   if(body)bodies++;
   if(helm){helmets++;helmetObj=o;}
