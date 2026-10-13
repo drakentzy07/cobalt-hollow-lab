@@ -12,7 +12,7 @@
 - Per-class encounters have a 32-second diagnostic cutoff. **A 32-second timeout is not equal to a loss**, and the short scenario is not the five-minute Captain gate.
 - First run `38436391133` failed because test incorrectly called `sim.drainEvents()` after `sim.tick()`. Original `Sim.tick()` *already drains and returns* event list, so double-drain counted zero although 8/9 classes won. This was a telemetry/test bug, NOT zero actual damage.
 - Observed diagnostic initial results: eight normal-LV99 native wolf victories (Warrior, Paladin, Hunter, Rogue, Priest, Shaman, Mage, Warlock). Druid remained alive, wolf 322/1412 HP, at the 32-second cutoff. All nine native HF pilots cast and no Training stats mutated.
-- Fix commit `8aeaaa90bb21bc64adfeaf2c5a6a03590f08a6a2` consumes `const events = sim.tick()` instead of double-draining. Run **38437099220** is the corrected end-to-end verification. The SF9A gate completed successfully and subsequent standard regressions were in progress when this report was authored. Do not claim overall GREEN until the run itself concludes successfully.
+- Fix commit `8aeaaa90bb21bc64adfeaf2c5a6a03590f08a6a2` consumes `const events = sim.tick()` instead of double-draining. Run **38437099220** is **FULL GREEN** at code commit `8aeaaa90bb21bc64adfeaf2c5a6a03590f08a6a2`. SF9A block: **83/83 passing tests** across seven suites. All original class/gear gates, 9/9 original Captain Lv99 victories, TypeScript, activated HF WebGL build and simulated S23 Chrome smoke passed. No public deployment. Run: https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/38437099220. Generated candidate artifact ID **11833773139**, expiry 2026-10-27. The later documentation commit is not the tested code SHA.
 
 ## Scope outstanding
 1. SF9B: extend Druid combat diagnostic and prove 9/9 actual Captain LV99 with HIGHFLY-equipped FULL combat rotations, not original-only victory gate; native legal gameplay mechanics, all specialization outcomes reported without manufactured wins.
@@ -22,3 +22,9 @@
 
 ## Honest progress count
 10/63 = 15.87% of authored fused active skills have passed native mechanics/effect tests. This is NOT an overall HIGHFLY game completion percentage or a time estimate. Production release remains blocked pending opt-in QA, device tests and explicit owner approval.
+
+## Additional real event diagnostics from the full-green run
+- Actual original ability direct damage in the short normal-wolf encounter is positive for **8/9** classes: Warrior 1156; Paladin 338; Rogue 475; Priest 1163; Shaman 724; Mage 1702; Warlock 1009; Druid 921. These are telemetry values, **not balancing comparisons**; different cast lengths, targets and damage schools.
+- **Hunter 0 direct original ability damage** despite a real native HF raptor retreat cast, attempted arcane/serpent abilities, and victory from its original attack system. The SF9A gate does NOT falsely certify full effective Hunter mixed ranged skill rotation. Likely native 8-yard minimum-range/closing policy. Next SF9B must implement genuine 10–14-yard kiting through `meta.moveInput` (no teleports) and require `originalDamage > 0` for ALL nine.
+- **Druid** damaged normal wolf 1090/1412 HP in 32s and remained alive. SF9B should extend diagnostic to 45–60s and demand 9/9 wolf wins WITHOUT modifying wolf HP.
+- Full fused Captain Lv99 9/9 has **not** been attempted or certified yet. The existing green Captain gate uses original kits and original legal rotations only.
