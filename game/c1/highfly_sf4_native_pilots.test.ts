@@ -19,20 +19,21 @@ describe('SF4 fail-closed 9/9 fusion integration — no release or save mutation
     expect(data).toHaveLength(63);
     expect(new Set(data.map(s=>s.id)).size).toBe(63);
     expect(data.filter(s=>s.status==='native-pilot').map(s=>s.id).sort())
-      .toEqual(['hf_priest_s2','hf_priest_s3']);
-    expect(data.filter(s=>s.status!=='native-pilot')).toHaveLength(61);
+      .toEqual(['hf_priest_s2','hf_priest_s3','hf_rogue_s4','hf_warrior_u1']);
+    expect(data.filter(s=>s.status!=='native-pilot')).toHaveLength(59);
     expect(data.find(s=>s.id==='hf_druid_u1')?.status).toBe('design-mismatch');
     expect(data.find(s=>s.id==='hf_shaman_s4')?.status).toBe('design-mismatch');
   });
-  it('registers only two real-effect Priest pilots and does not unlock anything else', () => {
+  it('registers precisely four audited multi-effect prototypes with native class ownership', () => {
     const { abilities, classes }=copies();
     const result=installSf4NativePilots(abilities,classes);
-    expect(result.registered).toEqual(['hf_priest_s2','hf_priest_s3']);
-    expect(result.blocked.length + result.mismatchedDesign.length).toBe(61);
+    expect(result.registered).toEqual(['hf_warrior_u1','hf_rogue_s4','hf_priest_s2','hf_priest_s3']);
+    expect(result.blocked.length + result.mismatchedDesign.length).toBe(59);
     const outputSkills=clsIds.flatMap(cl=>classes[cl].abilities.filter(id=>id.startsWith('hf_')));
-    expect(outputSkills.sort()).toEqual(['hf_priest_s2','hf_priest_s3']);
+    expect(outputSkills.sort()).toEqual(['hf_priest_s2','hf_priest_s3','hf_rogue_s4','hf_warrior_u1']);
     for (const cl of clsIds) {
-      if (cl !== 'priest') expect(classes[cl].abilities).toEqual(CLASSES[cl].abilities);
+      if (cl !== 'priest' && cl !== 'warrior' && cl !== 'rogue')
+        expect(classes[cl].abilities).toEqual(CLASSES[cl].abilities);
       expect(CLASSES[cl].abilities.every(id => classes[cl].abilities.includes(id))).toBe(true);
     }
     const blast = abilities.hf_priest_s2;
@@ -47,6 +48,20 @@ describe('SF4 fail-closed 9/9 fusion integration — no release or save mutation
     expect(shield.targetType).toBe('friendly');
     expect(shield.effects.map(e=>e.type)).toEqual(['absorb','hot']);
     expect(shield.effects[1]).toMatchObject({type:'hot',total:14,duration:15,interval:3});
+  });
+  it('keeps the actual 180s Warrior and 300s Rogue cooldowns, aura identities and off-GCD mechanics', () => {
+    const {abilities,classes}=copies();
+    installSf4NativePilots(abilities,classes);
+    const warrior=abilities.hf_warrior_u1;
+    const rogue=abilities.hf_rogue_s4;
+    expect(warrior.learnLevel).toBe(25);
+    expect(warrior.cooldown).toBe(180);
+    expect(warrior.effects.map(x=>x.type)).toEqual(['buffTarget','aoeAllyMaxHp']);
+    expect(rogue.learnLevel).toBe(15);
+    expect(rogue.offGcd).toBe(true);
+    expect(rogue.cooldown).toBe(300);
+    expect(rogue.effects.map(x=>x.type)).toEqual(['selfBuff','selfBuff']);
+    expect(rogue.effects.map(x=>x.type==='selfBuff'?x.kind:'')).toEqual(['buff_speed','buff_dodge']);
   });
   it('maintains donor rank scaling and never zeroes out the old rank progression', () => {
     const { abilities, classes }=copies();
