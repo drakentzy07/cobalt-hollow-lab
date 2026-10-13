@@ -41,17 +41,25 @@ assert(donorMesh.primitives.length===2&&skin.joints.length===23,'NATIVE_HEAD_SOU
 const headJoint=skin.joints.findIndex(i=>src.nodes[i].name==='head');
 assert(headJoint>=0,'RIG_HEAD_JOINT_NOT_FOUND');
 const mins=[Infinity,Infinity,Infinity],maxs=[-Infinity,-Infinity,-Infinity];
-for(const prim of donorMesh.primitives){
- const acc=src.accessors[prim.attributes.POSITION];
- assert(acc.type==='VEC3'&&acc.componentType===5122&&acc.normalized===true);
- for(let k=0;k<3;k++){
-  mins[k]=Math.min(mins[k],acc.min[k]/32767);
-  maxs[k]=Math.max(maxs[k],acc.max[k]/32767);
+// Crucial fit repair: size the shell using BOTH actual character HEADS,
+// not the decorative protrusions of Armor_paladin_Head (which are much larger).
+// This encloses the face and the back of the head for both male and female.
+for(const name of ['M_Head','F_Head']){
+ const node=src.nodes.find(n=>n.name===name);
+ assert(node&&Number.isInteger(node.mesh),'MISSING_NATIVE_BODY_HEAD_'+name);
+ for(const prim of src.meshes[node.mesh].primitives){
+  const acc=src.accessors[prim.attributes.POSITION];
+  assert(acc.type==='VEC3'&&acc.componentType===5122&&acc.normalized===true);
+  for(let k=0;k<3;k++){
+   mins[k]=Math.min(mins[k],acc.min[k]/32767);
+   maxs[k]=Math.max(maxs[k],acc.max[k]/32767);
+  }
  }
 }
 const W=maxs[0]-mins[0],H=maxs[1]-mins[1],D=maxs[2]-mins[2];
 assert(W>0.1&&H>0.1&&D>0.1);
 const cx=(mins[0]+maxs[0])/2,cz=(mins[2]+maxs[2])/2;
+const shellStartY=mins[1]-H*.13, shellHeight=H*1.25;
 const profiles=[
  [.09,.33,.37,-.025], [.18,.43,.44,.02], [.245,.49,.47,.14],
  [.315,.52,.54,.20], [.395,.56,.55,.19], [.485,.57,.52,.08],
@@ -68,9 +76,9 @@ for(let k=0;k<profiles.length;k++){
   const brow=k===7?H*.025*Math.max(0,face)*(Math.abs(side)>.12?1:0):0;
   const crest=k===9?H*.018*Math.max(0,-face):0;
   ring.push([
-   cx+W*.5*rx*side,
-   mins[1]+H*y+brow+crest,
-   cz+D*.5*rz*face+D*recipe.geometry.frontSnoutExtension*(muzzle/.20)*Math.pow(Math.max(0,face),3)
+   cx+W*.96*rx*side,
+   shellStartY+shellHeight*y+brow+crest,
+   cz+D*rz*face+D*recipe.geometry.frontSnoutExtension*(muzzle/.20)*Math.pow(Math.max(0,face),3)
   ]);
  }
  rings.push(ring);
@@ -95,7 +103,7 @@ for(let k=0;k<rings.length-1;k++)for(let i=0;i<segments;i++){
  tri(rings[k][i],rings[k+1][i],rings[k+1][j],material);
  tri(rings[k][i],rings[k+1][j],rings[k][j],material);
 }
-const low=[cx,mins[1]+H*.09,cz],high=[cx,mins[1]+H*.96,cz];
+const low=[cx,shellStartY+shellHeight*.09,cz],high=[cx,shellStartY+shellHeight*.96,cz];
 for(let i=0;i<segments;i++){
  const j=(i+1)%segments;
  tri(low,rings[0][j],rings[0][i],'shadow');
@@ -180,6 +188,7 @@ const report={
  sourceOriginalHelmetIntact:true,originalHelmetReplacedNotStacked:true,
  newGeometry:true,newMeshNode:variant.name,originalMeshName:donorMesh.name,
  originalPrimitives:donorMesh.primitives.length,newPrimitives:mesh.primitives.length,
+ fitEnvelopeReference:'union of native M_Head and F_Head, not decorative Paladin bounds',
  newTriangles:tris,newVertices:verts,headJoint,nativeSkinIndex:variant.skin,
  originalNativeBones:skin.joints.length,originalAnimations:src.animations.length,
  rigAndAnimationUnchanged:true,materialGroups:proof,
