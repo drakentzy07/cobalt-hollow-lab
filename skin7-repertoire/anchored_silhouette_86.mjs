@@ -138,7 +138,9 @@ export function sculptFamilySilhouette86(gltf,style){
   const dimension=Math.max(size.x,size.y,size.z);
   const direction=vec(dx,dy,dz).normalize();
   const start=anchor.point.clone();
-  const span=dimension*length,thick=dimension*width;
+  // Shoulder and arm silhouettes need bolder volumes than the small stock T-pose arms.
+  // Expand LENGTH only; anchor remains on actual donor geometry.
+  const span=dimension*length*(slot.startsWith('Arm')?1.62:slot.startsWith('Leg')?1.16:1),thick=dimension*width;
   const normal=anchor.normal.lengthSq()>.2?anchor.normal:vec(0,0,1);
   // The base penetrates its source by one small radius: NO floating ornament.
   const behind=start.clone().addScaledVector(normal,-thick*.18);
