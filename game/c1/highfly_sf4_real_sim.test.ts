@@ -23,11 +23,17 @@ beforeAll(() => {
   expect(ABILITIES.hf_mage_s3).toBeDefined();
   expect(ABILITIES.hf_shaman_s3).toBeDefined();
   expect(ABILITIES.hf_druid_s3).toBeDefined();
+  expect(ABILITIES.hf_paladin_s1).toBeDefined();
+  expect(ABILITIES.hf_hunter_s5).toBeDefined();
+  expect(ABILITIES.hf_warlock_s2).toBeDefined();
   expect(CLASSES.warrior.abilities).toContain('hf_warrior_u1');
   expect(CLASSES.rogue.abilities).toContain('hf_rogue_s4');
   expect(CLASSES.mage.abilities).toContain('hf_mage_s3');
   expect(CLASSES.shaman.abilities).toContain('hf_shaman_s3');
   expect(CLASSES.druid.abilities).toContain('hf_druid_s3');
+  expect(CLASSES.paladin.abilities).toContain('hf_paladin_s1');
+  expect(CLASSES.hunter.abilities).toContain('hf_hunter_s5');
+  expect(CLASSES.warlock.abilities).toContain('hf_warlock_s2');
   expect(CLASSES.priest.abilities).toContain('hf_priest_s2');
   expect(CLASSES.priest.abilities).toContain('hf_priest_s3');
 });
@@ -145,6 +151,56 @@ describe('SF5 Mage, Shaman and Druid adapters — ORIGINAL Sim',()=>{
       const id='hf_'+cls+'_s3';
       sim.castAbility(id,p.id);sim.tick();
       expect(p.cooldowns.has(id)).toBe(false);
+    }
+  });
+});
+
+describe('SF6 Paladin, Hunter and Warlock original-Sim level and combat gates',()=>{
+  it('Paladin LV1: Holy strike and own imbue apply in the same legal melee cast',()=>{
+    const sim=new Sim({seed:47001,playerClass:'paladin',autoEquip:true});
+    sim.setPlayerLevel(1);sim.tick();const hero=sim.player;
+    hero.resource=hero.maxResource;hero.hitBonus=1;
+    const mob=inertTarget(sim,47101,2),hp=mob.hp;
+    sim.targetEntity(mob.id,hero.id);
+    sim.castAbility('hf_paladin_s1',hero.id);
+    for(let i=0;i<12;i++)sim.tick();
+    expect(hero.cooldowns.has('hf_paladin_s1')).toBe(true);
+    expect(mob.hp).toBeLessThan(hp);
+    expect(hero.auras.some(a=>a.id==='hf_paladin_s1'&&a.kind==='imbue')).toBe(true);
+  });
+  it('Hunter LV20: physical strike plus native Trailbreak displacement',()=>{
+    const sim=new Sim({seed:47002,playerClass:'hunter',autoEquip:true});
+    sim.setPlayerLevel(20);sim.tick();const hero=sim.player;
+    hero.resource=hero.maxResource;hero.hitBonus=1;
+    const mob=inertTarget(sim,47102,2),hp=mob.hp,from={...hero.pos};
+    sim.targetEntity(mob.id,hero.id);
+    sim.castAbility('hf_hunter_s5',hero.id);
+    for(let i=0;i<8;i++)sim.tick();
+    expect(hero.cooldowns.has('hf_hunter_s5')).toBe(true);
+    expect(mob.hp).toBeLessThan(hp);
+    expect(Math.hypot(hero.pos.x-from.x,hero.pos.z-from.z)).toBeGreaterThan(1);
+  });
+  it('Warlock LV5: combined single Shadow DoT deals periodic damage',()=>{
+    const sim=new Sim({seed:47003,playerClass:'warlock',autoEquip:true});
+    sim.setPlayerLevel(5);sim.tick();const hero=sim.player;
+    hero.resource=hero.maxResource;hero.hitBonus=1;
+    const mob=inertTarget(sim,47103,8),hp=mob.hp;
+    sim.targetEntity(mob.id,hero.id);
+    sim.castAbility('hf_warlock_s2',hero.id);
+    for(let i=0;i<110;i++)sim.tick();
+    expect(hero.cooldowns.has('hf_warlock_s2')).toBe(true);
+    expect(mob.hp).toBeLessThan(hp);
+    expect(mob.auras.filter(a=>a.id==='hf_warlock_s2'&&a.kind==='dot'&&a.sourceId===hero.id)).toHaveLength(1);
+  });
+  it('Hunter LV19 and Warlock LV4 cannot circumvent HIGHFLY level gates',()=>{
+    for(const [cls,lv,id] of [['hunter',19,'hf_hunter_s5'],['warlock',4,'hf_warlock_s2']] as const){
+      const sim=new Sim({seed:47004,playerClass:cls,autoEquip:true});
+      sim.setPlayerLevel(lv);sim.tick();const hero=sim.player;
+      hero.resource=hero.maxResource;
+      const mob=inertTarget(sim,47104,2);
+      sim.targetEntity(mob.id,hero.id);
+      sim.castAbility(id,hero.id);sim.tick();
+      expect(hero.cooldowns.has(id)).toBe(false);
     }
   });
 });
