@@ -125,3 +125,42 @@ describe('SF7: actual LV99 original-Sim cast of HIGHFLY skill for every class',(
     });
   }
 });
+
+describe('SF8: native HUD binding invariants — no destructive reseeding',()=>{
+  it('nine classes can fit all currently learned HIGHFLY pilots in ten configurable HUD seats at LV99',()=>{
+    for(const cls of new Set(PILOTS.map(p=>p.cls))){
+      const known=abilitiesKnownAt(cls,99).filter(a=>a.def.id.startsWith('hf_'));
+      let actionSlots=Array.from({length:10},()=>null) as ReturnType<typeof placeAbilityOnSlot>;
+      for(const [index,skill] of known.entries()){
+        expect(index).toBeLessThan(10);
+        actionSlots=placeAbilityOnSlot(actionSlots,skill.def.id,index);
+      }
+      expect(actionSlots.filter(Boolean)).toHaveLength(known.length);
+      for(const ability of known)
+        expect(actionSlots).toContainEqual({type:'ability',id:ability.def.id});
+      expect(new Set(actionSlots.filter(Boolean).map(a=>a?.type==='ability'?a.id:'')).size).toBe(known.length);
+    }
+  });
+  it('original hotbar never accepts unknown or early-locked fusion as an assigned *usable* action',()=>{
+    const source=Array.from({length:10},()=>null);
+    const premature=placeAbilityOnSlot(source,'hf_hunter_s5',2);
+    const at19=new Set(abilitiesKnownAt('hunter',19).map(a=>a.def.id));
+    const stripped=sanitizeHotbarActions(premature,id=>
+      at19.has(id)&&isAbilityActionBarEligible(ABILITIES[id]));
+    expect(stripped[2]).toBeNull();
+    const at20=new Set(abilitiesKnownAt('hunter',20).map(a=>a.def.id));
+    const restored=sanitizeHotbarActions(premature,id=>
+      at20.has(id)&&isAbilityActionBarEligible(ABILITIES[id]));
+    expect(restored[2]).toEqual({type:'ability',id:'hf_hunter_s5'});
+    expect(source.every(x=>x===null)).toBe(true);
+  });
+  it('one fused swap does not reorder other slots or overwrite the default attack control',()=>{
+    const original=Array.from({length:10},()=>null) as ReturnType<typeof placeAbilityOnSlot>;
+    const withMage=placeAbilityOnSlot(original,'hf_mage_s3',4);
+    const withPriest=placeAbilityOnSlot(withMage,'hf_priest_s2',8);
+    expect(withPriest[4]).toEqual({type:'ability',id:'hf_mage_s3'});
+    expect(withPriest[8]).toEqual({type:'ability',id:'hf_priest_s2'});
+    expect(withMage[8]).toBeNull();
+    expect(original.every(x=>x===null)).toBe(true);
+  });
+});
