@@ -4,7 +4,7 @@
  * IMPORTANT: The previous SF3 registry proved that 63 donor IDs exist; it did
  * NOT prove that 63 skills can be mechanically fused. Never copy the entire
  * donor's effects onto arbitrary targets. Only hand-audited, explicit pilot
- * recipes below can be registered. Other 56 definitions remain locked.
+ * recipes below can be registered. Other 53 definitions remain locked.
  *
  * Opt-in code path is installed only when VITE_HIGHFLY_SF4 === '1' by the
  * isolated overlay. No mutation of Training, inventory, saves or world data.
@@ -16,6 +16,7 @@ import {
   type HighflyClass,
 } from './sf3_skill_catalog';
 import {sf5MageArrivalNova,sf5ShamanTidalMend,sf5DruidBloomMend} from './sf5_native_adapters';
+import {sf6PaladinCrusaderSeal,sf6HunterRaptorRetreat,sf6WarlockTwinCurse} from './sf6_missing_three_adapters';
 
 export type Sf4Status = 'native-pilot' | 'blocked-needs-adapter' | 'design-mismatch';
 export interface Sf4Readiness {
@@ -37,6 +38,9 @@ const PILOT_IDS = new Set([
   'hf_mage_s3',   // native frost nova at blink landing
   'hf_shaman_s3', // one Nature heal merging Tidecall numeric component
   'hf_druid_s3',  // one direct heal + one HoT; 3 donors at HIGHFLY unlock
+  'hf_paladin_s1',// Holy melee strike plus self-seal
+  'hf_hunter_s5', // physical hit plus native retreat
+  'hf_warlock_s2',// merged shadow curse DoT
 ]);
 const DESIGN_MISMATCHES: Readonly<Record<string, string>> = {
   hf_druid_u1:
@@ -211,7 +215,7 @@ function composePilot(
   };
 }
 
-/** Add ONLY seven audited pilots (six original classes) to the original Sim registry. */
+/** Add ONLY ten audited native pilots across all NINE original classes. */
 export function installSf4NativePilots(
   abilities: Record<string, AbilityDef>,
   classes: Record<HighflyClass, { abilities: string[] }>,
@@ -225,7 +229,7 @@ export function installSf4NativePilots(
       throw new Error('SF4 missing class registry: ' + spec.classId);
     if (classes[spec.classId].abilities.includes(spec.id))
       throw new Error('SF4 duplicate class slot: ' + spec.id);
-    // Validate donor IDs/ownership for ALL 63 even though seven are enabled.
+    // Validate donor IDs/ownership for ALL 63 even though only ten are enabled.
     for (const id of spec.donors) {
       if (!abilities[id] || abilities[id].class !== spec.classId)
         throw new Error('SF4 missing or foreign donor: ' + spec.id + ' / ' + id);
@@ -234,7 +238,13 @@ export function installSf4NativePilots(
       throw new Error('SF4 duplicate skill: ' + spec.id);
     if (!PILOT_IDS.has(spec.id)) continue;
     let def:AbilityDef;
-    if(spec.id==='hf_mage_s3')
+    if(spec.id==='hf_paladin_s1')
+      def=sf6PaladinCrusaderSeal(spec,abilities.crusader_strike,abilities.seal_of_righteousness);
+    else if(spec.id==='hf_hunter_s5')
+      def=sf6HunterRaptorRetreat(spec,abilities.raptor_strike,abilities.trailbreak);
+    else if(spec.id==='hf_warlock_s2')
+      def=sf6WarlockTwinCurse(spec,abilities.corruption,abilities.curse_of_agony);
+    else if(spec.id==='hf_mage_s3')
       def=sf5MageArrivalNova(spec,abilities.blink,abilities.frost_nova);
     else if(spec.id==='hf_shaman_s3')
       def=sf5ShamanTidalMend(spec,abilities.healing_wave,abilities.tidecall);
@@ -247,8 +257,8 @@ export function installSf4NativePilots(
     }
     prepared.push({def,classId:spec.classId});
   }
-  if (prepared.length !== 7)
-    throw new Error('SF4 expected exactly 7 native pilots');
+  if (prepared.length !== 10)
+    throw new Error('SF4 expected exactly 10 native pilots');
   // Commit only after complete validation: fail without half-registering kits.
   for (const { def, classId } of prepared) {
     abilities[def.id] = def;
