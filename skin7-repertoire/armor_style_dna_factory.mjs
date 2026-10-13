@@ -9,19 +9,20 @@ import * as THREE from 'three';
 import {forgeDualArmor} from '../skin7-auto-fit/dual_shell_factory.mjs';
 import {integrateNativeArmor} from './native_integration_pass.mjs';
 import {balanceNativeArmorSilhouette} from './art_fit_pass.mjs';
+import {fuseReferenceArmors83} from './reference_fusion_83.mjs';
 
 const specs=[
- {id:'violet',name:'Obsidiana Violeta III',family:'DARK SAINT',base:'violet',colors:[0x10121c,0x30324b,0xd1cce0,0x9b36fa,0x49315e],
+ {id:'violet',name:'Obsidiana Violeta III · Referencia 8.3',family:'DARK SAINT',base:'violet',colors:[0x10121c,0x30324b,0xd1cce0,0x9b36fa,0x49315e],
   signature:'obsidian-faceted-wings-and-crystal-filament'},
- {id:'dragon',name:'Dragón Rojo II',family:'DRAGON SCALE',base:'dragon',colors:[0x290807,0xb62319,0xf8aa45,0xff5e1a,0x5d120e],
+ {id:'dragon',name:'Dragón Rojo Escamado · Referencia 8.3',family:'DRAGON SCALE',base:'dragon',colors:[0x290807,0xb62319,0xf8aa45,0xff5e1a,0x5d120e],
   signature:'horned-dragon-maw-and-hot-scale-crest'},
- {id:'celestial',name:'Saint Celestial',family:'CELESTIAL SAINT',base:'violet',colors:[0xa5b9da,0xe7ecfc,0xfbcf74,0x60d8ff,0x4b6aa6],
+ {id:'celestial',name:'Saint Celestial · Referencia 8.3',family:'CELESTIAL SAINT',base:'violet',colors:[0xa5b9da,0xe7ecfc,0xfbcf74,0x60d8ff,0x4b6aa6],
   signature:'winged-celestial-helmet-and-radiant-sunburst'},
  {id:'royal',name:'Royal Paladin',family:'HOLY ROYAL',base:'violet',colors:[0xc7d6df,0xf7f4ed,0xe4b44e,0x3a82f0,0x204d9c],
   signature:'knightly-tall-crown-and-heraldic-shields'},
- {id:'berserker',name:'Shadow Berserker',family:'BEAST BERSERKER',base:'violet',colors:[0x121116,0x43434d,0xbdb3a3,0xcd2932,0x58252d],
+ {id:'berserker',name:'Infernal Cataclismo · Referencia 8.3',family:'BEAST BERSERKER',base:'violet',colors:[0x121116,0x43434d,0xbdb3a3,0xcd2932,0x58252d],
   signature:'asymmetric-bone-maw-and-spiked-massive-shoulders'},
- {id:'arcane',name:'Arcane Mage',family:'ARCANE MYSTIC',base:'violet',colors:[0x1b204d,0x394a8b,0xb6a6f9,0x43e6e1,0x352467],
+ {id:'arcane',name:'Arcane Astral · Referencia 8.3',family:'ARCANE MYSTIC',base:'violet',colors:[0x1b204d,0x394a8b,0xb6a6f9,0x43e6e1,0x352467],
   signature:'tall-mage-coronet-and-orbiting-rune-rings'}
 ];
 export const ARMOR_FAMILIES=Object.freeze(specs.map(s=>Object.freeze({...s,colors:Object.freeze([...s.colors])})));
@@ -284,6 +285,7 @@ export function forgeArmorRepertoire(gltf,id){
  const qa=forgeDetails(gltf,design);
  qa.nativeIntegration=integrateNativeArmor(gltf,design.id);
  qa.artFit=balanceNativeArmorSilhouette(gltf,design.id);
+ qa.reference83=fuseReferenceArmors83(gltf,design.id);
  qa.shellCount=src.proof.shellCount;
  qa.originalNativeSlots=src.proof.nativeSlots;
  qa.originalNativePrimitives=src.proof.nativePrimitives;
