@@ -7,22 +7,33 @@ import type {AbilityDef} from '../sim/types';
 
 export const V14_CLASSES=['warrior','rogue','paladin','mage','hunter','priest','shaman','warlock','druid'] as const;
 export type V14Class=typeof V14_CLASSES[number];
-export const V14_ORIGINALS:Record<V14Class,readonly string[]>={
- warrior:['charge','slam','overpower','thunder_clap','hamstring','pummel','execute','whirlwind','heroic_leap','faultline'],
- rogue:['sinister_strike','eviscerate','backstab','ambush','garrote','rupture','kidney_shot','kick','vanish','blind'],
- paladin:['final_edict','hammer_of_justice','consecration','hammer_of_grace','dawnfall','solar_step','sunward_disc','hammer_of_wrath','sun_gods_verdict','valkyrs_calling'],
- mage:['fireball','fire_blast','scorch','flamestrike','pyroblast','meteor','dragons_breath','blink','frost_nova','polymorph'],
- hunter:['measured_shot','arcane_shot','serpent_sting','concussive_shot','frostjaw_trap','shrapnel_charge','volley','aimed_shot','rapid_fire','stampede'],
- priest:['smite','shadow_word_pain','mind_blast','mind_flay','flash_heal','prayer_of_healing','holy_nova','psychic_scream','summon_tithefiend','prayer_of_returning'],
- shaman:['lightning_bolt','chain_lightning','flame_shock','lava_burst','frost_shock','earth_shock','earthquake','thunderstorm','healing_wave','tidecall'],
- warlock:['shadow_bolt','corruption','immolate','chaos_bolt','drain_life','fear','rain_of_fire','summon_imp','summon_infernal','army_of_the_dead'],
- druid:['wrath','moonfire','entangling_roots','bear_charge','maul','rake','ferocious_bite','starfire','hurricane','wildwake'],
+/** A coherent original talent specialization for each ten-skill shortlist.
+ * We do NOT assign talents, respec a saved character or override ClaudeCraft gates.
+ * An uncommitted test character can inspect all ten, but native known-ability
+ * checks always decide what can actually be equipped and cast.
+ */
+export const V14_RECOMMENDED_SPEC:Record<V14Class,string>={
+ warrior:'arms',rogue:'subtlety',paladin:'retribution',mage:'fire',
+ hunter:'marksmanship',priest:'shadow',shaman:'elemental',
+ warlock:'destruction',druid:'feral',
 };
-const SHOW_BUFF_TYPES=new Set(['selfBuff','partyBuff','groupBuff','raidBuff','aura','applyAura','buff','shapeshift','transform','form','healOverTime','applyBuff']);
+export const V14_ORIGINALS:Record<V14Class,readonly string[]>={
+ warrior:['charge','slam','overpower','hamstring','pummel','execute','heroic_leap','cleave','breachmaker','intimidating_shout'],
+ rogue:['sinister_strike','eviscerate','backstab','ambush','garrote','rupture','kidney_shot','kick','venom_dart','blind'],
+ paladin:['final_edict','hammer_of_justice','consecration','hammer_of_grace','dawnfall','solar_step','hushbrand','hammer_of_wrath','sun_gods_verdict','valkyrs_calling'],
+ mage:['fireball','fire_blast','scorch','flamestrike','pyroblast','meteor','dragons_breath','blink','frost_nova','polymorph'],
+ hunter:['measured_shot','arcane_shot','serpent_sting','concussive_shot','frostjaw_trap','trailbreak','volley','aimed_shot','rapid_fire','counter_shot'],
+ priest:['smite','shadow_word_pain','mind_blast','mind_flay','flash_heal','lesser_heal','heal','psychic_scream','summon_tithefiend','veilstep'],
+ shaman:['lightning_bolt','chain_lightning','flame_shock','lava_burst','frost_shock','earth_shock','earthquake','thunderstorm','healing_wave','unleash_weapon'],
+ warlock:['shadow_bolt','corruption','immolate','chaos_bolt','drain_life','fear','rain_of_fire','summon_imp','summon_infernal','shadowburn'],
+ druid:['wrath','moonfire','entangling_roots','bear_charge','maul','rake','ferocious_bite','starfire','hurricane','pounce'],
+};
+const SHOW_BUFF_TYPES=new Set(['selfBuff','buffTarget','imbue','partyMeleeBuff','aoeAllyHaste','partyBuff','groupBuff','raidBuff','aura','applyAura','buff','shapeshift','transform','form','healOverTime','applyBuff']);
 const BUFF_ID_PARTS=/^(?:aspect_of_|seal_of_|blessing_of_|.*_stance$|.*_form$|mark_of_the_wild$|power_word_fortitude$|arcane_intellect$|frost_armor$|demon_skin$|lightning_shield$|.*_weapon$|bloodlust$|battle_shout$|rallying_cry$|retribution_aura$|barkskin$|thorns$|stealth$|slice_and_dice$|sprint$|evasion$|renew$|rejuvenation$|regrowth$|power_word_shield$|bone_armor$|avenging_wrath$|berserker_rage$|bloodrage$|tigers_fury$|adrenaline_rush$|ghost_wolf$|travel_form$)/;
 function originalBuff(def:AbilityDef):boolean {
  if(def.passive)return true;
  if(BUFF_ID_PARTS.test(def.id))return true;
+ if(/^(?:prowl|vanish|divine_ascension|avenging_wrath|divine_protection|aura_mastery|retribution_aura|devotion_aura|devotion_ward|radiant_devotion|dawn_devotion|grace_devotion|power_infusion|inner_focus|seraphic_vigil|thunder_reservoir|trueshot_aura|cold_focus|berserker_rage|rallying_cry|battle_shout|primal_exaltation|elemental_mastery|recklessness|avatar|innervate|bloodlust|bone_armor)$/.test(def.id))return true;
  const effects=def.effects??[];
  return effects.length>0 && effects.every(e=>SHOW_BUFF_TYPES.has(e.type));
 }
@@ -42,6 +53,8 @@ export function v14OriginalCatalogueErrors():string[]{
    const d=ABILITIES[id];
    if(!d||d.class!==cls||d.passive||d.hiddenFromPlayer)errors.push(cls+': invalid native original '+id);
    if(id.startsWith('hf_'))errors.push(cls+': fusion forbidden '+id);
+   if(d?.specs && !d.specs.includes(V14_RECOMMENDED_SPEC[cls]))
+     errors.push(cls+': '+id+' requires different specialization than '+V14_RECOMMENDED_SPEC[cls]);
   }
  }
  return errors;
@@ -89,7 +102,7 @@ export function installV14(h:V14Hooks):void{
  });
  const hide=make('button','OCULTAR','background:#34576c;color:#fff;border:0;border-radius:6px;');
  nav.append(select,hide);
- const status=make('div','Catálogo original: equipando solamente habilidades conocidas…',
+ const status=make('div','Preset técnico '+V14_RECOMMENDED_SPEC[cls]+' · equipando solamente habilidades originales conocidas…',
   'padding:7px;color:#a6e3ff;line-height:1.3;');
  const detail=make('div','','overflow:auto;padding:7px 9px;flex:1;');
  const equipped:string[]=[];
