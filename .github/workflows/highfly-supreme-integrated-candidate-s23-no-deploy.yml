@@ -3,7 +3,7 @@ name: HIGHFLY SUPREME — Unified REAL WebGL S23 Preview (NO DEPLOY)
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
   push:
-    branches: [highfly-supreme-v91-combat-aim-nine-classes, highfly-sf2-manual-aim-cancel-lab, highfly-sf3-nine-classes-fusion-integration, highfly-sf4-native-fusion-safe-implementation, highfly-sf22-three-original-compat-lab, highfly-sf23-three-native-fusion-lab]
+    branches: [highfly-supreme-v91-combat-aim-nine-classes, highfly-sf2-manual-aim-cancel-lab, highfly-sf3-nine-classes-fusion-integration, highfly-sf4-native-fusion-safe-implementation, highfly-sf22-three-original-compat-lab, highfly-sf23-three-native-fusion-lab, highfly-sf24-hunter-druid-native-fusions-lab]
     paths:
       - ".github/workflows/highfly-supreme-integrated-candidate-s23-no-deploy.yml"
       - "overlays/highfly_v91_combat_feel.py"
@@ -56,6 +56,8 @@ on:
       - "game/c1/highfly_sf22_three_original_compat.test.ts"
       - "game/c1/highfly_sf23_three_native_fusions.ts"
       - "game/c1/highfly_sf23_three_native_fusions.test.ts"
+      - "game/c1/highfly_sf24_hunter_druid_three_native.ts"
+      - "game/c1/highfly_sf24_hunter_druid_three_native.test.ts"
       - "overlays/highfly_sf22_original_source_compat.py"
       - "overlays/highfly_sf16_preflight.py"
   workflow_dispatch:
@@ -135,9 +137,11 @@ jobs:
             /game/c1/highfly_sf22_three_original_compat.test.ts
             /game/c1/highfly_sf23_three_native_fusions.ts
             /game/c1/highfly_sf23_three_native_fusions.test.ts
+            /game/c1/highfly_sf24_hunter_druid_three_native.ts
+            /game/c1/highfly_sf24_hunter_druid_three_native.test.ts
             /overlays/highfly_sf22_original_source_compat.py
             /overlays/highfly_sf16_preflight.py
-      - name: SF23 PRECHECK unique IDs across SF4-SF23 (fast before 55-minute build)
+      - name: SF24 PRECHECK unique IDs across SF4-SF24 (fast before 55-minute build)
         shell: bash
         run: |
           set -euo pipefail
@@ -678,7 +682,7 @@ jobs:
           pnpm exec vitest run tests/highfly_v9_p0_regression.test.ts tests/highfly_v91_combat_nine_classes.test.ts
           echo 'HF_V91_ALL_NINE_CLASSES_AIM_AND_ROGUE_SKILL_GREEN=1'
       - name: SF2 opt-in manual aim, shared native 9-class pointer/cancel pilot
-        if: github.ref_name == 'highfly-sf2-manual-aim-cancel-lab' || github.ref_name == 'highfly-sf3-nine-classes-fusion-integration' || (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: github.ref_name == 'highfly-sf2-manual-aim-cancel-lab' || github.ref_name == 'highfly-sf3-nine-classes-fusion-integration' || (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         working-directory: upstream
         shell: bash
         run: |
@@ -689,7 +693,7 @@ jobs:
           pnpm exec vitest run tests/highfly_manual_skill_aim.test.ts
           echo 'HIGHFLY_SF2_MANUAL_AIM_CANCEL_PURE_NATIVE_GATE_GREEN=1'
       - name: SF3 9/9 fusion donor catalogue + native ability preview (NO PUBLIC CHANGE)
-        if: github.ref_name == 'highfly-sf3-nine-classes-fusion-integration' || (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: github.ref_name == 'highfly-sf3-nine-classes-fusion-integration' || (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         working-directory: upstream
         shell: bash
         run: |
@@ -700,7 +704,7 @@ jobs:
           pnpm exec vitest run tests/highfly_sf3_fusion_9_classes.test.ts
           echo 'HIGHFLY_SF3_NINE_CLASSES_63_FUSION_DESIGN_NATIVE_GATE_GREEN=1'
       - name: V10 SF12 16 real native abilities + SF11 63 audit + SF9B nine-class combat (NO DEPLOY)
-        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         working-directory: upstream
         shell: bash
         run: |
@@ -714,7 +718,7 @@ jobs:
           test -s ../highfly-sf11-internal-audit/catalogo-63-interno.json
           echo 'HF_V10_SF12_SIXTEEN_NATIVE_FUSIONS_AND_SF11_ALL_63_DONORS_AUDITED_GREEN=1'
       - name: SF13 all remaining 47 donor contracts, safe native simulations (NO DEPLOY)
-        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         working-directory: upstream
         shell: bash
         run: |
@@ -725,7 +729,7 @@ jobs:
           test -s ../highfly-sf13-native-audit/47_source_contracts.json
           echo 'HIGHFLY_SF13_ALL_47_AUDITED_STRICT_NATIVE_GATE=1'
       - name: SF14 Priest dual-purpose and Shaman chain ORIGINAL-Sim regression (NO DEPLOY)
-        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         working-directory: upstream
         shell: bash
         run: |
@@ -735,7 +739,7 @@ jobs:
           pnpm exec vitest run tests/highfly_sf14_hand_native_adapters.test.ts
           echo 'HF_SF14_TWENTY_NATIVE_SKILLS_REAL_SIM_GATE_GREEN=1'
       - name: SF15 eight hand-audited physical, defensive, positional and summon fusions (NO DEPLOY)
-        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         working-directory: upstream
         shell: bash
         run: |
@@ -745,7 +749,7 @@ jobs:
           pnpm exec vitest run tests/highfly_sf15_eight_native_batch.test.ts
           echo 'HF_SF15_EIGHT_NATIVE_FUSIONS_ORIGINAL_COMBAT_SIM_GREEN=1'
       - name: SF21 THREE native Paladin Hunter Warlock originals plus source FX (NO DEPLOY)
-        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         working-directory: upstream
         shell: bash
         run: |
@@ -755,7 +759,7 @@ jobs:
           pnpm exec vitest run tests/highfly_sf21_three_complex_source.test.ts
           echo 'HF_SF21_THREE_NATIVE_SOURCE_SKILLS_AND_FX_GREEN=1'
       - name: SF22 three pinned native source fusions, exact ID/aim bridge (NO DEPLOY)
-        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         working-directory: upstream
         shell: bash
         run: |
@@ -765,7 +769,7 @@ jobs:
           pnpm exec vitest run tests/highfly_sf22_three_original_compat.test.ts
           echo 'HF_SF22_THREE_PINNED_SOURCE_NATIVE_SIM_GREEN=1'
       - name: SF23 three ORIGINAL Warrior Rogue Mage fused native combat (NO DEPLOY)
-        if: github.ref_name == 'highfly-sf23-three-native-fusion-lab'
+        if: (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')
         working-directory: upstream
         shell: bash
         run: |
@@ -773,8 +777,17 @@ jobs:
           cp ../v9-corrections/game/c1/highfly_sf23_three_native_fusions.test.ts tests/highfly_sf23_three_native_fusions.test.ts
           pnpm exec vitest run tests/highfly_sf23_three_native_fusions.test.ts
           echo 'HF_SF23_THREE_REAL_ORIGINAL_SIM_COMBAT_GREEN=1'
+      - name: SF24 three Hunter Druid ORIGINAL channel and dual-DOT native combat (NO DEPLOY)
+        if: github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_sf24_hunter_druid_three_native.test.ts tests/highfly_sf24_hunter_druid_three_native.test.ts
+          pnpm exec vitest run tests/highfly_sf24_hunter_druid_three_native.test.ts
+          echo 'HF_SF24_HUNTER_DRUID_ORIGINAL_CHANNEL_DOT_THORNS_SIM_GREEN=1'
       - name: SF20 two NEW Mage meteor/orb and Rogue CC finisher (NO DEPLOY)
-        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         working-directory: upstream
         shell: bash
         run: |
@@ -784,7 +797,7 @@ jobs:
           pnpm exec vitest run tests/highfly_sf20_two_source_effects.test.ts
           echo 'HF_SF20_TWO_NEW_NATIVE_ORIGINAL_SIM_SKILLS_GREEN=1'
       - name: SF19 two NEW Warrior and Rogue melee source mechanics (NO DEPLOY)
-        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         working-directory: upstream
         shell: bash
         run: |
@@ -794,7 +807,7 @@ jobs:
           pnpm exec vitest run tests/highfly_sf19_two_melee_native.test.ts
           echo 'HF_SF19_TWO_NEW_MELEE_SIM_SKILLS_GREEN=1'
       - name: SF18 three compatible Hunter Shaman Mage source mechanics (NO DEPLOY)
-        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         working-directory: upstream
         shell: bash
         run: |
@@ -804,7 +817,7 @@ jobs:
           pnpm exec vitest run tests/highfly_sf18_four_native_effects.test.ts
           echo 'HF_SF18_THREE_NEW_SOURCE_NATIVE_SIM_SKILLS_GREEN=1'
       - name: SF17 three NEW Hunter and Shaman source mechanics (NO DEPLOY)
-        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         working-directory: upstream
         shell: bash
         run: |
@@ -814,7 +827,7 @@ jobs:
           pnpm exec vitest run tests/highfly_sf17_three_unique_native.test.ts
           echo 'HF_SF17_THREE_NEW_REAL_ORIGINAL_SIM_GATE_GREEN=1'
       - name: SF16 ONE genuinely new Paladin speed and stun native Sim (NO DEPLOY) (NO DEPLOY)
-        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         working-directory: upstream
         shell: bash
         run: |
@@ -824,14 +837,14 @@ jobs:
           pnpm exec vitest run tests/highfly_sf16_eight_support_elemental.test.ts
           echo 'HF_SF16_ONE_NEW_PALADIN_NATIVE_SIM_GREEN=1'
       - name: Upload SF13 47 donor compatibility report (NO DEPLOY)
-        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         uses: actions/upload-artifact@v4
         with:
           name: HIGHFLY-SF13-47-REAL-NATIVE-COMPATIBILITY
           path: highfly-sf13-native-audit/
           if-no-files-found: error
       - name: Upload SF11 OFFLINE internal 63-skill inspection (NOT live gameplay, NO DEPLOY)
-        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab'))
+        if: (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab')))
         uses: actions/upload-artifact@v4
         with:
           name: HIGHFLY-SF11-INTERNAL-63-INSPECTOR-NO-DEPLOY
@@ -877,20 +890,21 @@ jobs:
         env:
           # Enable ten completed native fusion pilots ONLY in this no-deploy
           # SF7 lab build. No normal PUBLIC Pages branch has this flag set.
-          VITE_HIGHFLY_SF4: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab')) && '1' || '0' }}"
-          VITE_HIGHFLY_SF10: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab')) && '1' || '0' }}"
-          VITE_HIGHFLY_SF12: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab')) && '1' || '0' }}"
-          VITE_HIGHFLY_SF13: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab')) && '1' || '0' }}"
-          VITE_HIGHFLY_SF14: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab')) && '1' || '0' }}"
-          VITE_HIGHFLY_SF15: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab')) && '1' || '0' }}"
-          VITE_HIGHFLY_SF16: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab')) && '1' || '0' }}"
-          VITE_HIGHFLY_SF17: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab')) && '1' || '0' }}"
-          VITE_HIGHFLY_SF18: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab')) && '1' || '0' }}"
-          VITE_HIGHFLY_SF19: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab')) && '1' || '0' }}"
-          VITE_HIGHFLY_SF20: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab')) && '1' || '0' }}"
-          VITE_HIGHFLY_SF21: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab')) && '1' || '0' }}"
-          VITE_HIGHFLY_SF22: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || github.ref_name == 'highfly-sf23-three-native-fusion-lab')) && '1' || '0' }}"
-          VITE_HIGHFLY_SF23: "${{ github.ref_name == 'highfly-sf23-three-native-fusion-lab' && '1' || '0' }}"
+          VITE_HIGHFLY_SF4: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'))) && '1' || '0' }}"
+          VITE_HIGHFLY_SF10: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'))) && '1' || '0' }}"
+          VITE_HIGHFLY_SF12: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'))) && '1' || '0' }}"
+          VITE_HIGHFLY_SF13: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'))) && '1' || '0' }}"
+          VITE_HIGHFLY_SF14: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'))) && '1' || '0' }}"
+          VITE_HIGHFLY_SF15: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'))) && '1' || '0' }}"
+          VITE_HIGHFLY_SF16: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'))) && '1' || '0' }}"
+          VITE_HIGHFLY_SF17: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'))) && '1' || '0' }}"
+          VITE_HIGHFLY_SF18: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'))) && '1' || '0' }}"
+          VITE_HIGHFLY_SF19: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'))) && '1' || '0' }}"
+          VITE_HIGHFLY_SF20: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'))) && '1' || '0' }}"
+          VITE_HIGHFLY_SF21: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'))) && '1' || '0' }}"
+          VITE_HIGHFLY_SF22: "${{ (github.ref_name == 'highfly-sf4-native-fusion-safe-implementation' || (github.ref_name == 'highfly-sf22-three-original-compat-lab' || (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab'))) && '1' || '0' }}"
+          VITE_HIGHFLY_SF23: "${{ (github.ref_name == 'highfly-sf23-three-native-fusion-lab' || github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab') && '1' || '0' }}"
+          VITE_HIGHFLY_SF24: "${{ github.ref_name == 'highfly-sf24-hunter-druid-native-fusions-lab' && '1' || '0' }}"
           VITE_COBALT_OFFLINE: "1"
           VITE_COBALT_BASE: "/cobalt-hollow-lab/"
           VITE_HIGHFLY_HUNT_PREVIEW: "0"
@@ -902,7 +916,7 @@ jobs:
           node scripts/build_bundle_pregen.mjs
           python3 ../overlays/rewrite_source_public_paths.py
           pnpm exec vite build
-          if [[ "${GITHUB_REF_NAME}" == "highfly-sf4-native-fusion-safe-implementation" || "${GITHUB_REF_NAME}" == "highfly-sf22-three-original-compat-lab" || "${GITHUB_REF_NAME}" == "highfly-sf23-three-native-fusion-lab" ]]; then
+          if [[ "${GITHUB_REF_NAME}" == "highfly-sf4-native-fusion-safe-implementation" || "${GITHUB_REF_NAME}" == "highfly-sf22-three-original-compat-lab" || "${GITHUB_REF_NAME}" == "highfly-sf23-three-native-fusion-lab" || "${GITHUB_REF_NAME}" == "highfly-sf24-hunter-druid-native-fusions-lab" ]]; then
             test "${VITE_HIGHFLY_SF4}" = "1"
             test "${VITE_HIGHFLY_SF10}" = "1"
             test "${VITE_HIGHFLY_SF12}" = "1"
@@ -916,7 +930,8 @@ jobs:
             test "${VITE_HIGHFLY_SF20}" = "1"
             test "${VITE_HIGHFLY_SF21}" = "1"
             test "${VITE_HIGHFLY_SF22}" = "1"
-            if [[ "${GITHUB_REF_NAME}" == "highfly-sf23-three-native-fusion-lab" ]]; then test "${VITE_HIGHFLY_SF23}" = "1"; fi
+            if [[ "${GITHUB_REF_NAME}" == "highfly-sf23-three-native-fusion-lab" || "${GITHUB_REF_NAME}" == "highfly-sf24-hunter-druid-native-fusions-lab" ]]; then test "${VITE_HIGHFLY_SF23}" = "1"; fi
+            if [[ "${GITHUB_REF_NAME}" == "highfly-sf24-hunter-druid-native-fusions-lab" ]]; then test "${VITE_HIGHFLY_SF24}" = "1"; fi
             # Prove the emitted browser JS embeds a real compiled HF_ skill ID.
             # A green Sim test alone is not proof the preview can learn skills.
             grep -R -q 'hf_paladin_s1' dist/assets || {
@@ -958,11 +973,17 @@ jobs:
               grep -R -q "$skill" dist/assets || { echo "SF22_MISSING_WEBGL_$skill"; exit 1; }
             done
             echo 'HF_SF22_WEBGL_THREE_NATIVE_SOURCE_SKILLS_PRESENT=1'
-            if [[ "${GITHUB_REF_NAME}" == "highfly-sf23-three-native-fusion-lab" ]]; then
+            if [[ "${GITHUB_REF_NAME}" == "highfly-sf23-three-native-fusion-lab" || "${GITHUB_REF_NAME}" == "highfly-sf24-hunter-druid-native-fusions-lab" ]]; then
               for skill in hf_warrior_s1 hf_rogue_s2 hf_mage_s5; do
                 grep -R -q "$skill" dist/assets || { echo "SF23_MISSING_WEBGL_$skill"; exit 1; }
               done
               echo 'HF_SF23_WEBGL_THREE_NATIVE_SKILLS_PRESENT=1'
+            fi
+            if [[ "${GITHUB_REF_NAME}" == "highfly-sf24-hunter-druid-native-fusions-lab" ]]; then
+              for skill in hf_hunter_u1 hf_druid_s1 hf_druid_s2; do
+                grep -R -q "$skill" dist/assets || { echo "SF24_MISSING_WEBGL_$skill"; exit 1; }
+              done
+              echo 'HF_SF24_WEBGL_THREE_NATIVE_SKILLS_PRESENT=1'
             fi
           fi
           node scripts/build_media_manifest.mjs emit
