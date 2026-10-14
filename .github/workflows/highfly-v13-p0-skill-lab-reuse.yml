@@ -1,0 +1,52 @@
+name: HIGHFLY V13 P0 - 63 Skills Skill Lab 2 Reuse (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-v13-skill-lab-63-ab-reuse]
+    paths:
+      - "ci/v13/**"
+      - ".github/workflows/highfly-v13-p0-skill-lab-reuse.yml"
+      - "game/c1/highfly_sf3_skill_catalog.ts"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-v13-p0-catalog
+  cancel-in-progress: true
+jobs:
+  validate_catalog_and_reuse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout V13 isolated branch only
+        uses: actions/checkout@v4
+      - name: Checkout historical Skill Lab 2.0 original code (read only)
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/u6-mobile-runtime-probe
+          ref: highfly/skill-lab-2.0-hd-7of7-green
+          path: skilllab-donor
+          sparse-checkout: |
+            ci/lab
+          sparse-checkout-cone-mode: false
+      - name: Build 63-skill A/B manifest and check donor runtime contracts
+        run: |
+          set -euo pipefail
+          python3 -m py_compile ci/v13/build_v13_catalog.py
+          python3 ci/v13/build_v13_catalog.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("v13-output/skill-lab-63-ab-catalog.json")
+          data=json.loads(p.read_text())
+          assert data["skillCount"]==63 and data["classCount"]==9
+          assert len(data["abCases"])==63
+          assert all(not c["visualVerified"] and not c["s23Verified"] for c in data["abCases"])
+          assert data["publicProjectMutated"] is False
+          print("HIGHFLY_V13_P0_TRUTHFUL_NO_FALSE_3D_OR_VISUAL_CERTIFICATION_GREEN")
+          PY
+      - name: Upload V13 catalog and reproducible A/B plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-V13-P0-63-SKILLS-AB-REUSE-AUDIT
+          path: v13-output/skill-lab-63-ab-catalog.json
+          if-no-files-found: error
