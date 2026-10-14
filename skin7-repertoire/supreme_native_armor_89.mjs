@@ -16,7 +16,7 @@ export const SUPREME89=Object.freeze({
    signature:'SOLAR_GOLDEN_ARCS_IVORY_BREASTPLATE'},
  'supreme-crimson':{label:'CRIMSON DRAGON EMPEROR · Emperador Dragón',base:'dragon',
    metal:0x78251e,trim:0xefb365,dark:0x1b1013,glow:0xff5b19,style:2,
-   signature:'DRACONIC_SNOUT_SCALED_ARMOR_CRIMSON'});
+   signature:'DRACONIC_SNOUT_SCALED_ARMOR_CRIMSON'}});
 const SLOTS=['Head','Chest','Back','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR'];
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const smooth=(a,b,x)=>{let t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)};
