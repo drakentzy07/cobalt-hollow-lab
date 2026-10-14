@@ -54,7 +54,20 @@ function feather(root,tip,width){
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(xyz,3));g.setIndex(tris);g.computeVertexNormals();return g;
 }
 function relief(a,s,shape){
- const g=shape==='scale'?new THREE.IcosahedronGeometry(1,1):shape==='gem'?new THREE.OctahedronGeometry(1,0):new THREE.SphereGeometry(1,8,6);
+ let g;
+ if(shape==='gem')g=new THREE.OctahedronGeometry(1,0);
+ else if(shape==='scale')g=new THREE.IcosahedronGeometry(1,0);
+ else{
+  // A low-profile bevelled METAL PLATE instead of inflated shiny balls.
+  const profile=new THREE.Shape();
+  for(const [i,x,y] of [[0,-.78,.50],[1,-.48,.96],[2,.48,.96],[3,.78,.50],[4,.66,-.50],[5,0,-.96],[6,-.66,-.50]]){
+   if(i===0)profile.moveTo(x,y);else profile.lineTo(x,y);
+  }
+  profile.closePath();
+  g=new THREE.ExtrudeGeometry(profile,{steps:1,depth:.55,bevelEnabled:true,
+   bevelThickness:.07,bevelSize:.08,bevelSegments:1});
+  g.translate(0,0,-.27);
+ }
  g.scale(Math.max(.01,s.x),Math.max(.01,s.y),Math.max(.01,s.z));
  const normal=a.normal.lengthSq()>.1?a.normal:V(0,0,1);
  g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(V(0,0,1),normal));
@@ -66,6 +79,10 @@ function skinned(src,g,a,material,name){
  for(let i=0;i<count;i++)for(let k=0;k<4;k++){idx[i*4+k]=a.idx[k];w[i*4+k]=a.w[k];}
  g.setAttribute('skinIndex',new THREE.BufferAttribute(idx,4));
  g.setAttribute('skinWeight',new THREE.BufferAttribute(w,4));
+ const pos=g.attributes.position;
+ for(let i=0;i<pos.count;i++)
+  if(!Number.isFinite(pos.getX(i))||!Number.isFinite(pos.getY(i))||!Number.isFinite(pos.getZ(i)))
+   throw Error('HF87_NAN_VERTEX '+name+' '+i);
  g.computeBoundingSphere();const mesh=new THREE.SkinnedMesh(g,material);
  mesh.name=name;mesh.bind(src.skeleton,src.bindMatrix.clone());
  mesh.frustumCulled=false;src.parent.add(mesh);return mesh;
@@ -143,8 +160,11 @@ export function buildLegendary87(gltf,id){
     height*((isAngel?.68:.39)-t*(isDragon?.85:1.12)),
     -bs.z*.30-bs.x*.10*Math.sin(t*2)
    ));
-   const start=root.clone().lerp(tip,.06);
-   const g=feather(start,tip,bs.x*(isDragon?.15:.12)*(1-t*.4));
+   // Start feather from an articulated leading edge/SPAR, NOT all from one
+   // attachment point (old radial starburst). Each feather overlaps its neighbor.
+   const sparEnd=root.clone().add(V(side*width*.69,height*.33,-bs.z*.12));
+   const start=root.clone().lerp(sparEnd,.22+.70*t);
+   const g=feather(start,tip,bs.x*(isDragon?.18:.21)*(1-t*.38));
    insert('Back',g,a,'wings',j%5===0?'glow':j%4===0?'trim':'wing');
   }
  }
