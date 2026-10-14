@@ -1,0 +1,217 @@
+name: HIGHFLY SF28 — Pages LAB sidecar, preserve public site
+# Explicit owner authorization 2026-10-14: view SF28 63/63 on Android Pages.
+# Preserve current public home + static assets BYTE FOR BYTE. No rebuild.
+# Refuse deployment unless public home matches immutable V9.1 source artifact.
+on:
+  push:
+    branches:
+      - highfly-sf28-original-vs-fused-vfx-audit-lab
+    paths:
+      - ".github/workflows/highfly-sf28-pages-lab-preserve-public.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: highfly-sf28-pages-lab-preserve-public
+  cancel-in-progress: false
+
+jobs:
+  stage_and_safeguard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Get pinned existing PUBLIC V9.1 source artifact (immutable)
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38320066780
+          github-token: ${{ github.token }}
+          name: HIGHFLY-SUPREME-INTEGRATED-WEBGL-S23-CANDIDATE-NO-DEPLOY
+          path: current-public
+
+      - name: Get proven GREEN SF28 WebGL 63 of 63 candidate (immutable)
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38543442226
+          github-token: ${{ github.token }}
+          name: HIGHFLY-SUPREME-INTEGRATED-WEBGL-S23-CANDIDATE-NO-DEPLOY
+          path: new-sf28
+
+      - name: Preserve entire public root, add ONLY new hashed assets and SF28 lab entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, re, shutil, urllib.request
+          from pathlib import Path
+          old=Path('current-public/cobalt-hollow-lab')
+          new=Path('new-sf28/cobalt-hollow-lab')
+          site=Path('sidecar-site')
+          for root in (old,new):
+            assert (root/'index.html').is_file() and (root/'assets').is_dir() and (root/'media').is_dir(),root
+          if site.exists(): raise SystemExit('SF28_STAGING_ALREADY_EXISTS')
+          shutil.copytree(old,site)
+          (site/'.nojekyll').touch()
+          def sha(path):
+            h=hashlib.sha256()
+            with path.open('rb') as f:
+              for chunk in iter(lambda:f.read(4*1024*1024),b''):h.update(chunk)
+            return h.hexdigest()
+          oldindex=sha(old/'index.html')
+          # Verify the current LIVE public site has not diverged from the pinned
+          # V9.1 donor. If a newer release is live, ABORT before any deployment.
+          url='https://drakentzy07.github.io/cobalt-hollow-lab/index.html?sf28_before=1'
+          req=urllib.request.Request(url,headers={
+            'User-Agent':'HIGHFLY-SF28-BYTE-PRESERVATION-GATE',
+            'Cache-Control':'no-cache'
+          })
+          with urllib.request.urlopen(req,timeout=60) as response:
+            body=response.read()
+            assert response.status==200
+          current=hashlib.sha256(body).hexdigest()
+          print('HF_SF28_PUBLIC_BEFORE_INDEX_SHA='+current)
+          print('HF_SF28_PINNED_V91_INDEX_SHA='+oldindex)
+          if current!=oldindex:raise SystemExit('SF28_BLOCKED_CURRENT_PUBLIC_VERSION_DIFFERS_FROM_PINNED_V91')
+          copied=[];identical=[];collisions=[]
+          for src in sorted(p for p in new.rglob('*') if p.is_file()):
+            rel=src.relative_to(new)
+            if rel.name=='.nojekyll' or rel.suffix=='.html' or str(rel)=='highfly-supreme-qa.json':
+              continue
+            dst=site/rel
+            if dst.is_file():
+              if src.stat().st_size!=dst.stat().st_size or sha(src)!=sha(dst):
+                collisions.append(str(rel))
+              else:
+                identical.append(str(rel))
+            else:
+              dst.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copy2(src,dst)
+              copied.append(str(rel))
+          if collisions:
+            print('HF_SF28_COLLISIONS_NONIDENTICAL='+json.dumps(collisions[:80]))
+            raise SystemExit('SF28_PUBLIC_SHARED_ASSET_COLLISION_BLOCKED')
+          # HTML uses ORIGINAL /cobalt-hollow-lab/assets/ absolute Vite base.
+          # New hashed JS/CSS names are now present in shared /assets/. The
+          # lab entry imports SF28 versions; old homepage keeps V9.1 versions.
+          lab=site/'lab/sf28'
+          lab.mkdir(parents=True,exist_ok=True)
+          for html in new.glob('*.html'):
+            shutil.copy2(html,lab/html.name)
+          html=(lab/'index.html').read_text(encoding='utf-8')
+          matches=re.findall(r'''(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)''',html)
+          if not matches:raise SystemExit('SF28_NO_COMPILED_SCRIPT_REFERENCES_IN_LAB_INDEX')
+          for ref in matches:
+            p=site/ref.removeprefix('/cobalt-hollow-lab/')
+            if not p.is_file():raise SystemExit('SF28_MISSING_COMPILED_LAB_ASSET:'+str(p))
+          metadata={
+            'edition':'HIGHFLY SF28 NINE CLASS 63/63 SKILL FACTORY',
+            'sourceRun':38543442226,
+            'sourceCommit':'6069668f34e77f98ecaf416ec43433f456a3f60e',
+            'originalPublicRun':38320066780,
+            'originalHomeSHA256':oldindex,
+            'separatePath':'/cobalt-hollow-lab/lab/sf28/',
+            'originalHomeUntouched':True,
+            'laboratoryPublished':True,
+            'nativeSimCertifiedCount':63,
+            'visualQA':'pending human review',
+            'physicalSamsungS23QA':'pending human review',
+            'notAnABComparator':True
+          }
+          (lab/'highfly-sf28-qa.json').write_text(json.dumps(metadata,indent=2),encoding='utf-8')
+          if sha(site/'index.html')!=oldindex:
+            raise SystemExit('SF28_BUG_ORIGINAL_PUBLIC_ENTRY_MUTATED')
+          sitefiles=[p for p in site.rglob('*') if p.is_file()]
+          if any(p.is_symlink() for p in site.rglob('*')):
+            raise SystemExit('SF28_SYMLINK_BLOCKED')
+          total=sum(p.stat().st_size for p in sitefiles)
+          print('HF_SF28_SAFE_SIDECAR_REPORT='+json.dumps({
+            'bytes':total,'files':len(sitefiles),'assetsCopied':len(copied),
+            'sharedAssetsIdentical':len(identical),'newHtml':len(list(lab.glob('*.html'))),
+            'oldHomepageSha':oldindex,'labScriptPaths':matches[:8]
+          }))
+          if total>=995_000_000:raise SystemExit('SF28_PAGES_1GB_SIZE_GATE_STOP')
+          if total<=500_000_000 or len(sitefiles)<6000:
+            raise SystemExit('SF28_INCOMPLETE_BASELINE_STOP')
+          PY
+
+      - name: Test both homepage and lab entry over HTTP before deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory sidecar-site > sidecar-http.log 2>&1 &
+          HTTP_PID=$!
+          trap 'kill "$HTTP_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 25); do
+            if curl -fsS http://127.0.0.1:4173/index.html > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4173/lab/sf28/ > lab-verified-index.html
+          grep -q '/cobalt-hollow-lab/assets/' lab-verified-index.html
+          test -s sidecar-site/lab/sf28/highfly-sf28-qa.json
+          echo 'HF_SF28_PAGES_LAB_ISOLATED_HTTP_GATE_GREEN=1'
+
+      - name: Configure Pages for complete preserved site + lab
+        uses: actions/configure-pages@v5
+
+      - name: Upload complete Pages artifact with UNCHANGED public root
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: sidecar-site
+
+  publish_sidecar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: stage_and_safeguard
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/lab/sf28/
+    steps:
+      - name: Deploy whole preserved public site with new isolated SF28 lab
+        id: release
+        uses: actions/deploy-pages@v4
+
+      - name: Verify SF28 URL and unchanged original root actually served
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,time,urllib.request
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          expected='6069668f34e77f98ecaf416ec43433f456a3f60e'
+          def get(path):
+            r=urllib.request.Request(base+path,headers={
+              'User-Agent':'HIGHFLY-SF28-PAGES-AFTER-DEPLOY',
+              'Cache-Control':'no-cache'
+            })
+            with urllib.request.urlopen(r,timeout=60) as reply:
+              assert reply.status==200
+              return reply.read()
+          for i in range(35):
+            try:
+              qa=json.loads(get('lab/sf28/highfly-sf28-qa.json?run='+str(i)))
+              html=get('lab/sf28/?run='+str(i))
+              homepage=get('index.html?run='+str(i))
+              if qa['sourceCommit']!=expected or not html:raise RuntimeError('SF28_NOT_LIVE_YET')
+              if hashlib.sha256(homepage).hexdigest()!=qa['originalHomeSHA256']:
+                raise SystemExit('SF28_CRITICAL_ORIGINAL_PUBLIC_PAGE_CHANGED')
+              if b'/cobalt-hollow-lab/assets/' not in html:
+                raise SystemExit('SF28_LAB_HTML_BAD_ENTRY')
+              print('HF_SF28_LIVE_ANDROID_PAGES_GREEN='+json.dumps({
+                'labUrl':base+'lab/sf28/',
+                'homePreservedSHA256':qa['originalHomeSHA256'],
+                'sf28SourceCommit':expected,
+                'physicalS23StillNotCertified':True
+              }))
+              break
+            except SystemExit: raise
+            except Exception as e:
+              print('SF28_WAIT_FOR_PAGES_PROPAGATION',i,str(e)[:160])
+              time.sleep(6)
+          else:raise SystemExit('SF28_LAB_URL_NOT_VERIFIED_AFTER_DEPLOY')
+          PY
