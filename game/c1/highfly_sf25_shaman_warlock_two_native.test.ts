@@ -1,4 +1,4 @@
-/** SF24: original native 6-shot channel, lunar melee + DoT, 2 DoTs+SELF thorns. */
+/** SF25 original source-native Shaman weapon unleash and Warlock demon selector. */
 import {beforeAll,afterAll,describe,it,expect} from 'vitest';
 import {ABILITIES,CLASSES,abilitiesKnownAt} from '../src/sim/content/classes';
 import {Sim} from '../src/sim/sim';
@@ -22,6 +22,7 @@ import {installSf22ThreeNative} from '../src/highfly/sf22_three_original_compat'
 import {installSf23ThreeNative} from '../src/highfly/sf23_three_native_fusions';
 import {installSf24ThreeNative} from '../src/highfly/sf24_hunter_druid_three_native';
 import {SF25_IDS,installSf25TwoNative} from '../src/highfly/sf25_shaman_warlock_two_native';
+const installed:string[]=[];
 beforeAll(()=>{
  expect(Object.keys(ABILITIES).filter(x=>x.startsWith('hf_'))).toHaveLength(0);
  installed.push(...installSf4NativePilots(ABILITIES,CLASSES).registered);
