@@ -103,7 +103,7 @@ function loft(donors,kind,cfg){
   for(let ix=0;ix<=sides;ix++){
    const a=ix/sides*Math.PI*2,ux=Math.sin(a),front=Math.cos(a);
    const absX=Math.abs(ux);
-   let y=c.y+(t-.5)*s.y,rx=1,rz=1;
+   let y=c.y+(t-.5)*s.y*(kind==='helmet'?.47:1.35),rx=1,rz=1;
    if(kind==='helmet'){
     // Open throat taper, sculpted jaw, brow, upper crown and draconic muzzle.
     rx=.75+.25*Math.sin(Math.PI*t*.88);
@@ -113,12 +113,12 @@ function loft(donors,kind,cfg){
      rx*=1+.055*Math.cos(a*8)+.09*smooth(.65,.97,t);
      rz*=1+.08*smooth(.35,.75,t)*Math.max(0,front);
      // Three angular crown ridges are cut into the SAME helmet topology.
-     if(t>.79)y+=s.y*.15*smooth(.79,1,t)*Math.pow(Math.max(0,Math.cos(a*3)),10);
+     if(t>.79)y+=s.y*.47*.15*smooth(.79,1,t)*Math.pow(Math.max(0,Math.cos(a*3)),10);
     }else if(cfg.style===1){
      rx*=.89+.08*smooth(.50,.86,t);
      rz*=.93;
      // Golden saint's swept crown: two side arches and central crest.
-     if(t>.75)y+=s.y*.17*smooth(.75,1,t)*
+     if(t>.75)y+=s.y*.47*.17*smooth(.75,1,t)*
       (Math.pow(Math.max(0,Math.cos(a)),18)*.72+
        Math.pow(Math.abs(Math.sin(a)),22)*.77);
     }else{
@@ -127,7 +127,7 @@ function loft(donors,kind,cfg){
      // Draconic snout is integral to the face shell, not a box over it.
      if(front>.4&&t<.52)rz+=.18*smooth(.40,.92,front)*(1-smooth(.39,.62,t));
      // Rearward horn silhouette is lofted from the helmet crown itself.
-     if(t>.77)y+=s.y*.15*smooth(.77,1,t)*
+     if(t>.77)y+=s.y*.47*.15*smooth(.77,1,t)*
        Math.pow(Math.max(0,-front),7)*(1-.3*absX);
     }
     // Continuous front central nasal ridge and angular cheek deflectors.
@@ -150,8 +150,8 @@ function loft(donors,kind,cfg){
         Math.max(0,1-Math.abs(t-(.73-.19*absX))/.15);
    }
    const facet=1+.032*Math.cos(a*8);
-   const x=c.x+ux*s.x*.54*rx*facet;
-   const z=c.z+front*s.z*.54*rz*facet;
+   const x=c.x+ux*s.x*.54*rx*facet*(kind==='helmet'?.46:2.25);
+   const z=c.z+front*s.z*.54*rz*facet*(kind==='helmet'?.55:1.55);
    positions.push(x,y,z);
    const tint=vertexColor(cfg,kind,ux,t,front,rz);
    colors.push(tint.r,tint.g,tint.b);
@@ -163,10 +163,10 @@ function loft(donors,kind,cfg){
  }
  // Shape is watertight in full 3D: caps are joined to the same geometry.
  const bottom=positions.length/3;
- positions.push(c.x,c.y-s.y*.5,c.z);
+ positions.push(c.x,c.y-s.y*(kind==='helmet'?.235:.675),c.z);
  colors.push(...new THREE.Color(cfg.dark).toArray());
  const top=positions.length/3;
- positions.push(c.x,c.y+s.y*(kind==='helmet'?.66:.50),c.z);
+ positions.push(c.x,c.y+s.y*(kind==='helmet'?.31:.675),c.z);
  colors.push(...new THREE.Color(cfg.trim).toArray());
  for(let ix=0;ix<sides;ix++){
   indices.push(bottom,ix+1,ix);
@@ -185,7 +185,7 @@ function repaint(mesh,slot,cfg){
   const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
   const u=(x-c.x)/s.x,v=(y-c.y)/s.y,w=(z-c.z)/s.z;
   const top=smooth(-.03,.43,v),wide=slot.startsWith('Arm')?.20:slot.startsWith('Leg')?.10:.045;
-  p.setXYZ(i,c.x+(x-c.x)*(1+wide*top),y,c.z+(z-c.z)*(1+.065*top));
+  p.setXYZ(i,c.x+(x-c.x)*(1+wide*top)*1.38,c.y+(y-c.y)*1.30,c.z+(z-c.z)*(1+.065*top)*1.22);
   let tone=color(cfg.metal),gold=color(cfg.trim),dark=color(cfg.dark),energy=color(cfg.glow);
   if(Math.abs(u)>.35||v>.37)tone.lerp(gold,.56);
   if(v<-.34)tone.lerp(dark,.49);
