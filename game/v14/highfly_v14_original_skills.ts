@@ -10,7 +10,7 @@ export type V14Class=typeof V14_CLASSES[number];
 export const V14_ORIGINALS:Record<V14Class,readonly string[]>={
  warrior:['charge','slam','overpower','thunder_clap','hamstring','pummel','execute','whirlwind','heroic_leap','faultline'],
  rogue:['sinister_strike','eviscerate','backstab','ambush','garrote','rupture','kidney_shot','kick','vanish','blind'],
- paladin:['crusader_strike','hammer_of_justice','consecration','exorcism','holy_shock','solar_step','sunward_disc','hammer_of_wrath','sun_gods_verdict','valkyrs_calling'],
+ paladin:['final_edict','hammer_of_justice','consecration','hammer_of_grace','dawnfall','solar_step','sunward_disc','hammer_of_wrath','sun_gods_verdict','valkyrs_calling'],
  mage:['fireball','fire_blast','scorch','flamestrike','pyroblast','meteor','dragons_breath','blink','frost_nova','polymorph'],
  hunter:['measured_shot','arcane_shot','serpent_sting','concussive_shot','frostjaw_trap','shrapnel_charge','volley','aimed_shot','rapid_fire','stampede'],
  priest:['smite','shadow_word_pain','mind_blast','mind_flay','flash_heal','prayer_of_healing','holy_nova','psychic_scream','summon_tithefiend','prayer_of_returning'],
