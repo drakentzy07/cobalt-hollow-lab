@@ -121,6 +121,7 @@ async function choose(id){
   if(!result.proof.structuralGreen)throw Error('STYLE_RED');
   if(key!==generation)return;
   present(right,result.gltf);
+  state.debugCandidateRoot=right.root;
   state.proofs[id]=result.proof;state.variantReady=true;state.variationCount++;
   $('#variant-title').textContent='HIGHFLY · '+result.proof.name;
   $('#variant-caption').textContent=result.proof.reference83?.enabled ? 'SKIN 8.7 · '+result.proof.reference83.assemblies+' piezas NATIVAS + formas 3D propias · 0 paneles flotantes visibles · cuernos/plumas/crestas 3D nuevos y articulados' : 'Comparador Royal anterior · 17 donantes';
