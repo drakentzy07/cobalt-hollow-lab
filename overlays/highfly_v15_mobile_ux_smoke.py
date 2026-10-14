@@ -60,9 +60,21 @@ injected = r"""
     }
   };
   const hf15Before=await hf15Measure();
-  await page.evaluate(()=>document.getElementById('mobile-menu-anchor')?.click());
-  await page.waitForFunction(()=>document.getElementById('mobile-menu-strip')?.classList.contains('open'),null,{timeout:3500});
-  await page.evaluate(()=>document.getElementById('mobile-more')?.click());
+  // Real touchscreen: a programmatic .click() does NOT exercise the game's
+  // pointerdown/pointerup menu gesture (StripGesture owns those events).
+  await page.locator('#mobile-menu-anchor').tap({force:true});
+  await page.waitForFunction(()=>document.getElementById('mobile-menu-strip')?.classList.contains('open'),null,{timeout:5500}).catch(async()=>{
+    const diag=await page.evaluate(()=>({
+      anchor:document.getElementById('mobile-menu-anchor')?.getBoundingClientRect().toJSON(),
+      expanded:document.getElementById('mobile-menu-anchor')?.getAttribute('aria-expanded'),
+      stripClasses:document.getElementById('mobile-menu-strip')?.className,
+      mobile:document.body.classList.contains('mobile-touch'),
+      active:document.body.classList.contains('game-active'),
+      questExists:!!document.getElementById('mobile-quest'),
+    }));
+    fail('HF15_UX_QUICK_ACTIONS_NOT_OPEN initial '+JSON.stringify(diag));
+  });
+  await page.locator('#mobile-more').tap({force:true});
   await page.waitForFunction(()=>document.body.classList.contains('mobile-more-open'),null,{timeout:3500});
   await page.waitForTimeout(240);
   const hf15Open=await hf15Measure();
@@ -73,29 +85,22 @@ injected = r"""
      hf15Open.modal.bottom>hf15Open.viewport.h+2)
     fail('HF15_UX_MORE_MODAL_CLIPPED '+JSON.stringify(hf15Open.modal));
   // Native close path: a press outside the modal; no test-only class mutation.
-  await page.evaluate(()=>{
-    const el=document.getElementById('game-canvas');
-    el?.dispatchEvent(new PointerEvent('pointerdown',{
-      bubbles:true,cancelable:true,pointerId:610,pointerType:'touch',isPrimary:true,
-      clientX:12,clientY:12
-    }));
-    el?.dispatchEvent(new PointerEvent('pointerup',{
-      bubbles:true,cancelable:true,pointerId:610,pointerType:'touch',isPrimary:true,
-      clientX:12,clientY:12
-    }));
-  });
+  await page.touchscreen.tap(12,12);
   await page.waitForFunction(()=>!document.body.classList.contains('mobile-more-open'),null,{timeout:3500});
   const hf15Closed=await hf15Measure();
   hf15AssertSeats(hf15Before,hf15Closed,'more-closed');
   // Reuse original mobile-quest button and original Quest Log callback.
   // The strip may still be open depending on the release path; open only if shut.
-  await page.evaluate(()=>{
-    const strip=document.getElementById('mobile-menu-strip');
-    if(!strip?.classList.contains('open'))
-      document.getElementById('mobile-menu-anchor')?.click();
+  const hf15StripOpen=await page.evaluate(()=>document.getElementById('mobile-menu-strip')?.classList.contains('open')===true);
+  if(!hf15StripOpen)await page.locator('#mobile-menu-anchor').tap({force:true});
+  await page.waitForFunction(()=>document.getElementById('mobile-menu-strip')?.classList.contains('open'),null,{timeout:5500}).catch(async()=>{
+    const diag=await page.evaluate(()=>({
+      expanded:document.getElementById('mobile-menu-anchor')?.getAttribute('aria-expanded'),
+      stripClasses:document.getElementById('mobile-menu-strip')?.className,
+    }));
+    fail('HF15_UX_QUICK_ACTIONS_NOT_OPEN quest '+JSON.stringify(diag));
   });
-  await page.waitForFunction(()=>document.getElementById('mobile-menu-strip')?.classList.contains('open'),null,{timeout:3500});
-  await page.evaluate(()=>document.getElementById('mobile-quest')?.click());
+  await page.locator('#mobile-quest').tap({force:true});
   await page.locator('#quest-log-window').waitFor({state:'visible',timeout:6500});
   const hf15Quest=await hf15Measure();
   hf15AssertSeats(hf15Before,hf15Quest,'quest-open');
