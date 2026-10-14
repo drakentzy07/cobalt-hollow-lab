@@ -20,6 +20,54 @@ if not source.is_file() or dest.exists():
     raise SystemExit("V13_NATIVE_SOURCE_MISSING_OR_ALREADY_INSTALLED")
 shutil.copyfile(source,dest)
 
+# Lab-only VFX isolation: protect the game, author-written skill hits and mobs.
+atk_source=Path("../v9-corrections/game/v13/highfly_v13_normal_atk_isolation.ts")
+atk_dest=Path("src/highfly/v13_normal_atk_isolation.ts")
+if not atk_source.is_file() or atk_dest.exists():
+    raise SystemExit("V13_NORMAL_ATK_SOURCE_MISSING_OR_ALREADY_INSTALLED")
+shutil.copyfile(atk_source,atk_dest)
+
+auto_attack=Path("src/sim/combat/auto_attack.ts")
+if not auto_attack.is_file():
+    raise SystemExit("V13_NATIVE_AUTO_ATTACK_SOURCE_MISSING")
+auto_attack.write_text(
+    "import { highflyV13MuteNormalAttackHere } from '../../highfly/v13_normal_atk_isolation';\n"
+    + auto_attack.read_text(encoding="utf-8"),encoding="utf-8")
+replace_once("src/sim/combat/auto_attack.ts",
+ "export function startAutoAttack(ctx: SimContext, pid?: number): void {\n  const r = ctx.resolve(pid);\n  if (!r) return;",
+ """export function startAutoAttack(ctx: SimContext, pid?: number): void {
+  const r = ctx.resolve(pid);
+  if (!r) return;
+  // V13 only: no white auto-attack if a skill/auto-engage tries to arm it.
+  // Authored skill weaponStrikes/VFX use independent effects.
+  if (highflyV13MuteNormalAttackHere(r.e.id,ctx.primaryId)) {
+    r.e.autoAttack=false;
+    return;
+  }""")
+replace_once("src/sim/combat/auto_attack.ts",
+ "export function tryPlayerSwing(ctx: SimContext, p: Entity, meta: PlayerMeta): void {\n  if (isValkyrsCallingAirborne(p)) return;",
+ """export function tryPlayerSwing(ctx: SimContext, p: Entity, meta: PlayerMeta): void {
+  // Defence in depth: white melee, offhand, wand and hunter auto-shot OFF.
+  if (highflyV13MuteNormalAttackHere(p.id,ctx.primaryId)) {
+    p.autoAttack=false;
+    return;
+  }
+  if (isValkyrsCallingAirborne(p)) return;""")
+replace_once("src/ui/hud.ts",
+ "  private activateFixedAttackSlot(): void {\n    if (this.sim.player.autoAttack) this.sim.stopAutoAttack();",
+ """  private activateFixedAttackSlot(): void {
+    // The V13 skill VFX recording lab intentionally has NO ordinary ATK.
+    if (new URLSearchParams(location.search).get('hf-v13') === '1') {
+      this.sim.stopAutoAttack();
+      return;
+    }
+    if (this.sim.player.autoAttack) this.sim.stopAutoAttack();""")
+replace_once("src/ui/hud.ts",
+ "            this.optionsHooks?.settings.get('startAttackOnAbilityUse') &&",
+ """            new URLSearchParams(location.search).get('hf-v13') !== '1' &&
+            this.optionsHooks?.settings.get('startAttackOnAbilityUse') &&""")
+
+
 replace_once("src/main.ts",
  "import { applyFrameGeometrySetting } from './game/frame_geometry_settings';",
  """import { applyFrameGeometrySetting } from './game/frame_geometry_settings';
@@ -74,11 +122,17 @@ replace_once("src/ui/hud.ts",
   }
 
   castSlot(barSlot: number): void {""")
-assert dest.is_file()
+assert dest.is_file() and atk_dest.is_file()
+attack=auto_attack.read_text(encoding="utf-8")
+assert attack.count("highflyV13MuteNormalAttackHere(")==2
+assert "export function tryPlayerSwing" in attack and "export function startAutoAttack" in attack
 main=Path("src/main.ts").read_text(encoding="utf-8")
 assert "installHighflyV13SkillLab" in main
 assert "HFV13Lab" in main
 assert "highflyV13CreateMob" in main
 hud=Path("src/ui/hud.ts").read_text(encoding="utf-8")
 assert "highflyV13Equip" in hud
+assert "this.optionsHooks?.settings.get('startAttackOnAbilityUse')" in hud
+assert "The V13 skill VFX recording lab intentionally has NO ordinary ATK" in hud
 print("HIGHFLY_V13_NATIVE_LV99_NINECLASS_SCROLL_SLOTS_ORIGINAL_HUD_SIM_PATCH_GREEN=1")
+print("HIGHFLY_V13_ALL_NINE_PRIMARY_BASIC_AUTOATTACK_DISABLED_ONLY_LAB=1")
