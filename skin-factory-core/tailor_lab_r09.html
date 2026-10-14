@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>HIGHFLY · Sastre 3D R0.9 · PartCrafter → Warrior</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0c101c;color:#f4f0ff;font:14px system-ui,Arial}
+header{padding:17px 18px;background:#181b2b;border-bottom:1px solid #3c345b}h1{margin:0;font-size:20px;color:#efe4ff}header p{margin:6px 0;color:#c5bcdd}
+main{max-width:1350px;margin:auto;padding:12px;display:grid;grid-template-columns:minmax(245px,330px) minmax(0,1fr);gap:12px}
+.panel{background:#171b2b;border:1px solid #41405e;border-radius:13px;padding:14px}h2{font-size:15px;margin:0 0 11px;color:#ebd9ff}
+label{display:block;margin:10px 0 5px;color:#cbbfe5}input[type=file],select,button{display:block;width:100%;font:inherit;border-radius:8px;padding:10px;background:#242b40;border:1px solid #575774;color:white}
+button{cursor:pointer;background:#483368;border-color:#9b78c5;font-weight:600;margin:9px 0}button:disabled{opacity:.5;cursor:not-allowed}
+button:hover:not(:disabled){background:#604489}.secondary{background:#252b42;border-color:#59627e}
+#view{width:100%;height:min(76vh,810px);min-height:430px;background:#2a3047;border-radius:12px;position:relative;overflow:hidden}
+#view canvas{width:100%;height:100%;display:block}#status{font-size:12px;white-space:pre-wrap;line-height:1.55;color:#d8c8fa;max-height:270px;overflow:auto}
+small,.hint{font-size:12px;color:#acaec4;line-height:1.45}.warning{color:#ffbd89;font-size:12px;padding:10px;border-left:3px solid #e69550;background:#3c302e;border-radius:4px}
+.meta{border-bottom:1px solid #41405e;padding:5px 0;display:flex;justify-content:space-between;gap:10px}.meta span:last-child{font-variant-numeric:tabular-nums}
+.row{display:flex;gap:6px;flex-wrap:wrap}.row button{flex:1;min-width:70px}.tag{border-radius:6px;background:#36234e;color:#e8c9ff;padding:3px 7px}
+@media(max-width:750px){main{display:block}.panel{margin-bottom:10px}#view{height:54vh;min-height:300px}header h1{font-size:17px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://esm.sh/three@0.180.0","three/addons/":"https://esm.sh/three@0.180.0/examples/jsm/","meshoptimizer":"https://esm.sh/meshoptimizer@0.23.0","fflate":"https://esm.sh/fflate@0.8.2"}}</script>
+</head><body>
+<header><h1>HIGHFLY · SASTRE 3D R0.9 <span class="tag">PRUEBA ANATÓMICA</span></h1>
+<p>ZIP real de PartCrafter INTACTO y al lado del Warrior con armadura KNIGHT NATIVA. Es una comparación para corregir arte, no una IA equipable.</p></header>
+<main><div class="panel">
+<h2>1. Cargar el modelo original</h2>
+<div id="measurements">Esperando al Warrior modular auténtico…</div>
+<button id="export-profile" disabled class="secondary">Exportar ficha de medidas (JSON)</button>
+<h2 style="margin-top:16px">2. Importar ZIP de IA</h2>
+<label for="raw">Tu HIGHFLY_OBSIDIAN_PARTCRAFTER_RAW3D.zip, o el GLB optimizado R0.7</label>
+<input id="raw" type="file" accept=".zip,.glb"/>
+<button id="fit" disabled>Cargar ZIP y comparar modelo IA / Knight</button>
+<div class="warning">R0.9 CORRIGE el error visual de R0.8: jamás se saltean triángulos ni se finge vestir una estatua. La escultura IA se muestra APARTE, intacta; el Knight es 100% original ClaudeCraft, NO generado por IA.</div>
+<h2 style="margin-top:17px">3. Animaciones nativas</h2>
+<select id="clip" disabled><option>Esperando 22 clips</option></select>
+<div class="row"><button class="secondary" id="front">Frente</button><button class="secondary" id="side">Perfil</button><button class="secondary" id="back">Espalda</button></div>
+<button id="toggle" class="secondary" disabled>Mostrar / ocultar IA (referencia)</button><button id="toggle-native" class="secondary" disabled>Mostrar / ocultar Knight nativo</button>
+<button id="export-report" class="secondary" disabled>Exportar diagnóstico</button>
+<h2 style="margin-top:17px">Diagnóstico</h2><pre id="status" role="status" aria-live="polite">Cargando…</pre>
+<p class="hint">El ZIP se procesa localmente en tu navegador; no se sube a la web. Three.js, Meshopt y fflate se cargan desde CDNs. No genera geometría nueva ni utiliza créditos. No certifica rendimiento Samsung S23 Ultra.</p>
+</div>
+<div class="panel"><div id="view"></div>
+<div class="meta"><span>Fuente original</span><span>ClaudeCraft Rig_Medium · 23 huesos</span></div>
+<div class="meta"><span>Clips originales</span><span id="clip-count">Pendiente</span></div>
+<div class="meta"><span>Estado de skin IA</span><span id="wearable">IA NO EQUIPABLE</span></div>
+<div class="meta"><span>Visualización</span><span>IA estática completa + Knight original animado</span></div>
+</div></main>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
+import {MeshoptDecoder} from 'meshoptimizer';
+import {unzipSync} from 'fflate';
+
+const SOURCE_URL='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb';
+const status=document.querySelector('#status'), host=document.querySelector('#view');
+const ui={file:document.querySelector('#raw'),fit:document.querySelector('#fit'),clip:document.querySelector('#clip')};
+const state={ready:false,sourceOriginal:true,clipCount:0,bones:0,sourceBounds:null,profile:null,importedTriangles:0,previewTriangles:0,animatedWithOriginalRig:false,visualFitApproved:false,wearableApproved:false,phoneValidated:false,lastError:null};
+window.__HIGHFLY_TAILOR_R08__=state;
+const say=(message)=>{status.textContent+='\\n'+String(message);status.scrollTop=status.scrollHeight;console.log(message)};
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x29334b);
+scene.add(new THREE.HemisphereLight(0xe5edff,0x44405c,2.8));
+for(const [p,i] of [[[4,8,5],2.8],[[-4,2,-5],1.8]]){const l=new THREE.DirectionalLight(0xffffff,i);l.position.set(...p);scene.add(l)}
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.4));renderer.outputColorSpace=THREE.SRGBColorSpace;host.appendChild(renderer.domElement);
+const camera=new THREE.PerspectiveCamera(33,1,.03,100);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;
+let actor=null,mixer=null,clips=[],bodyBounds=null,frameCenter=new THREE.Vector3(),distance=4,skinnedPreview=null,aiReference=null,nativeKnightMeshes=[],nativeDistance=4,nativeCenter=new THREE.Vector3();
+let sourcePoints=[],sourceGrid=new Map(),gridSize=.12,canonicalBones=[],canonicalInverses=[],boneIndexMap=new Map();
+const bodyRx=/^M_(Head|Torso|Loin|ArmL|ArmR|HandL|HandR|LegL|LegR|FootL|FootR)(?:_|$)/;
+function size(){const w=host.clientWidth,h=host.clientHeight; renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+const v3=()=>new THREE.Vector3();
+function view(axis){const c=frameCenter,d=distance;controls.target.copy(c);camera.position.set(c.x+(axis==='side'?d:0),c.y+d*.09,c.z+(axis==='back'?-d:axis==='side'?0:d));camera.lookAt(c);controls.update()}
+document.querySelector('#front').onclick=()=>view('front');document.querySelector('#side').onclick=()=>view('side');document.querySelector('#back').onclick=()=>view('back');
+function animate(){requestAnimationFrame(animate);if(mixer)mixer.update(.016);controls.update();size();renderer.render(scene,camera)}animate();
+
+const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
+const ktx=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/basis/').detectSupport(renderer);loader.setKTX2Loader(ktx);
+function boxBody(){
+  const b=new THREE.Box3(),tmp=new THREE.Box3();
+  actor.updateMatrixWorld(true);
+  actor.traverse(m=>{if(m.isSkinnedMesh&&bodyRx.test(m.name)){tmp.setFromObject(m,true);if(!tmp.isEmpty())b.union(tmp)}});
+  if(b.isEmpty())throw Error('NO_NATIVE_WARRIOR_BODY_BOUNDS');
+  return b;
+}
+function key(x,y,z){return x+','+y+','+z}
+function cellFor(p){return [Math.floor(p.x/gridSize),Math.floor(p.y/gridSize),Math.floor(p.z/gridSize)]}
+function createTailorProfile(){
+ const boxes={};
+ actor.traverse(m=>{
+  if(!m.isSkinnedMesh||!bodyRx.test(m.name))return;
+  const b=new THREE.Box3().setFromObject(m,true),d=b.getSize(v3()),c=b.getCenter(v3());
+  boxes[m.name]={size:d.toArray().map(x=>+x.toFixed(5)),center:c.toArray().map(x=>+x.toFixed(5))};
+ });
+ if(Object.keys(boxes).length<10)throw Error('NATIVE_BODY_MESHES_INCOMPLETE');
+ const full=bodyBounds.getSize(v3()),ctr=bodyBounds.getCenter(v3());
+ return {schema:'highfly.tailor.native-geometry/v0.8',unit:'original GLB model-space units (NO invented centimeters)',model:'warrior_modular.glb',sourceGitCommit:'9b57e49c9676d75962700f828cc00a50a9a988b5',bones:23,clips:clips.length,sourceBody:{height:full.y,width:full.x,depth:full.z,center:ctr.toArray()},bodyParts:boxes,wearableApproved:false};
+}
+function sampleOriginalBody(){
+ const canonical=canonicalBones;const p=v3();let count=0;
+ actor.traverse(m=>{
+  if(!m.isSkinnedMesh||!bodyRx.test(m.name))return;
+  const gp=m.geometry.getAttribute('position'),si=m.geometry.getAttribute('skinIndex'),sw=m.geometry.getAttribute('skinWeight');
+  if(!gp||!si||!sw||!m.skeleton)throw Error('MISSING_NATIVE_WEIGHTED_BODY_'+m.name);
+  for(let i=0;i<gp.count;i++){
+   p.fromBufferAttribute(gp,i);m.localToWorld(p);actor.worldToLocal(p);
+   const ix=cellFor(p),entry={p:p.clone(),indices:[],weights:[]};
+   for(let j=0;j<4;j++){
+    const bn=m.skeleton.bones[si.getComponent(i,j)]?.name;
+    entry.indices.push(boneIndexMap.get(bn)??0);entry.weights.push(sw.getComponent(i,j));
+   }
+   const k=key(...ix);if(!sourceGrid.has(k))sourceGrid.set(k,[]);sourceGrid.get(k).push(count);
+   sourcePoints.push(entry);count++;
+  }
+ });
+ if(count<100)throw Error('NO_REAL_SOURCE_BODY_VERTICES');
+ return count;
+}
+function nearestPoint(point){
+ const c=cellFor(point);let best=-1,d2=Infinity;
+ for(let r=0;r<4&&best<0;r++){
+  for(let x=-r;x<=r;x++)for(let y=-r;y<=r;y++)for(let z=-r;z<=r;z++){
+   const batch=sourceGrid.get(key(c[0]+x,c[1]+y,c[2]+z));
+   if(!batch)continue;
+   for(const i of batch){const dist=point.distanceToSquared(sourcePoints[i].p);if(dist<d2){d2=dist;best=i}}
+  }
+ }
+ if(best<0){
+  // Exceptional distant artifact: quality check will label it as invalid.
+  for(let i=0;i<sourcePoints.length;i++){const dist=point.distanceToSquared(sourcePoints[i].p);if(dist<d2){d2=dist;best=i}}
+ }
+ return {entry:sourcePoints[best],distance:Math.sqrt(d2)};
+}
+async function loadFile(file){
+ if(!file)throw Error('Seleccioná un ZIP de PartCrafter o un GLB.');
+ if(file.size>65*1024*1024)throw Error('El archivo supera el límite seguro del visor (65 MiB).');
+ let bytes,kind='GLB directo';const lower=file.name.toLowerCase();
+ if(lower.endsWith('.zip')){
+  const data=new Uint8Array(await file.arrayBuffer());
+  const unpack=unzipSync(data);
+  const list=Object.keys(unpack);
+  if(list.some(x=>x.includes('..')||x.includes('/')||x.includes('\\\\')))throw Error('ZIP con rutas no admitidas');
+  if(!unpack['manifest.json']||!unpack['highfly-provenance.json'])throw Error('NO_ES_ZIP_REAL_PARTCRAFTER');
+  const m=JSON.parse(new TextDecoder().decode(unpack['manifest.json']));
+  const prov=JSON.parse(new TextDecoder().decode(unpack['highfly-provenance.json']));
+  if(m.num_parts!==4||prov.riggedToClaudeCraft!==false)throw Error('PROCEDENCIA_O_NUM_PARTES_INVALIDOS');
+  if(!unpack['part_01.glb'])throw Error('PART_01_NO_EXISTE');
+  bytes=unpack['part_01.glb'];
+  kind='part_01.glb (escultura principal; descartamos artefactos 00/02/03)';
+ } else if(lower.endsWith('.glb'))bytes=new Uint8Array(await file.arrayBuffer());
+ else throw Error('SOLO_ZIP_O_GLB');
+ if(bytes.length<1024||String.fromCharCode(...bytes.slice(0,4))!=='glTF')throw Error('GLB_INVALIDO');
+ const parsed=await new Promise((ok,fail)=>loader.parse(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'',ok,fail));
+ return {root:parsed.scene,kind};
+}
+
+function auditRealGeometry(root){
+ let triangles=0,meshes=0;
+ root.traverse(o=>{if(!o.isMesh)return;meshes++;
+  triangles+=(o.geometry.getIndex()?.count||o.geometry.getAttribute('position')?.count||0)/3;
+ });if(!meshes||triangles<100)throw Error('AI_MESH_NOT_REAL');return {triangles,meshes};
+}
+function showAIReference(raw){
+ if(aiReference){scene.remove(aiReference);aiReference=null}
+ const bs=bodyBounds.getSize(v3()),bc=bodyBounds.getCenter(v3());
+ raw.updateMatrixWorld(true);
+ const bounds=new THREE.Box3().setFromObject(raw),rs=bounds.getSize(v3()),rc=bounds.getCenter(v3());
+ if(rs.y<.05||!Number.isFinite(rs.y))throw Error('BAD_AI_MODEL_BOUNDS');
+ const scale=bs.y/rs.y, dx=bs.x*1.5;
+ raw.scale.setScalar(scale);
+ raw.position.set(bc.x+dx-rc.x*scale,bc.y-rc.y*scale,bc.z-rc.z*scale);
+ raw.traverse(m=>{if(m.isMesh){m.material=new THREE.MeshStandardMaterial({color:0x62467d,metalness:.55,roughness:.44,side:THREE.DoubleSide});m.frustumCulled=false}});
+ scene.add(raw);aiReference=raw;frameCenter.copy(nativeCenter);frameCenter.x+=dx/2;distance=nativeDistance*1.7;view('front');
+}
+let lastReport=null;
+async function fit(){
+ try{
+  if(!state.ready)throw Error('Warrior aún no cargó');
+  if(!ui.file.files.length)throw Error('Elegir ZIP/GLB');
+  ui.fit.disabled=true;status.textContent='Abriendo PartCrafter SIN romper caras ni bindear estatua…';
+  const {root,kind}=await loadFile(ui.file.files[0]);
+  const data=auditRealGeometry(root);
+  showAIReference(root);
+  state.importedTriangles=data.triangles;state.previewTriangles=data.triangles;
+  state.animatedWithOriginalRig=nativeKnightMeshes.length>0;
+  state.visualFitApproved=false;state.wearableApproved=false;state.aiGarmentApplied=false;
+  lastReport={sourceFile:ui.file.files[0].name, ai:{kind,triangles:data.triangles,meshes:data.meshes,
+   topologyPreserved:true,isStatic:true,convertedToWearable:false},
+   originalNativeWarrior:{clips:clips.length,bones:23,knightArmorMeshes:nativeKnightMeshes.map(x=>x.name)},
+   anatomy:state.profile,artApproved:false};
+  document.querySelector('#export-report').disabled=false;document.querySelector('#toggle').disabled=false;
+  say('3D IA INTACTO: '+data.triangles.toLocaleString()+' triángulos. Ninguna cara omitida.');
+  say('IZQUIERDA: Knight ORIGINAL animado. DERECHA: escultura IA estática; no es una prenda.');
+  say('NO EQUIPABLE: necesitamos cascos, coraza, hombreras, guantes, grebas y botas separadas y adaptadas.');
+  if(data.triangles>400000)say('AVISO: modelo muy pesado para S23; usar GLB optimizado R0.7 para Android.');
+  ui.clip.value=clips.find(x=>x.name==='Running_A')?.name||'';
+  ui.clip.dispatchEvent(new Event('change'));
+ }catch(e){state.lastError=String(e.stack||e);say('ERROR '+state.lastError);console.error(e)}
+ finally{ui.fit.disabled=false}
+}
+ui.fit.onclick=fit;
+document.querySelector('#toggle').onclick=()=>{if(!aiReference)return;aiReference.visible=!aiReference.visible;
+  frameCenter.copy(nativeCenter);distance=nativeDistance;
+  if(aiReference.visible){frameCenter.x+=bodyBounds.getSize(v3()).x*.75;distance*=1.7}view('front');
+};
+document.querySelector('#toggle-native').onclick=()=>{if(!nativeKnightMeshes.length)return;
+  const show=!nativeKnightMeshes[0].visible;for(const m of nativeKnightMeshes)m.visible=show;
+  say('Knight nativo (NO IA): '+(show?'visible':'oculto'));
+};
+function downloadJSON(obj,name){const url=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),5000)}
+document.querySelector('#export-profile').onclick=()=>downloadJSON(state.profile,'HIGHFLY_WARRIOR_TAILOR_MEASUREMENTS_R08.json');
+document.querySelector('#export-report').onclick=()=>downloadJSON(lastReport,'HIGHFLY_AI_TAILOR_R08_DIAGNOSTIC.json');
+ui.clip.onchange=()=>{
+ if(!mixer)return;mixer.stopAllAction();
+ const c=clips.find(x=>x.name===ui.clip.value);
+ if(c)mixer.clipAction(c).reset().play();
+};
+(async()=>{
+ try{
+  status.textContent='Descargando GLB original (≈3.5 MiB) desde ClaudeCraft fijo…';
+  const original=await loader.loadAsync(SOURCE_URL);
+  actor=original.scene;clips=original.animations;
+  if(clips.length!==22)throw Error('ORIGINAL_22_ANIMATIONS_NOT_FOUND_'+clips.length);
+  const skeletons=[];
+  actor.traverse(o=>{if(o.isSkinnedMesh&&bodyRx.test(o.name))skeletons.push(o)});
+  const donor=skeletons.find(x=>x.name==='M_Torso')||skeletons[0];
+  if(!donor||donor.skeleton.bones.length!==23)throw Error('CLAUDECRAFT_ORIGINAL_23_BONES_NOT_FOUND');
+  canonicalBones=donor.skeleton.bones;canonicalInverses=donor.skeleton.boneInverses;
+  boneIndexMap=new Map(canonicalBones.map((b,i)=>[b.name,i]));
+  let visible=0;
+  actor.traverse(o=>{if(o.isMesh){
+   const knight=/^Armor_knight_/i.test(o.name||'');
+   o.visible=bodyRx.test(o.name)||knight;
+   if(knight){nativeKnightMeshes.push(o);o.material=new THREE.MeshStandardMaterial({color:0x171426,metalness:.72,roughness:.4,side:THREE.DoubleSide})}
+   if(bodyRx.test(o.name))visible++;
+  }});
+  if(!nativeKnightMeshes.length)throw Error('NATIVE_KNIGHT_WEARABLE_MISSING');
+  if(visible<10)throw Error('CLAUDECRAFT_BODY_INCOMPLETE');
+  scene.add(actor);actor.updateMatrixWorld(true);
+  bodyBounds=boxBody();const bsize=bodyBounds.getSize(v3());frameCenter.copy(bodyBounds.getCenter(v3()));
+  distance=Math.max(2.8,bsize.y*2.3);nativeDistance=distance;nativeCenter.copy(frameCenter);view('front');
+  const count=sampleOriginalBody();mixer=new THREE.AnimationMixer(actor);
+  state.clipCount=clips.length;state.bones=canonicalBones.length;state.profile=createTailorProfile();
+  state.sourceBounds={size:bsize.toArray(),center:frameCenter.toArray()};
+  document.querySelector('#clip-count').textContent=String(clips.length);
+  document.querySelector('#measurements').innerHTML='<div class="meta"><span>Altura real GLB</span><span>'+bsize.y.toFixed(4)+'</span></div><div class="meta"><span>Ancho real GLB</span><span>'+bsize.x.toFixed(4)+'</span></div><div class="meta"><span>Profundidad real GLB</span><span>'+bsize.z.toFixed(4)+'</span></div><div class="meta"><span>Partes corporales</span><span>'+Object.keys(state.profile.bodyParts).length+'</span></div><p class="hint">Unidades nativas de ClaudeCraft, no centímetros inventados. Ficha descargable.</p>';
+  ui.clip.innerHTML='<option value="">Reposo</option>'+clips.map(c=>'<option value="'+c.name.replace(/"/g,'&quot;')+'">'+c.name.replace(/</g,'&lt;')+'</option>').join('');
+  ui.fit.disabled=false;ui.clip.disabled=false;document.querySelector('#export-profile').disabled=false;document.querySelector('#toggle-native').disabled=false;
+  status.textContent='✓ Warrior original: 23 huesos / '+clips.length+' clips.\\n✓ '+nativeKnightMeshes.length+' piezas Knight nativas.\\n→ Cargá ZIP IA para verlo INTACTO al lado del Warrior.\\n⚠ La IA aún NO se aplica como vestimenta.';
+  state.ready=true;
+ }catch(e){state.lastError=String(e.stack||e);status.textContent=state.lastError;console.error(e)}
+})();
+</script></body></html>
