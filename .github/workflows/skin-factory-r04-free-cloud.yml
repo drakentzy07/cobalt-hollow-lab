@@ -1,0 +1,41 @@
+name: HIGHFLY Skin Factory R0.4 - FREE CLOUD PARTCRAFTER SAFETY
+on:
+  push:
+    branches: [highfly-skinfactory-r04-free-cloud-partcrafter]
+    paths:
+      - 'skin-factory-core/HIGHFLY_PartCrafter_Gratis_R04.ipynb'
+      - 'skin-factory-core/partcrafter_bundle_gate.py'
+      - 'skin-factory-core/test_partcrafter_free_cloud.py'
+      - '.github/workflows/skin-factory-r04-free-cloud.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cpu-safe-cloud-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install CPU-only validation dependency
+        shell: bash
+        run: |
+          python -m pip install -q 'numpy==1.26.4' 'trimesh==4.5.3'
+      - name: Validate free GPU notebook, PartCrafter package and hostile zip rejection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile skin-factory-core/partcrafter_bundle_gate.py
+          python -m py_compile skin-factory-core/test_partcrafter_free_cloud.py
+          python skin-factory-core/test_partcrafter_free_cloud.py
+          echo HIGHFLY_R04_GPU_NOTEBOOK_REAL_INFERENCE_NOT_RUN_CPU_ONLY=1
+      - name: Confirm source GitHub file is unchanged and no game integration is deployed
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e public/models/chars/modular/warrior_modular.glb
+          test -s skin-factory-core/HIGHFLY_PartCrafter_Gratis_R04.ipynb
+          test ! -d skin-factory-core/generated-premium-armors
+          echo HIGHFLY_3D_GENERATION_UNPROVEN_UNTIL_EXTERNAL_FREE_GPU=1
