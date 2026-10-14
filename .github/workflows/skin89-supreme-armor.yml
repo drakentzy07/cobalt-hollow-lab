@@ -1,0 +1,44 @@
+name: HIGHFLY SKIN 8.9 - THREE SUPREME TRUE HELMET 3D QA
+on:
+  push:
+    branches: [highfly-skin89-supreme-armor-native-3d]
+    paths: ['skin7-repertoire/**', '.github/workflows/skin89-supreme-armor.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  supreme-three-native-3d-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify unchanged real ClaudeCraft Warrior model
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check skin7-repertoire/supreme_native_armor_89.mjs
+          node --check skin7-repertoire/armor_style_dna_factory.mjs
+          node --check skin7-repertoire/test_supreme89.cjs
+          curl -fsSL --retry 3 --max-time 130 https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb -o /tmp/skin89-original.glb
+          test "$(git hash-object /tmp/skin89-original.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          test ! -e public/models/chars/modular/warrior_modular.glb
+          echo SKIN89_ORIGINAL_WARRIOR_MODULAR_UNMODIFIED=1
+      - name: Run real WebGL three armors 3D deformation and S23 horizontal simulation
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+          python3 -m http.server 4917 --bind 127.0.0.1 >/tmp/skin89-http.log 2>&1 &
+          sleep 2
+          node skin7-repertoire/test_supreme89.cjs
+          test -s skin7-repertoire/evidence-89/supreme-qa.json
+          echo SKIN89_FULL_NATIVE_3D_HELMET_CUIRASS_GREEN=1
+      - name: Upload actual front side back and animation screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN89-SUPREME-REAL-WEBGL-EVIDENCE
+          path: skin7-repertoire/evidence-89/
+          if-no-files-found: warn
+          retention-days: 30
