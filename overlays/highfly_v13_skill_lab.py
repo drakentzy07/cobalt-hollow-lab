@@ -54,14 +54,13 @@ replace_once("src/sim/combat/auto_attack.ts",
   }
   if (isValkyrsCallingAirborne(p)) return;""")
 replace_once("src/ui/hud.ts",
- "  private activateFixedAttackSlot(): void {\n    if (this.sim.player.autoAttack) this.sim.stopAutoAttack();",
+ "  private activateFixedAttackSlot(): void {",
  """  private activateFixedAttackSlot(): void {
     // The V13 skill VFX recording lab intentionally has NO ordinary ATK.
     if (new URLSearchParams(location.search).get('hf-v13') === '1') {
       this.sim.stopAutoAttack();
       return;
-    }
-    if (this.sim.player.autoAttack) this.sim.stopAutoAttack();""")
+    }""")
 replace_once("src/ui/hud.ts",
  "            this.optionsHooks?.settings.get('startAttackOnAbilityUse') &&",
  """            new URLSearchParams(location.search).get('hf-v13') !== '1' &&
