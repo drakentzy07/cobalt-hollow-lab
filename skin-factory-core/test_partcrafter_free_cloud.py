@@ -45,12 +45,17 @@ def test_notebook():
     for marker in (
         'torch.cuda.is_available', '3d773bf02fad51c7ab31a5615573fec93b287b30',
         'python","install","3.11', 'torch==2.5.1', 'torch-cluster',
-        'uploaded=files.upload()', 'new_a', 'new_b',
+        'uploaded=files.upload()', 'optional_imports', 'HIGHFLY_R06_RMBG_DISABLED',
         '--num_inference_steps', '--image_path', 'part_*.glb',
         'highfly-provenance.json', 'files.download(str(ZIP))', 'HIGHFLY ERROR REAL EN ETAPA:'
     ):
         assert marker in raw, marker
     assert 'run(["apt-get"' not in raw, 'FAIL_100_APT_GET_MUST_NOT_RECUR'
+    assert 'subprocess.Popen' in raw and 'stderr=subprocess.STDOUT' in raw, 'MUST_SURFACE_HIDDEN_CHILD_ERROR'
+    assert 'transformers==4.52.4' in raw and 'diffusers==0.34.0' in raw, 'MUST_PIN_PIP_LIBRARIES'
+    assert 'HIGHFLY_R06_NO_RENDER' in raw and 'HIGHFLY_R06_OPTIONAL_IMPORT_DISABLED' in raw, 'OPTIONAL_IMPORTS_STILL_ACTIVE'
+    assert "BitImageProcessor, Dinov2Model" in raw, 'NOT_TESTING_REAL_IMPORT'
+    assert 'pin_marker' in raw, 'PINNING_MUST_BE_REUSABLE'
     assert 'bash","settings/setup.sh"' not in raw, 'OFFICIAL_SETUP_CONTAINS_APT_GET'
     # Ningún servicio de crédito ni eliminación RMBG se invoca durante la generación.
     segment=raw.split('cmd=[PY,"scripts/inference_partcrafter.py"')[1].split('assert all(flag not in cmd')[0]
@@ -61,9 +66,45 @@ def test_notebook():
     assert 'GEOMETRIA_VACIA_O_DUMMY' in raw
     assert '"riggedToClaudeCraft":False' in raw
     assert 'RMBG-1.4' in raw
-    print('HIGHFLY_R05_ONE_CLICK_NOTEBOOK_SYNTAX_AND_FREE_GPU_GATES_GREEN')
+    print('HIGHFLY_R06_ONE_CLICK_NOTEBOOK_SYNTAX_STREAMED_ERROR_AND_PINNED_CUDA_GATES_GREEN')
+def test_patching_safe():
+    # Se prueba de verdad la reescritura del script oficial usando un fixture
+    # mínimo de las sentencias que se modifican (sin modelos ni créditos).
+    nb=json.loads((ROOT/'HIGHFLY_PartCrafter_Gratis_R04.ipynb').read_text(encoding='utf-8'))
+    code=''.join(nb['cells'][1]['source'])
+    tree=ast.parse(code)
+    fn=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name=='verify_partcrafter_patches')
+    func_code=ast.get_source_segment(code,fn)
+    with tempfile.TemporaryDirectory() as tmp:
+        root=Path(tmp)
+        source=root/'scripts'/'inference_partcrafter.py'
+        source.parent.mkdir()
+        initial='''from src.utils.render_utils import render_views_around_mesh, render_normal_views_around_mesh, make_grid_for_images_or_videos, export_renderings
+from src.utils.image_utils import prepare_image
+from src.models.briarmbg import BriaRMBG
+    snapshot_download(repo_id="briaai/RMBG-1.4", local_dir=rmbg_weights_dir)
+    rmbg_net = BriaRMBG.from_pretrained(rmbg_weights_dir).to(device)
+    rmbg_net.eval()
+    args = parser.parse_args()
+    if args.render:
+        print("ignored")
+'''
+        namespace={'ROOT':root}
+        exec(func_code,namespace)
+        source.write_text(initial,encoding='utf-8')
+        namespace['verify_partcrafter_patches']()
+        after=source.read_text(encoding='utf-8')
+        assert 'from src.utils.render_utils import' in after and 'HIGHFLY_R06_OPTIONAL_IMPORT_DISABLED' in after
+        assert '\\n    if False and args.render:' in after
+        assert 'RMBG_MODEL_DISABLED' in after
+        assert 'HIGHFLY gratuito: render, RMBG y servicios VLM deshabilitados' in after
+        namespace['verify_partcrafter_patches']()
+        assert source.read_text(encoding='utf-8')==after, 'PATCH_NOT_IDEMPOTENT'
+        print('HIGHFLY_R06_REAL_SOURCE_PATCH_SIMULATED_IDEMPOTENT_GREEN')
+
 def main():
     test_notebook()
+    test_patching_safe()
     with tempfile.TemporaryDirectory() as d:
         path=Path(d)/'test.zip'
         make_zip(path)
