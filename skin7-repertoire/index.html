@@ -1,5 +1,5 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HIGHFLY SKIN 8.8 — Laboratorio de tres armaduras legendarias</title>
+<title>HIGHFLY SKIN 9.1 — OBSIDIAN MONARCH / Caballero Knight original</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath fill='%237f50e0' d='M32 1 59 17v30L32 63 5 47V17Z'/%3E%3Cpath fill='white' d='M32 9 49 28 32 55 15 28Z'/%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#141723;color:#eaf0ff;font:14px system-ui,-apple-system,Segoe UI,sans-serif}
@@ -24,8 +24,8 @@ pre{white-space:pre-wrap;overflow:auto;max-height:220px;background:#1a1f2b;color
 </style>
 <script type="importmap">{"imports":{"three":"https://esm.sh/three@0.180.0","three/addons/":"https://esm.sh/three@0.180.0/examples/jsm/","meshoptimizer":"https://esm.sh/meshoptimizer@0.23.0"}}</script>
 </head><body>
-<header><h1>HIGHFLY · LEGENDARY ARMOR FACTORY <span style="color:#c8aaff">SKIN 8.8 · QA 3D</span></h1>
-<p>Laboratorio aislado de las tres armaduras legendarias: DRAGON SOVEREIGN, CELESTIAL SERAPH y MORTIS SERAPH. Comparador ClaudeCraft original, cámara frontal / lateral / trasera, 22 animaciones y pruebas WebGL. Cascos, corazas y encastres siguen en revisión artística: no se afirma fidelidad exacta a las ilustraciones. Versiones viejas ocultas del selector, sin eliminar los archivos necesarios para recuperarlas. HIGHFLY público intacto.</p></header>
+<header><h1>HIGHFLY · OBSIDIAN MONARCH <span style="color:#c8aaff">SKIN 9.1 · KNIGHT NATIVO</span></h1>
+<p>UN SOLO OBJETIVO: Obsidian Monarch sobre el Armor_knight ORIGINAL de ClaudeCraft, con sus 12 mallas nativas articuladas (incluido casco de dos partes) y no cascos genéricos. Metal negro obsidiana, plata y energía violeta. Se preservan los 23 huesos y 22 animaciones. La semejanza exacta con la ilustración está PENDIENTE de validación visual. HIGHFLY público intacto.</p></header>
 <main><nav id="families" aria-label="Familias de armaduras"></nav>
 <div class="control">
 <label>Animación <select id="animation"><option value="">Reposo</option></select></label>
@@ -40,7 +40,7 @@ pre{white-space:pre-wrap;overflow:auto;max-height:220px;background:#1a1f2b;color
 </div>
 <div class="info" id="progress" role="status">Cargando modelo auténtico de ClaudeCraft…</div>
 <div class="split"><div><strong>Inspección</strong><pre id="status">Inicializando WebGL...</pre></div><div><strong>Auditoría de la variante</strong><pre id="proof">Pendiente…</pre></div></div>
-<p class="info">ESTADO: GREEN técnico de laboratorio; aprobación artística PENDIENTE. Las tres armaduras experimentales reutilizan Rig_Medium (23 huesos y 22 animaciones), las 17 piezas nativas y alas ancladas. No son conversiones exactas de ilustraciones. Pendientes: fidelidad del casco y coraza frente a las imágenes, clipping en todas las animaciones y prueba física S23 Ultra. El HIGHFLY público no se modifica.</p>
+<p class="info">SKIN 9.1 - EXPERIMENTO REAL: Knight ORIGINAL ClaudeCraft (12 piezas, incluidas dos de casco) sobre Warrior modular. No reproduce la imagen conceptual exactamente. La aprobación artística y la prueba física Samsung S23 Ultra siguen pendientes. Volvemos al rig y a las mallas originales en vez de utilizar cascos/corazas de formas genéricas.</p>
 </main>
 <script type="module">
 import * as THREE from 'three';
@@ -89,7 +89,7 @@ function frame(which='front'){
  if(!n)return;
  const s=all.getSize(new THREE.Vector3()),center=all.getCenter(new THREE.Vector3());
  const a=Math.min(...views.map(v=>Math.max(.5,v.camera.aspect)));
- const d=Math.max(s.y*.5/Math.tan(THREE.MathUtils.degToRad(35/2)),Math.max(s.x,s.z)*.5/(Math.tan(THREE.MathUtils.degToRad(35/2))*a))*1.48;
+ const d=Math.max(s.y*.5/Math.tan(THREE.MathUtils.degToRad(35/2)),Math.max(s.x,s.z)*.5/(Math.tan(THREE.MathUtils.degToRad(35/2))*a))*1.29;
  const eye=which==='side'?new THREE.Vector3(1,.09,0):which==='back'?new THREE.Vector3(0,.09,-1):new THREE.Vector3(.05,.09,1);
  eye.normalize().multiplyScalar(d).add(center);
  for(const v of views){v.controls.target.copy(center);v.camera.position.copy(eye);v.camera.near=Math.max(.01,d/130);v.camera.far=d*14+40;v.camera.lookAt(center);v.camera.updateProjectionMatrix();v.controls.update();}
@@ -124,17 +124,17 @@ async function choose(id){
   state.debugCandidateRoot=right.root;
   state.proofs[id]=result.proof;state.variantReady=true;state.variationCount++;
   $('#variant-title').textContent='HIGHFLY · '+result.proof.name;
-  $('#variant-caption').textContent=result.proof.fidelity88?.pass==='SKIN8_8_HELMET_CUIRASS_FIDELITY' ? 'SKIN 8.8 · casco/coraza Nativos ESCULPIDOS · '+result.proof.fidelity88.retainedBackWingMeshes+' alas sujetas al rig · 23 huesos' : result.proof.hero87?.enabled ? 'SKIN 8.7 · '+result.proof.hero87.meshes+' piezas 3D · '+result.proof.hero87.attachedWingFeathers+' alas' : result.proof.reference83?.enabled ? 'SKIN 8.6 · '+result.proof.reference83.assemblies+' módulos · 17 donantes nativos' : 'Comparador Royal anterior';
+  $('#variant-caption').textContent=result.proof.obsidian91?.pass ? 'SKIN 9.1 · 12 geometrías KNIGHT originales · casco doble nativo · SIN ALAS · 23 huesos' : result.proof.fidelity88?.pass==='SKIN8_8_HELMET_CUIRASS_FIDELITY' ? 'SKIN 8.8 · casco/coraza Nativos ESCULPIDOS · '+result.proof.fidelity88.retainedBackWingMeshes+' alas sujetas al rig · 23 huesos' : result.proof.hero87?.enabled ? 'SKIN 8.7 · '+result.proof.hero87.meshes+' piezas 3D · '+result.proof.hero87.attachedWingFeathers+' alas' : result.proof.reference83?.enabled ? 'SKIN 8.6 · '+result.proof.reference83.assemblies+' módulos · 17 donantes nativos' : 'Comparador Royal anterior';
   $('#proof').textContent=JSON.stringify(result.proof,null,2);
   if(result.proof.silhouette86?.enabled){
     $('#variant-caption').textContent='SKIN 8.6 · '+result.proof.silhouette86.anchoredDetails+' adornos 3D anclados · 23 huesos';
   }
-  $('#progress').textContent=result.proof.name+' · '+(result.proof.hero87?.enabled ? 'Prototipo SKIN 8.8 (NO réplica exacta) · casco/coraza esculpidos · alas sujetas al rig' : result.proof.reference83?.enabled ? result.proof.reference83.geometryPiecesCombined+' detalles agrupados en 11 mallas por slot' : 'comparador antiguo')+' · 23 huesos · 22 animaciones · aprobación artística pendiente.';
+  $('#progress').textContent=result.proof.name+' · '+(result.proof.obsidian91 ? 'KNIGHT real: 12 mallas esculpidas, casco de dos partes, 22 animaciones · fidelidad a la ilustración todavía no aprobada' : result.proof.hero87?.enabled ? 'Prototipo SKIN 8.8 (NO réplica exacta) · casco/coraza esculpidos · alas sujetas al rig' : result.proof.reference83?.enabled ? result.proof.reference83.geometryPiecesCombined+' detalles agrupados en 11 mallas por slot' : 'comparador antiguo')+' · 23 huesos · 22 animaciones · aprobación artística pendiente.';
   $('#status').textContent='LISTO · '+id+' · '+result.proof.signature;
  }catch(err){if(key!==generation)return;state.error=String(err);$('#status').textContent=String(err.stack||err);$('#progress').textContent='Falló '+id+': '+err.message;console.error(err);}
 }
-const labels={'hero-dragon':'🐉 Dragon Sovereign','hero-celestial':'🪽 Celestial Seraph','hero-death':'🖤 Ángel de la Muerte',violet:'◆ Obsidiana Violeta',dragon:'♜ Dragón Escamado',celestial:'✦ Saint Celestial',royal:'♛ Royal (comparador)',berserker:'⚔ Infernal Cataclismo',arcane:'✧ Arcane Astral'};
-for(const spec of ARMOR_FAMILIES.filter(s=>s.id.startsWith('hero-'))){
+const labels={'obsidian91':'◆ Obsidian Monarch 9.1','hero-dragon':'🐉 Dragon Sovereign','hero-celestial':'🪽 Celestial Seraph','hero-death':'🖤 Ángel de la Muerte',violet:'◆ Obsidiana Violeta',dragon:'♜ Dragón Escamado',celestial:'✦ Saint Celestial',royal:'♛ Royal (comparador)',berserker:'⚔ Infernal Cataclismo',arcane:'✧ Arcane Astral'};
+for(const spec of ARMOR_FAMILIES.filter(s=>s.id==='obsidian91')){
  const b=document.createElement('button');b.dataset.id=spec.id;b.textContent=labels[spec.id];b.onclick=()=>choose(spec.id);
  $('#families').appendChild(b);
 }
@@ -160,7 +160,7 @@ requestAnimationFrame(loop);
   present(left,gltf,true);
   state.animationList=gltf.animations.map(c=>c.name);
   $('#animation').innerHTML='<option value="">Reposo</option>'+gltf.animations.map(c=>'<option value="'+c.name+'">'+c.name+'</option>').join('');
-  state.sourceLoaded=true;await choose('hero-dragon');
+  state.sourceLoaded=true;await choose('obsidian91');
  }catch(err){state.error=String(err);$('#progress').textContent='Error de Hunter original: '+err.message;$('#status').textContent=String(err.stack||err);}
 })();
 </script></body></html>
