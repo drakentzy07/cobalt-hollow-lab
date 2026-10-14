@@ -1,0 +1,37 @@
+name: HIGHFLY V13 - Skill catalog isolated smoke
+on:
+  push:
+    branches: [highfly-v13-skill-lab-63-ab-reuse]
+    paths:
+      - 'lab/v13/**'
+      - '.github/workflows/highfly-v13-skill-lab-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  catalog-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate isolated HTML and canonical 9 x 7 catalog
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,re,html
+          p=Path("lab/v13/index.html")
+          s=p.read_text()
+          m=re.search(r"const CATALOG=(\{.*?\});\nconst names=",s,re.S)
+          assert m, "catalog missing"
+          data=json.loads(m.group(1))
+          assert len(data)==9
+          assert all(len(v)==7 for v in data.values())
+          assert len({x['id'] for a in data.values() for x in a})==63
+          assert all(x['donors'] for a in data.values() for x in a)
+          assert 'FASE 1' in s
+          assert '<iframe' not in s
+          print("HF_V13_CATALOG_63_9X7_GREEN")
+          PY
+      - name: Safety gate (no public deploy)
+        run: |
+          test -f lab/v13/index.html
+          echo "HF_V13_NO_PAGES_DEPLOY_FROM_THIS_WORKFLOW=1"
