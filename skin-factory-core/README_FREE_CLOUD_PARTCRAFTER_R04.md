@@ -32,3 +32,19 @@ El repositorio y pesos PartCrafter están publicados como MIT. El script oficial
 
 ## Regla fija
 NO bodypaint, NO armadura nativa Knight recoloreada, NO cascos flotantes. Se conserva el Warrior original. No modificación del juego ni del Pages publicado. HIGHFLY SUPREME SKIN FACTORY recibirá armaduras completas NUEVAS cuando superen los gates de arte y rig.
+
+
+## HARD RULE — SIN CRÉDITOS NI SERVICIOS DE PAGO (decisión del usuario 2026-10-14)
+La fábrica NO dependerá de un proveedor comercial medido por créditos, ni siquiera de créditos promocionales o de un plan free que solo permita 10-15 modelos al mes. Prohibido insertar Meshy, Tripo, Rodin o servicios similares como requisito para la producción. Evitar API keys y cuentas de pago. El proyecto puede aceptar un GLB externo si el usuario ya posee legalmente el archivo, pero jamás obliga al usuario a comprarlo.
+
+**Motor generativo primario:** código y pesos de PartCrafter MIT, ejecutados en GPU gratuita disponible. **Motores candidatos para pruebas futuras:** Hunyuan3D / TRELLIS.2, previa revisión de pesos, licencias y requisitos GPU, sin dependencia de sus APIs comerciales. **Motor de fitting/export:** Blender libre en GitHub Actions CPU; rig original ClaudeCraft. **Plan B sin GPU:** construcción geométrica real asistida por scripts Blender y piezas libres legales; menor fidelidad semántica automática, no presentar como generación IA de imagen.
+
+### Plataformas gratuitas (no son ilimitadas)
+- Google Colab Free: GPU gratuita sujeta a disponibilidad, desconexión y límites cambiantes; uso interactivo autorizado. Referencia: https://research.google.com/colaboratory/faq.html
+- Kaggle Notebooks: opción oficial GPU NVIDIA P100 gratuita, cuota semanal y disponibilidad limitada. Referencias: https://www.kaggle.com/docs/notebooks y https://www.kaggle.com/docs/efficient-gpu-usage . La compatibilidad específica de dependencias PartCrafter/torch-cluster/P100 no está verificada; NO declarar probado hasta ejecutar allí.
+- GitHub Actions en runners CPU: validar e integrar modelos, no ejecutar inferencia PartCrafter GPU sin hardware proporcionado.
+
+**Límite de honestidad:** no existe una garantía verificable de GPU gratuita ilimitada para generar cientos de modelos de IA de alta calidad. No prometer capacidad infinita. Trabajar con GPU gratuita cuando exista y mantener desarrollo de fitting, edición, armado y pruebas sin esperar a la GPU. No eludir límites ni automatizar servicios gratuitos como backend oculto.
+
+### Escalabilidad
+La salida usa formatos abiertos (GLB, PNG, JSON) y un motor de fitting independiente del generador. Por eso podemos cambiar de IA gratuita o añadir una futura GPU propia sin reconstruir el Skin Lab. El objetivo final sigue siendo una sola interfaz texto/imagen -> vestimenta 3D completa -> Warrior nativo animado, sin bodypaint.
