@@ -58,7 +58,7 @@ def inspect_bundle(bundle):
         require(prov.get('riggedToClaudeCraft') is False and prov.get('artApproved') is False,
           'RAW_3D_CANNOT_CLAIM_WEARABLE_OR_ART_APPROVAL')
         n=manifest.get('num_parts')
-        require(type(n) is int and 2<=n<=16,'INVALID_PART_COUNT')
+        require(type(n) is int and 1<=n<=16,'INVALID_PART_COUNT')
         parts=[f'part_{i:02}.glb' for i in range(n)]
         require(set(names)==set([*parts,'object.glb','manifest.json','highfly-provenance.json']),
           'INCOMPLETE_OR_EXTRA_EXPORTS')
