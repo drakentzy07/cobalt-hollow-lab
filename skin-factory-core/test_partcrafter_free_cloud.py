@@ -95,7 +95,7 @@ from src.models.briarmbg import BriaRMBG
         namespace['verify_partcrafter_patches']()
         after=source.read_text(encoding='utf-8')
         assert 'from src.utils.render_utils import' in after and 'HIGHFLY_R06_OPTIONAL_IMPORT_DISABLED' in after
-        assert '\\n    if False and args.render:' in after
+        assert 'if False and args.render:  # HIGHFLY_R06_NO_RENDER' in after
         assert 'RMBG_MODEL_DISABLED' in after
         assert 'HIGHFLY gratuito: render, RMBG y servicios VLM deshabilitados' in after
         namespace['verify_partcrafter_patches']()
