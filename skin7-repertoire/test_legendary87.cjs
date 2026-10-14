@@ -52,6 +52,32 @@ const dir='skin7-repertoire/evidence-87';fs.mkdirSync(dir,{recursive:true});
   }
   assert.equal(new Set(variants.map(id=>proof[id].signature)).size,3);
   assert.equal(new Set(variants.map(id=>proof[id].hero87.attachedWingFeathers)).size,3);
+  const diagnostic=await page.evaluate(()=>{
+    const root=window.__HIGHFLY_ARMOR_REPERTOIRE__.debugCandidateRoot;
+    const bad=[],report={meshes:0,vertices:0,rawNan:0,deformedNan:0};
+    if(!root)return {bad:[{error:'missing root'}],report};
+    root.traverse(o=>{
+      if(!o.isSkinnedMesh||!o.visible)return;
+      report.meshes++;
+      const p=o.geometry.getAttribute('position'),deformed=o.position.clone();
+      for(let i=0;i<p.count;i++){
+        report.vertices++;
+        const raw=[p.getX(i),p.getY(i),p.getZ(i)];
+        if(!raw.every(Number.isFinite)){report.rawNan++;if(bad.length<10)bad.push({name:o.name,i,type:'raw',raw});break;}
+        try{
+          o.getVertexPosition(i,deformed);
+          if(![deformed.x,deformed.y,deformed.z].every(Number.isFinite)){
+            report.deformedNan++;
+            if(bad.length<10)bad.push({name:o.name,i,type:'skinned',raw,skinIndices:[0,1,2,3].map(k=>o.geometry.getAttribute('skinIndex').getComponent(i,k)),skinWeights:[0,1,2,3].map(k=>o.geometry.getAttribute('skinWeight').getComponent(i,k))});
+            break;
+          }
+        }catch(e){if(bad.length<10)bad.push({name:o.name,i,type:'exception',reason:String(e)});break;}
+      }
+    });
+    return {bad,report};
+  });
+  console.log('HF87_FINITE_MESH_DIAGNOSTIC',JSON.stringify(diagnostic));
+  assert.equal(diagnostic.bad.length,0,'invalid donor or hero mesh '+JSON.stringify(diagnostic.bad));
   assert.equal(errors.length,0,'browser errors '+JSON.stringify(errors));
   const mobile=await browser.newPage({viewport:{width:915,height:412},deviceScaleFactor:1});
   await mobile.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
