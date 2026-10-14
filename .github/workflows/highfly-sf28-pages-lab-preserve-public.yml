@@ -1,4 +1,4 @@
-name: HIGHFLY SF28 — Pages LAB sidecar, preserve public site
+name: HIGHFLY SF28 + V13 — trusted Pages deploy, preserve public and labs
 # Explicit owner authorization 2026-10-14: view SF28 63/63 on Android Pages.
 # Preserve current public home + static assets BYTE FOR BYTE. No rebuild.
 # Refuse deployment unless public home matches immutable V9.1 source artifact.
@@ -17,7 +17,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: highfly-sf28-pages-lab-preserve-public
+  group: highfly-v13-p2-pages-and-public-preservation
   cancel-in-progress: false
 
 jobs:
@@ -43,7 +43,15 @@ jobs:
           name: HIGHFLY-SUPREME-INTEGRATED-WEBGL-S23-CANDIDATE-NO-DEPLOY
           path: new-sf28
 
-      - name: Preserve entire public root, add ONLY new hashed assets and SF28 lab entry
+      - name: Get proven GREEN V13 native Skill Lab WebGL (immutable)
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38567262586
+          github-token: ${{ github.token }}
+          name: HIGHFLY-V13-P1-NATIVE-63-SCROLL-WEBGL-NO-DEPLOY
+          path: new-v13
+      - name: Preserve public V9.1 and SF28 byte-for-byte, add ONLY V13
         shell: bash
         run: |
           set -euo pipefail
@@ -52,8 +60,9 @@ jobs:
           from pathlib import Path
           old=Path('current-public/cobalt-hollow-lab')
           new=Path('new-sf28/cobalt-hollow-lab')
+          v13=Path('new-v13/cobalt-hollow-lab')
           site=Path('sidecar-site')
-          for root in (old,new):
+          for root in (old,new,v13):
             assert (root/'index.html').is_file() and (root/'assets').is_dir() and (root/'media').is_dir(),root
           if site.exists(): raise SystemExit('SF28_STAGING_ALREADY_EXISTS')
           shutil.copytree(old,site)
@@ -66,7 +75,7 @@ jobs:
           oldindex=sha(old/'index.html')
           # Verify the current LIVE public site has not diverged from the pinned
           # V9.1 donor. If a newer release is live, ABORT before any deployment.
-          url='https://drakentzy07.github.io/cobalt-hollow-lab/index.html?sf28_before=1'
+          url='https://drakentzy07.github.io/cobalt-hollow-lab/index.html?v13_before=1'
           req=urllib.request.Request(url,headers={
             'User-Agent':'HIGHFLY-SF28-BYTE-PRESERVATION-GATE',
             'Cache-Control':'no-cache'
@@ -126,6 +135,67 @@ jobs:
           (lab/'highfly-sf28-qa.json').write_text(json.dumps(metadata,indent=2),encoding='utf-8')
           if sha(site/'index.html')!=oldindex:
             raise SystemExit('SF28_BUG_ORIGINAL_PUBLIC_ENTRY_MUTATED')
+          # V13 publication must preserve the already-live SF28 lab as well as
+          # the V9.1 homepage. A concurrent Pages release aborts safely.
+          published='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          def live(path):
+            request=urllib.request.Request(published+path,headers={
+              'User-Agent':'HIGHFLY-V13-PREDEPLOY-SF28-PRESERVATION',
+              'Cache-Control':'no-cache'})
+            with urllib.request.urlopen(request,timeout=60) as response:
+              assert response.status==200
+              return response.read()
+          active_sf28=json.loads(live('lab/sf28/highfly-sf28-qa.json?v13_preflight=1'))
+          if active_sf28.get('sourceRun')!=38543442226:
+            raise SystemExit('V13_BLOCKED_LIVE_SF28_VERSION_CHANGED')
+          for file in ('index.html','highfly-sf28-qa.json'):
+            expected_sha=sha(site/'lab/sf28'/file)
+            got_sha=hashlib.sha256(live('lab/sf28/'+file+'?v13_preflight=1')).hexdigest()
+            if got_sha!=expected_sha:
+              raise SystemExit('V13_BLOCKED_EXISTING_SF28_FILE_MISMATCH:'+file)
+          # Shared media and JavaScript assets are immutable. Never overwrite
+          # a public asset with the same filename but different bytes.
+          v13_new=[]
+          for src in sorted(p for p in v13.rglob('*') if p.is_file()):
+            rel=src.relative_to(v13)
+            if rel.name=='.nojekyll' or rel.suffix=='.html' or str(rel)=='highfly-supreme-qa.json':
+              continue
+            dst=site/rel
+            if dst.is_file():
+              if src.stat().st_size!=dst.stat().st_size or sha(src)!=sha(dst):
+                raise SystemExit('V13_SHARED_ASSET_COLLISION_BLOCKED:'+str(rel))
+            else:
+              dst.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copy2(src,dst)
+              v13_new.append(str(rel))
+          lab13=site/'lab/v13'
+          if lab13.exists():raise SystemExit('V13_EXISTING_LAB_DIR_BLOCKED')
+          lab13.mkdir(parents=True)
+          for html in v13.glob('*.html'):shutil.copy2(html,lab13/html.name)
+          html13=(lab13/'index.html').read_text(encoding='utf-8')
+          matches13=re.findall(r'''(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)''',html13)
+          if not matches13:raise SystemExit('V13_NO_COMPILED_JS_IN_LAB_INDEX')
+          for asset in matches13:
+            if not (site/asset.removeprefix('/cobalt-hollow-lab/')).is_file():
+              raise SystemExit('V13_COMPILED_JS_NOT_FOUND:'+asset)
+          metadata13={
+            'edition':'HIGHFLY V13 A/B NINE CLASS 63 SKILL WEBGL',
+            'sourceRun':38567262586,
+            'sourceBranch':'highfly-v13-skill-lab-63-ab-reuse',
+            'originalPublicRun':38320066780,
+            'preservedSf28Run':38543442226,
+            'preservedHomeSHA256':oldindex,
+            'preservedSf28IndexSHA256':sha(site/'lab/sf28/index.html'),
+            'v13Path':'/cobalt-hollow-lab/lab/v13/',
+            'v13EntryQuery':'?hf-v13=1&hf-v13-class=warrior&hf-manual-aim=1',
+            'nativeCatalogCount':63,'nativeClasses':9,
+            'humanVfxCertified':False,'physicalS23Certified':False,
+            'newSharedAssetCount':len(v13_new),
+            'publicGameUntouched':True,'sf28Untouched':True}
+          (lab13/'highfly-v13-qa.json').write_text(json.dumps(metadata13,indent=2),encoding='utf-8')
+          print('HIGHFLY_V13_PUBLISH_GATES='+json.dumps({
+            'newSharedAssets':len(v13_new),'newLabHtml':len(list(lab13.glob('*.html'))),
+            'liveSf28':True,'originalHomeSha':oldindex}))
           sitefiles=[p for p in site.rglob('*') if p.is_file()]
           if any(p.is_symlink() for p in site.rglob('*')):
             raise SystemExit('SF28_SYMLINK_BLOCKED')
@@ -152,6 +222,9 @@ jobs:
             sleep 1
           done
           curl -fsS http://127.0.0.1:4173/lab/sf28/ > lab-verified-index.html
+          curl -fsS http://127.0.0.1:4173/lab/v13/ > v13-verified-index.html
+          grep -q '/cobalt-hollow-lab/assets/' v13-verified-index.html
+          test -s sidecar-site/lab/v13/highfly-v13-qa.json
           grep -q '/cobalt-hollow-lab/assets/' lab-verified-index.html
           test -s sidecar-site/lab/sf28/highfly-sf28-qa.json
           echo 'HF_SF28_PAGES_LAB_ISOLATED_HTTP_GATE_GREEN=1'
@@ -164,54 +237,54 @@ jobs:
         with:
           path: sidecar-site
 
-  publish_sidecar:
+  publish_v13_sidecar:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: stage_and_safeguard
     environment:
       name: github-pages
-      url: https://drakentzy07.github.io/cobalt-hollow-lab/lab/sf28/
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/lab/v13/
     steps:
-      - name: Deploy whole preserved public site with new isolated SF28 lab
+      - name: Deploy preserved public and SF28 plus V13 skill lab
         id: release
         uses: actions/deploy-pages@v4
 
-      - name: Verify SF28 URL and unchanged original root actually served
+      - name: Verify LIVE V13 while proving public home and SF28 remain byte-identical
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           import hashlib,json,time,urllib.request
           base='https://drakentzy07.github.io/cobalt-hollow-lab/'
-          expected='6069668f34e77f98ecaf416ec43433f456a3f60e'
-          def get(path):
-            r=urllib.request.Request(base+path,headers={
-              'User-Agent':'HIGHFLY-SF28-PAGES-AFTER-DEPLOY',
-              'Cache-Control':'no-cache'
-            })
-            with urllib.request.urlopen(r,timeout=60) as reply:
+          def load(path):
+            req=urllib.request.Request(base+path,headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-V13-PAGES-VERIFY'})
+            with urllib.request.urlopen(req,timeout=60) as reply:
               assert reply.status==200
               return reply.read()
           for i in range(35):
             try:
-              qa=json.loads(get('lab/sf28/highfly-sf28-qa.json?run='+str(i)))
-              html=get('lab/sf28/?run='+str(i))
-              homepage=get('index.html?run='+str(i))
-              if qa['sourceCommit']!=expected or not html:raise RuntimeError('SF28_NOT_LIVE_YET')
-              if hashlib.sha256(homepage).hexdigest()!=qa['originalHomeSHA256']:
-                raise SystemExit('SF28_CRITICAL_ORIGINAL_PUBLIC_PAGE_CHANGED')
-              if b'/cobalt-hollow-lab/assets/' not in html:
-                raise SystemExit('SF28_LAB_HTML_BAD_ENTRY')
-              print('HF_SF28_LIVE_ANDROID_PAGES_GREEN='+json.dumps({
-                'labUrl':base+'lab/sf28/',
-                'homePreservedSHA256':qa['originalHomeSHA256'],
-                'sf28SourceCommit':expected,
-                'physicalS23StillNotCertified':True
-              }))
+              qa=json.loads(load('lab/v13/highfly-v13-qa.json?check='+str(i)))
+              if qa.get('sourceRun')!=38567262586:raise RuntimeError('V13_NOT_LIVE_YET')
+              body=load('lab/v13/index.html?check='+str(i))
+              home=load('index.html?check='+str(i))
+              sf28=load('lab/sf28/index.html?check='+str(i))
+              sf28qa=json.loads(load('lab/sf28/highfly-sf28-qa.json?check='+str(i)))
+              if hashlib.sha256(home).hexdigest()!=qa['preservedHomeSHA256']:
+                raise SystemExit('V13_CRITICAL_ORIGINAL_PUBLIC_HOME_CHANGED')
+              if hashlib.sha256(sf28).hexdigest()!=qa['preservedSf28IndexSHA256']:
+                raise SystemExit('V13_CRITICAL_SF28_ENTRY_CHANGED')
+              if sf28qa.get('sourceRun')!=qa['preservedSf28Run']:
+                raise SystemExit('V13_CRITICAL_SF28_QA_CHANGED')
+              if b'/cobalt-hollow-lab/assets/' not in body:
+                raise SystemExit('V13_LAB_COMPILED_ASSETS_MISSING')
+              print('HIGHFLY_V13_ANDROID_PAGES_GREEN='+json.dumps({
+                'url':base+'lab/v13/?hf-v13=1&hf-v13-class=warrior&hf-manual-aim=1',
+                'catalog':qa['nativeCatalogCount'],'originalHomeUnchanged':True,
+                'sf28Unchanged':True,'physicalS23QA':'still pending'}))
               break
-            except SystemExit: raise
+            except SystemExit:raise
             except Exception as e:
-              print('SF28_WAIT_FOR_PAGES_PROPAGATION',i,str(e)[:160])
+              print('WAITING_V13_PAGES_PROPAGATION',i,str(e)[:150])
               time.sleep(6)
-          else:raise SystemExit('SF28_LAB_URL_NOT_VERIFIED_AFTER_DEPLOY')
+          else:raise SystemExit('V13_NOT_VISIBLE_AFTER_DEPLOY')
           PY
