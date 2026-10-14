@@ -39,3 +39,26 @@ Un campo 'Describí tu armadura', una entrada de imagen opcional, acción 'Crear
 
 ## Siguiente RUN técnico
 Conseguir un **GLB sin rig con geometría nueva**, preferentemente separado por casco/torso/brazos/piernas, ejecutar fit a medidas originales + Data Transfer real en Blender; luego auditar export, animaciones y capturas. Eso demostrará el puente 3D crudo → wearable en una sola pieza end-to-end, pendiente de control humano de la calidad artística.
+
+## Evidencia adicional REAL - 14 octubre 2026
+
+### R0.2 — Primer rebind Blender GREEN, RUN 38581612579
+- Descargado V19 legítimo del run 37984648737 y se extrajeron 32 mallas 3D reales, separadas de su rig anterior.
+- Blender 4.2.23 oficial descargado y verificado con SHA-256; donor real `M_*` de `warrior_modular.glb` meshopt-decodeado.
+- Transferencia REAL de vertex groups por nearest-face interpolated `POLYINTERP_NEAREST`, normalización max 4 pesos, rig original 23 huesos.
+- Resultado exportado `new-wearable-rigged.glb`: 32 SkinnedMeshes, 4.234 vértices validados, 2.080 triángulos, NO incluye actor original. Hay 0 mallas sin pesos.
+- Advertencia no fatal del exportador Blender 4.2: `Armature must be the parent of skinned mesh`; el GLB pasó su validación de joints y weights, pero esto merece limpieza en una futura iteración. **NO** confundir con ausencia de clipping.
+
+### R0.3 — Probado físicamente en navegador Chrome (NO Samsung), RUN 38582428951
+- Nuevo visor interno `skin-factory-core/rigged_preview.html` carga actor original de ClaudeCraft y `new-wearable-rigged.glb` del RUN anterior.
+- Sus 32 mallas se re-vincularon a las referencias **VIVAS** de los 23 huesos del único Hunter; no se cambian bones, animaciones ni juego.
+- Renderizado y capturas desde Chrome real: frente, perfil, espalda, Running_A, Jump_Idle, 1H_Melee_Attack_Chop, más viewport horizontal Android simulado 915x412.
+- Evidencia: 4.234 vértices finitos, 32 mallas, todos los huesos apuntan al actor original, cero errores de navegador.
+- **IMPORTANTE: no existe una armadura completa, espectacular ni generada por IA en esta prueba**. El fixture V19 tiene solo ornamentos en torso/brazos/espalda y se ve así: cuerpo base sin casco nuevo. Es una prueba de pipeline, **no** de arte ni producto para mostrar. **No se publicó en Pages** deliberadamente.
+
+### Estado actualizado
+- `Raw GLB -> verificaciones -> Blender transfer pesos -> wearable GLB -> skeleton vivo Chrome`: **GREEN técnico para mallas ya ubicadas y nombradas**.
+- `Imagen/texto -> IA -> GLB nuevo`: **AÚN NO** (proveedor autenticado ausente y la tarea implica créditos/condiciones comerciales).
+- `GLB AI no nombrado/no alineado -> armadura completa con casco, coraza y prendas perfectas`: **AÚN NO** (segmentación/normalización escala, remesh, fitting semántico, clipping y VFX).
+- Próximo hito imprescindible: elegir una herramienta generativa, producir un **GLB de armadura real** (no personaje entero), separar por slot, usar Blender R0.2 como base, comparar contra ilustración original y no publicar hasta aprobar arte.
+- Se conservan absolutamente intactos HIGHFLY público, SKIN 8.8, SKIN 8.9, SKIN 9.1.
