@@ -287,6 +287,36 @@ function forgeDetails(gltf,design){
  return qa;
 }
 export function forgeArmorRepertoire(gltf,id){
+ // New legendary skins are built DIRECTLY from the original 17 Paladin donors.
+ // Do not process SKIN 7/8.2/8.3/8.6 temporary overlays: those invisible
+ // intermediates caused NaN geometry warnings and wasted memory.
+ if(HERO87[id]){
+  const baseId=HERO87[id].base;
+  const underArmor=/^M_(Torso|Loin|ArmL|ArmR|HandL|HandR|LegL|LegR|FootL|FootR)(?:_|$)/;
+  gltf.scene.traverse(o=>{
+   if(!o.isMesh)return;
+   const n=o.name||'';
+   o.visible=n.startsWith('Armor_paladin_')||underArmor.test(n);
+  });
+  const nativeReforge841=forgeNativeReferenceShells841(gltf,baseId);
+  const surfaceConform85=applyNativeSurfaceConform85(gltf,baseId);
+  const hero87=buildLegendary87(gltf,id);
+  const flags={donorAndRigPreserved:hero87.sourcePrimitives===17&&hero87.bones===23,
+   noBodyLeaks:surfaceConform85.visiblePriorFlatPanels===0&&surfaceConform85.visibleOriginalArmor===0,
+   styleSignature:hero87.meshes>=30&&hero87.wingPairs===2,
+   animationClips:gltf.animations.length===22,
+   artReviewed:false,physicalAndroid:false};
+  const def=ARMOR_FAMILIES.find(x=>x.id===id);
+  const qa={id,name:HERO87[id].label,family:'THREE LEGENDARY 8.7',
+   signature:def.signature,originalBones:23,clips:gltf.animations.length,
+   nativeSlots:11,originalNativeSlots:11,originalNativePrimitives:17,
+   newStyleMeshes:hero87.meshes+17,skinnedStyleMeshes:hero87.weightedMeshes+17,
+   nativeReforge841,surfaceConform85,hero87,sourceImmutable:true,flags,
+   structuralGreen:Object.values(flags).slice(0,4).every(Boolean),
+   maleArtApproved:false};
+  if(!qa.structuralGreen)throw Error('HF87_NATIVE_DIRECT_GATE_RED '+JSON.stringify(qa));
+  return {gltf,proof:qa};
+ }
  const design=ARMOR_FAMILIES.find(d=>d.id===(HERO87[id]?.base||id));
  if(!design)throw Error('UNKNOWN_STYLE '+id);
  const src=forgeDualArmor(gltf,design.base);
