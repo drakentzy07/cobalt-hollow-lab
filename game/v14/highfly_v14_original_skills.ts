@@ -3,7 +3,7 @@
  * This is a disposable LV99 playtest character: production saves are untouched.
  */
 import {ABILITIES,CLASSES} from '../sim/content/classes';
-import type {PlayerClass,AbilityDef} from '../sim/types';
+import type {AbilityDef} from '../sim/types';
 
 export const V14_CLASSES=['warrior','rogue','paladin','mage','hunter','priest','shaman','warlock','druid'] as const;
 export type V14Class=typeof V14_CLASSES[number];
