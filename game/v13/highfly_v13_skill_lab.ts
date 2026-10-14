@@ -62,7 +62,7 @@ export function installHighflyV13SkillLab(hooks:HighflyV13LabHooks):void {
   bar.append(select);
   const close=make('button','OCULTAR','border:0;border-radius:7px;padding:7px;background:#324b69;color:white;');
   bar.append(close);
-  const status=make('div','Tocá PROBAR para lanzar una habilidad NUEVA HIGHFLY (B).',
+  const status=make('div','Preparando las 7 habilidades nuevas de esta clase…',
     'padding:6px 10px;color:#bfe8ff;line-height:1.3;');
   const viewport=make('div','','overflow-y:auto;overscroll-behavior:contain;padding:6px 8px;flex:1;');
   const rowButton=(text:string, id:string, slot:number, title:string, accent:string)=>{
@@ -81,6 +81,27 @@ export function installHighflyV13SkillLab(hooks:HighflyV13LabHooks):void {
     return b;
   };
   const specs=HIGHFLY_FUSED_SKILLS[cls];
+  // Equip all seven HIGHFLY fusions BEFORE the player touches the action ring.
+  // Original Hud enforces real known-ability eligibility; no fake cast shortcuts.
+  const equipSeven=():{ok:number;failed:string[]}=>{
+    const failed:string[]=[];
+    for(const spec of specs){
+      if(!hooks.equip(spec.id,spec.slot))failed.push(spec.name);
+    }
+    const ok=specs.length-failed.length;
+    root.dataset.highflyV13Equipped=String(ok);
+    root.dataset.highflyV13Class=cls;
+    status.textContent=failed.length
+      ? 'EQUIPADAS '+ok+'/7 · FALLARON: '+failed.join(', ')+
+        '. Probá RESTAURAR 7 y avisame de este mensaje.'
+      : '✓ 7/7 NUEVAS EQUIPADAS · S1–S7 del HUD. OCULTAR panel para combatir.';
+    if(failed.length)console.warn('[HIGHFLY V13] 7/7 autoloadout incomplete',cls,failed);
+    return {ok,failed};
+  };
+  equipSeven();
+  const restore=make('button','↺ RESTAURAR LAS 7 NUEVAS AL HUD',
+    'margin:0 8px 6px;border:1px solid #55aad3;background:#19405b;color:#fff;padding:9px;border-radius:7px;font-weight:800;');
+  restore.addEventListener('click',()=>{equipSeven();});
   const originalsGroups:HTMLElement[]=[];
   let showOriginals=false;
   for(const spec of specs){
@@ -112,13 +133,13 @@ export function installHighflyV13SkillLab(hooks:HighflyV13LabHooks):void {
     originalsGroups.forEach(group=>{group.style.display=showOriginals?'flex':'none';});
   });
   const foot=make('div',
-    'SOLO SKILLS NUEVAS · 7 por clase / 63 total · VFX: revisión visual S23 pendiente',
+    '7 NUEVAS EN S1–S7 · Arrastrá botones para apuntar · VFX reales: revisión visual pendiente',
     'padding:8px;color:#c1d1df;background:#10283c;font-size:11px;');
   const toggle=make('button','⚔ SKILLS 63',
     'position:fixed;right:12px;top:9px;z-index:9991;padding:10px 13px;'+
     'background:#153b57;color:#fff;border:2px solid #74d9ff;border-radius:10px;display:none;');
   close.addEventListener('click',()=>{root.style.display='none';toggle.style.display='block';});
   toggle.addEventListener('click',()=>{root.style.display='flex';toggle.style.display='none';});
-  root.append(header,bar,status,oldToggle,viewport,foot);
+  root.append(header,bar,status,restore,oldToggle,viewport,foot);
   document.body.append(root,toggle);
 }
