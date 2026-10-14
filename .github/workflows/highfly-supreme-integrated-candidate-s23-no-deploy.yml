@@ -9,6 +9,7 @@ on:
       - "overlays/highfly_v91_combat_feel.py"
       - "game/c1/highfly_v91_combat_nine_classes.test.ts"
       - "overlays/highfly_v15_pwa_manifest.py"
+      - "overlays/highfly_v15_mobile_ux_smoke.py"
       - "tests/test_highfly_v15_pwa_manifest.py"
   workflow_dispatch:
 permissions:
@@ -40,6 +41,7 @@ jobs:
             /overlays/highfly_v91_combat_feel.py
             /game/c1/highfly_v91_combat_nine_classes.test.ts
             /overlays/highfly_v15_pwa_manifest.py
+            /overlays/highfly_v15_mobile_ux_smoke.py
             /overlays/rewrite_pages_static.py
             /tests/test_highfly_v15_pwa_manifest.py
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
@@ -676,6 +678,8 @@ jobs:
           set -euo pipefail
           cp ../monsters/integration/highfly_p06_mobile_smoke.mjs scripts/highfly_supreme_unified_s23.mjs
           python3 ../monsters/integration/activate_p09_mobile_smoke.py scripts/highfly_supreme_unified_s23.mjs
+          # V15 adds mobile More/Quest and GOLDEN-HUD geometry E2E (copied browser smoke only).
+          python3 ../v9-corrections/overlays/highfly_v15_mobile_ux_smoke.py scripts/highfly_supreme_unified_s23.mjs
           python3 -m http.server 4173 --bind 127.0.0.1 --directory ../supreme-preview > ../supreme-local-preview.log 2>&1 &
           PID=$!
           trap 'kill "$PID" 2>/dev/null || true' EXIT
