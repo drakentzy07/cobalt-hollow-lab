@@ -1,0 +1,144 @@
+name: HIGHFLY V14 - PROTECTED Pages original-90 lab sidecar
+# HIGHFLY V14 user's explicit deploy authorization 2026-10-14.
+# FAIL CLOSED unless final V14 source build is GREEN and live public/SF28/V13
+# all match pinned immutable artifact sources byte-for-byte.
+on:
+  push:
+    branches: [highfly-v14-original-skills-supreme]
+    paths:
+      - ".github/workflows/highfly-v14-pages-safe-sidecar.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: highfly-v13-p2-pages-and-public-preservation
+  cancel-in-progress: false
+
+jobs:
+  stage_protected_site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      V14_RUN_ID: "38629881456"
+      V14_HEAD_SHA: "3ec3d6c4cbe5fd00a75858665a32763478d1c263"
+      GH_TOKEN: "${{ github.token }}"
+    steps:
+      - name: Checkout ONLY isolated V14 publisher logic
+        uses: actions/checkout@v4
+        with:
+          ref: "${{ github.sha }}"
+      - name: Validate Python publisher compiles and V14 source GREEN, or stop safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile overlays/highfly_v14_pages_publisher.py
+          python3 - <<'PY'
+          import os, json, time, urllib.request
+          rid=int(os.environ['V14_RUN_ID'])
+          url=f'https://api.github.com/repos/drakentzy07/cobalt-hollow-lab/actions/runs/{rid}'
+          req=lambda:urllib.request.Request(url,headers={
+              'Authorization':'Bearer '+os.environ['GH_TOKEN'],
+              'Accept':'application/vnd.github+json','User-Agent':'HIGHFLY-V14-RELEASE-GATE'})
+          for attempt in range(90):
+              with urllib.request.urlopen(req(),timeout=45) as response: run=json.load(response)
+              if run.get('head_sha')!=os.environ['V14_HEAD_SHA']:
+                  raise SystemExit('V14_RELEASE_BLOCK_SOURCE_SHA_DRIFT')
+              if run.get('status')=='completed':
+                  if run.get('conclusion')!='success':raise SystemExit('V14_RELEASE_BLOCK_SOURCE_RUN_NOT_GREEN')
+                  print('HIGHFLY_V14_BUILD_FULL_GREEN_SOURCE_VERIFIED='+str(rid));break
+              print('V14_SOURCE_RUN_FINISHING',attempt,run.get('status'));time.sleep(8)
+          else:raise SystemExit('V14_RELEASE_SOURCE_NEVER_COMPLETED_GREEN')
+          PY
+      - name: Download immutable current PUBLIC root V9.1
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38320066780
+          github-token: "${{ github.token }}"
+          name: HIGHFLY-SUPREME-INTEGRATED-WEBGL-S23-CANDIDATE-NO-DEPLOY
+          path: current-public
+      - name: Download immutable SF28 (preserve exactly)
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38543442226
+          github-token: "${{ github.token }}"
+          name: HIGHFLY-SUPREME-INTEGRATED-WEBGL-S23-CANDIDATE-NO-DEPLOY
+          path: current-sf28
+      - name: Download immutable V13 (preserve exactly)
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38606172532
+          github-token: "${{ github.token }}"
+          name: HIGHFLY-V13-P1-NATIVE-63-SCROLL-WEBGL-NO-DEPLOY
+          path: current-v13
+      - name: Download final GREEN V14 90-native-skill WebGL
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38629881456
+          github-token: "${{ github.token }}"
+          name: HIGHFLY-V14-ORIGINAL-90-WEBGL-NO-DEPLOY
+          path: new-v14
+      - name: Preflight LIVE main SF28 V13, byte-guard entire build, stage ONLY V14
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 overlays/highfly_v14_pages_publisher.py stage
+          test -s sidecar-site/index.html
+          test -s sidecar-site/lab/sf28/index.html
+          test -s sidecar-site/lab/v13/index.html
+          test -s sidecar-site/lab/v14/index.html
+          test -s sidecar-site/lab/v14/highfly-v14-qa.json
+          echo 'V14_SIDE_CAR_STAGE_ONLY_EXISTING_3_VERSIONS_BYTE_IDENTICAL=1'
+      - name: Validate local protected HTML files HTTP without touching LIVE
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory sidecar-site > site-smoke.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then break; fi
+            sleep 1
+          done
+          for target in /index.html /lab/sf28/index.html /lab/v13/index.html /lab/v14/index.html /lab/v14/highfly-v14-qa.json; do
+            curl -fsS "http://127.0.0.1:4173$target" >/dev/null
+          done
+          echo 'HFV14_PROTECTED_PAGES_LOCAL_HTTP_GREEN=1'
+      - name: Configure protected GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload complete preserved Pages artifact with V14 sidecar ONLY
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: sidecar-site
+
+  deploy_v14:
+    needs: stage_protected_site
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/lab/v14/?hf-v14=1&hf-v14-class=warrior
+    env:
+      V14_RUN_ID: "38629881456"
+      V14_HEAD_SHA: "3ec3d6c4cbe5fd00a75858665a32763478d1c263"
+    steps:
+      - name: Deploy ONLY green protected Pages artifact
+        uses: actions/deploy-pages@v4
+      - name: Checkout validator for LIVE verification
+        uses: actions/checkout@v4
+        with:
+          ref: "${{ github.sha }}"
+      - name: Verify LIVE V14 WebGL and BYTE-IDENTICAL main SF28 V13
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 overlays/highfly_v14_pages_publisher.py verify-live
+          echo 'HIGHFLY_V14_ANDROID_WEBGL_LIVE_PAGES_GREEN=1'
