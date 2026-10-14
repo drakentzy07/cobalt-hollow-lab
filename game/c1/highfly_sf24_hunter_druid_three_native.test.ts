@@ -96,9 +96,15 @@ describe('SF24 Hunter six-shot, Druid lunar and twin dot ORIGINAL Sim',()=>{
     c.cls==='hunter'?12:3);
    sim.castAbility(c.id,p.id);
    let hits=0,moon=false,rake=false,swarm=false,thorns=false,trail=false;
+   // Confirm cooldown was actually ARMED during the cast. Garra Lunar's
+   // native 4s cooldown is allowed to expire in the later 110-tick DoT
+   // observation window; reading the map only at the end was a false RED.
+   let cooldownArmed=p.cooldowns.has(c.id);
    const ticks=c.cls==='hunter'?230:110;
    for(let i=0;i<ticks;i++){
-    for(const ev of sim.tick()){
+    const events=sim.tick();
+    if(p.cooldowns.has(c.id))cooldownArmed=true;
+    for(const ev of events){
      if(ev.type==='damage'&&ev.sourceId===p.id&&ev.targetId===mob.id&&
        ev.ability===ability.name&&ev.amount>0)hits++;
     }
@@ -109,7 +115,7 @@ describe('SF24 Hunter six-shot, Druid lunar and twin dot ORIGINAL Sim',()=>{
     if(p.auras.some(a=>a.kind==='thorns'&&a.sourceId===p.id))thorns=true;
     if(p.auras.some(a=>a.kind==='hunter_bloodtrail'))trail=true;
    }
-   expect(p.cooldowns.has(c.id),c.id+' native cast must set cooldown').toBe(true);
+   expect(cooldownArmed,c.id+' native cast must arm cooldown').toBe(true);
    expect(hits,c.id+' native damage must land in combat').toBeGreaterThan(0);
    if(c.cls==='hunter'){
     expect(hits,'6 source channel shots (at least 4 must land)').toBeGreaterThanOrEqual(4);
