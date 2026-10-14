@@ -8,7 +8,7 @@ const {chromium}=require('playwright');
  assert(code,'MISSING_INLINE_MODULE');
  fs.writeFileSync('/tmp/highfly-tailor-r09-module.mjs',code);
  require('node:child_process').execFileSync('node',['--check','/tmp/highfly-tailor-r09-module.mjs']);
- for(const marker of ['HIGHFLY','23 huesos','22 animaciones','PartCrafter','unzipSync',
+ for(const marker of ['HIGHFLY','23 huesos','clips.length!==22','PartCrafter','unzipSync',
    'showAIReference','topologyPreserved','NATIVE_KNIGHT_WEARABLE_MISSING','Rig_Medium']){
    if(marker==='getVertexPosition')continue;
    assert(html.includes(marker),'MISSING_'+marker);
