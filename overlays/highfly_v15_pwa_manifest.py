@@ -18,9 +18,10 @@ BASE = os.environ.get("VITE_COBALT_BASE", "/cobalt-hollow-lab/")
 
 
 def normalize_base(raw: str) -> str:
-    base = "/" + raw.strip("/") + "/"
-    if base == "/":
+    project_segment = raw.strip("/")
+    if not project_segment:
         raise ValueError("HF15_PWA_BASE_EMPTY: refusing origin-wide PWA scope")
+    base = "/" + project_segment + "/"
     if "?" in base or "#" in base or "\\" in base:
         raise ValueError("HF15_PWA_BASE_INVALID: expected a project path")
     return base
