@@ -17,7 +17,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: highfly-v13-p2-pages-and-public-preservation
+  group: highfly-sf28-pages-lab-preserve-public
   cancel-in-progress: false
 
 jobs:
@@ -237,7 +237,7 @@ jobs:
         with:
           path: sidecar-site
 
-  publish_v13_sidecar:
+  publish_sidecar:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: stage_and_safeguard
