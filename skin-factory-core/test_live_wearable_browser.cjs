@@ -15,6 +15,8 @@ const dir='skin-factory-core/factory-evidence-r03';fs.mkdirSync(dir,{recursive:t
   assert.equal(s.ready,true);assert.equal(s.meshes,32);
   assert.equal(s.liveSourceJoints,23);assert.equal(s.allReferencesNative,true);
   assert.equal(s.sourceOriginal,true);assert(s.totalFinite>=4000);
+  assert.equal(s.cameraFramed,true,'PREVIEW_DID_NOT_FRAME_HUNTER');
+  assert(s.bodyBounds?.size?.[1]>.1,'NO_REAL_NATIVE_BODY_BOUNDS');
   for(const [view,button] of [['front','front'],['side','side'],['back','back']]){
    await page.click('#'+button);await page.waitForTimeout(500);
    await page.locator('#scene').screenshot({path:dir+'/real-'+view+'.png'});
