@@ -708,3 +708,42 @@ jobs:
       - name: Explicit safe stop — no main/Pages mutation
         if: always()
         run: echo "HF_SUPREME_STAGING_ONLY_NO_PUBLIC_DEPLOY=1"
+
+  # V15-only final outcome; the main job owns all build/test gates.
+  # Reporting has NO pages permission and never changes game code/artifacts.
+  v15_qa_report:
+    if: ${{ always() && github.ref_name == 'highfly-v15-foundation' }}
+    needs: [native_outdoor_camps_and_world_portals]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    steps:
+      - name: Record V15 build outcome and failed step on master tracker
+        uses: actions/github-script@v7
+        env:
+          MAIN_JOB_RESULT: ${{ needs.native_outdoor_camps_and_world_portals.result }}
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const current=process.env.MAIN_JOB_RESULT;
+            const jobs=await github.paginate(github.rest.actions.listJobsForWorkflowRun,{
+              owner,repo,run_id:context.runId,per_page:100
+            });
+            const original=jobs.find(j=>j.name==='native_outdoor_camps_and_world_portals');
+            const steps=(original?.steps||[]).filter(x=>x.conclusion==='failure');
+            const details=steps.length
+              ? steps.map(x=>'- Paso '+x.number+': '+x.name+' (falló)').join('\n')
+              : '- Pasos fallidos no disponibles o ninguno.';
+            const report=[
+              '## HF15 — Resultado de build NO DEPLOY',
+              '**RUN:** https://github.com/'+owner+'/'+repo+'/actions/runs/'+context.runId,
+              '**SHA:** '+context.sha,
+              '**Resultado del juego completo:** '+current,
+              details,
+              'Reporte automático. Sitio público: no desplegado por este workflow.'
+            ].join('\n\n');
+            await github.rest.issues.createComment({owner,repo,issue_number:30,body:report});
+            core.info(report);
