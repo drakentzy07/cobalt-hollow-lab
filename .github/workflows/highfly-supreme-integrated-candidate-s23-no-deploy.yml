@@ -58,6 +58,7 @@ on:
       - "game/c1/highfly_sf23_three_native_fusions.test.ts"
       - "game/c1/highfly_sf24_hunter_druid_three_native.ts"
       - "game/c1/highfly_sf24_hunter_druid_three_native.test.ts"
+      - "overlays/highfly_sf24_hunter_completion.py"
       - "overlays/highfly_sf22_original_source_compat.py"
       - "overlays/highfly_sf16_preflight.py"
   workflow_dispatch:
@@ -139,6 +140,7 @@ jobs:
             /game/c1/highfly_sf23_three_native_fusions.test.ts
             /game/c1/highfly_sf24_hunter_druid_three_native.ts
             /game/c1/highfly_sf24_hunter_druid_three_native.test.ts
+            /overlays/highfly_sf24_hunter_completion.py
             /overlays/highfly_sf22_original_source_compat.py
             /overlays/highfly_sf16_preflight.py
       - name: SF24 PRECHECK unique IDs across SF4-SF24 (fast before 55-minute build)
@@ -783,6 +785,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_sf24_hunter_completion.py
           cp ../v9-corrections/game/c1/highfly_sf24_hunter_druid_three_native.test.ts tests/highfly_sf24_hunter_druid_three_native.test.ts
           pnpm exec vitest run tests/highfly_sf24_hunter_druid_three_native.test.ts
           echo 'HF_SF24_HUNTER_DRUID_ORIGINAL_CHANNEL_DOT_THORNS_SIM_GREEN=1'
