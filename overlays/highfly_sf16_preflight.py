@@ -79,9 +79,27 @@ if {"hf_hunter_s3", "hf_shaman_s5", "hf_mage_s2"} != {
     raise SystemExit("SF_PRECHECK_UNEXPECTED_SF18_IDS")
 print("HF_SF18_UNIQUE_35_NATIVE_PREFLIGHT_GREEN=1")
 print(f"HF_SF18_PRIOR_CERTIFIED=32 NEW=3 CANDIDATES=35 OF_CATALOG=63")
+# SF18 explicitly blocked an unadapted secondary selfBuff in six-shot
+# channels. SF24 now installs an ORIGINAL casting_lifecycle source bridge
+# that issues this buff ONLY after six delivered ticks. Keep the strict
+# safety gate: if the exact compatibility source is absent, reject.
 if "hf_hunter_u1" in all_skills:
-    raise SystemExit("SF18_INVALID_CHANNEL_SECONDARY_BUFF_WAS_INSTALLED")
-print("HF_SF18_HUNTER_U1_BLOCKED_LIFECYCLE_ADAPTER_REQUIRED=1")
+    if all_skills["hf_hunter_u1"] != "SF24":
+        raise SystemExit("SF18_INVALID_CHANNEL_SECONDARY_BUFF_WAS_INSTALLED")
+    adapter = root / "overlays" / "highfly_sf24_hunter_completion.py"
+    bridge = adapter.read_text(encoding="utf-8") if adapter.is_file() else ""
+    for token in [
+        "hf24SixShotsCompleted",
+        "p.channelTicksLeft === 0",
+        "completed?.def.id === 'hf_hunter_u1'",
+        "activateHunterMajorWindow(ctx, p, buff.duration)",
+        "SF24_FROZEN_SOURCE_DRIFT",
+    ]:
+        if token not in bridge:
+            raise SystemExit("SF24_BLOCKED_CHANNEL_COMPLETION_BRIDGE_MISSING:" + token)
+    print("HF_SF24_HUNTER_U1_COMPLETION_ONLY_NATIVE_BRIDGE_PREFLIGHT_GREEN=1")
+else:
+    print("HF_SF18_HUNTER_U1_BLOCKED_LIFECYCLE_ADAPTER_REQUIRED=1")
 print(f"HF_SF18_REMAINING_IF_SUCCESS={len(catalog_ids)-len(all_skills)}")
 
 if {"hf_warrior_s2", "hf_rogue_u1"} != {
