@@ -47,7 +47,10 @@ function create(s:HighflyFusionSpec,ds:AbilityDef[]):AbilityDef{
   fx=lv=>[
     // Attack first, then Blind: original damage would immediately break
     // original break-on-damage crowd control in the reverse order.
-    {...ranked(c,lv)[0],requiresBehind:false},
+    // HIGHFLY ultimate: the native Ambush strike is guaranteed against
+    // dodge (but still follows the source hit/miss and damage rules).
+    // A 90-second signature ability must not whiff solely to 5% RNG dodge.
+    {...ranked(c,lv)[0],requiresBehind:false,cannotBeDodged:true},
     ...ranked(b,lv),
     // A brief veil after the ambush (not 3600s / original out-of-combat
     // stealth) is a native status that breaks on the next hostile hit.
