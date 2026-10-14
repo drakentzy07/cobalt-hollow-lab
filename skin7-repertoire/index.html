@@ -124,12 +124,12 @@ async function choose(id){
   state.debugCandidateRoot=right.root;
   state.proofs[id]=result.proof;state.variantReady=true;state.variationCount++;
   $('#variant-title').textContent='HIGHFLY · '+result.proof.name;
-  $('#variant-caption').textContent=result.proof.reference83?.enabled ? 'SKIN 8.7 · '+result.proof.reference83.assemblies+' piezas NATIVAS + formas 3D propias · 0 paneles flotantes visibles · cuernos/plumas/crestas 3D nuevos y articulados' : 'Comparador Royal anterior · 17 donantes';
+  $('#variant-caption').textContent=result.proof.hero87?.enabled ? 'SKIN 8.7 · '+result.proof.hero87.meshes+' nuevas mallas 3D · '+result.proof.hero87.attachedWingFeathers+' piezas alares · Rig_Medium' : result.proof.reference83?.enabled ? 'SKIN 8.6 · '+result.proof.reference83.assemblies+' módulos · 17 donantes nativos' : 'Comparador Royal anterior';
   $('#proof').textContent=JSON.stringify(result.proof,null,2);
   if(result.proof.silhouette86?.enabled){
-    $('#variant-caption').textContent='SKIN 8.7 · '+result.proof.silhouette86.anchoredDetails+' adornos 3D anclados · 23 huesos';
+    $('#variant-caption').textContent='SKIN 8.6 · '+result.proof.silhouette86.anchoredDetails+' adornos 3D anclados · 23 huesos';
   }
-  $('#progress').textContent=result.proof.name+' · '+(result.proof.reference83?.enabled ? result.proof.reference83.geometryPiecesCombined+' detalles agrupados en 11 mallas por slot' : 'comparador antiguo')+' · 23 huesos · 22 animaciones · aprobación artística pendiente.';
+  $('#progress').textContent=result.proof.name+' · '+(result.proof.hero87?.enabled ? 'Prototipo 3D (NO replica exacta de las imágenes) · alas sujetas al rig' : result.proof.reference83?.enabled ? result.proof.reference83.geometryPiecesCombined+' detalles agrupados en 11 mallas por slot' : 'comparador antiguo')+' · 23 huesos · 22 animaciones · aprobación artística pendiente.';
   $('#status').textContent='LISTO · '+id+' · '+result.proof.signature;
  }catch(err){if(key!==generation)return;state.error=String(err);$('#status').textContent=String(err.stack||err);$('#progress').textContent='Falló '+id+': '+err.message;console.error(err);}
 }
