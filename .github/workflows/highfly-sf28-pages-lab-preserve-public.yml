@@ -47,7 +47,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           repository: drakentzy07/cobalt-hollow-lab
-          run-id: 38567262586
+          run-id: 38576493532
           github-token: ${{ github.token }}
           name: HIGHFLY-V13-P1-NATIVE-63-SCROLL-WEBGL-NO-DEPLOY
           path: new-v13
@@ -145,6 +145,12 @@ jobs:
             with urllib.request.urlopen(request,timeout=60) as response:
               assert response.status==200
               return response.read()
+          # Protect currently published older V13 from out-of-order or unintended overwrites.
+          active_v13=json.loads(live('lab/v13/highfly-v13-qa.json?v13_preflight_upgrade=1'))
+          if active_v13.get('sourceRun')!=38567262586:
+            raise SystemExit('V13_BLOCKED_LIVE_VERSION_CHANGED_SINCE_PRIOR_GREEN')
+          if active_v13.get('preservedSf28Run')!=38543442226:
+            raise SystemExit('V13_BLOCKED_PRIOR_SF28_PRESERVATION_MISMATCH')
           active_sf28=json.loads(live('lab/sf28/highfly-sf28-qa.json?v13_preflight=1'))
           if active_sf28.get('sourceRun')!=38543442226:
             raise SystemExit('V13_BLOCKED_LIVE_SF28_VERSION_CHANGED')
@@ -179,8 +185,8 @@ jobs:
             if not (site/asset.removeprefix('/cobalt-hollow-lab/')).is_file():
               raise SystemExit('V13_COMPILED_JS_NOT_FOUND:'+asset)
           metadata13={
-            'edition':'HIGHFLY V13 A/B NINE CLASS 63 SKILL WEBGL',
-            'sourceRun':38567262586,
+            'edition':'HIGHFLY V13 NINE CLASS SEVEN AUTO-EQUIPPED NEW SKILLS WEBGL',
+            'sourceRun':38576493532,
             'sourceBranch':'highfly-v13-skill-lab-63-ab-reuse',
             'originalPublicRun':38320066780,
             'preservedSf28Run':38543442226,
@@ -189,6 +195,8 @@ jobs:
             'v13Path':'/cobalt-hollow-lab/lab/v13/',
             'v13EntryQuery':'?hf-v13=1&hf-v13-class=warrior&hf-manual-aim=1',
             'nativeCatalogCount':63,'nativeClasses':9,
+            'autoLoadoutRequested':True,'sevenPerClass':True,
+            'autoLoadoutManualS23Qa':'pending player verification',
             'humanVfxCertified':False,'physicalS23Certified':False,
             'newSharedAssetCount':len(v13_new),
             'publicGameUntouched':True,'sf28Untouched':True}
@@ -264,7 +272,7 @@ jobs:
           for i in range(35):
             try:
               qa=json.loads(load('lab/v13/highfly-v13-qa.json?check='+str(i)))
-              if qa.get('sourceRun')!=38567262586:raise RuntimeError('V13_NOT_LIVE_YET')
+              if qa.get('sourceRun')!=38576493532:raise RuntimeError('V13_NOT_LIVE_YET')
               body=load('lab/v13/index.html?check='+str(i))
               home=load('index.html?check='+str(i))
               sf28=load('lab/sf28/index.html?check='+str(i))
