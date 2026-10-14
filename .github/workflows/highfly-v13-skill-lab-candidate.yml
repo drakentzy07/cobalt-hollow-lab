@@ -1104,7 +1104,8 @@ jobs:
           node scripts/build_media_manifest.mjs prune
           python3 ../overlays/rewrite_pages_static.py
           python3 ../overlays/audit_pages_public_roots.py
-          test -s dist/index.html          grep -R -q 'hf-v13-root' dist/assets || { echo 'V13_NOT_IN_COMPILED_WEBGL'; exit 1; }
+          test -s dist/index.html
+          grep -R -q 'hf-v13-root' dist/assets || { echo 'V13_NOT_IN_COMPILED_WEBGL'; exit 1; }
 
           test -d dist/media
           echo "HF_SUPREME_INTEGRATED_REAL_WEBGL_BUILD=1"
@@ -1113,7 +1114,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p supreme-preview/cobalt-hollow-lab
-          cp -a upstream/dist/. supreme-preview/cobalt-hollow-lab/          # V13: one new isolated lab entry, no Pages/public overwrite
+          cp -a upstream/dist/. supreme-preview/cobalt-hollow-lab/
+          # V13: one new isolated lab entry, no Pages/public overwrite
           mkdir -p supreme-preview/cobalt-hollow-lab/lab/v13
           cp upstream/dist/index.html supreme-preview/cobalt-hollow-lab/lab/v13/index.html
           test -s supreme-preview/cobalt-hollow-lab/lab/v13/index.html
