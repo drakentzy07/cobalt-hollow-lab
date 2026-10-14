@@ -37,25 +37,31 @@ def reject(path,expected):
     raise AssertionError('BAD_GENERATIVE_PACKAGE_NOT_REJECTED '+expected)
 def test_notebook():
     nb=json.loads((ROOT/'HIGHFLY_PartCrafter_Gratis_R04.ipynb').read_text(encoding='utf-8'))
-    assert nb['nbformat']==4 and len(nb['cells'])>=7
+    assert nb['nbformat']==4 and len(nb['cells'])==2
     codes=[''.join(x.get('source',[])) for x in nb['cells'] if x['cell_type']=='code']
-    for n,code in enumerate(codes):ast.parse(code,filename=f'cell_{n}')
-    raw='\n'.join(codes)
-    for marker in ['torch.cuda.is_available','3d773bf02fad51c7ab31a5615573fec93b287b30',
-      'part_*.glb','--num_inference_steps','--image_path','uploaded=files.upload()','new_a','new_b','files.download']:
-        assert marker in raw,marker
-    # Colab Python 3.13 != Python compatible con PyTorch 2.5.1.
-    assert 'uv' in raw and 'python", "install", "3.11' in raw, 'MISSING_COLAB_PY313_ISOLATED_PY311_FIX'
-    assert 'pc_python = venv_path / "bin/python"' in raw, 'MISSING_ISOLATED_INFERENCE_RUNTIME'
-    assert 'cmd=[str(pc_python)' in raw, 'INFERENCE_MUST_RUN_WITH_PY311'
-    assert '"torch==2.5.1"' in raw and 'torch-cluster' in raw, 'WRONG_UPSTREAM_CUDA_STACK'
-    assert 'run(["apt-get"' not in raw, 'UNNECESSARY_APT_PACKAGE_INSTALL_BLOCKS_COLAB'
-    assert 'from src.pipelines.pipeline_partcrafter import PartCrafterPipeline' in raw, 'NOT_SMOKE_TESTING_REAL_INFERENCE_IMPORT'
-    # No llamar cuentas comerciales o VLM durante la generación.
-    actual_cmd=raw.split('cmd=[str(pc_python)')[1].split('assert "--rmbg"')[0]
-    for forbidden in ('--part_suggest','--style_transfer','--rmbg'):
-        assert forbidden not in actual_cmd, forbidden
-    print('HIGHFLY_R04_FREE_GPU_NOTEBOOK_SYNTAX_AND_PAYWALL_GATES_GREEN')
+    assert len(codes)==1, 'USER_MUST_RUN_ALL_ONCE'
+    raw=codes[0]
+    ast.parse(raw,filename='highfly_one_click_colab.py')
+    for marker in (
+        'torch.cuda.is_available', '3d773bf02fad51c7ab31a5615573fec93b287b30',
+        'python","install","3.11', 'torch==2.5.1', 'torch-cluster',
+        'uploaded=files.upload()', 'new_a', 'new_b',
+        '--num_inference_steps', '--image_path', 'part_*.glb',
+        'highfly-provenance.json', 'files.download(str(ZIP))', 'HIGHFLY ERROR REAL EN ETAPA:'
+    ):
+        assert marker in raw, marker
+    assert 'run(["apt-get"' not in raw, 'FAIL_100_APT_GET_MUST_NOT_RECUR'
+    assert 'bash","settings/setup.sh"' not in raw, 'OFFICIAL_SETUP_CONTAINS_APT_GET'
+    # Ningún servicio de crédito ni eliminación RMBG se invoca durante la generación.
+    segment=raw.split('cmd=[PY,"scripts/inference_partcrafter.py"')[1].split('assert all(flag not in cmd')[0]
+    for forbidden in ('--part_suggest','--style_transfer','--rmbg','--render'):
+        assert forbidden not in segment, forbidden
+    # Repo pinned + semántica real de salida: compuesto + 4 partes + manifest, zip.
+    assert 'manifest.get("num_parts")!=4' in raw
+    assert 'GEOMETRIA_VACIA_O_DUMMY' in raw
+    assert '"riggedToClaudeCraft":False' in raw
+    assert 'RMBG-1.4' in raw
+    print('HIGHFLY_R05_ONE_CLICK_NOTEBOOK_SYNTAX_AND_FREE_GPU_GATES_GREEN')
 def main():
     test_notebook()
     with tempfile.TemporaryDirectory() as d:
