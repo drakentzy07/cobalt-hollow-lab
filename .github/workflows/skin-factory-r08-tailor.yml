@@ -1,0 +1,59 @@
+name: HIGHFLY SKIN FACTORY R0.8 - ACTUAL TAILOR BROWSER
+on:
+  push:
+    branches: [highfly-skinfactory-r04-free-cloud-partcrafter]
+    paths:
+      - skin-factory-core/tailor_lab_r08.html
+      - skin-factory-core/test_tailor_browser_r08.cjs
+      - .github/workflows/skin-factory-r08-tailor.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-native-rig-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Create synthetic NO-ART test geometry (not PartCrafter output)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -q numpy==1.26.4 trimesh==4.5.3
+          python - <<'PY'
+          import trimesh
+          m=trimesh.creation.icosphere(subdivisions=3, radius=1)
+          m.apply_scale([.36,.87,.36])
+          m.export('skin-factory-core/factory-test-r08-fixture.glb')
+          print('HIGHFLY_R08_SYNTHETIC_TEST_ONLY_NO_GAME_ARMOR=1')
+          PY
+      - name: Install real browser
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Real original ClaudeCraft rig, 22 clips, imported glb test geometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4951 --bind 127.0.0.1 > /tmp/hf-tailor-r08-server.log 2>&1 &
+          sleep 2
+          curl -fsSL http://127.0.0.1:4951/skin-factory-core/tailor_lab_r08.html | grep -F 'SASTRE 3D'
+          node skin-factory-core/test_tailor_browser_r08.cjs
+          echo HIGHFLY_R08_INGEST_AND_RIG_TEST_BROWSER_GREEN=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-R08-TAILOR-VISUAL-TEST-NOT-ARMOR
+          path: skin-factory-core/factory-evidence-r08/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Hard safety gate
+        run: |
+          test ! -d skin-factory-core/generated-premium-armors
+          echo HIGHFLY_R08_NO_PUBLIC_GAME_CHANGE_NO_HUMAN_ART_APPROVAL=1
