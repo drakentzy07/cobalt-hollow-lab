@@ -9,7 +9,7 @@
 import * as THREE from 'three';
 const GOLD=0xbbbecd, BLACK=0x15131e, OBSIDIAN=0x282638, VIOLET=0x922bff, DEEP=0x090a13;
 export const OBSIDIAN91={id:'obsidian91',name:'OBSIDIAN MONARCH · Armadura Knight nativa 9.1',
-  family:'OBSIDIAN MONARCH',signature:'KNIGHT_NATIVE_12_WEIGHTED_23_BONES_22_CLIPS'};
+  family:'OBSIDIAN MONARCH',colors:[BLACK,OBSIDIAN,GOLD,VIOLET,DEEP],signature:'KNIGHT_NATIVE_12_WEIGHTED_23_BONES_22_CLIPS'};
 const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
 const smooth=(a,b,v)=>{const t=clamp((v-a)/(b-a));return t*t*(3-2*t);};
 const vec=(hex)=>new THREE.Color(hex);
