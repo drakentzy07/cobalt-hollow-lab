@@ -37,6 +37,8 @@ jobs:
             /game/c1/highfly_v9_p0_regression.test.ts
             /overlays/highfly_v91_combat_feel.py
             /game/c1/highfly_v91_combat_nine_classes.test.ts
+            /overlays/highfly_v15_pwa_manifest.py
+            /tests/test_highfly_v15_pwa_manifest.py
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
@@ -623,6 +625,10 @@ jobs:
           node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune
           python3 ../overlays/rewrite_pages_static.py
+          # HF15-PWA01: explicit manifest start_url/scope under GitHub Pages project.
+          # Changes disposable dist only, preserves donor identity and PUBLIC Pages.
+          python3 ../v9-corrections/overlays/highfly_v15_pwa_manifest.py
+          python3 -m unittest discover -s ../v9-corrections/tests -p 'test_highfly_v15_pwa_manifest.py' -v
           python3 ../overlays/audit_pages_public_roots.py
           test -s dist/index.html
           test -d dist/media
