@@ -55,7 +55,7 @@ const SOURCE_URL='https://raw.githubusercontent.com/levy-street/world-of-claudec
 const status=document.querySelector('#status'), host=document.querySelector('#view');
 const ui={file:document.querySelector('#raw'),fit:document.querySelector('#fit'),clip:document.querySelector('#clip')};
 const state={ready:false,sourceOriginal:true,clipCount:0,bones:0,sourceBounds:null,profile:null,importedTriangles:0,previewTriangles:0,animatedWithOriginalRig:false,visualFitApproved:false,wearableApproved:false,phoneValidated:false,lastError:null};
-window.__HIGHFLY_TAILOR_R08__=state;
+window.__HIGHFLY_TAILOR_R09__=state;
 const say=(message)=>{status.textContent+='\\n'+String(message);status.scrollTop=status.scrollHeight;console.log(message)};
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x29334b);
 scene.add(new THREE.HemisphereLight(0xe5edff,0x44405c,2.8));
