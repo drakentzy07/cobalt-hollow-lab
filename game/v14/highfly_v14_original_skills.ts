@@ -203,10 +203,10 @@ export function installV14(h:V14Hooks):void{
  document.body.dataset.highflyV14NormalAttack='enabled';
  document.body.dataset.highflyV14OriginalCatalog='90';
  document.body.dataset.highflyV14BuffCatalogue=String(allBuffs.length);
- // Native skill radial duplicates the 10 direct buttons. ATK normal is separate
- // (#mobile-action-attack) and is NEVER disabled or even touched by V14.
- for(const id of ['mobile-action-ring','mobile-action-radial']){
-  const el=document.getElementById(id);if(el)el.style.setProperty('display','none','important');
- }
+ // IMPORTANT: the native #mobile-action-attack, Jump, Use, Target and stance
+ // buttons are CHILDREN of #mobile-action-ring (ClaudeCraft index.html).
+ // Never hide this ring: doing so silences ATK and breaks GOLDEN controls.
+ // V14's two-row skill deck is supplementary; duplicate native skill petals
+ // stay available until a dedicated non-destructive HUD layout is proven on S23.
  equipAll();
 }
