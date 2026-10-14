@@ -124,6 +124,14 @@ replace_once("src/main.ts",
           previewRefill();hud.castSlot(slot);hud.commitGroundAimAt(point);
           return true;
         }
+        if(def.requiresTarget && (def.targetType==='friendly'||def.partyOnlyTarget)){
+          // Healers in the nine-class LAB target the own player, NOT hostile dummies.
+          // Dead-ally resurrection is a separate native condition, never faked.
+          if(def.targetsDead)return false;
+          world.targetEntity(world.playerId);
+          previewRefill();hud.castSlot(slot);
+          return true;
+        }
         if(def.requiresTarget){
           const targetId=drag
             ?highflyV13AimTarget(world.entities.values(),player.pos,aim.yaw,range,attackable)
