@@ -1,0 +1,65 @@
+name: HIGHFLY Wearable Factory R0.3 - ACTUAL LIVE WARRIOR WEBGL FIT
+on:
+  push:
+    branches: [highfly-wearable-factory-r01-authentic-3d-intake]
+    paths:
+      - 'skin-factory-core/rigged_preview.html'
+      - 'skin-factory-core/test_live_wearable_browser.cjs'
+      - '.github/workflows/skin-factory-r03-live-webgl.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original-warrior-live-skin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require exact GREEN real Blender R0.2 transfer and get actual output
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/drakentzy07/cobalt-hollow-lab/actions/runs/38581612579 -o /tmp/highfly-r02-status.json
+          python3 - <<'PY'
+          import json
+          a=json.load(open('/tmp/highfly-r02-status.json'))
+          assert a['status']=='completed' and a['conclusion']=='success'
+          assert a['head_sha']=='0b323cee3ef7a04256e74df3ff453369adf07f43'
+          print('HF_R03_SOURCE_IS_AUTHENTIC_PREVIOUS_GREEN_REBIND=1')
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38581612579
+          name: HIGHFLY-WEARABLE-FACTORY-R02-GENUINE-BLENDER-WEIGHT-TRANSFER
+          github-token: ${{ github.token }}
+          path: skin-factory-core/rigged-fixture
+      - name: Install headless Chrome and verify honest real 3D source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s skin-factory-core/rigged-fixture/new-wearable-rigged.glb
+          test -s skin-factory-core/rigged-fixture/rebound-original-rig-proof.json
+          node --check skin-factory-core/test_live_wearable_browser.cjs
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Mount imported genuinely rigged GLB on live ORIGINAL ClaudeCraft 23-bone actor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4917 --bind 127.0.0.1 >/tmp/highfly-wearable-browser.log 2>&1 &
+          sleep 2
+          node skin-factory-core/test_live_wearable_browser.cjs
+          test -s skin-factory-core/factory-evidence-r03/real-browser-proof.json
+          echo HIGHFLY_WEABLE_FACTORY_REAL_RIG_WEBGL_GREEN=1
+      - name: Store screenshots and proof - no game deploy or public Pages
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-WEARABLE-FACTORY-R03-LIVE-RIG-AND-POSE-REAL-SCREENSHOTS
+          path: skin-factory-core/factory-evidence-r03/
+          retention-days: 30
+          if-no-files-found: warn
