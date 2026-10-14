@@ -30,7 +30,7 @@ once("src/main.ts","  mobileControls.start();","""  mobileControls.start();
       x:player.pos.x,y:player.pos.y,z:player.pos.z+6,
     });
     dummy.hostile=true;dummy.hp=dummy.maxHp=999999999;dummy.aiState='idle';
-    offlineSim.addEntity(dummy);
+    (offlineSim as unknown as {addEntity(mob:typeof dummy):void}).addEntity(dummy);
     offlineSim.targetEntity(dummy.id,player.id);
     const attackable=(id:number)=>isAttackableEntity(
       world.entities.get(id),world.playerId,activePvpOpponentIds(world));
