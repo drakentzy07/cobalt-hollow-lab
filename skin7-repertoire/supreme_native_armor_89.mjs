@@ -240,13 +240,14 @@ export function forgeSupreme89(gltf,id){
  const visibleOldHelmet=[...shells.get('Head'),...donor.get('Head')].filter(m=>m.visible).length;
  const visibleOldChest=[...shells.get('Chest'),...donor.get('Chest')].filter(m=>m.visible).length;
  const actual=[...generated,...list.filter(m=>m.visible)];
+ const sourceBounds=Object.fromEntries([...donor].map(([name,ms])=>{const b=boxes(ms);return [name,{center:b.center.toArray().map(v=>+v.toFixed(4)),size:b.size.toArray().map(v=>+v.toFixed(4))}]}));
  const qa={pass:'SKIN89_NEW_TOPOLOGY_RIGGED_3D',id,style:cfg.signature,
   helmetMode:'CLOSED_SINGLE_MESH_FULL_REPLACEMENT',
   cuirassMode:'CONTINUOUS_SINGLE_MESH_FULL_REPLACEMENT',
   helmetTriangles:generated[0].geometry.index.count/3,
   cuirassTriangles:generated[1].geometry.index.count/3,
   generatedSkinnedMeshes:generated.length,sourceDonorMeshes:original.length,
-  nativeBodyMeshesReworked:repainted,hiddenOldNativeShells:shellHidden,
+  nativeBodyMeshesReworked:repainted,hiddenOldNativeShells:shellHidden,sourceBounds,
   oldHelmetVisible:visibleOldHelmet,oldChestVisible:visibleOldChest,
   wingMeshesVisible:visibleWings.length,sourceBones:23,clips:gltf.animations.length,
   weightedMeshes:actual.filter(o=>o.isSkinnedMesh&&o.skeleton.bones.length===23).length,
