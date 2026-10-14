@@ -103,9 +103,16 @@ def main():
             if group.name not in bone_names:dst.vertex_groups.remove(group)
         arm=dst.modifiers.new('HF_CLAUDECRAFT_RIG','ARMATURE')
         arm.object=rig
+        # Blender's glTF exporter requires armature PARENT, not only modifier.
+        # Preserve exact original world matrix, with no surprising offset/scale.
+        preserved_world=dst.matrix_world.copy()
+        dst.parent=rig
+        dst.matrix_world=preserved_world
+        if dst.parent!=rig or arm.object!=rig:
+            raise ValueError('EXPORT_NATIVE_PARENT_OR_MODIFIER_LOST '+dst.name)
         all_weights+=valid
         transfers.append({'part':dst.name,'donor':donor.name,'vertices':valid,'groups':len(dst.vertex_groups)})
-    # Only the new mesh pieces and the *original* armature will be exported.
+    if any(mesh.parent != rig for mesh in incoming):\n        raise ValueError('EXPORTED_SKIN_NO_ACTUAL_RIG_PARENT')\n    # Only the new mesh pieces and the *original* armature will be exported.
     # Source body meshes are never bundled in a wearable; source remains separate.
     bpy.ops.object.select_all(action='DESELECT')
     rig.select_set(True)
@@ -120,7 +127,7 @@ def main():
         'raw_sha256':hashlib.sha256(raw.read_bytes()).hexdigest(),
         'originalSourceMutated':False,'generatedFromTextAI':False,
         'method':'Blender Data Transfer POLYINTERP_NEAREST, 4 normalized groups, original 23 bones',
-        'authenticSkeletonBones':len(bone_names),
+        'authenticSkeletonBones':len(bone_names),'armatureParentedMeshes':sum(x.parent == rig for x in incoming),
         'newMeshesWeighted':len(incoming),'newVerticesWeighted':all_weights,
         'parts':transfers,'visualArtApproved':False,'physicalAndroidTested':False,
         'semanticFitApproval':False,'outBytes':out.stat().st_size}
