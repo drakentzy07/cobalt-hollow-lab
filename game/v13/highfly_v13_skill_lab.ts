@@ -142,4 +142,13 @@ export function installHighflyV13SkillLab(hooks:HighflyV13LabHooks):void {
   toggle.addEventListener('click',()=>{root.style.display='flex';toggle.style.display='none';});
   root.append(header,bar,status,restore,oldToggle,viewport,foot);
   document.body.append(root,toggle);
+  document.body.dataset.highflyV13NormalAttack='disabled';
+  // Only this isolated V13 HUD: ordinary ATK is disabled, not skill strikes.
+  const normalAtk=document.getElementById('mobile-action-attack') as HTMLButtonElement|null;
+  if(normalAtk){
+    normalAtk.disabled=true;
+    normalAtk.setAttribute('aria-label','ATK normal desactivado en el laboratorio V13');
+    normalAtk.style.opacity='.3';
+    normalAtk.style.filter='grayscale(1)';
+  }
 }
