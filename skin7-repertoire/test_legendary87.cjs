@@ -21,6 +21,12 @@ const dir='skin7-repertoire/evidence-87';fs.mkdirSync(dir,{recursive:true});
   let res=await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
   assert(res?.ok(),'viewer must load');
   await page.waitForFunction(()=>window.__HIGHFLY_ARMOR_REPERTOIRE__?.sourceLoaded || window.__HIGHFLY_ARMOR_REPERTOIRE__?.error,null,{timeout:120000});
+  // SKIN 8.8 selector: only the three new heroes, no failed legacy experiments.
+  assert.deepEqual(await page.locator('#families button').evaluateAll(nodes=>nodes.map(n=>n.dataset.id)),variants,
+    'SKIN88_HERO_ONLY_MENU_RED');
+  await page.waitForFunction(()=>window.__HIGHFLY_ARMOR_REPERTOIRE__?.variantReady || window.__HIGHFLY_ARMOR_REPERTOIRE__?.error,null,{timeout:165000});
+  assert.equal(await page.evaluate(()=>window.__HIGHFLY_ARMOR_REPERTOIRE__?.variantId),'hero-dragon',
+    'SKIN88_DEFAULT_DRAGON_REQUIRED');
   const proof={};
   for(const id of variants){
    await page.locator('[data-id="'+id+'"]').click();
@@ -34,6 +40,19 @@ const dir='skin7-repertoire/evidence-87';fs.mkdirSync(dir,{recursive:true});
    assert.equal(p.originalNativePrimitives,17);assert.equal(p.originalNativeSlots,11);
    assert.equal(p.sourceImmutable,true);
    assert.equal(p.hero87?.pass,'SKIN8_7_THREE_LEGENDARY');
+   assert.equal(p.fidelity88?.pass,'SKIN8_8_HELMET_CUIRASS_FIDELITY');
+   assert.equal(p.fidelity88?.sourceBones,23);
+   assert.equal(p.fidelity88?.clips,22);
+   assert.equal(p.fidelity88?.nativeShellsResculpted,17);
+   assert(p.fidelity88?.helmSculptedVertices>10,'native helmet geometry must visibly change');
+   assert(p.fidelity88?.chestSculptedVertices>10,'native cuirass geometry must visibly change');
+   for(const k of ['Head','Chest','ArmL','ArmR'])
+    assert(p.fidelity88?.fullyConnectedGeometrySlots.includes(k),'native connected slot '+k);
+   assert(p.fidelity88?.oldStickerPlatesHidden>=30);
+   assert.equal(p.fidelity88?.unwantedOldDecorVisible,0);
+   assert.equal(p.fidelity88?.retainedBackWingMeshes,id==='hero-dragon'?18:id==='hero-celestial'?26:30);
+   assert.equal(p.fidelity88?.sourceGLBImmutable,true);
+   assert.equal(p.fidelity88?.exactConceptArtMatch,false);
    assert.equal(p.hero87?.id,id);
    assert.equal(p.hero87?.sourcePrimitives,17);
    assert.equal(p.hero87?.bones,23);assert.equal(p.hero87?.clips,22);
@@ -60,6 +79,7 @@ const dir='skin7-repertoire/evidence-87';fs.mkdirSync(dir,{recursive:true});
   }
   assert.equal(new Set(variants.map(id=>proof[id].signature)).size,3);
   assert.equal(new Set(variants.map(id=>proof[id].hero87.attachedWingFeathers)).size,3);
+  assert.equal(new Set(variants.map(id=>proof[id].fidelity88.targetTheme)).size,3);
   const diagnostic=await page.evaluate(()=>{
     const root=window.__HIGHFLY_ARMOR_REPERTOIRE__.debugCandidateRoot;
     const bad=[],report={meshes:0,vertices:0,rawNan:0,deformedNan:0};
@@ -104,6 +124,6 @@ const dir='skin7-repertoire/evidence-87';fs.mkdirSync(dir,{recursive:true});
   fs.writeFileSync(dir+'/legendary-qa.json',JSON.stringify({variants,proof,
    mobileViewport:'915x412 simulated; real Samsung not tested',
    sourceUnmodified:true,wingPhysicsCertified:false,exactImageArtApproved:false},null,2));
-  console.log('HIGHFLY_SKIN87_THREE_LEGENDARY_RIG_AND_MOTION_GREEN=1');
+  console.log('HIGHFLY_SKIN88_THREE_THEMATIC_INTEGRATED_ARMORS_GREEN=1');
  }finally{await browser.close();}
 })().catch(e=>{console.error('HIGHFLY_LEGENDARY87_GATE_FAIL',e.stack||e);process.exit(1)});

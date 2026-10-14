@@ -14,6 +14,7 @@ import {forgeNativeReferenceShells841} from './native_reforge_841.mjs';
 import {applyNativeSurfaceConform85} from './native_surface_conform_85.mjs';
 import {sculptFamilySilhouette86} from './anchored_silhouette_86.mjs';
 import {HERO87,buildLegendary87} from './legendary_hero_armors_87.mjs';
+import {integrateLegendaryFidelity88} from './legendary_fidelity_88.mjs';
 
 const specs=[
  {id:'violet',name:'Obsidiana Violeta III · Referencia 8.3',family:'DARK SAINT',base:'violet',colors:[0x10121c,0x30324b,0xd1cce0,0x9b36fa,0x49315e],
@@ -301,6 +302,7 @@ export function forgeArmorRepertoire(gltf,id){
   const nativeReforge841=forgeNativeReferenceShells841(gltf,baseId);
   const surfaceConform85=applyNativeSurfaceConform85(gltf,baseId);
   const hero87=buildLegendary87(gltf,id);
+  const fidelity88=integrateLegendaryFidelity88(gltf,id);
   const flags={donorAndRigPreserved:hero87.sourcePrimitives===17&&hero87.bones===23,
    noBodyLeaks:surfaceConform85.visiblePriorFlatPanels===0&&surfaceConform85.visibleOriginalArmor===0,
    styleSignature:hero87.meshes>=30&&hero87.wingPairs===2,
@@ -311,7 +313,7 @@ export function forgeArmorRepertoire(gltf,id){
    signature:def.signature,originalBones:23,clips:gltf.animations.length,
    nativeSlots:11,originalNativeSlots:11,originalNativePrimitives:17,
    newStyleMeshes:hero87.meshes+17,skinnedStyleMeshes:hero87.weightedMeshes+17,
-   nativeReforge841,surfaceConform85,hero87,sourceImmutable:true,flags,
+   nativeReforge841,surfaceConform85,hero87,fidelity88,sourceImmutable:true,flags,
    structuralGreen:Object.values(flags).slice(0,4).every(Boolean),
    maleArtApproved:false};
   if(!qa.structuralGreen)throw Error('HF87_NATIVE_DIRECT_GATE_RED '+JSON.stringify(qa));
