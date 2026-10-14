@@ -62,3 +62,13 @@ Conseguir un **GLB sin rig con geometría nueva**, preferentemente separado por 
 - `GLB AI no nombrado/no alineado -> armadura completa con casco, coraza y prendas perfectas`: **AÚN NO** (segmentación/normalización escala, remesh, fitting semántico, clipping y VFX).
 - Próximo hito imprescindible: elegir una herramienta generativa, producir un **GLB de armadura real** (no personaje entero), separar por slot, usar Blender R0.2 como base, comparar contra ilustración original y no publicar hasta aprobar arte.
 - Se conservan absolutamente intactos HIGHFLY público, SKIN 8.8, SKIN 8.9, SKIN 9.1.
+
+## Actualización investigación de IA 3D - candidatos de piezas individuales
+
+**PartCrafter** (https://github.com/wgsxm/PartCrafter) genera mallas 3D divididas en varias partes a partir de una imagen; su repositorio está publicado con licencia MIT, pero la ejecución requiere modelos con GPU y dependencias externas: revisar licencias de pesos (incluido RMBG-1.4) y costos de hosting antes de producción. No es un sistema de rigging compatible con ClaudeCraft por sí mismo. Es el candidato abierto que mejor coincide con 'armadura por piezas visualmente coherentes'.
+
+**Meshy T2 Smart Topology** (https://docs.meshy.ai/en/api/image-to-3d) genera geometría con partes separadas y 100-15000 caras, pero exige créditos API: no iniciar peticiones facturables sin aprobación expresa. No escoger `lowpoly` retirado en octubre 2026.
+
+**Tripo generate_parts** (https://developers.tripo3d.com/en/docs/generation-image-to-model/standard) ofrece segmentación; actualmente `generate_parts=true` exige `texture=false` y `pbr=false` y es incompatible con `smart_low_poly`; posterior texturizado PBR es un segundo paso. También requiere API key/créditos. Por ahora no se ha contratado ningún proveedor.
+
+**Prioridad operativa:** probar un solo set Obsidian Monarch con partes de armadura separadas desde entrada de imagen, primero la calidad geométrica, después el ajuste Blender R0.2 y la prueba R0.3. Si no se obtiene geometría satisfactoria del proveedor, no forzar una publicación 'premium'.
