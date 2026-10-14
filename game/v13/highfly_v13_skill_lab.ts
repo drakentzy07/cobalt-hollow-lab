@@ -94,7 +94,7 @@ export function installHighflyV13SkillLab(hooks:HighflyV13LabHooks):void {
     status.textContent=failed.length
       ? 'EQUIPADAS '+ok+'/7 · FALLARON: '+failed.join(', ')+
         '. Probá RESTAURAR 7 y avisame de este mensaje.'
-      : '✓ 7/7 NUEVAS EQUIPADAS · S1–S7 del HUD. OCULTAR panel para combatir.';
+      : '✓ 7/7 NUEVAS EQUIPADAS · ATK NORMAL OFF · Grabá solo VFX de S1–S7.';
     if(failed.length)console.warn('[HIGHFLY V13] 7/7 autoloadout incomplete',cls,failed);
     return {ok,failed};
   };
@@ -133,7 +133,7 @@ export function installHighflyV13SkillLab(hooks:HighflyV13LabHooks):void {
     originalsGroups.forEach(group=>{group.style.display=showOriginals?'flex':'none';});
   });
   const foot=make('div',
-    '7 NUEVAS EN S1–S7 · Arrastrá botones para apuntar · VFX reales: revisión visual pendiente',
+    'ATK NORMAL DESACTIVADO (SOLO V13) · SKILLS S1–S7 · VFX sin golpes básicos',
     'padding:8px;color:#c1d1df;background:#10283c;font-size:11px;');
   const toggle=make('button','⚔ SKILLS 63',
     'position:fixed;right:12px;top:9px;z-index:9991;padding:10px 13px;'+
