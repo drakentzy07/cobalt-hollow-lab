@@ -21,6 +21,12 @@ const dir='skin7-repertoire/evidence-87';fs.mkdirSync(dir,{recursive:true});
   let res=await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
   assert(res?.ok(),'viewer must load');
   await page.waitForFunction(()=>window.__HIGHFLY_ARMOR_REPERTOIRE__?.sourceLoaded || window.__HIGHFLY_ARMOR_REPERTOIRE__?.error,null,{timeout:120000});
+  // SKIN 8.8 selector: only the three new heroes, no failed legacy experiments.
+  assert.deepEqual(await page.locator('#families button').evaluateAll(nodes=>nodes.map(n=>n.dataset.id)),variants,
+    'SKIN88_HERO_ONLY_MENU_RED');
+  await page.waitForFunction(()=>window.__HIGHFLY_ARMOR_REPERTOIRE__?.variantReady || window.__HIGHFLY_ARMOR_REPERTOIRE__?.error,null,{timeout:165000});
+  assert.equal(await page.evaluate(()=>window.__HIGHFLY_ARMOR_REPERTOIRE__?.variantId),'hero-dragon',
+    'SKIN88_DEFAULT_DRAGON_REQUIRED');
   const proof={};
   for(const id of variants){
    await page.locator('[data-id="'+id+'"]').click();
