@@ -10,7 +10,8 @@ const dir='skin7-repertoire/evidence-91';fs.mkdirSync(dir,{recursive:true});
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
   const a=await page.goto('http://127.0.0.1:4917/skin7-repertoire/',{waitUntil:'domcontentloaded',timeout:60000});
   assert(a.ok(),'VIEWER_HTTP_RED');
-  await page.waitForFunction(()=>window.__HIGHFLY_ARMOR_REPERTOIRE__?.sourceLoaded||window.__HIGHFLY_ARMOR_REPERTOIRE__?.error,null,{timeout:120000});
+  try{await page.waitForFunction(()=>window.__HIGHFLY_ARMOR_REPERTOIRE__?.sourceLoaded||window.__HIGHFLY_ARMOR_REPERTOIRE__?.error,null,{timeout:85000});}
+  catch(e){throw Error('HF91_BOOTSTRAP_TIMEOUT / '+JSON.stringify(errors.slice(0,10))+' / '+await page.locator('#progress').innerText());}
   assert.deepEqual(await page.locator('#families button').evaluateAll(xs=>xs.map(x=>x.dataset.id)),['obsidian91']);
   await page.waitForFunction(()=>window.__HIGHFLY_ARMOR_REPERTOIRE__?.variantReady||window.__HIGHFLY_ARMOR_REPERTOIRE__?.error,null,{timeout:165000});
   const st=await page.evaluate(()=>window.__HIGHFLY_ARMOR_REPERTOIRE__);
