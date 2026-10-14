@@ -67,7 +67,10 @@ function create(s:HighflyFusionSpec,ds:AbilityDef[]):AbilityDef{
    throw Error('SF27_TITHEFIEND_VESPERS_FEAR_SOURCE_CHANGED');
   props={...common,requiresTarget:false,cost:60,cooldown:60,
    castTime:0,range:0,school:'shadow',targetMode:undefined,
-   requiresAuraKind:'gloomtithe',consumesRequiredAura:false};
+   // The base Highfly Priest has no forced ClaudeCraft specialization.
+   // Tithefiend uses 1 native Gloomtithe stack minimum, consuming banked
+   // source stacks if present; casting remains usable for all nine classes.
+   requiresAuraKind:undefined,consumesRequiredAura:false};
   fx=lv=>ranked(b,lv);
  }else if(id==='hf_druid_u1'){
   if(a.effects[0]?.type!=='massResurrectGroup'||!a.requiresOutOfCombat||
