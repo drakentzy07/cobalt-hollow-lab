@@ -10,6 +10,34 @@ const CLASS_NAMES: Record<HighflyClass,string> = {
   priest:'Priest',shaman:'Shaman',mage:'Mage',warlock:'Warlock',druid:'Druid',
 };
 const CLASS_IDS = Object.keys(CLASS_NAMES) as HighflyClass[];
+// A separate testing mode, never a gameplay rule. Enabled only after V13 UI mounts.
+let v13PreviewResourcesEnabled=false;
+export function highflyV13ResourceRefillEnabled():boolean {
+  return v13PreviewResourcesEnabled;
+}
+export function highflyV13PickSmartTarget(
+  entities:Iterable<{id:number;pos:{x:number;z:number}}>,
+  origin:{x:number;z:number}, cameraYaw:number, range:number,
+  attackable:(id:number)=>boolean,
+):number|null {
+  const sx=Math.sin(cameraYaw),sz=Math.cos(cameraYaw);
+  let best:number|null=null,bestScore=Infinity;
+  for(const e of entities){
+    if(!attackable(e.id))continue;
+    const x=e.pos.x-origin.x,z=e.pos.z-origin.z;
+    const d=Math.hypot(x,z);
+    if(!(d>0.001 && d<=range))continue;
+    const dot=(sx*x+sz*z)/d;
+    // Taps prefer a nearby visible-front target, but can turn toward the only
+    // valid target behind the player (as requested for HIGHFLY soft aim).
+    const penalty=dot<0?range+10:(1-dot)*2;
+    const score=d+penalty;
+    if(score<bestScore || (score===bestScore && (best===null || e.id<best))){
+      best=e.id;bestScore=score;
+    }
+  }
+  return best;
+}
 export function highflyV13Requested():boolean {
   return new URLSearchParams(location.search).get('hf-v13')==='1';
 }
@@ -20,11 +48,14 @@ export function highflyV13Class():HighflyClass {
 export interface HighflyV13LabHooks {
   equip(id:string,slot:number):boolean;
   cast(slot:number):void;
+  aim(slot:number,sx:number,sy:number,x:number,y:number,drag:boolean):boolean;
+  readResource():{type:string;current:number;max:number};
 }
 export function installHighflyV13SkillLab(hooks:HighflyV13LabHooks):void {
   if (!highflyV13Requested()) return;
   if (document.getElementById('highfly-v13-skill-lab')) return;
   const cls=highflyV13Class();
+  v13PreviewResourcesEnabled=true;
   const root=document.createElement('aside');
   root.id='highfly-v13-skill-lab';
   root.setAttribute('aria-label','HIGHFLY V13 selector de 63 habilidades');
@@ -64,6 +95,18 @@ export function installHighflyV13SkillLab(hooks:HighflyV13LabHooks):void {
   bar.append(close);
   const status=make('div','Preparando las 7 habilidades nuevas de esta clase…',
     'padding:6px 10px;color:#bfe8ff;line-height:1.3;');
+  const resourceMode=make('button','♾ RECURSOS VFX · RECARGA AUTOMÁTICA ACTIVA',
+    'margin:0 8px 6px;border:1px solid #55ba85;background:#133c36;color:#e6fff3;padding:8px;border-radius:7px;font-weight:800;');
+  resourceMode.addEventListener('click',()=>{
+    v13PreviewResourcesEnabled=!v13PreviewResourcesEnabled;
+    const resource=hooks.readResource();
+    resourceMode.textContent=v13PreviewResourcesEnabled
+      ? '♾ RECURSOS VFX · RECARGA AUTOMÁTICA ACTIVA'
+      : '⚖ RECURSOS REALES · '+resource.type.toUpperCase()+' (SIN RECARGA)';
+    status.textContent=v13PreviewResourcesEnabled
+      ? 'MODO VFX: '+resource.type+' lleno en cada tick; daño/cooldowns/condiciones siguen siendo nativos.'
+      : 'MODO REAL: '+resource.type+' y costes auténticos. Con ATK normal OFF, la ira no se genera por golpes básicos.';
+  });
   const viewport=make('div','','overflow-y:auto;overscroll-behavior:contain;padding:6px 8px;flex:1;');
   const rowButton=(text:string, id:string, slot:number, title:string, accent:string)=>{
     const b=make('button',text,
@@ -140,9 +183,83 @@ export function installHighflyV13SkillLab(hooks:HighflyV13LabHooks):void {
     'background:#153b57;color:#fff;border:2px solid #74d9ff;border-radius:10px;display:none;');
   close.addEventListener('click',()=>{root.style.display='none';toggle.style.display='block';});
   toggle.addEventListener('click',()=>{root.style.display='flex';toggle.style.display='none';});
-  root.append(header,bar,status,restore,oldToggle,viewport,foot);
-  document.body.append(root,toggle);
+  root.append(header,bar,status,resourceMode,restore,oldToggle,viewport,foot);
+  // Mobile Legends inspired V13 ONLY: seven direct thumb skills; tap auto-selects,
+  // drag previews a direction/area, release commits the ORIGINAL native cast.
+  // The legacy petal/radial input is hidden exclusively in this isolated lab.
+  const deck=make('div','','position:fixed;z-index:9961;right:max(120px,11vw);bottom:20px;'+
+    'width:min(344px,46vw);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));'+
+    'gap:7px;touch-action:none;');
+  deck.id='highfly-v13-seven-skill-deck';
+  const canvas=document.createElement('canvas');
+  canvas.id='highfly-v13-aim-preview';
+  Object.assign(canvas.style,{position:'fixed',inset:'0',width:'100%',height:'100%',
+    zIndex:'9959',pointerEvents:'none',display:'none'});
+  const ctx=canvas.getContext('2d');
+  const resetAim=()=>{
+    canvas.style.display='none';
+    ctx?.clearRect(0,0,innerWidth,innerHeight);
+  };
+  const preview=(sx:number,sy:number,x:number,y:number,slot:number)=>{
+    if(!ctx)return;
+    canvas.style.display='block';
+    canvas.width=Math.max(1,Math.floor(innerWidth*devicePixelRatio));
+    canvas.height=Math.max(1,Math.floor(innerHeight*devicePixelRatio));
+    ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+    ctx.clearRect(0,0,innerWidth,innerHeight);
+    ctx.lineWidth=4;ctx.strokeStyle='rgba(91,221,255,.95)';
+    ctx.fillStyle='rgba(91,221,255,.14)';ctx.setLineDash([10,6]);
+    ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(x,y);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.arc(x,y,19,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 16px system-ui';
+    ctx.fillText('S'+slot+' · SOLTAR PARA LANZAR',Math.max(5,x-92),Math.max(18,y-25));
+  };
+  for(const spec of specs){
+    const btn=make('button','S'+spec.slot+'\n'+spec.name,
+      'display:flex;flex-direction:column;justify-content:center;align-items:center;'+
+      'white-space:pre-line;text-align:center;line-height:1.1;min-height:64px;'+
+      'padding:6px 3px;border-radius:12px;border:2px solid #57bdec;'+
+      'background:rgba(9,37,60,.94);color:white;font:600 10px system-ui;'+
+      'touch-action:none;user-select:none;-webkit-user-select:none;');
+    btn.setAttribute('aria-label','S'+spec.slot+' '+spec.name+' · tocar o arrastrar');
+    btn.title='TOCAR: autoapuntar y lanzar · ARRASTRAR: apuntado manual';
+    let active:{id:number;sx:number;sy:number}|null=null;
+    btn.addEventListener('pointerdown',(e)=>{
+      if(active)return;
+      e.preventDefault();e.stopPropagation();
+      active={id:e.pointerId,sx:e.clientX,sy:e.clientY};
+      btn.setPointerCapture(e.pointerId);
+      btn.style.borderColor='#ffe88b';
+    });
+    btn.addEventListener('pointermove',(e)=>{
+      if(!active||active.id!==e.pointerId)return;
+      e.preventDefault();e.stopPropagation();
+      if(Math.hypot(e.clientX-active.sx,e.clientY-active.sy)>16)
+        preview(active.sx,active.sy,e.clientX,e.clientY,spec.slot);
+    });
+    btn.addEventListener('pointerup',(e)=>{
+      if(!active||active.id!==e.pointerId)return;
+      e.preventDefault();e.stopPropagation();
+      const a=active;active=null;resetAim();
+      btn.style.borderColor='#57bdec';
+      const drag=Math.hypot(e.clientX-a.sx,e.clientY-a.sy)>20;
+      const ok=hooks.aim(spec.slot,a.sx,a.sy,e.clientX,e.clientY,drag);
+      status.textContent=ok
+        ? 'S'+spec.slot+' '+spec.name+(drag?' · APUNTADO MANUAL':' · AUTOAPUNTADO')+
+          (v13PreviewResourcesEnabled?' · RECURSO VFX ∞':' · RECURSO REAL')
+        : 'S'+spec.slot+': objetivo inválido o fuera de alcance. Probá apuntar al dummy.';
+    });
+    btn.addEventListener('pointercancel',()=>{active=null;resetAim();btn.style.borderColor='#57bdec';});
+    deck.append(btn);
+  }
+  document.body.append(root,toggle,deck,canvas);
   document.body.dataset.highflyV13NormalAttack='disabled';
+  document.body.dataset.highflyV13SkillAim='seven-direct-buttons';
+  // Native radial icons would compete for the same right-thumb gestures.
+  const nativeRing=document.getElementById('mobile-action-ring');
+  if(nativeRing)nativeRing.style.display='none';
+  const nativeRadial=document.getElementById('mobile-action-radial');
+  if(nativeRadial)nativeRadial.style.display='none';
   // Only this isolated V13 HUD: ordinary ATK is disabled, not skill strikes.
   const normalAtk=document.getElementById('mobile-action-attack') as HTMLButtonElement|null;
   if(normalAtk){
