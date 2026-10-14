@@ -1,0 +1,111 @@
+name: HIGHFLY Wearable Factory R0.2 - BLENDER REAL AUTO REBIND
+on:
+  push:
+    branches: [highfly-wearable-factory-r01-authentic-3d-intake]
+    paths:
+      - 'skin-factory-core/blender_auto_bind.py'
+      - 'skin-factory-core/make_unrigged_fixture.py'
+      - 'skin-factory-core/decode_warrior_for_blender.mjs'
+      - '.github/workflows/skin-factory-r02-blender-bind.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  blender-real-mesh-to-original-23-bones:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install verified official Blender 4.2 LTS
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          VERSION=4.2.23
+          NAME="blender-$VERSION-linux-x64.tar.xz"
+          BASE=https://download.blender.org/release/Blender4.2
+          mkdir -p "$RUNNER_TEMP/hf-blender" "$RUNNER_TEMP/hf-download"
+          cd "$RUNNER_TEMP/hf-download"
+          curl -fSL --retry 2 --connect-timeout 15 --max-time 390 "$BASE/$NAME" -o "$NAME"
+          curl -fSL --retry 2 --connect-timeout 15 --max-time 35 "$BASE/blender-$VERSION.sha256" -o SHA256SUMS
+          grep -F "$NAME" SHA256SUMS | head -n 1 | sha256sum --check
+          tar -xJf "$NAME" --strip-components=1 -C "$RUNNER_TEMP/hf-blender"
+          echo "$RUNNER_TEMP/hf-blender" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/hf-blender/blender" --version | head -n 2
+      - name: Download real Blender authored armor as independent fitting fixture
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 37984648737
+          name: HIGHFLY-V19-LEGENDARY-BLENDER-ORIGINAL-RIG-STUDIO-NO-DEPLOY
+          github-token: ${{ github.token }}
+          path: skin-factory-core/factory-fixture
+      - name: Decode frozen original Warrior GLB and strip fixture skin
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/highfly-original /tmp/highfly-r02
+          curl -fsSL --retry 3 --max-time 130 https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb -o /tmp/highfly-original/warrior_modular.glb
+          test "$(git hash-object /tmp/highfly-original/warrior_modular.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          npm install --no-save --package-lock=false @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer
+          node skin-factory-core/decode_warrior_for_blender.mjs /tmp/highfly-original/warrior_modular.glb /tmp/highfly-r02/decoded-warrior.glb
+          python3 -m pip install -q 'trimesh>=4.0,<5' 'numpy>=1.24,<3'
+          python3 skin-factory-core/make_unrigged_fixture.py \
+            skin-factory-core/factory-fixture/assets/HIGHFLY-V19-LEGENDARY-ORNAMENTS.glb \
+            /tmp/highfly-r02/new-unrigged-armor.glb \
+            /tmp/highfly-r02/unrigged-provenance.json
+          node skin-factory-core/validate_real_wearable.mjs \
+            --source /tmp/highfly-original/warrior_modular.glb \
+            --wearable /tmp/highfly-r02/new-unrigged-armor.glb \
+            --stage raw --out /tmp/highfly-r02/unrigged-preflight.json
+          test -s /tmp/highfly-r02/decoded-warrior.glb
+          echo HIGHFLY_REAL_NEW_GEOMETRY_NOT_SKINNED_YET=1
+      - name: Blender transfer bone weights from actual M body to unrigged geometry
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          blender --background --factory-startup --python skin-factory-core/blender_auto_bind.py -- \
+            --native /tmp/highfly-r02/decoded-warrior.glb \
+            --raw /tmp/highfly-r02/new-unrigged-armor.glb \
+            --out /tmp/highfly-r02/new-wearable-rigged.glb \
+            --report /tmp/highfly-r02/weight-transfer.json
+          test -s /tmp/highfly-r02/new-wearable-rigged.glb
+          test -s /tmp/highfly-r02/weight-transfer.json
+          echo HIGHFLY_BLENDER_REAL_NATIVE_WEIGHTS_TRANSFERRED=1
+      - name: Verify all new 3D vertices use the ORIGINAL 23 ClaudeCraft joints
+        shell: bash
+        run: |
+          set -euo pipefail
+          node skin-factory-core/validate_real_wearable.mjs \
+            --source /tmp/highfly-original/warrior_modular.glb \
+            --wearable /tmp/highfly-r02/new-wearable-rigged.glb \
+            --stage wearable --out /tmp/highfly-r02/rebound-original-rig-proof.json
+          python3 - <<'PY'
+          import json
+          p=json.load(open('/tmp/highfly-r02/rebound-original-rig-proof.json'))
+          q=json.load(open('/tmp/highfly-r02/weight-transfer.json'))
+          assert p['meshNodes']==32 and p['weightedMeshes']==32
+          assert p['sourceBoneCount']==23 and p['originalAnimationClips']==22
+          assert p['weightVertices']>=1000 and p['unskinnedNodes']==0
+          assert q['authenticSkeletonBones']==23 and q['newMeshesWeighted']==32
+          assert p['automaticFittingImplemented']==False
+          assert q['visualArtApproved']==False
+          print('HIGHFLY_UNRIGGED_3D_TO_ORIGINAL_WARRIOR_23_BONE_SKIN_WEIGHTS_GREEN',p['weightVertices'])
+          PY
+      - name: Package real 3D output and truthful evidence - NEVER deploy HIGHFLY game
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p skin-factory-core/factory-evidence-r02
+          for n in new-unrigged-armor.glb new-wearable-rigged.glb unrigged-provenance.json unrigged-preflight.json weight-transfer.json rebound-original-rig-proof.json; do
+            if test -s "/tmp/highfly-r02/$n"; then cp "/tmp/highfly-r02/$n" skin-factory-core/factory-evidence-r02/; fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-WEARABLE-FACTORY-R02-GENUINE-BLENDER-WEIGHT-TRANSFER
+          path: skin-factory-core/factory-evidence-r02/
+          if-no-files-found: warn
+          retention-days: 30
