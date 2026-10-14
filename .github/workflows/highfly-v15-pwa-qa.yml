@@ -1,0 +1,36 @@
+name: HIGHFLY V15 - PWA path QA (NO DEPLOY)
+
+# Small, reproducible tests only. No Pages permission, upload, publish, or donor mutation.
+on:
+  push:
+    branches: [highfly-v15-foundation]
+    paths:
+      - ".github/workflows/highfly-v15-pwa-qa.yml"
+      - ".github/workflows/highfly-supreme-integrated-candidate-s23-no-deploy.yml"
+      - "overlays/highfly_v15_pwa_manifest.py"
+      - "tests/test_highfly_v15_pwa_manifest.py"
+      - "overlays/rewrite_pages_static.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-v15-pwa-qa-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  pwa_manifest_guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout V15 branch only (no publish token)
+        uses: actions/checkout@v4
+      - name: Verify manifest patch and real URL-rewrite chaining
+        run: python3 -m unittest discover -s tests -p 'test_highfly_v15_pwa_manifest.py' -v
+      - name: Guard branch and never deploy Pages
+        env:
+          REPOSITORY_REF: ${{ github.ref_name }}
+        run: |
+          test "$REPOSITORY_REF" = "highfly-v15-foundation"
+          echo 'HF15_PWA_QA_NO_PAGES_WRITE=1'
