@@ -1,0 +1,61 @@
+name: HIGHFLY V15 - Diagnose recent red runs (NO DEPLOY)
+
+# Branch-scoped, minimal visibility. Reads Actions and reports to master issue #30.
+# Does not check out or execute game code, mutate runtime, or deploy Pages.
+on:
+  push:
+    branches: [highfly-v15-foundation]
+    paths:
+      - ".github/workflows/highfly-v15-ci-diagnostics.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  report_previous_red:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Find failing run and failing step from GitHub Actions API
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner, repo = context.repo.repo;
+            const data = await github.paginate(github.rest.actions.listWorkflowRunsForRepo, {
+              owner, repo, branch: 'highfly-v15-foundation', per_page: 100
+            });
+            const runs = data.filter(r =>
+              r.id !== context.runId &&
+              r.status === 'completed' &&
+              r.conclusion === 'failure' &&
+              r.name !== 'HIGHFLY V15 - Diagnose recent red runs (NO DEPLOY)'
+            ).slice(0, 4);
+            const lines = [
+              '## HF15 — Informe automático de RUNs rojos',
+              'Fecha UTC: ' + new Date().toISOString(),
+              'Rama: highfly-v15-foundation',
+              ''
+            ];
+            if (!runs.length) lines.push('Sin RUNs fallidos visibles para la rama en los primeros registros consultados.');
+            for (const run of runs) {
+              lines.push('### ' + run.name + ' — [RUN ' + run.id + '](' + run.html_url + ')');
+              lines.push('Commit: ' + run.head_sha + '; conclusión: ' + run.conclusion);
+              const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+                owner, repo, run_id: run.id, per_page: 100
+              });
+              for (const job of jobs.filter(j => j.conclusion === 'failure')) {
+                lines.push('- Job: ' + job.name + ' (' + job.html_url + ')');
+                for (const step of (job.steps || []).filter(s => s.conclusion === 'failure')) {
+                  lines.push('  - Paso ' + step.number + ': ' + step.name + ' **ROJO**');
+                }
+              }
+            }
+            lines.push('', 'Informe de diagnóstico; no supone que un RUN posterior esté verde.');
+            const report = lines.join('\n');
+            await github.rest.issues.createComment({
+              owner, repo, issue_number: 30, body: report
+            });
+            core.info(report);
