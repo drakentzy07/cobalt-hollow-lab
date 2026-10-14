@@ -221,6 +221,9 @@ export function installHighflyV13SkillLab(hooks:HighflyV13LabHooks):void {
       'padding:6px 3px;border-radius:12px;border:2px solid #57bdec;'+
       'background:rgba(9,37,60,.94);color:white;font:600 10px system-ui;'+
       'touch-action:none;user-select:none;-webkit-user-select:none;');
+    // Native touch-owner ledger MUST classify V13 buttons as combat controls,
+    // never as camera drags, including S23 Ultra joystick multitouch.
+    btn.classList.add('mobile-btn');
     btn.setAttribute('aria-label','S'+spec.slot+' '+spec.name+' · tocar o arrastrar');
     btn.title='TOCAR: autoapuntar y lanzar · ARRASTRAR: apuntado manual';
     let active:{id:number;sx:number;sy:number}|null=null;
@@ -257,9 +260,9 @@ export function installHighflyV13SkillLab(hooks:HighflyV13LabHooks):void {
   document.body.dataset.highflyV13SkillAim='seven-direct-buttons';
   // Native radial icons would compete for the same right-thumb gestures.
   const nativeRing=document.getElementById('mobile-action-ring');
-  if(nativeRing)nativeRing.style.display='none';
+  if(nativeRing)nativeRing.style.setProperty('display','none','important');
   const nativeRadial=document.getElementById('mobile-action-radial');
-  if(nativeRadial)nativeRadial.style.display='none';
+  if(nativeRadial)nativeRadial.style.setProperty('display','none','important');
   // Only this isolated V13 HUD: ordinary ATK is disabled, not skill strikes.
   const normalAtk=document.getElementById('mobile-action-attack') as HTMLButtonElement|null;
   if(normalAtk){
