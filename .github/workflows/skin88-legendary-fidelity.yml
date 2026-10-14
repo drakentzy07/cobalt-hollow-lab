@@ -1,0 +1,46 @@
+name: HIGHFLY SKIN 8.8 - THREE LEGENDARY FIDELITY QA (ISOLATED)
+on:
+  push:
+    branches: [highfly-skin88-legendary-fidelity-integration]
+    paths: ['skin7-repertoire/**', '.github/workflows/skin88-legendary-fidelity.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  legendary-three-skin88-chrome:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source integrity and source code syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check skin7-repertoire/legendary_fidelity_88.mjs
+          node --check skin7-repertoire/legendary_hero_armors_87.mjs
+          node --check skin7-repertoire/armor_style_dna_factory.mjs
+          node --check skin7-repertoire/test_legendary87.cjs
+          curl -fsSL --retry 3 --max-time 130 https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb -o /tmp/hf-skin88-original.glb
+          test "$(git hash-object /tmp/hf-skin88-original.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          test ! -e public/models/chars/modular/warrior_modular.glb
+          echo SKIN88_CLAUDECRAFT_SOURCE_IMMUTABLE=1
+      - name: Three heroes WebGL Chrome and simulated mobile screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+          python3 -m http.server 4917 --bind 127.0.0.1 >/tmp/highfly-skin88-http.log 2>&1 &
+          sleep 2
+          node skin7-repertoire/test_legendary87.cjs
+          test -s skin7-repertoire/evidence-87/legendary-qa.json
+          echo SKIN88_THREE_HEROES_TECHNICAL_QA_GREEN=1
+      - name: Upload evidence - no game deploy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-SKIN88-FIDELITY-CHROME-EVIDENCE
+          path: |
+            skin7-repertoire/evidence-87/
+          if-no-files-found: warn
+          retention-days: 30
