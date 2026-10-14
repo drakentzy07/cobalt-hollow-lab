@@ -1,0 +1,78 @@
+name: HIGHFLY Wearable Factory R0.1 - REAL GLB INTAKE AND RIG GATE
+on:
+  push:
+    branches: [highfly-wearable-factory-r01-authentic-3d-intake]
+    paths: ['skin-factory-core/**','.github/workflows/skin-factory-r01-real-glb.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  real-mesh-verified:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load existing real Blender authored V19 glTF artifact
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 37984648737
+          name: HIGHFLY-V19-LEGENDARY-BLENDER-ORIGINAL-RIG-STUDIO-NO-DEPLOY
+          github-token: ${{ github.token }}
+          path: skin-factory-core/real-v19-fixture
+      - name: Authentic original Warrior from frozen upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p skin-factory-core/factory-evidence
+          curl -fsSL --retry 3 --max-time 130 https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb -o /tmp/highfly-real-original.glb
+          test "$(git hash-object /tmp/highfly-real-original.glb)" = e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2
+          test ! -e public/models/chars/modular/warrior_modular.glb
+          node --check skin-factory-core/validate_real_wearable.mjs
+          test -s skin-factory-core/real-v19-fixture/assets/HIGHFLY-V19-LEGENDARY-ORNAMENTS.glb
+          test -s skin-factory-core/real-v19-fixture/assets/HIGHFLY-V19-LEGENDARY-COMBINED.glb
+          echo HF_FACTORY_ORIGINAL_CLAUDECRAFT_UNMODIFIED=1
+      - name: Independently verify REAL 32-part Blender generated rigged meshes
+        shell: bash
+        run: |
+          set -euo pipefail
+          node skin-factory-core/validate_real_wearable.mjs \
+            --source /tmp/highfly-real-original.glb \
+            --wearable skin-factory-core/real-v19-fixture/assets/HIGHFLY-V19-LEGENDARY-ORNAMENTS.glb \
+            --out skin-factory-core/factory-evidence/v19-fragment-proof.json \
+            --stage wearable
+          node skin-factory-core/validate_real_wearable.mjs \
+            --source /tmp/highfly-real-original.glb \
+            --wearable skin-factory-core/real-v19-fixture/assets/HIGHFLY-V19-LEGENDARY-COMBINED.glb \
+            --out skin-factory-core/factory-evidence/v19-body-parts-proof.json \
+            --stage wearable
+          node - <<'JS'
+          const fs=require('fs');
+          const a=JSON.parse(fs.readFileSync('skin-factory-core/factory-evidence/v19-fragment-proof.json'));
+          const b=JSON.parse(fs.readFileSync('skin-factory-core/factory-evidence/v19-body-parts-proof.json'));
+          if(a.meshNodes!==32||a.sourceBoneCount!==23||a.originalAnimationClips!==22||a.weightedMeshes!==32)throw Error('V19_32_BONE_WEIGHTED_FIXTURE_RED '+JSON.stringify(a));
+          if(b.meshNodes!==124||b.weightedMeshes!==124||b.regionHints.chest<10||b.regionHints.legs<4)throw Error('V19_FULL_BODY_PIECES_RED '+JSON.stringify(b));
+          if(a.automaticFittingImplemented!==false||b.artisticFidelityReviewed!==false)throw Error('MISLEADING_CLAIM_RED');
+          console.log('HIGHFLY_REAL_GEOMETRY_SOURCE_AND_ARMOR_TRANSFER_READY_FOR_FUTURE_GENERATOR=1');
+          JS
+      - name: Reject junk or unbounded generated geometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node skin-factory-core/validate_real_wearable.mjs \
+             --source /tmp/highfly-real-original.glb \
+             --wearable skin-factory-core/real-v19-fixture/assets/HIGHFLY-V19-LEGENDARY-COMBINED.glb \
+             --out /tmp/this-must-not-pass.json --stage wearable --max-triangles 10; then
+            echo 'GATE_FAILED_TO_REJECT_EXCESSIVE_GEOMETRY'; exit 1
+          fi
+          test ! -e /tmp/this-must-not-pass.json
+          echo HIGHFLY_REJECT_OVER_BUDGET_MESHES=1
+      - name: Preserve QA report (no website deployment, no game changes)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: HIGHFLY-WEARABLE-FACTORY-R01-REAL-GLB-INTAKE-PROOF
+          path: skin-factory-core/factory-evidence/
+          if-no-files-found: warn
+          retention-days: 30
