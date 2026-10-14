@@ -108,7 +108,7 @@ replace_once("src/main.ts",
     installHighflyV13SkillLab({
       equip:(id,slot)=>hud.highflyV13Equip(id,slot),
       cast:(slot)=>{previewRefill();hud.castSlot(slot);},
-      readResource:()=>({type:player.resourceType,current:player.resource,max:player.maxResource}),
+      readResource:()=>({type:player.resourceType ?? 'sin recurso',current:player.resource,max:player.maxResource}),
       aim:(slot,sx,sy,x,y,drag)=>{
         const def=hud.abilityForSlot(slot)?.def;
         if(!def)return false;
