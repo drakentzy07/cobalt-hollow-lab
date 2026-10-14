@@ -100,6 +100,7 @@ jobs:
             /game/v13/highfly_v13_skill_lab.ts
             /game/v13/highfly_v13_normal_atk_isolation.ts
             /game/v13/highfly_v13_normal_atk_isolation.test.ts
+            /game/v13/highfly_v13_resource_aim.test.ts
             /overlays/highfly_v13_skill_lab.py
             /game/c1/highfly_sf28_originals_fusions_vfx_truth.test.ts
             /overlays/highfly_sf22_original_source_compat.py
@@ -874,8 +875,10 @@ jobs:
           test -s src/highfly/v13_normal_atk_isolation.ts
           cp ../v9-corrections/game/v13/highfly_v13_normal_atk_isolation.test.ts tests/highfly_v13_normal_atk_isolation.test.ts
           pnpm exec vitest run tests/highfly_v13_normal_atk_isolation.test.ts
+          cp ../v9-corrections/game/v13/highfly_v13_resource_aim.test.ts tests/highfly_v13_resource_aim.test.ts
+          pnpm exec vitest run tests/highfly_v13_resource_aim.test.ts
           git diff --check HEAD
-          echo 'HIGHFLY_V13_9_CLASS_ONLY_BASIC_WHITE_AUTO_ATTACK_DISABLED_GREEN=1'
+          echo 'HIGHFLY_V13_9_CLASS_AIM_AND_VISUAL_RESOURCES_TESTS_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
