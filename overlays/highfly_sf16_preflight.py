@@ -25,6 +25,7 @@ stages = [
     ("SF22", "highfly_sf22_three_original_compat.ts", "export const SF22_IDS=[", 3),
     ("SF23", "highfly_sf23_three_native_fusions.ts", "export const SF23_IDS=[", 3),
     ("SF24", "highfly_sf24_hunter_druid_three_native.ts", "export const SF24_IDS=[", 3),
+    ("SF25", "highfly_sf25_shaman_warlock_two_native.ts", "export const SF25_IDS=[", 2),
 ]
 id_pattern = re.compile(r"['\"](hf_[a-z]+_[su]\d+)['\"]")
 all_skills: dict[str, str] = {}
@@ -63,7 +64,7 @@ if unknown:
 if duplicates:
     raise SystemExit("SF_PRECHECK_DUPLICATE_SKILL_ID:" + "; ".join(duplicates))
 expected_total = sum(row[3] for row in stages) + len(sf13_ids)
-if len(all_skills) != expected_total or expected_total != 51:
+if len(all_skills) != expected_total or expected_total != 53:
     raise SystemExit(f"SF_PRECHECK_WRONG_ACTUAL_NATIVE_TOTAL:{len(all_skills)}")
 if all_skills.get("hf_paladin_s5") != "SF16":
     raise SystemExit("SF_PRECHECK_SF16_NEW_SKILL_NOT_UNIQUE")
@@ -148,4 +149,24 @@ if {"hf_hunter_u1", "hf_druid_s1", "hf_druid_s2"} != {
     raise SystemExit("SF_PRECHECK_INVALID_SF24_SET")
 print("HF_SF24_UNIQUE_51_NATIVE_PREFLIGHT_GREEN=1")
 print("HF_SF24_PRIOR_48_NEW_3_CANDIDATES_51_OF_63=1")
-print(f"HF_SF24_REMAINING_IF_SUCCESS={len(catalog_ids)-len(all_skills)}")
+print("HF_SF24_REMAINING_IF_SUCCESS=12")
+
+if {"hf_shaman_s4", "hf_warlock_s5"} != {
+    ident for ident, stage in all_skills.items() if stage == "SF25"
+}:
+    raise SystemExit("SF_PRECHECK_INVALID_SF25_SET")
+source_adapter = root / "overlays" / "highfly_sf25_native_selectors.py"
+bridge = source_adapter.read_text(encoding="utf-8") if source_adapter.is_file() else ""
+for token in [
+    "runUnleashWeapon(ctx, p, target)",
+    "id: 'flametongue_weapon'",
+    "previous?.templateId === 'emberkin'",
+    "ctx.summonPet(p, nextMobId)",
+    "SF25_FROZEN_EFFECT_DISPATCH_DRIFT",
+]:
+    if token not in bridge:
+        raise SystemExit("SF25_BLOCKED_NATIVE_SOURCE_BRIDGE_MISSING:" + token)
+print("HF_SF25_SHAMAN_PYREBRAND_WARLOCK_ONE_DEMON_BRIDGE_PREFLIGHT_GREEN=1")
+print("HF_SF25_UNIQUE_53_NATIVE_PREFLIGHT_GREEN=1")
+print("HF_SF25_PRIOR_51_NEW_2_CANDIDATES_53_OF_63=1")
+print(f"HF_SF25_REMAINING_IF_SUCCESS={len(catalog_ids)-len(all_skills)}")
