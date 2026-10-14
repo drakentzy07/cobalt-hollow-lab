@@ -22,18 +22,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/drakentzy07/cobalt-hollow-lab/actions/runs/38581612579 -o /tmp/highfly-r02-status.json
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/drakentzy07/cobalt-hollow-lab/actions/runs/38597557546 -o /tmp/highfly-r02-status.json
           python3 - <<'PY'
           import json
           a=json.load(open('/tmp/highfly-r02-status.json'))
           assert a['status']=='completed' and a['conclusion']=='success'
-          assert a['head_sha']=='0b323cee3ef7a04256e74df3ff453369adf07f43'
+          assert a['head_sha']=='09fb1681e693b564250c0e0185bfb3bdf9f6787f'
           print('HF_R03_SOURCE_IS_AUTHENTIC_PREVIOUS_GREEN_REBIND=1')
           PY
       - uses: actions/download-artifact@v4
         with:
           repository: drakentzy07/cobalt-hollow-lab
-          run-id: 38581612579
+          run-id: 38597557546
           name: HIGHFLY-WEARABLE-FACTORY-R02-GENUINE-BLENDER-WEIGHT-TRANSFER
           github-token: ${{ github.token }}
           path: skin-factory-core/rigged-fixture
