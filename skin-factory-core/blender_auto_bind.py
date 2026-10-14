@@ -112,7 +112,9 @@ def main():
             raise ValueError('EXPORT_NATIVE_PARENT_OR_MODIFIER_LOST '+dst.name)
         all_weights+=valid
         transfers.append({'part':dst.name,'donor':donor.name,'vertices':valid,'groups':len(dst.vertex_groups)})
-    if any(mesh.parent != rig for mesh in incoming):\n        raise ValueError('EXPORTED_SKIN_NO_ACTUAL_RIG_PARENT')\n    # Only the new mesh pieces and the *original* armature will be exported.
+    if any(mesh.parent != rig for mesh in incoming):
+        raise ValueError('EXPORTED_SKIN_NO_ACTUAL_RIG_PARENT')
+    # Only the new mesh pieces and the *original* armature will be exported.
     # Source body meshes are never bundled in a wearable; source remains separate.
     bpy.ops.object.select_all(action='DESELECT')
     rig.select_set(True)
