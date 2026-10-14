@@ -14,7 +14,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {MeshoptDecoder} from 'meshoptimizer';
-const state={ready:false,loaded:false,error:null,meshes:0,liveSourceJoints:0,allReferencesNative:false,animationName:'Reposo',totalFinite:0,sourceOriginal:true,artApproved:false,physicalSamsung:false};
+const state={ready:false,loaded:false,error:null,meshes:0,liveSourceJoints:0,allReferencesNative:false,animationName:'Reposo',totalFinite:0,sourceOriginal:true,artApproved:false,physicalSamsung:false,bodyBounds:null,cameraFramed:false};
 window.__HIGHFLY_WEARABLE_FACTORY__=state;
 const host=document.querySelector('#scene'),log=document.querySelector('#log');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x273348);
@@ -31,11 +31,37 @@ const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
 const transcoder=new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/basis/').detectSupport(render);
 loader.setKTX2Loader(transcoder);
 let mixer=null,actor=null,clips=[],prev=0;
-const recenter=()=>{cam.position.set(0,1,3.7);control.target.set(0,.8,0);control.update()};
-document.querySelector('#front').onclick=()=>{cam.position.set(0,1,3.7);control.update()};
-document.querySelector('#side').onclick=()=>{cam.position.set(3.7,1,0);control.update()};
-document.querySelector('#back').onclick=()=>{cam.position.set(0,1,-3.7);control.update()};
+const framing={center:new THREE.Vector3(0,.8,0),distance:3.7};
+function view(x,z){
+ const c=framing.center,d=framing.distance;
+ control.target.copy(c);
+ cam.position.set(c.x+x*d,c.y+d*.08,c.z+z*d);
+ cam.lookAt(c);
+ control.update();
+}
+const recenter=()=>view(0,1);
+document.querySelector('#front').onclick=()=>view(0,1);
+document.querySelector('#side').onclick=()=>view(1,0);
+document.querySelector('#back').onclick=()=>view(0,-1);
 document.querySelector('#reset').onclick=recenter;
+function fitBodyOnce(){
+ actor.updateMatrixWorld(true);
+ const bounds=new THREE.Box3(),one=new THREE.Box3();
+ let count=0;
+ actor.traverse(o=>{
+  if(!o.isMesh||!o.visible||!/^M_(Head|Torso|Loin|ArmL|ArmR|HandL|HandR|LegL|LegR|FootL|FootR)(?:_|$)/.test(o.name))return;
+  one.setFromObject(o,true);if(!one.isEmpty()){bounds.union(one);count++;}
+ });
+ if(count<10||bounds.isEmpty())throw Error('CAMERA_NO_NATIVE_BODY_WORLD_BOUNDS');
+ const ext=bounds.getSize(new THREE.Vector3()),mid=bounds.getCenter(new THREE.Vector3());
+ if(!ext.toArray().every(x=>Number.isFinite(x)&&x>.01))throw Error('CAMERA_BAD_NATIVE_WORLD_BOUNDS');
+ const tan=Math.tan(THREE.MathUtils.degToRad(cam.fov)/2);
+ const distance=Math.max((ext.y/2)/tan,(ext.x/2)/(tan*cam.aspect))*1.39;
+ if(distance<.6||distance>40)throw Error('CAMERA_NATIVE_FIT_IMPLAUSIBLE_'+distance);
+ framing.center.copy(mid);framing.distance=distance;view(0,1);
+ state.cameraFramed=true;
+ state.bodyBounds={center:mid.toArray(),size:ext.toArray(),distance,meshes:count};
+}
 document.querySelector('#clip').onchange=e=>{
  if(!mixer)return;
  mixer.stopAllAction();
@@ -59,7 +85,7 @@ requestAnimationFrame(tick);
    if(o.isMesh){o.visible=body.test(o.name||'');if(o.visible)visibleBody++;}
   });
   if(bones.size!==23||visibleBody<10)throw Error('HUNTER_MODULAR_BASE_MISSING');
-  scene.add(actor);actor.updateMatrixWorld(true);
+  scene.add(actor);actor.updateMatrixWorld(true);fitBodyOnce();
   const product=await loader.loadAsync('./rigged-fixture/new-wearable-rigged.glb');
   product.scene.updateMatrixWorld(true);
   const newMeshes=[];
