@@ -16,7 +16,7 @@ shutil.copyfile(source,dest)
 once("src/main.ts",
  "import { applyFrameGeometrySetting } from './game/frame_geometry_settings';",
  """import { applyFrameGeometrySetting } from './game/frame_geometry_settings';
-import {v14Requested,v14Class,installV14} from './highfly/v14_original_skills';
+import {v14Requested,v14Class,installV14,V14_ORIGINALS,V14_RECOMMENDED_SPEC} from './highfly/v14_original_skills';
 import {hfAimVector as v14AimVector,hfPointFromVector as v14AimPoint} from './highfly/manual_skill_aim';
 import {createMob as v14CreateMob} from './sim/entity';
 import {MOBS as V14_MOBS} from './sim/data';""")
@@ -24,6 +24,18 @@ once("src/main.ts","  mobileControls.start();","""  mobileControls.start();
   if(v14Requested() && offlineSim){
     // LV99 is an isolated QA fixture, NOT a persisted balance change.
     offlineSim.setPlayerLevel(99);
+    // This is a disposable local QA Hunter, never the persisted player profile.
+    // Commit the game's REAL specialization before enumerating available skills:
+    // the former fixture was merely LV99 with NO chosen spec -> locked buttons.
+    const v14Cls=v14Class();
+    const v14Spec=V14_RECOMMENDED_SPEC[v14Cls];
+    if(!offlineSim.setSpec(v14Spec))
+      throw Error('V14_QA_SPEC_UNAVAILABLE: '+v14Cls+'/'+v14Spec);
+    const v14Known=new Set(offlineSim.known.map(a=>a.def.id));
+    const v14Missing=V14_ORIGINALS[v14Cls].filter(id=>!v14Known.has(id));
+    if(v14Missing.length)
+      throw Error('V14_QA_NOT_10_OF_10: '+v14Cls+'/'+v14Missing.join(','));
+    console.info('HIGHFLY_V14_NATIVE_10_OF_10_GREEN',v14Cls,v14Spec);
     offlineSim.tick();
     const player=offlineSim.player;
     // Physical S23 QA: three honest original training dummies for
