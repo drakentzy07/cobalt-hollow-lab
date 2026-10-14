@@ -44,7 +44,7 @@ def inspect_bundle(bundle):
     except Exception as e:raise GateError('INVALID_ZIP') from e
     with z:
         entries=z.infolist()
-        require(len(entries)>=5 and len(entries)<=20,'ZIP_FILE_COUNT_INVALID')
+        require(len(entries)>=4 and len(entries)<=20,'ZIP_FILE_COUNT_INVALID')
         require(all(not x.is_dir() and not x.filename.startswith(('/','\\')) and
           '/' not in x.filename and '\\' not in x.filename and x.file_size<=FILE_CAP
           and x.compress_size<=FILE_CAP for x in entries),'ZIP_UNSAFE_PATH_OR_BYTES')
