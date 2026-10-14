@@ -38,6 +38,7 @@ jobs:
             /overlays/highfly_v91_combat_feel.py
             /game/c1/highfly_v91_combat_nine_classes.test.ts
             /overlays/highfly_v15_pwa_manifest.py
+            /overlays/rewrite_pages_static.py
             /tests/test_highfly_v15_pwa_manifest.py
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
