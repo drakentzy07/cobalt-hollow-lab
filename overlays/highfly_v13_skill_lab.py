@@ -31,18 +31,11 @@ replace_once("src/main.ts",
  """  mobileControls.start();
   // Native browser renderer + original HUD+Sim, V13 UI only on isolated ?hf-v13=1.
   if (highflyV13Requested() && offlineSim) {
-    installHighflyV13SkillLab({
-      equip:(id,slot)=>hud.highflyV13Equip(id,slot),
-      cast:(slot)=>hud.castSlot(slot),
-    });
-  }""")
-replace_once("src/main.ts",
- "  sim.setPlayerSkin(sim.playerId, skin);",
- """  // Offline-only test session: no training/save/class mutation in production.
-  if (highflyV13Requested()) {
-    sim.setPlayerLevel(99);
-    sim.tick();
-    const player=sim.player;
+    // Source-modification-independent insertion: this anchor already survived
+    // all V9 and SF4..SF27 overlays and is in the shared active game loop.
+    offlineSim.setPlayerLevel(99);
+    offlineSim.tick();
+    const player=offlineSim.player;
     const spawnDummy=(id:number,dx:number,dz:number):void=>{
       const dummy=highflyV13CreateMob(id,HIGHFLY_V13_MOBS.training_dummy,20,{
         x:player.pos.x+dx,y:player.pos.y,z:player.pos.z+dz,
@@ -50,15 +43,18 @@ replace_once("src/main.ts",
       dummy.hostile=true;
       dummy.hp=dummy.maxHp=999999999;
       dummy.aiState='idle';
-      (sim as unknown as {addEntity(mob:typeof dummy):void}).addEntity(dummy);
-      if(id===931101)sim.targetEntity(dummy.id,player.id);
+      (offlineSim as unknown as {addEntity(mob:typeof dummy):void}).addEntity(dummy);
+      if(id===931101)offlineSim.targetEntity(dummy.id,player.id);
     };
     spawnDummy(931101,0,5);
     spawnDummy(931102,-3,7);
     spawnDummy(931103,3,7);
     player.resource=player.maxResource;
-  }
-  sim.setPlayerSkin(sim.playerId, skin);""")
+    installHighflyV13SkillLab({
+      equip:(id,slot)=>hud.highflyV13Equip(id,slot),
+      cast:(slot)=>hud.castSlot(slot),
+    });
+  }""")
 replace_once("src/main.ts",
  "} else if (diagnosticsAutoOffline) {",
  """} else if (highflyV13Requested()) {
