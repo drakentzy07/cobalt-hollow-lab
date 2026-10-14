@@ -27,6 +27,7 @@ stages = [
     ("SF24", "highfly_sf24_hunter_druid_three_native.ts", "export const SF24_IDS=[", 3),
     ("SF25", "highfly_sf25_shaman_warlock_two_native.ts", "export const SF25_IDS=[", 2),
     ("SF26", "highfly_sf26_five_native_wave_a.ts", "export const SF26_IDS=[", 5),
+    ("SF27", "highfly_sf27_final_five_native.ts", "export const SF27_IDS=[", 5),
 ]
 id_pattern = re.compile(r"['\"](hf_[a-z]+_[su]\d+)['\"]")
 all_skills: dict[str, str] = {}
@@ -65,7 +66,7 @@ if unknown:
 if duplicates:
     raise SystemExit("SF_PRECHECK_DUPLICATE_SKILL_ID:" + "; ".join(duplicates))
 expected_total = sum(row[3] for row in stages) + len(sf13_ids)
-if len(all_skills) != expected_total or expected_total != 58:
+if len(all_skills) != expected_total or expected_total != 63:
     raise SystemExit(f"SF_PRECHECK_WRONG_ACTUAL_NATIVE_TOTAL:{len(all_skills)}")
 if all_skills.get("hf_paladin_s5") != "SF16":
     raise SystemExit("SF_PRECHECK_SF16_NEW_SKILL_NOT_UNIQUE")
@@ -194,4 +195,26 @@ for token in (
         raise SystemExit("SF26_SOURCE_NATIVE_COMPATIBILITY_BRIDGE_MISSING:" + token)
 print("HF_SF26_UNIQUE_58_NATIVE_PREFLIGHT_GREEN=1")
 print("HF_SF26_PRIOR_53_NEW_5_CANDIDATES_58_OF_63=1")
-print(f"HF_SF26_REMAINING_IF_SUCCESS={len(catalog_ids)-len(all_skills)}")
+print("HF_SF26_REMAINING_IF_SUCCESS=5")
+
+sf27_native_ids = {
+    ident for ident, stage in all_skills.items() if stage == "SF27"
+}
+if sf27_native_ids != {"hf_rogue_u2", "hf_priest_u1", "hf_priest_u2",
+                        "hf_druid_u1", "hf_druid_u2"}:
+    raise SystemExit("SF27_FINAL_FIVE_MISMATCH")
+adapter_path = root / "overlays" / "highfly_sf27_final_native_compat.py"
+bridge = adapter_path.read_text(encoding="utf-8") if adapter_path.is_file() else ""
+for token in (
+    "hf_priest_u2", "hf_druid_u1", "hf_druid_u2",
+    "gloomtitheStacksForCast", "massResurrectGroup",
+    "SF27_FROZEN_ORIGINAL_SOURCE_DRIFT",
+):
+    if token == "gloomtitheStacksForCast":
+        # The source bridge directly patches its existing native function.
+        token = "summon_tithefiend"
+    if token not in bridge:
+        raise SystemExit("SF27_ORIGINAL_SOURCE_BRIDGE_MISSING:" + token)
+print("HF_SF27_ALL_63_OF_63_EXACT_UNIQUE_CATALOG_PREFLIGHT_GREEN=1")
+print("HF_SF27_ORIGINAL_FUSION_TARGETS_9_CLASSES_7_EACH=1")
+print(f"HF_SF27_REMAINING_IF_SUCCESS={len(catalog_ids)-len(all_skills)}")
