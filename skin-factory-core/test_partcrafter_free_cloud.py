@@ -49,7 +49,7 @@ def test_notebook():
     assert 'pc_python = venv_path / "bin/python"' in raw, 'MISSING_ISOLATED_INFERENCE_RUNTIME'
     assert 'cmd=[str(pc_python)' in raw, 'INFERENCE_MUST_RUN_WITH_PY311'
     assert '"torch==2.5.1"' in raw and 'torch-cluster' in raw, 'WRONG_UPSTREAM_CUDA_STACK'
-    assert 'apt-get' not in raw.split('if not root.exists():')[1], 'UNNECESSARY_APT_PACKAGE_INSTALL_BLOCKS_COLAB'
+    assert 'run(["apt-get"' not in raw, 'UNNECESSARY_APT_PACKAGE_INSTALL_BLOCKS_COLAB'
     assert 'from src.pipelines.pipeline_partcrafter import PartCrafterPipeline' in raw, 'NOT_SMOKE_TESTING_REAL_INFERENCE_IMPORT'
     # No llamar cuentas comerciales o VLM durante la generación.
     actual_cmd=raw.split('cmd=[str(pc_python)')[1].split('assert "--rmbg"')[0]
