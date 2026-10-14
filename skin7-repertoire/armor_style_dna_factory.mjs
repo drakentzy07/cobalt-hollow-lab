@@ -15,6 +15,7 @@ import {applyNativeSurfaceConform85} from './native_surface_conform_85.mjs';
 import {sculptFamilySilhouette86} from './anchored_silhouette_86.mjs';
 import {HERO87,buildLegendary87} from './legendary_hero_armors_87.mjs';
 import {integrateLegendaryFidelity88} from './legendary_fidelity_88.mjs';
+import {OBSIDIAN91,forgeObsidianKnight91} from './obsidian_knight_native_91.mjs';
 
 const specs=[
  {id:'violet',name:'Obsidiana Violeta III · Referencia 8.3',family:'DARK SAINT',base:'violet',colors:[0x10121c,0x30324b,0xd1cce0,0x9b36fa,0x49315e],
@@ -35,7 +36,7 @@ const heroSpecs=[
  {id:'hero-celestial',name:'CELESTIAL SERAPH · Alas de Luz',base:'celestial',colors:[0xc5d0e3,0xf2f0ee,0xf0bf73,0x68c9ff,0xe8e1d9],signature:'white-gold-sculpted-feathered-angelic-wings'},
  {id:'hero-death',name:'MORTIS SERAPH · Ángel de la Muerte',base:'berserker',colors:[0x0e1018,0x23242c,0xa4afbb,0xc92b49,0x12131b],signature:'death-angel-gothic-feathers-and-hooded-mask'}
 ];
-export const ARMOR_FAMILIES=Object.freeze([...specs,...heroSpecs].map(s=>Object.freeze({...s,colors:Object.freeze([...s.colors])})));
+export const ARMOR_FAMILIES=Object.freeze([...specs,...heroSpecs,OBSIDIAN91].map(s=>Object.freeze({...s,colors:Object.freeze([...s.colors])})));
 const slots=['Head','Chest','Back','ArmL','ArmR','HandL','HandR','LegL','LegR','FootL','FootR'];
 const materials=color=>{
  const [base,plate,trim,glow,secondary]=color;
@@ -288,6 +289,7 @@ function forgeDetails(gltf,design){
  return qa;
 }
 export function forgeArmorRepertoire(gltf,id){
+ if(id===OBSIDIAN91.id)return forgeObsidianKnight91(gltf);
  // New legendary skins are built DIRECTLY from the original 17 Paladin donors.
  // Do not process SKIN 7/8.2/8.3/8.6 temporary overlays: those invisible
  // intermediates caused NaN geometry warnings and wasted memory.
