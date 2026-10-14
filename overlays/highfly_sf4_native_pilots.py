@@ -175,6 +175,11 @@ sf26_dst=Path('src/highfly/sf26_five_native_wave_a.ts')
 if not sf26_src.is_file() or sf26_dst.exists():
     raise SystemExit('SF26_SOURCE_MISSING_OR_DUPLICATE')
 shutil.copyfile(sf26_src,sf26_dst)
+sf27_src=Path('../v9-corrections/game/c1/highfly_sf27_final_five_native.ts')
+sf27_dst=Path('src/highfly/sf27_final_five_native.ts')
+if not sf27_src.is_file() or sf27_dst.exists():
+    raise SystemExit('SF27_SOURCE_MISSING_OR_DUPLICATE')
+shutil.copyfile(sf27_src,sf27_dst)
 
 # Stage the complete read-only 9×7 donor unlock planner and its unit contract.
 stages_source = Path("../v9-corrections/game/c1/highfly_sf5_unlock_stages.ts")
@@ -207,7 +212,8 @@ new_import=("import { installSf4NativePilots } from '../../highfly/sf4_safe_fusi
             "import { installSf23ThreeNative } from '../../highfly/sf23_three_native_fusions';\n"
             "import { installSf24ThreeNative } from '../../highfly/sf24_hunter_druid_three_native';\n"
             "import { installSf25TwoNative } from '../../highfly/sf25_shaman_warlock_two_native';\n"
-            "import { installSf26FiveNative } from '../../highfly/sf26_five_native_wave_a';\n")
+            "import { installSf26FiveNative } from '../../highfly/sf26_five_native_wave_a';\n"
+            "import { installSf27FinalFive } from '../../highfly/sf27_final_five_native';\n")
 old_cond="""if (import.meta.env?.VITE_HIGHFLY_SF3 === '1') {
   installHighflySF3Fusions(ABILITIES, CLASSES);
 }"""
@@ -248,6 +254,9 @@ if (import.meta.env?.VITE_HIGHFLY_SF4 === '1') {
                               installSf25TwoNative(ABILITIES, CLASSES);
                               if (import.meta.env?.VITE_HIGHFLY_SF26 === '1') {
                                 installSf26FiveNative(ABILITIES, CLASSES);
+                                if (import.meta.env?.VITE_HIGHFLY_SF27 === '1') {
+                                  installSf27FinalFive(ABILITIES, CLASSES);
+                                }
                               }
                             }
                           }
