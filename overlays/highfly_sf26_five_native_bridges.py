@@ -56,7 +56,14 @@ patches={
     const maul = ABILITIES.maul.effects.find(e => e.type === 'weaponDamage');
     const swipe = ABILITIES.swipe.effects.find(e => e.type === 'aoeDamage');
     if (maul?.type === 'weaponDamage' && swipe?.type === 'aoeDamage') {
-      ctx.meleeSwing(runner, target, maul.bonus, ABILITIES.hf_druid_s4.name);
+      ctx.meleeSwing(runner, target, maul.bonus, ABILITIES.hf_druid_s4.name, {
+        // Original meleeSwing requires an options object, even for default
+        // strikes. Preserve native Maul tank threat modifiers, plus the
+        // fusion's own stable ID for the native visual/impact pipeline.
+        threatFlat: ABILITIES.maul.threat?.flat,
+        threatMult: ABILITIES.maul.threat?.mult,
+        abilityId: 'hf_druid_s4',
+      });
       for (const m of ctx.hostilesInRadius(runner, runner.pos, swipe.radius)) {
         if (!ctx.hasLineOfSight(runner, m)) continue;
         ctx.dealDamage(runner, m,
