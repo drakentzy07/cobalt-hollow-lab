@@ -138,6 +138,30 @@ describe('SF27 all five ORIGINAL native combat and nine-class catalog',()=>{
   expect(blind,'original Blind follows damage').toBe(true);
   expect(veil,'brief original stealth after strike').toBe(true);
  },18000);
+ for(const level of [30,99])it('Priest Tithefiend native summoned guardian and original AoE fear LV'+level,()=>{
+  const sim=new Sim({seed:276100+level,playerClass:'priest',autoEquip:true});
+  sim.setPlayerLevel(level);sim.tick();
+  const p=sim.player;p.resource=p.maxResource;
+  const m=dummy(sim,276400+level,5);
+  // Original Tithefiend requires one hostile carrying the priest's native
+  // shadow_word_pain DoT. The fused class ability can use the original
+  // minimum one-stack guardian even without selecting ClaudeCraft Shadow.
+  m.auras.push({id:'shadow_word_pain',name:'Dirge of Decay',kind:'dot',
+    remaining:18,duration:18,value:1,tickInterval:3,tickTimer:3,
+    sourceId:p.id,school:'shadow'});
+  sim.castAbility('hf_priest_u2',p.id);
+  let guardian=false,fear=false,cooldown=p.cooldowns.has('hf_priest_u2');
+  for(let i=0;i<65;i++){
+   sim.tick();
+   if(p.cooldowns.has('hf_priest_u2'))cooldown=true;
+   if(m.auras.some(x=>x.kind==='incapacitate'))fear=true;
+   if([...sim.entities.values()].some(e=>e.ownerId===p.id&&
+      e.guardianState?.key==='tithefiend'&&!e.dead))guardian=true;
+  }
+  expect(cooldown,'native Priest ability cooldown').toBe(true);
+  expect(fear,'original psychic_scream AoE fear must land').toBe(true);
+  expect(guardian,'original Vespers Tithefiend guardian must be summoned').toBe(true);
+ },20000);
  for(const [klass,id,lv] of [
   ['priest','hf_priest_u1',25],['druid','hf_druid_u1',25]
  ] as const)it(klass+' mass resurrection source returns group from death: '+id,()=>{
