@@ -70,7 +70,8 @@ replace_once("src/ui/hud.ts",
 replace_once("src/main.ts",
  "import { applyFrameGeometrySetting } from './game/frame_geometry_settings';",
  """import { applyFrameGeometrySetting } from './game/frame_geometry_settings';
-import { highflyV13Requested, highflyV13Class, installHighflyV13SkillLab } from './highfly/v13_skill_lab';
+import { highflyV13Requested, highflyV13Class, installHighflyV13SkillLab, highflyV13ResourceRefillEnabled, highflyV13PickSmartTarget } from './highfly/v13_skill_lab';
+import { hfAimVector as highflyV13AimVector, hfAimTarget as highflyV13AimTarget, hfPointFromVector as highflyV13AimPoint } from './highfly/manual_skill_aim';
 import { createMob as highflyV13CreateMob } from './sim/entity';
 import { MOBS as HIGHFLY_V13_MOBS } from './sim/data';""")
 replace_once("src/main.ts",
@@ -97,9 +98,44 @@ replace_once("src/main.ts",
     spawnDummy(931102,-3,7);
     spawnDummy(931103,3,7);
     player.resource=player.maxResource;
+    // V13's preview mode gives each class its OWN original resource type.
+    // The authoritative Sim still validates the native ability, cost, and CD.
+    const previewRefill=():void=>{
+      if(highflyV13ResourceRefillEnabled())player.resource=player.maxResource;
+    };
+    const attackable=(id:number)=>isAttackableEntity(
+      world.entities.get(id),world.playerId,activePvpOpponentIds(world));
     installHighflyV13SkillLab({
       equip:(id,slot)=>hud.highflyV13Equip(id,slot),
-      cast:(slot)=>hud.castSlot(slot),
+      cast:(slot)=>{previewRefill();hud.castSlot(slot);},
+      readResource:()=>({type:player.resourceType,current:player.resource,max:player.maxResource}),
+      aim:(slot,sx,sy,x,y,drag)=>{
+        const def=hud.abilityForSlot(slot)?.def;
+        if(!def)return false;
+        const range=Math.max(def.range??0,def.requiresTarget?5:2);
+        const aim=highflyV13AimVector(sx,sy,x,y,input.camYaw,range);
+        if(def.targetMode==='position'&&!def.selfCentered){
+          const targetId=drag?null:highflyV13PickSmartTarget(
+            world.entities.values(),player.pos,input.camYaw,range,attackable);
+          const picked=targetId===null?null:world.entities.get(targetId);
+          const fallback={...aim,distance:Math.min(range,Math.max(2,range*.65))};
+          const point=drag?highflyV13AimPoint(player.pos,aim)
+            :picked?{x:picked.pos.x,z:picked.pos.z}:highflyV13AimPoint(player.pos,fallback);
+          previewRefill();hud.castSlot(slot);hud.commitGroundAimAt(point);
+          return true;
+        }
+        if(def.requiresTarget){
+          const targetId=drag
+            ?highflyV13AimTarget(world.entities.values(),player.pos,aim.yaw,range,attackable)
+            :highflyV13PickSmartTarget(world.entities.values(),player.pos,input.camYaw,range,attackable);
+          if(targetId===null)return false; // Never fire at a random side/back target on drag.
+          world.targetEntity(targetId);
+          const entity=world.entities.get(targetId);
+          if(entity)player.facing=Math.atan2(entity.pos.x-player.pos.x,entity.pos.z-player.pos.z);
+        }else if(drag)player.facing=aim.yaw;
+        previewRefill();hud.castSlot(slot);
+        return true;
+      },
     });
   }""")
 replace_once("src/main.ts",
@@ -121,6 +157,17 @@ replace_once("src/ui/hud.ts",
   }
 
   castSlot(barSlot: number): void {""")
+
+# Native offline Sim tick, not a global timer: refill AFTER every world tick.
+# A one-time spawn refill is insufficient: Warrior rage naturally decays and
+# no longer regenerates via disabled basic ATK in the VFX lab.
+replace_once("src/main.ts",
+ "        const tickPlayer = offlineSim.player;",
+ """        const tickPlayer = offlineSim.player;
+        if(highflyV13ResourceRefillEnabled()){
+          tickPlayer.resource=tickPlayer.maxResource;
+        }""")
+
 assert dest.is_file() and atk_dest.is_file()
 attack=auto_attack.read_text(encoding="utf-8")
 assert attack.count("highflyV13MuteNormalAttackHere(")==2
@@ -129,6 +176,7 @@ main=Path("src/main.ts").read_text(encoding="utf-8")
 assert "installHighflyV13SkillLab" in main
 assert "HFV13Lab" in main
 assert "highflyV13CreateMob" in main
+assert "highflyV13PickSmartTarget" in main and "highflyV13ResourceRefillEnabled" in main
 hud=Path("src/ui/hud.ts").read_text(encoding="utf-8")
 assert "highflyV13Equip" in hud
 assert "this.optionsHooks?.settings.get('startAttackOnAbilityUse')" in hud
