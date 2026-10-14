@@ -26,7 +26,7 @@ def glb_mesh(raw,name):
     try:scene=trimesh.load(BytesIO(raw),file_type='glb',force='scene',process=False)
     except Exception as e:raise GateError('GLB_IMPORT_FAILURE_'+name+':'+str(e)[:220]) from e
     require(isinstance(scene,trimesh.Scene) and len(scene.geometry)>0,'NOT_A_3D_SCENE_'+name)
-    nfaces=0,nverts=0
+    nfaces=nverts=0
     for key,geo in scene.geometry.items():
         require(isinstance(geo,trimesh.Trimesh),'NON_TRIANGULATED_MESH_'+name)
         v,f=geo.vertices,geo.faces
