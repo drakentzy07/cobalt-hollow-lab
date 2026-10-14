@@ -7,6 +7,14 @@ const dir='skin7-repertoire/evidence-87';fs.mkdirSync(dir,{recursive:true});
  const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-webgl']});
  try{
   const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
+  await page.addInitScript(()=>{
+   window.__geometryStacks=[];
+   const prev=console.error;
+   console.error=(...args)=>{
+    if(args.some(x=>String(x).includes('Computed min/max have NaN')||String(x).includes('Computed radius is NaN'))&&window.__geometryStacks.length<8)window.__geometryStacks.push(new Error('geometry callsite').stack);
+    prev(...args);
+   };
+  });
   const errors=[];
   page.on('pageerror',e=>errors.push(String(e)));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
@@ -57,7 +65,7 @@ const dir='skin7-repertoire/evidence-87';fs.mkdirSync(dir,{recursive:true});
     const bad=[],report={meshes:0,vertices:0,rawNan:0,deformedNan:0};
     if(!root)return {bad:[{error:'missing root'}],report};
     root.traverse(o=>{
-      if(!o.isSkinnedMesh||!o.visible)return;
+      if(!o.isMesh||!o.visible)return;
       report.meshes++;
       const p=o.geometry.getAttribute('position'),deformed=o.position.clone();
       for(let i=0;i<p.count;i++){
@@ -65,7 +73,8 @@ const dir='skin7-repertoire/evidence-87';fs.mkdirSync(dir,{recursive:true});
         const raw=[p.getX(i),p.getY(i),p.getZ(i)];
         if(!raw.every(Number.isFinite)){report.rawNan++;if(bad.length<10)bad.push({name:o.name,i,type:'raw',raw});break;}
         try{
-          o.getVertexPosition(i,deformed);
+          if(o.isSkinnedMesh)o.getVertexPosition(i,deformed);
+          else deformed.set(...raw);
           if(![deformed.x,deformed.y,deformed.z].every(Number.isFinite)){
             report.deformedNan++;
             if(bad.length<10)bad.push({name:o.name,i,type:'skinned',raw,skinIndices:[0,1,2,3].map(k=>o.geometry.getAttribute('skinIndex').getComponent(i,k)),skinWeights:[0,1,2,3].map(k=>o.geometry.getAttribute('skinWeight').getComponent(i,k))});
@@ -77,6 +86,8 @@ const dir='skin7-repertoire/evidence-87';fs.mkdirSync(dir,{recursive:true});
     return {bad,report};
   });
   console.log('HF87_FINITE_MESH_DIAGNOSTIC',JSON.stringify(diagnostic));
+  console.log('HF87_BOUNDS_WARN_STACK',JSON.stringify(await page.evaluate(()=>window.__geometryStacks)));
+  console.log('HF87_BROWSER_ERRORS_COUNT',errors.length);
   assert.equal(diagnostic.bad.length,0,'invalid donor or hero mesh '+JSON.stringify(diagnostic.bad));
   assert.equal(errors.length,0,'browser errors '+JSON.stringify(errors));
   const mobile=await browser.newPage({viewport:{width:915,height:412},deviceScaleFactor:1});
