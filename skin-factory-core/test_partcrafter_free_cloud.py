@@ -56,6 +56,7 @@ def test_notebook():
     assert 'HIGHFLY_R06_NO_RENDER' in raw and 'HIGHFLY_R06_OPTIONAL_IMPORT_DISABLED' in raw, 'OPTIONAL_IMPORTS_STILL_ACTIVE'
     assert "BitImageProcessor, Dinov2Model" in raw, 'NOT_TESTING_REAL_IMPORT'
     assert 'pin_marker' in raw, 'PINNING_MUST_BE_REUSABLE'
+    assert 'env["PYTHONPATH"]=str(ROOT)' in raw, 'INFERENCE_NEEDS_REPOSITORY_PYTHONPATH'
     assert 'bash","settings/setup.sh"' not in raw, 'OFFICIAL_SETUP_CONTAINS_APT_GET'
     # Ningún servicio de crédito ni eliminación RMBG se invoca durante la generación.
     segment=raw.split('cmd=[PY,"scripts/inference_partcrafter.py"')[1].split('assert all(flag not in cmd')[0]
