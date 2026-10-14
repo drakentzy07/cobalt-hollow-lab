@@ -213,8 +213,19 @@ export function forgeSupreme89(gltf,id){
  const original= [...donor.values()].flat(),list=[...shells.values()].flat();
  if(list.length!==17||[...shells.values()].some(a=>!a.length))
   throw Error('SKIN89_NEEDS_17_NATIVE_SHELLS');
+ // ClaudeCraft glTF donors use normalized +/-1 local positions with their own
+ // per-mesh transforms. A fresh SkinnedMesh MUST inherit these transforms;
+ // omitting them makes the helmet balloon and the body miniature.
+ function alignNativeTransform(dst,src){
+  dst.position.copy(src.position);dst.quaternion.copy(src.quaternion);
+  dst.scale.copy(src.scale);dst.updateMatrix();
+ }
  let shellHidden=0,repainted=0;
  for(const [slot,ms] of shells)for(const m of ms){
+  const ix=Number(m.name.slice(m.name.lastIndexOf('_')+1));
+  const nativeDonor=donor.get(slot)[ix];
+  if(!nativeDonor)throw Error('SKIN89_DONOR_TRANSFORM_NOT_FOUND '+m.name);
+  alignNativeTransform(m,nativeDonor);
   if(slot==='Head'||slot==='Chest'||slot==='Back'){m.visible=false;shellHidden++;}
   else{repaint(m,slot,cfg);repainted++;}
  }
@@ -228,6 +239,7 @@ export function forgeSupreme89(gltf,id){
    side:THREE.DoubleSide,flatShading:true});
   const mesh=new THREE.SkinnedMesh(geometry,material);
   mesh.name='HF89_'+id+'_'+slot+'_FULL_REPLACEMENT';
+  alignNativeTransform(mesh,d);
   mesh.bind(d.skeleton,d.bindMatrix.clone());mesh.frustumCulled=false;
   d.parent.add(mesh);generated.push(mesh);
  }
@@ -241,13 +253,14 @@ export function forgeSupreme89(gltf,id){
  const visibleOldChest=[...shells.get('Chest'),...donor.get('Chest')].filter(m=>m.visible).length;
  const actual=[...generated,...list.filter(m=>m.visible)];
  const sourceBounds=Object.fromEntries([...donor].map(([name,ms])=>{const b=boxes(ms);return [name,{center:b.center.toArray().map(v=>+v.toFixed(4)),size:b.size.toArray().map(v=>+v.toFixed(4))}]}));
+ const donorTransformScale=Object.fromEntries([...donor].map(([name,ms])=>[name,ms.map(x=>x.scale.toArray().map(n=>+n.toFixed(4)))]));
  const qa={pass:'SKIN89_NEW_TOPOLOGY_RIGGED_3D',id,style:cfg.signature,
   helmetMode:'CLOSED_SINGLE_MESH_FULL_REPLACEMENT',
   cuirassMode:'CONTINUOUS_SINGLE_MESH_FULL_REPLACEMENT',
   helmetTriangles:generated[0].geometry.index.count/3,
   cuirassTriangles:generated[1].geometry.index.count/3,
   generatedSkinnedMeshes:generated.length,sourceDonorMeshes:original.length,
-  nativeBodyMeshesReworked:repainted,hiddenOldNativeShells:shellHidden,sourceBounds,
+  nativeBodyMeshesReworked:repainted,hiddenOldNativeShells:shellHidden,sourceBounds,donorTransformScale,
   oldHelmetVisible:visibleOldHelmet,oldChestVisible:visibleOldChest,
   wingMeshesVisible:visibleWings.length,sourceBones:23,clips:gltf.animations.length,
   weightedMeshes:actual.filter(o=>o.isSkinnedMesh&&o.skeleton.bones.length===23).length,
