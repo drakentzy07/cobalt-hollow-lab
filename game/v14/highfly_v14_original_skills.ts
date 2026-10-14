@@ -20,13 +20,13 @@ export const V14_RECOMMENDED_SPEC:Record<V14Class,string>={
 export const V14_ORIGINALS:Record<V14Class,readonly string[]>={
  warrior:['charge','slam','overpower','hamstring','pummel','execute','heroic_leap','cleave','breachmaker','intimidating_shout'],
  rogue:['sinister_strike','eviscerate','backstab','ambush','garrote','rupture','kidney_shot','kick','venom_dart','blind'],
- paladin:['final_edict','hammer_of_justice','consecration','hammer_of_grace','dawnfall','solar_step','hushbrand','hammer_of_wrath','sun_gods_verdict','valkyrs_calling'],
+ paladin:['final_edict','hammer_of_justice','consecration','hammer_of_grace','dawnfall','lay_on_hands','hushbrand','hammer_of_wrath','sun_gods_verdict','valkyrs_calling'],
  mage:['fireball','fire_blast','scorch','flamestrike','pyroblast','meteor','dragons_breath','blink','frost_nova','polymorph'],
  hunter:['measured_shot','arcane_shot','serpent_sting','concussive_shot','frostjaw_trap','trailbreak','volley','aimed_shot','rapid_fire','counter_shot'],
  priest:['smite','shadow_word_pain','mind_blast','mind_flay','flash_heal','lesser_heal','heal','psychic_scream','summon_tithefiend','veilstep'],
  shaman:['lightning_bolt','chain_lightning','flame_shock','lava_burst','frost_shock','earth_shock','earthquake','thunderstorm','healing_wave','unleash_weapon'],
  warlock:['shadow_bolt','corruption','immolate','chaos_bolt','drain_life','fear','rain_of_fire','summon_imp','summon_infernal','shadowburn'],
- druid:['wrath','moonfire','entangling_roots','bear_charge','maul','rake','ferocious_bite','starfire','hurricane','pounce'],
+ druid:['bear_charge','maul','bash','pounce','rake','claw','ferocious_bite','rip','hamstring_bite','skull_bash'],
 };
 const SHOW_BUFF_TYPES=new Set(['selfBuff','buffTarget','imbue','partyMeleeBuff','aoeAllyHaste','partyBuff','groupBuff','raidBuff','aura','applyAura','buff','shapeshift','transform','form','healOverTime','applyBuff']);
 const BUFF_ID_PARTS=/^(?:aspect_of_|seal_of_|blessing_of_|.*_stance$|.*_form$|mark_of_the_wild$|power_word_fortitude$|arcane_intellect$|frost_armor$|demon_skin$|lightning_shield$|.*_weapon$|bloodlust$|battle_shout$|rallying_cry$|retribution_aura$|barkskin$|thorns$|stealth$|slice_and_dice$|sprint$|evasion$|renew$|rejuvenation$|regrowth$|power_word_shield$|bone_armor$|avenging_wrath$|berserker_rage$|bloodrage$|tigers_fury$|adrenaline_rush$|ghost_wolf$|travel_form$)/;
@@ -53,6 +53,7 @@ export function v14OriginalCatalogueErrors():string[]{
    const d=ABILITIES[id];
    if(!d||d.class!==cls||d.passive||d.hiddenFromPlayer)errors.push(cls+': invalid native original '+id);
    if(id.startsWith('hf_'))errors.push(cls+': fusion forbidden '+id);
+   if(d && originalBuff(d))errors.push(cls+': buff/passive occupies combat slot '+id);
    if(d?.specs && !d.specs.includes(V14_RECOMMENDED_SPEC[cls]))
      errors.push(cls+': '+id+' requires different specialization than '+V14_RECOMMENDED_SPEC[cls]);
   }
@@ -111,8 +112,8 @@ export function installV14(h:V14Hooks):void{
   equipped.length=0;
   for(const p of specs)if(isKnown(p.id)&&h.equip(p.id,p.slot))equipped.push(p.id);
   panel.dataset.v14Equipped=String(equipped.length);
-  status.textContent=equipped.length+'/10 equipadas · '+h.resource().type+
-    ' NATIVO · ATK NORMAL ON · Inaccesibles: requisito de nivel, spec o talento.';
+  status.textContent=(equipped.length===10?'10/10 LISTAS · ':'ATENCIÓN '+equipped.length+'/10 · ')+h.resource().type+
+    ' NATIVO · ATK NORMAL ON · Preset '+V14_RECOMMENDED_SPEC[cls]+' · Usos situacionales: recurso, forma, sigilo y posición.';
  }
  function skillCard(id:string,slot:number){
   const d=ABILITIES[id],known=isKnown(id);
