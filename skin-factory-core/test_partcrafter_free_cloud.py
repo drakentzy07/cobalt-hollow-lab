@@ -45,9 +45,9 @@ def test_notebook():
       'part_*.glb','--num_inference_steps','--image_path','uploaded=files.upload()','new_a','new_b','files.download']:
         assert marker in raw,marker
     # Never require paid accounts or token-posting.
-    assert '--part_suggest' not in raw.split('cmd=[sys.executable')[1].split('assert "--rmbg"')[0]
-    assert '--style_transfer' not in raw.split('cmd=[sys.executable')[1].split('subprocess.run(cmd')[0]
-    assert '--rmbg' not in raw.split('cmd=[sys.executable')[1].split('subprocess.run(cmd')[0]
+    actual_cmd=raw.split('cmd=[sys.executable')[1].split('assert "--rmbg"')[0]
+    for forbidden in ('--part_suggest','--style_transfer','--rmbg'):
+        assert forbidden not in actual_cmd, forbidden
     print('HIGHFLY_R04_FREE_GPU_NOTEBOOK_SYNTAX_AND_PAYWALL_GATES_GREEN')
 def main():
     test_notebook()
