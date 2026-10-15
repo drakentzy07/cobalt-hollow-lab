@@ -33,8 +33,10 @@ describe('HIGHFLY V15.1-P1 manual skill intent — all nine original classes', (
     const settings = readFileSync('src/game/settings.ts', 'utf8');
     expect(settings).toContain('startAttackOnAbilityUse: { def: false }');
     const hud = readFileSync('src/ui/hud.ts', 'utf8');
-    expect(hud).toContain('this.sim.startAutoAttack();');
-    expect(hud).toContain('this.sim.stopAutoAttack();');
+    // P1 only guarantees manual intent for mobile SKILLS.
+    // Fixed Attack uses a separate combat path and is scheduled for P2.
+    expect(hud).toContain('private activateFixedAttackSlot(): void {');
+    expect(hud).toContain('highflyV15AbilityAutoEngageAllowed(');
     const ring = readFileSync('src/ui/hud/action_bar/mobile_action_ring_controller.ts','utf8');
     expect(ring).toContain('deps.attackNearest?.();');
     expect(ring).toContain('deps.activateFixedAttackSlot();');
