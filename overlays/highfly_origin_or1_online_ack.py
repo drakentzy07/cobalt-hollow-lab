@@ -5,6 +5,7 @@ No new server WS envelope, no new damage path, no persisted fields.
 """
 from pathlib import Path
 import shutil
+import re
 
 def once(file: str, old: str, new: str) -> None:
     p = Path(file)
@@ -80,7 +81,28 @@ new="""    const intent = this.onHighflyBasicAttack?.(next) ?? false;
       if (this.sim.player.dead) return;
       this.highflyOriginAcceptBasicStrike(next, elemental, now);
     }).catch(() => { this.highflyOriginStrikeAck.settle(token, false); });"""
-once(hud,old,new)
+# V9.1 and the GAME-C1 elemental/evade-grace overlay evolve the body of
+# activateFixedAttackSlot. Replace ONLY the final accepted-strike callback
+# block, regardless of extra guard/animation lines preceding it. Never match
+# another function or blindly patch an unknown layout.
+method_start = Path(hud).read_text(encoding='utf-8').find('  private activateFixedAttackSlot(): void {')
+if method_start < 0:
+    raise SystemExit("ORIGIN_OR1_P2_ATTACK_METHOD_MISSING")
+source = Path(hud).read_text(encoding='utf-8')
+next_method = source.find('\n  private ', method_start + 5)
+if next_method < 0:
+    next_method = len(source)
+method = source[method_start:next_method]
+pattern = r"    if \\(this\\.onHighflyBasicAttack\\?\\.\\(next\\)\\) \\{\\n(?:(?!    \\}\\n)[^\\n]*\\n)*    \\}"
+# Match by the callback start and its dedented method-local closing brace.
+# Non-greedy, anchored on a 4-space closing brace, preserving other logic.
+pattern = r"    if \\(this\\.onHighflyBasicAttack\\?\\.\\(next\\)\\) \\{\\n.*?\\n    \\}"
+matches = list(re.finditer(pattern, method, flags=re.DOTALL))
+if len(matches) != 1:
+    raise SystemExit(f"ORIGIN_OR1_P2_CALLBACK_SOURCE_DRIFT count={len(matches)}")
+m = matches[0]
+method_new = method[:m.start()] + new + method[m.end():]
+Path(hud).write_text(source[:method_start]+method_new+source[next_method:], encoding='utf-8')
 # Main's duck-typed local/online action world must allow Promise confirmation.
 once("src/main.ts",
    "highflyBasicAttack?: (comboStep: 1 | 2 | 3 | 4) => boolean;",
