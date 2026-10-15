@@ -1,0 +1,49 @@
+name: HIGHFLY Character Factory R02 - real dependency imports
+on:
+  push:
+    branches: [highfly-characterfactory-r01-free-colab]
+    paths:
+      - 'skin-factory-core/HIGHFLY_CharacterFactory_AUTO_R02_FREE.ipynb'
+      - 'skin-factory-core/test_characterfactory_colab_r02.py'
+      - '.github/workflows/skin-factory-characterfactory-r02.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  notebook-and-dependency-compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Syntax and no-credit barriers
+        run: python skin-factory-core/test_characterfactory_colab_r02.py
+      - name: Install real CPU torch 2.6 and Character Factory generation extras (no GPU, no weights)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -q "torch==2.6.0" --index-url https://download.pytorch.org/whl/cpu
+          printf 'torch==2.6.0\n' >/tmp/highfly-cf-r02-cpu-constraints.txt
+          git clone --no-checkout https://github.com/character-factory/character-factory.git /tmp/hf-upstream-cf
+          git -C /tmp/hf-upstream-cf checkout 379b59f1b40172aa318cf0f67d3529ded255f8ac
+          python -m pip install -q -e "/tmp/hf-upstream-cf[generation]" -c /tmp/highfly-cf-r02-cpu-constraints.txt
+          python -m pip check
+      - name: Exercise actual Diffusers and Transformers imports and CPU preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import torch,diffusers,transformers
+          assert torch.__version__.startswith("2.6.0"),torch.__version__
+          assert hasattr(torch,"accelerator"),"MISSING_TORCH_ACCELERATOR"
+          from diffusers import DiffusionPipeline
+          from character_factory.preflight import check_generation_stack
+          checks=check_generation_stack(device="cpu")
+          failures=[x for x in checks if not x.ok]
+          assert not failures,[str(x) for x in failures]
+          print("HIGHFLY_CF_R02_REAL_DIFFUSERS_TRANSFORMERS_CPU_PRECHECK_IMPORTS_GREEN")
+          print("Torch",torch.__version__,"Diffusers",diffusers.__version__,"Transformers",transformers.__version__)
+          print("HIGHFLY_CF_R02_GPU_INFERENCE_NOT_EXECUTED_CI=1")
+          PY
