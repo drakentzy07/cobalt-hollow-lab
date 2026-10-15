@@ -15,8 +15,8 @@ from pathlib import Path
 CSS = Path("src/styles/hud.mobile.css")
 SIGNATURE = "/* HF15_UX02_QUICK_ACTIONS_INPUT_LAYER */"
 RULE = """
-  /* HF15_UX02_QUICK_ACTIONS_INPUT_LAYER
-     The closed Quick Actions anchor must be an actual hit-test target during
+  /* HF15_UX02_QUICK_ACTIONS_INPUT_LAYER */
+  /* The closed Quick Actions anchor must be an actual hit-test target during
      gameplay, not painted beneath #ui (z80) / the game canvas.  #mobile-controls
      is already pointer-events:none with pointer-active children; raising its
      stacking context does not create an opaque touch-capturing fullscreen sheet.
