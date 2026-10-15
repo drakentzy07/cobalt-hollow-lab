@@ -24,15 +24,18 @@ export function highflyAimSpec(id:string):HighflyAimSpec|null {
  const positional=def.targetMode==='position';
  const movement=effects.some(e=>e.type==='repositionToAim'||e.type==='blinkForward');
  const actualRange=movement && range===0
-   ? Math.max(0,...effects.map(e=>e.type==='blinkForward'?(e.distance??0):0)):range;
+   ? Math.max(0,...effects.map(e=>e.type==='blinkForward'?(e.distance??0):0))
+   : def.requiresTarget && range===0 ? 4.5 : range; // native melee reach preview ONLY
  const selfCentered=range===0&&!positional&&!movement;
  let shape:HighflyAimShape='target';
  if(DASH_IDS.has(id)&&(positional||movement))shape='dash';
+ else if(def.class==='rogue'&&def.requiresTarget&&range===0
+   &&effects.some(e=>e.type==='weaponStrike'))shape='line'; // short Wicked Slash / Ambush lane
  else if(positional)shape='circle';
  else if(CONE_IDS.has(id))shape='cone';
  else if(LINE_IDS.has(id)&&def.requiresTarget)shape='line';
  return {shape,range:actualRange,minRange:Math.max(0,Number(def.minRange??0)),
-   radius:Math.max(0,radius),width:0.75,angle:Math.PI/3,
+   radius:Math.max(0,radius),width:range===0?1.5:0.95,angle:Math.PI/3,
    targetRequired:Boolean(def.requiresTarget),selfCentered};
 }
 type Pt={x:number;z:number};
