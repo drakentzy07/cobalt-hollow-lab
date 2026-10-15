@@ -93,10 +93,8 @@ next_method = source.find('\n  private ', method_start + 5)
 if next_method < 0:
     next_method = len(source)
 method = source[method_start:next_method]
-pattern = r"    if \\(this\\.onHighflyBasicAttack\\?\\.\\(next\\)\\) \\{\\n(?:(?!    \\}\\n)[^\\n]*\\n)*    \\}"
-# Match by the callback start and its dedented method-local closing brace.
-# Non-greedy, anchored on a 4-space closing brace, preserving other logic.
-pattern = r"    if \\(this\\.onHighflyBasicAttack\\?\\.\\(next\\)\\) \\{\\n.*?\\n    \\}"
+# Delimit the original callback by its own 4-space closing brace.
+pattern = r"    if \(this\.onHighflyBasicAttack\?\.\(next\)\) \{\n.*?\n    \}"
 matches = list(re.finditer(pattern, method, flags=re.DOTALL))
 if len(matches) != 1:
     raise SystemExit(f"ORIGIN_OR1_P2_CALLBACK_SOURCE_DRIFT count={len(matches)}")
