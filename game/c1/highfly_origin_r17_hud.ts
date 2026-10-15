@@ -24,7 +24,7 @@ export interface OriginAimHooks {
 export function originUtilitySkill(id:string):boolean {
   const def=ABILITIES[id];
   if(!def)return false;
-  if(id==='divine_ascension')return true;
+  if(id==='divine_ascension'||id==='holy_light'||id==='flash_of_light')return true;
   const utility=/blessing|ward|aura|shield|armor|armour|protection|healing|heal|renew|barrier|regeneration|invocation|fortify|fortitude|might|sanctuary|covenant|bulwark|resurrection|resurrect|rebirth|dispel|purify|cleanse|rejuvenation|lay_on_hands|buff/i;
   // Avoid putting explicitly offensive strikes in a passive slot just
   // because their name happens to mention a shield or holy effect.
@@ -100,7 +100,7 @@ export function installOriginAimAndLoadout(h:OriginAimHooks):void {
     publish();
   };
   const down=(ev:PointerEvent)=>{
-    if(ev.pointerType!=='touch'||pending||ev.isPrimary===false)return;
+    if(ev.pointerType!=='touch'||pending)return; // right thumb works alongside joystick
     const el=(ev.target as HTMLElement).closest<HTMLButtonElement>('.action-btn[data-hotbar-slot]');
     if(!el)return;
     const slot=Number(el.dataset.hotbarSlot);
@@ -117,7 +117,7 @@ export function installOriginAimAndLoadout(h:OriginAimHooks):void {
     p.drag=true;
     const id=h.getSlot(p.slot),def=id?ABILITIES[id]:null;
     const selected=originAimSelect(h.player(),h.targets(),{dx:p.dx,dy:p.dy},def?.range??30,priority);
-    indicator.textContent=p.dy< -125 && Math.abs(p.dy)>Math.abs(p.dx)*1.8
+    indicator.textContent=p.dx>120 && p.dy< -95
       ? '✕ CANCELAR' : selected===null?'Sin objetivo válido':'◎ OBJETIVO '+selected;
     indicator.style.display='block';
     indicator.style.left=Math.min(innerWidth-140,Math.max(8,ev.clientX+15))+'px';
@@ -132,7 +132,7 @@ export function installOriginAimAndLoadout(h:OriginAimHooks):void {
     // a target never gets two casts. Ordinary taps/empowered holds are native.
     ev.preventDefault();ev.stopImmediatePropagation();
     consumed={slot:p.slot,at:Date.now()};
-    const canceled=p.dy< -125 && Math.abs(p.dy)>Math.abs(p.dx)*1.8;
+    const canceled=p.dx>120 && p.dy< -95;
     if(!canceled){
       const id=h.getSlot(p.slot),def=id?ABILITIES[id]:null;
       const target=originAimSelect(h.player(),h.targets(),{dx:p.dx,dy:p.dy},def?.range??30,priority);
