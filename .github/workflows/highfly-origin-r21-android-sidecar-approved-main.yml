@@ -1,0 +1,338 @@
+name: HIGHFLY ORIGIN R21 Android Pages — SAFE ADDITIVE NEW LAB
+# Owner approved 2026-10-15: publish GREEN R21 as separate S23 preview.
+# NEVER replace the public root, V15.2, SF28 or previous ORIGIN: use the exact
+# last successful Pages artifact as a byte-preserved baseline.
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/highfly-origin-r21-android-sidecar-approved-main.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: highfly-origin-r21-pages-additive-preserve-origin-r15
+  cancel-in-progress: false
+
+jobs:
+  safe_stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Pin proven source and current Pages deployment by exact SHA
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sources=[
+              {id:38821301164,sha:"d0c06198b42bba8437d21be149deec8e6faf0ea6",tag:"CURRENT_ORIGIN_R20_PUBLIC_PAGES"},
+              {id:38823447706,sha:"7956dcc9bb1babf6adfa7f66ec3af6ef231f4242",tag:"HUNTER_ORIGIN_R21_GREEN"}
+            ];
+            for(const item of sources){
+              const run=(await github.rest.actions.getWorkflowRun({
+                owner:context.repo.owner,repo:context.repo.repo,run_id:item.id
+              })).data;
+              if(run.status!=="completed"||run.conclusion!=="success"||run.head_sha!==item.sha)
+                throw Error("ORIGIN_BLOCK_SOURCE_DRIFT "+JSON.stringify({item,status:run.status,conclusion:run.conclusion,sha:run.head_sha}));
+              core.info(item.tag+" VERIFIED "+item.id);
+            }
+
+      - name: Download EXACT latest complete public Pages tree (ORIGIN R21 GREEN)
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38821301164
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: baseline-pages
+
+      - name: Download EXACT Hunter ORIGIN R21 GREEN WebGL
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38823447706
+          github-token: ${{ github.token }}
+          name: HIGHFLY-ORIGIN-R21-FREE-MANUAL-AIM-WEBGL-NO-DEPLOY
+          path: origin-compiled
+
+      - name: Preserve all published files, merge ONLY new hash-safe resources and ORIGIN entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s baseline-pages/artifact.tar
+          test -s origin-compiled/cobalt-hollow-lab/index.html
+          test -d origin-compiled/cobalt-hollow-lab/assets
+          test -d origin-compiled/cobalt-hollow-lab/media
+          python3 - <<'PY'
+          from pathlib import Path
+          import tarfile,hashlib,json,shutil,urllib.request,re
+          archive=Path('baseline-pages/artifact.tar')
+          old=Path('preserved-pages')
+          incoming=Path('origin-compiled/cobalt-hollow-lab')
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          old.mkdir()
+          # Existing uploaded Pages tree has no untrusted user data, but protect
+          # tar extraction against path escape and symlink entries anyway.
+          with tarfile.open(archive,'r:') as tf:
+              members=tf.getmembers()
+              for m in members:
+                  p=Path(m.name)
+                  if p.is_absolute() or '..' in p.parts or m.issym() or m.islnk():
+                      raise SystemExit('ORIGIN_BLOCK_UNSAFE_BASELINE_TAR_ENTRY:'+m.name)
+              tf.extractall(old,filter='data')
+          for p in ('index.html','lab/v15-2/index.html','lab/sf28/index.html',
+                    'lab/v15-2/highfly-v152-preview-qa.json',
+                    'lab/origin/index.html', 'lab/origin/highfly-origin-qa.json',
+                    'lab/origin-r17/index.html', 'lab/origin-r17/highfly-origin-r17-qa.json',
+                    'lab/origin-r19/index.html', 'lab/origin-r19/highfly-origin-r19-qa.json',
+                    'lab/origin-r20/index.html', 'lab/origin-r20/highfly-origin-r20-qa.json'):
+              if not (old/p).is_file():
+                  raise SystemExit('ORIGIN_BLOCK_BASELINE_MISSING:'+p)
+          if (old/'lab/origin-r21').exists():
+              raise SystemExit('ORIGIN_BLOCK_PREEXISTING_LAB_ORIGIN')
+          def digest(p):
+              h=hashlib.sha256()
+              with open(p,'rb') as f:
+                  for part in iter(lambda:f.read(4*1024*1024),b''): h.update(part)
+              return h.hexdigest()
+          keep={p:digest(old/p) for p in ('index.html','lab/v15-2/index.html',
+                                          'lab/sf28/index.html',
+                                          'lab/v15-2/highfly-v152-preview-qa.json',
+                                          'lab/origin/index.html', 'lab/origin/highfly-origin-qa.json',
+                                          'lab/origin-r17/index.html', 'lab/origin-r17/highfly-origin-r17-qa.json',
+                                          'lab/origin-r19/index.html','lab/origin-r19/highfly-origin-r19-qa.json',
+                                          'lab/origin-r20/index.html','lab/origin-r20/highfly-origin-r20-qa.json')}
+          def live_bytes(relative):
+              req=urllib.request.Request(base+relative+'?origin_guard=1',headers={
+                'User-Agent':'HIGHFLY-ORIGIN-R15-BEFORE-PAGES-GUARD',
+                'Cache-Control':'no-cache'
+              })
+              with urllib.request.urlopen(req,timeout=90) as ans:
+                  if ans.status!=200: raise SystemExit('ORIGIN_LIVE_HTTP_NOT_200:'+relative)
+                  return ans.read()
+          for rel,want in keep.items():
+              actual=hashlib.sha256(live_bytes(rel)).hexdigest()
+              if actual!=want:
+                  raise SystemExit('ORIGIN_ABORT_LIVE_BASELINE_CHANGED:'+rel+':'+actual+' != '+want)
+          copy_new=0
+          identical=0
+          skipped=[]
+          conflict=[]
+          for source in sorted(p for p in incoming.rglob('*') if p.is_file()):
+              relative=source.relative_to(incoming)
+              # Never copy any new root HTML, PWA identity, service worker,
+              # QA file, or global configuration over an existing public path.
+              if relative.suffix=='.html' or str(relative) in (
+                '.nojekyll','manifest.webmanifest','sw.js','service-worker.js',
+                'highfly-supreme-qa.json'
+              ) or relative.name.endswith('-qa.json'):
+                  skipped.append(str(relative))
+                  continue
+              dest=old/relative
+              if dest.exists():
+                  if dest.stat().st_size!=source.stat().st_size or digest(dest)!=digest(source):
+                      conflict.append(str(relative))
+                  else:
+                      identical+=1
+              else:
+                  dest.parent.mkdir(parents=True,exist_ok=True)
+                  shutil.copy2(source,dest)
+                  copy_new+=1
+          if conflict:
+              print('ORIGIN_PAGES_RESOURCE_CONFLICT='+json.dumps(conflict[:80]))
+              raise SystemExit('ORIGIN_ABORT_EXISTING_PUBLIC_RESOURCE_COLLISION')
+          laboratory=old/'lab/origin-r21'
+          laboratory.mkdir(parents=True)
+          # Copy only entry HTML; static hashed asset URLs keep the existing
+          # Vite project root, as proven by the 72/72 integrated build.
+          html=(incoming/'index.html').read_text(encoding='utf-8')
+          if '/cobalt-hollow-lab/assets/' not in html:
+              raise SystemExit('ORIGIN_BAD_COMPILED_VITE_BASE')
+          if 'VITE_HIGHFLY_ORIGIN_PREVIEW' in html:
+              raise SystemExit('ORIGIN_UNEXPECTED_UNCOMPILED_PREVIEW_FLAG')
+          html=html.replace('/cobalt-hollow-lab/manifest.webmanifest',
+                            '/cobalt-hollow-lab/lab/origin-r21/manifest.webmanifest')
+          (laboratory/'index.html').write_text(html,encoding='utf-8')
+          candidate_manifest=incoming/'manifest.webmanifest'
+          if candidate_manifest.is_file():
+              manifest=json.loads(candidate_manifest.read_text(encoding='utf-8'))
+              manifest.update({
+                  'id':'/cobalt-hollow-lab/lab/origin-r21/',
+                  'start_url':'/cobalt-hollow-lab/lab/origin-r21/',
+                  'scope':'/cobalt-hollow-lab/lab/origin-r21/'
+              })
+              (laboratory/'manifest.webmanifest').write_text(
+                  json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          srcs=re.findall(r"""(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)""",html)
+          if not srcs: raise SystemExit('ORIGIN_NO_BUNDLED_ENTRY_SCRIPTS')
+          for url in srcs:
+              dest=old/url.removeprefix('/cobalt-hollow-lab/')
+              if not dest.is_file():raise SystemExit('ORIGIN_MISSING_ENTRY_ASSET:'+str(dest))
+          # Production compiled JS must actually contain the NEW preview entry.
+          # This gate prevents green build with the opt-in flag accidentally off.
+          js_candidates=[old/url.removeprefix('/cobalt-hollow-lab/')
+                         for url in srcs if url.endswith('.js')]
+          if not js_candidates:
+              raise SystemExit('ORIGIN_NO_COMPILED_JS')
+          found=False
+          for candidate in js_candidates:
+              if b'HIGHFLY ORIGIN' in candidate.read_bytes() or b'ENTRAR AL MUNDO' in candidate.read_bytes():
+                  found=True
+          if not found:
+              # Vite can move application code into another hashed JS chunk.
+              for candidate in (old/'assets').glob('*.js'):
+                  if b'HIGHFLY ORIGIN' in candidate.read_bytes():
+                      found=True
+                      break
+          if not found:raise SystemExit('ORIGIN_PREVIEW_ENTRY_NOT_IN_COMPILED_JAVASCRIPT')
+          meta={
+              'edition':'HIGHFLY ORIGIN R21 FREE MANUAL DRAG CAMERA-CORRECTED PREVIEW',
+              'sourceRun':38823447706,
+              'sourceCommit':'7956dcc9bb1babf6adfa7f66ec3af6ef231f4242',
+              'sourceSuccessfulSteps':'AUTOMATED_GREEN',
+              'path':'/cobalt-hollow-lab/lab/origin-r21/',
+              'homeBeforeSHA256':keep['index.html'],
+              'v152BeforeSHA256':keep['lab/v15-2/index.html'],
+              'sf28BeforeSHA256':keep['lab/sf28/index.html'],
+              'originR15BeforeSHA256':keep['lab/origin/index.html'],
+              'originR15QaBeforeSHA256':keep['lab/origin/highfly-origin-qa.json'],
+              'originR17BeforeSHA256':keep['lab/origin-r17/index.html'],
+              'originR17QaBeforeSHA256':keep['lab/origin-r17/highfly-origin-r17-qa.json'],
+               'originR19BeforeSHA256':keep['lab/origin-r19/index.html'],
+               'originR19QaBeforeSHA256':keep['lab/origin-r19/highfly-origin-r19-qa.json'],
+               'originR20BeforeSHA256':keep['lab/origin-r20/index.html'],
+               'originR20QaBeforeSHA256':keep['lab/origin-r20/highfly-origin-r20-qa.json'],
+              'originalHomePreserved':True,
+              'otherLaboratoriesPreserved':True,
+              'androidPhysicalQA':'PENDING_USER_TEST',
+              'trialOfflineSaveOnly':True,
+              'realOnlineHunterNotYetSupported':True
+          }
+          (laboratory/'highfly-origin-r21-qa.json').write_text(
+              json.dumps(meta,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          (old/'.nojekyll').touch()
+          for path,expected in keep.items():
+              if digest(old/path)!=expected:raise SystemExit('ORIGIN_ABORT_PUBLIC_FILE_MUTATED:'+path)
+          if any(p.is_symlink() for p in old.rglob('*')):
+              raise SystemExit('ORIGIN_SYMLINK_IN_STAGING')
+          files=[p for p in old.rglob('*') if p.is_file()]
+          total=sum(p.stat().st_size for p in files)
+          print('HIGHFLY_ORIGIN_SAFE_PAGES_STAGE='+json.dumps({
+              'totalBytes':total,'files':len(files),'newFiles':copy_new,
+              'identicalSharedFiles':identical,'excluded':skipped[:12],
+              'existingHomeHash':keep['index.html'],
+              'newUrl':base+'lab/origin-r21/'
+          }))
+          if total>=995_000_000:
+              raise SystemExit('ORIGIN_PAGES_SAFE_STOP_OVER_SIZE_'+str(total))
+          if total<500_000_000 or len(files)<6000:
+              raise SystemExit('ORIGIN_PAGES_SAFE_STOP_INCOMPLETE_BASELINE')
+          PY
+
+      - name: Local HTTP verify home, V15.2, SF28 and actual compiled Origin entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p site-test
+          ln -s ../preserved-pages site-test/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory site-test >/tmp/highfly-origin-lab-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 35); do
+            if curl -fsS 'http://127.0.0.1:4173/cobalt-hollow-lab/index.html' >/dev/null; then break; fi
+            sleep 1
+          done
+          for rel in index.html lab/v15-2/index.html lab/sf28/index.html lab/origin/index.html lab/origin-r17/index.html lab/origin-r17/highfly-origin-r17-qa.json lab/origin-r19/index.html lab/origin-r19/highfly-origin-r19-qa.json lab/origin-r20/index.html lab/origin-r20/highfly-origin-r20-qa.json lab/origin-r21/index.html lab/origin-r21/highfly-origin-r21-qa.json; do
+            curl -fsS "http://127.0.0.1:4173/cobalt-hollow-lab/$rel" >/dev/null
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,urllib.request,json
+          base='http://127.0.0.1:4173'
+          html=Path('preserved-pages/lab/origin-r21/index.html').read_text()
+          links=re.findall(r"""(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)""",html)
+          for src in links:
+              with urllib.request.urlopen(base+src,timeout=30) as r:
+                  if r.status!=200 or not r.read(1024):
+                      raise SystemExit('ORIGIN_LOCAL_HTTP_ASSET_INVALID:'+src)
+          qa=json.loads(Path('preserved-pages/lab/origin-r21/highfly-origin-r21-qa.json').read_text())
+          assert qa['sourceRun']==38823447706
+          print('HIGHFLY_ORIGIN_LAB_LOCAL_HTTP_VERIFIED='+str(len(links)))
+          PY
+
+      - name: Configure GitHub Pages to preserve public and sidecar
+        uses: actions/configure-pages@v5
+
+      - name: Upload fully preserved Pages tree + isolated ORIGIN sidecar
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: preserved-pages
+
+  deploy:
+    needs: safe_stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/lab/origin-r21/
+    steps:
+      - name: Publish whole preserved public Pages site + new ORIGIN lab
+        uses: actions/deploy-pages@v4
+      - name: Verify actual live Android link plus preserved public and V15.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import urllib.request,json,hashlib,time,re
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          def get(rel):
+              req=urllib.request.Request(base+rel,headers={
+                'User-Agent':'HIGHFLY-ORIGIN-R19-LIVE-VERIFY',
+                'Cache-Control':'no-cache'
+              })
+              with urllib.request.urlopen(req,timeout=60) as rsp:
+                  if rsp.status!=200:raise RuntimeError('HTTP '+str(rsp.status))
+                  return rsp.read()
+          for attempt in range(36):
+              try:
+                  qa=json.loads(get('lab/origin-r21/highfly-origin-r21-qa.json?try='+str(attempt)))
+                  html=get('lab/origin-r21/index.html?try='+str(attempt))
+                  if qa.get('sourceRun')!=38823447706 or b'/cobalt-hollow-lab/assets/' not in html:
+                      raise RuntimeError('ORIGIN_SIDE_CAR_NOT_YET_LIVE')
+                  for rel,key in [
+                      ('index.html','homeBeforeSHA256'),
+                      ('lab/v15-2/index.html','v152BeforeSHA256'),
+                      ('lab/sf28/index.html','sf28BeforeSHA256'),
+                      ('lab/origin/index.html','originR15BeforeSHA256'),
+                      ('lab/origin/highfly-origin-qa.json','originR15QaBeforeSHA256'),
+                      ('lab/origin-r17/index.html','originR17BeforeSHA256'),
+                      ('lab/origin-r17/highfly-origin-r17-qa.json','originR17QaBeforeSHA256'),
+                       ('lab/origin-r19/index.html','originR19BeforeSHA256'),
+                       ('lab/origin-r19/highfly-origin-r19-qa.json','originR19QaBeforeSHA256'),
+                       ('lab/origin-r20/index.html','originR20BeforeSHA256'),
+                       ('lab/origin-r20/highfly-origin-r20-qa.json','originR20QaBeforeSHA256')
+                  ]:
+                      if hashlib.sha256(get(rel+'?try='+str(attempt))).hexdigest()!=qa[key]:
+                          raise SystemExit('ORIGIN_CRITICAL_ORIGINAL_PAGES_CHANGED:'+rel)
+                  links=re.findall(rb"""(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)""",html)
+                  if not links:raise RuntimeError('ORIGIN_LIVE_NO_ASSETS')
+                  for asset in links[:10]:
+                      if not get(asset.decode().removeprefix('/cobalt-hollow-lab/')):
+                          raise SystemExit('ORIGIN_LIVE_ASSET_MISSING:'+asset.decode())
+                  print('HIGHFLY_ORIGIN_R21_REAL_ANDROID_PAGES_GREEN='+json.dumps({
+                      'url':base+'lab/origin-r21/',
+                      'sourceRun':qa['sourceRun'],
+                      'preservedHome':True,'preservedV152':True,'preservedSF28':True,'preservedOriginR17':True,
+                      'physicalS23StillPending':True
+                  }))
+                  break
+              except SystemExit:raise
+              except Exception as exc:
+                  print('ORIGIN_WAIT_FOR_PAGES_PROPAGATION',attempt,str(exc)[:200])
+                  time.sleep(6)
+          else:raise SystemExit('ORIGIN_LAB_URL_UNVERIFIED_AFTER_PUBLISH')
+          PY
