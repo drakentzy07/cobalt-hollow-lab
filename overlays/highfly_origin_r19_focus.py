@@ -120,7 +120,7 @@ once('src/highfly/highfly_origin_trial_runtime.ts',
      """  const backdrop=document.createElement('div');
   backdrop.id='hf-origin-entry-backdrop';
   backdrop.style.cssText='position:fixed;inset:0;z-index:99000;background:radial-gradient(ellipse at 50% 28%,#284363 0%,#0a1829 56%,#050b16 100%);pointer-events:auto;';
-  document.body.appendChild(backdrop);
+  host.appendChild(backdrop); // same lifecycle as mode-select: no orphan overlay intercepting live game
   const introStyle=document.createElement('style');
   introStyle.textContent='#hf-origin-entry input:focus{outline:2px solid #e0c384} #hf-origin-entry button:active{transform:scale(.98)}';
   document.head.appendChild(introStyle);
