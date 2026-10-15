@@ -93,7 +93,7 @@ injected = r"""
       if(!(anchor instanceof HTMLElement))throw Error('HF15_UX_TOUCH_TARGET_MISSING '+sel);
       const r=anchor.getBoundingClientRect(),x=Math.max(2,r.x+r.width/2),y=r.y+r.height/2;
       const top=document.elementFromPoint(x,y);
-      if(!(top instanceof HTMLElement)||!anchor.contains(top)){
+      if(!(top instanceof Element)||!anchor.contains(top)){
         const stack=document.elementsFromPoint(x,y).slice(0,7).map(e=>e.id||e.tagName);
         throw Error('HF15_UX_TOUCH_TARGET_OBSCURED '+sel+' '+JSON.stringify({x,y,top:top?.id||top?.tagName,stack}));
       }
