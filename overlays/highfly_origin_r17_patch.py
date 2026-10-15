@@ -109,6 +109,23 @@ once('src/highfly/highfly_origin_trial_runtime.ts',
   setButton.addEventListener('click',()=>dispatch('set',skillSelect.value));
   clearButton.addEventListener('click',()=>dispatch('clear'));
   autoButton.addEventListener('click',()=>dispatch('autopack'));
+  const targetPriority=document.createElement('select');
+  targetPriority.style.cssText=skillSelect.style.cssText;
+  [{value:'nearest',label:'AUTO: ENEMIGO MÁS CERCANO'},
+   {value:'lowest-hp',label:'AUTO: ENEMIGO CON MENOR % DE VIDA'}].forEach(opt=>{
+    const node=document.createElement('option');node.value=opt.value;
+    node.textContent=opt.label;targetPriority.appendChild(node);
+  });
+  targetPriority.addEventListener('change',()=>document.dispatchEvent(new CustomEvent('hf-origin-command',{
+    detail:{kind:'priority',priority:targetPriority.value}
+  })));
+  const removeShield=button('QUITAR ESCUDO DEL HUNTER');
+  removeShield.addEventListener('click',()=>{
+    const ok=sim.unequipItem('offhand');
+    status.textContent=ok
+      ? 'Escudo guardado en el inventario. La espada sigue disponible.'
+      : 'No hay escudo equipado o no hay espacio para desequiparlo.';
+  });
   const slotState=document.createElement('small');
   slotState.style.cssText='display:block;color:#ace0ff;word-wrap:break-word;';
   const utility=document.createElement('div');
@@ -167,7 +184,7 @@ once('src/highfly/highfly_origin_trial_runtime.ts',
   });""")
 once('src/highfly/highfly_origin_trial_runtime.ts',
      "  panel.append(caption,list,status);shell.append(toggle,panel);document.body.append(shell);",
-     """  panel.append(caption,barNote,skillSelect,slotSelect,controlRow,autoButton,slotState,list,status);
+     """  panel.append(caption,barNote,skillSelect,slotSelect,controlRow,autoButton,targetPriority,removeShield,slotState,list,status);
   shell.append(toggle,panel);document.body.append(shell);
   dispatch('sync');""")
 
