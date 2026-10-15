@@ -27,9 +27,8 @@ describe('HIGHFLY ORIGIN R1-7: 10 combat + 8 utility, native actions only',()=>{
     expect(originSkillRole('divine_ascension')).toBe('reference');
     expect(originSkillRole('holy_light')).toBe('support');
     expect(originUtilitySkill('divine_protection')).toBe(true);
-    expect(originUtilitySkill('wildmend')).toBe(true);
-    expect(originUtilitySkill('fiendhide')).toBe(true);
-    expect(originUtilitySkill('stonebound_weapon')).toBe(true);
+    expect(originSkillRole('demon_skin')).toBe('support');
+    expect(originSkillRole('rockbiter_weapon')).toBe('reference');
     expect(originUtilitySkill('holy_light')).toBe(true);
     expect(originUtilitySkill('sinister_strike')).toBe(false);
     expect(originUtilitySkill('shield_bash')).toBe(false);

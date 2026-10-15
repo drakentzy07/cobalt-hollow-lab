@@ -43,6 +43,9 @@ on:
       - "game/c1/highfly_origin_r15_r16_playable_trial.test.ts"
       - "game/c1/highfly_origin_r17_hud.ts"
       - "game/c1/highfly_origin_r18_loadout.ts"
+      - "game/c1/highfly_origin_r19_selection.ts"
+      - "game/c1/highfly_origin_r19_focus.test.ts"
+      - "overlays/highfly_origin_r19_focus.py"
       - "game/c1/highfly_origin_r17_hud.test.ts"
       - "overlays/highfly_origin_r17_patch.py"
       - "overlays/highfly_v91_combat_feel.py"
@@ -124,6 +127,9 @@ jobs:
             /game/c1/highfly_origin_r15_r16_playable_trial.test.ts
             /game/c1/highfly_origin_r17_hud.ts
             /game/c1/highfly_origin_r18_loadout.ts
+            /game/c1/highfly_origin_r19_selection.ts
+            /game/c1/highfly_origin_r19_focus.test.ts
+            /overlays/highfly_origin_r19_focus.py
             /game/c1/highfly_origin_r17_hud.test.ts
             /overlays/highfly_origin_r17_patch.py
             /overlays/highfly_v15_pwa_manifest.py
@@ -823,8 +829,18 @@ jobs:
           python3 ../v9-corrections/overlays/highfly_origin_r17_patch.py
           cp ../v9-corrections/game/c1/highfly_origin_r17_hud.test.ts tests/highfly_origin_r17_hud.test.ts
           git diff --check HEAD
-          pnpm exec vitest run tests/highfly_origin_r17_hud.test.ts tests/highfly_origin_r15_r16_playable_trial.test.ts
-          echo 'HIGHFLY_ORIGIN_R17_DEVOTION_HUD_TARGET_DRAG_NATIVE_REGRESSION_GREEN=1'
+          pnpm exec vitest run tests/highfly_origin_r15_r16_playable_trial.test.ts
+          echo 'HIGHFLY_ORIGIN_R18_MOBILE_RING_PREVIEW_PATCH_GREEN=1'
+      - name: ORIGIN R19 36 native ranked picks, specialist selection, premium support and clean entrance
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r19_focus.py
+          cp ../v9-corrections/game/c1/highfly_origin_r19_focus.test.ts tests/highfly_origin_r19_focus.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r17_hud.test.ts tests/highfly_origin_r19_focus.test.ts tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R19_TOP36_LEVEL_GATES_PREMIUM_HUD_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
