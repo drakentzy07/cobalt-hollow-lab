@@ -10,6 +10,8 @@ on:
       - "game/c1/highfly_v91_combat_nine_classes.test.ts"
       - "overlays/highfly_v15_manual_cast_p1.py"
       - "game/c1/highfly_v15_manual_cast_p1.test.ts"
+      - "overlays/highfly_v15_manual_strike_p2.py"
+      - "game/c1/highfly_v15_manual_strike_p2.test.ts"
       - "overlays/highfly_v15_pwa_manifest.py"
       - "tests/test_highfly_v15_pwa_manifest.py"
   workflow_dispatch:
@@ -43,6 +45,8 @@ jobs:
             /game/c1/highfly_v91_combat_nine_classes.test.ts
             /overlays/highfly_v15_manual_cast_p1.py
             /game/c1/highfly_v15_manual_cast_p1.test.ts
+            /overlays/highfly_v15_manual_strike_p2.py
+            /game/c1/highfly_v15_manual_strike_p2.test.ts
             /overlays/highfly_v15_pwa_manifest.py
             /overlays/rewrite_pages_static.py
             /tests/test_highfly_v15_pwa_manifest.py
@@ -592,6 +596,17 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_v15_manual_cast_p1.test.ts
           echo 'HF15_1_P1_MANUAL_SKILL_INTENT_NINE_CLASS_GATE_GREEN=1'
+      - name: HF15.1 P2 native manual strike — nine classes and server protocol (NO DEPLOY)
+        if: ${{ github.ref_name == 'highfly-v15-foundation' }}
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_v15_manual_strike_p2.py
+          cp ../v9-corrections/game/c1/highfly_v15_manual_strike_p2.test.ts tests/highfly_v15_manual_strike_p2.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_v15_manual_strike_p2.test.ts tests/highfly_v15_manual_cast_p1.test.ts
+          echo 'HF15_1_P2_NATIVE_SINGLE_STRIKE_NINE_CLASS_SERVER_GATE_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
