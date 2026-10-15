@@ -1,190 +1,93 @@
 #!/usr/bin/env python3
-"""HIGHFLY V15.1-P2 — true manual basic attack on the ORIGINAL Sim and server.
+"""HF15.1 P2 — wire EXISTING CLEAN V1 highflyBasicAttack(1|2|3|4) online.
 
-Install only after V9/V9.1 and V15.1-P1 overlays; fail on donor anchor drift.
-No autoAttack toggling or timeouts. One command invokes at most one regular
-mainhand OR offhand attack, reusing existing accuracy/crit/range/LoS/procs and
-native animation events. Respects original weapon timers and nine-class logic.
+Preserves approved GAME-C1 1-2-3-4, elemental gem finalizer, animation,
+Sim combat damage, targeting, and GOLDEN mobile input. No duplicate strike
+engine, no bogus startAutoAttack/stopAutoAttack pulse and no HUD rewrite.
+Install AFTER immutable CLEAN V1 and P1.
 """
 from pathlib import Path
 
-def once(filename: str, old: str, new: str) -> None:
-    path=Path(filename); s=path.read_text(encoding="utf-8")
-    n=s.count(old)
-    if n != 1: raise SystemExit(f"HF15P2_SOURCE_DRIFT {filename} {n}: {old[:110]!r}")
-    path.write_text(s.replace(old,new,1),encoding="utf-8")
+def once(path: str, old: str, new: str) -> None:
+    p = Path(path)
+    text = p.read_text(encoding='utf-8')
+    n = text.count(old)
+    if n != 1:
+        raise SystemExit(f'HF15P2_SOURCE_DRIFT {path}: count={n} anchor={old[:100]!r}')
+    p.write_text(text.replace(old, new, 1), encoding='utf-8')
 
-path="src/sim/combat/auto_attack.ts"
-once(path,
-    "export function updatePlayerAutoAttack(ctx: SimContext, p: Entity, meta: PlayerMeta): void {",
-    """/**
- * One authoritative manual attack request. NEVER arms the per-tick driver.
- * Range/facing/weapon timer/LoS/stealth/miss/crit/procs use the same native
- * tryPlayerSwing path as regular white hits. The server resolves the request
- * against the authenticated pid; the client cannot supply power or victim.
- */
-export function manualBasicAttack(ctx: SimContext, pid?: number): void {
-  const r = ctx.resolve(pid);
-  if (!r) return;
-  const p = r.e;
-  // Legacy continuing autoattack must not run after a deliberate manual press.
-  p.autoAttack = false;
-  if (r.meta.vehicle || p.dead || isInStasis(p) ||
-      isValkyrsCallingAirborne(p) ||
-      wispMazeActionsLocked(r.meta.worldQuestLog) ||
-      shadowActionsLocked(r.meta.worldQuestLog) ||
-      gliderActionsLocked(r.meta.worldQuestLog) ||
-      p.auras.some(a => isTravelFormAuraKind(a.kind))) return;
-  const target = p.targetId === null ? null : ctx.entities.get(p.targetId);
-  if (!target || target.dead || !ctx.isHostileTo(p, target) || hasEscapeStealth(target)) return;
-  if (p.castingAbility || isStunned(p) || isDisarmed(p)) return;
-  if (p.swingTimer > 0 &&
-      (!p.dualWielding || !p.offhandWeapon || p.offhandSwingTimer > 0)) return;
-  if (p.sitting) ctx.standUp(p);
-  if (p.weaponStowed) drawWeapon(p);
-  r.meta.lastActiveTick = ctx.tickCount;
-  tryPlayerSwing(ctx, p, r.meta, true);
-}
+# Reuse already-accepted ONE-SWING combat primitive in CLEAN V1, rather
+# than altering the native hit table or shadowing the approved combo HUD.
+sim = Path("src/sim/sim.ts").read_text(encoding='utf-8')
+assert 'highflyBasicAttack(step: 1 | 2 | 3 | 4, pid?: number): boolean' in sim, 'HF15P2_CLEAN_BASIC_SIM_MISSING'
+hud = Path("src/ui/hud.ts").read_text(encoding='utf-8')
+assert 'if (this.onHighflyBasicAttack?.(next)) {' in hud, 'HF15P2_CLEAN_COMBO_HUD_MISSING'
+assert 'this.onHighflyElementalFinisherReady?.()' in hud, 'HF15P2_ELEMENTAL_COMBO_MISSING'
+native = Path("src/sim/combat/auto_attack.ts").read_text(encoding='utf-8')
+assert 'export function highflyBasicAttack(' in native, 'HF15P2_NATIVE_ATTACK_MISSING'
+assert 'p.autoAttack = false;' in native, 'HF15P2_NATIVE_MANUAL_MODE_MISSING'
+assert 'applyHighflyElementalFinisher(ctx, p, t, element)' in native, 'HF15P2_GEM4_NATIVE_MISSING'
 
-export function updatePlayerAutoAttack(ctx: SimContext, p: Entity, meta: PlayerMeta): void {""")
-once(path,
-    "export function tryPlayerSwing(ctx: SimContext, p: Entity, meta: PlayerMeta): void {",
-    """export function tryPlayerSwing(
-  ctx: SimContext, p: Entity, meta: PlayerMeta, manual = false,
-): void {""")
-once(path,
-    "  if (!p.autoAttack || p.castingAbility) return;",
-    "  if ((!manual && !p.autoAttack) || p.castingAbility) return;")
-once(path,
-    """  const dualWieldWhiteMissPenalty = hasDualWieldWhiteMissPenalty(ctx, p, meta);
-
-  if (p.swingTimer <= 0) {""",
-    """  const dualWieldWhiteMissPenalty = hasDualWieldWhiteMissPenalty(ctx, p, meta);
-  const manualMainReady = p.swingTimer <= 0;
-
-  if (p.swingTimer <= 0) {""")
-once(path,
-    """  if (p.dualWielding && p.offhandWeapon && p.offhandSwingTimer <= 0) {""",
-    """  // A manual press is ONE weapon attempt. Duals alternate to the ready
-  // offhand only when the main hand was still cooling down at this press.
-  if (p.dualWielding && p.offhandWeapon && p.offhandSwingTimer <= 0 &&
-      (!manual || !manualMainReady)) {""")
-
-path="src/sim/sim.ts"
-once(path,
-    "  meleeSwing as meleeSwingImpl,",
-    "  manualBasicAttack as manualBasicAttackImpl,\n  meleeSwing as meleeSwingImpl,")
-once(path,
-    """  startAutoAttack(pid?: number): void {
-    startAutoAttackImpl(this.ctx, pid);
-  }""",
-    """  /** HIGHFLY: one real, server-authoritative native weapon strike. */
-  manualBasicAttack(pid?: number): void {
-    manualBasicAttackImpl(this.ctx, pid);
-  }
-
-  startAutoAttack(pid?: number): void {
-    startAutoAttackImpl(this.ctx, pid);
-  }""")
-
-path="src/world_api/combat.ts"
-once(path,
-    """  startAutoAttack(): void;
-  stopAutoAttack(): void;""",
-    """  /** One press = at most one regular native basic-attack attempt. */
-  manualBasicAttack(): void;
-  startAutoAttack(): void;
-  stopAutoAttack(): void;""")
-
-path="src/net/online.ts"
-once(path,
+# Add a narrow method on ClientWorld; main.ts already duck-types the existing
+# highflyBasicAttack method and correctly passes the HIGHFLY combo step.
+# A true return value here means the intent was SENT, never damage confirmed.
+once("src/net/online.ts",
     """  startAutoAttack(): void {
     this.cmd({ cmd: 'attack' });
   }""",
-    """  manualBasicAttack(): void {
-    // No client damage/target payload: authenticated Sim is authoritative.
-    this.cmd({ cmd: 'manual_attack' });
+    """  /** Submit ONE HIGHFLY basic-combo press, keeping all damage authoritative.
+   * Returns 'sent', not server hit-acceptance (network is asynchronous). */
+  highflyBasicAttack(step: 1 | 2 | 3 | 4): boolean {
+    if (step !== 1 && step !== 2 && step !== 3 && step !== 4) return false;
+    this.cmd({ cmd: 'highfly_basic_attack', step });
+    return true;
   }
   startAutoAttack(): void {
     this.cmd({ cmd: 'attack' });
   }""")
 
-path="server/game.ts"
-once(path,
+# Server binds the authenticated player ID and ignores client damage/target.
+# Anti-spam: do not allow the same socket to bypass the canonical native
+# swing-recovery timer. This is in ADDITION to the existing command lane.
+once("server/game.ts",
     """      case 'attack':
         sim.startAutoAttack(pid);
         break;""",
-    """      case 'manual_attack':
-        // Already authenticated pid, existing rate-limited command lane.
-        sim.manualBasicAttack(pid);
+    """      case 'highfly_basic_attack': {
+        const step = msg.step;
+        const attacker = sim.entities.get(pid);
+        if ((step === 1 || step === 2 || step === 3 || step === 4) &&
+            attacker && attacker.swingTimer <= 0) {
+          sim.highflyBasicAttack(step, pid);
+        }
         break;
+      }
       case 'attack':
         sim.startAutoAttack(pid);
         break;""")
 
-path="src/world_api.ts"
-once(path,
+# Append-only protocol change: never replace or change the legacy 'attack'.
+once("src/world_api.ts",
     """  'guild_set_ranks',
 ] as const;""",
     """  'guild_set_ranks',
-  // HIGHFLY single-strike command. Append-only; never rename legacy attack.
-  'manual_attack',
+  // HIGHFLY native combo 1/2/3/4. Validated server-side.
+  'highfly_basic_attack',
 ] as const;""")
-once(path,
+once("src/world_api.ts",
     """  attack: 'IWorldCombat',
   stopattack: 'IWorldCombat',""",
     """  attack: 'IWorldCombat',
-  manual_attack: 'IWorldCombat',
+  highfly_basic_attack: 'IWorldCombat',
   stopattack: 'IWorldCombat',""")
 
-path="src/ui/hud.ts"
-once(path,
-    """  private activateFixedAttackSlot(): void {
-    if (this.sim.player.autoAttack) this.sim.stopAutoAttack();
-    else this.sim.startAutoAttack();
-    this.flashActionSlot(0);
-  }""",
-    """  private activateFixedAttackSlot(): void {
-    // HIGHFLY: Attack is a discrete manual action on both PC and mobile.
-    // The game already chooses a nearby enemy for the mobile button.
-    // No start/stop autoattack trick, and no client-side damage calculation.
-    this.sim.manualBasicAttack();
-    this.flashActionSlot(0);
-  }""")
-
-# Original W0b and W0c contract tests must stay strict, not skipped.
-path="tests/command_schema.test.ts"
+# Preserve strict command-schema parity; numbers change only for the NEW pair.
+path = "tests/command_schema.test.ts"
 if Path(path).exists():
-    once(path,"const EXPECTED_SEND_COUNT = 247;","const EXPECTED_SEND_COUNT = 248;")
-    once(path,"const EXPECTED_DISPATCH_COUNT = 261;","const EXPECTED_DISPATCH_COUNT = 262;")
+    once(path, "const EXPECTED_SEND_COUNT = 247;", "const EXPECTED_SEND_COUNT = 248;")
+    once(path, "const EXPECTED_DISPATCH_COUNT = 261;", "const EXPECTED_DISPATCH_COUNT = 262;")
 
-path="tests/world_api_parity.test.ts"
-if Path(path).exists():
-    once(path, "  { name: 'startAutoAttack', kind: 'method' },",
-         "  { name: 'manualBasicAttack', kind: 'method' },\n  { name: 'startAutoAttack', kind: 'method' },")
-    once(path, "    expect(IWORLD_MEMBERS.length).toBe(424);",
-         "    expect(IWORLD_MEMBERS.length).toBe(425);")
-    once(path, "    expect(METHOD_MEMBERS.length).toBe(298);",
-         "    expect(METHOD_MEMBERS.length).toBe(299);")
-    once(path, "  'startAutoAttack',\n  'stopAutoAttack',\n  'unstuck',",
-         "  'manualBasicAttack',\n  'startAutoAttack',\n  'stopAutoAttack',\n  'unstuck',")
-    # Sorted member/method snapshots are updated, never relaxed.
-    src=Path(path).read_text(encoding="utf-8")
-    marker="      'manualBasicAttack',"
-    if marker in src: raise SystemExit("HF15P2_PARITY_ALREADY_PATCHED")
-    # Both arrays' alphabetical positions immediately before marketBuy.
-    needle="      'marketBuy',"
-    if src.count(needle)!=2:
-        raise SystemExit(f"HF15P2_PARITY_SORTED_ANCHOR:{src.count(needle)}")
-    src=src.replace(needle,"      'manualBasicAttack',\n"+needle)
-    Path(path).write_text(src,encoding="utf-8")
-
-checks={
-    "server": "case 'manual_attack':" in Path("server/game.ts").read_text(),
-    "network": "this.cmd({ cmd: 'manual_attack' });" in Path("src/net/online.ts").read_text(),
-    "no_timed_fake": "this.sim.manualBasicAttack();" in Path("src/ui/hud.ts").read_text(),
-    "original_hit_path": "tryPlayerSwing(ctx, p, r.meta, true)" in Path("src/sim/combat/auto_attack.ts").read_text(),
-    "no_weapon_double": "(!manual || !manualMainReady)" in Path("src/sim/combat/auto_attack.ts").read_text(),
-}
-if not all(checks.values()): raise SystemExit(f"HF15P2_INSTALL_CHECK_FAILED {checks}")
-print("HF15P2_NATIVE_SINGLE_STRIKE_SERVER_AUTHORITY_APPLIED=1")
+assert "this.cmd({ cmd: 'highfly_basic_attack', step });" in Path('src/net/online.ts').read_text()
+assert "sim.highflyBasicAttack(step, pid)" in Path('server/game.ts').read_text()
+assert "if (this.onHighflyBasicAttack?.(next)) {" in Path('src/ui/hud.ts').read_text()
+print("HF15P2_REUSE_HIGHFLY_NATIVE_COMBO_ONE_STRIKE_ONLINE_WIRE=1")
