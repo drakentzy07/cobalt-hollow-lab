@@ -1,4 +1,4 @@
-name: HIGHFLY ORIGIN OR-1 P1 — Manual ATK buffer guard + WebGL QA (NO DEPLOY)
+name: HIGHFLY ORIGIN OR-1 P2 — Server ACK combo confirmation QA (NO DEPLOY)
 # Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
@@ -12,6 +12,9 @@ on:
       - "overlays/highfly_origin_or1_buffer_guard.py"
       - "game/c1/highfly_origin_buffer_guard.ts"
       - "game/c1/highfly_origin_buffer_guard.test.ts"
+      - "overlays/highfly_origin_or1_online_ack.py"
+      - "game/c1/highfly_origin_strike_ack.ts"
+      - "game/c1/highfly_origin_online_ack.test.ts"
       - "overlays/highfly_v91_combat_feel.py"
       - "game/c1/highfly_v91_combat_nine_classes.test.ts"
       - "overlays/highfly_v15_manual_cast_p1.py"
@@ -61,6 +64,9 @@ jobs:
             /game/c1/highfly_origin_buffer_guard.ts
             /game/c1/highfly_origin_buffer_guard.test.ts
             /overlays/highfly_origin_or1_buffer_guard.py
+            /overlays/highfly_origin_or1_online_ack.py
+            /game/c1/highfly_origin_strike_ack.ts
+            /game/c1/highfly_origin_online_ack.test.ts
             /overlays/highfly_v15_pwa_manifest.py
             /overlays/rewrite_pages_static.py
             /tests/test_highfly_v15_pwa_manifest.py
@@ -648,6 +654,16 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_origin_r0_diagnostic.test.ts tests/highfly_v15_manual_strike_p2.test.ts tests/highfly_v15_manual_cast_p1.test.ts tests/highfly_v15_skill_input_nine_classes.test.ts
           echo 'HIGHFLY_ORIGIN_R0_FORENSIC_BASELINE_RETAINED_NOT_ANDROID_CERTIFIED=1'
+      - name: ORIGIN OR-1 P2 native online basic swing acknowledgement and combo gate
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_or1_online_ack.py
+          cp ../v9-corrections/game/c1/highfly_origin_online_ack.test.ts tests/highfly_origin_online_ack.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_online_ack.test.ts tests/highfly_origin_buffer_guard.test.ts
+          echo 'HIGHFLY_ORIGIN_OR1_P2_NATIVE_SERVER_COMBO_ACK_GATE_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -719,7 +735,7 @@ jobs:
           # Separate release QA metadata, NOT a game-play buff or stats edit.
           import json
           (root/'highfly-supreme-qa.json').write_text(json.dumps({
-            'edition':'HIGHFLY ORIGIN OR-1 P1 MANUAL BUFFER GUARD (NO PUBLIC DEPLOY)',
+            'edition':'HIGHFLY ORIGIN OR-1 P2 ACK-CONFIRMED BASIC SWING (NO PUBLIC DEPLOY)',
             'qaSourceCommit':'8a3ddc93c9147e8c3320c04d4d2a13896b11e063',
             'nineClassesNativeSoloCaptainLv99':True,
             'bossStatOverride':False,'trainingStatInjection':False,
@@ -771,7 +787,7 @@ jobs:
       - name: Upload actual playable WEBGL full assets ONLY after green gates (never publish)
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-ORIGIN-OR1-P1-MANUAL-COMBAT-WEBGL-S23-NO-DEPLOY
+          name: HIGHFLY-ORIGIN-OR1-P2-ACK-CONFIRMED-WEBGL-S23-NO-DEPLOY
           path: supreme-preview/
           if-no-files-found: error
           compression-level: 0
