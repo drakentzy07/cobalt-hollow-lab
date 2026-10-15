@@ -62,7 +62,7 @@ injected = r"""
   const hf15Before=await hf15Measure();
   // Trace actual touch routing. A pointer event can be intercepted by another
   // floating HUD layer even if Playwright force:true bypasses actionability.
-  // No control listeners, class names, or game data are modified by the probe.
+  // No game class names or state are modified by the probe; capture listeners only.
   await page.evaluate(()=>{
     const a=document.getElementById('mobile-menu-anchor');
     if(!(a instanceof HTMLElement))throw Error('HF15_UX_MENU_ANCHOR_MISSING');
@@ -85,7 +85,7 @@ injected = r"""
   });
   // Real touchscreen: a programmatic .click() does NOT exercise the game's
   // pointerdown/pointerup menu gesture (StripGesture owns those events).
-  await page.locator('#mobile-menu-anchor').tap({force:true});
+  await page.locator('#mobile-menu-anchor').tap({timeout:5500});
   await page.waitForFunction(()=>document.getElementById('mobile-menu-strip')?.classList.contains('open'),null,{timeout:5500}).catch(async()=>{
     const diag=await page.evaluate(()=>({
       anchor:document.getElementById('mobile-menu-anchor')?.getBoundingClientRect().toJSON(),
@@ -109,7 +109,7 @@ injected = r"""
     }));
     fail('HF15_UX_QUICK_ACTIONS_NOT_OPEN initial '+JSON.stringify(diag));
   });
-  await page.locator('#mobile-more').tap({force:true});
+  await page.locator('#mobile-more').tap({timeout:5500});
   await page.waitForFunction(()=>document.body.classList.contains('mobile-more-open'),null,{timeout:3500});
   await page.waitForTimeout(240);
   const hf15Open=await hf15Measure();
@@ -127,7 +127,7 @@ injected = r"""
   // Reuse original mobile-quest button and original Quest Log callback.
   // The strip may still be open depending on the release path; open only if shut.
   const hf15StripOpen=await page.evaluate(()=>document.getElementById('mobile-menu-strip')?.classList.contains('open')===true);
-  if(!hf15StripOpen)await page.locator('#mobile-menu-anchor').tap({force:true});
+  if(!hf15StripOpen)await page.locator('#mobile-menu-anchor').tap({timeout:5500});
   await page.waitForFunction(()=>document.getElementById('mobile-menu-strip')?.classList.contains('open'),null,{timeout:5500}).catch(async()=>{
     const diag=await page.evaluate(()=>({
       expanded:document.getElementById('mobile-menu-anchor')?.getAttribute('aria-expanded'),
@@ -135,7 +135,7 @@ injected = r"""
     }));
     fail('HF15_UX_QUICK_ACTIONS_NOT_OPEN quest '+JSON.stringify(diag));
   });
-  await page.locator('#mobile-quest').tap({force:true});
+  await page.locator('#mobile-quest').tap({timeout:5500});
   await page.locator('#quest-log-window').waitFor({state:'visible',timeout:6500});
   const hf15Quest=await hf15Measure();
   hf15AssertSeats(hf15Before,hf15Quest,'quest-open');
