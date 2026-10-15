@@ -63,7 +63,7 @@ export function originRestoreResources(raw: unknown): OriginHunterResourcesV1 {
  */
 export function originCostDecision(ability: AbilityDef): OriginCostDecision {
   if (
-    ability.onNextSwing ||
+    // These native utilities spend directly inside applyAbility, bypassing\n    // the common cast spend hook. Add them only after their bespoke paths migrate.\n    ['conjure_water', 'conjure_food', 'revive_pet'].includes(ability.id) ||\n    ability.onNextSwing ||
     ability.spendsAllResource ||
     ability.devotionCost ||
     ability.ruinCost ||
