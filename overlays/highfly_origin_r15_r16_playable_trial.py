@@ -104,7 +104,7 @@ once('src/main.ts',
   // offers the entry. No server token / real-money profile / public mutation.
   installOriginTrialEntrance((name)=>{
     audio.init();music.init();sfx.init();
-    void startOffline('warrior',name,0,undefined,undefined,true);
+    void startOffline('warrior',name,0,undefined,undefined,undefined,true);
   });
 
   const goToLoggedInPlay = () => {""")
