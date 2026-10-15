@@ -62,7 +62,7 @@ export function originAimSelect(
     if(e.dead||!e.hostile||e.hp<=0||e.kind==='player')return [];
     const x=e.pos.x-actor.pos.x,z=e.pos.z-actor.pos.z;
     const distance=Math.hypot(x,z);
-    if(distance<=0.1||distance>Math.max(1,maxRange))return [];
+    if(distance<=0.1||distance>Math.max(6,maxRange))return [];
     const dot=len>18?(x*wantedX+z*wantedZ)/distance:1;
     if(len>18 && dot<0.45)return [];
     return [{id:e.id,distance,hpFrac:e.hp/Math.max(1,e.maxHp),dot}];
