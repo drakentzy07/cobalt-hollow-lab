@@ -98,13 +98,24 @@ injected = r"""
         throw Error('HF15_UX_TOUCH_TARGET_OBSCURED '+sel+' '+JSON.stringify({x,y,top:top?.id||top?.tagName,stack}));
       }
       const pointerId=950;
+      const snapshot=phase=>({
+        phase,
+        expanded:document.getElementById('mobile-menu-anchor')?.getAttribute('aria-expanded'),
+        stripClass:document.getElementById('mobile-menu-strip')?.className,
+        active:document.activeElement?.id,
+        tapMode:document.body.getAttribute('data-touch-tap-menus')||null,
+      });
+      const stages=[snapshot('before')];
       for(const type of ['pointerdown','pointerup']){
-        top.dispatchEvent(new PointerEvent(type,{
+        const ev=new PointerEvent(type,{
           bubbles:true,cancelable:true,isPrimary:true,pointerId,pointerType:'touch',
           clientX:x,clientY:y,button:0,buttons:type==='pointerdown'?1:0
-        }));
+        });
+        const dispatched=top.dispatchEvent(ev);
+        stages.push({...snapshot(type),defaultPrevented:ev.defaultPrevented,
+          dispatchReturned:dispatched});
       }
-      return {x,y,hit:top.id||top.tagName};
+      return {x,y,hit:top.id||top.tagName,stages};
     },selector);
   };
   // CDP read-only: prove whether MobileControls.start() installed the
