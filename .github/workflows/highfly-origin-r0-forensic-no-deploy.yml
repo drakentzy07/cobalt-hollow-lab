@@ -1,4 +1,4 @@
-name: HIGHFLY ORIGIN R1-2B P1 — Cross-Discipline Native Animation Playback (NO DEPLOY)
+name: HIGHFLY ORIGIN R1-2C — Safe Cross-Class Resource Costs (NO DEPLOY)
 # Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
@@ -27,6 +27,9 @@ on:
       - "game/c1/highfly_origin_skill_motion_catalog.test.ts"
       - "overlays/highfly_origin_r12b_visual_bridge.py"
       - "game/c1/highfly_origin_r12b_visual_bridge.test.ts"
+      - "game/c1/highfly_origin_resource_admission.ts"
+      - "game/c1/highfly_origin_r12c_resource_gate.test.ts"
+      - "overlays/highfly_origin_r12c_resource_gate.py"
       - "overlays/highfly_v91_combat_feel.py"
       - "game/c1/highfly_v91_combat_nine_classes.test.ts"
       - "overlays/highfly_v15_manual_cast_p1.py"
@@ -90,6 +93,9 @@ jobs:
             /game/c1/highfly_origin_skill_motion_catalog.test.ts
             /overlays/highfly_origin_r12b_visual_bridge.py
             /game/c1/highfly_origin_r12b_visual_bridge.test.ts
+            /game/c1/highfly_origin_resource_admission.ts
+            /game/c1/highfly_origin_r12c_resource_gate.test.ts
+            /overlays/highfly_origin_r12c_resource_gate.py
             /overlays/highfly_v15_pwa_manifest.py
             /overlays/rewrite_pages_static.py
             /tests/test_highfly_v15_pwa_manifest.py
@@ -729,6 +735,16 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_origin_r12b_visual_bridge.test.ts tests/highfly_origin_skill_motion_catalog.test.ts tests/highfly_origin_native_spellbook.test.ts
           echo 'HIGHFLY_ORIGIN_R12B_P1_CROSS_CLASS_NATIVE_MIXER_MOTION_GREEN=1'
+      - name: ORIGIN R1-2C native resource/weapon guards before HP-MP-Stamina bridge
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r12c_resource_gate.py
+          cp ../v9-corrections/game/c1/highfly_origin_r12c_resource_gate.test.ts tests/highfly_origin_r12c_resource_gate.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r12c_resource_gate.test.ts tests/highfly_origin_r12b_visual_bridge.test.ts tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R12C_NO_WRONG_RESOURCE_BILLING_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -800,7 +816,7 @@ jobs:
           # Separate release QA metadata, NOT a game-play buff or stats edit.
           import json
           (root/'highfly-supreme-qa.json').write_text(json.dumps({
-            'edition':'HIGHFLY ORIGIN R1-2B P1 CROSS-DISCIPLINE ANIMATION BRIDGE (NO PUBLIC DEPLOY)',
+            'edition':'HIGHFLY ORIGIN R1-2C CROSS-CLASS RESOURCE SAFETY (NO PUBLIC DEPLOY)',
             'qaSourceCommit':'8a3ddc93c9147e8c3320c04d4d2a13896b11e063',
             'nineClassesNativeSoloCaptainLv99':True,
             'bossStatOverride':False,'trainingStatInjection':False,
@@ -852,7 +868,7 @@ jobs:
       - name: Upload actual playable WEBGL full assets ONLY after green gates (never publish)
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-ORIGIN-R1-2B-P1-NATIVE-ANIMATION-WEBGL-S23-NO-DEPLOY
+          name: HIGHFLY-ORIGIN-R1-2C-COST-GUARD-WEBGL-S23-NO-DEPLOY
           path: supreme-preview/
           if-no-files-found: error
           compression-level: 0
