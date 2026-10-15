@@ -83,40 +83,44 @@ injected = r"""
       },{capture:true});
     }
   });
-  // Match HIGHFLY's established S23 smoke: dispatch real pointerType=touch
-  // through the original pointer listeners, not Playwright's hanging CDP tap.
-  // Critically, hit-test FIRST: dispatch only to the element actually at the
-  // visual anchor, otherwise reject an obstructed gameplay control.
+  // HF15 TRUSTED INPUT: dispatch via Chromium's native touchscreen input
+  // pipeline, not dispatchEvent(isTrusted=false) and not Playwright locator.tap
+  // (which stalled in actionability despite a stable accessible target).
+  // On a real Android phone this is the path that also creates pointer capture
+  // and compatibility click. Always hit-test before sending.
   const hf15Touch=async(selector)=>{
-    return page.evaluate((sel)=>{
-      const anchor=document.querySelector(sel);
-      if(!(anchor instanceof HTMLElement))throw Error('HF15_UX_TOUCH_TARGET_MISSING '+sel);
-      const r=anchor.getBoundingClientRect(),x=Math.max(2,r.x+r.width/2),y=r.y+r.height/2;
+    const p=await page.evaluate((sel)=>{
+      const btn=document.querySelector(sel);
+      if(!(btn instanceof HTMLElement))throw Error('HF15_UX_TOUCH_TARGET_MISSING '+sel);
+      const r=btn.getBoundingClientRect(),x=Math.max(2,r.left+r.width/2),
+        y=r.top+r.height/2;
       const top=document.elementFromPoint(x,y);
-      if(!(top instanceof Element)||!anchor.contains(top)){
+      if(!(top instanceof Element)||!btn.contains(top)){
         const stack=document.elementsFromPoint(x,y).slice(0,7).map(e=>e.id||e.tagName);
-        throw Error('HF15_UX_TOUCH_TARGET_OBSCURED '+sel+' '+JSON.stringify({x,y,top:top?.id||top?.tagName,stack}));
+        throw Error('HF15_UX_TOUCH_TARGET_OBSCURED '+sel+' '+
+          JSON.stringify({x,y,top:top?.id||top?.tagName,stack}));
       }
-      const pointerId=950;
-      const snapshot=phase=>({
-        phase,
-        expanded:document.getElementById('mobile-menu-anchor')?.getAttribute('aria-expanded'),
-        stripClass:document.getElementById('mobile-menu-strip')?.className,
-        active:document.activeElement?.id,
-        tapMode:document.body.getAttribute('data-touch-tap-menus')||null,
-      });
-      const stages=[snapshot('before')];
-      for(const type of ['pointerdown','pointerup']){
-        const ev=new PointerEvent(type,{
-          bubbles:true,cancelable:true,isPrimary:true,pointerId,pointerType:'touch',
-          clientX:x,clientY:y,button:0,buttons:type==='pointerdown'?1:0
-        });
-        const dispatched=top.dispatchEvent(ev);
-        stages.push({...snapshot(type),defaultPrevented:ev.defaultPrevented,
-          dispatchReturned:dispatched});
-      }
-      return {x,y,hit:top.id||top.tagName,stages};
+      return {x,y,hit:top.id||top.tagName};
     },selector);
+    const stages=[];
+    const snapshot=phase=>page.evaluate(phase=>({
+      phase,
+      expanded:document.getElementById('mobile-menu-anchor')?.getAttribute('aria-expanded'),
+      stripClass:document.getElementById('mobile-menu-strip')?.className,
+      focus:document.activeElement?.id,
+      moreOpen:document.body.classList.contains('mobile-more-open')
+    }),phase);
+    const session=await page.context().newCDPSession(page);
+    try{
+      await session.send('Input.dispatchTouchEvent',{type:'touchStart',
+        touchPoints:[{x:p.x,y:p.y,id:950}]});
+      stages.push(await snapshot('after-trusted-touchStart'));
+      await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+      stages.push(await snapshot('after-trusted-touchEnd'));
+    }finally{
+      await session.detach();
+    }
+    return {...p,stages};
   };
   // CDP read-only: prove whether MobileControls.start() installed the
   // original StripGesture listeners at all. A present anchor alone is not proof.
@@ -155,7 +159,7 @@ injected = r"""
     fail('HF15_UX_MENU_GESTURE_LISTENERS_MISSING '+
       JSON.stringify({listeners:result.hf15MenuBindings,dom:missing}));
   }
-  result.hf15TouchMethod='hit-tested-pointer-events-matching-original-joystick-qa';
+  result.hf15TouchMethod='hit-tested-CDP-trusted-native-touch-input';
   result.hf15AnchorTouch=await hf15Touch('#mobile-menu-anchor');
   await page.waitForFunction(()=>document.getElementById('mobile-menu-strip')?.classList.contains('open'),null,{timeout:5500}).catch(async()=>{
     const diag=await page.evaluate(()=>({
