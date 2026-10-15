@@ -40,58 +40,49 @@ if params and not params.endswith(','):
 params+='\n  originHunterTrial = false,\n'
 main_data=main_data[:sig.start(2)]+params+main_data[sig.end(2):]
 main.write_text(main_data,encoding='utf8')
-once('src/main.ts',
-     """  const sim = loadSpan(
-    'sim-build',
-    () =>
-      new Sim(
-        offlineWorldConfig({
-          playerClass,
-          name,
-          world,
-          seedOverride,
-          devCommands: import.meta.env.DEV,
-        }),
-      ),
-  );
-  sim.setPlayerSkin(sim.playerId, skin);""",
-     """  // R1-5 preview-only. The user never selects a legacy class: Warrior is
-  // exclusively the internal Rig_Medium / bootstrap carrier until true native
-  // Hunter creation; all skills and MP/stamina belong to ORIGIN identity.
+# Do not replace an OLD frozen Sim block: CLEAN V1 already updated that
+# block for offline autosave/resume. Wrap its existing expression so the entire
+# original path is byte-for-byte preserved for every classic character.
+main=Path('src/main.ts')
+code=main.read_text(encoding='utf8')
+method_start=code.index('async function startOffline(')
+method_end=code.find('// Online flow:',method_start)
+if method_end<0: method_end=code.index('const api = new Api()',method_start)
+method=code[method_start:method_end]
+anchor="  const sim = loadSpan("
+if method.count(anchor)!=1:
+    raise SystemExit(f'ORIGIN_R15_EXPECT_SINGLE_NATIVE_SIM_BUILD count={method.count(anchor)}')
+trial_branch="""  // HIGHFLY ORIGIN preview is an ISOLATED second build path; legacy offline
+  // save/restore and character skin still execute from the untouched ELSE arm.
   const trialSave = originHunterTrial ? await loadOriginTrialSave(name) : null;
-  const originCfg = offlineWorldConfig({
-    playerClass,
-    name,
-    world,
-    seedOverride,
-    devCommands: import.meta.env.DEV,
-  });
-  const sim = loadSpan('sim-build', () => {
-    if (originHunterTrial && trialSave?.state.originHunter) {
-      const restored=new Sim({
-        ...originCfg,
-        noPlayer:true,
-        compulsoryTutorial:false,
-      });
-      restored.addPlayer(playerClass,name,{
-        state:trialSave.state,
-        appearance:trialSave.appearance,
-        localGathererIdentity:originCfg.gathererIdentity??null,
-      });
-      return restored;
-    }
-    return new Sim(originHunterTrial
-      ? {...originCfg,originHunterEnabled:true}
-      : originCfg);
-  });
-  if (!trialSave) sim.setPlayerSkin(sim.playerId, skin);""")
+  const sim = originHunterTrial
+    ? loadSpan('origin-sim-build', () => {
+        const cfg=offlineWorldConfig({
+          playerClass,name,world,seedOverride,devCommands:import.meta.env.DEV,
+        });
+        if (trialSave?.state.originHunter) {
+          const restored=new Sim({...cfg,noPlayer:true,compulsoryTutorial:false});
+          restored.addPlayer(playerClass,name,{
+            state:trialSave.state,
+            appearance:trialSave.appearance,
+            localGathererIdentity:cfg.gathererIdentity??null,
+          });
+          return restored;
+        }
+        return new Sim({...cfg,originHunterEnabled:true});
+      })
+    : loadSpan("""
+method=method.replace(anchor,trial_branch,1)
+main.write_text(code[:method_start]+method+code[method_end:],encoding='utf8')
+
+# Keep the existing legacy appearance restoration; Origin overrides ONLY
+# its own saved modular appearance after the native fallback completes.
 once('src/main.ts',
-     """    offlinePlayer.modularAppearance = modularAppearance as unknown as Record<string, unknown>;
-    offlinePlayer.helmHidden = !creationHelm;""",
-     """    offlinePlayer.modularAppearance = originHunterTrial && trialSave?.appearance
-      ? trialSave.appearance
-      : modularAppearance as unknown as Record<string, unknown>;
-    if (!originHunterTrial || !trialSave) offlinePlayer.helmHidden = !creationHelm;""")
+     """  // Dev convenience: ?mech drops an offline session""",
+     """  if (originHunterTrial && trialSave?.appearance && offlinePlayer)
+    offlinePlayer.modularAppearance = trialSave.appearance;
+  // Dev convenience: ?mech drops an offline session""")
+
 once('src/main.ts',
      """  void startGame(sim, sim, null, `offline:${playerClass}:${name}`, true);""",
      """  if (originHunterTrial) {
