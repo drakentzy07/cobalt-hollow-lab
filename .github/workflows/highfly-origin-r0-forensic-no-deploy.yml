@@ -1,9 +1,9 @@
-name: HIGHFLY ORIGIN R1-5 + R1-6 P0 — Playable Hunter Trial (NO DEPLOY)
+name: HIGHFLY ORIGIN R20 Premium Aim V1 — FULL BUILD NO DEPLOY
 # Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
   push:
-    branches: [highfly-origin-r0]
+    branches: [highfly-origin-r20-premium-aim]
     paths:
       - ".github/workflows/highfly-origin-r0-forensic-no-deploy.yml"
       - "game/c1/highfly_origin_r0_diagnostic.test.ts"
@@ -44,6 +44,9 @@ on:
       - "game/c1/highfly_origin_r17_hud.ts"
       - "game/c1/highfly_origin_r18_loadout.ts"
       - "game/c1/highfly_origin_r19_selection.ts"
+      - "game/c1/highfly_origin_r20_premium_aim.ts"
+      - "game/c1/highfly_origin_r20_premium_aim.test.ts"
+      - "overlays/highfly_origin_r20_premium_aim.py"
       - "game/c1/highfly_origin_r19_focus.test.ts"
       - "overlays/highfly_origin_r19_focus.py"
       - "game/c1/highfly_origin_r17_hud.test.ts"
@@ -128,6 +131,9 @@ jobs:
             /game/c1/highfly_origin_r17_hud.ts
             /game/c1/highfly_origin_r18_loadout.ts
             /game/c1/highfly_origin_r19_selection.ts
+            /game/c1/highfly_origin_r20_premium_aim.ts
+            /game/c1/highfly_origin_r20_premium_aim.test.ts
+            /overlays/highfly_origin_r20_premium_aim.py
             /game/c1/highfly_origin_r19_focus.test.ts
             /overlays/highfly_origin_r19_focus.py
             /game/c1/highfly_origin_r17_hud.test.ts
@@ -841,6 +847,16 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_origin_r17_hud.test.ts tests/highfly_origin_r19_focus.test.ts tests/highfly_origin_native_spellbook.test.ts
           echo 'HIGHFLY_ORIGIN_R19_TOP36_LEVEL_GATES_PREMIUM_HUD_GREEN=1'
+      - name: R20 Premium Aim V1 native-scene 3D geometry and five-shape QA (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r20_premium_aim.py
+          cp ../v9-corrections/game/c1/highfly_origin_r20_premium_aim.test.ts tests/highfly_origin_r20_premium_aim.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r20_premium_aim.test.ts tests/highfly_origin_r19_focus.test.ts
+          echo 'HIGHFLY_ORIGIN_R20_PREMIUM_AIM_V1_FIVE_SHAPES_NATIVE_SCENE_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -965,7 +981,7 @@ jobs:
       - name: Upload actual playable WEBGL full assets ONLY after green gates (never publish)
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-ORIGIN-R1-5-R1-6-PLAYABLE-HUNTER-PREVIEW-WEBGL-NO-DEPLOY
+          name: HIGHFLY-ORIGIN-R20-PREMIUM-AIM-V1-WEBGL-NO-DEPLOY
           path: supreme-preview/
           if-no-files-found: error
           compression-level: 0
