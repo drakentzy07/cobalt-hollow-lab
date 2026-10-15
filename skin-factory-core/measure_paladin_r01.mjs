@@ -24,7 +24,7 @@ const report={schema:'highfly.paladin-exact-geometry/r01',sceneUnits:"original G
   animationClips:original.animations.length,paladinCount:paladin.length,knightCount:knight.length,
   skinJointSizes:[...new Set((original.skins||[]).map(s=>s.joints.length))],
   notes:[
-    'BBoxes are geometric EXTERNAL envelopes of skinned bind-pose mesh vertices, in the source coordinate system. Not clothing interior dimensions or proof of collision-free fit.',
+    'BBoxes are geometric EXTERNAL envelopes of mesh vertices after real joint-world and inverseBindMatrix skinning in the source rest pose, in the source coordinate system. Not clothing interior dimensions or proof of collision-free fit.',
     'Paladin and Knight parts exist within one native warrior_modular.glb; they are NOT assembled armor separate from Warrior.',
     'Every native part is skinned to 23 Rig_Medium joints; use original mesh as a reusable deformation/weight donor, not a new rig.',
     'Interior negative space, plate thickness, topology/holes and animation clearance require per-surface analysis and movement QA; never infer from a bounding box.'
@@ -41,14 +41,38 @@ function partBounds(name){
  let vertices=0,triangles=0;
  const mats=new Set();const jointNames=node.getSkin()?.listJoints().map(x=>x.getName())||[];
  if(jointNames.length!==23)throw Error('NOT_23_BONES '+name);
+ // IMPORTANT: native accessor POSITION values are *per-mesh normalized*.
+ // Each native Skin has 23 DIFFERENT inverse bind matrices encoding original
+ // mesh-specific dequantization + geometric placement. A raw AABB is invalid.
+ // Reconstruct actual rest skinned coords: Sum weights * worldJoint * IBM * pos.
+ const skin=node.getSkin();
+ const ibmAccessor=skin.getInverseBindMatrices();
+ if(!ibmAccessor||ibmAccessor.getCount()!==23)throw Error('MISSING_23_SKIN_BIND_MATRICES '+name);
+ const joints=skin.listJoints().map(x=>x.getWorldMatrix());
+ const ibms=[...Array(23)].map((_,i)=>ibmAccessor.getElement(i,new Array(16)));
+ const mul=(A,B)=>{let C=new Array(16).fill(0);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)C[4*c+r]+=A[4*k+r]*B[4*c+k];return C;};
+ const restMatrices=joints.map((m,i)=>mul(m,ibms[i]));
+ const applied=[0,0,0,0],position=[0,0,0],jointIDs=[0,0,0,0],weights=[0,0,0,0];
  for(const prim of primitives){
   const pos=prim.getAttribute('POSITION'); if(!pos)throw Error('POSITION_MISSING '+name);
+  const jAtt=prim.getAttribute('JOINTS_0'), wAtt=prim.getAttribute('WEIGHTS_0');
+  if(!jAtt||!wAtt)throw Error('NO_REAL_WEIGHTED_MESH '+name);
   const material=prim.getMaterial();if(material)mats.add(material.getName());
-  const v=[0,0,0]; const count=pos.getCount();
+  const count=pos.getCount();
   for(let j=0;j<count;j++){
-   pos.getElement(j,v);
+   pos.getElement(j,position);
+   jAtt.getElement(j,jointIDs);wAtt.getElement(j,weights);
+   const v=[0,0,0],norm=weights.reduce((a,b)=>a+b,0);
+   if(norm<.9||norm>1.1)throw Error('BAD_WEIGHT_SUM '+name+' '+norm);
+   for(let q=0;q<4;q++){
+    const weight=weights[q]/norm;if(weight<=1e-8)continue;
+    const id=jointIDs[q];if(id>=23||id<0)throw Error('SKIN_JOINT_INDEX_OUT_OF_RANGE');
+    const m=restMatrices[id];
+    const x=position[0],y=position[1],z=position[2],w=m[3]*x+m[7]*y+m[11]*z+m[15];
+    for(let k=0;k<3;k++)v[k]+=weight*(m[k]*x+m[k+4]*y+m[k+8]*z+m[k+12])/w;
+   }
    for(let k=0;k<3;k++){
-    if(!Number.isFinite(v[k]))throw Error('NON_FINITE_VERTEX '+name);
+    if(!Number.isFinite(v[k]))throw Error('NON_FINITE_REST_SKIN_VERTEX '+name);
     lo[k]=Math.min(lo[k],v[k]);hi[k]=Math.max(hi[k],v[k]);
    }
   }
