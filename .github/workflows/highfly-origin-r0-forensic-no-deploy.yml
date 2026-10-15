@@ -1,4 +1,4 @@
-name: HIGHFLY ORIGIN R1-2C FIX + R1-4 AB — HP MP Stamina Bundled (NO DEPLOY)
+name: HIGHFLY ORIGIN R1-4C — HP MP Stamina Client HUD + Owner Wire (NO DEPLOY)
 # Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
@@ -33,6 +33,8 @@ on:
       - "game/c1/highfly_origin_universal_resources.ts"
       - "game/c1/highfly_origin_r14_resource_bundle.test.ts"
       - "overlays/highfly_origin_r14_resource_bundle.py"
+      - "overlays/highfly_origin_r14c_hud_wire_bar.py"
+      - "game/c1/highfly_origin_r14c_hud_wire_bar.test.ts"
       - "overlays/highfly_v91_combat_feel.py"
       - "game/c1/highfly_v91_combat_nine_classes.test.ts"
       - "overlays/highfly_v15_manual_cast_p1.py"
@@ -102,6 +104,8 @@ jobs:
             /game/c1/highfly_origin_universal_resources.ts
             /game/c1/highfly_origin_r14_resource_bundle.test.ts
             /overlays/highfly_origin_r14_resource_bundle.py
+            /overlays/highfly_origin_r14c_hud_wire_bar.py
+            /game/c1/highfly_origin_r14c_hud_wire_bar.test.ts
             /overlays/highfly_v15_pwa_manifest.py
             /overlays/rewrite_pages_static.py
             /tests/test_highfly_v15_pwa_manifest.py
@@ -761,6 +765,16 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_origin_r14_resource_bundle.test.ts tests/highfly_origin_r12b_visual_bridge.test.ts tests/highfly_origin_native_spellbook.test.ts
           echo 'HIGHFLY_ORIGIN_R14_AB_HP_MP_STAMINA_BUNDLE_GREEN=1'
+      - name: ORIGIN R1-4C owner-only resource network, HP MP Stamina HUD and action bar
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r14c_hud_wire_bar.py
+          cp ../v9-corrections/game/c1/highfly_origin_r14c_hud_wire_bar.test.ts tests/highfly_origin_r14c_hud_wire_bar.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r14c_hud_wire_bar.test.ts tests/highfly_origin_r14_resource_bundle.test.ts tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R14C_OWNER_HUD_NETWORK_SKILL_COST_PARITY_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -832,7 +846,7 @@ jobs:
           # Separate release QA metadata, NOT a game-play buff or stats edit.
           import json
           (root/'highfly-supreme-qa.json').write_text(json.dumps({
-            'edition':'HIGHFLY ORIGIN R1-4 AB UNIVERSAL MP STAMINA CORE (NO PUBLIC DEPLOY)',
+            'edition':'HIGHFLY ORIGIN R1-4C HP MP STAMINA CLIENT HUD AND OWNER WIRE (NO PUBLIC DEPLOY)',
             'qaSourceCommit':'8a3ddc93c9147e8c3320c04d4d2a13896b11e063',
             'nineClassesNativeSoloCaptainLv99':True,
             'bossStatOverride':False,'trainingStatInjection':False,
@@ -884,7 +898,7 @@ jobs:
       - name: Upload actual playable WEBGL full assets ONLY after green gates (never publish)
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-ORIGIN-R1-4-AB-HP-MP-STAMINA-WEBGL-S23-NO-DEPLOY
+          name: HIGHFLY-ORIGIN-R1-4C-TRIAD-HUD-OWNER-WIRE-WEBGL-S23-NO-DEPLOY
           path: supreme-preview/
           if-no-files-found: error
           compression-level: 0
