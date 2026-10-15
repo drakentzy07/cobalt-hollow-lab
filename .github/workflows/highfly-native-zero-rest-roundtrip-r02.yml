@@ -1,0 +1,45 @@
+name: HIGHFLY R02 Original Native Armor Zero-change Geometry Audit
+on:
+  push:
+    branches: [highfly-paladin-native-measurements-r01]
+    paths:
+      - 'skin-factory-core/audit_zero_rest_roundtrip_r02.mjs'
+      - '.github/workflows/highfly-native-zero-rest-roundtrip-r02.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rigorous-only-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install native meshopt decompression and geometry transforms
+        run: npm install --no-save --package-lock=false @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions meshoptimizer
+      - name: Fetch pinned original and verify byte identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 --max-time 120 https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb -o /tmp/warrior_modular.glb
+          test "$(git hash-object /tmp/warrior_modular.glb)" = 'e3fb52b8e064ab3927f3bc34a5ba7d04e8d701c2'
+      - name: Verify weighted rest world-to-local and inverse for EVERY original Knight and Paladin vertex
+        shell: bash
+        run: |
+          set -euo pipefail
+          node skin-factory-core/audit_zero_rest_roundtrip_r02.mjs /tmp/warrior_modular.glb /tmp/HIGHFLY_NATIVE_ZERO_CHANGE_ROUNDTRIP.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/HIGHFLY_NATIVE_ZERO_CHANGE_ROUNDTRIP.json'))
+          assert d['pass'] and d['originalRigBones']==23 and d['originalAnimationClips']==22
+          assert d['paladinNodes']==11 and d['knightNodes']==12
+          assert d['maxReconstructionPositionError'] < 0.00001
+          print('HIGHFLY_ORIGINAL_ALL_NATIVE_REST_SCALES_NOT_GUESSED_GREEN')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-NATIVE-23-BONE-ZERO-CHANGE-INVERSE-REST-REPORT
+          path: /tmp/HIGHFLY_NATIVE_ZERO_CHANGE_ROUNDTRIP.json
+          retention-days: 30
