@@ -178,7 +178,21 @@ injected = r"""
             cls:String(el.className).slice(0,70),pe:getComputedStyle(el).pointerEvents}));
       })()
     }));
-    fail('HF15_UX_QUICK_ACTIONS_NOT_OPEN initial '+JSON.stringify(diag));
+    // If synthetic touch fails, cross-check the ACTUAL original assistive
+    // activation path using a trusted keyboard Enter, but KEEP THE GATE RED:
+    // a passing keyboard path never silently certifies mobile touch.
+    await page.locator('#mobile-menu-anchor').focus();
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(160);
+    const keyboard=await page.evaluate(()=>({
+      expanded:document.getElementById('mobile-menu-anchor')?.getAttribute('aria-expanded'),
+      stripOpen:document.getElementById('mobile-menu-strip')?.classList.contains('open')===true,
+      activeElement:document.activeElement?.id
+    }));
+    const kind=keyboard.stripOpen
+      ? 'HF15_UX_SYNTHETIC_TOUCH_FAIL_KEYBOARD_WORKS'
+      : 'HF15_UX_TOUCH_AND_KEYBOARD_FAIL';
+    fail(kind+' '+JSON.stringify({diag,keyboard,hf15AnchorTouch:result.hf15AnchorTouch}));
   });
   await hf15Touch('#mobile-more');
   await page.waitForFunction(()=>document.body.classList.contains('mobile-more-open'),null,{timeout:3500});
