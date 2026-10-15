@@ -57,7 +57,7 @@ export function originAimSelect(
     : b.dot-a.dot||a.distance-b.distance);
   return candidates[0]?.id??null;
 }
-type Cmd={kind:'set'|'clear'|'cast'|'sync'|'learned'|'autopack';slot?:number;id?:string};
+type Cmd={kind:'set'|'clear'|'cast'|'sync'|'learned'|'autopack'|'priority';slot?:number;id?:string;priority?:OriginAimPriority};
 let disposeLast:(()=>void)|null=null;
 export function installOriginAimAndLoadout(h:OriginAimHooks):void {
   disposeLast?.();
@@ -71,11 +71,15 @@ export function installOriginAimAndLoadout(h:OriginAimHooks):void {
   document.body.appendChild(indicator);
   const publish=()=>document.dispatchEvent(new CustomEvent('hf-origin-loadout-state',{
     detail:{slots:Array.from({length:18},(_,i)=>h.getSlot(i+1)),priority,
-      devotion:h.player() && (h.player() as Player&{paladinDevotion?:{value:number}}).paladinDevotion?.value??0}
+      devotion:(h.player() as Player&{paladinDevotion?:{value:number}}).paladinDevotion?.value??0}
   }));
   const command=(ev:Event)=>{
     const d=(ev as CustomEvent<Cmd>).detail;
     if(!d)return;
+    if(d.kind==='priority'){
+      if(d.priority==='nearest'||d.priority==='lowest-hp')priority=d.priority;
+      publish();return;
+    }
     if(d.kind==='sync'){publish();return;}
     if(d.kind==='autopack'){
       const learned=Object.keys(ABILITIES).filter(id=>h.learned(id));
