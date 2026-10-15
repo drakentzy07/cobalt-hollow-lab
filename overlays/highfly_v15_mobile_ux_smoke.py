@@ -209,7 +209,16 @@ injected = r"""
      hf15Open.modal.bottom>hf15Open.viewport.h+2)
     fail('HF15_UX_MORE_MODAL_CLIPPED '+JSON.stringify(hf15Open.modal));
   // Native close path: a press outside the modal; no test-only class mutation.
-  await page.touchscreen.tap(12,12);
+  // Use the same trusted input pipeline for outside-dismiss as the menu tap;
+  // no DOM class forcing and no hanging Playwright .tap() actionability wait.
+  const hf15Outside=await page.context().newCDPSession(page);
+  try{
+    await hf15Outside.send('Input.dispatchTouchEvent',{type:'touchStart',
+      touchPoints:[{x:12,y:12,id:951}]});
+    await hf15Outside.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  }finally{
+    await hf15Outside.detach();
+  }
   await page.waitForFunction(()=>!document.body.classList.contains('mobile-more-open'),null,{timeout:3500});
   const hf15Closed=await hf15Measure();
   hf15AssertSeats(hf15Before,hf15Closed,'more-closed');
