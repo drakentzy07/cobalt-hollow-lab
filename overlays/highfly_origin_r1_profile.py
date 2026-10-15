@@ -48,6 +48,12 @@ once('src/sim/sim.ts',
      """export interface PlayerMeta extends worldQuestState.WorldQuestPlayerState {
   /** Optional ORIGIN identity; legacy saves/meta never gain this field. */
   originHunter?: OriginHunterProfileV1;""")
+# Sim.cfg uses RuntimeSimConfig, whose Required<Omit<SimConfig,...>>
+# makes every new config key mandatory after defaults are resolved. Thread the
+# explicit feature flag through the existing constructor's resolved cfg.
+once('src/sim/sim.ts',
+     "      playerClass: cfg.playerClass,\n      // Deliberately NOT defaulted:",
+     "      playerClass: cfg.playerClass,\n      originHunterEnabled: cfg.originHunterEnabled ?? false,\n      // Deliberately NOT defaulted:")
 once('src/sim/sim.ts',
      "        autoEquip: this.cfg.autoEquip,\n        // Carried through, never derived:",
      "        autoEquip: this.cfg.autoEquip,\n"
