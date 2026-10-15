@@ -8,6 +8,8 @@ on:
       - ".github/workflows/highfly-supreme-integrated-candidate-s23-no-deploy.yml"
       - "overlays/highfly_v91_combat_feel.py"
       - "game/c1/highfly_v91_combat_nine_classes.test.ts"
+      - "overlays/highfly_v15_manual_cast_p1.py"
+      - "game/c1/highfly_v15_manual_cast_p1.test.ts"
       - "overlays/highfly_v15_pwa_manifest.py"
       - "tests/test_highfly_v15_pwa_manifest.py"
   workflow_dispatch:
@@ -39,6 +41,8 @@ jobs:
             /game/c1/highfly_v9_p0_regression.test.ts
             /overlays/highfly_v91_combat_feel.py
             /game/c1/highfly_v91_combat_nine_classes.test.ts
+            /overlays/highfly_v15_manual_cast_p1.py
+            /game/c1/highfly_v15_manual_cast_p1.test.ts
             /overlays/highfly_v15_pwa_manifest.py
             /overlays/rewrite_pages_static.py
             /tests/test_highfly_v15_pwa_manifest.py
@@ -577,6 +581,17 @@ jobs:
           set -euo pipefail
           pnpm exec vitest run tests/highfly_v9_p0_regression.test.ts tests/highfly_v91_combat_nine_classes.test.ts
           echo 'HF_V91_ALL_NINE_CLASSES_AIM_AND_ROGUE_SKILL_GREEN=1'
+      - name: HF15.1 P1 manual skill intent and nine-class regression (NO DEPLOY)
+        if: ${{ github.ref_name == 'highfly-v15-foundation' }}
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_v15_manual_cast_p1.py
+          cp ../v9-corrections/game/c1/highfly_v15_manual_cast_p1.test.ts tests/highfly_v15_manual_cast_p1.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_v15_manual_cast_p1.test.ts
+          echo 'HF15_1_P1_MANUAL_SKILL_INTENT_NINE_CLASS_GATE_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
