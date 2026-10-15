@@ -187,7 +187,7 @@ jobs:
               'edition':'HIGHFLY ORIGIN R17 SKILL HUD SUPPORT LIBRARY AND AIM PREVIEW',
               'sourceRun':38800765203,
               'sourceCommit':'be55cf3a7965c348334c5cd5e326a70dfac51317',
-              'sourceSuccessfulSteps':'GREEN,
+              'sourceSuccessfulSteps':'AUTOMATED_GREEN',
               'path':'/cobalt-hollow-lab/lab/origin-r17/',
               'homeBeforeSHA256':keep['index.html'],
               'v152BeforeSHA256':keep['lab/v15-2/index.html'],
