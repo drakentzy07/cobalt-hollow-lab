@@ -107,6 +107,43 @@ injected = r"""
       return {x,y,hit:top.id||top.tagName};
     },selector);
   };
+  // CDP read-only: prove whether MobileControls.start() installed the
+  // original StripGesture listeners at all. A present anchor alone is not proof.
+  const hf15Cdp=await page.context().newCDPSession(page);
+  const hf15Remote=await hf15Cdp.send('Runtime.evaluate',{
+    expression:"document.getElementById('mobile-menu-anchor')",
+    objectGroup:'hf15-menu-probe'
+  });
+  const hf15ObjectId=hf15Remote.result?.objectId;
+  const hf15Listeners=hf15ObjectId
+    ? await hf15Cdp.send('DOMDebugger.getEventListeners',{objectId:hf15ObjectId})
+    : {listeners:[]};
+  result.hf15MenuBindings={
+    kinds:(hf15Listeners.listeners||[]).map(l=>({type:l.type,useCapture:l.useCapture,
+      scriptId:l.scriptId,lineNumber:l.lineNumber})),
+    pointerDown:(hf15Listeners.listeners||[]).filter(l=>l.type==='pointerdown').length,
+    pointerUp:(hf15Listeners.listeners||[]).filter(l=>l.type==='pointerup').length,
+    click:(hf15Listeners.listeners||[]).filter(l=>l.type==='click').length,
+  };
+  await hf15Cdp.detach();
+  if(!result.hf15MenuBindings.pointerDown||!result.hf15MenuBindings.pointerUp||
+     !result.hf15MenuBindings.click){
+    const missing=await page.evaluate(()=>({
+      required:[
+        'mobile-controls','mobile-move-joystick','mobile-move-stick',
+        'mobile-camera-joystick','mobile-camera-stick','mobile-menu-anchor',
+        'mobile-menu-strip','mobile-menu-cancel','mobile-menu-caption',
+        'mobile-menu-mount','mobile-menu-chat','mobile-menu-map',
+        'mobile-menu-bags','mobile-social','mobile-quest',
+        'mobile-menu-char','mobile-menu-spellbook','mobile-menu','mobile-more'
+      ].filter(id=>!document.getElementById(id)),
+      caption:!!document.querySelector('#mobile-menu-caption .tt-title'),
+      menuAria:document.getElementById('mobile-menu-anchor')?.getAttribute('aria-label'),
+      mobileTouch:document.body.classList.contains('mobile-touch')
+    }));
+    fail('HF15_UX_MENU_GESTURE_LISTENERS_MISSING '+
+      JSON.stringify({listeners:result.hf15MenuBindings,dom:missing}));
+  }
   result.hf15TouchMethod='hit-tested-pointer-events-matching-original-joystick-qa';
   result.hf15AnchorTouch=await hf15Touch('#mobile-menu-anchor');
   await page.waitForFunction(()=>document.getElementById('mobile-menu-strip')?.classList.contains('open'),null,{timeout:5500}).catch(async()=>{
