@@ -24,14 +24,22 @@ import {
   mountOriginTrialTrainer,
   startOriginTrialAutosave,
 } from './highfly/highfly_origin_trial_runtime';""")
-once('src/main.ts',
-     """  seedOverride?: number,
-): Promise<void> {
-  stopShaderWarmup();""",
-     """  seedOverride?: number,
-  originHunterTrial = false,
-): Promise<void> {
-  stopShaderWarmup();""")
+# Multiple certified HIGHFLY overlays extend the native startOffline
+# signature. Append only OUR parameter at the end, preserving all prior args.
+import re
+main=Path('src/main.ts')
+main_data=main.read_text(encoding='utf8')
+sig=re.search(r'(async function startOffline\\s*\\()([\\s\\S]*?)(\\)\\s*:\\s*Promise<void>\\s*\\{)',main_data)
+if not sig:
+    raise SystemExit('ORIGIN_R15_MISSING_NATIVE_START_OFFLINE_FUNCTION')
+params=sig.group(2).rstrip()
+if 'originHunterTrial' in params:
+    raise SystemExit('ORIGIN_R15_DUPLICATE_ORIGIN_PARAMETER')
+if params and not params.endswith(','):
+    params+=','
+params+='\\n  originHunterTrial = false,\\n'
+main_data=main_data[:sig.start(2)]+params+main_data[sig.end(2):]
+main.write_text(main_data,encoding='utf8')
 once('src/main.ts',
      """  const sim = loadSpan(
     'sim-build',
