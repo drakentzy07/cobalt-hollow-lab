@@ -1,4 +1,4 @@
-name: HIGHFLY ORIGIN R1-4D — Gold Motion + Manual Combo Stamina (NO DEPLOY)
+name: HIGHFLY ORIGIN R1-5 + R1-6 P0 — Playable Hunter Trial (NO DEPLOY)
 # Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
@@ -38,6 +38,9 @@ on:
       - "game/c1/highfly_origin_action_stamina.ts"
       - "game/c1/highfly_origin_r14d_stamina_actions.test.ts"
       - "overlays/highfly_origin_r14d_stamina_actions.py"
+      - "game/c1/highfly_origin_trial_runtime.ts"
+      - "overlays/highfly_origin_r15_r16_playable_trial.py"
+      - "game/c1/highfly_origin_r15_r16_playable_trial.test.ts"
       - "overlays/highfly_v91_combat_feel.py"
       - "game/c1/highfly_v91_combat_nine_classes.test.ts"
       - "overlays/highfly_v15_manual_cast_p1.py"
@@ -112,6 +115,9 @@ jobs:
             /game/c1/highfly_origin_action_stamina.ts
             /game/c1/highfly_origin_r14d_stamina_actions.test.ts
             /overlays/highfly_origin_r14d_stamina_actions.py
+            /game/c1/highfly_origin_trial_runtime.ts
+            /overlays/highfly_origin_r15_r16_playable_trial.py
+            /game/c1/highfly_origin_r15_r16_playable_trial.test.ts
             /overlays/highfly_v15_pwa_manifest.py
             /overlays/rewrite_pages_static.py
             /tests/test_highfly_v15_pwa_manifest.py
@@ -791,6 +797,16 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_origin_r14d_stamina_actions.test.ts tests/highfly_origin_r14c_hud_wire_bar.test.ts tests/highfly_origin_r14_resource_bundle.test.ts tests/highfly_origin_native_spellbook.test.ts
           echo 'HIGHFLY_ORIGIN_R14D_GOLDEN_MOVEMENT_AND_MANUAL_ATK_STAMINA_GREEN=1'
+      - name: ORIGIN R1-5 + R1-6 P0 preview-only single Hunter, local saves and trainer UI
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r15_r16_playable_trial.py
+          cp ../v9-corrections/game/c1/highfly_origin_r15_r16_playable_trial.test.ts tests/highfly_origin_r15_r16_playable_trial.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r15_r16_playable_trial.test.ts tests/highfly_origin_r14d_stamina_actions.test.ts tests/highfly_origin_r14c_hud_wire_bar.test.ts tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R15_R16_SINGLE_HUNTER_PREVIEW_SAVE_TRAINER_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -828,6 +844,7 @@ jobs:
         working-directory: upstream
         shell: bash
         env:
+          VITE_HIGHFLY_ORIGIN_PREVIEW: "1"
           VITE_COBALT_OFFLINE: "1"
           VITE_COBALT_BASE: "/cobalt-hollow-lab/"
           VITE_HIGHFLY_HUNT_PREVIEW: "0"
@@ -862,7 +879,7 @@ jobs:
           # Separate release QA metadata, NOT a game-play buff or stats edit.
           import json
           (root/'highfly-supreme-qa.json').write_text(json.dumps({
-            'edition':'HIGHFLY ORIGIN R1-4D GOLDEN MOVEMENT MANUAL COMBO STAMINA (NO PUBLIC DEPLOY)',
+            'edition':'HIGHFLY ORIGIN R1-5 R1-6 PLAYABLE SINGLE HUNTER PREVIEW (NO PUBLIC DEPLOY)',
             'qaSourceCommit':'8a3ddc93c9147e8c3320c04d4d2a13896b11e063',
             'nineClassesNativeSoloCaptainLv99':True,
             'bossStatOverride':False,'trainingStatInjection':False,
@@ -914,7 +931,7 @@ jobs:
       - name: Upload actual playable WEBGL full assets ONLY after green gates (never publish)
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-ORIGIN-R1-4D-GOLDEN-MOTION-COMBO-STAMINA-WEBGL-S23-NO-DEPLOY
+          name: HIGHFLY-ORIGIN-R1-5-R1-6-PLAYABLE-HUNTER-PREVIEW-WEBGL-NO-DEPLOY
           path: supreme-preview/
           if-no-files-found: error
           compression-level: 0
