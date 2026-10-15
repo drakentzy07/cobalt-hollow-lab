@@ -46,7 +46,7 @@ describe('HIGHFLY ORIGIN R1-5+R1-6 P0 — preview-only single Hunter playable fl
   it('offers single Hunter trial entry WITHOUT an active legacy class selection or online character mutation', () => {
     const main=readFileSync('src/main.ts','utf8');
     expect(main).toContain('installOriginTrialEntrance((name)=>');
-    expect(main).toContain("startOffline('warrior',name,0,undefined,undefined,true)");
+    expect(main).toContain("startOffline('warrior',name,0,undefined,undefined,undefined,true)");
     expect(main).toContain('originHunterEnabled:true');
     expect(main).toContain('originHunterTrial ? await loadOriginTrialSave(name) : null');
     expect(main).toContain('startOriginTrialAutosave(sim,name)');
