@@ -10,6 +10,8 @@ on:
       - "game/c1/highfly_v91_combat_nine_classes.test.ts"
       - "overlays/highfly_v15_pwa_manifest.py"
       - "overlays/highfly_v15_mobile_ux_smoke.py"
+      - "overlays/highfly_v15_mobile_menu_layer.py"
+      - "tests/test_highfly_v15_mobile_menu_layer.py"
       - "tests/test_highfly_v15_pwa_manifest.py"
   workflow_dispatch:
 permissions:
@@ -42,6 +44,8 @@ jobs:
             /game/c1/highfly_v91_combat_nine_classes.test.ts
             /overlays/highfly_v15_pwa_manifest.py
             /overlays/highfly_v15_mobile_ux_smoke.py
+            /overlays/highfly_v15_mobile_menu_layer.py
+            /tests/test_highfly_v15_mobile_menu_layer.py
             /overlays/rewrite_pages_static.py
             /tests/test_highfly_v15_pwa_manifest.py
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
@@ -572,6 +576,17 @@ jobs:
           git diff --check HEAD
           test -s src/sim/combat/highfly_v91_rogue_opener.ts
           echo 'HF_V91_NINE_CLASS_AIM_ROGUE_SKILL_COMBO_PATCH_GREEN=1'
+      - name: V15 only — protect Quick Actions touch hitbox above the canvas (NO DEPLOY)
+        if: ${{ github.ref_name == 'highfly-v15-foundation' }}
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s ../v9-corrections/tests -p 'test_highfly_v15_mobile_menu_layer.py' -v
+          python3 ../v9-corrections/overlays/highfly_v15_mobile_menu_layer.py
+          grep -Fq 'HF15_UX02_QUICK_ACTIONS_INPUT_LAYER' src/styles/hud.mobile.css
+          git diff --check HEAD
+          echo 'HF15_UX02_QUICK_ACTIONS_INPUT_LAYER_GATE_GREEN=1'
       - name: V9.1 nine-class soft aim, honest Rogue positioning and touch response regressions
         working-directory: upstream
         shell: bash
