@@ -108,6 +108,12 @@ once('src/ui/hud.ts',
         project: (x,y,z) => this.renderer.worldToScreen(x,y,z),
         cameraYaw: () => this.renderer.camYaw,""")
 
+# Correct original donor's class-bar resource naming in Hunter-only
+# tooltips. Runtime spending was already mana/stamina, not rage/focus/energy.
+once('src/ui/hud.ts',
+     "          resource: resourceDisplayName(this.sim.player.resourceType),",
+     "          resource: this.sim.player.originResources ? (a.school === 'physical' ? 'Stamina' : 'Maná') : resourceDisplayName(this.sim.player.resourceType),")
+
 # Premium single-Hunter intro, only in preview. Existing game/legacy build untouched.
 once('src/highfly/highfly_origin_trial_runtime.ts',
      "  const section=document.createElement('section');\n  section.id='hf-origin-entry';",

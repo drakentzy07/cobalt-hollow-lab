@@ -8,7 +8,7 @@ export type OriginCombatShape='single'|'area'|'mobility'|'special';
 export interface OriginPick{className:OriginClassName;role:OriginPickKind;shape:OriginCombatShape;label:string;}
 export const ORIGIN_TOP36:Record<OriginClassName,{combat:readonly [string,string,string];buff:string}>={
  warrior:{combat:['overpower','heroic_leap','pummel'],buff:'battle_shout'},
- paladin:{combat:['crusader_strike','consecration','solar_step'],buff:'divine_protection'},
+ paladin:{combat:['hammer_of_grace','consecration','solar_step'],buff:'divine_protection'},
  hunter:{combat:['arcane_shot','volley','trailbreak'],buff:'aspect_of_the_hawk'},
  rogue:{combat:['sinister_strike','ambush','venom_dart'],buff:'evasion'},
  priest:{combat:['mind_blast','holy_nova','veilstep'],buff:'power_word_fortitude'},
