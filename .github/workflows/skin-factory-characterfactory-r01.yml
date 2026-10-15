@@ -1,0 +1,25 @@
+name: HIGHFLY Character Factory R01 - free Colab code safety
+on:
+  push:
+    branches: [highfly-characterfactory-r01-free-colab]
+    paths:
+      - 'skin-factory-core/HIGHFLY_CharacterFactory_AUTO_R01_FREE.ipynb'
+      - 'skin-factory-core/test_characterfactory_colab_r01.py'
+      - '.github/workflows/skin-factory-characterfactory-r01.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  notebook-code-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate one-click notebook syntax and free-tier gates
+        run: |
+          python -m py_compile skin-factory-core/test_characterfactory_colab_r01.py
+          python skin-factory-core/test_characterfactory_colab_r01.py
+          echo "HIGHFLY_CHARACTERFACTORY_R01_NO_GAME_PAGES_DEPLOY_AND_NO_GPU_FAKE=1"
