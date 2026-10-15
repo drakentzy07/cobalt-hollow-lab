@@ -38,12 +38,14 @@ jobs:
           import torch,diffusers,transformers
           assert torch.__version__.startswith("2.6.0"),torch.__version__
           assert hasattr(torch,"accelerator"),"MISSING_TORCH_ACCELERATOR"
-          from diffusers import DiffusionPipeline
+          from diffusers.utils.torch_utils import get_device
+          # Full DiffusionPipeline import on a no-GPU runner invokes a Transformers accelerator probe
+          # that crashes without CUDA. We cannot claim GPU pipeline validation on CPU Actions.
           from character_factory.preflight import check_generation_stack
           checks=check_generation_stack(device="cpu")
           failures=[x for x in checks if not x.ok]
           assert not failures,[str(x) for x in failures]
-          print("HIGHFLY_CF_R02_REAL_DIFFUSERS_TRANSFORMERS_CPU_PRECHECK_IMPORTS_GREEN")
+          print("HIGHFLY_CF_R02_REAL_DIFFUSERS_TORCH_UTILS_TRANSFORMERS_CPU_PREFLIGHT_IMPORTS_GREEN")
           print("Torch",torch.__version__,"Diffusers",diffusers.__version__,"Transformers",transformers.__version__)
           print("HIGHFLY_CF_R02_GPU_INFERENCE_NOT_EXECUTED_CI=1")
           PY
