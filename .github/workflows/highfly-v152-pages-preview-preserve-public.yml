@@ -47,7 +47,7 @@ jobs:
         with:
           repository: drakentzy07/cobalt-hollow-lab
           run-id: 38320066780
-          github-token: \${{ github.token }}
+          github-token: ${{ github.token }}
           name: HIGHFLY-SUPREME-INTEGRATED-WEBGL-S23-CANDIDATE-NO-DEPLOY
           path: original
 
@@ -56,7 +56,7 @@ jobs:
         with:
           repository: drakentzy07/cobalt-hollow-lab
           run-id: 38543442226
-          github-token: \${{ github.token }}
+          github-token: ${{ github.token }}
           name: HIGHFLY-SUPREME-INTEGRATED-WEBGL-S23-CANDIDATE-NO-DEPLOY
           path: sf28
 
@@ -65,7 +65,7 @@ jobs:
         with:
           repository: drakentzy07/cobalt-hollow-lab
           run-id: 38737442379
-          github-token: \${{ github.token }}
+          github-token: ${{ github.token }}
           name: HIGHFLY-SUPREME-INTEGRATED-WEBGL-S23-CANDIDATE-NO-DEPLOY
           path: v152
 
