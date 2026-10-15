@@ -60,6 +60,29 @@ injected = r"""
     }
   };
   const hf15Before=await hf15Measure();
+  // Trace actual touch routing. A pointer event can be intercepted by another
+  // floating HUD layer even if Playwright force:true bypasses actionability.
+  // No control listeners, class names, or game data are modified by the probe.
+  await page.evaluate(()=>{
+    const a=document.getElementById('mobile-menu-anchor');
+    if(!(a instanceof HTMLElement))throw Error('HF15_UX_MENU_ANCHOR_MISSING');
+    const ids=['mobile-menu-mount','mobile-menu-chat','mobile-menu-map',
+      'mobile-menu-bags','mobile-social','mobile-quest',
+      'mobile-menu-char','mobile-menu-spellbook','mobile-menu',
+      'mobile-more','mobile-menu-cancel','mobile-menu-caption'];
+    window.__hf15QuickMenuTrace={
+      absent:ids.filter(id=>!document.getElementById(id)),
+      events:[],
+      rect:a.getBoundingClientRect().toJSON(),
+    };
+    for(const type of ['pointerdown','pointerup','click']){
+      document.addEventListener(type,e=>{
+        const t=e.target;
+        const name=t instanceof HTMLElement?(t.id||t.className||t.tagName):String(t);
+        window.__hf15QuickMenuTrace.events.push(type+':'+String(name).slice(0,65));
+      },{capture:true});
+    }
+  });
   // Real touchscreen: a programmatic .click() does NOT exercise the game's
   // pointerdown/pointerup menu gesture (StripGesture owns those events).
   await page.locator('#mobile-menu-anchor').tap({force:true});
@@ -71,6 +94,18 @@ injected = r"""
       mobile:document.body.classList.contains('mobile-touch'),
       active:document.body.classList.contains('game-active'),
       questExists:!!document.getElementById('mobile-quest'),
+      touchTrace:window.__hf15QuickMenuTrace,
+      menuButtonsPresent:['mobile-menu-cancel','mobile-menu-caption','mobile-menu-mount',
+        'mobile-menu-chat','mobile-menu-map','mobile-menu-bags','mobile-social','mobile-quest',
+        'mobile-menu-char','mobile-menu-spellbook','mobile-menu','mobile-more']
+        .map(id=>({id,found:!!document.getElementById(id)})),
+      hitStack:(()=>{
+        const r=document.getElementById('mobile-menu-anchor')?.getBoundingClientRect();
+        if(!r)return [];
+        return document.elementsFromPoint(Math.max(2,r.left+r.width/2),r.top+r.height/2)
+          .slice(0,8).map(el=>({id:el.id,tag:el.tagName,
+            cls:String(el.className).slice(0,70),pe:getComputedStyle(el).pointerEvents}));
+      })()
     }));
     fail('HF15_UX_QUICK_ACTIONS_NOT_OPEN initial '+JSON.stringify(diag));
   });
