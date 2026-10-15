@@ -66,8 +66,11 @@ once(settings,
     """  startAttackOnAbilityUse: { def: true },""",
     """  startAttackOnAbilityUse: { def: false },""")
 
-assert "this.sim.startAutoAttack();" in Path(hud).read_text(encoding="utf-8")
-assert "this.sim.stopAutoAttack();" in Path(hud).read_text(encoding="utf-8")
+# Upstream/HIGHFLY may implement the fixed Attack button through different
+# SIM delegates. P1 must NEVER mandate any particular autoattack implementation:
+# only require the mobile ability engage guard. Basic-attack authority is P2.
+assert "highflyV15AbilityAutoEngageAllowed(" in Path(hud).read_text(encoding="utf-8")
+assert "this.isMobileLayout()," in Path(hud).read_text(encoding="utf-8")
 assert "highflyV15AbilityAutoEngageAllowed" in Path(hud).read_text(encoding="utf-8")
 assert "startAttackOnAbilityUse: { def: false }" in Path(settings).read_text(encoding="utf-8")
 print("HF15_1_P1_MOBILE_SKILL_AUTOENGAGE_BLOCKED_MANUAL_DEFAULT=1")
