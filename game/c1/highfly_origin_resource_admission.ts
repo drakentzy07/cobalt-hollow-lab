@@ -11,12 +11,12 @@ import type { AbilityDef, ResourceType } from './types';
 
 export type OriginResourceAdmission =
   | { allowed: true }
-  | { allowed: false; required: ResourceType; available: ResourceType };
+  | { allowed: false; required: ResourceType; available: ResourceType | null };
 
 /** Fail closed on mismatched class-specific resources until R1-4 owns all three. */
 export function originResourceAdmission(
   original: AbilityDef,
-  activePool: ResourceType,
+  activePool: ResourceType | null,
 ): OriginResourceAdmission {
   const required = CLASSES[original.class].resourceType;
   return required === activePool
