@@ -1,4 +1,4 @@
-name: HIGHFLY ORIGIN R1-2A — Hunter native learned spellbook QA (NO DEPLOY)
+name: HIGHFLY ORIGIN R1-2A FIX + R1-2 P0 — Native Skill Motion Donors (NO DEPLOY)
 # Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
@@ -22,6 +22,9 @@ on:
       - "overlays/highfly_origin_r1_native_spellbook.py"
       - "game/c1/highfly_origin_native_spellbook.ts"
       - "game/c1/highfly_origin_native_spellbook.test.ts"
+      - "overlays/highfly_origin_r12_motion_catalog.py"
+      - "game/c1/highfly_origin_skill_motion_catalog.ts"
+      - "game/c1/highfly_origin_skill_motion_catalog.test.ts"
       - "overlays/highfly_v91_combat_feel.py"
       - "game/c1/highfly_v91_combat_nine_classes.test.ts"
       - "overlays/highfly_v15_manual_cast_p1.py"
@@ -80,6 +83,9 @@ jobs:
             /overlays/highfly_origin_r1_native_spellbook.py
             /game/c1/highfly_origin_native_spellbook.ts
             /game/c1/highfly_origin_native_spellbook.test.ts
+            /overlays/highfly_origin_r12_motion_catalog.py
+            /game/c1/highfly_origin_skill_motion_catalog.ts
+            /game/c1/highfly_origin_skill_motion_catalog.test.ts
             /overlays/highfly_v15_pwa_manifest.py
             /overlays/rewrite_pages_static.py
             /tests/test_highfly_v15_pwa_manifest.py
@@ -695,8 +701,20 @@ jobs:
           python3 ../v9-corrections/overlays/highfly_origin_r1_native_spellbook.py
           cp ../v9-corrections/game/c1/highfly_origin_native_spellbook.test.ts tests/highfly_origin_native_spellbook.test.ts
           git diff --check HEAD
-          pnpm exec vitest run tests/highfly_origin_native_spellbook.test.ts tests/highfly_origin_hunter_profile.test.ts
+          # R1-1 test checks the pre-activation compatibility state, so run it
+          # in R1-1 only. R1-2A intentionally removes free class abilities.
+          pnpm exec vitest run tests/highfly_origin_native_spellbook.test.ts
           echo 'HIGHFLY_ORIGIN_R1_2A_NATIVE_LEARNED_SPELLBOOK_GREEN=1'
+      - name: ORIGIN R1-2 P0 cross-discipline original animation donor lookup
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r12_motion_catalog.py
+          cp ../v9-corrections/game/c1/highfly_origin_skill_motion_catalog.test.ts tests/highfly_origin_skill_motion_catalog.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_skill_motion_catalog.test.ts tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R1_2_P0_ORIGINAL_RIG_MEDIUM_ANIMATION_DONORS_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -768,7 +786,7 @@ jobs:
           # Separate release QA metadata, NOT a game-play buff or stats edit.
           import json
           (root/'highfly-supreme-qa.json').write_text(json.dumps({
-            'edition':'HIGHFLY ORIGIN R1-2A HUNTER LEARNED NATIVE SKILL BOOK (NO PUBLIC DEPLOY)',
+            'edition':'HIGHFLY ORIGIN R1-2A P0 SKILL MOTION DONOR CATALOG (NO PUBLIC DEPLOY)',
             'qaSourceCommit':'8a3ddc93c9147e8c3320c04d4d2a13896b11e063',
             'nineClassesNativeSoloCaptainLv99':True,
             'bossStatOverride':False,'trainingStatInjection':False,
@@ -820,7 +838,7 @@ jobs:
       - name: Upload actual playable WEBGL full assets ONLY after green gates (never publish)
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-ORIGIN-R1-2A-HUNTER-LEARNED-SPELLBOOK-S23-NO-DEPLOY
+          name: HIGHFLY-ORIGIN-R1-2A-P0-SKILL-MOTION-WEBGL-S23-NO-DEPLOY
           path: supreme-preview/
           if-no-files-found: error
           compression-level: 0
