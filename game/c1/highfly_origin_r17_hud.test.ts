@@ -25,7 +25,7 @@ describe('HIGHFLY ORIGIN R1-7: honest non-equippable class skill references',()=
 describe('HIGHFLY ORIGIN R1-7: 10 combat + 8 utility, native actions only',()=>{
   it('classifies protective skills below and offensive skills in S1-S10',()=>{
     expect(originSkillRole('divine_ascension')).toBe('reference');
-    expect(originSkillRole('holy_light')).toBe('support');
+    expect(originSkillRole('holy_light')).toBe('reference');
     expect(originUtilitySkill('divine_protection')).toBe(true);
     expect(originSkillRole('demon_skin')).toBe('support');
     expect(originSkillRole('rockbiter_weapon')).toBe('reference');
@@ -58,7 +58,7 @@ describe('HIGHFLY ORIGIN R1-7: 10 combat + 8 utility, native actions only',()=>{
     expect(module).not.toContain('startAutoAttack');
     expect(trial).toContain('hf-origin-utility-row');
     expect(trial).toContain('ORDENAR SKILLS / BUFFS');
-    expect(trial).toContain('BIBLIOTECA · CONSULTA');
+    expect(trial).toContain('BIBLIOTECA · ARCHIVO');
     expect(trial).toContain('mountOriginR18Editor(');
     expect(module).toContain('.mobile-action-slot[data-mobile-index]');
     expect(module).toContain('h.ringSlot(');
