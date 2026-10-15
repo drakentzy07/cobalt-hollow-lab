@@ -69,7 +69,7 @@ export function originCostDecision(ability: AbilityDef): OriginCostDecision {
     ability.ruinCost ||
     ability.soulFragmentCost ||
     ability.effects.some((effect) =>
-      effect.type === 'gainResource' ||
+      effect.type === 'gainResource' ||\n      effect.type === 'charge' ||
       (effect.type === 'selfBuff' && effect.kind.startsWith('form_')))
   ) return { ok: false, reason: 'Special legacy resource or form mechanic pending Origin adaptation' };
   return { ok: true, pool: ability.school === 'physical' ? 'stamina' : 'mana' };
