@@ -23,7 +23,7 @@ once('src/highfly/highfly_origin_r17_hud.ts',
 # Only the chosen 36 are displayed as learnable. All others remain library.
 once('src/highfly/highfly_origin_trial_runtime.ts',
      "import { originUtilitySkill, originSkillRole } from './highfly_origin_r17_hud';",
-     "import { originUtilitySkill, originSkillRole } from './highfly_origin_r17_hud';\nimport { ORIGIN_FOCUS_SKILLS } from '../sim/highfly_origin_r19_selection';")
+     "import { originUtilitySkill, originSkillRole } from './highfly_origin_r17_hud';\nimport { ORIGIN_FOCUS_SKILLS } from '../sim/highfly_origin_r19_selection';\nimport { bindTouchTap } from '../ui/touch_tap';")
 once('src/highfly/highfly_origin_trial_runtime.ts',
      """    const catalog=Object.values(ABILITIES)
       .filter(def=>highflyOriginNativeLearnable(def.id,sim.player.level,meta.questsDone)!==null)
@@ -94,6 +94,20 @@ once('src/highfly/highfly_origin_trial_runtime.ts',
 once('src/highfly/highfly_origin_trial_runtime.ts',
      "      b.textContent=id?'B'+(i+1)+' · '+name.slice(0,3):'B'+(i+1);",
      "      b.textContent=id?'✦ B'+(i+1):'B'+(i+1);\n      b.setAttribute('aria-label',id?'B'+(i+1)+' '+name:'B'+(i+1)+' vacío');")
+# Native multitouch casting, even while another thumb holds the joystick.
+once('src/highfly/highfly_origin_trial_runtime.ts',
+     """    b.addEventListener('click',()=>document.dispatchEvent(new CustomEvent('hf-origin-command',{
+      detail:{kind:'cast',slot:n}
+    })));""",
+     """    bindTouchTap(b,()=>document.dispatchEvent(new CustomEvent('hf-origin-command',{
+      detail:{kind:'cast',slot:n}
+    })));""")
+once('src/ui/hud.ts',
+     "        cameraYaw: () => this.renderer.camYaw,",
+     """        castAt: (id,point) => this.sim.castAbilityAt(id,point),
+        project: (x,y,z) => this.renderer.worldToScreen(x,y,z),
+        cameraYaw: () => this.renderer.camYaw,""")
+
 # Premium single-Hunter intro, only in preview. Existing game/legacy build untouched.
 once('src/highfly/highfly_origin_trial_runtime.ts',
      "  const section=document.createElement('section');\n  section.id='hf-origin-entry';",
