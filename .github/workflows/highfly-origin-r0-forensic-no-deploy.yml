@@ -41,6 +41,9 @@ on:
       - "game/c1/highfly_origin_trial_runtime.ts"
       - "overlays/highfly_origin_r15_r16_playable_trial.py"
       - "game/c1/highfly_origin_r15_r16_playable_trial.test.ts"
+      - "game/c1/highfly_origin_r17_hud.ts"
+      - "game/c1/highfly_origin_r17_hud.test.ts"
+      - "overlays/highfly_origin_r17_patch.py"
       - "overlays/highfly_v91_combat_feel.py"
       - "game/c1/highfly_v91_combat_nine_classes.test.ts"
       - "overlays/highfly_v15_manual_cast_p1.py"
@@ -118,6 +121,9 @@ jobs:
             /game/c1/highfly_origin_trial_runtime.ts
             /overlays/highfly_origin_r15_r16_playable_trial.py
             /game/c1/highfly_origin_r15_r16_playable_trial.test.ts
+            /game/c1/highfly_origin_r17_hud.ts
+            /game/c1/highfly_origin_r17_hud.test.ts
+            /overlays/highfly_origin_r17_patch.py
             /overlays/highfly_v15_pwa_manifest.py
             /overlays/rewrite_pages_static.py
             /tests/test_highfly_v15_pwa_manifest.py
@@ -807,6 +813,16 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_origin_r15_r16_playable_trial.test.ts tests/highfly_origin_r14d_stamina_actions.test.ts tests/highfly_origin_r14c_hud_wire_bar.test.ts tests/highfly_origin_native_spellbook.test.ts
           echo 'HIGHFLY_ORIGIN_R15_R16_SINGLE_HUNTER_PREVIEW_SAVE_TRAINER_GREEN=1'
+      - name: ORIGIN R1-7 true native Devotion, 18-slot separated loadout and preview target drag (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r17_patch.py
+          cp ../v9-corrections/game/c1/highfly_origin_r17_hud.test.ts tests/highfly_origin_r17_hud.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r17_hud.test.ts tests/highfly_origin_r15_r16_playable_trial.test.ts
+          echo 'HIGHFLY_ORIGIN_R17_DEVOTION_HUD_TARGET_DRAG_NATIVE_REGRESSION_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
