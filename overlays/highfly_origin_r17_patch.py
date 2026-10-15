@@ -57,6 +57,8 @@ once('src/ui/hud.ts',
         target: (id) => this.sim.targetEntity(id),
         player: () => this.sim.player,
         targets: () => Array.from(this.sim.entities.values()),
+        cameraYaw: () => this.renderer.camYaw,
+        ringSlot: (i) => this.mobileSourceSlotForButton(i,'center'),
       });
     }""")
 
@@ -112,11 +114,11 @@ once('src/highfly/highfly_origin_trial_runtime.ts',
   slotState.style.cssText='display:block;color:#ace0ff;word-wrap:break-word;';
   const utility=document.createElement('div');
   utility.id='hf-origin-utility-row';
-  utility.style.cssText='position:fixed;bottom:8px;left:44%;width:188px;z-index:8500;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:4px;border-radius:8px;background:#111c2acb;touch-action:manipulation;';
+  utility.style.cssText='position:fixed;bottom:6px;left:39%;width:min(27vw,212px);z-index:8500;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;padding:3px;border-radius:8px;background:#111c2ade;touch-action:manipulation;';
   const utilityBtns:HTMLButtonElement[]=[];
   for(let n=11;n<=18;n++){
     const b=button('B'+(n-10));
-    b.style.cssText+='font-size:10px;min-width:0;padding:5px 1px;height:32px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;';
+    b.style.cssText+='font-size:10px;min-width:0;padding:2px 0;height:27px;max-height:27px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;';
     b.title='B'+(n-10)+' sin asignar';
     b.addEventListener('click',()=>document.dispatchEvent(new CustomEvent('hf-origin-command',{
       detail:{kind:'cast',slot:n}
@@ -132,7 +134,7 @@ once('src/highfly/highfly_origin_trial_runtime.ts',
     utilityBtns.forEach((b,i)=>{
       const id=data.slots[i+10];
       const name=id?ABILITIES[id]?.name??id:'';
-      b.textContent=id?name.slice(0,5):'B'+(i+1);
+      b.textContent=id?'B'+(i+1)+' · '+name.slice(0,3):'B'+(i+1);
       b.title=id?name:'B'+(i+1)+' libre';
       b.style.opacity=id?'1':'.65';
     });
@@ -203,6 +205,17 @@ once('src/highfly/highfly_origin_trial_runtime.ts',
 once('src/highfly/highfly_origin_trial_runtime.ts',
      """  panel.append(caption,barNote,skillSelect,slotSelect,controlRow,autoButton,targetPriority,removeShield,slotState,list,status);""",
      """  panel.append(caption,barNote,skillSelect,slotSelect,controlRow,autoButton,targetPriority,removeShield,slotState,list,referencePanel,status);""")
+
+new_ui=Path('../v9-corrections/game/c1/highfly_origin_r18_loadout.ts')
+ui_target=Path('src/highfly/highfly_origin_r18_loadout.ts')
+if ui_target.exists():raise SystemExit('OR18_MODULE_ALREADY_INSTALLED')
+shutil.copy2(new_ui,ui_target)
+once('src/highfly/highfly_origin_trial_runtime.ts',
+     "import { originUtilitySkill, originSkillRole } from './highfly_origin_r17_hud';",
+     "import { originUtilitySkill, originSkillRole } from './highfly_origin_r17_hud';\nimport { mountOriginR18Editor } from './highfly_origin_r18_loadout';")
+once('src/highfly/highfly_origin_trial_runtime.ts',
+     "  dispatch('sync');\n}",
+     "  mountOriginR18Editor(sim,panel,list,referencePanel,status,refresh);\n  dispatch('sync');\n}")
 
 for path,required in {
   'src/highfly/highfly_origin_trial_runtime.ts':[

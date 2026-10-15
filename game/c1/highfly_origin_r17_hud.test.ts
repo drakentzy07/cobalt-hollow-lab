@@ -27,6 +27,9 @@ describe('HIGHFLY ORIGIN R1-7: 10 combat + 8 utility, native actions only',()=>{
     expect(originSkillRole('divine_ascension')).toBe('reference');
     expect(originSkillRole('holy_light')).toBe('support');
     expect(originUtilitySkill('divine_protection')).toBe(true);
+    expect(originUtilitySkill('wildmend')).toBe(true);
+    expect(originUtilitySkill('fiendhide')).toBe(true);
+    expect(originUtilitySkill('stonebound_weapon')).toBe(true);
     expect(originUtilitySkill('holy_light')).toBe(true);
     expect(originUtilitySkill('sinister_strike')).toBe(false);
     expect(originUtilitySkill('shield_bash')).toBe(false);
@@ -43,6 +46,7 @@ describe('HIGHFLY ORIGIN R1-7: 10 combat + 8 utility, native actions only',()=>{
     expect(originAimSelect(player,mobs,{dx:0,dy:-80},30,'nearest')).toBe(2);
     expect(originAimSelect(player,mobs,{dx:0,dy:-80},30,'lowest-hp')).toBe(3);
     expect(originAimSelect(player,mobs,{dx:0,dy:80},30,'nearest')).toBeNull();
+    expect(originAimSelect(player,mobs,{dx:0,dy:80},30,'nearest',Math.PI)).toBe(2);
   });
   it('copies neither combat engine nor automatic attack paths',()=>{
     const module=readFileSync('src/highfly/highfly_origin_r17_hud.ts','utf8');
@@ -56,5 +60,9 @@ describe('HIGHFLY ORIGIN R1-7: 10 combat + 8 utility, native actions only',()=>{
     expect(trial).toContain('hf-origin-utility-row');
     expect(trial).toContain('ORDENAR SKILLS / BUFFS');
     expect(trial).toContain('BIBLIOTECA · CONSULTA');
+    expect(trial).toContain('mountOriginR18Editor(');
+    expect(module).toContain('.mobile-action-slot[data-mobile-index]');
+    expect(module).toContain('h.ringSlot(');
+    expect(module).toContain('h.cameraYaw()');
   });
 });

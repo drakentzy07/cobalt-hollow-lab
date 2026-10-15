@@ -42,6 +42,7 @@ on:
       - "overlays/highfly_origin_r15_r16_playable_trial.py"
       - "game/c1/highfly_origin_r15_r16_playable_trial.test.ts"
       - "game/c1/highfly_origin_r17_hud.ts"
+      - "game/c1/highfly_origin_r18_loadout.ts"
       - "game/c1/highfly_origin_r17_hud.test.ts"
       - "overlays/highfly_origin_r17_patch.py"
       - "overlays/highfly_v91_combat_feel.py"
@@ -122,6 +123,7 @@ jobs:
             /overlays/highfly_origin_r15_r16_playable_trial.py
             /game/c1/highfly_origin_r15_r16_playable_trial.test.ts
             /game/c1/highfly_origin_r17_hud.ts
+            /game/c1/highfly_origin_r18_loadout.ts
             /game/c1/highfly_origin_r17_hud.test.ts
             /overlays/highfly_origin_r17_patch.py
             /overlays/highfly_v15_pwa_manifest.py
