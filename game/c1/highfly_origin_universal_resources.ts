@@ -65,7 +65,7 @@ export function originCostDecision(ability: AbilityDef): OriginCostDecision {
   if (
     // These native utilities spend directly inside applyAbility, bypassing
     // the common cast spend hook. Add them only after their bespoke paths migrate.
-    ['conjure_water', 'conjure_food', 'revive_pet'].includes(ability.id) ||
+    ['conjure_water', 'conjure_food', 'revive_pet', 'divine_ascension'].includes(ability.id) ||
     ability.onNextSwing ||
     ability.spendsAllResource ||
     ability.devotionCost ||

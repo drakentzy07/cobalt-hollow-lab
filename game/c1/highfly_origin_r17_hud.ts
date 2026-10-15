@@ -5,6 +5,7 @@
  * AOEs and charge indicators remain separate later QA gates.
  */
 import { ABILITIES } from '../sim/content/classes';
+import { originCostDecision } from '../sim/highfly_origin_universal_resources';
 
 type Unit = {
   id:number; kind:string; dead:boolean; hostile?:boolean;
@@ -24,12 +25,20 @@ export interface OriginAimHooks {
 export function originUtilitySkill(id:string):boolean {
   const def=ABILITIES[id];
   if(!def)return false;
-  if(id==='divine_ascension'||id==='holy_light'||id==='flash_of_light')return true;
+  if(id==='holy_light'||id==='flash_of_light')return true;
   const utility=/blessing|ward|aura|shield|armor|armour|protection|healing|heal|renew|barrier|regeneration|invocation|fortify|fortitude|might|sanctuary|covenant|bulwark|resurrection|resurrect|rebirth|dispel|purify|cleanse|rejuvenation|lay_on_hands|buff/i;
   // Avoid putting explicitly offensive strikes in a passive slot just
   // because their name happens to mention a shield or holy effect.
   const offensive=/strike|smash|bash|slash|shot|stab|bolt|missile|leap|thrust|charge|cleave|judgment|execute|attack|whirl/i;
   return utility.test(id) && !offensive.test(id);
+}
+export type OriginSkillRole='combat'|'support'|'reference';
+/** Reference-only skills are visible for learning, never presented as working skills. */
+export function originSkillRole(id:string):OriginSkillRole {
+  const def=ABILITIES[id];
+  if(!def||def.passive||def.hiddenFromPlayer||id==='divine_ascension'
+    ||!originCostDecision(def).ok||def.requiresShield)return 'reference';
+  return originUtilitySkill(id)?'support':'combat';
 }
 export function originAimSelect(
   actor:{pos:{x:number;z:number};facing:number},
@@ -83,14 +92,14 @@ export function installOriginAimAndLoadout(h:OriginAimHooks):void {
     if(d.kind==='sync'){publish();return;}
     if(d.kind==='autopack'){
       const learned=Object.keys(ABILITIES).filter(id=>h.learned(id));
-      const attacks=learned.filter(id=>!originUtilitySkill(id)).slice(0,10);
-      const utility=learned.filter(originUtilitySkill).slice(0,8);
+      const attacks=learned.filter(id=>originSkillRole(id)==='combat').slice(0,10);
+      const utility=learned.filter(id=>originSkillRole(id)==='support').slice(0,8);
       for(let slot=1;slot<=18;slot++)h.setSlot(slot,null);
       attacks.forEach((id,i)=>h.setSlot(i+1,id));
       utility.forEach((id,i)=>h.setSlot(i+11,id));
       publish();return;
     }
-    if(d.kind==='learned'&&typeof d.id==='string'&&h.learned(d.id)){
+    if(d.kind==='learned'&&typeof d.id==='string'&&h.learned(d.id)&&originSkillRole(d.id)!=='reference'){
       const group=originUtilitySkill(d.id)?[11,18]:[1,10];
       if(!Array.from({length:18},(_,i)=>h.getSlot(i+1)).includes(d.id)){
         for(let slot=group[0];slot<=group[1];slot++)if(!h.getSlot(slot)){h.setSlot(slot,d.id);break;}
@@ -98,9 +107,12 @@ export function installOriginAimAndLoadout(h:OriginAimHooks):void {
       publish();return;
     }
     if(!Number.isInteger(d.slot)||d.slot!<1||d.slot!>18)return;
-    if(d.kind==='cast')h.castSlot(d.slot!);
+    if(d.kind==='cast'){
+      const id=h.getSlot(d.slot!);
+      if(id&&originSkillRole(id)!=='reference')h.castSlot(d.slot!);
+    }
     if(d.kind==='clear')h.setSlot(d.slot!,null);
-    if(d.kind==='set'&&d.id&&h.learned(d.id))h.setSlot(d.slot!,d.id);
+    if(d.kind==='set'&&d.id&&h.learned(d.id)&&originSkillRole(d.id)!=='reference')h.setSlot(d.slot!,d.id);
     publish();
   };
   const down=(ev:PointerEvent)=>{
@@ -110,7 +122,7 @@ export function installOriginAimAndLoadout(h:OriginAimHooks):void {
     const slot=Number(el.dataset.hotbarSlot);
     if(slot<1||slot>10)return;
     const id=h.getSlot(slot),def=id?ABILITIES[id]:null;
-    if(!def||!def.requiresTarget||def.empowerStages)return;
+    if(!def||originSkillRole(id!)!=='combat'||!def.requiresTarget||def.empowerStages)return;
     pending={id:ev.pointerId,slot,startX:ev.clientX,startY:ev.clientY,dx:0,dy:0,drag:false};
   };
   const move=(ev:PointerEvent)=>{
@@ -140,7 +152,7 @@ export function installOriginAimAndLoadout(h:OriginAimHooks):void {
     if(!canceled){
       const id=h.getSlot(p.slot),def=id?ABILITIES[id]:null;
       const target=originAimSelect(h.player(),h.targets(),{dx:p.dx,dy:p.dy},def?.range??30,priority);
-      if(target!==null){h.target(target);h.castSlot(p.slot);}
+      if(target!==null&&id&&originSkillRole(id)==='combat'){h.target(target);h.castSlot(p.slot);}
     }
     clear();
   };

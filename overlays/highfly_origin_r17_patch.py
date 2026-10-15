@@ -18,25 +18,7 @@ dest=Path('src/highfly/highfly_origin_r17_hud.ts')
 if dest.exists():raise SystemExit('OR17_MODULE_ALREADY_INSTALLED')
 shutil.copy2(source,dest)
 
-# The original Paladin ability requires a native Devotion resource. Carrier
-# Warrior was never initialized with it, and Paladin's state() rejected it.
-# Accept only an authenticated opt-in Origin entity with the owner-only MP
-# projection: normal warriors remain untouched, no free Devotion is granted.
-once('src/sim/paladin_devotion.ts',
-     "e.kind === 'player' && e.templateId === 'paladin' ? (e.paladinDevotion ?? null) : null",
-     "(e.kind === 'player' && (e.templateId === 'paladin' || e.originResources !== undefined)) ? (e.paladinDevotion ?? null) : null")
-once('src/sim/sim.ts',
-     "    if (meta.originHunter) player.originResources = meta.originHunter.resources;",
-     """    if (meta.originHunter) {
-      player.originResources = meta.originHunter.resources;
-      // OR17: initialize the ORIGINAL Paladin Devotion cycle on the
-      // cross-discipline Hunter; it starts at ZERO and earns naturally.
-      // This does not reclass the underlying Warrior rig/animations.
-      player.paladinDevotion ??= {
-        value: 0, ascensionCharges: 0, ascensionRemaining: 0,
-        outOfCombatTime: 0, decayProgress: 0, blockIcdRemaining: 0,
-      };
-    }""")
+# No Paladin-specific Devotion in universal Hunter. Divine Ascension stays reference-only.
 
 # Fresh trials start without the default Warrior shield; the training sword
 # stays because native melee-weapon checks need a valid equipped mainhand.
@@ -52,7 +34,7 @@ once('src/main.ts',
 once('src/ui/hud.ts',
      "import { audio } from '../game/audio';",
      """import { audio } from '../game/audio';
-import { installOriginAimAndLoadout } from '../highfly/highfly_origin_r17_hud';""")
+import { installOriginAimAndLoadout, originSkillRole } from '../highfly/highfly_origin_r17_hud';""")
 once('src/ui/hud.ts',
      "    hydrateCrestImageFallbacks(document);",
      """    hydrateCrestImageFallbacks(document);
@@ -64,7 +46,7 @@ once('src/ui/hud.ts',
         },
         setSlot: (slot, id) => {
           if (slot < 1 || slot > 18) return;
-          if (id && !this.sim.known.some(known => known.def.id === id)) return;
+          if (id && (!this.sim.known.some(known => known.def.id === id) || originSkillRole(id) === 'reference')) return;
           this.commitHotbarActions(
             id ? placeAbilityOnSlot(this.hotbarActions, id, slot - 1)
                : clearHotbarSlot(this.hotbarActions, slot - 1)
@@ -82,7 +64,7 @@ once('src/ui/hud.ts',
 once('src/highfly/highfly_origin_trial_runtime.ts',
      "import { ABILITIES } from '../sim/content/classes';",
      """import { ABILITIES } from '../sim/content/classes';
-import { originUtilitySkill } from './highfly_origin_r17_hud';""")
+import { originUtilitySkill, originSkillRole } from './highfly_origin_r17_hud';""")
 once('src/highfly/highfly_origin_trial_runtime.ts',
      "  const list=document.createElement('div');list.style.cssText='display:grid;gap:6px;';",
      """  const list=document.createElement('div');list.style.cssText='display:grid;gap:6px;';
@@ -146,7 +128,7 @@ once('src/highfly/highfly_origin_trial_runtime.ts',
     const data=(event as CustomEvent<{slots:(string|null)[];devotion:number}>).detail;
     if(!data?.slots)return;
     slotState.textContent=data.slots.map((id,i)=>id?(i<10?'S'+(i+1):'B'+(i-9))+': '+(ABILITIES[id]?.name??id):null).filter(Boolean).join(' · ')
-      +' | Devotion '+(data.devotion??0)+'/20';
+      +' | Consulta otras técnicas en Biblioteca';
     utilityBtns.forEach((b,i)=>{
       const id=data.slots[i+10];
       const name=id?ABILITIES[id]?.name??id:'';
@@ -188,14 +170,46 @@ once('src/highfly/highfly_origin_trial_runtime.ts',
   shell.append(toggle,panel);document.body.append(shell);
   dispatch('sync');""")
 
+
+# Restrict the native learning panel to fully admitted abilities and include a
+# searchable-by-name read-only library for the rest.
+once('src/highfly/highfly_origin_trial_runtime.ts',
+     """  const list=document.createElement('div');list.style.cssText='display:grid;gap:6px;';""",
+     """  const list=document.createElement('div');list.style.cssText='display:grid;gap:6px;';
+  const referencePanel=document.createElement('details');
+  const refTitle=document.createElement('summary');
+  refTitle.textContent='📖 BIBLIOTECA · CONSULTA (NO EQUIPABLE)';
+  const referenceList=document.createElement('div');
+  referenceList.style.cssText='max-height:155px;overflow:auto;font-size:11px;';
+  referencePanel.append(refTitle,referenceList);""")
+once('src/highfly/highfly_origin_trial_runtime.ts',
+     """    const learnable=Object.values(ABILITIES)
+      .filter(def=>highflyOriginNativeLearnable(def.id,sim.player.level,meta.questsDone)!==null)
+      .filter(def=>originCostDecision(def).ok)
+      .sort((a,b)=>a.class.localeCompare(b.class)||a.id.localeCompare(b.id));""",
+     """    const catalog=Object.values(ABILITIES)
+      .filter(def=>highflyOriginNativeLearnable(def.id,sim.player.level,meta.questsDone)!==null)
+      .sort((a,b)=>a.class.localeCompare(b.class)||a.id.localeCompare(b.id));
+    const learnable=catalog.filter(def=>originCostDecision(def).ok&&originSkillRole(def.id)!=='reference');
+    const references=catalog.filter(def=>!originCostDecision(def).ok||originSkillRole(def.id)==='reference');
+    referenceList.replaceChildren();
+    for(const def of references.slice(0,80)){
+      const item=document.createElement('div');
+      item.textContent='📖 '+def.class.toUpperCase()+' · '+def.name+' — no equipable';
+      item.title=def.description||'Requiere adaptación funcional';
+      item.style.cssText='padding:3px;border-bottom:1px solid #34475d;opacity:.8';
+      referenceList.appendChild(item);
+    }""")
+once('src/highfly/highfly_origin_trial_runtime.ts',
+     """  panel.append(caption,barNote,skillSelect,slotSelect,controlRow,autoButton,targetPriority,removeShield,slotState,list,status);""",
+     """  panel.append(caption,barNote,skillSelect,slotSelect,controlRow,autoButton,targetPriority,removeShield,slotState,list,referencePanel,status);""")
+
 for path,required in {
   'src/highfly/highfly_origin_trial_runtime.ts':[
     'hf-origin-utility-row','ORDENAR SKILLS / BUFFS','hf-origin-command'],
-  'src/sim/sim.ts':['player.paladinDevotion ??='],
-  'src/sim/paladin_devotion.ts':['e.originResources !== undefined'],
   'src/ui/hud.ts':['installOriginAimAndLoadout({'],
 }.items():
     data=Path(path).read_text(encoding='utf8')
     for needle in required:
         if needle not in data:raise SystemExit('OR17_MISSING '+path+' '+needle)
-print('ORIGIN_R17_DIVINE_ASCENSION_NATIVE_DEVOTION_PLUS_18_SLOT_HUD_AND_TARGET_DRAG=1')
+print('ORIGIN_R17_SKILL_REFERENCE_LIBRARY_18_SLOT_HUD_AND_TARGET_DRAG=1')

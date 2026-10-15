@@ -1,29 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { Sim } from '../src/sim/sim';
-import { grantDevotion, canActivateDivineAscension } from '../src/sim/paladin_devotion';
-import { originAimSelect, originUtilitySkill } from '../src/highfly/highfly_origin_r17_hud';
+import { ABILITIES } from '../src/sim/content/classes';
+import { originCostDecision } from '../src/sim/highfly_origin_universal_resources';
+import { originAimSelect, originUtilitySkill, originSkillRole } from '../src/highfly/highfly_origin_r17_hud';
 
-describe('HIGHFLY ORIGIN R1-7: true native Divine Ascension for classless Hunter',()=>{
-  it('initializes native devotion at ZERO only for opted-in Hunter, not legacy warrior',()=>{
-    const origin=new Sim({seed:701,playerClass:'warrior',originHunterEnabled:true});
-    const classic=new Sim({seed:701,playerClass:'warrior'});
-    expect(origin.player.originResources).toBeDefined();
-    expect(origin.player.paladinDevotion?.value).toBe(0);
-    expect(classic.player.paladinDevotion).toBeUndefined();
-    expect(grantDevotion(classic.player,20)).toBe(0);
+describe('HIGHFLY ORIGIN R1-7: honest non-equippable class skill references',()=>{
+  it('keeps Divine Ascension in library until its specialist effects are truly useful',()=>{
+    expect(originSkillRole('divine_ascension')).toBe('reference');
+    expect(originCostDecision(ABILITIES.divine_ascension).ok).toBe(false);
+    const hunter=new Sim({seed:701,playerClass:'warrior',originHunterEnabled:true});
+    const warrior=new Sim({seed:701,playerClass:'warrior'});
+    expect(hunter.player.paladinDevotion).toBeUndefined();
+    expect(warrior.player.paladinDevotion).toBeUndefined();
   });
-  it('learns original ascension, earns devotion from original hook, then activates without free charge',()=>{
-    const sim=new Sim({seed:702,playerClass:'warrior',originHunterEnabled:true});
-    expect(sim.learnOriginHunterSkillTrusted('divine_ascension')).toBe(true);
-    expect(canActivateDivineAscension(sim.player)).toBe(false);
-    expect(grantDevotion(sim.player,20)).toBe(20);
-    expect(canActivateDivineAscension(sim.player)).toBe(true);
-    sim.castAbility('divine_ascension');
-    expect(sim.player.paladinDevotion?.ascensionCharges).toBeGreaterThan(0);
-    expect(sim.player.paladinDevotion?.value).toBe(0);
-  });
-  it('preserves native equipment API; removes only new-preview offhand',()=>{
+  it('native offhand removal works without changing legacy equipment',()=>{
     const sim=new Sim({seed:703,playerClass:'warrior',originHunterEnabled:true});
     expect(sim.equipment.offhand).toBe('eastbrook_buckler');
     expect(sim.unequipItem('offhand')).toBe(true);
@@ -33,7 +24,8 @@ describe('HIGHFLY ORIGIN R1-7: true native Divine Ascension for classless Hunter
 });
 describe('HIGHFLY ORIGIN R1-7: 10 combat + 8 utility, native actions only',()=>{
   it('classifies protective skills below and offensive skills in S1-S10',()=>{
-    expect(originUtilitySkill('divine_ascension')).toBe(true);
+    expect(originSkillRole('divine_ascension')).toBe('reference');
+    expect(originSkillRole('holy_light')).toBe('support');
     expect(originUtilitySkill('divine_protection')).toBe(true);
     expect(originUtilitySkill('holy_light')).toBe(true);
     expect(originUtilitySkill('sinister_strike')).toBe(false);
@@ -63,5 +55,6 @@ describe('HIGHFLY ORIGIN R1-7: 10 combat + 8 utility, native actions only',()=>{
     expect(module).not.toContain('startAutoAttack');
     expect(trial).toContain('hf-origin-utility-row');
     expect(trial).toContain('ORDENAR SKILLS / BUFFS');
+    expect(trial).toContain('BIBLIOTECA · CONSULTA');
   });
 });
