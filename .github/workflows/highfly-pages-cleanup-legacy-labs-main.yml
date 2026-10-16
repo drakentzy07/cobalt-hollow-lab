@@ -1,0 +1,184 @@
+name: HIGHFLY Pages Cleanup - Legacy Labs Only SAFE DEPLOY
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/highfly-pages-cleanup-legacy-labs-main.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-pages-clean-legacy-only
+  cancel-in-progress: false
+jobs:
+  preserve_prune:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check exact published R28 release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const a=(await github.rest.actions.getWorkflowRun({owner:context.repo.owner,repo:context.repo.repo,run_id:38903606037})).data;
+            if(a.status!=="completed"||a.conclusion!=="success"||a.head_sha!=="eb9d2f3da06dfe9e8e6d4cd2b8ff44cc626034c8")
+              throw Error("HF_CLEAN_ABORT_BASELINE_UNVERIFIED");
+            core.info("BACKUP_IMMUTABLE_PRE_CLEANUP_RUN_38903606037_GREEN");
+      - name: Download immutable public Pages backup
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38903606037
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: backup
+      - name: Remove only obsolete HTML lab trees and exclusive compiled JS
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import tarfile,hashlib,json,collections,re,shutil,urllib.request
+          from pathlib import Path,PurePosixPath
+          backup=Path('backup/artifact.tar')
+          if not backup.is_file():raise SystemExit('HF_CLEAN_BACKUP_MISSING')
+          root=Path('safe-clean-pages')
+          root.mkdir()
+          with tarfile.open(backup,'r:') as tf:
+              m=tf.getmembers()
+              for x in m:
+                  p=PurePosixPath(x.name)
+                  if p.is_absolute() or '..' in p.parts or x.issym() or x.islnk():
+                      raise SystemExit('HF_CLEAN_UNSAFE_TAR_ENTRY:'+x.name)
+              tf.extractall(root,filter='data')
+          mandatory=['index.html','play.html','lab/v15-2/index.html','lab/origin-r28/index.html',
+                     'lab/origin-r28/highfly-origin-r28-qa.json','manifest.webmanifest']
+          def sha(path):
+              h=hashlib.sha256()
+              with path.open('rb') as f:
+                  for part in iter(lambda:f.read(1024*1024),b''):h.update(part)
+              return h.hexdigest()
+          keep={p:sha(root/p) for p in mandatory}
+          old=['lab/origin','lab/origin-r17','lab/origin-r19','lab/origin-r20',
+               'lab/origin-r21','lab/origin-r23','lab/origin-r24a','lab/origin-r26','lab/sf28']
+          for p in old:
+              if not (root/p/'index.html').is_file():raise SystemExit('HF_CLEAN_OLD_LAB_MISSING:'+p)
+          allfiles={p.relative_to(root).as_posix():p for p in root.rglob('*') if p.is_file()}
+          indexed={PurePosixPath(p).name:p for p in allfiles if p.startswith('assets/') and p.endswith(('.js','.css','.wasm'))}
+          pat=re.compile(rb'([A-Za-z0-9._/-]+\.(?:js|css|wasm))')
+          deps={}
+          for p,src in allfiles.items():
+              if not p.endswith(('.html','.js','.css','.json','.webmanifest')) or src.stat().st_size>20_000_000:continue
+              v=src.read_bytes()
+              deps[p]=set()
+              for t in set(pat.findall(v)):
+                  target=indexed.get(t.rsplit(b'/',1)[-1].decode('utf8','ignore'))
+                  if target and target!=p:deps[p].add(target)
+          def reach(roots):
+              found=set(roots);todo=list(roots)
+              while todo:
+                  p=todo.pop()
+                  for d in deps.get(p,()):
+                      if d not in found:found.add(d);todo.append(d)
+              return found
+          def is_old(p):return any(p.startswith(x+'/') for x in old)
+          retained_html=[p for p in allfiles if p.endswith('.html') and not is_old(p)]
+          retired_html=[p for p in allfiles if p.endswith('.html') and is_old(p)]
+          necessary=reach(retained_html)
+          exclusive=reach(retired_html)-necessary
+          dead_js=[p for p in exclusive if p.startswith('assets/') and p.endswith('.js')]
+          # Verify that retained reachable scripts exist prior to stage pruning.
+          if not necessary or len(dead_js)<30 or len(retired_html)<20:
+              raise SystemExit('HF_CLEAN_REF_GRAPH_UNEXPECTED')
+          for p in retained_html:
+              src=allfiles[p]
+              if p in mandatory or p=='index.html':
+                  for oldlab in old:
+                      if ('/cobalt-hollow-lab/'+oldlab+'/').encode() in src.read_bytes():
+                          raise SystemExit('HF_CLEAN_RETAINED_HTML_REFERENCES_RETIRED:'+p+' -> '+oldlab)
+          removed_bytes=0
+          for oldlab in old:
+              d=root/oldlab
+              removed_bytes+=sum(p.stat().st_size for p in d.rglob('*') if p.is_file())
+              shutil.rmtree(d)
+          for p in dead_js:
+              file=root/p
+              removed_bytes+=file.stat().st_size
+              file.unlink()
+          for p,want in keep.items():
+              if sha(root/p)!=want:raise SystemExit('HF_CLEAN_PROTECTED_HASH_CHANGED:'+p)
+          if not any(b'highfly:origin:r28-ephemeral' in p.read_bytes() for p in (root/'assets').glob('*.js')):
+              raise SystemExit('HF_CLEAN_LOST_R28_RUNTIME')
+          missing=[p for p in necessary if p.startswith('assets/') and not (root/p).is_file()]
+          if missing:raise SystemExit('HF_CLEAN_LOST_STATIC_DEPENDENCIES:'+repr(missing[:10]))
+          remaining=[p for p in root.rglob('*') if p.is_file()]
+          total=sum(p.stat().st_size for p in remaining)
+          print('HF_PAGES_CLEAN_GREEN='+json.dumps({'originalFiles':len(allfiles),'remainingFiles':len(remaining),
+               'removedLabFolders':old,'removedExclusiveJs':len(dead_js),'savedBytes':removed_bytes,
+               'siteBytesAfter':total,'backupRun':38903606037,'protectedHashVerified':True}))
+          if removed_bytes<70_000_000 or total>925_000_000 or total<700_000_000:
+              raise SystemExit('HF_CLEAN_SIZE_SAFETY_GATE')
+          PY
+      - name: Local HTTP probe of existing app, V15.2, R28 and retained hashed files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p site-probe
+          ln -s ../safe-clean-pages site-probe/cobalt-hollow-lab
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory site-probe >/tmp/hf-clean-http.log 2>&1 &
+          P=$!
+          trap 'kill "$P" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30);do
+            if curl -fsS http://127.0.0.1:4174/cobalt-hollow-lab/index.html >/dev/null;then break;fi
+            sleep 1
+          done
+          for f in index.html play.html lab/v15-2/index.html lab/origin-r28/index.html lab/origin-r28/highfly-origin-r28-qa.json;do
+            curl -fsS "http://127.0.0.1:4174/cobalt-hollow-lab/$f" >/dev/null
+          done
+          python3 - <<'PY'
+          import re,urllib.request
+          from pathlib import Path
+          root=Path('safe-clean-pages')
+          for f in ('index.html','play.html','lab/v15-2/index.html','lab/origin-r28/index.html'):
+              html=(root/f).read_text()
+              paths=re.findall(r'["\x27](/cobalt-hollow-lab/assets/[^"\x27]+)',html)
+              if not paths:raise SystemExit('HF_CLEAN_NO_HASHED_ASSETS:'+f)
+              for p in paths[:15]:
+                  with urllib.request.urlopen('http://127.0.0.1:4174'+p,timeout=20) as res:
+                      if res.status!=200 or not res.read(32):raise SystemExit('HF_CLEAN_HTTP_FAIL:'+p)
+          print('HF_PAGES_RETENTION_HTTP_GREEN=1')
+          PY
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: safe-clean-pages
+  deploy:
+    needs: preserve_prune
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/lab/origin-r28/
+    steps:
+      - uses: actions/deploy-pages@v4
+      - name: Verify public retained app and R28, no mass UI regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import urllib.request,time
+          root='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for trial in range(25):
+              try:
+                  for url in ('index.html','lab/v15-2/index.html','lab/origin-r28/index.html','lab/origin-r28/highfly-origin-r28-qa.json'):
+                      req=urllib.request.Request(root+url+'?cleanup_verify='+str(trial),headers={'Cache-Control':'no-cache'})
+                      with urllib.request.urlopen(req,timeout=30) as res:
+                          if res.status!=200:raise RuntimeError('HTTP '+str(res.status))
+                          body=res.read()
+                          if not body:raise RuntimeError('EMPTY')
+                  print('HIGHFLY_PAGES_CLEANUP_PUBLIC_GREEN='+root+'lab/origin-r28/')
+                  break
+              except Exception as e:
+                  print('HF_PAGES_PROPAGATION',trial,str(e)[:120]);time.sleep(5)
+          else:raise SystemExit('HF_CLEAN_PUBLIC_URL_UNVERIFIED')
+          PY
