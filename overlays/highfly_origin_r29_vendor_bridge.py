@@ -22,6 +22,16 @@ for source in ('casting6','effects7','advanced10'):
  if any(i.is_file() and i.suffix.lower() in {'.fbx','.hdr','.glb','.mp3','.png','.jpg'}
         for i in dest.rglob('*')):
   raise SystemExit('R29_VENDOR_UNREVIEWED_BINARY_NOT_ALLOWED')
+ if source=='advanced10':
+  # Unlike its particle shaders, Cyber Serpent requires a body silhouette. The
+  # upstream MIT-repository snake.glb is preserved verbatim; unlike Mixamo
+  # character FBX and HDRI, the model is not substituted by KayKit or a dummy.
+  mesh=Path('../vendor-r29/advanced10/public/models/snake.glb')
+  if not mesh.is_file() or mesh.stat().st_size < 200000:
+   raise SystemExit('R29_ORIGINAL_SERPENT_MESH_MISSING')
+  asset=dest/'embedded-assets'
+  asset.mkdir(exist_ok=True)
+  shutil.copy2(mesh,asset/'snake.glb')
  src_license=Path('../vendor-r29')/source/'LICENSE'
  if 'MIT License' not in src_license.read_text():raise SystemExit('R29_MISSING_MIT_LICENSE')
  (dest/'LICENSE').write_text(src_license.read_text(),'utf8')
