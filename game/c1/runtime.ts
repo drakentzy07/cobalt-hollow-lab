@@ -15,6 +15,8 @@ type HighflyGameWindow = Window & {
 };
 
 const w = window as HighflyGameWindow;
+// R32 is an isolated opt-in lab. Never change classic ClaudeCraft or public HUD.
+const originR32Mode = import.meta.env.VITE_HIGHFLY_ORIGIN_R32 === '1';
 const params = new URLSearchParams(location.search);
 const testMode = params.get('c1test') === '1';
 let mode: HighflyWeaponElement =
@@ -92,6 +94,8 @@ function paintGemSeat(): void {
 }
 
 function ensureSpecialSeats(): void {
+  // Secret abilities must not exist as locked, empty, or even hidden placeholders.
+  if (originR32Mode) { document.getElementById('hf-c1-special-seats')?.remove(); return; }
   if (document.getElementById('hf-c1-special-seats')) return;
   const host = document.createElement('div');
   host.id = 'hf-c1-special-seats';
@@ -113,6 +117,7 @@ function ensureSpecialSeats(): void {
 }
 
 function ensureGhostSkillSeats(): void {
+  if (originR32Mode) { document.getElementById('hf-c22-ghost-skills')?.remove(); return; }
   let host = document.getElementById('hf-c22-ghost-skills');
   if (!host) {
     host = document.createElement('div');
@@ -313,10 +318,31 @@ function installSkillTouch(): void {
     });
 }
 
+function ensureR32UseButton(): void {
+  if (!originR32Mode) return;
+  let button = document.getElementById('hf-r32-use') as HTMLButtonElement | null;
+  if (!button) {
+    button = document.createElement('button');
+    button.id = 'hf-r32-use';
+    button.type = 'button';
+    button.textContent = 'USAR';
+    button.title = 'Interactuar con el mundo';
+    button.setAttribute('aria-label', 'Usar / Interactuar');
+    button.addEventListener('click', () => {
+      if (w.__highflyGameC1Context?.canUse?.() !== true) return;
+      // Delegate ONLY to ClaudeCraft's contextual use seam; never duplicate rewards.
+      w.__game?.hud?.onMobileContextualUse?.();
+    });
+    document.body.append(button);
+  }
+  button.disabled = !document.body.classList.contains('hf-c25-world-ready')
+    || w.__highflyGameC1Context?.canUse?.() !== true;
+}
+
 function paintContextualAttack(): void {
   const attack = document.getElementById('mobile-action-attack');
   if (!(attack instanceof HTMLButtonElement)) return;
-  const use = w.__highflyGameC1Context?.canUse?.() === true;
+  const use = !originR32Mode && w.__highflyGameC1Context?.canUse?.() === true;
   const label = use ? 'USAR' : 'ATK';
   if (attack.dataset.highflyContext !== label) {
     attack.dataset.highflyContext = label;
@@ -386,15 +412,17 @@ type HighflyHudTarget = {
 };
 
 const HIGHFLY_HUD_TARGETS: HighflyHudTarget[] = [
-  ...Array.from({ length: 10 }, (_, index) => ({
+  ...Array.from({ length: originR32Mode ? 4 : 10 }, (_, index) => ({
     id: 's' + (index + 1),
     label: 'HABILIDAD S' + (index + 1),
     selectors: ['#actionbar [data-hotbar-slot="' + (index + 1) + '"]'],
   })),
-  { id: 'esp1', label: 'ESPECIAL 1', selectors: ['#hf-c1-esp1'] },
-  { id: 'esp2', label: 'ESPECIAL 2', selectors: ['#hf-c1-esp2'] },
-  { id: 'ult', label: 'ULT', selectors: ['#hf-c1-ult'] },
-  { id: 'target', label: 'TARGET', selectors: ['#mobile-target-cycle'] },
+  ...(originR32Mode ? [{ id: 'use', label: 'USAR', selectors: ['#hf-r32-use'] }] : [
+    { id: 'esp1', label: 'ESPECIAL 1', selectors: ['#hf-c1-esp1'] },
+    { id: 'esp2', label: 'ESPECIAL 2', selectors: ['#hf-c1-esp2'] },
+    { id: 'ult', label: 'ULT', selectors: ['#hf-c1-ult'] },
+    { id: 'target', label: 'TARGET', selectors: ['#mobile-target-cycle'] },
+  ]),
   { id: 'attack', label: 'ATK / USAR', selectors: ['#mobile-action-attack'] },
   { id: 'evade', label: 'EVADIR', selectors: ['#mobile-evade'] },
   { id: 'jump', label: 'SALTAR', selectors: ['#mobile-jump'] },
@@ -407,7 +435,7 @@ const HIGHFLY_HUD_TARGETS: HighflyHudTarget[] = [
   { id: 'debuffs', label: 'DEBUFFS', selectors: ['#debuff-bar'] },
 ];
 
-const HIGHFLY_HUD_STORE_PREFIX = 'highfly:c282:hud:';
+const HIGHFLY_HUD_STORE_PREFIX = originR32Mode ? 'highfly:r32:hud:' : 'highfly:c282:hud:';
 
 const HIGHFLY_HUD_DEFAULTS: Record<string, HighflyHudTransform> = {
   s1: { x: 17, y: 15, scale: 1, opacity: 1 },
@@ -437,6 +465,10 @@ const HIGHFLY_HUD_DEFAULTS: Record<string, HighflyHudTransform> = {
 };
 
 function highflyHudDefault(targetId: string): HighflyHudTransform {
+  if (originR32Mode && (/^s[1-4]$/.test(targetId) || targetId === 'attack'
+     || targetId === 'jump' || targetId === 'evade' || targetId === 'use')) {
+    return { x: 0, y: 0, scale: 1, opacity: 1 };
+  }
   const value = HIGHFLY_HUD_DEFAULTS[targetId];
   return value ? { ...value } : { x: 0, y: 0, scale: 1, opacity: 1 };
 }
@@ -816,9 +848,13 @@ function boot(): void {
 
   const tick = () => {
     syncHighflyWorldReady();
+    // Native Hunter detection: R32 visual preset never affects classic characters.
+    document.body.classList.toggle('hf-origin-r32-combat',
+      originR32Mode && !!w.__game?.sim?.player?.originResources);
     ensureSpecialSeats();
     ensureGhostSkillSeats();
     ensureUtilityLane();
+    ensureR32UseButton();
     installSkillTouch();
     paintContextualAttack();
     syncCreatorPreviewState();
