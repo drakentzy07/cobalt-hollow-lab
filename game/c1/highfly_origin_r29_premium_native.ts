@@ -80,7 +80,10 @@ export function installR29PremiumNativeContracts():void{
       R29_PREMIUM_CONTRACTS.filter(x=>x.source===s).length!==FIXED_SOURCE_COUNTS[s]))
    throw Error('R29_VENDOR_CONTRACT_COVERAGE_DRIFT');
  for(const c of R29_PREMIUM_CONTRACTS){
-  if(ABILITIES[c.id]){\n   if(ABILITIES[c.id].name===c.name)continue;\n   throw Error('R29_NATIVE_SKILL_ID_COLLISION_'+c.id);\n  }
+  if(ABILITIES[c.id]){
+   if(ABILITIES[c.id].name===c.name)continue;
+   throw Error('R29_NATIVE_SKILL_ID_COLLISION_'+c.id);
+  }
   const positional=c.aim!=='line';
   const def:AbilityDef={
    id:c.id,name:c.name,class:'mage',learnLevel:1,
