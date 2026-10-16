@@ -74,7 +74,9 @@ describe('R25A SF27 63-fusion + 36-original safe A/B lab (NO GRANTS)',()=>{
  it('the R22 gallery is RESTORED after R18 replaces the DOM; no inert buttons',()=>{
   const runtime=readFileSync('src/highfly/highfly_origin_trial_runtime.ts','utf8');
   const replace=runtime.indexOf('  mountOriginR18Editor(sim,panel,list,referencePanel,status,refresh);');
-  const attach=runtime.indexOf('  panel.insertBefore(gallery,referencePanel);');
+  // R22 performs an earlier insertion which R18 replaces. R25A restores it
+  // later; check the last insertion, not the discarded original placement.
+  const attach=runtime.lastIndexOf('  panel.insertBefore(gallery,referencePanel);');
   const lab=runtime.indexOf('  mountOriginR25aSelector(sim,panel);');
   expect(replace).toBeGreaterThan(0);
   expect(attach).toBeGreaterThan(replace);
