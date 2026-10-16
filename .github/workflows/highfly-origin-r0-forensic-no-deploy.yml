@@ -143,7 +143,7 @@ jobs:
             /game/c1/highfly_origin_r21_aim_intent.ts
             /game/c1/highfly_origin_r22_premium_visual.ts
             /game/c1/highfly_origin_r23_multitouch_buffs.test.ts
-            /overlays/highfly_origin_r23_multitouch_buffs.py"
+            /overlays/highfly_origin_r23_multitouch_buffs.py
             /game/c1/highfly_origin_r22_premium_visual.test.ts
             /overlays/highfly_origin_r22_premium_visual.py
             /game/c1/highfly_origin_r21_free_manual_aim.test.ts
