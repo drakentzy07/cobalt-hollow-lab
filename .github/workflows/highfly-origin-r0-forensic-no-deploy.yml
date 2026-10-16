@@ -1,9 +1,9 @@
-name: HIGHFLY ORIGIN R21 Free Manual Aim — FULL BUILD NO DEPLOY
+name: HIGHFLY ORIGIN R22 Premium Aim Visual Polish — FULL BUILD NO DEPLOY
 # Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
   push:
-    branches: [highfly-origin-r21-free-manual-aim]
+    branches: [highfly-origin-r22-aim-visual-polish]
     paths:
       - ".github/workflows/highfly-origin-r0-forensic-no-deploy.yml"
       - "game/c1/highfly_origin_r0_diagnostic.test.ts"
@@ -46,6 +46,9 @@ on:
       - "game/c1/highfly_origin_r19_selection.ts"
       - "game/c1/highfly_origin_r20_premium_aim.ts"
       - "game/c1/highfly_origin_r21_aim_intent.ts"
+      - "game/c1/highfly_origin_r22_premium_visual.ts"
+      - "game/c1/highfly_origin_r22_premium_visual.test.ts"
+      - "overlays/highfly_origin_r22_premium_visual.py"
       - "game/c1/highfly_origin_r21_free_manual_aim.test.ts"
       - "overlays/highfly_origin_r21_free_manual_aim.py"
       - "game/c1/highfly_origin_r20_premium_aim.test.ts"
@@ -136,6 +139,9 @@ jobs:
             /game/c1/highfly_origin_r19_selection.ts
             /game/c1/highfly_origin_r20_premium_aim.ts
             /game/c1/highfly_origin_r21_aim_intent.ts
+            /game/c1/highfly_origin_r22_premium_visual.ts
+            /game/c1/highfly_origin_r22_premium_visual.test.ts
+            /overlays/highfly_origin_r22_premium_visual.py
             /game/c1/highfly_origin_r21_free_manual_aim.test.ts
             /overlays/highfly_origin_r21_free_manual_aim.py
             /game/c1/highfly_origin_r20_premium_aim.test.ts
@@ -873,6 +879,16 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_origin_r21_free_manual_aim.test.ts tests/highfly_origin_r20_premium_aim.test.ts tests/highfly_origin_r19_focus.test.ts
           echo 'HIGHFLY_ORIGIN_R21_MANUAL_DRAG_NO_SNAP_GREEN=1'
+      - name: R22 Premium Visual Polish and in-editor non-casting gallery QA (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r22_premium_visual.py
+          cp ../v9-corrections/game/c1/highfly_origin_r22_premium_visual.test.ts tests/highfly_origin_r22_premium_visual.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r22_premium_visual.test.ts tests/highfly_origin_r21_free_manual_aim.test.ts tests/highfly_origin_r20_premium_aim.test.ts
+          echo 'HIGHFLY_ORIGIN_R22_MOBILE_PREMIUM_VISUAL_GALLERY_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -997,7 +1013,7 @@ jobs:
       - name: Upload actual playable WEBGL full assets ONLY after green gates (never publish)
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-ORIGIN-R21-FREE-MANUAL-AIM-WEBGL-NO-DEPLOY
+          name: HIGHFLY-ORIGIN-R22-PREMIUM-VISUAL-WEBGL-NO-DEPLOY
           path: supreme-preview/
           if-no-files-found: error
           compression-level: 0
