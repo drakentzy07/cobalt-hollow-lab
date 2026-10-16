@@ -25,8 +25,8 @@ edit(casting,
  "import { scheduleProjectile } from '../projectile_travel';",
  "import { scheduleProjectile } from '../projectile_travel';\nimport { originCanFreeFire,originRememberFreeAim,originHasFreeAim,originTakeFreeAim,originScheduleFreeShot } from '../highfly_origin_r24a_native_skillshot';")
 edit(casting,
- "  const ability = res.def;\n  if (cancelRecedingShell(ctx, p, meta, ability.id)) return;",
- "  const ability = res.def;\n  const originFreeAim = originCanFreeFire(p,ability.id,aim);\n  if (cancelRecedingShell(ctx, p, meta, ability.id)) return;")
+ "  if (cancelRecedingShell(ctx, p, meta, ability.id)) return;",
+ "  const originFreeAim = originCanFreeFire(p,ability.id,aim);\n  if (cancelRecedingShell(ctx, p, meta, ability.id)) return;")
 edit(casting,
  "  } else if (ability.requiresTarget) {\n    if (p.targetId !== null) {",
  "  } else if (ability.requiresTarget && !originFreeAim) {\n    if (p.targetId !== null) {")
