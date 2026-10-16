@@ -1079,6 +1079,18 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_origin_r31_77_laboratory.test.ts tests/highfly_origin_r30_curated77.test.ts
           echo "HF_R31_77_IDENTITIES_9_SERVER_PASSIVES_23_ORIGINAL_PREVIEWS_GREEN=1"
+      - name: Preserve R31 actually assembled TypeScript sources for forensic QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-R31-ASSEMBLED-SOURCES-FORENSIC
+          path: |
+            upstream/src/highfly/highfly_origin_r28_universal_tester.ts
+            upstream/src/sim/highfly_origin_r31_passive_runtime.ts
+            upstream/src/sim/highfly_origin_r30_curated77.ts
+            upstream/src/sim/highfly_origin_universal_resources.ts
+          if-no-files-found: warn
+          retention-days: 14
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false

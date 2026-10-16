@@ -138,7 +138,7 @@ once(ui,
       passives:r31PassiveLabAudit(),autoEnabledPassivesInDisposableLab:true
     };
   }
-  if(import.meta.env.VITE_HIGHFLY_ORIGIN_R29==='1'){""")
+  """)
 once(ui,
  "  if(import.meta.env.VITE_HIGHFLY_ORIGIN_R29==='1')delete (window as any).__HIGHFLY_R29_VFX_QA__;",
  """  if(import.meta.env.VITE_HIGHFLY_ORIGIN_R31==='1')delete (window as any).__HIGHFLY_R31_77_QA__;
