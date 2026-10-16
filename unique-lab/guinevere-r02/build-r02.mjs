@@ -19,7 +19,7 @@ const html=readFileSync(join(folder,'index.html'),'utf8');
 const inject='<script>window.__HIGHFLY_KAYKIT_GLB_BASE64__='+JSON.stringify(bin.toString('base64'))+';</script><script>'+res.outputFiles[0].text.replaceAll('</script>','<\\/script>')+'</script>';
 const target='<script type="module" src="./main3d.mjs"></script>';
 if(!html.includes(target))throw Error('HTML_ENTRY_MISMATCH');
-const single=html.replace(target,inject);
+const single=html.replace(target,()=>inject); // avoid const single=html.replace(target,inject); replacement-token expansion in minified Three.js
 if(single.includes(target))throw Error('UNBUNDLED_MODULE_SCRIPT');
 const out=join(folder,'dist');mkdirSync(out,{recursive:true});
 writeFileSync(join(out,'HIGHFLY_GUINEVERE_R02_KAYKIT_3D.html'),single);
