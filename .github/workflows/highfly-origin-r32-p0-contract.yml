@@ -1,0 +1,40 @@
+name: HIGHFLY ORIGIN R32 P0 - HUD Secrecy Contract NO DEPLOY
+on:
+  push:
+    branches:
+      - highfly-origin-r32-supreme-moba-core-p0
+    paths:
+      - "tests/r32/**"
+      - "docs/highfly-origin/R32_COMBAT_CORE_P0_AUDIT.md"
+      - ".github/workflows/highfly-origin-r32-p0-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  r32-p0-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout isolated R32 branch
+        uses: actions/checkout@v4
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test 4 BASE / hidden UNIQUE HUD contract
+        run: node --test tests/r32/hud_contract.test.mjs
+      - name: Verify P0 audit and upstream lock remain present
+        shell: bash
+        run: |
+          test -s docs/highfly-origin/R32_COMBAT_CORE_P0_AUDIT.md
+          grep -Fq "9b57e49c9676d75962700f828cc00a50a9a988b5" CLAUDECRAFT_UPSTREAM.lock
+          test -s game/c1/runtime.ts
+          test -s game/c1/highfly_origin_r17_hud.ts
+          test -s game/c1/highfly_origin_r20_premium_aim.ts
+          test -s game/c1/highfly_origin_r21_aim_intent.ts
+          test -s game/c1/highfly_origin_r24a_skillshot_physics.ts
+          test -s game/c1/highfly_origin_universal_resources.ts
+          test -s unique-lab/guinevere-r03/core.mjs && exit 1 || true
+          echo "R32_P0_NO_DEPLOY_CONTRACT_GREEN"
