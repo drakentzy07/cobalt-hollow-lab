@@ -120,11 +120,12 @@ export function mountOriginR25aSelector(sim:Sim,panel:HTMLElement):()=>void {
       details.style.cssText='display:block;color:#b3c7de;margin:4px 0;';
       const state=mk('small',entry.note);state.style.cssText='display:block;color:'+(entry.testable?'#9ae3b9':'#efd091')+';';
       const preview=document.createElement('button');preview.type='button';
-      preview.textContent='🎯 VER APUNTADO';
+      preview.textContent=entry.mode==='fusion'?'🎯 VISTA DEL DONANTE':'🎯 VER APUNTADO';
       preview.style.cssText='min-height:34px;border:1px solid #87b4df;border-radius:6px;background:#274869;color:#fff;margin-top:6px;padding:5px 10px;touch-action:manipulation;';
       preview.addEventListener('click',()=>{
         // This only calls the existing R22 visual renderer, NOT native casting.
         const id=entry.donors.find(d=>Boolean(ABILITIES[d]))??entry.id;
+        panel.hidden=true;
         document.dispatchEvent(new CustomEvent('hf-origin-aim-gallery',{
           detail:{shape:entry.shape,abilityId:id}
         }));
