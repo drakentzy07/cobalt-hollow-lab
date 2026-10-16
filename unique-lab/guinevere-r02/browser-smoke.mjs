@@ -21,7 +21,7 @@ try{
   await page.keyboard.press('Digit2');await page.waitForTimeout(510);
   await page.keyboard.press('Digit3');await page.waitForTimeout(520);
   await page.screenshot({path:join(here,'dist/smoke-'+name+'.png')});
-  const state=await page.evaluate(()=>({rig:window.__HIGHFLY_UNIQUE_R02_QA.rig(),events:window.__HIGHFLY_UNIQUE_R02_QA.snapshot().events}));
+  const state=await page.evaluate(()=>({rig:window.__HIGHFLY_UNIQUE_R02_QA.rig(),events:window.__HIGHFLY_UNIQUE_R02_QA.events()}));
   const castSkills=state.events.filter(e=>e.type==='cast').map(e=>e.skill);
   if(state.rig.clips.length<15||castSkills.indexOf('U1')<0||castSkills.indexOf('U2')<0||castSkills.indexOf('U3')<0||errors.length)throw Error('BROWSER_SMOKE_FAILED '+name+JSON.stringify({clips:state.rig.clips,castSkills,errors}));
   console.log('BROWSER_SMOKE_GREEN',name,'GLB clips:',state.rig.clips.length,'casts:',castSkills,'errors:',errors.length);
