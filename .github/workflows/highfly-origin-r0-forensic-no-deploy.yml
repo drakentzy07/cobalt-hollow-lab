@@ -1,9 +1,9 @@
-name: HIGHFLY ORIGIN R26 ORIGINAL SEVEN NATIVE PLAYABLE — FULL BUILD NO DEPLOY
+name: HIGHFLY ORIGIN R28 UNIVERSAL TESTER NATIVE ATK — FULL BUILD NO DEPLOY
 # Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
   push:
-    branches: [highfly-origin-r26-original-seven-native-lab]
+    branches: [highfly-origin-r28-universal-skill-tester-p1]
     paths:
       - ".github/workflows/highfly-origin-r0-forensic-no-deploy.yml"
       - "game/c1/highfly_origin_r0_diagnostic.test.ts"
@@ -54,6 +54,12 @@ on:
       - "game/c1/highfly_origin_r26_seven_trial.ts"
       - "game/c1/highfly_origin_r26_seven_trial.test.ts"
       - "overlays/highfly_origin_r26_seven_native_lab.py"
+      - "game/c1/highfly_origin_r27_premium23_catalog.ts"
+      - "game/c1/highfly_origin_r28_universal_catalog.ts"
+      - "game/c1/highfly_origin_r28_session.ts"
+      - "game/c1/highfly_origin_r28_universal_tester.ts"
+      - "game/c1/highfly_origin_r28_universal_tester.test.ts"
+      - "overlays/highfly_origin_r28_universal_tester.py"
       - "overlays/highfly_origin_r24a_real_skillshot.py"
       - "overlays/highfly_origin_r23_multitouch_buffs.py"
       - "game/c1/highfly_origin_r22_premium_visual.test.ts"
@@ -155,6 +161,12 @@ jobs:
             /game/c1/highfly_origin_r24a_skillshot.test.ts
             /game/c1/highfly_origin_r26_seven_trial.ts
             /game/c1/highfly_origin_r26_seven_trial.test.ts
+            /game/c1/highfly_origin_r27_premium23_catalog.ts
+            /game/c1/highfly_origin_r28_universal_catalog.ts
+            /game/c1/highfly_origin_r28_session.ts
+            /game/c1/highfly_origin_r28_universal_tester.ts
+            /game/c1/highfly_origin_r28_universal_tester.test.ts
+            /overlays/highfly_origin_r28_universal_tester.py
             /overlays/highfly_origin_r26_seven_native_lab.py
             /overlays/highfly_origin_r24a_real_skillshot.py
             /overlays/highfly_origin_r23_multitouch_buffs.py
@@ -939,6 +951,19 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_origin_r26_seven_trial.test.ts tests/highfly_origin_r24a_skillshot.test.ts tests/highfly_origin_r23_multitouch_buffs.test.ts
           echo "HIGHFLY_R26_SEVEN_ORIGINAL_NATIVE_CASTS_TESTED=1"
+      - name: R28 P1 full native catalog, disposable level-proof ATK and compact VIP grimoire
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_HIGHFLY_ORIGIN_SEVEN_LAB: "1"
+          VITE_HIGHFLY_ORIGIN_UNIVERSAL_TESTER: "1"
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r28_universal_tester.py
+          cp ../v9-corrections/game/c1/highfly_origin_r28_universal_tester.test.ts tests/highfly_origin_r28_universal_tester.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r28_universal_tester.test.ts tests/highfly_origin_r24a_skillshot.test.ts
+          echo 'HIGHFLY_R28_P1_REAL_NATIVE_CATALOG_LV2_SURVIVES_ATK_PREVIEW_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -978,6 +1003,7 @@ jobs:
         env:
           VITE_HIGHFLY_ORIGIN_PREVIEW: "1"
           VITE_HIGHFLY_ORIGIN_SEVEN_LAB: "1"
+          VITE_HIGHFLY_ORIGIN_UNIVERSAL_TESTER: "1"
           VITE_COBALT_OFFLINE: "1"
           VITE_COBALT_BASE: "/cobalt-hollow-lab/"
           VITE_HIGHFLY_HUNT_PREVIEW: "0"
@@ -1064,7 +1090,7 @@ jobs:
       - name: Upload actual playable WEBGL full assets ONLY after green gates (never publish)
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-ORIGIN-R26-SEVEN-ORIGINAL-NATIVE-WEBGL-NO-DEPLOY
+          name: HIGHFLY-ORIGIN-R28-UNIVERSAL-NATIVE-ATK-WEBGL-NO-DEPLOY
           path: supreme-preview/
           if-no-files-found: error
           compression-level: 0
