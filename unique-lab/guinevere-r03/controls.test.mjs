@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {cameraScreenToWorld,pointerToWorld,joystickToWorld} from './controls.mjs';
+const near=(a,b)=>Math.abs(a-b)<1e-9;
+test('joystick UP at rear camera moves AWAY -Z',()=>assert.ok(near(joystickToWorld(0,0,-100).z,-1)));
+test('skill UP at rear camera aims AWAY -Z',()=>assert.ok(near(pointerToWorld(0,0,-100).z,-1)));
+test('right goes +X for both',()=>{for(const f of [joystickToWorld,pointerToWorld])assert.ok(near(f(0,100,0).x,1));});
+test('down goes +Z for both',()=>{for(const f of [joystickToWorld,pointerToWorld])assert.ok(near(f(0,0,100).z,1));});
+test('90 degree camera: up points -X',()=>assert.ok(near(pointerToWorld(Math.PI/2,0,-20).x,-1)));
+test('180 degree camera: up points +Z',()=>assert.ok(near(pointerToWorld(Math.PI,0,-20).z,1)));
+test('aim and movement always match at eight camera angles',()=>{for(let i=0;i<8;i++)assert.deepEqual(joystickToWorld(i*Math.PI/4,17,-38),pointerToWorld(i*Math.PI/4,17,-38));});
+test('right and up are perpendicular on orbit',()=>{for(const a of [0,.4,1,3.14,4.7]){const u=cameraScreenToWorld(a,0,1),v=cameraScreenToWorld(a,1,0);assert.ok(Math.abs(u.x*v.x+u.z*v.z)<1e-9);}});
+test('invalid input stops movement',()=>{assert.equal(pointerToWorld(0,0,0),null);assert.equal(pointerToWorld(0,NaN,5),null);});
