@@ -1,9 +1,9 @@
-name: HIGHFLY ORIGIN R24A REAL BALLISTIC SKILLSHOTS — FULL BUILD NO DEPLOY
+name: HIGHFLY ORIGIN R26 ORIGINAL SEVEN NATIVE PLAYABLE — FULL BUILD NO DEPLOY
 # Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
   push:
-    branches: [highfly-origin-r24a-real-skillshot-collision]
+    branches: [highfly-origin-r26-original-seven-native-lab]
     paths:
       - ".github/workflows/highfly-origin-r0-forensic-no-deploy.yml"
       - "game/c1/highfly_origin_r0_diagnostic.test.ts"
@@ -51,6 +51,9 @@ on:
       - "game/c1/highfly_origin_r24a_skillshot_physics.ts"
       - "game/c1/highfly_origin_r24a_native_skillshot.ts"
       - "game/c1/highfly_origin_r24a_skillshot.test.ts"
+      - "game/c1/highfly_origin_r26_seven_trial.ts"
+      - "game/c1/highfly_origin_r26_seven_trial.test.ts"
+      - "overlays/highfly_origin_r26_seven_native_lab.py"
       - "overlays/highfly_origin_r24a_real_skillshot.py"
       - "overlays/highfly_origin_r23_multitouch_buffs.py"
       - "game/c1/highfly_origin_r22_premium_visual.test.ts"
@@ -150,6 +153,9 @@ jobs:
             /game/c1/highfly_origin_r24a_skillshot_physics.ts
             /game/c1/highfly_origin_r24a_native_skillshot.ts
             /game/c1/highfly_origin_r24a_skillshot.test.ts
+            /game/c1/highfly_origin_r26_seven_trial.ts
+            /game/c1/highfly_origin_r26_seven_trial.test.ts
+            /overlays/highfly_origin_r26_seven_native_lab.py
             /overlays/highfly_origin_r24a_real_skillshot.py
             /overlays/highfly_origin_r23_multitouch_buffs.py
             /game/c1/highfly_origin_r22_premium_visual.test.ts
@@ -921,6 +927,18 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_origin_r24a_skillshot.test.ts tests/highfly_origin_r23_multitouch_buffs.test.ts tests/highfly_origin_r22_premium_visual.test.ts
           echo 'HIGHFLY_ORIGIN_R24A_AUTHENTIC_BALLISTIC_SKILLSHOT_GREEN=1'
+      - name: R26 real disposable seven originals, native cone and spend verification
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_HIGHFLY_ORIGIN_SEVEN_LAB: "1"
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r26_seven_native_lab.py
+          cp ../v9-corrections/game/c1/highfly_origin_r26_seven_trial.test.ts tests/highfly_origin_r26_seven_trial.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r26_seven_trial.test.ts tests/highfly_origin_r24a_skillshot.test.ts tests/highfly_origin_r23_multitouch_buffs.test.ts
+          echo "HIGHFLY_R26_SEVEN_ORIGINAL_NATIVE_CASTS_TESTED=1"
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -959,6 +977,7 @@ jobs:
         shell: bash
         env:
           VITE_HIGHFLY_ORIGIN_PREVIEW: "1"
+          VITE_HIGHFLY_ORIGIN_SEVEN_LAB: "1"
           VITE_COBALT_OFFLINE: "1"
           VITE_COBALT_BASE: "/cobalt-hollow-lab/"
           VITE_HIGHFLY_HUNT_PREVIEW: "0"
@@ -1045,7 +1064,7 @@ jobs:
       - name: Upload actual playable WEBGL full assets ONLY after green gates (never publish)
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-ORIGIN-R24A-AUTHENTIC-SKILLSHOTS-WEBGL-NO-DEPLOY
+          name: HIGHFLY-ORIGIN-R26-SEVEN-ORIGINAL-NATIVE-WEBGL-NO-DEPLOY
           path: supreme-preview/
           if-no-files-found: error
           compression-level: 0
