@@ -59,9 +59,6 @@ aim='src/highfly/highfly_origin_r17_hud.ts'
 once(aim,
      "    if(ev.pointerType!=='touch'||pending)return;",
      "    if(ev.pointerType!=='touch'||pending)return; // Claim ONLY skill pointer; a simultaneous joystick pointer stays native.")
-once(aim,
-     "    if(!pending||pending.id!==ev.pointerId)return;",
-     "    if(!pending||pending.id!==ev.pointerId)return; // Never suppress the left joystick move pointer.")
 # Prevent silent no-op while running past an enemy with a narrower-than-model
 # cursor corridor. This tolerates small lateral motion, not retargeting the
 # actual preview: the manually steered arrow NEVER snaps to the creature.
