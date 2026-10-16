@@ -1,0 +1,11 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {UniqueGuinevereLab as Lab,RULES} from './core.mjs';
+const step=(g,t)=>{for(let i=0;i<Math.ceil(t*120);i++)g.step(1/120);};
+const mob=()=>new Lab({targets:[{id:'m',pos:{x:4.8,z:0},hp:3000,radius:.6}],obstacles:[]});
+const events=(g,k)=>g.events.filter(x=>x.type===k);
+test('U2 airborne starts at landing and lasts .85s',()=>{const g=mob();g.request('U2',{x:4,z:0});step(g,.4);assert.equal(g.targets.get('m').airborneUntil,0);step(g,.025);const remain=g.targets.get('m').airborneUntil-g.time;assert.ok(remain>.83&&remain<.85);});
+test('U2 to U3 floats through all 11 hits and drops after grace',()=>{const g=mob();g.request('U2',{x:4,z:0});g.request('U3');step(g,.45);step(g,2.01);assert.equal(events(g,'ultimate_tick').length,11);assert.ok(g.targets.get('m').airborneUntil>g.time);step(g,.4);assert.ok(g.targets.get('m').airborneUntil<=g.time);});
+test('three marks alone can trigger U3 lift',()=>{const g=mob(),m=g.targets.get('m');m.marks=3;m.markUntil=100;g.request('U3');assert.ok(m.airborneUntil>=RULES.U3.duration);});
+test('unmarked U3 alone still deals 11 hits but does not lift',()=>{const g=mob();g.request('U3');step(g,2.2);assert.equal(g.targets.get('m').airborneUntil,0);assert.equal(events(g,'ultimate_tick').length,11);});
+test('boss never airborne',()=>{const g=new Lab({targets:[{id:'b',pos:{x:2,z:0},hp:9000,kind:'boss',poise:300}],obstacles:[]});g.targets.get('b').marks=3;g.targets.get('b').markUntil=100;g.request('U3');step(g,2.2);assert.equal(g.targets.get('b').airborneUntil,0);assert.ok(events(g,'boss_poise').length>0);});
+test('U2 recast pressed during U3 queues blink after ultimate',()=>{const g=mob();g.request('U2',{x:4,z:0});g.request('U3');step(g,.51);assert.equal(g.request('U2',{x:1,z:0}).buffered,true);step(g,2.05);assert.equal(events(g,'blink').length,1);});
+test('dead mob takes no U3 damage',()=>{const g=new Lab({targets:[{id:'m',pos:{x:4,z:0},hp:15}],obstacles:[]});g.request('U2',{x:4,z:0});g.request('U3');step(g,3);assert.equal(events(g,'damage').filter(e=>e.skill==='U3').length,0);});
