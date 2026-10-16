@@ -5,6 +5,9 @@
  * The laboratory must not call this on refused casts.
  */
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { buildSerpentGeometry } from './vendor/advanced10/assets/SerpentGeometry.js';
+import serpentGlb from './vendor/advanced10/embedded-assets/snake.glb?url';
 import { AbilityManager as Six } from './vendor/casting6/abilities/AbilityManager.js';
 import { AbilityManager as Seven } from './vendor/effects7/abilities/AbilityManager.js';
 import { AbilityManager as Ten } from './vendor/advanced10/abilities/AbilityManager.js';
@@ -69,15 +72,25 @@ export class R29OriginalSourceVFX {
    this.bySource=new Map();
    this.elapsed=0;
    this.failures=new Map();
+   this.serpent=null;
+   this.serpentLoadError=null;
+   this.serpentLoading=new GLTFLoader().loadAsync(serpentGlb).then(gltf=>{
+     this.serpent=buildSerpentGeometry(gltf.scene,{ghosts:8});
+     return this.serpent;
+   }).catch(e=>{this.serpentLoadError=String(e);return null;});
  }
  start(sourceId,source,from,to){
    if(!CATALOG[source]?.has(sourceId))return {ok:false,reason:'UNKNOWN_SOURCE'};
    const v=SOURCES[source];
    try{
+     if(source==='advanced10' && sourceId==='cyber' && !this.serpent){
+       return {ok:false,reason:this.serpentLoadError?'ORIGINAL_SERPENT_ASSET_FAILED':'ORIGINAL_SERPENT_ASSET_LOADING',detail:this.serpentLoadError??undefined};
+     }
      let entry=this.bySource.get(source);
      if(!entry){
        const context=services(this.scene,v);
        context.camera=this.camera;
+       if(source==='advanced10' && this.serpent)context.models.serpent=this.serpent;
        const manager=new v.M(context);
        entry={context,manager,frame:v.frame};
        this.bySource.set(source,entry);
@@ -104,13 +117,19 @@ export class R29OriginalSourceVFX {
    for(const {context,manager,frame} of this.bySource.values()){
      frame.uTime.value=this.elapsed;
      if(frame.uDelta)frame.uDelta.value=step;
+     if(frame.uCameraNear)frame.uCameraNear.value=this.camera.near;
+     if(frame.uCameraFar)frame.uCameraFar.value=this.camera.far;
+     if(frame.uResolution)frame.uResolution.value.set(
+       Math.max(1,this.camera.aspect*1080),1080);
      manager.update(step);
      context.lights.update(step);
      context.decals.update(step);
      context.bursts.update(step);
      context.fissures?.update(step);
      context.flash.update(step);
-     context.particles.update?.(step);
+     // Vendors upload new particle spawn data only when ParticleEngine.flush()
+     // runs after each update; no generic replacement particles are introduced.
+     context.particles.flush();
    }
  }
  dispose(){
@@ -121,5 +140,7 @@ export class R29OriginalSourceVFX {
      }
    }
    this.bySource.clear();
+   this.serpent?.geometry?.dispose?.();
+   this.serpent?.ghostGeometry?.dispose?.();
  }
 }
