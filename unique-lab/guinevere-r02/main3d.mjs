@@ -188,4 +188,4 @@ let last=performance.now();function frame(now){const dt=Math.min(.055,Math.max(.
  camera.position.set(game.player.pos.x+Math.sin(camAngle)*camDistance,camHeight,game.player.pos.z+Math.cos(camAngle)*camDistance);camera.lookAt(game.player.pos.x,1.45,game.player.pos.z);
  updateActors(paused?0:dt);updatePreview();updateUi(dt);renderer.render(scene,camera);requestAnimationFrame(frame);}
 requestAnimationFrame(frame);void loadRig();
-window.__HIGHFLY_UNIQUE_R02_QA=Object.freeze({snapshot:()=>game.snapshot(),rig:()=>({loaded:rigReady,clips:rigClips.map(c=>c.name),scale:rigScale,visibleMeshes:actualRig?actualRig.getObjectsByProperty('isMesh',true).filter(x=>x.visible).length:0,source:'warrior_modular.glb'}),version:LAB_VERSION});
+window.__HIGHFLY_UNIQUE_R02_QA=Object.freeze({snapshot:()=>game.snapshot(),events:()=>game.events.slice(),rig:()=>({loaded:rigReady,clips:rigClips.map(c=>c.name),scale:rigScale,visibleMeshes:actualRig?actualRig.getObjectsByProperty('isMesh',true).filter(x=>x.visible).length:0,source:'warrior_modular.glb'}),version:LAB_VERSION});
