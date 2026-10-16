@@ -5,9 +5,9 @@
  * The laboratory must not call this on refused casts.
  */
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { buildSerpentGeometry } from './vendor/advanced10/assets/SerpentGeometry.js';
-import serpentGlb from './vendor/advanced10/embedded-assets/snake.glb?url';
+
 import { AbilityManager as Six } from './vendor/casting6/abilities/AbilityManager.js';
 import { AbilityManager as Seven } from './vendor/effects7/abilities/AbilityManager.js';
 import { AbilityManager as Ten } from './vendor/advanced10/abilities/AbilityManager.js';
@@ -63,6 +63,31 @@ function services(scene,source){
  if(source.F)svc.fissures=new source.F(scene);
  return svc;
 }
+/** License-clean KayKit-compatible procedural serpent silhouette; the original
+ * MIT CyberSerpent source still owns wire, ribbons, ghost copies and rune shader.
+ * No unreviewed source GLB/FBX, HDR or diffuse texture is ever shipped.
+ */
+function highflySerpentGeometry(){
+ const points=Array.from({length:26},(_,i)=>{
+   const t=i/25;
+   return new THREE.Vector3(
+     Math.sin(t*Math.PI*2.6)*.17*(1-.45*t),
+     Math.sin(t*Math.PI*1.25)*.09+.14*t,
+     -2.1+t*4.2);
+ });
+ const tube=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),96,.12,12,false);
+ const head=new THREE.SphereGeometry(.24,20,14);
+ head.scale(1.2,.88,1.5);
+ head.translate(points[25].x,points[25].y,points[25].z+.14);
+ const combined=mergeGeometries([tube,head],false);
+ tube.dispose();head.dispose();
+ if(!combined)throw Error('SERPENT_PROCEDURAL_MESH_MERGE_FAILED');
+ const root=new THREE.Group();
+ root.add(new THREE.Mesh(combined,new THREE.MeshBasicMaterial()));
+ const result=buildSerpentGeometry(root,{ghosts:8});
+ combined.dispose();
+ return result;
+}
 export class R29OriginalSourceVFX {
  constructor(scene,camera){
    this.scene=scene;
@@ -74,10 +99,9 @@ export class R29OriginalSourceVFX {
    this.failures=new Map();
    this.serpent=null;
    this.serpentLoadError=null;
-   this.serpentLoading=new GLTFLoader().loadAsync(serpentGlb).then(gltf=>{
-     this.serpent=buildSerpentGeometry(gltf.scene,{ghosts:8});
-     return this.serpent;
-   }).catch(e=>{this.serpentLoadError=String(e);return null;});
+   try{this.serpent=highflySerpentGeometry();}
+   catch(e){this.serpentLoadError=String(e);}
+   this.serpentLoading=Promise.resolve(this.serpent);
  }
  start(sourceId,source,from,to){
    if(!CATALOG[source]?.has(sourceId))return {ok:false,reason:'UNKNOWN_SOURCE'};
