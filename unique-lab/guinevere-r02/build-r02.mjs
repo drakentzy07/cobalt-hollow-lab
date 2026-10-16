@@ -13,7 +13,7 @@ const animationNames=(gltf.animations||[]).map(a=>a.name||'(unnamed)');
 if(animationNames.length<15)throw Error('KAYKIT_ANIMATION_SET_TOO_SMALL');
 if(!(gltf.skins||[]).length)throw Error('KAYKIT_SKINS_MISSING');
 if(!JSON.stringify(gltf.nodes||[]).includes('Rig_Medium'))throw Error('KAYKIT_RIG_MEDIUM_MISSING');
-const res=await build({entryPoints:[join(folder,'main3d.mjs')],bundle:true,write:false,format:'iife',platform:'browser',target:'es2022',minify:true,logLevel:'warning',loader:{'.png':'dataurl'}});
+const res=await build({entryPoints:[join(folder,'main3d.mjs')],bundle:true,write:false,format:'iife',platform:'browser',target:'es2022',define:{'import.meta.url':'window.location.href'},minify:true,logLevel:'warning',loader:{'.png':'dataurl'}});
 if(res.outputFiles.length!==1)throw Error('ESBUILD_CHUNK_UNEXPECTED');
 const html=readFileSync(join(folder,'index.html'),'utf8');
 const basisJS=readFileSync(join(folder,'../../public/basis/basis_transcoder.js'));
