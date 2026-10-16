@@ -62,6 +62,7 @@ on:
       - "game/c1/highfly_origin_r29_vendor_runtime.js"
       - "game/c1/highfly_origin_r29_premium_native.ts"
       - "game/c1/highfly_origin_r29_premium_native.test.ts"
+      - "game/c1/highfly_origin_r29_vfx23_s23_browser.mjs"
       - "overlays/highfly_origin_r29_vendor_bridge.py"
       - "overlays/highfly_origin_r28_universal_tester.py"
       - "overlays/highfly_origin_r24a_real_skillshot.py"
@@ -173,6 +174,7 @@ jobs:
             /game/c1/highfly_origin_r29_vendor_runtime.js
             /game/c1/highfly_origin_r29_premium_native.ts
             /game/c1/highfly_origin_r29_premium_native.test.ts
+            /game/c1/highfly_origin_r29_vfx23_s23_browser.mjs
             /overlays/highfly_origin_r29_vendor_bridge.py
             /overlays/highfly_origin_r28_universal_tester.py
             /overlays/highfly_origin_r26_seven_native_lab.py
@@ -1127,6 +1129,28 @@ jobs:
             throw Error('HF_SUPREME_INTEGRATED_REAL_S23_BROWSERQA_BLOCKED');
           console.log('HF_SUPREME_INTEGRATED_PAGES_S23_CHROME_PREOPEN_QA_GREEN=1');
           JS
+      - name: P3 Real 23 of 23 original MIT VFX browser execution on S23 Chrome
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_origin_r29_vfx23_s23_browser.mjs scripts/highfly_origin_r29_vfx23_s23_browser.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory ../supreme-preview > ../hf-r29-browser-local.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for n in $(seq 1 60); do
+            if curl -fsS 'http://127.0.0.1:4173/cobalt-hollow-lab/' >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_origin_r29_vfx23_s23_browser.mjs
+          echo 'R29_P3_ORIGINAL_23_MIT_VFX_BROWSER_VISUAL_RUN_GREEN=1'
+      - name: Preserve actual 23-source VFX browser QA report EVEN on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-R29-P3-VFX23-S23-CHROME-BROWSER-EVIDENCE
+          path: upstream/highfly-r29-vfx23-s23-browser-report.json
+          if-no-files-found: warn
       - name: Upload actual playable WEBGL full assets ONLY after green gates (never publish)
         uses: actions/upload-artifact@v4
         with:
