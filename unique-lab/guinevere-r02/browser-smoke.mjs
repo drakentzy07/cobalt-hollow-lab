@@ -9,9 +9,14 @@ let failed=false;
 try{
  for(const [name,width,height,deviceScaleFactor] of [['desktop',1280,720,1],['s23-landscape-emulated',915,412,2]]){
   const ctx=await browser.newContext({viewport:{width,height},deviceScaleFactor,isMobile:name!=='desktop',hasTouch:name!=='desktop'});
-  const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+  const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});
   await page.goto(url,{waitUntil:'load',timeout:30000});
-  await page.waitForFunction(()=>window.__HIGHFLY_UNIQUE_R02_QA?.rig().loaded===true,undefined,{timeout:24000});
+  try{await page.waitForFunction(()=>window.__HIGHFLY_UNIQUE_R02_QA?.rig().loaded===true,undefined,{timeout:24000});}
+  catch(e){
+    await page.screenshot({path:join(here,'dist/smoke-failure-'+name+'.png')}).catch(()=>{});
+    const diagnostics=await page.evaluate(()=>({loading:document.getElementById('loading')?.textContent,qaExists:!!window.__HIGHFLY_UNIQUE_R02_QA,rig:window.__HIGHFLY_UNIQUE_R02_QA?.rig?.(),bodyText:document.body.innerText?.slice(0,350)})).catch(err=>({error:String(err)}));
+    throw Error('RIG_LOAD_DIAGNOSTIC '+name+' '+JSON.stringify({diagnostics,errors,waitError:String(e)}));
+  }
   await page.keyboard.press('Digit1');await page.waitForTimeout(450);
   await page.keyboard.press('Digit2');await page.waitForTimeout(510);
   await page.keyboard.press('Digit3');await page.waitForTimeout(520);
