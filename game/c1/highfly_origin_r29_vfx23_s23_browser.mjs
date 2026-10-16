@@ -8,13 +8,13 @@ const URL='http://127.0.0.1:4173/cobalt-hollow-lab/';
 const report={device:'Samsung S23 landscape emulation 844x390 DPR3',releaseReady:false,
  sourceRenderCount:0,total:23,sourceVisualFailures:[],pageErrors:[],
  shaderErrors:[],brokenAssets:[],ids:[],status:'pending'};
-let browser;
+let browser,page;
 try{
  browser=await chromium.launch({channel:'chrome',headless:true,timeout:60000});
  const ctx=await browser.newContext({viewport:{width:844,height:390},screen:{width:844,height:390},
    deviceScaleFactor:3,isMobile:true,hasTouch:true,
    userAgent:'Mozilla/5.0 (Linux; Android 16; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36'});
- const page=await ctx.newPage();
+ page=await ctx.newPage();
  page.on('pageerror',e=>report.pageErrors.push(String(e)));
  page.on('console',msg=>{
    if(msg.type()==='error' && /WebGLProgram|GLSL|shader|compile|ERROR: 0:/i.test(msg.text()))
@@ -40,7 +40,7 @@ try{
   if(state.loaded&&state.probe)break;
   await page.waitForTimeout(650);
  }
- await page.waitForFunction(()=>Boolean(window.__HIGHFLY_R29_VFX_QA__?.probe),null,{timeout:110000});
+ await page.waitForFunction(()=>Boolean(window.__HIGHFLY_R29_VFX_QA__?.probe),null,{timeout:45000});
  const all=await page.evaluate(()=>window.__HIGHFLY_R29_VFX_QA__.ids);
  report.ids=all;
  if(all.length!==23||new Set(all.map(x=>x.id)).size!==23)
@@ -59,8 +59,38 @@ try{
     report.brokenAssets.length||report.sourceRenderCount!==23)
    throw Error('R29_ORIGINAL_MIT_SOURCE_VFX_QA_INCOMPLETE');
  report.status='source-vfx-23-pass';
-} catch(e){
+ } catch(e){
  report.status='failed';report.error=String(e);
+ // Inspect the actual startup blocker, not just a timeout. All this is
+ // read-only; do not mark a missing VFX hook as a 23/23 render success.
+ try{
+  if(page)report.bootDiagnostics=await page.evaluate(()=>{
+   const visible=(id)=>{
+    const n=document.querySelector(id);
+    if(!n)return null;
+    const r=n.getBoundingClientRect(),s=getComputedStyle(n);
+    return {visible:r.width>0&&r.height>0&&s.display!=='none',display:s.display,width:r.width,height:r.height};
+   };
+   return {url:location.href,readyState:document.readyState,
+    hasSim:!!window.__game?.sim,
+    hasPlayer:!!window.__game?.sim?.player,
+    hasR29QA:!!window.__HIGHFLY_R29_VFX_QA__,
+    qaProbeType:typeof window.__HIGHFLY_R29_VFX_QA__?.probe,
+    hasGrimoire:!!document.querySelector('#hf-r28-universal-tester'),
+    hasR28Attack:!!document.querySelector('[data-r28-skill]'),
+    originEntry:visible('#hf-origin-entry'),
+    mobilePreflight:visible('#mobile-preflight'),
+    mobileContinue:visible('#mobile-preflight-continue'),
+    startScreen:visible('.start-screen'),
+    rotateDevice:visible('#rotate-device'),
+    offlineSelect:visible('#offline-select'),
+    gameLoading:visible('#loading-screen'),
+    bodyClasses:document.body?.className,
+    bootText:(document.querySelector('#loading-screen')?.textContent||'').slice(0,400)};
+  });
+  await page?.screenshot({path:'highfly-r29-vfx23-s23-boot-failure.png'}).catch(()=>{});
+ }catch(inner){report.diagError=String(inner);}
+
 } finally {
  fs.writeFileSync('highfly-r29-vfx23-s23-browser-report.json',JSON.stringify(report,null,2));
  await browser?.close().catch(()=>{});
