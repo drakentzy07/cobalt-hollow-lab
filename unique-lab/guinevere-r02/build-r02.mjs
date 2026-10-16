@@ -16,12 +16,15 @@ if(!JSON.stringify(gltf.nodes||[]).includes('Rig_Medium'))throw Error('KAYKIT_RI
 const res=await build({entryPoints:[join(folder,'main3d.mjs')],bundle:true,write:false,format:'iife',platform:'browser',target:'es2022',minify:true,logLevel:'warning',loader:{'.png':'dataurl'}});
 if(res.outputFiles.length!==1)throw Error('ESBUILD_CHUNK_UNEXPECTED');
 const html=readFileSync(join(folder,'index.html'),'utf8');
-const inject='<script>window.__HIGHFLY_KAYKIT_GLB_BASE64__='+JSON.stringify(bin.toString('base64'))+';</script><script>'+res.outputFiles[0].text.replaceAll('</script>','<\\/script>')+'</script>';
+const basisJS=readFileSync(join(folder,'../../public/basis/basis_transcoder.js'));
+const basisWASM=readFileSync(join(folder,'../../public/basis/basis_transcoder.wasm'));
+if(basisWASM.subarray(0,4).toString('hex')!=='0061736d')throw Error('INVALID_BASIS_TRANSCODER_WASM');
+const inject='<script>window.__HIGHFLY_KAYKIT_GLB_BASE64__='+JSON.stringify(bin.toString('base64'))+';window.__HIGHFLY_BASIS_JS_BASE64__='+JSON.stringify(basisJS.toString('base64'))+';window.__HIGHFLY_BASIS_WASM_BASE64__='+JSON.stringify(basisWASM.toString('base64'))+';</script><script>'+res.outputFiles[0].text.replaceAll('</script>','<\\/script>')+'</script>';
 const target='<script type="module" src="./main3d.mjs"></script>';
 if(!html.includes(target))throw Error('HTML_ENTRY_MISMATCH');
 const single=html.replace(target,()=>inject); // avoid const single=html.replace(target,inject); replacement-token expansion in minified Three.js
 if(single.includes(target))throw Error('UNBUNDLED_MODULE_SCRIPT');
 const out=join(folder,'dist');mkdirSync(out,{recursive:true});
 writeFileSync(join(out,'HIGHFLY_GUINEVERE_R02_KAYKIT_3D.html'),single);
-writeFileSync(join(out,'asset_audit.json'),JSON.stringify({glb:file,bytes:bin.length,meshes:gltf.meshes?.length,skins:gltf.skins?.length,animations:animationNames,author:'KayKit / Kay Lousberg',license:'CC0-1.0 per upstream CREDITS.md'},null,2));
+writeFileSync(join(out,'asset_audit.json'),JSON.stringify({glb:file,bytes:bin.length,meshes:gltf.meshes?.length,skins:gltf.skins?.length,animations:animationNames,author:'KayKit / Kay Lousberg',license:'CC0-1.0 per upstream CREDITS.md',basisDecoder:{jsBytes:basisJS.length,wasmBytes:basisWASM.length}}},null,2));
 console.log(JSON.stringify({status:'BUILT',standaloneBytes:Buffer.byteLength(single),animationCount:animationNames.length,clipNames:animationNames,modelBytes:bin.length,skinCount:gltf.skins.length},null,2));
