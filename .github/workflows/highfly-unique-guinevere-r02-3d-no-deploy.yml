@@ -7,6 +7,9 @@ on:
       - 'unique-lab/guinevere-r02/**'
       - '.github/workflows/highfly-unique-guinevere-r02-3d-no-deploy.yml'
   workflow_dispatch:
+concurrency:
+  group: guinevere-r02-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:
