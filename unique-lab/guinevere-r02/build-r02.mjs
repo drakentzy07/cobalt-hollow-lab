@@ -26,5 +26,5 @@ const single=html.replace(target,()=>inject); // avoid const single=html.replace
 if(single.includes(target))throw Error('UNBUNDLED_MODULE_SCRIPT');
 const out=join(folder,'dist');mkdirSync(out,{recursive:true});
 writeFileSync(join(out,'HIGHFLY_GUINEVERE_R02_KAYKIT_3D.html'),single);
-writeFileSync(join(out,'asset_audit.json'),JSON.stringify({glb:file,bytes:bin.length,meshes:gltf.meshes?.length,skins:gltf.skins?.length,animations:animationNames,author:'KayKit / Kay Lousberg',license:'CC0-1.0 per upstream CREDITS.md',basisDecoder:{jsBytes:basisJS.length,wasmBytes:basisWASM.length}}},null,2));
+writeFileSync(join(out,'asset_audit.json'),JSON.stringify({glb:file,bytes:bin.length,meshes:gltf.meshes?.length,skins:gltf.skins?.length,animations:animationNames,author:'KayKit / Kay Lousberg',license:'CC0-1.0 per upstream CREDITS.md',basisDecoder:{jsBytes:basisJS.length,wasmBytes:basisWASM.length}},null,2));
 console.log(JSON.stringify({status:'BUILT',standaloneBytes:Buffer.byteLength(single),animationCount:animationNames.length,clipNames:animationNames,modelBytes:bin.length,skinCount:gltf.skins.length},null,2));
