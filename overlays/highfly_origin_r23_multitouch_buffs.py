@@ -10,6 +10,10 @@ def once(path,before,after):
     if n!=1:raise SystemExit(f'HIGHFLY_R23_SOURCE_DRIFT:{path}:count={n}:anchor={before[:90]}')
     p.write_text(s.replace(before,after,1),encoding='utf8')
 trial='src/highfly/highfly_origin_trial_runtime.ts'
+# Reuse existing ClaudeCraft action-ability icon atlas, no new textures/licenses.
+once(trial,
+     "import { ABILITIES } from '../sim/content/classes';",
+     "import { ABILITIES } from '../sim/content/classes';\\nimport { iconDataUrl } from '../ui/icons';")
 once(trial,
      "  document.body.appendChild(utility);",
      """  // R23: there is no support PANEL during gameplay. B1-B4 sit against the
@@ -36,12 +40,9 @@ once(trial,
      "      b.textContent=id?'✦ B'+(i+1):'B'+(i+1);",
      """      b.replaceChildren();
       const mark=document.createElement('span');
-      mark.style.cssText='display:block;font-size:17px;text-align:center;line-height:27px;';
-      const effect=id?ABILITIES[id]:null;
-      const types=effect?.effects?.map(e=>e.type)??[];
-      mark.textContent=!id?'◇':types.some(t=>/heal|restore/i.test(t))?'✚'
-        :types.some(t=>/absorb|shield/i.test(t))?'⬡'
-        :types.some(t=>/buff|aura/i.test(t))?'✦':'◆';
+      mark.style.cssText='display:block;width:100%;height:100%;box-sizing:border-box;border-radius:5px;background-size:cover;background-position:center;background-repeat:no-repeat;text-align:center;font-size:17px;line-height:30px;';
+      mark.style.backgroundImage=id?'url('+iconDataUrl('ability',id)+')':'';
+      mark.textContent=id?'':'◇';
       const tag=document.createElement('span');
       tag.textContent='B'+(i+1);
       tag.style.cssText='position:absolute;bottom:1px;right:3px;font:700 8px system-ui;color:#d6bc8e;line-height:1;';
