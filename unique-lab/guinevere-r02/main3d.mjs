@@ -85,7 +85,7 @@ async function loadRig(){try{
  // one facial expression, and the native Knight armor; keep every bone and clip untouched.
  const maleSlots=new Set(['M_Head','M_Torso','M_ArmL','M_ArmR','M_HandL','M_HandR','M_LegL','M_LegR','M_FootL','M_FootR','M_Loin','M_Ear_round','M_Eye_almond','M_Brow_soft','M_Mouth_neutral']);
  actualRig.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){
-  const name=o.name.replace(/\\.\\d+$/,'');
+  const name=o.name.split('.')[0];
   o.visible=maleSlots.has(name)||(name.startsWith('Armor_knight_')&&name!=='Armor_knight_Head1');
   o.frustumCulled=false;
  }});
