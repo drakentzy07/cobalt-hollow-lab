@@ -81,7 +81,14 @@ async function loadRig(){try{
  const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);loader.setKTX2Loader(ktx);
  const parsed=await new Promise((resolve,reject)=>loader.parse(decodeInlineGlb(),'',resolve,reject));
  actualRig=parsed.scene;rigClips=parsed.animations||[];
- actualRig.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){o.frustumCulled=false;}});
+ // GLB ships ALL 247 modular variations together. Select one coherent MALE Hunter,
+ // one facial expression, and the native Knight armor; keep every bone and clip untouched.
+ const maleSlots=new Set(['M_Head','M_Torso','M_ArmL','M_ArmR','M_HandL','M_HandR','M_LegL','M_LegR','M_FootL','M_FootR','M_Loin','M_Ear_round','M_Eye_almond','M_Brow_soft','M_Mouth_neutral']);
+ actualRig.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){
+  const name=o.name.replace(/\\.\\d+$/,'');
+  o.visible=maleSlots.has(name)||(name.startsWith('Armor_knight_')&&name!=='Armor_knight_Head1');
+  o.frustumCulled=false;
+ }});
  // keep Rig_Medium skeleton/animations/weights unmodified: scale only scene container.
  actualRig.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(actualRig);
  const height=box.max.y-box.min.y;if(Number.isFinite(height)&&height>.01)rigScale=Math.min(6,Math.max(.1,2.55/height));
@@ -181,4 +188,4 @@ let last=performance.now();function frame(now){const dt=Math.min(.055,Math.max(.
  camera.position.set(game.player.pos.x+Math.sin(camAngle)*camDistance,camHeight,game.player.pos.z+Math.cos(camAngle)*camDistance);camera.lookAt(game.player.pos.x,1.45,game.player.pos.z);
  updateActors(paused?0:dt);updatePreview();updateUi(dt);renderer.render(scene,camera);requestAnimationFrame(frame);}
 requestAnimationFrame(frame);void loadRig();
-window.__HIGHFLY_UNIQUE_R02_QA=Object.freeze({snapshot:()=>game.snapshot(),rig:()=>({loaded:rigReady,clips:rigClips.map(c=>c.name),scale:rigScale,source:'warrior_modular.glb'}),version:LAB_VERSION});
+window.__HIGHFLY_UNIQUE_R02_QA=Object.freeze({snapshot:()=>game.snapshot(),rig:()=>({loaded:rigReady,clips:rigClips.map(c=>c.name),scale:rigScale,visibleMeshes:actualRig?actualRig.getObjectsByProperty('isMesh',true).filter(x=>x.visible).length:0,source:'warrior_modular.glb'}),version:LAB_VERSION});
