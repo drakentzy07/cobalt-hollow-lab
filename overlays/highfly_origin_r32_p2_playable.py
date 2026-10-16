@@ -110,7 +110,7 @@ function paintContextualAttack(): void {""")
         "export function r28Reapply(meta:LabMeta,level=1):void {",
         """// R32 disposable four-BASE loadout. Native definitions, native resource costs.
 const r32SessionLoadouts = new WeakMap<object,readonly string[]>();
-export const R32_P2_BASE_IDS = ['fireball','heroic_leap','charge','flamestrike'] as const;
+export const R32_P2_BASE_IDS = ['fireball','heroic_leap','blink','flamestrike'] as const;
 export function r32StartSession(sim:Sim):void {
  const meta=sim.players.get(sim.playerId);
  if(!meta?.originHunter||!sim.player.originResources)
@@ -123,12 +123,13 @@ export function r32StartSession(sim:Sim):void {
 export function r28Reapply(meta:LabMeta,level=1):void {
  const r32=r32SessionLoadouts.get(meta);
  if(r32){meta.known=r32.map(id=>r28Resolved(id,level));return;}""")
-    # R30 explicitly curates 45 originals and excludes the native Charge.
-    # R32 uses it for one isolated mechanic test with original duration/cost;
-    # no R30 registry or persistent skill entitlement is modified.
+    # Original Charge has the server-blocked legacy "charge" effect and
+    # MUST NOT be injected: it aborts Hunter entry before the world loads.
+    # Blink/Flitstep is a safe native movement fallback until Charge is
+    # genuinely adapted to HP/MP/Stamina. No server resource guards bypassed.
     replace_one(session,
         "if(import.meta.env.VITE_HIGHFLY_ORIGIN_R30==='1')return r30ResolveSelected(id,level);",
-        "if(import.meta.env.VITE_HIGHFLY_ORIGIN_R30==='1' && !(import.meta.env.VITE_HIGHFLY_ORIGIN_R32==='1' && id==='charge'))return r30ResolveSelected(id,level);")
+        "if(import.meta.env.VITE_HIGHFLY_ORIGIN_R30==='1' && !(import.meta.env.VITE_HIGHFLY_ORIGIN_R32==='1' && id==='blink'))return r30ResolveSelected(id,level);")
     replace_one("src/main.ts",
         "import { r28StartSession } from './sim/highfly_origin_r28_session';",
         "import { r28StartSession, r32StartSession } from './sim/highfly_origin_r28_session';")
@@ -149,7 +150,7 @@ export function r28Reapply(meta:LabMeta,level=1):void {
         """    if(import.meta.env.VITE_HIGHFLY_ORIGIN_R32==='1' && this.sim.player.originResources){
       // Existing R17/Claude command -> original hotbar serialization in the
       // ephemeral R28 namespace. No fake buttons or bypassed cast mechanics.
-      (['fireball','heroic_leap','charge','flamestrike'] as const).forEach((id,i)=>
+      (['fireball','heroic_leap','blink','flamestrike'] as const).forEach((id,i)=>
         document.dispatchEvent(new CustomEvent('hf-origin-command',{
           detail:{kind:'set',slot:i+1,id}
         })));
@@ -165,7 +166,7 @@ export function r28Reapply(meta:LabMeta,level=1):void {
     native=Path(hud).read_text(encoding="utf8")
     if "onMobileContextualUse" not in native:
         raise SystemExit("R32_NATIVE_USE_SEAM_MISSING")
-    for ability in ("fireball","heroic_leap","charge","flamestrike"):
+    for ability in ("fireball","heroic_leap","blink","flamestrike"):
         if ability not in Path(session).read_text(encoding="utf8"):
             raise SystemExit("R32_BASE_MISSING_"+ability)
     print("HIGHFLY_R32_P2_CLAUDE_NATIVE_4_BASE_ATK_SEPARATE_USE_NO_SAVES=1")
