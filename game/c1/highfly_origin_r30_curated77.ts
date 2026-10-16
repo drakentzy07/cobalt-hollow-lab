@@ -11,7 +11,7 @@ import { R29_PREMIUM_CONTRACTS } from './highfly_origin_r29_premium_native';
 
 export const R30_ORIGINAL_BY_SCHOOL = {
  warrior:['thunder_clap','whirlwind','heroic_leap','mortal_strike','storm_bolt'],
- paladin:['hammer_of_grace','crusader_strike','holy_shock','consecration','final_edict'],
+ paladin:['hammer_of_grace','dawnfall','holy_shock','consecration','final_edict'],
  hunter:['arcane_shot','volley','concussive_shot','frostjaw_trap','shrapnel_charge'],
  rogue:['sinister_strike','venom_dart','gouge','hemorrhage','crippling_poison'],
  priest:['smite','shadow_word_pain','mind_blast','holy_nova','scouring_mercy'],
@@ -53,7 +53,13 @@ export function r30AuditSelected():{original:number,premium:number,passiveDesign
    if(!d||d.class!==school||d.passive||d.hiddenFromPlayer||d.requiresStealth||
       d.requiresForm||d.requiresAuraKind||d.requiresTargetHpBelow||
       d.requiresShield||d.spendsCombo||d.requiresQuest||
-      !originCostDecision(d).ok)throw Error('R30_SKILL_REQUIRES_MISSING_CONDITION_'+id);
+      !originCostDecision(d).ok)throw Error('R30_SKILL_REQUIRES_MISSING_CONDITION_'+id+':'+JSON.stringify({
+    exists:Boolean(d),actualClass:d?.class,hidden:d?.hiddenFromPlayer,passive:d?.passive,
+    stealth:d?.requiresStealth,form:d?.requiresForm,aura:d?.requiresAuraKind,
+    health:d?.requiresTargetHpBelow,shield:d?.requiresShield,
+    spendsCombo:d?.spendsCombo,quest:d?.requiresQuest,
+    admission:d?originCostDecision(d):null
+   }));
   }
  }
  for(const p of R30_PASSIVE_DESIGNS)
