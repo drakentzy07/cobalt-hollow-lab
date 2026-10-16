@@ -52,10 +52,8 @@ once(catalog,
  "import { R27_PREMIUM_23 } from './highfly_origin_r27_premium23_catalog';",
  "import { R27_PREMIUM_23 } from './highfly_origin_r27_premium23_catalog';\n"+
  "import {R30_ORIGINAL_45} from './highfly_origin_r30_curated77';")
-once(catalog,
- "const native=Object.values(ABILITIES).filter(def=>!def.id.startsWith('hf_vfx23_')).map(def=>{",
- "const native=Object.values(ABILITIES).filter(def=>!def.id.startsWith('hf_vfx23_') && "+
- "(import.meta.env.VITE_HIGHFLY_ORIGIN_R30!=='1'||R30_ORIGINAL_45.includes(def.id))).map(def=>{")
+# Preserve the FULL 411-original catalog for backward-compatible R28 tests.
+# The R30 45 selection is only a non-destructive UI projection.
 
 ui='src/highfly/highfly_origin_r28_universal_tester.ts'
 once(ui,
@@ -64,7 +62,7 @@ once(ui,
 once(ui,
  "import { ABILITIES } from '../sim/content/classes';",
  "import { ABILITIES } from '../sim/content/classes';\n"+
- "import {R30_PASSIVE_DESIGNS} from '../sim/highfly_origin_r30_curated77';")
+ "import {R30_PASSIVE_DESIGNS,R30_ORIGINAL_45} from '../sim/highfly_origin_r30_curated77';")
 once(ui,
  " let category:'native'|'premium'|'support'='native';",
  " let category:'native'|'premium'|'support'|'passives'='native';")
@@ -84,7 +82,7 @@ once(ui,
     shape:'PASSIVE',effect:p.stat,cost:null,pool:null,cooldown:null,
     status:'passive' as const,note:'DISEÑO R30 · aún NO activada en combate'
   }));
-  let rows:R28Item[]=category==='native'?native:
+  let rows:R28Item[]=category==='native'?native.filter(x=>import.meta.env.VITE_HIGHFLY_ORIGIN_R30!=='1'||R30_ORIGINAL_45.includes(x.id)):
     category==='premium'?list.filter(x=>x.kind==='premium'):
     category==='passives'?passiveRows:native.filter(x=>x.shape==='SELF'||x.effect==='holy');""")
 once(ui,
