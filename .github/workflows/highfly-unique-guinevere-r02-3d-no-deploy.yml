@@ -1,0 +1,71 @@
+name: HIGHFLY UNIQUE Guinevere R02 3D / NO DEPLOY
+on:
+  push:
+    branches:
+      - highfly-unique-guinevere-lab-r02-3d-vfx-combo
+    paths:
+      - 'unique-lab/guinevere-r02/**'
+      - '.github/workflows/highfly-unique-guinevere-r02-3d-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  guinevere-r02:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout isolated HIGHFLY lab
+        uses: actions/checkout@v4
+        with:
+          path: lab
+      - name: Checkout pinned original ClaudeCraft assets and dependencies
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: upstream/package-lock.json
+      - name: Exact native-core and combo tests
+        run: node --test lab/unique-lab/guinevere-r02/core.test.mjs lab/unique-lab/guinevere-r02/combo.test.mjs
+      - name: Install pinned Three and esbuild from ClaudeCraft upstream
+        working-directory: upstream
+        run: npm ci --ignore-scripts
+      - name: Assemble native KayKit 3D isolated lab
+        run: |
+          mkdir -p upstream/unique-lab/guinevere-r02
+          cp lab/unique-lab/guinevere-r02/{core.mjs,main3d.mjs,index.html,build-r02.mjs,browser-smoke.mjs} upstream/unique-lab/guinevere-r02/
+          node upstream/unique-lab/guinevere-r02/build-r02.mjs upstream/public/models/chars/modular/warrior_modular.glb
+      - name: Validate baked HTML is offline and includes native model
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('upstream/unique-lab/guinevere-r02/dist/HIGHFLY_GUINEVERE_R02_KAYKIT_3D.html')
+          b=p.read_text()
+          assert p.stat().st_size>3_700_000, p.stat().st_size
+          assert 'HIGHFLY' in b and 'GUINEVERE' in b
+          assert 'window.__HIGHFLY_KAYKIT_GLB_BASE64__=' in b
+          assert '<script type="module" src=' not in b
+          assert 'https://cdn.' not in b
+          print('OFFLINE_ASSET_EMBEDDED',p.stat().st_size)
+          PY
+      - name: Install Chromium for 3D visual smoke
+        working-directory: upstream
+        run: npx playwright install --with-deps chromium
+      - name: Browser smoke native GLB + HUD + U1 U2 U3 (desktop and S23 emulation)
+        run: node upstream/unique-lab/guinevere-r02/browser-smoke.mjs
+      - name: Upload standalone phone-ready 3D laboratory (NO Pages)
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-Guinevere-R02-KayKit-3D-Android
+          path: |
+            upstream/unique-lab/guinevere-r02/dist/HIGHFLY_GUINEVERE_R02_KAYKIT_3D.html
+            upstream/unique-lab/guinevere-r02/dist/asset_audit.json
+            upstream/unique-lab/guinevere-r02/dist/smoke-*.png
+          retention-days: 14
+      - name: Confirm no public deployment
+        run: echo 'R02 is an isolated Action artifact only. No Pages, no public workflow dispatch.'
