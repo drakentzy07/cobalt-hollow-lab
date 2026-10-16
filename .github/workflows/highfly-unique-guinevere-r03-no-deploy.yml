@@ -5,7 +5,7 @@ on:
       - highfly-unique-guinevere-r03-controls-airtime
     paths:
       - 'unique-lab/guinevere-r03/**'
-      - '.github/workflows/highfly-unique-guinevere-r03-3d-no-deploy.yml'
+      - '.github/workflows/highfly-unique-guinevere-r03-no-deploy.yml'
   workflow_dispatch:
 concurrency:
   group: guinevere-r03-${{ github.ref }}
