@@ -75,7 +75,7 @@ try{
 } catch(e){
  qa.status='failed';qa.error=String(e);
 } finally {
- fs.writeFileSync('../highfly-r28-s23-browser-report.json',JSON.stringify(qa,null,2));
+ fs.writeFileSync('highfly-r28-s23-browser-report.json',JSON.stringify(qa,null,2));
  await browser?.close().catch(()=>{});
 }
 console.log('HIGHFLY_R28_S23_BROWSER_REAL_UI='+JSON.stringify(qa));
