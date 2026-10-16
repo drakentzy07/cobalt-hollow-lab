@@ -11,7 +11,7 @@ import { R29_PREMIUM_CONTRACTS } from './highfly_origin_r29_premium_native';
 
 export const R30_ORIGINAL_BY_SCHOOL = {
  warrior:['thunder_clap','whirlwind','heroic_leap','mortal_strike','storm_bolt'],
- paladin:['hammer_of_grace','exorcism','holy_shock','consecration','final_edict'],
+ paladin:['hammer_of_grace','crusader_strike','holy_shock','consecration','final_edict'],
  hunter:['arcane_shot','volley','concussive_shot','frostjaw_trap','shrapnel_charge'],
  rogue:['sinister_strike','venom_dart','gouge','hemorrhage','crippling_poison'],
  priest:['smite','shadow_word_pain','mind_blast','holy_nova','scouring_mercy'],
