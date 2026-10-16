@@ -107,7 +107,7 @@ function paintContextualAttack(): void {""")
 
     session = "src/sim/highfly_origin_r28_session.ts"
     replace_one(session,
-        "export function r28Reapply(meta:LabMeta):void {",
+        "export function r28Reapply(meta:LabMeta,level=1):void {",
         """// R32 disposable four-BASE loadout. Native definitions, native resource costs.
 const r32SessionLoadouts = new WeakMap<object,readonly string[]>();
 export const R32_P2_BASE_IDS = ['fireball','heroic_leap','charge','flamestrike'] as const;
@@ -120,9 +120,15 @@ export function r32StartSession(sim:Sim):void {
  meta.known=selected;
  // No learnedSkillIds / XP / mastery / permanent save data changed.
 }
-export function r28Reapply(meta:LabMeta):void {
+export function r28Reapply(meta:LabMeta,level=1):void {
  const r32=r32SessionLoadouts.get(meta);
- if(r32){meta.known=r32.map(id=>r28Resolved(id));return;}""")
+ if(r32){meta.known=r32.map(id=>r28Resolved(id,level));return;}""")
+    # R30 explicitly curates 45 originals and excludes the native Charge.
+    # R32 uses it for one isolated mechanic test with original duration/cost;
+    # no R30 registry or persistent skill entitlement is modified.
+    replace_one(session,
+        "if(import.meta.env.VITE_HIGHFLY_ORIGIN_R30==='1')return r30ResolveSelected(id,level);",
+        "if(import.meta.env.VITE_HIGHFLY_ORIGIN_R30==='1' && !(import.meta.env.VITE_HIGHFLY_ORIGIN_R32==='1' && id==='charge'))return r30ResolveSelected(id,level);")
     replace_one("src/main.ts",
         "import { r28StartSession } from './sim/highfly_origin_r28_session';",
         "import { r28StartSession, r32StartSession } from './sim/highfly_origin_r28_session';")
