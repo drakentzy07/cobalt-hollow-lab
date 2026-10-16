@@ -1,9 +1,9 @@
-name: HIGHFLY ORIGIN R24A REAL BALLISTIC SKILLSHOTS — FULL BUILD NO DEPLOY
+name: HIGHFLY ORIGIN R25A SF27 A/B CATALOG + FIXED AIM GALLERY — FULL BUILD NO DEPLOY
 # Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
   push:
-    branches: [highfly-origin-r24a-real-skillshot-collision]
+    branches: [highfly-origin-r25a-sf27-selector-gallery]
     paths:
       - ".github/workflows/highfly-origin-r0-forensic-no-deploy.yml"
       - "game/c1/highfly_origin_r0_diagnostic.test.ts"
@@ -51,6 +51,10 @@ on:
       - "game/c1/highfly_origin_r24a_skillshot_physics.ts"
       - "game/c1/highfly_origin_r24a_native_skillshot.ts"
       - "game/c1/highfly_origin_r24a_skillshot.test.ts"
+      - "game/c1/highfly_origin_r25_sf27_catalog.ts"
+      - "game/c1/highfly_origin_r25a_sf27_selector.ts"
+      - "game/c1/highfly_origin_r25a_sf27_selector.test.ts"
+      - "overlays/highfly_origin_r25a_gallery_selector.py"
       - "overlays/highfly_origin_r24a_real_skillshot.py"
       - "overlays/highfly_origin_r23_multitouch_buffs.py"
       - "game/c1/highfly_origin_r22_premium_visual.test.ts"
@@ -150,6 +154,10 @@ jobs:
             /game/c1/highfly_origin_r24a_skillshot_physics.ts
             /game/c1/highfly_origin_r24a_native_skillshot.ts
             /game/c1/highfly_origin_r24a_skillshot.test.ts
+            /game/c1/highfly_origin_r25_sf27_catalog.ts
+            /game/c1/highfly_origin_r25a_sf27_selector.ts
+            /game/c1/highfly_origin_r25a_sf27_selector.test.ts
+            /overlays/highfly_origin_r25a_gallery_selector.py
             /overlays/highfly_origin_r24a_real_skillshot.py
             /overlays/highfly_origin_r23_multitouch_buffs.py
             /game/c1/highfly_origin_r22_premium_visual.test.ts
@@ -921,6 +929,16 @@ jobs:
           git diff --check HEAD
           pnpm exec vitest run tests/highfly_origin_r24a_skillshot.test.ts tests/highfly_origin_r23_multitouch_buffs.test.ts tests/highfly_origin_r22_premium_visual.test.ts
           echo 'HIGHFLY_ORIGIN_R24A_AUTHENTIC_BALLISTIC_SKILLSHOT_GREEN=1'
+      - name: R25A gallery DOM persistence and 63 SF27 vs 36 original A/B selector (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r25a_gallery_selector.py
+          cp ../v9-corrections/game/c1/highfly_origin_r25a_sf27_selector.test.ts tests/highfly_origin_r25a_sf27_selector.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r25a_sf27_selector.test.ts tests/highfly_origin_r22_premium_visual.test.ts tests/highfly_origin_r24a_skillshot.test.ts tests/highfly_origin_r19_focus.test.ts
+          echo 'HIGHFLY_R25A_GALLERY_AND_63_36_READONLY_AB_SELECTOR_GREEN=1'
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
@@ -1045,7 +1063,7 @@ jobs:
       - name: Upload actual playable WEBGL full assets ONLY after green gates (never publish)
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-ORIGIN-R24A-AUTHENTIC-SKILLSHOTS-WEBGL-NO-DEPLOY
+          name: HIGHFLY-ORIGIN-R25A-SF27-GALLERY-AB-WEBGL-NO-DEPLOY
           path: supreme-preview/
           if-no-files-found: error
           compression-level: 0
