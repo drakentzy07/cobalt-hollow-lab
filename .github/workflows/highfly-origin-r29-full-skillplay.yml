@@ -1,0 +1,67 @@
+name: HIGHFLY ORIGIN R29 RUN01 — 388 CLAUDE + 23 REAL MIT VFX SOURCE VERIFICATION (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-origin-r29-vip-skill-test-and-premium23]
+    paths:
+      - ".github/workflows/highfly-origin-r29-full-skillplay.yml"
+      - "scripts/highfly_origin_r29_source_inventory_gate.py"
+      - "game/c1/highfly_origin_r27_premium23_catalog.ts"
+      - "docs/HIGHFLY_ORIGIN_R29_FULL_SKILLPLAY_RELEASE_CONTRACT.md"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-origin-r29-full-skillplay
+  cancel-in-progress: true
+jobs:
+  source_411_23:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: HIGHFLY R29 source and full integration release contract
+        uses: actions/checkout@v4
+      - name: Checkout exact original frozen ClaudeCraft ability registry
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: donor
+      - name: Checkout MIT VFX source 6 of 23 at original pinned commit
+        uses: actions/checkout@v4
+        with:
+          repository: achrefelouafi/LinearAbiltyCastingThreeJS
+          ref: 97f1de19617e9a2e3af3c8021c8c21c8f58b40f3
+          path: vendor/LinearAbiltyCastingThreeJS
+      - name: Checkout MIT VFX source 7 of 23 at original pinned commit
+        uses: actions/checkout@v4
+        with:
+          repository: achrefelouafi/LinearAbilityExtThreeJS
+          ref: bf58757ab9b6057515470aa074cdb4026bc54ed7
+          path: vendor/LinearAbilityExtThreeJS
+      - name: Checkout MIT VFX source 10 of 23 at original pinned commit
+        uses: actions/checkout@v4
+        with:
+          repository: achrefelouafi/LinearAbiltyCastingExtendedThreeJS
+          ref: 8c377c886ac2c68b26bc65c8f3507905818b974a
+          path: vendor/LinearAbiltyCastingExtendedThreeJS
+      - name: Exact 411 original abilities including 388 active candidates and 23 premium REAL VFX source modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/highfly_origin_r29_source_inventory_gate.py | tee highfly-origin-r29-inventory.log
+      - name: Verify honest full release gate - do not mislabel provenance as playability
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F '"release_ready": false' highfly-origin-r29-inventory.log
+          grep -F 'PREMIUM 23' docs/HIGHFLY_ORIGIN_R29_FULL_SKILLPLAY_RELEASE_CONTRACT.md
+          echo 'HIGHFLY_R29_RUN01_REAL_SOURCE_CHECK_GREEN_BUT_PREMIUM_SIM_VFX_HOOK_PENDING=1'
+      - name: Preserve R29 gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-R29-RUN01-REAL-SOURCE-411-AND-23-VFX-MIT-EVIDENCE
+          path: highfly-origin-r29-inventory.log
+          if-no-files-found: warn
+      - name: Explicit no Pages publication before 23 of 23 real VFX + authoritative damage
+        run: echo "HIGHFLY_R29_NO_DEPLOY_UNTIL_ALL_PREMIUM_SIM_COLLISION_VFX_QA_GREEN"
