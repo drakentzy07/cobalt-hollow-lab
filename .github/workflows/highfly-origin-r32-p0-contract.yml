@@ -5,6 +5,9 @@ on:
       - highfly-origin-r32-supreme-moba-core-p0
     paths:
       - "tests/r32/**"
+      - "game/c1/runtime.ts"
+      - "game/c1/hud.css"
+      - "overlays/highfly_game_c1.py"
       - "docs/highfly-origin/R32_COMBAT_CORE_P0_AUDIT.md"
       - ".github/workflows/highfly-origin-r32-p0-contract.yml"
   workflow_dispatch:
@@ -25,6 +28,8 @@ jobs:
           node-version: "22"
       - name: Test 4 BASE / hidden UNIQUE HUD contract
         run: node --test tests/r32/hud_contract.test.mjs
+      - name: Test ClaudeCraft-native R32 P1 HUD integration
+        run: node --test tests/r32/native_hud_integration.test.mjs
       - name: Verify P0 audit and upstream lock remain present
         shell: bash
         run: |
