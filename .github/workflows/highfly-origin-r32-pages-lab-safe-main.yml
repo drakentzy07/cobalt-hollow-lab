@@ -1,4 +1,4 @@
-name: HIGHFLY ORIGIN R32 Isolated Android Pages - Preserve Public [R32 77 GREEN]
+name: HIGHFLY ORIGIN R32 - Publish Four BASE Combat Lab (Preserve Public)
 on:
   push:
     branches: [main]
@@ -22,7 +22,7 @@ jobs:
         with:
           script: |
             for(const x of [
-              {id:38978167039,sha:'5da27a3dda0e392f72d9f67c7318fea6e5d20ab5'},
+              {id:38978773679,sha:'c2e9df51ebbf5cf18619bbd8624c0c4677866faf'},
               {id:38960414989,sha:'24583bab43ae56856a0d5de26c08fe89b7b606ac'}
             ]) {
               const r=(await github.rest.actions.getWorkflowRun({owner:context.repo.owner,repo:context.repo.repo,run_id:x.id})).data;
@@ -36,11 +36,11 @@ jobs:
           github-token: ${{ github.token }}
           name: github-pages
           path: baseline
-      - name: Download certified R32 full WebGL artifacts 23/23 VFX
+      - name: Download certified R32 P2 WebGL artifact 4 native skills
         uses: actions/download-artifact@v4
         with:
           repository: drakentzy07/cobalt-hollow-lab
-          run-id: 38978167039
+          run-id: 38978773679
           github-token: ${{ github.token }}
           name: HIGHFLY-ORIGIN-R32-NATIVE-FOUR-COMBAT-P2-NO-DEPLOY
           path: candidate
@@ -155,7 +155,7 @@ jobs:
           if not any(b'hf-origin-r32-combat' in js.read_bytes() for js in (site/'assets').glob('*.js')):
               raise SystemExit('R32_RUNTIME_NOT_COMPILED')
           qa={'edition':'HIGHFLY ORIGIN R32 4 BASE skills native S23 lab; R31 library preserved',
-              'sourceRun':38978167039,'sourceCommit':'5da27a3dda0e392f72d9f67c7318fea6e5d20ab5',
+              'sourceRun':38978773679,'sourceCommit':'c2e9df51ebbf5cf18619bbd8624c0c4677866faf',
               'originalNativeAttacks':45,'premiumNativeReady':14,
               'premiumOriginalVfxVisualOnly':9,'passivesServerPrototype':9,
               'totalCatalogIdentities':77,
@@ -199,7 +199,7 @@ jobs:
           for ref in re.findall(r"""(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)""",html):
               with urllib.request.urlopen(root+ref,timeout=30) as response:
                   if response.status!=200 or not response.read(32):raise SystemExit('R32_HTTP_ASSET_FAIL_'+ref)
-          assert json.loads(Path('site/lab/origin-r32/highfly-origin-r32-qa.json').read_text())['sourceRun']==38978167039
+          assert json.loads(Path('site/lab/origin-r32/highfly-origin-r32-qa.json').read_text())['sourceRun']==38978773679
           print('HIGHFLY_R32_PAGES_LOCAL_HTTP_GREEN')
           PY
       - uses: actions/configure-pages@v5
@@ -231,7 +231,7 @@ jobs:
           for attempt in range(35):
               try:
                   qa=json.loads(get('lab/origin-r32/highfly-origin-r32-qa.json?check='+str(attempt)))
-                  if qa.get('sourceRun')!=38978167039:raise RuntimeError('R32_NOT_LIVE_YET')
+                  if qa.get('sourceRun')!=38978773679:raise RuntimeError('R32_NOT_LIVE_YET')
                   html=get('lab/origin-r32/index.html?check='+str(attempt))
                   files=re.findall(rb"""(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)""",html)
                   if not files:raise RuntimeError('R32_NO_ASSETS_ONLINE')
