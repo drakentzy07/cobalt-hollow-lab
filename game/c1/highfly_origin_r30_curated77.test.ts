@@ -1,17 +1,30 @@
 import {describe,it,expect} from 'vitest';
+import {writeFileSync} from 'node:fs';
 import {ABILITIES} from '../src/sim/content/classes';
 import {originCostDecision} from '../src/sim/highfly_origin_universal_resources';
-import {R30_ORIGINAL_BY_SCHOOL,R30_ORIGINAL_45,R30_PREMIUM_23,R30_PASSIVE_DESIGNS,r30AuditSelected} from '../src/sim/highfly_origin_r30_curated77';
+import {R30_ORIGINAL_BY_SCHOOL,R30_ORIGINAL_45,R30_PREMIUM_23,R30_PASSIVE_DESIGNS,r30AuditSelected,r30PreflightReport,r30AdmissionReasons} from '../src/sim/highfly_origin_r30_curated77';
 import {r30ResolveSelected,r30Growth} from '../src/sim/highfly_origin_r30_lv99_instant';
 import {installR29PremiumNativeContracts,R29_PREMIUM_CONTRACTS} from '../src/sim/highfly_origin_r29_premium_native';
 
 describe('HIGHFLY R30 isolated 77-scope playable foundation',()=>{
  it('has 45 unique standalone original abilities, five per school',()=>{
   installR29PremiumNativeContracts();
+  // Must exist even if one or more entries fail: do not stop at first offender.
+  const report=r30PreflightReport();
+  writeFileSync('highfly-r30-curated-post-overlay-audit.json',JSON.stringify(report,null,2)+'\n','utf8');
+  console.info('R30_FULL_POST_OVERLAY_REPORT='+JSON.stringify({
+    totals:report.totals,underfilled:report.underfilledSchools,
+    replacements:report.schools.map(s=>({school:s.school,replacements:s.replacements,
+     rejected:s.rejected.filter(x=>x.reasons.length)}))
+  }));
+  expect(report.underfilledSchools).toEqual([]);
+  expect(report.abilities).toHaveLength(45);
   const stats=r30AuditSelected();
   expect(stats).toEqual({original:45,premium:23,passiveDesigns:9,premiumBlocked:9});
   expect(new Set(R30_ORIGINAL_45).size).toBe(45);
   expect(Object.keys(R30_ORIGINAL_BY_SCHOOL)).toHaveLength(9);
+  for(const [school,ids] of Object.entries(R30_ORIGINAL_BY_SCHOOL))
+   for(const id of ids)expect(r30AdmissionReasons(id,school as keyof typeof R30_ORIGINAL_BY_SCHOOL)).toEqual([]);
   for(const id of R30_ORIGINAL_45){
    const def=ABILITIES[id];
    expect(def).toBeTruthy();

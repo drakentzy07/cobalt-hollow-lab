@@ -1028,6 +1028,14 @@ jobs:
           VITE_HIGHFLY_ORIGIN_R30=0 pnpm exec vitest run tests/highfly_origin_r29_premium_native.test.ts tests/highfly_origin_r28_universal_tester.test.ts
           VITE_HIGHFLY_ORIGIN_R30=1 pnpm exec vitest run tests/highfly_origin_r30_curated77.test.ts
           echo 'HIGHFLY_R30_45_INDEPENDENT_23_SOURCE_9_PROPOSED_LV99_RANK_GREEN=1'
+      - name: Preserve FULL post-overlay 45-skill admission audit even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-R30-ALL-45-POST-OVERLAY-AUDIT
+          path: upstream/highfly-r30-curated-post-overlay-audit.json
+          if-no-files-found: warn
+          retention-days: 14
       - name: TypeScript all-source baseline
         working-directory: upstream
         run: pnpm exec tsc --noEmit --incremental false
