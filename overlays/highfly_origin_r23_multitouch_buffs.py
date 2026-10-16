@@ -13,7 +13,7 @@ trial='src/highfly/highfly_origin_trial_runtime.ts'
 # Reuse existing ClaudeCraft action-ability icon atlas, no new textures/licenses.
 once(trial,
      "import { ABILITIES } from '../sim/content/classes';",
-     "import { ABILITIES } from '../sim/content/classes';\\nimport { iconDataUrl } from '../ui/icons';")
+     "import { ABILITIES } from '../sim/content/classes';\nimport { iconDataUrl } from '../ui/icons';")
 once(trial,
      "  document.body.appendChild(utility);",
      """  // R23: there is no support PANEL during gameplay. B1-B4 sit against the
