@@ -149,7 +149,7 @@ jobs:
       - name: Checkout immutable lossless encoder for independent bench
         uses: actions/checkout@v4
         with:
-          clean: false
+          path: safety-scripts
       - name: RLE benchmark on three actual published HDR files - DRY RUN
         shell: bash
         run: |
@@ -164,4 +164,4 @@ jobs:
                   p.parent.mkdir(parents=True,exist_ok=True)
                   p.write_bytes(tf.extractfile(m).read())
           PY
-          python3 scripts/highfly_lossless_hdr_rle.py hdr-bench --dry-run --minimum-saved 100000
+          python3 safety-scripts/scripts/highfly_lossless_hdr_rle.py hdr-bench --dry-run --minimum-saved 100000
