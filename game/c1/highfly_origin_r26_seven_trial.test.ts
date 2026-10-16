@@ -18,7 +18,11 @@ describe('R26 seven real native abilities, no persisted unlocks',()=>{
     for(const id of ORIGIN_R26_SEVEN_IDS){
       const def=ABILITIES[id];
       expect(def).toBeTruthy();
-      expect(CLASSES[def.class].abilities).toContain(id);
+      // Three real native specialist entries are NOT in the base-class roster.
+      // The ephemeral Origin test resolves these without rewriting CLASSES.
+      const specialistOnly = new Set(['meteor','dragons_breath','bladestorm']);
+      if(specialistOnly.has(id)) expect(CLASSES[def.class].abilities).not.toContain(id);
+      else expect(CLASSES[def.class].abilities).toContain(id);
       expect(originCostDecision(def).ok).toBe(true);
       expect(def.passive).not.toBe(true);
     }
