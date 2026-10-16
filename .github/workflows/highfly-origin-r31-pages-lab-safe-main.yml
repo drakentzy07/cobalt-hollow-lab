@@ -1,0 +1,248 @@
+name: HIGHFLY ORIGIN R31 Isolated Android Pages - Preserve Public [R31 77 GREEN]
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/highfly-origin-r31-pages-lab-safe-main.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-r31-pages-publish-preserve
+  cancel-in-progress: false
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - name: Pin certified R31 and most recent cleaned Pages snapshot
+        uses: actions/github-script@v7
+        with:
+          script: |
+            for(const x of [
+              {id:38957779088,sha:'8e91c6654720c6128dbabc3c421d0ab293822f3d'},
+              {id:38936169436,sha:'866ed910082271457358fa67e7d2223a03a8ced7'}
+            ]) {
+              const r=(await github.rest.actions.getWorkflowRun({owner:context.repo.owner,repo:context.repo.repo,run_id:x.id})).data;
+              if(r.status!=='completed'||r.conclusion!=='success'||r.head_sha!==x.sha)throw Error('R31_UNVERIFIED_PIN '+x.id);
+            }
+      - name: Download currently published complete Pages snapshot
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38936169436
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: baseline
+      - name: Download certified R31 full WebGL artifacts 23/23 VFX
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38957779088
+          github-token: ${{ github.token }}
+          name: HIGHFLY-ORIGIN-R31-77-LAB-45-14-9-PASSIVES-NO-DEPLOY
+          path: candidate
+      - name: Merge hash-safe R31 resources only and preserve original site
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path,PurePosixPath
+          import tarfile,hashlib,shutil,json,re,urllib.request
+          site=Path('site');incoming=Path('candidate/cobalt-hollow-lab')
+          site.mkdir()
+          if not (incoming/'index.html').is_file() or not (incoming/'assets').is_dir() or not (incoming/'media').is_dir():
+              raise SystemExit('R31_CANDIDATE_INCOMPLETE')
+          with tarfile.open('baseline/artifact.tar','r:') as tar:
+              for m in tar.getmembers():
+                  p=PurePosixPath(m.name)
+                  if p.is_absolute() or '..' in p.parts or m.issym() or m.islnk() or not (m.isfile() or m.isdir()):
+                      raise SystemExit('R31_BAD_BASELINE_TAR')
+              tar.extractall(site,filter='data')
+          protected=['index.html','play.html','manifest.webmanifest',
+                     'lab/v15-2/index.html','lab/v15-2/highfly-v152-preview-qa.json',
+                     'lab/origin-r28/index.html','lab/origin-r28/highfly-origin-r28-qa.json',
+                     'lab/origin-r29/index.html','lab/origin-r29/highfly-origin-r29-qa.json']
+          def sha(file):
+              h=hashlib.sha256()
+              with file.open('rb') as f:
+                  for part in iter(lambda:f.read(1024*1024),b''):h.update(part)
+              return h.hexdigest()
+          keep={}
+          for name in protected:
+              if not (site/name).is_file():raise SystemExit('R31_BASELINE_MISSING_'+name)
+              keep[name]=sha(site/name)
+          if (site/'lab/origin-r31').exists():raise SystemExit('R31_LAB_EXISTS')
+          root='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          def web(rel):
+              request=urllib.request.Request(root+rel,headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-R31-GUARD'})
+              with urllib.request.urlopen(request,timeout=90) as r:
+                  if r.status!=200:raise RuntimeError('LIVE_NON_200')
+                  return r.read()
+          for path,digest in keep.items():
+              if hashlib.sha256(web(path+'?r31_guard=1')).hexdigest()!=digest:
+                  raise SystemExit('R31_LIVE_BASELINE_CHANGED_'+path)
+          # The previous R28 build applied lossless RGBE scanline RLE on some HDRs.
+          def hdr_equivalent(previous,new):
+              marker=re.compile(rb'(?m)^-Y ([0-9]+) \+X ([0-9]+)\r?\n')
+              def unpack(path):
+                  b=path.read_bytes();m=marker.search(b)
+                  if m is None:return None
+                  height,width=map(int,m.groups())
+                  if not 8<=width<=32767 or not 1<=height<=16384:return None
+                  tail=memoryview(b)[m.end():]
+                  if len(tail)==width*height*4:return b[:m.end()],bytes(tail)
+                  out=bytearray();pos=0
+                  for row_index in range(height):
+                      if bytes(tail[pos:pos+4])!=bytes((2,2,width>>8,width&255)):return None
+                      pos+=4;channels=[]
+                      for ch in range(4):
+                          buf=bytearray()
+                          while len(buf)<width:
+                              if pos>=len(tail):return None
+                              count=tail[pos];pos+=1
+                              if count==0:return None
+                              if count>128:
+                                  if pos>=len(tail):return None
+                                  buf.extend(bytes([tail[pos]])*(count-128));pos+=1
+                              else:
+                                  buf.extend(tail[pos:pos+count]);pos+=count
+                              if len(buf)>width:return None
+                          channels.append(buf)
+                      line=bytearray(width*4)
+                      for ch,buf in enumerate(channels):line[ch::4]=buf
+                      out.extend(line)
+                  return (b[:m.end()],bytes(out)) if pos==len(tail) else None
+              a=unpack(previous);b=unpack(new)
+              return a is not None and a==b
+          copied=0;same=0;hdr=0;conflicts=[];new_files=[]
+          for src in sorted(p for p in incoming.rglob('*') if p.is_file()):
+              rel=src.relative_to(incoming)
+              if rel.suffix=='.html' or rel.as_posix() in ('.nojekyll','manifest.webmanifest','sw.js','service-worker.js','highfly-supreme-qa.json') or rel.name.endswith('-qa.json'):
+                  continue
+              dst=site/rel
+              if dst.exists():
+                  if dst.is_file() and src.stat().st_size==dst.stat().st_size and sha(src)==sha(dst):
+                      same+=1
+                  elif rel.parts[:2]==('media','env') and rel.suffix=='.hdr' and hdr_equivalent(dst,src):
+                      hdr+=1
+                  else:conflicts.append(rel.as_posix())
+              else:
+                  dst.parent.mkdir(parents=True,exist_ok=True)
+                  shutil.copy2(src,dst);copied+=1
+                  new_files.append((rel.as_posix(),src.stat().st_size))
+          if conflicts:
+              print('R31_COLLISIONS='+json.dumps(conflicts[:60]))
+              raise SystemExit('R31_SHARED_RESOURCE_CONFLICT')
+          lab=site/'lab/origin-r31';lab.mkdir(parents=True)
+          html=(incoming/'index.html').read_text(encoding='utf8')
+          if '/cobalt-hollow-lab/assets/' not in html:raise SystemExit('R31_BAD_VITE_BASE')
+          html=html.replace('/cobalt-hollow-lab/manifest.webmanifest','/cobalt-hollow-lab/lab/origin-r31/manifest.webmanifest')
+          (lab/'index.html').write_text(html,encoding='utf8')
+          manifest=incoming/'manifest.webmanifest'
+          if manifest.is_file():
+              data=json.loads(manifest.read_text())
+              data.update({'id':'/cobalt-hollow-lab/lab/origin-r31/','start_url':'/cobalt-hollow-lab/lab/origin-r31/','scope':'/cobalt-hollow-lab/lab/origin-r31/'})
+              (lab/'manifest.webmanifest').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+          refs=re.findall(r"""(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)""",html)
+          if not refs:raise SystemExit('R31_NO_COMPILED_REFERENCES')
+          for url in refs:
+              if not (site/url.removeprefix('/cobalt-hollow-lab/')).is_file():
+                  raise SystemExit('R31_MISSING_ASSET_'+url)
+          if not any(b'__HIGHFLY_R31_77_QA__' in js.read_bytes() for js in (site/'assets').glob('*.js')):
+              raise SystemExit('R31_RUNTIME_NOT_COMPILED')
+          qa={'edition':'HIGHFLY ORIGIN R31 isolated Samsung S23 77-skill laboratory',
+              'sourceRun':38957779088,'sourceCommit':'8e91c6654720c6128dbabc3c421d0ab293822f3d',
+              'originalNativeAttacks':45,'premiumNativeReady':14,
+              'premiumOriginalVfxVisualOnly':9,'passivesServerPrototype':9,
+              'totalCatalogIdentities':77,
+              'all77FullyPlayable':False,'pending':['summon','portal','barrier'],
+              'physicalS23Test':'PENDING USER','preservedSiteHashes':keep,
+              'sitePath':'/cobalt-hollow-lab/lab/origin-r31/'}
+          (lab/'highfly-origin-r31-qa.json').write_text(json.dumps(qa,indent=2)+'\n')
+          (site/'.nojekyll').touch()
+          for path,digest in keep.items():
+              if sha(site/path)!=digest:raise SystemExit('R31_PROTECTED_FILE_CHANGED_'+path)
+          if any(p.is_symlink() for p in site.rglob('*')):raise SystemExit('R31_SYMLINK')
+          all_files=[p for p in site.rglob('*') if p.is_file()]
+          total=sum(p.stat().st_size for p in all_files)
+          print('HIGHFLY_R31_PAGES_STAGE='+json.dumps({'totalBytes':total,'files':len(all_files),
+            'newFiles':copied,'identical':same,'equivalentHdr':hdr,'largestNew':sorted(new_files,key=lambda x:-x[1])[:10]}))
+          if total>=995000000 or total<700000000 or len(all_files)<6000:
+              raise SystemExit('R31_PAGES_SIZE_GATE')
+          PY
+      - name: Verify local HTTP navigation and compiled WebGL files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir stage-http
+          ln -s ../site stage-http/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory stage-http >/tmp/highfly-r29-site.log 2>&1 &
+          P=$!
+          trap 'kill "$P" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30);do
+            if curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/index.html >/dev/null;then break;fi
+            sleep 1
+          done
+          python3 - <<'PY'
+          import urllib.request,re,json
+          from pathlib import Path
+          root='http://127.0.0.1:4173'
+          for rel in ('index.html','play.html','lab/v15-2/index.html','lab/origin-r28/index.html','lab/origin-r29/index.html','lab/origin-r31/index.html'):
+              with urllib.request.urlopen(root+'/cobalt-hollow-lab/'+rel,timeout=30) as response:
+                  if response.status!=200 or not response.read(32):raise SystemExit('R31_HTTP_ENTRY_FAIL_'+rel)
+          html=Path('site/lab/origin-r31/index.html').read_text()
+          for ref in re.findall(r"""(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)""",html):
+              with urllib.request.urlopen(root+ref,timeout=30) as response:
+                  if response.status!=200 or not response.read(32):raise SystemExit('R31_HTTP_ASSET_FAIL_'+ref)
+          assert json.loads(Path('site/lab/origin-r31/highfly-origin-r31-qa.json').read_text())['sourceRun']==38957779088
+          print('HIGHFLY_R31_PAGES_LOCAL_HTTP_GREEN')
+          PY
+      - uses: actions/configure-pages@v5
+      - name: Upload complete preserved Pages with R31 sidecar
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/lab/origin-r31/
+    steps:
+      - uses: actions/deploy-pages@v4
+      - name: Verify R31 LIVE and original public SHA byte-identical
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import urllib.request,hashlib,json,re,time
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          def get(path):
+              req=urllib.request.Request(base+path,headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-R31-LIVE-GATE'})
+              with urllib.request.urlopen(req,timeout=60) as r:
+                  if r.status!=200:raise RuntimeError('HTTP_'+str(r.status))
+                  return r.read()
+          for attempt in range(35):
+              try:
+                  qa=json.loads(get('lab/origin-r31/highfly-origin-r31-qa.json?check='+str(attempt)))
+                  if qa.get('sourceRun')!=38957779088:raise RuntimeError('R31_NOT_LIVE_YET')
+                  html=get('lab/origin-r31/index.html?check='+str(attempt))
+                  files=re.findall(rb"""(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)""",html)
+                  if not files:raise RuntimeError('R31_NO_ASSETS_ONLINE')
+                  for p,digest in qa['preservedSiteHashes'].items():
+                      if hashlib.sha256(get(p+'?check='+str(attempt))).hexdigest()!=digest:
+                          raise SystemExit('R31_OLD_SITE_CHANGED_'+p)
+                  for file in files:
+                      if not get(file.decode().removeprefix('/cobalt-hollow-lab/')):
+                          raise RuntimeError('R31_ASSET_NOT_LIVE')
+                  print('HIGHFLY_R31_PAGES_LIVE_GREEN='+base+'lab/origin-r31/')
+                  break
+              except SystemExit:raise
+              except Exception as error:
+                  print('R31_PAGES_PROPAGATION',attempt,str(error)[:160]);time.sleep(6)
+          else:raise SystemExit('R31_PUBLIC_URL_UNVERIFIED')
+          PY
