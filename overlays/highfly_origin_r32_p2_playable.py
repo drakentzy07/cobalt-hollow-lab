@@ -22,16 +22,86 @@ def main():
     for path in (runtime, style):
         if not path.is_file():
             raise SystemExit("R32_MISSING_CLAUDE_NATIVE_SEAM:"+str(path))
-    # Replacement of the C2.8 UI *presentation*, preserving its original
-    # action bar, menu, interaction hooks, game runtime and saved hero.
-    for source, dest in (
-        ("game/c1/runtime.ts", runtime),
-        ("game/c1/hud.css", style),
-    ):
-        donor = Path("../v9-corrections") / source
-        if not donor.is_file():
-            raise SystemExit("R32_MISSING_VERSIONED_C2_SOURCE:"+str(donor))
-        shutil.copy2(donor,dest)
+    # Surgical adaptation of the fully assembled C2.8 runtime: do not
+    # replace its PR16 GEM guide, PR18/19 UX, menues, or native callbacks.
+    replace_one(runtime, "const w = window as HighflyGameWindow;",
+      """const w = window as HighflyGameWindow;
+const originR32Mode = import.meta.env.VITE_HIGHFLY_ORIGIN_R32 === '1';""")
+    replace_one(runtime, "function ensureSpecialSeats(): void {",
+      """function ensureSpecialSeats(): void {
+  if (originR32Mode) { document.getElementById('hf-c1-special-seats')?.remove(); return; }""")
+    replace_one(runtime, "function ensureGhostSkillSeats(): void {",
+      """function ensureGhostSkillSeats(): void {
+  if (originR32Mode) { document.getElementById('hf-c22-ghost-skills')?.remove(); return; }""")
+    replace_one(runtime, "function paintContextualAttack(): void {",
+      """function ensureR32UseButton(): void {
+  if (!originR32Mode) return;
+  let button = document.getElementById('hf-r32-use') as HTMLButtonElement | null;
+  if (!button) {
+    button = document.createElement('button');
+    button.id = 'hf-r32-use';
+    button.type = 'button';
+    button.textContent = 'USAR';
+    button.title = 'Interactuar con el mundo';
+    button.setAttribute('aria-label', 'Usar / Interactuar');
+    button.addEventListener('click', () => {
+      if (w.__highflyGameC1Context?.canUse?.() !== true) return;
+      w.__game?.hud?.onMobileContextualUse?.();
+    });
+    document.body.append(button);
+  }
+  button.disabled = !document.body.classList.contains('hf-c25-world-ready')
+    || w.__highflyGameC1Context?.canUse?.() !== true;
+}
+
+function paintContextualAttack(): void {""")
+    replace_one(runtime,
+      "  const use = w.__highflyGameC1Context?.canUse?.() === true;",
+      "  const use = !originR32Mode && w.__highflyGameC1Context?.canUse?.() === true;")
+    replace_one(runtime, "  ...Array.from({ length: 10 }, (_, index) => ({",
+      "  ...Array.from({ length: originR32Mode ? 4 : 10 }, (_, index) => ({")
+    replace_one(runtime,
+      """  { id: 'esp1', label: 'ESPECIAL 1', selectors: ['#hf-c1-esp1'] },
+  { id: 'esp2', label: 'ESPECIAL 2', selectors: ['#hf-c1-esp2'] },
+  { id: 'ult', label: 'ULT', selectors: ['#hf-c1-ult'] },
+  { id: 'target', label: 'TARGET', selectors: ['#mobile-target-cycle'] },""",
+      """  ...(originR32Mode ? [{ id: 'use', label: 'USAR', selectors: ['#hf-r32-use'] }] : [
+    { id: 'esp1', label: 'ESPECIAL 1', selectors: ['#hf-c1-esp1'] },
+    { id: 'esp2', label: 'ESPECIAL 2', selectors: ['#hf-c1-esp2'] },
+    { id: 'ult', label: 'ULT', selectors: ['#hf-c1-ult'] },
+    { id: 'target', label: 'TARGET', selectors: ['#mobile-target-cycle'] },
+  ]),""")
+    replace_one(runtime,
+      "const HIGHFLY_HUD_STORE_PREFIX = 'highfly:c282:hud:';",
+      "const HIGHFLY_HUD_STORE_PREFIX = originR32Mode ? 'highfly:r32:hud:' : 'highfly:c282:hud:';")
+    replace_one(runtime,
+      """function highflyHudDefault(targetId: string): HighflyHudTransform {
+  const value""",
+      """function highflyHudDefault(targetId: string): HighflyHudTransform {
+  if (originR32Mode && (/^s[1-4]$/.test(targetId) || targetId === 'attack'
+     || targetId === 'jump' || targetId === 'evade' || targetId === 'use'))
+    return { x: 0, y: 0, scale: 1, opacity: 1 };
+  const value""")
+    replace_one(runtime,
+      """    ensureSpecialSeats();
+    ensureGhostSkillSeats();
+    ensureUtilityLane();
+    installSkillTouch();""",
+      """    document.body.classList.toggle('hf-origin-r32-combat',
+      originR32Mode && !!w.__game?.sim?.player?.originResources);
+    ensureSpecialSeats();
+    ensureGhostSkillSeats();
+    ensureUtilityLane();
+    ensureR32UseButton();
+    installSkillTouch();""")
+    # Append only the verified R32 CSS override; keep every prior PR16/C2.8 rule.
+    r32_css = Path("../v9-corrections/game/c1/hud.css").read_text(encoding="utf8")
+    marker = "/* ==========================================================================" + chr(10) + "   HIGHFLY R32 P1 NATIVE HUD"
+    idx = r32_css.find(marker)
+    if idx < 0 or "hf-origin-r32-combat" not in r32_css[idx:]:
+        raise SystemExit("R32_CSS_EXTENSION_MISSING")
+    style.write_text(style.read_text(encoding="utf8") + chr(10) + r32_css[idx:],
+                     encoding="utf8")
     if "VITE_HIGHFLY_ORIGIN_R32" not in runtime.read_text():
         raise SystemExit("R32_MISSING_ISOLATED_HUNTER_FLAG")
 
