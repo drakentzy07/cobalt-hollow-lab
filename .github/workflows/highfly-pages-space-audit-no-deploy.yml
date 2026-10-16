@@ -1,0 +1,59 @@
+name: HIGHFLY Pages Space Audit - NO DEPLOY
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/highfly-pages-space-audit-no-deploy.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Download exact live Pages artifact for inventory only
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38892068367
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: live-baseline
+      - name: Inspect sizes, duplicates and safely removable candidates WITHOUT modifying
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import tarfile,json,collections,os,re
+          archive='live-baseline/artifact.tar'
+          bydir=collections.Counter()
+          byext=collections.Counter()
+          bytop=collections.Counter()
+          members=[]
+          duplicates=collections.defaultdict(list)
+          with tarfile.open(archive,'r:') as tf:
+              for m in tf:
+                  if not m.isfile():continue
+                  path=m.name.lstrip('./')
+                  p=path.split('/')
+                  if path.startswith('/') or '..' in p:raise SystemExit('UNSAFE_PATH')
+                  members.append((m.size,path))
+                  bytop[p[0]]+=m.size
+                  for n in (2,3,4):
+                      if len(p)>=n:bydir['/'.join(p[:n])]+=m.size
+                  byext[os.path.splitext(path)[1].lower() or '(none)']+=m.size
+                  duplicates[(m.size,os.path.basename(path))].append(path)
+          members.sort(reverse=True)
+          def mb(n):return round(n/1e6,2)
+          print('HF_PAGES_AUDIT_TOTAL='+json.dumps({'files':len(members),'bytes':sum(m[0] for m in members),'MB':mb(sum(m[0] for m in members))}))
+          print('HF_PAGES_TOP_LEVEL='+json.dumps([(x,mb(y)) for x,y in bytop.most_common(30)]))
+          print('HF_PAGES_DIRECTORY_TOP='+json.dumps([(x,mb(y)) for x,y in bydir.most_common(60)]))
+          print('HF_PAGES_EXTENSION_TOP='+json.dumps([(x,mb(y)) for x,y in byext.most_common(25)]))
+          print('HF_PAGES_LARGEST_FILES='+json.dumps([(mb(n),p) for n,p in members[:75]]))
+          dupe=[(size,ps) for (size,name),ps in duplicates.items() if len(ps)>1 and size>=100000]
+          dupe.sort(reverse=True)
+          print('HF_PAGES_SAME_NAME_AND_SIZE='+json.dumps([{'MB_each':mb(n),'paths':ps[:8]} for n,ps in dupe[:35]]))
+          print('HF_PAGES_POTENTIAL_JUNK='+json.dumps([(mb(n),p) for n,p in members if p.endswith(('.map','.log','.tmp','.bak','.zip','.tar','.gz'))][:75]))
+          PY
