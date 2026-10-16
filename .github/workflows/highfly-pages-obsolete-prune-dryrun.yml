@@ -1,0 +1,70 @@
+name: HIGHFLY Pages Obsolete Lab Prune - DRY RUN ONLY
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/highfly-pages-obsolete-prune-dryrun.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 38903606037
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: baseline
+      - name: Classify legacy labs and static dependency graph without deletion
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import tarfile,os,re,json,collections
+          from pathlib import PurePosixPath
+          tf=tarfile.open('baseline/artifact.tar','r:')
+          members={m.name.lstrip('./'):m for m in tf if m.isfile()}
+          labs=collections.defaultdict(lambda:[0,0])
+          for p,m in members.items():
+              if p.startswith('lab/'):
+                  part=p.split('/')[1];labs[part][0]+=1;labs[part][1]+=m.size
+          print('HIGHFLY_ALL_LABS='+json.dumps({k:{'files':v[0],'bytes':v[1]} for k,v in sorted(labs.items())}))
+          protected=('lab/v15-2/','lab/origin-r28/')
+          old_labs=tuple('lab/'+x+'/' for x in labs if 'lab/'+x+'/' not in protected)
+          roots=[p for p in members if p.endswith('.html') and not p.startswith(old_labs)]
+          indexed={PurePosixPath(p).name:p for p in members if p.startswith('assets/') and p.endswith(('.js','.css','.wasm'))}
+          ref_pattern=re.compile(rb'([A-Za-z0-9._/-]+\.(?:js|css|wasm))')
+          graph={}
+          for p,m in members.items():
+              if not p.endswith(('.html','.js','.css','.json','.webmanifest')) or m.size>20_000_000:continue
+              b=tf.extractfile(m).read()
+              graph[p]=set()
+              for token in set(ref_pattern.findall(b)):
+                  dest=indexed.get(token.rsplit(b'/',1)[-1].decode('utf8','ignore'))
+                  if dest and dest!=p:graph[p].add(dest)
+          def closure(roots):
+              reachable=set(roots);todo=list(roots)
+              while todo:
+                  p=todo.pop()
+                  for q in graph.get(p,()):
+                      if q not in reachable:reachable.add(q);todo.append(q)
+              return reachable
+          retained=closure(roots)
+          legacy_html=[p for p in members if p.endswith('.html') and p.startswith(old_labs)]
+          legacy_reachable=closure(legacy_html)
+          removable_assets=sorted((p for p in legacy_reachable-retained if p.startswith('assets/') and p.endswith('.js')),key=lambda p:members[p].size,reverse=True)
+          print('HIGHFLY_PRUNE_DRY_RUN='+json.dumps({
+             'keep':'all root HTML + V15.2 + R28; do not touch media, audio, PWA, textures, models',
+             'legacy_lab_names':list(old_labs),'legacy_html_count':len(legacy_html),
+             'legacy_file_count':sum(p.startswith(old_labs) for p in members),
+             'legacy_html_bytes':sum(m.size for p,m in members.items() if p.startswith(old_labs)),
+             'graph_js_removal_count':len(removable_assets),
+             'graph_js_removal_bytes':sum(members[p].size for p in removable_assets),
+             'largest':[(p,members[p].size) for p in removable_assets[:50]],
+             'note':'PREVIEW ONLY, static module references are conservative but runtime dependencies must still be verified'
+          }))
+          PY
