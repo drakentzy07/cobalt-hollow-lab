@@ -69,7 +69,7 @@ const decodeBase64=(s)=>{const raw=atob(s);const out=new Uint8Array(raw.length);
 const nativeFileLoad=THREE.FileLoader.prototype.load;
 THREE.FileLoader.prototype.load=function(url,onLoad,onProgress,onError){
  const name=String(url??'');
- if(name.endsWith('/basis_transcoder.js')||name.endsWith('/basis_transcoder.wasm')){
+ if(name.endsWith('basis_transcoder.js')||name.endsWith('basis_transcoder.wasm')){
   const js=name.endsWith('.js');const encoded=window[js?'__HIGHFLY_BASIS_JS_BASE64__':'__HIGHFLY_BASIS_WASM_BASE64__'];
   if(!encoded){queueMicrotask(()=>onError?.(new Error('MISSING_INLINE_BASIS_TRANSCODER')));return this;}
   queueMicrotask(()=>{try{const bin=decodeBase64(encoded);onLoad(js?new TextDecoder().decode(bin):bin.buffer);}catch(err){onError?.(err);}});return this;
