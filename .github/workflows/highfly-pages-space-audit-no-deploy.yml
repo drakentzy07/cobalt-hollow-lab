@@ -57,3 +57,46 @@ jobs:
           print('HF_PAGES_SAME_NAME_AND_SIZE='+json.dumps([{'MB_each':mb(n),'paths':ps[:8]} for n,ps in dupe[:35]]))
           print('HF_PAGES_POTENTIAL_JUNK='+json.dumps([(mb(n),p) for n,p in members if p.endswith(('.map','.log','.tmp','.bak','.zip','.tar','.gz'))][:75]))
           PY
+      - name: Find conservative unreferenced hashed JS candidates, no deletion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import tarfile,re,json,collections,posixpath
+          archive='live-baseline/artifact.tar'
+          with tarfile.open(archive,'r:') as tar:
+              files={m.name.lstrip('./'):m for m in tar if m.isfile()}
+              scripts={p:m.size for p,m in files.items() if p.startswith('assets/') and p.endswith('.js')}
+              css={p:m.size for p,m in files.items() if p.startswith('assets/') and p.endswith('.css')}
+              indexed={posixpath.basename(p):p for p in (*scripts,*css)}
+              match=re.compile(rb'[A-Za-z0-9._/-]+\.(?:js|css)')
+              referenced=collections.defaultdict(set)
+              roots=set()
+              scripts_read=0
+              for path,m in files.items():
+                  if not path.endswith(('.html','.js','.css','.json','.webmanifest','.xml','.svg','.mjs')):continue
+                  if m.size>20_000_000:continue
+                  fh=tar.extractfile(m)
+                  if fh is None:continue
+                  b=fh.read()
+                  for token in set(match.findall(b)):
+                      name=token.rsplit(b'/',1)[-1].decode('utf8','ignore')
+                      target=indexed.get(name)
+                      if target is not None and target!=path:
+                          referenced[target].add(path)
+                  if path.endswith('.html'):
+                      for token in match.findall(b):
+                          name=token.rsplit(b'/',1)[-1].decode('utf8','ignore')
+                          target=indexed.get(name)
+                          if target:roots.add(target)
+                  scripts_read+=1
+              orphans=sorted(((size,p) for p,size in scripts.items() if not referenced[p]),reverse=True)
+              candidates=sorted(((size,p, len(referenced[p]),list(referenced[p])[:3]) for p,size in scripts.items()),reverse=True)
+              print('HF_JS_ORPHAN_AUDIT='+json.dumps({
+                  'total_scripts':len(scripts),'js_MB':round(sum(scripts.values())/1e6,2),
+                  'orphan_count':len(orphans),'orphan_MB':round(sum(x[0] for x in orphans)/1e6,2),
+                  'top_orphans':[(round(n/1e6,2),p) for n,p in orphans[:70]],
+                  'top_referenced':[(round(n/1e6,2),p,count,refs) for n,p,count,refs in candidates[:25]],
+                  'html_referenced_count':len(roots),'texts_scanned':scripts_read
+              }))
+          PY
