@@ -20,7 +20,7 @@ const inject='<script>window.__HIGHFLY_KAYKIT_GLB_BASE64__='+JSON.stringify(bin.
 const target='<script type="module" src="./main3d.mjs"></script>';
 if(!html.includes(target))throw Error('HTML_ENTRY_MISMATCH');
 const single=html.replace(target,inject);
-if(single.includes('src="./main3d.mjs"'))throw Error('UNBUNDLED_SCRIPT');
+if(single.includes(target))throw Error('UNBUNDLED_MODULE_SCRIPT');
 const out=join(folder,'dist');mkdirSync(out,{recursive:true});
 writeFileSync(join(out,'HIGHFLY_GUINEVERE_R02_KAYKIT_3D.html'),single);
 writeFileSync(join(out,'asset_audit.json'),JSON.stringify({glb:file,bytes:bin.length,meshes:gltf.meshes?.length,skins:gltf.skins?.length,animations:animationNames,author:'KayKit / Kay Lousberg',license:'CC0-1.0 per upstream CREDITS.md'},null,2));
