@@ -1,0 +1,11 @@
+import {readFileSync,writeFileSync} from 'node:fs';
+import {join,dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=dirname(fileURLToPath(import.meta.url));
+const html=readFileSync(join(root,'index.html'),'utf8');
+const core=readFileSync(join(root,'core.mjs'),'utf8');
+const ui=readFileSync(join(root,'ui.mjs'),'utf8').replace(/^import \{UniqueGuinevereLab,RULES,LAB_VERSION,normalize,distance\} from '\.\/core\.mjs';\s*/,'');
+if(ui.startsWith('import ')||!html.includes('<script type="module" src="./ui.mjs"></script>'))throw Error('SOURCE_LINK_CONTRACT_CHANGED');
+const bundled=html.replace('<script type="module" src="./ui.mjs"></script>',`<script type="module">\n${core}\n${ui.replaceAll('</script>','<\\/script>')}\n</script>`);
+writeFileSync(join(root,'index.standalone.html'),bundled);
+console.log('Standalone generated:',bundled.length,'bytes');

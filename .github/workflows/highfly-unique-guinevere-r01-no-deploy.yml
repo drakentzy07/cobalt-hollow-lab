@@ -1,0 +1,46 @@
+name: HIGHFLY UNIQUE Guinevere R01 - TEST and standalone ARTIFACT ONLY
+on:
+  push:
+    branches:
+      - highfly-unique-guinevere-lab-r01
+    paths:
+      - 'unique-lab/guinevere/**'
+      - '.github/workflows/highfly-unique-guinevere-r01-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unique-guinevere-r01:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout isolated branch
+        uses: actions/checkout@v4
+      - name: Node v22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check standalone source syntax
+        run: |
+          node --check unique-lab/guinevere/core.mjs
+          node --check unique-lab/guinevere/ui.mjs
+      - name: Deterministic combat tests
+        run: node --test unique-lab/guinevere/core.test.mjs
+      - name: Build portable offline browser lab
+        run: node unique-lab/guinevere/build-standalone.mjs
+      - name: Verify fully self-contained without remote dependencies
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync,statSync} from 'node:fs';
+          const html=readFileSync('unique-lab/guinevere/index.standalone.html','utf8');
+          if(!html.includes('HIGHFLY · UNIQUE SKILL LAB')||!html.includes('UniqueGuinevereLab'))throw Error('LAB_MISSING');
+          if(html.includes('src="./ui.mjs"')||/<script[^>]+src=/i.test(html)||/https?:\/\//i.test(html))throw Error('REMOTE_DEPENDENCY_OR_UNBUNDLED_SCRIPT');
+          if(statSync('unique-lab/guinevere/index.standalone.html').size>150000)throw Error('LAB_OVERSIZED');
+          console.log('HIGHFLY UNIQUE LAB standalone verified');
+          NODE
+      - name: Publish workflow artifact - no Pages deploy
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-UNIQUE-GUINEVERE-R01-OFFLINE-HTML
+          path: unique-lab/guinevere/index.standalone.html
+          if-no-files-found: error
