@@ -106,8 +106,8 @@ export class HighflyAimVisual {
    const rx=dz,rz=-dx;
    const side=(p:P,s:number)=>point(p.x+rx*s,p.z+rz*s);
    // All preview geometry, including the arrowhead, stays INSIDE range.
-   const head=clamp(length*.19,.55,1.9);
-   const tail=clamp(length*.12,.30,.85);
+   const head=Math.min(length*.43,clamp(length*.19,.24,1.9));
+   const tail=Math.min(length*.12,clamp(length*.12,.08,.85));
    const start=point(origin.x+dx*tail,origin.z+dz*tail);
    const base=point(end.x-dx*head,end.z-dz*head);
    const shaft=role==='dash'?clamp(width*.31,.18,.43):clamp(width*.37,.22,.48);
