@@ -1149,7 +1149,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: HIGHFLY-R29-P3-VFX23-S23-CHROME-BROWSER-EVIDENCE
-          path: upstream/highfly-r29-vfx23-s23-browser-report.json
+          path: |
+            upstream/highfly-r29-vfx23-s23-browser-report.json
+            upstream/highfly-r29-vfx23-s23-boot-failure.png
           if-no-files-found: warn
       - name: Upload actual playable WEBGL full assets ONLY after green gates (never publish)
         uses: actions/upload-artifact@v4
