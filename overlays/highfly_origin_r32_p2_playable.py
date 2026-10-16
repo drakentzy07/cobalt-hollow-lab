@@ -123,13 +123,18 @@ export function r32StartSession(sim:Sim):void {
 export function r28Reapply(meta:LabMeta,level=1):void {
  const r32=r32SessionLoadouts.get(meta);
  if(r32){meta.known=r32.map(id=>r28Resolved(id,level));return;}""")
+    # R30 freezes only its 45 curated identities; Heroic Leap is a real,
+    # native and Origin-approved mobility action outside the R30 top-five.
+    # R32's isolated opt-in may resolve precisely this ID from the original
+    # ABILITIES registry, subject to r28Selectable and Origin guard. It does
+    # not add a permanent learn/unlock or modify R30's 45 admission set.
     # Original Charge has the server-blocked legacy "charge" effect and
     # MUST NOT be injected: it aborts Hunter entry before the world loads.
     # Blink/Flitstep is a safe native movement fallback until Charge is
     # genuinely adapted to HP/MP/Stamina. No server resource guards bypassed.
     replace_one(session,
         "if(import.meta.env.VITE_HIGHFLY_ORIGIN_R30==='1')return r30ResolveSelected(id,level);",
-        "if(import.meta.env.VITE_HIGHFLY_ORIGIN_R30==='1' && !(import.meta.env.VITE_HIGHFLY_ORIGIN_R32==='1' && id==='blink'))return r30ResolveSelected(id,level);")
+        "if(import.meta.env.VITE_HIGHFLY_ORIGIN_R30==='1' && !(import.meta.env.VITE_HIGHFLY_ORIGIN_R32==='1' && (id==='blink'||id==='heroic_leap')))return r30ResolveSelected(id,level);")
     replace_one("src/main.ts",
         "import { r28StartSession } from './sim/highfly_origin_r28_session';",
         "import { r28StartSession, r32StartSession } from './sim/highfly_origin_r28_session';")
