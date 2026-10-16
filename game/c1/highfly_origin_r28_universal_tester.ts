@@ -19,7 +19,7 @@ export interface R28Hooks{
  cameraYaw:()=>number;
  iconUrl:(id:string)=>string;
 }
-const mini=(el:HTMLElement,css:string)=>{el.style.cssText=css;return el;};
+const mini=<T extends HTMLElement>(el:T,css:string):T=>{el.style.cssText=css;return el;};
 export function mountR28UniversalTester(h:R28Hooks):()=>void{
  const list=r28UniversalCatalog();
  const native=list.filter(x=>x.kind==='native');
