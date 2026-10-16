@@ -3,6 +3,8 @@ import {beforeEach,afterEach,describe,it,expect,vi} from 'vitest';
 import * as THREE from 'three';
 import {readFileSync} from 'node:fs';
 import {installOriginAimAndLoadout} from '../src/highfly/highfly_origin_r17_hud';
+import {abilityCastSurvivesMovement} from '../src/sim/combat/cast_move_gate';
+import type {Entity} from '../src/sim/types';
 function ptr(el:Element,type:string,id:number,x:number,y:number){
  const e=new Event(type,{bubbles:true,cancelable:true}) as PointerEvent;
  Object.defineProperties(e,{
@@ -51,8 +53,10 @@ describe('R23 real second-thumb pointer path + separated support banks',()=>{
   ptr(h.joystick,'pointermove',11,119,204);
   expect(h.joy.down).toBe(1);
   expect(h.joy.move).toBe(3);
-  expect(h.cast).toHaveBeenCalledExactlyOnceWith(1);
-  expect(h.target).toHaveBeenCalledExactlyOnceWith(88);
+  expect(h.cast).toHaveBeenCalledTimes(1);
+  expect(h.cast).toHaveBeenCalledWith(1);
+  expect(h.target).toHaveBeenCalledTimes(1);
+  expect(h.target).toHaveBeenCalledWith(88);
  });
  it('independent left joystick pointer continues after skill-first press, and drag remains manual',()=>{
   const h=harness();
@@ -65,6 +69,17 @@ describe('R23 real second-thumb pointer path + separated support banks',()=>{
   expect(h.joy.move).toBe(2);
   expect(h.cast).toHaveBeenCalledTimes(1);
   expect(h.face).toHaveBeenCalledTimes(1);
+ });
+ it('the Origin Hunter survives a cast while moving in the ORIGINAL shared native gate',()=>{
+  const player={
+    kind:'player',originResources:{mp:120,stamina:100},auras:[]
+  } as unknown as Entity;
+  expect(abilityCastSurvivesMovement(player,'fireball',
+    {def:{castWhileMoving:false},castWhileMoving:false})).toBe(true);
+  // The original ClaudeCraft ability-level mobility flag must remain valid.
+  const legacy={kind:'player',auras:[]} as unknown as Entity;
+  expect(abilityCastSurvivesMovement(legacy,'fireball',
+    {def:{castWhileMoving:true}})).toBe(true);
  });
  it('R23 replaces B1-B8 panel with two GEM-sized independent four-button banks',()=>{
   const trial=readFileSync('src/highfly/highfly_origin_trial_runtime.ts','utf8');
