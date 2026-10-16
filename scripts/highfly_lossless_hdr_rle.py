@@ -94,7 +94,7 @@ def compress_lossless(original:bytes)->tuple[bytes,dict]|None:
     return new,dict(width=w,height=h,before=len(original),
                     after=len(new),saved=len(original)-len(new),pixel_sha256=source_sha)
 
-def optimize(root:Path,dry_run:bool,minimum:int=500000)->dict:
+def optimize(root:Path,dry_run:bool,minimum:int=500000,target_savings:int=20_000_000)->dict:
     report=[]
     for path in sorted(root.glob('media/env/*.hdr')):
         original=path.read_bytes()
@@ -115,6 +115,7 @@ def optimize(root:Path,dry_run:bool,minimum:int=500000)->dict:
             finally:
                 if os.path.exists(tmp):os.unlink(tmp)
         report.append({'path':str(path.relative_to(root)),**meta})
+        if sum(item['saved'] for item in report)>=target_savings:break
     return {'mode':'dry-run' if dry_run else 'stage-only',
             'files':len(report),'saved_bytes':sum(d['saved'] for d in report),
             'details':report}
@@ -124,6 +125,7 @@ if __name__=='__main__':
     ap.add_argument('root',type=Path)
     ap.add_argument('--dry-run',action='store_true')
     ap.add_argument('--minimum-saved',type=int,default=500000)
+    ap.add_argument('--target-savings',type=int,default=20_000_000)
     args=ap.parse_args()
-    report=optimize(args.root,args.dry_run,args.minimum_saved)
+    report=optimize(args.root,args.dry_run,args.minimum_saved,args.target_savings)
     print('HIGHFLY_LOSSLESS_HDR_RLE='+json.dumps(report))
