@@ -10,6 +10,15 @@ import shutil
 def once(path,old,new):
  p=Path(path);s=p.read_text('utf-8')
  n=s.count(old)
+ if n!=1 and old.lstrip(' ')!=old:
+  # Prior R29/R30 patches preserve semantics but sometimes change indentation.
+  # Allow only ONE exact code anchor with different leading spaces, not fuzzy edits.
+  candidate=old.lstrip(' ')
+  if s.count(candidate)==1:
+   old=candidate
+   new=new.lstrip(' ')
+   n=1
+   print('R31_INDENT_ONLY_COMPAT:'+str(path)+':'+repr(old[:65]))
  if n!=1:raise SystemExit('R31_SOURCE_DRIFT:'+str(path)+':'+str(n)+':'+repr(old[:120]))
  p.write_text(s.replace(old,new,1),encoding='utf-8')
 

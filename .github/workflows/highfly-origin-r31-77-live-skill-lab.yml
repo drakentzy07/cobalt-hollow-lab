@@ -207,6 +207,28 @@ jobs:
             /overlays/highfly_v15_pwa_manifest.py
             /overlays/rewrite_pages_static.py
             /tests/test_highfly_v15_pwa_manifest.py
+      - name: R31 fast syntax and anchor preflight before expensive integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile v9-corrections/overlays/highfly_origin_r31_77_laboratory.py
+          python3 - <<'PY'
+          from pathlib import Path
+          repo=Path('v9-corrections')
+          script=(repo/'overlays/highfly_origin_r31_77_laboratory.py').read_text()
+          r29=(repo/'overlays/highfly_origin_r29_vendor_bridge.py').read_text()
+          r30=(repo/'overlays/highfly_origin_r30_curated_preview.py').read_text()
+          for anchor in ['R31_INDENT_ONLY_COMPAT','r31OutgoingDamageMultiplier',
+                         'r31IncomingDamageMultiplier','r31MovementSpeedBonus',
+                         'r31ManaRegenMultiplier','R29_PREMIUM_CONTRACTS',
+                         'r31PassiveLabAudit','previewOnly']:
+            assert anchor in script, 'R31_PREFLIGHT_MISSING:'+anchor
+          assert 'const works=r28Selectable(item.id);' in r29
+          assert 'R30_PASSIVE_DESIGNS' in r30
+          assert (repo/'game/c1/highfly_origin_r31_passive_runtime.ts').is_file()
+          assert (repo/'game/c1/highfly_origin_r31_77_laboratory.test.ts').is_file()
+          print('R31_FAST_STATIC_ANCHOR_PREFLIGHT_GREEN=1')
+          PY
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
