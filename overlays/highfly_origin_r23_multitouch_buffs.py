@@ -81,6 +81,17 @@ once(aim,
             window.setTimeout(()=>{if(!pending)indicator.style.display='none';},650);
           }
           // Direction with no valid enemy: do not fake a direct-damage projectile.""")
+# One native predicate is shared by spell press validation and interruption
+# while walking. Opt-in only for the real Origin Hunter entity carrying the
+# dedicated MP/Stamina profile; original nine ClaudeCraft classes unchanged.
+# This allows non-instant spells to BEGIN and CONTINUE while GOLDEN moves.
+once('src/sim/combat/cast_move_gate.ts',
+     "  return Boolean(\n    resolved.def.castWhileMoving ||",
+     """  // HIGHFLY ORIGIN: Action RPG mobility for the persistent Hunter only.
+  // The same predicate is read before the cast AND on movement ticks.
+  if (p.kind === 'player' && p.originResources) return true;
+  return Boolean(
+    resolved.def.castWhileMoving ||""")
 # Keep own-pointer cancellation from clearing other input state. Already only
 # matches pending.id, but document this as explicit regression contract.
 print('HIGHFLY_ORIGIN_R23_TWO_THUMBS_TOP_BOTTOM_GEM_SIZED_BUFFS_PATCH_READY=1')
