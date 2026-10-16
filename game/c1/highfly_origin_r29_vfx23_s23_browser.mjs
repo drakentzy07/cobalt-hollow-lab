@@ -26,7 +26,7 @@ try{
  });
  await page.goto(URL,{waitUntil:'domcontentloaded',timeout:50000});
  await page.locator('#hf-origin-entry').waitFor({state:'attached',timeout:60000});
- await page.locator('#hf-origin-name').fill('R29VfxQA');
+ await page.locator('#hf-origin-name').fill('VfxTester');
  await page.evaluate(()=>document.querySelector('#hf-origin-entry button')?.click());
  for(let i=0;i<110;i++){
   const state=await page.evaluate(()=>{
