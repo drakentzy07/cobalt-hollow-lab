@@ -5,6 +5,7 @@
  */
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {KTX2Loader} from 'three/addons/loaders/KTX2Loader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {UniqueGuinevereLab,RULES,LAB_VERSION,normalize,distance} from './core.mjs';
 
@@ -51,8 +52,8 @@ function runFX(dt){for(let i=fx.length-1;i>=0;i--){const e=fx[i];e.age+=dt;const
 }}
 const actor=new THREE.Group();scene.add(actor);
 let actualRig=null,rigClips=[],mixer=null,currentAction=null,currentClip='',rigOffset=0,rigScale=1,rigReady=false;
-const animRegex={idle:/idle|standing|rest/i,run:/run|walk|sprint|movement/i,U1:/cast|spell|magic|attack/i,U2:/jump|leap|roll|dash|attack/i,U3:/cast|spell|attack|magic|swing/i};
-function chooseClip(kind){const pattern=animRegex[kind]||animRegex.idle;return rigClips.find(c=>pattern.test(c.name)) || (kind!=='idle'?rigClips.find(c=>animRegex.idle.test(c.name)):null) || rigClips[0] ||null;}
+const preferredClips={idle:['Idle'],run:['Running_A','Walking_A'],U1:['Spellcast_Shoot','Spellcasting'],U2:['Jump_Idle','Spellcast_Raise'],U3:['Spellcast_Raise','Spellcasting']};
+function chooseClip(kind){for(const name of (preferredClips[kind]??preferredClips.idle)){const clip=rigClips.find(c=>c.name===name);if(clip)return clip;}return rigClips.find(c=>/idle/i.test(c.name))||rigClips[0]||null;}
 function playClip(kind,oneshot=false){if(!mixer||!rigClips.length)return;const clip=chooseClip(kind);if(!clip)return;
  if(currentClip===clip.name&&!oneshot)return;const next=mixer.clipAction(clip);next.reset();next.enabled=true;next.setEffectiveWeight(1);
  next.setEffectiveTimeScale((kind==='U3'&&oneshot)?Math.max(.8,clip.duration/1.8):1);
@@ -62,8 +63,22 @@ function playClip(kind,oneshot=false){if(!mixer||!rigClips.length)return;const c
 function decodeInlineGlb(){const b64=window.__HIGHFLY_KAYKIT_GLB_BASE64__;
  if(!b64||b64==='__INJECT_MODEL_BASE64__')throw Error('FALTA GLB: este HTML debe generarse con build-r02.mjs y el asset CC0 congelado');
  const ascii=atob(b64);const bytes=new Uint8Array(ascii.length);for(let i=0;i<ascii.length;i++)bytes[i]=ascii.charCodeAt(i);return bytes.buffer;}
+// Keep the original KTX2-compressed KayKit textures, entirely offline. THREE.FileLoader
+// is bridged only for the two pinned Basis transcoder resources; no network requests.
+const decodeBase64=(s)=>{const raw=atob(s);const out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;};
+const nativeFileLoad=THREE.FileLoader.prototype.load;
+THREE.FileLoader.prototype.load=function(url,onLoad,onProgress,onError){
+ const name=String(url??'');
+ if(name.endsWith('/basis_transcoder.js')||name.endsWith('/basis_transcoder.wasm')){
+  const js=name.endsWith('.js');const encoded=window[js?'__HIGHFLY_BASIS_JS_BASE64__':'__HIGHFLY_BASIS_WASM_BASE64__'];
+  if(!encoded){queueMicrotask(()=>onError?.(new Error('MISSING_INLINE_BASIS_TRANSCODER')));return this;}
+  queueMicrotask(()=>{try{const bin=decodeBase64(encoded);onLoad(js?new TextDecoder().decode(bin):bin.buffer);}catch(err){onError?.(err);}});return this;
+ }
+ return nativeFileLoad.call(this,url,onLoad,onProgress,onError);
+};
 async function loadRig(){try{
- const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
+ const ktx=new KTX2Loader().setTranscoderPath('/highfly-inline-basis/');ktx.detectSupport(renderer);
+ const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);loader.setKTX2Loader(ktx);
  const parsed=await new Promise((resolve,reject)=>loader.parse(decodeInlineGlb(),'',resolve,reject));
  actualRig=parsed.scene;rigClips=parsed.animations||[];
  actualRig.traverse(o=>{if(o.isMesh||o.isSkinnedMesh){o.frustumCulled=false;}});
