@@ -352,7 +352,8 @@ rep(
     """    audio.click();
     handleMobileAttackTap(deps.attackTapState(), {""",
     """    audio.click();
-    if (deps.contextualUse()) {
+    // R32 uses a separate native USAR control. ATK stays manual.
+    if (!document.body.classList.contains('hf-origin-r32-combat') && deps.contextualUse()) {
       attackBtn.blur();
       return;
     }
