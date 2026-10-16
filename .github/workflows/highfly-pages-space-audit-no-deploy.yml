@@ -100,3 +100,34 @@ jobs:
                   'html_referenced_count':len(roots),'texts_scanned':scripts_read
               }))
           PY
+
+      - name: Audit media references without removing required assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import tarfile,re,json,collections,posixpath
+          archive='live-baseline/artifact.tar'
+          with tarfile.open(archive,'r:') as tar:
+              files={m.name.lstrip('./'):m for m in tar if m.isfile()}
+              candidates={p:m.size for p,m in files.items() if p.startswith(('media/','map_art/','ui/')) and p.endswith(('.hdr','.glb','.png','.ktx2','.jpg','.webp')) and m.size>=400000}
+              indexed=collections.defaultdict(list)
+              for p in candidates:indexed[posixpath.basename(p)].append(p)
+              pattern=re.compile(rb'[A-Za-z0-9._/-]+\.(?:hdr|glb|ktx2|jpg|png|webp)')
+              refs=collections.Counter()
+              for p,m in files.items():
+                  if not p.endswith(('.html','.js','.css','.json','.webmanifest','.xml','.mjs')):continue
+                  if m.size>20_000_000:continue
+                  b=tar.extractfile(m).read()
+                  for t in set(pattern.findall(b)):
+                      name=t.rsplit(b'/',1)[-1].decode('utf8','ignore')
+                      for target in indexed.get(name,[]):refs[target]+=1
+              unref=sorted(((n,p) for p,n in candidates.items() if refs[p]==0),reverse=True)
+              print('HF_MEDIA_REF_AUDIT='+json.dumps({
+                  'candidate_count':len(candidates),'unused_name_count':len(unref),
+                  'unused_MB':round(sum(n for n,p in unref)/1e6,2),
+                  'top_unused_names':[(round(n/1e6,2),p) for n,p in unref[:70]],
+                  'hdr_unused':[(round(n/1e6,2),p) for n,p in unref if p.endswith('.hdr')][:30],
+                  'disclaimer':'NAME_REFERENCE_ABSENCE_NOT_PROOF_OF_SAFETY_DYNAMIC_LOADERS_EXIST'
+              }))
+          PY
