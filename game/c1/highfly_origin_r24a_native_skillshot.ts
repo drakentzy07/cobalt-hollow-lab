@@ -22,7 +22,7 @@ const aimByCaster=new WeakMap<Entity,StoredAim>();
 const queued=new WeakMap<SimContext,PendingShot[]>();
 export function originCanFreeFire(p:Entity,id:string,aim?:ShotPoint|null):boolean {
  return p.kind==='player'&&Boolean(p.originResources)&&ORIGIN_FREE_SKILLS.has(id)
-   &&Boolean(aim&&Number.isFinite(aim.x)&&Number.isFinite(aim.z));
+   &&Boolean(aim&&originNormalizeDirection(p.pos,aim));
 }
 export function originRememberFreeAim(p:Entity,abilityId:string,to:ShotPoint):void {
  const dir=originNormalizeDirection(p.pos,to);
