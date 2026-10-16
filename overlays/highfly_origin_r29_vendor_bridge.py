@@ -187,8 +187,7 @@ one(ui,
   state.textContent='SIM NATIVO · '+def.name+' · comprobar efecto/daño';""")
 one(ui,
     "  tile?.remove();icon?.remove();root.remove();visual.dispose();",
-    "  if(import.meta.env.VITE_HIGHFLY_ORIGIN_R29==='1')delete (window as any).__HIGHFLY_R29_VFX_QA__;
-  cancelAnimationFrame(raf);r29Fx?.dispose();\n  tile?.remove();icon?.remove();root.remove();visual.dispose();")
+    "  if(import.meta.env.VITE_HIGHFLY_ORIGIN_R29==='1')delete (window as any).__HIGHFLY_R29_VFX_QA__;\n  cancelAnimationFrame(raf);r29Fx?.dispose();\n  tile?.remove();icon?.remove();root.remove();visual.dispose();")
 
 # Keep the original HUD experience, but disable redundant development windows
 # in R29 preview only; do not change buttons of the public branch.
