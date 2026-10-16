@@ -1,0 +1,27 @@
+name: HIGHFLY R27 P0 - 23-Skill Catalog (NO DEPLOY)
+on:
+  push:
+    branches:
+      - highfly-origin-r27-premium-23-skill-lab
+    paths:
+      - game/c1/highfly_origin_r27_premium23_catalog.ts
+      - game/c1/r27_catalog_gate.py
+      - docs/highfly-origin/R27_PREMIUM_23_PLAYABLE_LAB.md
+      - .github/workflows/highfly-origin-r27-catalog-no-deploy.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  catalog-source-gate:
+    name: Verify 23 entries, provenance, no deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: R27 metadata/provenance static gate
+        run: python3 game/c1/r27_catalog_gate.py
+      - name: Declare scope of result
+        run: |
+          echo "PASS is only the 23-skill registry/legal-source guard."
+          echo "No donor shaders/abilities imported, no gameplay, no Android or Pages deployment."
