@@ -131,3 +131,17 @@ jobs:
                   'disclaimer':'NAME_REFERENCE_ABSENCE_NOT_PROOF_OF_SAFETY_DYNAMIC_LOADERS_EXIST'
               }))
           PY
+
+      - name: Inspect HDR headers for lossless pixel-preserving compression viability
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import tarfile,re,json
+          with tarfile.open('live-baseline/artifact.tar','r:') as tf:
+              hdr=[m for m in tf.getmembers() if m.isfile() and m.name.lower().endswith('.hdr')]
+              print('HF_HDR_COUNT',len(hdr),'BYTES',sum(m.size for m in hdr))
+              for m in sorted(hdr,key=lambda x:-x.size)[:5]:
+                  f=tf.extractfile(m);chunk=f.read(260)
+                  print('HF_HDR_HEADER='+json.dumps({'file':m.name,'bytes':m.size,'prefix':repr(chunk[:180])}))
+          PY
