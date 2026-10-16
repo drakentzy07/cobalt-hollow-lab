@@ -60,6 +60,14 @@ jobs:
           name: HIGHFLY-ORIGIN-R28-UNIVERSAL-NATIVE-ATK-WEBGL-NO-DEPLOY
           path: origin-compiled
 
+      - name: Checkout lossless HDR encoder independently of downloaded artifacts
+        uses: actions/checkout@v4
+        with:
+          path: stage-safety
+          sparse-checkout: |
+            scripts/highfly_lossless_hdr_rle.py
+          sparse-checkout-cone-mode: false
+
       - name: Preserve all published files, merge ONLY new hash-safe resources and ORIGIN entry
         shell: bash
         run: |
@@ -217,6 +225,15 @@ jobs:
               for p in (old/'assets').glob('*.js')
           ):
               raise SystemExit('ORIGIN_R28_MISSING_R23_SPLIT_BUFFS')
+          # RLE lossless in the STAGING artifact ONLY: raw HDR RGBE pixel hash
+          # is verified after decode for each file. Never remove assets; all
+          # existing HTML/JS/model/texture/audio/QA URLs remain byte-identical.
+          import runpy
+          hdr_optimize=runpy.run_path('stage-safety/scripts/highfly_lossless_hdr_rle.py')['optimize']
+          hdr_report=hdr_optimize(old,False,500000,20_000_000)
+          print('HIGHFLY_R28_PAGES_LOSSLESS_HDR='+json.dumps(hdr_report))
+          if hdr_report['saved_bytes']<15_000_000:
+              raise SystemExit('ORIGIN_ABORT_LOSSLESS_HDR_INSUFFICIENT_SAVINGS_'+str(hdr_report['saved_bytes']))
           meta={
               'edition':'HIGHFLY ORIGIN R28 P1 UNIVERSAL NATIVE ATK + PREMIUM REGISTRY S23 PLAYTEST',
               'sourceRun':38897982970,
@@ -247,6 +264,9 @@ jobs:
               'r28Premium23VfxPlayable':False,
               'originalHomePreserved':True,
               'otherLaboratoriesPreserved':True,
+              'losslessHDRPixelIdentityVerified':True,
+              'losslessHDRSavedBytes':hdr_report['saved_bytes'],
+              'losslessHDRFileCount':hdr_report['files'],
               'androidPhysicalQA':'PENDING_USER_TEST',
               'trialOfflineSaveOnly':True,
               'realOnlineHunterNotYetSupported':True,'allSevenPhysicallyTested':False
