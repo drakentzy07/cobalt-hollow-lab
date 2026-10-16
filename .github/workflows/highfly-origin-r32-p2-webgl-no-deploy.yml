@@ -10,6 +10,8 @@ on:
       - "game/c1/runtime.ts"
       - "game/c1/hud.css"
       - "tests/r32/**"
+      - "game/c1/highfly_origin_r32_boot_regression.test.ts"
+      - "game/c1/highfly_origin_r32_browser_boot_smoke.mjs"
   workflow_dispatch:
 permissions:
   contents: read
@@ -103,6 +105,8 @@ jobs:
             /overlays/highfly_origin_r32_p2_playable.py
             /game/c1/runtime.ts
             /game/c1/hud.css
+            /game/c1/highfly_origin_r32_boot_regression.test.ts
+            /game/c1/highfly_origin_r32_browser_boot_smoke.mjs
             /game/c1/highfly_origin_r31_passive_runtime.ts
             /game/c1/highfly_origin_r31_77_laboratory.test.ts
             /game/c1/highfly_origin_r29_premium_native.ts
@@ -1012,6 +1016,8 @@ jobs:
           grep -Fq "R32_P2_BASE_IDS" src/sim/highfly_origin_r28_session.ts
           grep -Fq "R32_REQUIRES_EPHEMERAL_HUNTER" src/sim/highfly_origin_r28_session.ts
           grep -Fq "VITE_HIGHFLY_ORIGIN_R32" src/main.ts
+          cp ../v9-corrections/game/c1/highfly_origin_r32_boot_regression.test.ts tests/highfly_origin_r32_boot_regression.test.ts
+          VITE_HIGHFLY_ORIGIN_R30=1 VITE_HIGHFLY_ORIGIN_R32=1 pnpm exec vitest run tests/highfly_origin_r32_boot_regression.test.ts
           echo "R32_P2_FOUR_REAL_CLAUDE_SKILLS_ASSEMBLED=1"
       - name: Preserve R31 actually assembled TypeScript sources for forensic QA
         if: always()
