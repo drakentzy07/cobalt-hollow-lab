@@ -28,13 +28,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: upstream/package-lock.json
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10.34.5'
       - name: Exact native-core and combo tests
         run: node --test lab/unique-lab/guinevere-r02/core.test.mjs lab/unique-lab/guinevere-r02/combo.test.mjs
       - name: Install pinned Three and esbuild from ClaudeCraft upstream
         working-directory: upstream
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile
       - name: Assemble native KayKit 3D isolated lab
         run: |
           mkdir -p upstream/unique-lab/guinevere-r02
@@ -55,7 +56,7 @@ jobs:
           PY
       - name: Install Chromium for 3D visual smoke
         working-directory: upstream
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
       - name: Browser smoke native GLB + HUD + U1 U2 U3 (desktop and S23 emulation)
         run: node upstream/unique-lab/guinevere-r02/browser-smoke.mjs
       - name: Upload standalone phone-ready 3D laboratory (NO Pages)
