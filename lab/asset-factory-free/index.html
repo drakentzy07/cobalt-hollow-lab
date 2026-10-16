@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HIGHFLY Asset Factory R01 FREE</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#09111e;color:#e5f0ff;font:14px system-ui,Arial,sans-serif}header{display:flex;align-items:center;gap:14px;padding:10px 15px;border-bottom:1px solid #2c3c52;background:#101a2a}h1{font-size:18px;margin:0}small{color:#b8ccdc}.pill{background:#134c42;color:#a8fbd4;border-radius:12px;padding:4px 8px}.layout{display:grid;grid-template-columns:270px minmax(300px,1fr) 300px;gap:8px;padding:8px;height:calc(100dvh - 55px)}aside,.screen{border:1px solid #304258;background:#111e30;border-radius:12px;overflow:auto;padding:12px}section{padding-bottom:13px;border-bottom:1px solid #2b3e52;margin-bottom:13px}h2{font-size:15px;margin:0 0 9px}button,input,select{font:inherit}button{background:#16415b;border:1px solid #3c6a83;color:#e0f6ff;border-radius:8px;padding:9px;cursor:pointer;margin:4px 3px 3px 0}button:hover{background:#246181}input,select{background:#091421;color:#f1f8ff;border:1px solid #3b4e64;border-radius:7px;padding:7px;max-width:100%}select{width:100%}label{display:block;margin:9px 0;font-size:12px}label input{display:block;width:100%;margin-top:4px}input[type=file]{font-size:12px}p{line-height:1.5;color:#b9ccdf}#viewport{position:relative;padding:0;overflow:hidden;touch-action:none}#canvas{display:block;width:100%;height:100%;touch-action:none}.help{position:absolute;top:9px;left:9px;pointer-events:none;background:#09111ece;padding:6px;border-radius:6px;font-size:12px}.trace{font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;max-height:250px;overflow:auto;background:#0a1626;padding:9px;border-radius:8px}.triple{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.triple input{width:100%}.notice{background:#332919;color:#f2d9af;border:1px solid #685534;border-radius:8px;padding:9px;font-size:12px}a{color:#a2dfff}@media(max-width:920px){.layout{grid-template-columns:210px minmax(260px,1fr);height:auto}.screen{height:65dvh}aside:last-child{grid-column:1/-1}}@media(max-width:670px){.layout{display:flex;flex-direction:column}.screen{order:-1;height:55dvh;min-height:300px}}@media(orientation:landscape) and (max-height:550px){.layout{display:grid;grid-template-columns:205px minmax(250px,1fr) 245px;height:calc(100dvh - 55px)}.screen{height:auto;min-height:0}aside:last-child{grid-column:auto}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/","meshoptimizer":"https://cdn.jsdelivr.net/npm/meshoptimizer@0.22.0/meshopt_decoder.module.js"}}</script>
+</head><body>
+<header><h1>HIGHFLY <span style="color:#70d9ef">ASSET FACTORY</span> R01</h1><span class="pill">FREE · 0 créditos</span><small>Laboratorio aislado • sin Tripo API</small></header>
+<div class="layout">
+<aside>
+<section><h2>1. Hunter original</h2><button id="demo">Cargar Warrior modular</button><label>O cargar personaje GLB<input type="file" accept=".glb" id="basefile"></label><p>Demo desde el upstream v0.44.0 congelado, sin incluir los recursos artísticos en este repositorio.</p></section>
+<section><h2>2. Añadir arma o armadura</h2><label>Importar GLB local<input type="file" accept=".glb" id="piecefile"></label><label>Pieza activa<select id="piece"><option value="">Sin piezas</option></select></label><button id="remove">Quitar</button><button id="reset">Restablecer</button></section>
+<section><h2>3. Verificar animación</h2><label>Clip<select id="clips"><option value="">Sin animación</option></select></label><button id="pause">Pausar</button><button id="frame">Centrar</button><button id="wire">Mostrar malla</button></section>
+<section><h2>4. Exportar</h2><button id="save">Descargar FIT JSON</button><button id="screenshot">Captura PNG</button><p>El JSON guarda transformaciones; no genera un GLB nuevo.</p></section>
+</aside>
+<div class="screen" id="viewport"><canvas id="canvas"></canvas><div class="help">Rotar: arrastrar · Zoom: rueda/pellizcar · Mover: botón derecho/dos dedos</div></div>
+<aside>
+<section><h2>Inspector técnico</h2><div class="trace" id="stats">Cargá el Warrior original para empezar.</div><p id="status">R01 listo.</p></section>
+<section><h2>5. Anclaje al rig</h2><label>Nodo o hueso<select id="anchor"><option value="root">Raíz del Hunter</option></select></label><p>Rigid attach: no copia los pesos de skinning a una armadura. El auto-fit está pendiente de validación.</p></section>
+<section><h2>6. Ajuste geométrico</h2><p>Posición XYZ</p><div class="triple"><input id="px" type="number" step=".01" value="0"><input id="py" type="number" step=".01" value="0"><input id="pz" type="number" step=".01" value="0"></div><p>Rotación XYZ, grados</p><div class="triple"><input id="rx" type="number" step="5" value="0"><input id="ry" type="number" step="5" value="0"><input id="rz" type="number" step="5" value="0"></div><label>Escala uniforme<input id="scale" type="number" step=".05" min=".001" value="1"></label></section>
+<section><h2>Estado de laboratorio</h2><div class="trace" id="log">Sin pagos ni envío de GLB.</div><p class="notice">El GLB se procesa en tu navegador. No hay generación IA ni rigging automático en R01. El siguiente paso es integrar y evaluar el rig-manual gratuito de ClaudeCraft.</p></section>
+<section><a href="https://github.com/levy-street/world-of-claudecraft/blob/9b57e49c9676d75962700f828cc00a50a9a988b5/scripts/asset_pipeline/CLAUDE.md" target="_blank" rel="noopener noreferrer">Código y documentación original de ClaudeCraft</a></section>
+</aside>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { MeshoptDecoder } from 'meshoptimizer';
+const $=id=>document.getElementById(id);
+const msg=(s)=>{$('log').textContent=s+'\n'+$('log').textContent};
+const scene=new THREE.Scene();scene.background=new THREE.Color('#091422');
+const camera=new THREE.PerspectiveCamera(50,1,.01,500);
+camera.position.set(3,2.2,4);
+const renderer=new THREE.WebGLRenderer({canvas:$('canvas'),antialias:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+const controls=new OrbitControls(camera,$('canvas'));controls.enableDamping=true;
+scene.add(new THREE.HemisphereLight(0xe1f2ff,0x345066,2.1));
+const sun=new THREE.DirectionalLight(0xffffff,2.5);sun.position.set(5,8,9);scene.add(sun);
+const grid=new THREE.GridHelper(25,25,0x346078,0x27374d);scene.add(grid);
+const base=new THREE.Group();scene.add(base);
+const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);await MeshoptDecoder.ready;
+const url='https://raw.githubusercontent.com/levy-street/world-of-claudecraft/9b57e49c9676d75962700f828cc00a50a9a988b5/public/models/chars/modular/warrior_modular.glb';
+let hunter=null,hunterName='',mixer=null,clips=[],playing=true,action=null,layers=[],active=null,wire=false;
+const ids=['px','py','pz','rx','ry','rz','scale'];
+const parse=bytes=>{
+ const dv=new DataView(bytes);
+ if(dv.byteLength<20||dv.getUint32(0,true)!==0x46546c67||dv.getUint32(4,true)!==2||dv.getUint32(16,true)!==0x4e4f534a)throw Error('No es GLB v2');
+ const n=dv.getUint32(12,true);if(n>dv.byteLength-20)throw Error('GLB truncado');
+ const j=JSON.parse(new TextDecoder().decode(new Uint8Array(bytes,20,n)).replace(/\0+$/g,''));
+ const nodes=j.nodes||[],meshes=j.meshes||[],animations=j.animations||[];
+ return {bytes:dv.byteLength,nodes:nodes.length,meshes:meshes.length,skins:(j.skins||[]).length,materials:(j.materials||[]).length,animationNames:animations.map((a,i)=>a.name||'Clip '+(i+1)),nodeNames:nodes.map(x=>x.name||'').filter(Boolean),meshopt:(j.extensionsUsed||[]).includes('EXT_meshopt_compression'),triangles:meshes.reduce((n,m)=>n+(m.primitives||[]).reduce((s,p)=>{let id=p.indices??p.attributes?.POSITION;return s+Math.floor((j.accessors?.[id]?.count||0)/3)},0),0)};
+};
+const decode=bytes=>new Promise((resolve,reject)=>loader.parse(bytes,'',resolve,reject));
+const inspect=(s,n)=>{$('stats').textContent=n+'\n'+(s.bytes/1048576).toFixed(2)+' MiB · '+s.meshes+' meshes · '+s.skins+' skins\n'+s.nodes+' nodos · '+s.materials+' materiales\n'+s.triangles+' triángulos aprox. · '+s.animationNames.length+' animaciones\nMeshopt: '+(s.meshopt?'SÍ':'NO')+'\nNodos: '+s.nodeNames.slice(0,23).join(' / ')};
+function frame(o){if(!o)return;const b=new THREE.Box3().setFromObject(o);if(b.isEmpty())return;const center=b.getCenter(new THREE.Vector3()),size=b.getSize(new THREE.Vector3());let r=Math.max(.4,size.length()*1.3);camera.position.set(center.x+r,center.y+r*.5,center.z+r);controls.target.copy(center);camera.near=Math.max(.001,r/1000);camera.far=Math.max(300,100*r);camera.updateProjectionMatrix();grid.position.y=b.min.y;}
+function doClip(i){mixer?.stopAllAction();action=null;if(clips[i]){action=mixer.clipAction(clips[i]);action.reset().play();action.paused=!playing}}
+function updatePiece(){let s=$('piece');s.replaceChildren(new Option('Sin piezas',''));layers.forEach(l=>s.add(new Option(l.name,l.id)));s.value=active?.id||''}
+function choose(id){active=layers.find(x=>x.id===id)||null;updatePiece();$('anchor').value=active?.anchor||'root';const o=active?.object,vals=o?[...o.position.toArray(),...o.rotation.toArray().slice(0,3).map(THREE.MathUtils.radToDeg),o.scale.x]:[0,0,0,0,0,0,1];ids.forEach((key,i)=>$(key).value=Number(vals[i].toFixed(4)));}
+function rebuildAnchors(){const s=$('anchor');s.replaceChildren(new Option('Raíz del Hunter','root'));hunter?.traverse(o=>{if(o.isBone||/^M_|^F_|handslot\.|^Rig_/i.test(o.name||''))s.add(new Option(o.name||'Hueso',o.uuid))});}
+async function addBase(bytes,name){
+ const data=parse(bytes),gltf=await decode(bytes.slice(0));
+ if(hunter)base.remove(hunter);layers.forEach(l=>l.object.parent?.remove(l.object));layers=[];active=null;updatePiece();
+ hunter=gltf.scene;hunterName=name;base.add(hunter);mixer=new THREE.AnimationMixer(hunter);clips=gltf.animations;
+ const sel=$('clips');sel.replaceChildren(new Option('Sin animación',''));
+ clips.forEach((c,i)=>sel.add(new Option(c.name+' ('+c.duration.toFixed(1)+'s)',String(i))));
+ if(clips.length){sel.value='0';doClip(0);}
+ rebuildAnchors();inspect(data,name);frame(hunter);msg('Hunter importado: '+name);
+}
+async function addPiece(bytes,name){
+ const data=parse(bytes),gltf=await decode(bytes.slice(0));
+ const object=gltf.scene;const item={id:'p'+Date.now()+'_'+layers.length,name,object,anchor:'root',skins:data.skins};
+ layers.push(item);base.add(object);choose(item.id);inspect(data,name);frame(hunter||object);
+ msg('Pieza importada: '+name+(data.skins?' (rig independiente: verificar deformación)':''));
+}
+async function localFile(file,kind){
+ if(!file)return;try{if(!/\.glb$/i.test(file.name))throw Error('Se requiere .glb autocontenido');$('status').textContent='Cargando archivo local…';const b=await file.arrayBuffer();if(kind==='hunter')await addBase(b,file.name);else await addPiece(b,file.name);$('status').textContent='Archivo cargado · costo $0';}catch(e){$('status').textContent='Error de GLB';msg(e.message);console.error(e)}
+}
+$('basefile').onchange=e=>localFile(e.target.files?.[0],'hunter');
+$('piecefile').onchange=e=>localFile(e.target.files?.[0],'piece');
+$('demo').onclick=async()=>{try{$('demo').disabled=true;$('status').textContent='Descargando Warrior original…';const r=await fetch(url);if(!r.ok)throw Error('HTTP '+r.status);await addBase(await r.arrayBuffer(),'warrior_modular.glb');$('status').textContent='Warrior original cargado';}catch(e){msg('Demo remoto: '+e.message+'; probá importar el GLB local.');}finally{$('demo').disabled=false;}};
+$('piece').onchange=e=>choose(e.target.value);
+$('anchor').onchange=e=>{if(!active)return;const parent=e.target.value==='root'?base:hunter?.getObjectByProperty('uuid',e.target.value);if(!parent)return;parent.add(active.object);active.anchor=e.target.value;active.object.position.set(0,0,0);active.object.rotation.set(0,0,0);active.object.scale.setScalar(1);choose(active.id);msg('Pieza anclada rígidamente a '+(parent.name||'raíz'))};
+ids.forEach(id=>$(id).oninput=()=>{if(!active)return;const n=ids.map(k=>Number($(k).value));if(n.some(x=>!Number.isFinite(x))||n[6]<=0)return;active.object.position.set(...n.slice(0,3));active.object.rotation.set(...n.slice(3,6).map(THREE.MathUtils.degToRad));active.object.scale.setScalar(n[6]);});
+$('remove').onclick=()=>{if(!active)return;active.object.parent?.remove(active.object);layers=layers.filter(l=>l!==active);choose(layers[0]?.id||'');};
+$('reset').onclick=()=>{if(!active)return;active.object.position.set(0,0,0);active.object.rotation.set(0,0,0);active.object.scale.setScalar(1);choose(active.id)};
+$('clips').onchange=e=>doClip(Number(e.target.value));$('pause').onclick=()=>{playing=!playing;if(action)action.paused=!playing;$('pause').textContent=playing?'Pausar':'Reproducir'};
+$('frame').onclick=()=>frame(hunter||active?.object);$('wire').onclick=()=>{wire=!wire;scene.traverse(o=>{if(o.isMesh){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{if(m&&'wireframe'in m)m.wireframe=wire})}});$('wire').textContent=wire?'Ocultar malla':'Mostrar malla'};
+function download(name,data,type){let href=URL.createObjectURL(new Blob([data],{type}));let a=document.createElement('a');a.download=name;a.href=href;a.click();setTimeout(()=>URL.revokeObjectURL(href),4000)}
+$('save').onclick=()=>{if(!hunter)return msg('Importá primero el Hunter');const data={schema:'HIGHFLY-FIT-R01',base:hunterName,cost:'0 API credits',rigging:'NOT AUTOMATED',pieces:layers.map(l=>({file:l.name,anchorName:l.anchor==='root'?'root':hunter.getObjectByProperty('uuid',l.anchor)?.name||'unknown',position:l.object.position.toArray(),rotationDegrees:[l.object.rotation.x,l.object.rotation.y,l.object.rotation.z].map(THREE.MathUtils.radToDeg),scale:l.object.scale.toArray(),separateSkins:l.skins}))};download('highfly-fit-r01.json',JSON.stringify(data,null,2),'application/json');msg('FIT exportado en JSON')};
+$('screenshot').onclick=()=>{renderer.render(scene,camera);let a=document.createElement('a');a.download='highfly-asset-factory-r01.png';a.href=$('canvas').toDataURL('image/png');a.click()};
+const viewport=$('viewport');new ResizeObserver(()=>{let w=viewport.clientWidth,h=viewport.clientHeight;camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();renderer.setSize(w,h,false)}).observe(viewport);
+const clock=new THREE.Clock();renderer.setAnimationLoop(()=>{let dt=Math.min(clock.getDelta(),.1);if(mixer&&playing)mixer.update(dt);controls.update();renderer.render(scene,camera)});
+msg('Visor 3D libre listo. No se utilizan APIs de generación.');
+</script></body></html>
