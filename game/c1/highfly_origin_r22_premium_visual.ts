@@ -126,8 +126,12 @@ export class HighflyAimVisual {
    const sw=clamp(width*.065,.045,.10);
    this.strip(this.edge,left0,left1,sw);
    this.strip(this.edge,right0,right1,sw);
-   this.strip(this.edge,headL,tip,sw);
-   this.strip(this.edge,tip,headR,sw);
+   // WebGL strip has finite thickness. End its stroke INSIDE the real
+   // maximum distance; otherwise the outer corner projects past cast range.
+   const insetTip=point(tip.x-dx*Math.max(.13,sw*1.7),
+                        tip.z-dz*Math.max(.13,sw*1.7));
+   this.strip(this.edge,headL,insetTip,sw);
+   this.strip(this.edge,insetTip,headR,sw);
    // One or two small centered chevrons give direction without covering the actor.
    const chevrons=length>10?2:1;
    for(let i=1;i<=chevrons;i++){
