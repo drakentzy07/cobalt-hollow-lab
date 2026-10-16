@@ -15,6 +15,12 @@ function ptr(el:Element,type:string,id:number,x:number,y:number){
  el.dispatchEvent(e);
  return e;
 }
+// The workflow exercises R23 BEFORE installing R24A, then R23 again AFTER R24A.
+// Keep both contracts strict, selected by the actual staged HUD source, not the branch name.
+function r24aInstalled():boolean {
+ return readFileSync('src/highfly/highfly_origin_r17_hud.ts','utf8')
+  .includes('ORIGIN_FREE_SKILLS.has(def.id)');
+}
 function harness(abilityId='fireball'){
  const joystick=document.createElement('div');
  joystick.id='mobile-move-zone';
@@ -53,13 +59,18 @@ describe('R23 real second-thumb pointer path + separated support banks',()=>{
   ptr(h.joystick,'pointermove',11,119,204);
   expect(h.joy.down).toBe(1);
   expect(h.joy.move).toBe(3);
-  // R24A changed fireball to a real free projectile: it must cast at a
-  // world point, not use R23's legacy lock-on castSlot path.
-  expect(h.castAt).toHaveBeenCalledTimes(1);
-  expect(h.castAt).toHaveBeenCalledWith('fireball',{x:0,y:0,z:12});
-  expect(h.cast).not.toHaveBeenCalled();
-  expect(h.target).not.toHaveBeenCalled();
-  expect(h.face).toHaveBeenCalledTimes(1);
+  if(r24aInstalled()) {
+   // R24A: ballistic Fireball must use free castAt and never fake lock-on.
+   expect(h.castAt).toHaveBeenCalledExactlyOnceWith('fireball',{x:0,y:0,z:12});
+   expect(h.cast).not.toHaveBeenCalled();
+   expect(h.target).not.toHaveBeenCalled();
+   expect(h.face).toHaveBeenCalledTimes(1);
+  } else {
+   // R23: before the R24A overlay, Fireball remains a native targeted cast.
+   expect(h.cast).toHaveBeenCalledExactlyOnceWith(1);
+   expect(h.target).toHaveBeenCalledExactlyOnceWith(88);
+   expect(h.castAt).not.toHaveBeenCalled();
+  }
  });
  it('independent left joystick pointer continues after skill-first press, and drag remains manual',()=>{
   const h=harness();
@@ -70,12 +81,18 @@ describe('R23 real second-thumb pointer path + separated support banks',()=>{
   ptr(h.joystick,'pointermove',11,130,220);
   ptr(h.button,'pointerup',22,850,160);
   expect(h.joy.move).toBe(2);
-  expect(h.castAt).toHaveBeenCalledTimes(1);
-  expect(h.castAt.mock.calls[0][0]).toBe('fireball');
-  expect(h.castAt.mock.calls[0][1].z).toBeGreaterThan(0);
-  expect(h.cast).not.toHaveBeenCalled();
-  expect(h.target).not.toHaveBeenCalled();
-  expect(h.face).toHaveBeenCalledTimes(1);
+  if(r24aInstalled()) {
+   expect(h.castAt).toHaveBeenCalledTimes(1);
+   expect(h.castAt.mock.calls[0][0]).toBe('fireball');
+   expect(h.castAt.mock.calls[0][1].z).toBeGreaterThan(0);
+   expect(h.cast).not.toHaveBeenCalled();
+   expect(h.target).not.toHaveBeenCalled();
+   expect(h.face).toHaveBeenCalledTimes(1);
+  } else {
+   expect(h.cast).toHaveBeenCalledExactlyOnceWith(1);
+   expect(h.castAt).not.toHaveBeenCalled();
+   expect(h.face).toHaveBeenCalledTimes(1);
+  }
  });
  it('non-ballistic native targeted skill still uses R23 castSlot and target selection',()=>{
   const h=harness('mind_blast');
