@@ -1,96 +1,12 @@
-name: HIGHFLY ORIGIN R29 P2 - ALL ORIGINAL MIT VFX SRC NATIVE SIM INTEGRATION WEBGL NO DEPLOY
-# Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
-# Selective patch/build gates ONLY. Never writes GitHub Pages or main.
+name: HIGHFLY ORIGIN R29 LEGACY MANUAL BACKUP - DO NOT RUN IN PARALLEL
+# This redundant workflow is disabled on push; the canonical R29 workflow is highfly-origin-r29-full-skillplay.yml.
 on:
-  push:
-    branches: [highfly-origin-r29-vip-skill-test-and-premium23]
-    paths:
-      - ".github/workflows/highfly-origin-r0-forensic-no-deploy.yml"
-      - "game/c1/highfly_origin_r0_diagnostic.test.ts"
-      - "docs/HIGHFLY_ORIGIN_R0_COMBAT_CONTRACT.md"
-      - "docs/HIGHFLY_ORIGIN_MOBILE_AIM_RESEARCH.md"
-      - "overlays/highfly_origin_or1_buffer_guard.py"
-      - "game/c1/highfly_origin_buffer_guard.ts"
-      - "game/c1/highfly_origin_buffer_guard.test.ts"
-      - "overlays/highfly_origin_or1_online_ack.py"
-      - "game/c1/highfly_origin_strike_ack.ts"
-      - "game/c1/highfly_origin_online_ack.test.ts"
-      - "docs/HIGHFLY_ORIGIN_R1_HUNTER_RESET_ENTRY_GATE.md"
-      - "game/c1/highfly_origin_hunter_profile.ts"
-      - "game/c1/highfly_origin_hunter_profile.test.ts"
-      - "overlays/highfly_origin_r1_profile.py"
-      - "overlays/highfly_origin_r1_native_spellbook.py"
-      - "game/c1/highfly_origin_native_spellbook.ts"
-      - "game/c1/highfly_origin_native_spellbook.test.ts"
-      - "overlays/highfly_origin_r12_motion_catalog.py"
-      - "game/c1/highfly_origin_skill_motion_catalog.ts"
-      - "game/c1/highfly_origin_skill_motion_catalog.test.ts"
-      - "overlays/highfly_origin_r12b_visual_bridge.py"
-      - "game/c1/highfly_origin_r12b_visual_bridge.test.ts"
-      - "game/c1/highfly_origin_resource_admission.ts"
-      - "game/c1/highfly_origin_r12c_resource_gate.test.ts"
-      - "overlays/highfly_origin_r12c_resource_gate.py"
-      - "game/c1/highfly_origin_universal_resources.ts"
-      - "game/c1/highfly_origin_r14_resource_bundle.test.ts"
-      - "overlays/highfly_origin_r14_resource_bundle.py"
-      - "overlays/highfly_origin_r14c_hud_wire_bar.py"
-      - "game/c1/highfly_origin_r14c_hud_wire_bar.test.ts"
-      - "game/c1/highfly_origin_action_stamina.ts"
-      - "game/c1/highfly_origin_r14d_stamina_actions.test.ts"
-      - "overlays/highfly_origin_r14d_stamina_actions.py"
-      - "game/c1/highfly_origin_trial_runtime.ts"
-      - "overlays/highfly_origin_r15_r16_playable_trial.py"
-      - "game/c1/highfly_origin_r15_r16_playable_trial.test.ts"
-      - "game/c1/highfly_origin_r17_hud.ts"
-      - "game/c1/highfly_origin_r18_loadout.ts"
-      - "game/c1/highfly_origin_r19_selection.ts"
-      - "game/c1/highfly_origin_r20_premium_aim.ts"
-      - "game/c1/highfly_origin_r21_aim_intent.ts"
-      - "game/c1/highfly_origin_r22_premium_visual.ts"
-      - "game/c1/highfly_origin_r23_multitouch_buffs.test.ts"
-      - "game/c1/highfly_origin_r24a_skillshot_physics.ts"
-      - "game/c1/highfly_origin_r24a_native_skillshot.ts"
-      - "game/c1/highfly_origin_r24a_skillshot.test.ts"
-      - "game/c1/highfly_origin_r26_seven_trial.ts"
-      - "game/c1/highfly_origin_r26_seven_trial.test.ts"
-      - "overlays/highfly_origin_r26_seven_native_lab.py"
-      - "game/c1/highfly_origin_r27_premium23_catalog.ts"
-      - "game/c1/highfly_origin_r28_universal_catalog.ts"
-      - "game/c1/highfly_origin_r28_session.ts"
-      - "game/c1/highfly_origin_r28_universal_tester.ts"
-      - "game/c1/highfly_origin_r28_universal_tester.test.ts"
-      - "game/c1/highfly_origin_r29_vendor_runtime.js"
-      - "game/c1/highfly_origin_r29_premium_native.ts"
-      - "game/c1/highfly_origin_r29_premium_native.test.ts"
-      - "overlays/highfly_origin_r29_vendor_bridge.py"
-      - "overlays/highfly_origin_r28_universal_tester.py"
-      - "overlays/highfly_origin_r24a_real_skillshot.py"
-      - "overlays/highfly_origin_r23_multitouch_buffs.py"
-      - "game/c1/highfly_origin_r22_premium_visual.test.ts"
-      - "overlays/highfly_origin_r22_premium_visual.py"
-      - "game/c1/highfly_origin_r21_free_manual_aim.test.ts"
-      - "overlays/highfly_origin_r21_free_manual_aim.py"
-      - "game/c1/highfly_origin_r20_premium_aim.test.ts"
-      - "overlays/highfly_origin_r20_premium_aim.py"
-      - "game/c1/highfly_origin_r19_focus.test.ts"
-      - "overlays/highfly_origin_r19_focus.py"
-      - "game/c1/highfly_origin_r17_hud.test.ts"
-      - "overlays/highfly_origin_r17_patch.py"
-      - "overlays/highfly_v91_combat_feel.py"
-      - "game/c1/highfly_v91_combat_nine_classes.test.ts"
-      - "overlays/highfly_v15_manual_cast_p1.py"
-      - "game/c1/highfly_v15_manual_cast_p1.test.ts"
-      - "overlays/highfly_v15_manual_strike_p2.py"
-      - "game/c1/highfly_v15_manual_strike_p2.test.ts"
-      - "overlays/highfly_v15_skill_input_p0.py"
-      - "game/c1/highfly_v15_skill_input_nine_classes.test.ts"
-      - "overlays/highfly_v15_pwa_manifest.py"
-      - "tests/test_highfly_v15_pwa_manifest.py"
   workflow_dispatch:
+
 permissions:
   contents: read
 concurrency:
-  group: highfly-origin-r0-forensic-${{ github.ref_name }}
+  group: highfly-r29-legacy-manual-only-${{ github.ref_name }}
   cancel-in-progress: true
 jobs:
   native_outdoor_camps_and_world_portals:
