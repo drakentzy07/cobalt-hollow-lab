@@ -8,7 +8,7 @@ on:
       - '.github/workflows/highfly-unique-guinevere-r02-3d-no-deploy.yml'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   guinevere-r02:
     runs-on: ubuntu-latest
@@ -69,3 +69,22 @@ jobs:
           retention-days: 14
       - name: Confirm no public deployment
         run: echo 'R02 is an isolated Action artifact only. No Pages, no public workflow dispatch.'
+      - name: Write branch-local CI report for verification (NO DEPLOY)
+        if: always()
+        env:
+          TEST_RESULT: ${{ job.status }}
+        run: |
+          mkdir -p lab/.ci-reports
+          python - <<'PYJSON'
+          import json,os
+          p='lab/.ci-reports/highfly-unique-guinevere-r02.json'
+          data={'status':os.environ['TEST_RESULT'],'run_id':os.environ['GITHUB_RUN_ID'],'run_url':f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",'source_commit':os.environ['GITHUB_SHA'],'branch':os.environ['GITHUB_REF_NAME'],'note':'No Pages deployment; independent KayKit 3D lab CI'}
+          with open(p,'w') as f:json.dump(data,f,indent=2)
+          print(data)
+          PYJSON
+          cd lab
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .ci-reports/highfly-unique-guinevere-r02.json
+          git diff --cached --quiet || git commit -m 'CI report: Guinevere R02 (no deploy)'
+          git push || echo 'CI report push unavailable; run log remains authoritative.'
