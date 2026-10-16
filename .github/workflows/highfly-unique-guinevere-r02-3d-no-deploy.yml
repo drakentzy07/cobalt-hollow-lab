@@ -60,6 +60,7 @@ jobs:
       - name: Browser smoke native GLB + HUD + U1 U2 U3 (desktop and S23 emulation)
         run: node upstream/unique-lab/guinevere-r02/browser-smoke.mjs
       - name: Upload standalone phone-ready 3D laboratory (NO Pages)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: HIGHFLY-Guinevere-R02-KayKit-3D-Android
