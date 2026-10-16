@@ -172,6 +172,16 @@ one(ui,
    if(redundant)redundant.style.display='none';
    filters.style.display='none';
  }""")
+# R17/21 legacy mobile HUD uses the original five input projection shapes.
+# R29 gate/ring/scribe retain their native distinctive mesh, while the
+# projection Jacobian correctly maps all three to ground-position selection.
+legacy_hud='src/highfly/highfly_origin_r17_hud.ts'
+one(legacy_hud,
+    "Math.max(0.5,spec.range),spec.shape,h.project,h.cameraYaw());",
+    "Math.max(0.5,spec.range),"+
+    "(spec.shape==='gate'||spec.shape==='ring'||spec.shape==='scribe'?'circle':spec.shape),"+
+    "h.project,h.cameraYaw());")
+
 hud='src/ui/hud.ts'
 one(hud,
     "        scene:this.renderer.scene,",
