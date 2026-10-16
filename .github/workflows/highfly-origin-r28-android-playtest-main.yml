@@ -134,6 +134,7 @@ jobs:
               if actual!=want:
                   raise SystemExit('ORIGIN_ABORT_LIVE_BASELINE_CHANGED:'+rel+':'+actual+' != '+want)
           copy_new=0
+          new_file_sizes=[]
           identical=0
           skipped=[]
           conflict=[]
@@ -156,6 +157,7 @@ jobs:
               else:
                   dest.parent.mkdir(parents=True,exist_ok=True)
                   shutil.copy2(source,dest)
+                  new_file_sizes.append({'path':str(relative),'bytes':source.stat().st_size})
                   copy_new+=1
           if conflict:
               print('ORIGIN_PAGES_RESOURCE_CONFLICT='+json.dumps(conflict[:80]))
@@ -265,6 +267,7 @@ jobs:
               'newUrl':base+'lab/origin-r28/'
           }))
           if total>=1_000_000_000:
+              print('R28_NEW_ASSET_SIZES='+json.dumps(sorted(new_file_sizes,key=lambda v:-v['bytes'])))
               raise SystemExit('ORIGIN_PAGES_SAFE_STOP_OVER_SIZE_'+str(total))
           if total<500_000_000 or len(files)<6000:
               raise SystemExit('ORIGIN_PAGES_SAFE_STOP_INCOMPLETE_BASELINE')
