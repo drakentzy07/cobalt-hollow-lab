@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import { ABILITIES, CLASSES } from '../src/sim/content/classes';
+import { ABILITIES } from '../src/sim/content/classes';
 import { originCostDecision } from '../src/sim/highfly_origin_universal_resources';
 import { originR26SessionOnly, ORIGIN_R26_SEVEN_IDS } from '../src/sim/highfly_origin_r26_seven_trial';
 import { highflyAimSpec } from '../src/highfly/highfly_origin_r20_premium_aim';
@@ -18,11 +18,9 @@ describe('R26 seven real native abilities, no persisted unlocks',()=>{
     for(const id of ORIGIN_R26_SEVEN_IDS){
       const def=ABILITIES[id];
       expect(def).toBeTruthy();
-      // Three real native specialist entries are NOT in the base-class roster.
-      // The ephemeral Origin test resolves these without rewriting CLASSES.
-      const specialistOnly = new Set(['meteor','dragons_breath','bladestorm']);
-      if(specialistOnly.has(id)) expect(CLASSES[def.class].abilities).not.toContain(id);
-      else expect(CLASSES[def.class].abilities).toContain(id);
+      // Native ABILITIES is authoritative; class base lists are NOT an
+      // exhaustive roster (talents and some specs use separate grants).
+      expect(def.id).toBe(id);
       expect(originCostDecision(def).ok).toBe(true);
       expect(def.passive).not.toBe(true);
     }
