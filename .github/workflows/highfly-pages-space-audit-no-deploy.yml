@@ -148,6 +148,8 @@ jobs:
 
       - name: Checkout immutable lossless encoder for independent bench
         uses: actions/checkout@v4
+        with:
+          clean: false
       - name: RLE benchmark on three actual published HDR files - DRY RUN
         shell: bash
         run: |
