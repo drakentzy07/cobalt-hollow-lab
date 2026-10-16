@@ -145,3 +145,21 @@ jobs:
                   f=tf.extractfile(m);chunk=f.read(260)
                   print('HF_HDR_HEADER='+json.dumps({'file':m.name,'bytes':m.size,'prefix':repr(chunk[:180])}))
           PY
+
+      - name: Checkout immutable lossless encoder for independent bench
+        uses: actions/checkout@v4
+      - name: RLE benchmark on three actual published HDR files - DRY RUN
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import tarfile
+          with tarfile.open('live-baseline/artifact.tar','r:') as tf:
+              hdr=[m for m in tf if m.isfile() and m.name.endswith('.hdr') and m.size>=8000000]
+              for m in hdr[:3]:
+                  p=Path('hdr-bench')/m.name.lstrip('./')
+                  p.parent.mkdir(parents=True,exist_ok=True)
+                  p.write_bytes(tf.extractfile(m).read())
+          PY
+          python3 scripts/highfly_lossless_hdr_rle.py hdr-bench --dry-run --minimum-saved 100000
