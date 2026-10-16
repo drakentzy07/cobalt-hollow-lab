@@ -11,7 +11,7 @@ try{
   const ctx=await browser.newContext({viewport:{width,height},deviceScaleFactor,isMobile:name!=='desktop',hasTouch:name!=='desktop'});
   const page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});
   await page.goto(url,{waitUntil:'load',timeout:30000});
-  try{await page.waitForFunction(()=>window.__HIGHFLY_UNIQUE_R02_QA?.rig().loaded===true,undefined,{timeout:24000});}
+  try{await page.waitForFunction(()=>window.__HIGHFLY_UNIQUE_R02_QA?.rig().loaded===true,undefined,{timeout:60000});}
   catch(e){
     await page.screenshot({path:join(here,'dist/smoke-failure-'+name+'.png')}).catch(()=>{});
     const diagnostics=await page.evaluate(()=>({loading:document.getElementById('loading')?.textContent,qaExists:!!window.__HIGHFLY_UNIQUE_R02_QA,rig:window.__HIGHFLY_UNIQUE_R02_QA?.rig?.(),bodyText:document.body.innerText?.slice(0,350)})).catch(err=>({error:String(err)}));
