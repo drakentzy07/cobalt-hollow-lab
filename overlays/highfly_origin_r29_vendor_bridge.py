@@ -176,4 +176,15 @@ hud='src/ui/hud.ts'
 one(hud,
     "        scene:this.renderer.scene,",
     "        scene:this.renderer.scene,\n        camera:this.renderer.camera,")
+# R21's projection uses only linear/zone/dash; ring/gate/scribe are
+# richer VISUALS but pick their placement using the circle Jacobian.
+ui_file=Path(ui)
+projection_input="spec.shape,h.project,h.cameraYaw()"
+raw=ui_file.read_text('utf8')
+# This file is the R28 tester after prior R29 patches above and has two uses.
+assert raw.count(projection_input)==2, 'R29_MOBILE_PROJECTION_SOURCE_DRIFT'
+raw=raw.replace(projection_input,
+    "(spec.shape==='ring'||spec.shape==='gate'||spec.shape==='scribe'?'circle':spec.shape),h.project,h.cameraYaw()")
+ui_file.write_text(raw,'utf8')
+
 print('R29_P2_REAL_MIT_23_SOURCE_VFX_COPIED_NATIVE_SIM_METADATA_AIM_ADAPTER=1')
