@@ -1159,6 +1159,34 @@ jobs:
           console.log('HF_SUPREME_INTEGRATED_PAGES_S23_CHROME_PREOPEN_QA_GREEN=1');
           JS
       # The prior R29 ATK hijack/VFX UI is deliberately disabled in R32.
+      - name: R32 HARD GATE - actual Hunter entry, four hotbar skills and world loaded in S23 Chrome
+        working-directory: upstream
+        shell: bash
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_origin_r32_browser_boot_smoke.mjs scripts/highfly_origin_r32_browser_boot_smoke.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory ../supreme-preview > ../r32-hunter-browser.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for n in $(seq 1 60); do
+            if curl -fsS 'http://127.0.0.1:4173/cobalt-hollow-lab/' >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_origin_r32_browser_boot_smoke.mjs
+          grep -Fq '"pass": true' ../r32-hunter-boot-report.json
+      - name: Preserve R32 physical-Hunter boot browser evidence even on error
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-R32-HUNTER-BOOT-DIAGNOSTICS
+          path: |
+            r32-hunter-boot-report.json
+            r32-hunter-boot-failure.png
+            r32-hunter-browser.log
+          if-no-files-found: warn
+          retention-days: 10
+
       - name: Upload actual playable WEBGL full assets ONLY after green gates (never publish)
         uses: actions/upload-artifact@v4
         with:
