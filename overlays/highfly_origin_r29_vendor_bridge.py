@@ -130,6 +130,33 @@ one(ui,
    raf=requestAnimationFrame(frame);
  };
  if(r29Fx)raf=requestAnimationFrame(frame);""")
+# Browser-only opt-in integrated runtime exercise for all 23 MIT shaders.
+# QA hook is gated by VITE_HIGHFLY_ORIGIN_R29 and never appears in production.
+one(ui,
+    " if(r29Fx)raf=requestAnimationFrame(frame);",
+    """ if(r29Fx)raf=requestAnimationFrame(frame);
+ if(import.meta.env.VITE_HIGHFLY_ORIGIN_R29==='1'){
+   (window as any).__HIGHFLY_R29_VFX_QA__={
+     ids:R29_PREMIUM_CONTRACTS.map(x=>({id:x.id,source:x.source,sourceId:x.sourceId,
+       role:x.role,readiness:x.readiness})),
+     probe:async (id:string)=>{
+       const c=R29_PREMIUM_CONTRACTS.find(x=>x.id===id);
+       if(!c||!r29Fx)return {ok:false,reason:'MISSING_RUNTIME_OR_SKILL'};
+       if(c.sourceId==='cyber')await r29Fx.serpentLoading;
+       const actor=h.sim.player.pos;
+       const a={x:actor.x,z:actor.z};
+       const t={x:a.x+8,z:a.z+8};
+       const result=r29Fx.start(c.sourceId,c.source,a,t);
+       if(!result.ok)return result;
+       const active=r29Fx.bySource.get(c.source)?.manager?.active??[];
+       return {ok:active.some((e:any)=>e.element===c.sourceId),
+         activeCount:active.length, originalVfxModule:result.originalVfxModule};
+     },
+     stats:()=>({sources:r29Fx?.bySource.size??0, failures:[...(r29Fx?.failures??new Map())],
+       active:[...(r29Fx?.bySource??new Map())].map(([name,v]:any)=>({
+         name,count:v.manager.active.length}))})
+   };
+ }""")
 one(ui,
     " const ta=tab('CLAUDE ORIGINAL','native'),tb=tab('PREMIUM · 23','premium'),tc=tab('BUFFS','support');",
     " const ta=tab('CLAUDE ORIGINAL','native'),tb=tab('PREMIUM · 23','premium');")
@@ -170,7 +197,8 @@ one(ui,
   state.textContent='SIM NATIVO · '+def.name+' · comprobar efecto/daño';""")
 one(ui,
     "  tile?.remove();icon?.remove();root.remove();visual.dispose();",
-    "  cancelAnimationFrame(raf);r29Fx?.dispose();\n  tile?.remove();icon?.remove();root.remove();visual.dispose();")
+    "  if(import.meta.env.VITE_HIGHFLY_ORIGIN_R29==='1')delete (window as any).__HIGHFLY_R29_VFX_QA__;
+  cancelAnimationFrame(raf);r29Fx?.dispose();\n  tile?.remove();icon?.remove();root.remove();visual.dispose();")
 
 # Keep the original HUD experience, but disable redundant development windows
 # in R29 preview only; do not change buttons of the public branch.
