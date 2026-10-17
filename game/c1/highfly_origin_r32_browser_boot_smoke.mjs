@@ -21,6 +21,10 @@ try {
   });
   page=await context.newPage();
   page.on('pageerror', e=>report.errors.push(String(e)));
+  page.on('console', msg=>{
+    if(msg.type()==='error' && msg.text().includes('R32_HUNTER_POST_BOOT_LOADOUT_RED'))
+      report.errors.push(msg.text());
+  });
   page.on('response', r=>{if(r.status()===404 && !r.url().includes('/api/'))report.missing.push(r.url());});
   await page.goto(url,{waitUntil:'domcontentloaded',timeout:40000});
   report.phase='hunter-entry';
@@ -51,13 +55,34 @@ try {
   report.phase='post-Hud-four-BASE-assignment';
   await page.waitForFunction(()=>['1','error'].includes(document.body.dataset.hfR32SkillsReady),null,{timeout:15000});
   const r32Status=await page.evaluate(()=>document.body.dataset.hfR32SkillsReady);
-  if(r32Status!=='1') throw Error('R32_NATIVE_POST_HUD_ASSIGNMENT_FAILED');
+  if(r32Status!=='1') {
+    const diag=await page.evaluate(()=>({
+      error:document.body.dataset.hfR32SkillsError??null,
+      known:document.body.dataset.hfR32KnownDebug??null,
+      simKnown:window.__game?.sim?.known?.map(x=>x.def?.id)??null
+    }));
+    throw Error('R32_NATIVE_POST_HUD_ASSIGNMENT_FAILED '+JSON.stringify(diag));
+  }
   report.phase='world-ready-and-native-HUD';
   await page.waitForFunction(()=>
     !!window.__game?.sim?.player?.originResources
       &&document.body.classList.contains('hf-origin-r32-combat')
       &&document.querySelectorAll('#actionbar [data-hotbar-slot="1"], #actionbar [data-hotbar-slot="2"], #actionbar [data-hotbar-slot="3"], #actionbar [data-hotbar-slot="4"]').length===4,
     null,{timeout:35000});
+  report.phase='dismiss-native-welcome-dialogs';
+  // The native island introduction and software GPU warning are modal and
+  // legitimately block HUD hit-testing until a player taps their buttons.
+  for (const name of [/^Cerrar$/i,/Entendido/i]) {
+    const controls=page.getByRole('button',{name});
+    const count=await controls.count();
+    for(let i=0;i<count;i++){
+      const btn=controls.nth(i);
+      if(await btn.isVisible().catch(()=>false)){
+        await btn.click({timeout:7000}).catch(()=>{});
+        break;
+      }
+    }
+  }
   report.phase='4-visible-tappable-BASE-and-original-HUD';
   await page.waitForFunction(()=>{
     const bar=document.getElementById('actionbar');
@@ -124,7 +149,11 @@ try {
     body:document.body.className,loading:document.querySelector('#loading-screen')?.textContent?.slice(0,500),
     preflight:document.querySelector('#mobile-preflight')?.textContent?.slice(0,300),
     hunterEntry:document.querySelector('#hf-origin-entry')?.textContent?.slice(0,350),
-    hasGame:!!window.__game,origin:!!window.__game?.sim?.player?.originResources
+    hasGame:!!window.__game,origin:!!window.__game?.sim?.player?.originResources,
+    r32Ready:document.body.dataset.hfR32SkillsReady??null,
+    r32Error:document.body.dataset.hfR32SkillsError??null,
+    r32KnownDebug:document.body.dataset.hfR32KnownDebug??null,
+    known:window.__game?.sim?.known?.map(x=>x.def?.id)??null
   }));await page?.screenshot({path:'../r32-hunter-boot-failure.png',fullPage:true});}catch{}
   console.error('HIGHFLY_R32_HUNTER_BOOT_RED',JSON.stringify(report,null,2));
   process.exitCode=1;
