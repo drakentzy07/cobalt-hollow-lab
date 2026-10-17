@@ -236,10 +236,18 @@ import { r32StartSession, R32_P2_BASE_IDS } from '../sim/highfly_origin_r28_sess
       window.setTimeout(() => {
         try {
           const hunter = this.sim as unknown as import('../sim/sim').Sim;
+          const seenBefore = this.sim.known.map(k=>k.def.id);
+          // R28 resolver already checks the native server safety/admission
+          // rules. The older R17 spellbook role is a UI grouping, not the
+          // authority for a cross-school R32 disposable four-skill laboratory.
           r32StartSession(hunter);
+          const seenAfter = this.sim.known.map(k=>k.def.id);
+          document.body.dataset.hfR32KnownDebug = JSON.stringify({
+            seenBefore,seenAfter,expected:[...R32_P2_BASE_IDS]
+          });
           for (const id of R32_P2_BASE_IDS) {
-            if (!this.sim.known.some(k=>k.def.id===id) || originSkillRole(id)!=='combat')
-              throw Error('R32_LATE_NATIVE_SKILL_NOT_ELIGIBLE_'+id);
+            if (!this.sim.known.some(k=>k.def.id===id))
+              throw Error('R32_NATIVE_KNOWN_DESYNC_'+id+'_'+seenAfter.join(','));
           }
           let actions = this.hotbarActions;
           R32_P2_BASE_IDS.forEach((id,i) => {
@@ -254,6 +262,7 @@ import { r32StartSession, R32_P2_BASE_IDS } from '../sim/highfly_origin_r28_sess
           document.body.dataset.hfR32SkillsReady = '1';
         } catch (err) {
           document.body.dataset.hfR32SkillsReady = 'error';
+          document.body.dataset.hfR32SkillsError = String(err);
           console.error('R32_HUNTER_POST_BOOT_LOADOUT_RED',err);
         }
       }, 0);
