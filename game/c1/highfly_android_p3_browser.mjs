@@ -56,6 +56,7 @@ try {
     // opening windows settle; never fake visibility or strip body classes.
     await page.waitForFunction(()=>!document.body.classList.contains('mobile-window-open'),
       null,{timeout:20000}).catch(()=>{});
+    await page.waitForFunction(()=>document.getElementById('mobile-action-attack')?.dataset.highflyContext==='ATK',null,{timeout:12000}).catch(()=>{});
     const found=await page.evaluate(()=>{
       const sim=window.__game.sim;
       const visible=el=>{
