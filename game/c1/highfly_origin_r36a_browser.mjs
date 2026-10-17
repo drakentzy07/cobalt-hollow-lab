@@ -57,6 +57,22 @@ try {
     await page.waitForFunction(()=>!document.body.classList.contains('mobile-window-open'),
       null,{timeout:20000}).catch(()=>{});
     await page.waitForFunction(()=>document.getElementById('mobile-action-attack')?.dataset.highflyContext==='ATK',null,{timeout:12000}).catch(()=>{});
+    // Read real resource debit in the same synchronous native Sim call.
+    // Reading 500ms later is INVALID: stamina regenerates 8/s and
+    // Playwright's frame/gesture settle time can refill a 4-point cost.
+    await page.evaluate(()=>{
+      const sim=window.__game.sim;
+      const old=sim.highflyBasicAttack.bind(sim);
+      sim.highflyBasicAttack=(step,pid)=>{
+        const meta=sim.players.get(pid??sim.player.id)?.originHunter;
+        const before=meta?.resources.stamina??null;
+        const accepted=old(step,pid);
+        const after=meta?.resources.stamina??null;
+        window.__r36aNativeTrace={step,before,after,accepted,
+          selectedId:sim.player.targetId,frameStamina:sim.player.originResources?.stamina??null};
+        return accepted;
+      };
+    });
     // Genuine S23 native attack BUTTON (tap gesture) with no preset enemy.
     const attackBefore=await page.evaluate(()=>{
       const sim=window.__game.sim;
@@ -72,6 +88,7 @@ try {
       const sim=window.__game.sim;
       return {count:Number(document.body.dataset.highflyBasicAttackCount||'0'),
         stamina:sim.player.originResources?.stamina??null,
+        nativeTrace:window.__r36aNativeTrace??null,
         autoAttack:sim.player.autoAttack,
         attackLabel:document.getElementById('mobile-action-attack')?.dataset.highflyContext};
     });
@@ -83,8 +100,10 @@ try {
     await page.waitForTimeout(250);
     const afterUse=await page.evaluate(()=>Number(document.body.dataset.highflyBasicAttackCount||'0'));
     const controlsSeparate=airSwing.count>attackBefore.count&&
-      airSwing.stamina!==null&&attackBefore.stamina!==null&&
-      airSwing.stamina<attackBefore.stamina&&!airSwing.autoAttack&&
+      airSwing.nativeTrace?.accepted===true&&
+      airSwing.nativeTrace.before!==null&&airSwing.nativeTrace.after!==null&&
+      airSwing.nativeTrace.before-airSwing.nativeTrace.after===4&&
+      !airSwing.autoAttack&&
       airSwing.attackLabel==='ATK'&&afterUse===countAfterAttack;
     const found=await page.evaluate(()=>{
       const sim=window.__game.sim;
