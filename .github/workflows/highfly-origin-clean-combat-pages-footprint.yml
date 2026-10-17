@@ -1,0 +1,56 @@
+name: HIGHFLY ORIGIN CLEAN - Pages Footprint Forensic NO DEPLOY
+
+on:
+  push:
+    branches:
+      - highfly-origin-clean-combat-r1
+    paths:
+      - scripts/highfly_clean_pages_footprint_audit.py
+      - .github/workflows/highfly-origin-clean-combat-pages-footprint.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: highfly-clean-pages-audit
+  cancel-in-progress: true
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout isolated CLEAN audit source
+        uses: actions/checkout@v4
+      - name: Download last VERIFIED Pages site artifact - read only
+        uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          run-id: 38984404410
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: pages-artifact
+      - name: Inventory all folders and hash true duplicate files
+        run: |
+          set -euo pipefail
+          python3 scripts/highfly_clean_pages_footprint_audit.py pages-artifact clean-pages-audit.json
+          python3 - <<'PY'
+          import json
+          j=json.load(open('clean-pages-audit.json',encoding='utf8'))
+          assert j['totalFiles'] > 6000, 'INCOMPLETE_SNAPSHOT'
+          assert 900000000 < j['totalBytes'] < 995000000, 'UNEXPECTED_PAGES_SIZE'
+          assert j['invalidPathCount'] == 0, 'UNSAFE_TAR_PATH'
+          print('HIGHFLY_CLEAN_PAGES_FOOTPRINT_READ_ONLY_GREEN=1')
+          PY
+      - name: Preserve ONLY small forensic JSON (never site media)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-CLEAN-PAGES-SIZE-DUPLICATE-INVENTORY
+          path: clean-pages-audit.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Explicit safe stop - NEVER deploy, delete or mutate Pages
+        run: |
+          echo 'HIGHFLY_CLEAN_AUDIT_NO_PAGES_WRITE_NO_DELETE=1'
