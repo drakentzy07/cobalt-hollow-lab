@@ -12,8 +12,8 @@ SITE=Path('site')
 CAND=Path('supreme-preview/cobalt-hollow-lab')
 ARCH=Path('baseline/artifact.tar')
 LAB='lab/origin-android-p2'
-RUN=39044284650
-COMMIT='cee271235b9ba088a84370804ffb15e6ca108fa0'
+RUN=39045655528
+COMMIT='af1e85f305d4e0eebb705a5594fc899dc9284934'
 ROOT='https://drakentzy07.github.io/cobalt-hollow-lab/'
 PROTECTED=(
     'index.html','play.html','manifest.webmanifest',
