@@ -52,6 +52,23 @@ No tocar profile, experiencia, training-core, slots multisave previos, inventari
 - El último deploy añadió solo **4 JS nuevos**; más de 6600 rutas fueron idénticas al artefacto descargado. Esto sugiere buscar duplicados de laboratorios y recursos, pero NO autoriza asumir que las rutas son borrables.
 - Auditoría complementaria activa: `scripts/highfly_clean_pages_footprint_audit.py` + workflow `highfly-origin-clean-combat-pages-footprint.yml`, leyendo el artifact Pages verificado #38984404410. Inventario por subcarpeta, archivo, extensión y SHA-256 de duplicados **SIN** extraer, borrar ni publicar. Esperar su JSON antes de proponer lista concreta de eliminación.
 - No fue posible obtener un saldo completo de cuota de Actions del usuario desde el endpoint permitido. Duplicados de outputs no equivalen a almacenamiento consumido por ramas Git. Mantener hashes/fuentes congeladas.
+
+### Resultado final de auditoría real de Pages (GREEN #39034434175)
+
+Inventario del paquete verificado con lectura de **cada archivo** y SHA-256:
+
+| Carpeta | Bytes | Archivos |
+|---|---:|---:|
+| `media/` (mundos/modelos/entornos) | 522928790 | 1838 |
+| `audio/` | 234765025 | 1341 |
+| `assets/` (bundles compilados) | 133612313 | 310 |
+| `map_art/` | 21866425 | 8 |
+| `ui/` | 16415097 | 3021 |
+| Cinco laboratorios `lab/v15-2`, `origin-r28`, `origin-r29`, `origin-r31`, `origin-r32` | 1319071 | 29 |
+
+Los cinco laboratorios solo ocupan **~1.32 MB**, **no** son el origen del crecimiento del sitio. Borrarlos no libera espacio relevante y sí destruye URLs históricas. NO proponer su eliminación como primera medida. Los bytes de payload idénticos repetidos suman solo **2308808 bytes** potencialmente deduplicables; no equivalen automáticamente a capacidad recuperable. Los mayores archivos individuales son siete HDR de entorno ~8.39 MB cada uno y una textura de dungeon ~8.30 MB. Las propuestas siguientes son **auditar compresión sin pérdidas en HDR/modelos, recursos servidos bajo demanda si Pages lo permite y bundles `assets/` obsoletos con prueba de referencias**; nunca borrar assets sin grafo de dependencias y rollback. La compresión de red (gzip/brotli) no reduce el tamaño de los archivos que se empaquetan en Pages.
+Resultados íntegros: [CI audit #39034434175](https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/39034434175), artifact `HIGHFLY-CLEAN-PAGES-SIZE-DUPLICATE-INVENTORY`.
+
 - Primer plan de limpieza (NO EJECUTAR): clasificar labs en público, rollback, descontinuados y experimentales; determinar URLs enlazadas por el launcher/PWA; construir manifest, copias/redirects si procede, solicitar aprobación por nombre; emitir Pages en CI con contador + hash de archivos protegidos y comprobar con Android. Separar reducción de retención de Actions.
 
 ## 7. Orden de implementación y puertas de aceptación
