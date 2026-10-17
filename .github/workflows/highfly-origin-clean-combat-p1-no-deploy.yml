@@ -1092,6 +1092,16 @@ jobs:
           node scripts/highfly_android_p2_browser.mjs
           test -s ../highfly-android-p2-report.json
           echo 'HIGHFLY_ANDROID_P2_EMULATED_TWO_HUNTERS_FOUR_BASE_UI_GREEN=1'
+      - name: Archive EXACT green Android P2 WebGL site for isolated Pages
+        # Only archive after *all* native and browser QA gates are GREEN.
+        # This is an Actions artifact, NOT a GitHub Pages deploy.
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-ANDROID-P2-GREEN-FULL-WEBGL-NO-DEPLOY
+          path: supreme-preview/cobalt-hollow-lab/
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 1
       - name: Preserve small CLEAN P1 diagnostics only
         if: always()
         uses: actions/upload-artifact@v4
