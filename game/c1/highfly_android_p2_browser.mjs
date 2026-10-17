@@ -38,6 +38,20 @@ try {
     }
     await page.waitForFunction(()=>!!window.__game?.sim?.player &&
       document.body.classList.contains('game-active'),null,{timeout:120000});
+    // ClaudeCraft v0.44.0 deliberately hides #mobile-controls with inline
+    // style.display='none' throughout the FIRST-SPAWN CAMERA CINEMATIC.
+    // A game-active body precedes the end of that intro, so testing buttons
+    // immediately here is a false negative. Use the native Escape-to-skip
+    // action (only while the intro owns the HUD), then WAIT for restored controls.
+    const initialIntroCover=await page.evaluate(()=>
+      document.getElementById('mobile-controls')?.style.display==='none');
+    if(initialIntroCover) await page.keyboard.press('Escape');
+    await page.waitForFunction(()=>{
+      const el=document.getElementById('mobile-controls');
+      return !!el && el.style.display!=='none' &&
+        getComputedStyle(el).display!=='none' &&
+        document.body.classList.contains('game-active');
+    },null,{timeout:60000});
     const found=await page.evaluate(()=>{
       const sim=window.__game.sim;
       const visible=el=>{
@@ -72,7 +86,7 @@ try {
       !found.equipment?.chest&&found.controls&&found.moveJoystick&&found.ring &&
       found.slots===4&&found.visibleSlots===4&&found.attack&&!found.pageToggle &&
       !found.hasHiddenUniqueSlot&&errors.length===0;
-    const entry={gender,pass:okay,found,errors:errors.slice(0,6)};
+    const entry={gender,pass:okay,introSkipped:initialIntroCover,found,errors:errors.slice(0,6)};
     report.hunters.push(entry);
     await page.screenshot({path:'../highfly-android-p2-'+gender+'.png',fullPage:false}).catch(()=>{});
     await context.close();
