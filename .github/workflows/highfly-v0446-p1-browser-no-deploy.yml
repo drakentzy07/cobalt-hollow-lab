@@ -1,0 +1,131 @@
+name: HIGHFLY REBORN P1 - real browser and touch smoke - NO DEPLOY
+
+on:
+  push:
+    branches: [highfly-claudecraft-v0446-training-reset]
+    paths:
+      - .github/workflows/highfly-v0446-p1-browser-no-deploy.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-v0446-p1-browser
+  cancel-in-progress: true
+
+jobs:
+  browser-world-and-touch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout P1 workflow branch (read only)
+        uses: actions/checkout@v4
+
+      - name: Checkout EXACT original ClaudeCraft v0.44.6 (do not mutate gameplay)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 86cc574989d03ac491563e26bd8fdf951dfeecfb
+          path: upstream
+          filter: blob:none
+          sparse-checkout-cone-mode: true
+          sparse-checkout: |
+            src
+            scripts
+            patches
+            tests
+            server
+            headless
+            bot
+            data
+            third_party
+            electron
+            public
+
+      - name: Prove pinned upstream and intact native movement
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream rev-parse HEAD)" = "86cc574989d03ac491563e26bd8fdf951dfeecfb"
+          grep -Fq '"version": "0.44.6"' upstream/package.json
+          test -s upstream/scripts/feel_smoke.mjs
+          test -s upstream/tests/browser/mobile_attack_setting.browser.test.ts
+          test -s upstream/tests/browser/action_bar_space_jump.browser.test.ts
+          test -s upstream/tests/browser/mobile_menu_control.browser.test.ts
+          test -s upstream/tests/browser/tap_menu_mode.browser.test.ts
+          echo "HF_P1_ORIGINAL_MOVEMENT_HUD_AND_BROWSER_TESTS_PINNED=1"
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install pinned pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+
+      - name: Install upstream dependencies unmodified
+        working-directory: upstream
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Install exact Chromium browser for real Browser Mode
+        working-directory: upstream
+        run: pnpm exec playwright install chromium
+
+      - name: Run original ClaudeCraft browser regressions (including touch HUD)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run --config vitest.browser.config.ts             tests/browser/mobile_attack_setting.browser.test.ts             tests/browser/action_bar_space_jump.browser.test.ts             tests/browser/mobile_menu_control.browser.test.ts             tests/browser/tap_menu_mode.browser.test.ts
+          echo "HF_P1_REAL_CHROMIUM_TOUCH_AND_ACTIONBAR_TESTS_GREEN=1"
+
+      - name: Start original local Vite game ONLY inside CI
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vite --host 127.0.0.1 --port 5173 --strictPort > "$GITHUB_WORKSPACE/highfly-p1-vite.log" 2>&1 &
+          echo $! > "$GITHUB_WORKSPACE/highfly-p1-vite.pid"
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:5173/ > /dev/null; then
+              echo "HF_P1_LOCAL_VITE_HTTP_READY=1"
+              exit 0
+            fi
+            sleep 2
+          done
+          cat "$GITHUB_WORKSPACE/highfly-p1-vite.log"
+          exit 1
+
+      - name: Boot REAL offline game and verify world movement and camera
+        working-directory: upstream
+        shell: bash
+        env:
+          GAME_URL: http://127.0.0.1:5173
+          FEEL_OUT: ../highfly-p1-feel-smoke.json
+          FEEL_BOOT_TIMEOUT_MS: "120000"
+        run: |
+          set -euo pipefail
+          node scripts/feel_smoke.mjs
+          test -s ../highfly-p1-feel-smoke.json
+          echo "HF_P1_ORIGINAL_OFFLINE_WORLD_MOVEMENT_CAMERA_GREEN=1"
+
+      - name: Preserve tiny browser receipts (NOT Pages)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-reborn-p1-browser-receipts
+          path: |
+            highfly-p1-feel-smoke.json
+            highfly-p1-vite.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Confirm NO DEPLOY and untouched public game
+        if: always()
+        shell: bash
+        run: |
+          echo "HF_P1_NO_PAGES_WRITE_NO_MAIN_BRANCH_NO_HUD_MODIFICATIONS_NO_SAVE_MIGRATION=1"
