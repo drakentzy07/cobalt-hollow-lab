@@ -112,8 +112,8 @@ function paintContextualAttack(): void {""")
     # The previous R32 assembly instruction creates ensureR32UseButton()
     # first. Only after that may P3 add the native hotbar relocation call.
     replace_one(runtime,
-      "    ensureR32UseButton();\\n    installSkillTouch();",
-      "    ensureR32UseButton();\\n    ensureR32NativeSkillBar();\\n    installSkillTouch();")
+      "    ensureR32UseButton();\n    installSkillTouch();",
+      "    ensureR32UseButton();\n    ensureR32NativeSkillBar();\n    installSkillTouch();")
     # Append only the verified R32 CSS override; keep every prior PR16/C2.8 rule.
     r32_css = Path("../v9-corrections/game/c1/hud.css").read_text(encoding="utf8")
     marker = "/* ==========================================================================" + chr(10) + "   HIGHFLY R32 P1 NATIVE HUD"
