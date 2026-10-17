@@ -58,6 +58,7 @@ on:
       - "overlays/highfly_origin_r36a_air_strike.py"
       - "game/c1/highfly_origin_r36a_manual_attack.test.ts"
       - "game/c1/highfly_origin_r36a_browser.mjs"
+      - "game/c1/highfly_r36a_soft_attack_target.ts"
       - ".github/workflows/highfly-origin-r36a-manual-air-strike-no-deploy.yml"
       - "game/c1/highfly_android_p35_aim_hud_lab.test.ts"
       - "game/c1/highfly_android_p35_browser.mjs"
@@ -186,6 +187,7 @@ jobs:
             /overlays/highfly_origin_r36a_air_strike.py
             /game/c1/highfly_origin_r36a_manual_attack.test.ts
             /game/c1/highfly_origin_r36a_browser.mjs
+            /game/c1/highfly_r36a_soft_attack_target.ts
             /game/c1/highfly_android_p35_aim_hud_lab.test.ts
             /game/c1/highfly_android_p35_browser.mjs
             /game/c1/highfly_android_p3_runtime.ts
