@@ -63,13 +63,37 @@ try {
         origin:!!window.__game.sim.player.originResources,
       };
     });
-    const passed=found.preview && found.desktop===!device.mobile &&
+    let wasd=null;
+    if(!device.mobile){
+      // Exercise native Input.readMoveInput directly with physical WASD
+      // binding codes; avoids fake joystick and any test-only combat hooks.
+      wasd=await page.evaluate(()=>{
+        const input=window.__game?.input;
+        if(!input?.isMouseCameraMode?.()||!input?.keys)return {pass:false,reason:'mouse-camera-not-active'};
+        const oldSuspend=input.suspendMovement;
+        input.setSuspendMovement(false);
+        input.keys.add('KeyW');
+        input.keys.add('KeyA');
+        const forwardLeft=input.readMoveInput();
+        input.keys.delete('KeyA');
+        input.keys.add('KeyD');
+        const forwardRight=input.readMoveInput();
+        input.keys.delete('KeyW');
+        input.keys.delete('KeyD');
+        input.setSuspendMovement(oldSuspend);
+        return {pass:forwardLeft.forward&&forwardLeft.strafeLeft&&!forwardLeft.turnLeft&&
+          forwardRight.forward&&forwardRight.strafeRight&&!forwardRight.turnRight,
+          forwardLeft,forwardRight,mouseCamera:input.isMouseCameraMode()};
+      });
+    }
+    const passed=(device.mobile||!!wasd?.pass) &&
+       found.preview && found.desktop===!device.mobile &&
        found.touchLayout && found.nativeMobileRing && found.slots===4 &&
        found.visibleSlots===4 && found.attack && !found.pageToggle &&
        found.joystick===device.mobile && found.gender===device.gender &&
        found.origin && !found.equipment?.chest && !found.equipment?.mainhand &&
        !found.equipment?.offhand && !errors.length;
-    const entry={device:device.name,passed,found,errors:errors.slice(0,5)};
+    const entry={device:device.name,passed,wasd,found,errors:errors.slice(0,5)};
     report.cases.push(entry);
     await page.screenshot({path:'../hf-r24-'+device.name+'.png',fullPage:false}).catch(()=>{});
     await context.close();
