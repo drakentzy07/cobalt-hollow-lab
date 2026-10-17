@@ -1015,6 +1015,9 @@ jobs:
           grep -Fq "HIGHFLY R32 P1 NATIVE HUD" src/styles/hf_game_c1.css
           grep -Fq "R32_P2_BASE_IDS" src/sim/highfly_origin_r28_session.ts
           grep -Fq "R32_REQUIRES_EPHEMERAL_HUNTER" src/sim/highfly_origin_r28_session.ts
+          grep -Fq "ensureR32NativeSkillBar" src/highfly/game_c1_runtime.ts
+          grep -Fq "R32_INCOMPLETE_FOUR_SLOT_HOTBAR" src/ui/hud.ts
+          grep -Fq "HIGHFLY R32 P3: physical S23 native bar visibility correction." src/styles/hf_game_c1.css
           grep -Fq "VITE_HIGHFLY_ORIGIN_R32" src/main.ts
           cp ../v9-corrections/game/c1/highfly_origin_r32_boot_regression.test.ts tests/highfly_origin_r32_boot_regression.test.ts
           VITE_HIGHFLY_ORIGIN_R30=1 VITE_HIGHFLY_ORIGIN_R32=1 pnpm exec vitest run tests/highfly_origin_r32_boot_regression.test.ts
@@ -1183,6 +1186,7 @@ jobs:
           path: |
             r32-hunter-boot-report.json
             r32-hunter-boot-failure.png
+            r32-hunter-hud-p3.png
             r32-hunter-browser.log
           if-no-files-found: warn
           retention-days: 10
