@@ -4,6 +4,14 @@ import { getActiveHighflyHunterProfile } from './profile_store';
 export interface HighflyBridgeEntity {
   id: number;
   attackPower: number;
+  // Donor-owned derived fields are declared for safe typing, not recalculated
+  // by HIGHFLY: the original ClaudeCraft combat pipeline remains authoritative.
+  rangedPower?: number;
+  spellPower?: number;
+  healPower?: number;
+  dodgeChance?: number;
+  critDmgSpellBonus?: number;
+  critDmgHealBonus?: number;
   maxHp: number;
   hp: number;
   critChance: number;
