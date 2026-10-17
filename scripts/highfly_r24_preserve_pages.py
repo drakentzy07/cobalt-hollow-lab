@@ -12,8 +12,8 @@ SITE=Path('site')
 CAND=Path('supreme-preview/cobalt-hollow-lab')
 ARCH=Path('baseline/artifact.tar')
 LAB='lab/origin-r24-p0'
-RUN=39042695463
-COMMIT='69bbe2ade371cb52f5b9723b9364a078cd764848'
+RUN=39043069777
+COMMIT='025e1a2797ba2b3f5e8c8d1f384479ba349d1a89'
 ROOT='https://drakentzy07.github.io/cobalt-hollow-lab/'
 PROTECTED=(
     'index.html','play.html','manifest.webmanifest',
