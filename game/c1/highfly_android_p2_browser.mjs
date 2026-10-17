@@ -65,7 +65,32 @@ try {
         return true;
       };
       const slots=[...document.querySelectorAll('#mobile-action-ring .mobile-action-slot')];
+      const explain=(id)=>{
+        const el=document.getElementById(id);
+        if(!el) return {missing:true};
+        const cs=getComputedStyle(el),rect=el.getBoundingClientRect();
+        const ancestors=[];
+        for(let n=el;n && ancestors.length<5;n=n.parentElement){
+          const c=getComputedStyle(n);
+          ancestors.push({id:n.id||null,tag:n.tagName,classes:String(n.className).slice(0,140),
+            display:c.display,visibility:c.visibility,opacity:c.opacity,
+            inlineDisplay:n.style.display,rect:[Math.round(n.getBoundingClientRect().width),Math.round(n.getBoundingClientRect().height)]});
+        }
+        return {display:cs.display,visibility:cs.visibility,opacity:cs.opacity,
+          pointerEvents:cs.pointerEvents,inlineDisplay:el.style.display,hidden:el.hidden,
+          rect:{x:rect.x,y:rect.y,width:rect.width,height:rect.height},
+          ancestors};
+      };
       return {
+        diagnostic: {
+          bodyClass:document.body.className, bodyStyle:document.body.style.cssText,
+          innerWidth:innerWidth,innerHeight:innerHeight,dpr:devicePixelRatio,
+          pointerCoarse:matchMedia('(pointer: coarse)').matches,
+          landscape:matchMedia('(orientation: landscape)').matches,
+          nodes:Object.fromEntries(['mobile-controls','mobile-move-joystick','mobile-move-zone',
+            'mobile-action-ring','mobile-action-attack','mobile-action-page-toggle',
+            'mobile-preflight','ui'].map(id=>[id,explain(id)])),
+        },
         androidP2:document.body.classList.contains('hf-android-p2'),
         touch:document.body.classList.contains('mobile-touch'),
         gameActive:document.body.classList.contains('game-active'),
