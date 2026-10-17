@@ -30,7 +30,7 @@ try{
         name.value=value==='male'?'Hunter Male':'Hunter Female';
         name.dispatchEvent(new Event('input',{bubbles:true}));
       }
-      document.querySelector('#hf-origin-entry button:last-of-type')?.click();
+      document.querySelector('#hf-origin-entry > button')?.click();
     },gender);
     await page.waitForFunction(()=>{
       const pre=document.getElementById('mobile-preflight');
