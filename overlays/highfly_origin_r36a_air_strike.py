@@ -41,7 +41,7 @@ function highflyR36AWhiff(ctx:SimContext,p:Entity,meta:PlayerMeta,step:1|2|3|4):
   meta.lastActiveTick=ctx.tickCount;
   p.swingTimer=step===1?.36:step===2?.40:step===3?.58:.68;
   // Typed cosmetic cue lets the same Rig_Medium render its one-shot attack.
-  // No targetId, no random damage, no aggro, no HP mutation.
+  // No target reference, no random damage, no aggro, no HP mutation.
   ctx.emit({type:'highflyBasicSwing',sourceId:p.id,step});
   return true;
 }
