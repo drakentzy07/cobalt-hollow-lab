@@ -95,10 +95,10 @@ jobs:
         with:
           script: |
             const q=(await github.rest.actions.getWorkflowRun({
-              owner:context.repo.owner,repo:context.repo.repo,run_id:39044284650
+              owner:context.repo.owner,repo:context.repo.repo,run_id:39045655528
             })).data;
             if(q.status!=='completed'||q.conclusion!=='success'||
-               q.head_sha!=='cee271235b9ba088a84370804ffb15e6ca108fa0')
+               q.head_sha!=='af1e85f305d4e0eebb705a5594fc899dc9284934')
               throw Error('ANDROID_P2_CI_NOT_GREEN_OR_SHA_DRIFT');
       - name: Checkout isolated HIGHFLY PR overlay
         uses: actions/checkout@v4
@@ -1140,8 +1140,8 @@ jobs:
           import json
           from pathlib import Path
           report=json.loads(Path('site/lab/origin-android-p2/highfly-origin-android-p2-qa.json').read_text())
-          assert report['sourceRun']==39044284650
-          assert report['sourceCommit']=='cee271235b9ba088a84370804ffb15e6ca108fa0'
+          assert report['sourceRun']==39045655528
+          assert report['sourceCommit']=='af1e85f305d4e0eebb705a5594fc899dc9284934'
           assert report['androidPreviewQuery']=='hf_android_p2=1'
           print('HIGHFLY_ANDROID_P2_BETA_SITE_SAFE_STAGED=1')
           PY
@@ -1208,7 +1208,7 @@ jobs:
           for attempt in range(30):
             try:
               report=json.loads(get('lab/origin-android-p2/highfly-origin-android-p2-qa.json?verify='+str(attempt)))
-              if report.get('sourceRun')!=39044284650:raise RuntimeError('ANDROID_P2_NOT_LIVE_YET')
+              if report.get('sourceRun')!=39045655528:raise RuntimeError('ANDROID_P2_NOT_LIVE_YET')
               html=get('lab/origin-android-p2/index.html?verify='+str(attempt))
               refs=re.findall(rb'''(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)''',html)
               if not refs:raise RuntimeError('ANDROID_P2_NO_ASSETS')
