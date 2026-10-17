@@ -100,7 +100,7 @@ jobs:
           cat "$GITHUB_WORKSPACE/highfly-p1-vite.log"
           exit 1
 
-      - name: Boot REAL offline game and verify world movement and camera
+      - name: Boot offline, skip original first-spawn cinematic and verify movement
         working-directory: upstream
         shell: bash
         env:
@@ -109,6 +109,34 @@ jobs:
           FEEL_BOOT_TIMEOUT_MS: "120000"
         run: |
           set -euo pipefail
+          # CI-only adjustment of upstream TEST HARNESS, never the game code:
+          # ClaudeCraft's new-character intro intentionally suspends movement.
+          # A real player can skip it with Escape before testing controls.
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/feel_smoke.mjs')
+          original = path.read_text()
+          marker = """  await page.evaluate(() => {
+            const start = window.__game?.perf?.report?.().frames ?? 0;"""
+          # Use the original exact indentation rather than relying on YAML.
+          marker = "  await page.evaluate(() => {\\n    const start = window.__game?.perf?.report?.().frames ?? 0;"
+          # Decode the escaped newline in the marker for reliable matching.
+          marker = marker.replace("\\n", "\n")
+          patch = """  // HIGHFLY CI readiness: exercise the game's supported Escape intro-skip.
+            const hiddenByIntro = await page.evaluate(
+              () => document.querySelector('#ui')?.style.display === 'none',
+            );
+            if (hiddenByIntro) await page.keyboard.press('Escape');
+            await page.waitForFunction(
+              () => !!window.__game?.input && !window.__game.input.suspendMovement,
+              { timeout: 90000, polling: 250 },
+            );
+          """
+          if original.count(marker) != 1:
+              raise SystemExit('P1 guard: upstream feel smoke marker changed')
+          path.write_text(original.replace(marker, patch + marker))
+          PY
+          git diff --exit-code -- src/main.ts src/sim src/ui
           node scripts/feel_smoke.mjs
           test -s ../highfly-p1-feel-smoke.json
           echo "HF_P1_ORIGINAL_OFFLINE_WORLD_MOVEMENT_CAMERA_GREEN=1"
