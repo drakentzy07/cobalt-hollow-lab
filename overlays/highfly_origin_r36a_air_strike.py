@@ -94,4 +94,33 @@ once('src/highfly/game_c1_runtime.ts',
   const use = !document.body.classList.contains('hf-android-p3') &&
     !document.body.classList.contains('hf-android-p35') &&
     w.__highflyGameC1Context?.canUse?.() === true;""")
+# On real ATK press, acquire a close frontal hostile without making TARGET a
+# prerequisite. Original normal/legacy target selection stays intact.
+# The second scanner is a manual-press-only fallback for S23 near enemies.
+import shutil
+shutil.copyfile('../v9-corrections/game/c1/highfly_r36a_soft_attack_target.ts',
+  'src/game/highfly_r36a_soft_attack_target.ts')
+once('src/main.ts',
+ "import { bestSoftAutoTarget } from './game/auto_target';",
+ "import { bestSoftAutoTarget } from './game/auto_target';\nimport { highflyR36ANearbyTarget } from './game/highfly_r36a_soft_attack_target';")
+once('src/main.ts',
+ "  hud.onMobileAttackNearest = () => attackNearest();",
+ """  hud.onMobileAttackNearest = () => {
+    const p=world.player;
+    // Only the single Hunter ORIGIN on the experimental Android combat HUD.
+    // If the player deliberately holds a target, classic locking wins.
+    if (document.body.classList.contains('hf-android-p35') &&
+        p.originResources && p.targetId===null) {
+      const pvp=activePvpOpponentIds(world);
+      const nearby=highflyR36ANearbyTarget(
+        world.entities.values(),p.pos,input.camYaw,
+        e=>isAttackableEntity(world.entities.get(e.id),world.playerId,pvp),5);
+      if(nearby!==null){
+        world.targetEntity(nearby);
+        highflyV91AimAt(nearby);
+        return;
+      }
+    }
+    attackNearest();
+  };""")
 print('HIGHFLY_R36A_AUTHENTIC_AIR_STRIKE_NO_FAKE_DAMAGE_NO_LEGACY_DAMAGE_AND_NATIVE_ATK_ALWAYS_ATK=1')
