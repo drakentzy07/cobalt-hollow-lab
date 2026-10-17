@@ -33,6 +33,12 @@ function highflyR36AWhiff(ctx:SimContext,p:Entity,meta:PlayerMeta,step:1|2|3|4):
 }
 
 export function highflyBasicAttack(""")
+# Keep the existing elemental gate: ATK4 without a gemstone cannot be
+# accepted even when swinging into empty space.
+once(path,
+ "  const t = p.targetId !== null ? ctx.entities.get(p.targetId) : null;",
+ """  if (step === 4 && !highflyElementalFinisherReady(p)) return false;
+  const t = p.targetId !== null ? ctx.entities.get(p.targetId) : null;""")
 # In R14D, the legacy rejection precedes two native damage routes.
 once(path,
  """  if (!t || t.dead || !ctx.isHostileTo(p, t) || hasEscapeStealth(t)) return false;""",
