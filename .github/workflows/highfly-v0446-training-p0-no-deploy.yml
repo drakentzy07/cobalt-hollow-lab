@@ -46,6 +46,8 @@ jobs:
             bot
             data
             third_party
+            electron
+            public
 
       - name: Prove certified vanilla source and untouched donor combat
         shell: bash
@@ -123,6 +125,16 @@ jobs:
           set -euo pipefail
           pnpm exec tsc --noEmit --incremental false
           echo "HF_RESET_V0446_TYPESCRIPT_GREEN=1"
+
+      - name: Compile complete original WebGL bundle (CI only, never publish)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s public/ui/skills/warrior/mapping.json
+          pnpm exec vite build
+          test -s dist/index.html
+          echo "HF_RESET_V0446_WEBGL_BUNDLE_BUILT_NO_DEPLOY=1"
 
       - name: Final no-deploy no-saves safety
         if: always()
