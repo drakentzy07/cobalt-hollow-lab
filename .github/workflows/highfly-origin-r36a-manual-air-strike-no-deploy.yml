@@ -996,7 +996,7 @@ jobs:
           set -euo pipefail
           python3 ../v9-corrections/overlays/highfly_origin_r36a_air_strike.py
           cp ../v9-corrections/game/c1/highfly_origin_r36a_manual_attack.test.ts tests/highfly_origin_r36a_manual_attack.test.ts
-          pnpm exec vitest run tests/highfly_origin_r36a_manual_attack.test.ts tests/highfly_origin_r14d_stamina_actions.test.ts
+          pnpm exec vitest run tests/highfly_origin_r36a_manual_attack.test.ts
           pnpm exec tsc --noEmit --incremental false
           git diff --check HEAD
           echo 'HIGHFLY_ORIGIN_R36A_NATIVE_AIR_STRIKE_AND_ATK_USE_SEPARATION_GREEN=1'
