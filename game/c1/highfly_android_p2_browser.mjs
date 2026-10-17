@@ -52,6 +52,10 @@ try {
         getComputedStyle(el).display!=='none' &&
         document.body.classList.contains('game-active');
     },null,{timeout:60000});
+    // Native transition may publish the first world frame before all
+    // opening windows settle; never fake visibility or strip body classes.
+    await page.waitForFunction(()=>!document.body.classList.contains('mobile-window-open'),
+      null,{timeout:20000}).catch(()=>{});
     const found=await page.evaluate(()=>{
       const sim=window.__game.sim;
       const visible=el=>{
@@ -87,6 +91,13 @@ try {
           innerWidth:innerWidth,innerHeight:innerHeight,dpr:devicePixelRatio,
           pointerCoarse:matchMedia('(pointer: coarse)').matches,
           landscape:matchMedia('(orientation: landscape)').matches,
+          openWindows:[...document.querySelectorAll('.window.panel')]
+            .filter(el=>!el.hidden && getComputedStyle(el).display!=='none')
+            .map(el=>({id:el.id,className:el.className,
+              display:getComputedStyle(el).display,
+              visible:el.getBoundingClientRect().width>0,
+              windowOpen:el.getAttribute('data-window-open')}))
+            .slice(0,24),
           nodes:Object.fromEntries(['mobile-controls','mobile-move-joystick','mobile-move-zone',
             'mobile-action-ring','mobile-action-attack','mobile-action-page-toggle',
             'mobile-preflight','ui'].map(id=>[id,explain(id)])),
@@ -101,6 +112,8 @@ try {
         moveJoystick:visible(document.getElementById('mobile-move-joystick')),
         ring:visible(document.getElementById('mobile-action-ring')),
         slots:slots.length,visibleSlots:slots.filter(visible).length,
+        slotStyles:slots.map((el,i)=>({slot:i+1,display:getComputedStyle(el).display,
+          visibility:getComputedStyle(el).visibility})),
         attack:visible(document.getElementById('mobile-action-attack')),
         pageToggle:visible(document.getElementById('mobile-action-page-toggle')),
         hasHiddenUniqueSlot:!!document.querySelector('[id*="origin-unique-slot"],[id*="hf-unique-locked"]'),

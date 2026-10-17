@@ -14,6 +14,17 @@ describe('HIGHFLY Android P2 4 BASE native arc while PC stays PC',()=>{
     expect(main).toContain("document.body.classList.toggle('hf-android-p2',androidP2)");
     expect(main).toContain("document.body.classList.toggle('mobile-touch', NATIVE_APP || useTouchInterface());");
   });
+  it('skips compulsory island tutorial ONLY for a fresh Android P2 Hunter',()=>{
+    expect(main).toContain("const androidP2Hunter = new URLSearchParams(location.search).get('hf_android_p2')==='1'");
+    expect(main).toContain("compulsoryTutorial: androidP2Hunter ? false : cfg.compulsoryTutorial");
+    expect(main).toContain("const hunter = new Sim({...cfg,originHunterEnabled:true,");
+  });
+  it('restores C1-hidden native action buttons without disabling window input gates',()=>{
+    expect(css).toContain('body.mobile-touch.hf-game-c1.hf-android-p2 #mobile-action-ring .mobile-action-slot');
+    expect(css).toContain('display: flex !important;');
+    const p2Css=css.split('body.mobile-touch.hf-game-c1.hf-android-p2 #mobile-action-ring .mobile-action-slot')[1];
+    expect(p2Css).not.toMatch(/pointer-events\s*:\s*auto|visibility\s*:\s*visible/);
+  });
   it('keeps one native 4-slot mobile action ring and existing server cast+cooldowns',()=>{
     expect(hud).toContain("this.isMobileLayout() && document.body.classList.contains('hf-android-p2')");
     expect(hud).toContain("? 0 : clampMobilePage(this.mobileActionPage)");

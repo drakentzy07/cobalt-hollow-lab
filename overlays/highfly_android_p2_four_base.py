@@ -38,6 +38,17 @@ once('src/ui/hud.ts',
       ? 0 : clampMobilePage(this.mobileActionPage);
   }""")
 
+# Android P2 ONLY: a new offline Hunter must not be auto-ferried into
+# ClaudeCraft's compulsory island tutorial, which opens a native window and
+# leaves the combat HUD hidden by its legitimate modal gate.
+# Keep the original compulsoryTutorial setting for desktop and legacy entries.
+once('src/main.ts',
+     "        const hunter = new Sim({...cfg,originHunterEnabled:true});",
+     """        const androidP2Hunter = new URLSearchParams(location.search).get('hf_android_p2')==='1'
+          && (NATIVE_APP || isPhoneTouchDevice());
+        const hunter = new Sim({...cfg,originHunterEnabled:true,
+          compulsoryTutorial: androidP2Hunter ? false : cfg.compulsoryTutorial});""")
+
 css=Path('src/styles/hud.mobile.css')
 s=css.read_text(encoding='utf8')
 s+=r"""
@@ -52,6 +63,15 @@ s+=r"""
   body.mobile-touch.hf-android-p2 #mobile-action-ring .mobile-action-slot {
     touch-action:none;
   }
+}
+"""
+# C1 intentionally retires the old radial/paged source slots via !important.
+# P2 explicitly resurrects ONLY the four original/native BASE action buttons.
+# Do not override visibility or pointer-events: native dialogs must still
+# suppress combat controls while legitimately open.
+s+=r"""
+body.mobile-touch.hf-game-c1.hf-android-p2 #mobile-action-ring .mobile-action-slot {
+  display: flex !important;
 }
 """
 css.write_text(s,encoding='utf8')
