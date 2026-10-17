@@ -66,7 +66,8 @@ def hdr_equivalent(previous,new):
             row=bytearray(width*4)
             for ch,part in enumerate(channels):row[ch::4]=part
             out.extend(row)
-        return raw[:m.end()],bytes(out) if offset==len(tail) else None
+        if offset!=len(tail):return None
+        return raw[:m.end()],bytes(out)
     return unpack(previous)==unpack(new) and unpack(previous) is not None
 
 if not ARCH.is_file() or not (CAND/'index.html').is_file() or not (CAND/'assets').is_dir() or not (CAND/'media').is_dir():
