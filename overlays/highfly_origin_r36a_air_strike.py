@@ -12,6 +12,20 @@ def once(path,old,new):
  if n!=1:raise SystemExit(f"R36A_SOURCE_DRIFT {path}: {n} {old[:110]!r}")
  p.write_text(s.replace(old,new,1),encoding='utf8')
 
+def attack_once(path,old,new):
+ p=Path(path);s=p.read_text(encoding='utf8')
+ marker='export function highflyBasicAttack('
+ start=s.find(marker)
+ if start<0:raise SystemExit('R36A_ATTACK_FUNCTION_NOT_FOUND '+path)
+ # Only the game action's function body; never patch the two native autoattack
+ # target resolver sites which legitimately share identical syntax.
+ end=s.find('\nexport function ',start+len(marker))
+ if end<0:end=len(s)
+ body=s[start:end]
+ n=body.count(old)
+ if n!=1:raise SystemExit(f'R36A_ATTACK_BODY_DRIFT {path}: {n}: {old[:110]!r}')
+ p.write_text(s[:start]+body.replace(old,new,1)+s[end:],encoding='utf8')
+
 path='src/sim/combat/auto_attack.ts'
 once(path,
  "export function highflyBasicAttack(",
@@ -35,23 +49,23 @@ function highflyR36AWhiff(ctx:SimContext,p:Entity,meta:PlayerMeta,step:1|2|3|4):
 export function highflyBasicAttack(""")
 # Keep the existing elemental gate: ATK4 without a gemstone cannot be
 # accepted even when swinging into empty space.
-once(path,
+attack_once(path,
  "  const t = p.targetId !== null ? ctx.entities.get(p.targetId) : null;",
  """  if (step === 4 && !highflyElementalFinisherReady(p)) return false;
   const t = p.targetId !== null ? ctx.entities.get(p.targetId) : null;""")
 # In R14D, the legacy rejection precedes two native damage routes.
-once(path,
+attack_once(path,
  """  if (!t || t.dead || !ctx.isHostileTo(p, t) || hasEscapeStealth(t)) return false;""",
  """  if (!t || t.dead || !ctx.isHostileTo(p, t) || hasEscapeStealth(t)) {
     return r.meta.originHunter ? highflyR36AWhiff(ctx,p,r.meta,step) : false;
   }""")
-once(path,
+attack_once(path,
  """    if (!ctx.hasLineOfSight(p, t)) return false;
     if (!originSpendBasicStamina(r.meta.originHunter, step)) return false;""",
  """    if (!ctx.hasLineOfSight(p, t))
       return r.meta.originHunter ? highflyR36AWhiff(ctx,p,r.meta,step) : false;
     if (!originSpendBasicStamina(r.meta.originHunter, step)) return false;""")
-once(path,
+attack_once(path,
  """  if (d > effectivePlayerAttackRange(t, MELEE_RANGE, meleeReachActor(ctx, p))) return false;
   if (isArenaPos(p.pos.x) && !ctx.hasLineOfSight(p, t)) return false;""",
  """  if (d > effectivePlayerAttackRange(t, MELEE_RANGE, meleeReachActor(ctx, p))) {
