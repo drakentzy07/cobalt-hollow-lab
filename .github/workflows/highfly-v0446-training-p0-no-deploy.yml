@@ -99,28 +99,24 @@ jobs:
           pnpm exec vitest run             tests/highfly_training_core.test.ts             tests/highfly_training_engine.test.ts             tests/highfly_training_persistence.test.ts             tests/highfly_training_e2e.test.ts
           echo "HF_RESET_V0446_TRAINING_CORE_BASELINE_TESTS_GREEN=1"
 
-      - name: Extended INDEPENDENT Training Core suites (post-PF5 integration deferred)
+      - name: Extended independent Training Core suites (PF5 donor integration deferred)
         working-directory: upstream
         shell: bash
         run: |
           set -euo pipefail
-          # Post-PF5 integration assumes donor recalc is patched, forbidden in P0:
+          # Two later integration suites require gameplay changes not allowed in P0:
           # highfly_training_pf5_stat_authority and highfly_training_j3b.
           mapfile -t suites < <(
             find tests -maxdepth 1 -name 'highfly_training_*.test.ts' |
-            grep -Ev '/highfly_training_(pf5_stat_authority|j3b)\\.test\\.ts
-        if: always()
-        run: |
-          echo "HF_RESET_NO_PAGES_WRITE_NO_ORIGIN_HUD_NO_SKILL_MUTATION=1"
- |
+            grep -Ev 'highfly_training_pf5_stat_authority|highfly_training_j3b' |
             sort
           )
-          printf 'P0 independent suite: %s\\n' "${suites[@]}"
+          printf 'Independent suite: %s\\n' "${suites[@]}"
           test "${#suites[@]}" -eq 19
           pnpm exec vitest run "${suites[@]}"
           echo "HF_RESET_V0446_INDEPENDENT_TRAINING_SUITE_GREEN=1"
 
-      - name: Verify original ClaudeCraft plus independent HIGHFLY TypeScript
+      - name: Verify original ClaudeCraft and HIGHFLY TypeScript
         working-directory: upstream
         shell: bash
         run: |
