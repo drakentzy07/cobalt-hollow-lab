@@ -48,6 +48,10 @@ try {
   }
   report.phase='native-Hunter-boot';
   await page.waitForFunction(()=>!!window.__game?.sim?.player,null,{timeout:135000});
+  report.phase='post-Hud-four-BASE-assignment';
+  await page.waitForFunction(()=>['1','error'].includes(document.body.dataset.hfR32SkillsReady),null,{timeout:15000});
+  const r32Status=await page.evaluate(()=>document.body.dataset.hfR32SkillsReady);
+  if(r32Status!=='1') throw Error('R32_NATIVE_POST_HUD_ASSIGNMENT_FAILED');
   report.phase='world-ready-and-native-HUD';
   await page.waitForFunction(()=>
     !!window.__game?.sim?.player?.originResources
@@ -84,6 +88,7 @@ try {
       legacySpecialSlots:!!document.getElementById('hf-c1-special-seats'),
       use:!!document.getElementById('hf-r32-use'),
       known:sim?.players?.get(sim?.playerId)?.known?.map(x=>x.def.id)||[],
+      loadoutReady:document.body.dataset.hfR32SkillsReady,
       nativeBarInBody:document.getElementById('actionbar')?.parentElement===document.body,
       oldTrainingMenuHidden:(()=>{
         const e=document.getElementById('hf-origin-training');
