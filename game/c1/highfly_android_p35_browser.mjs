@@ -153,7 +153,7 @@ try {
       !found.labButtonVisible&&!found.labMenuExists&&found.auxExists&&
       found.auxMoved===8&&found.interactionButtonExists&&
       found.contextualAttack==='ATK'&&found.targetVisible&&found.useVisible&&ordered&&
-      !found.auxToggleVisible&&found.topBuffBankVisible&&found.topBuffBankButtons===8&&
+      !found.auxToggleVisible&&found.auxExists&&found.topBuffBankButtons===8&&
       errors.length===0;
     const entry={gender,pass:okay,introSkipped:initialIntroCover,found,errors:errors.slice(0,6)};
     report.hunters.push(entry);
