@@ -1,5 +1,10 @@
 name: HIGHFLY ANDROID P2 - Safe isolated Pages lab
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/highfly-origin-android-p2-pages-lab-safe-main.yml"
+  workflow_dispatch:
   workflow_run:
     workflows:
       - "HIGHFLY ANDROID P2 — Hunter M/F 4 BASE + GOLDEN S23 (NO DEPLOY)"
@@ -15,7 +20,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   stage:
-    if: github.event.workflow_run.id == 39056556219 && github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event.workflow_run.id == 39056556219 && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
