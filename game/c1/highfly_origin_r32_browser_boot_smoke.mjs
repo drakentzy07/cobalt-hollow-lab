@@ -153,7 +153,25 @@ try {
     r32Ready:document.body.dataset.hfR32SkillsReady??null,
     r32Error:document.body.dataset.hfR32SkillsError??null,
     r32KnownDebug:document.body.dataset.hfR32KnownDebug??null,
-    known:window.__game?.sim?.known?.map(x=>x.def?.id)??null
+    known:window.__game?.sim?.known?.map(x=>x.def?.id)??null,
+    bar:(()=>{
+      const bar=document.getElementById('actionbar');
+      if(!bar)return null;
+      const c=getComputedStyle(bar),r=bar.getBoundingClientRect();
+      return {parent:bar.parentElement?.id||bar.parentElement?.tagName,
+        display:c.display,visibility:c.visibility,position:c.position,
+        zIndex:c.zIndex,rect:[r.x,r.y,r.width,r.height]};
+    })(),
+    realSkills:[1,2,3,4].map(slot=>{
+      const e=document.querySelector('#actionbar .action-btn[data-hotbar-slot="'+slot+'"]');
+      if(!(e instanceof HTMLElement))return {slot,exists:false};
+      const c=getComputedStyle(e),r=e.getBoundingClientRect();
+      const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+      return {slot,exists:true,classes:e.className,display:c.display,
+        visibility:c.visibility,opacity:c.opacity,pointerEvents:c.pointerEvents,
+        zIndex:c.zIndex,rect:[r.x,r.y,r.width,r.height],hit:hit?.id||hit?.className||hit?.tagName,
+        hitOwn:hit===e||e.contains(hit)};
+    })
   }));await page?.screenshot({path:'../r32-hunter-boot-failure.png',fullPage:true});}catch{}
   console.error('HIGHFLY_R32_HUNTER_BOOT_RED',JSON.stringify(report,null,2));
   process.exitCode=1;
