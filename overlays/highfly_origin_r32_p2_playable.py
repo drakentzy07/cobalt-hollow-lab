@@ -220,25 +220,44 @@ export function r28Reapply(meta:LabMeta,level=1):void {
         "if (import.meta.env.VITE_HIGHFLY_ORIGIN_UNIVERSAL_TESTER==='1' &&",
         """if (import.meta.env.VITE_HIGHFLY_ORIGIN_UNIVERSAL_TESTER==='1' &&
         import.meta.env.VITE_HIGHFLY_ORIGIN_R32!=='1' &&""")
+    # R32-specific late loadout assignment. During Hud.buildActionBar Claude
+    # can still rebuild the class/spec known list; asserting before the HUD
+    # constructor finishes caused a fatal black screen on S23 Chrome.
+    replace_one(hud,
+        "import { installOriginAimAndLoadout, originSkillRole } from '../highfly/highfly_origin_r17_hud';",
+        """import { installOriginAimAndLoadout, originSkillRole } from '../highfly/highfly_origin_r17_hud';
+import { r32StartSession, R32_P2_BASE_IDS } from '../sim/highfly_origin_r28_session';""")
     replace_one(hud,
         "    this.buildMobileConsumableSeat();",
-        """    if(import.meta.env.VITE_HIGHFLY_ORIGIN_R32==='1' && this.sim.player.originResources){
-      // Existing R17/Claude command -> original hotbar serialization in the
-      // ephemeral R28 namespace. No fake buttons or bypassed cast mechanics.
-      (['fireball','heroic_leap','blink','flamestrike'] as const).forEach((id,i)=>{
-        if (!this.sim.known.some(k=>k.def.id===id) || originSkillRole(id)!=='combat')
-          throw Error('R32_EXPECT_FOUR_NATIVE_COMBAT_SKILLS_'+id);
-        // Do not trust an early UI event: use the SAME authoritative hotbar
-        // mutation that R17 invokes after player-driven equip, then verify.
-        this.commitHotbarActions(placeAbilityOnSlot(this.hotbarActions,id,i));
-      });
-      (['fireball','heroic_leap','blink','flamestrike'] as const).forEach((id,i)=>{
-        const assigned=this.actionForSlot(i+1);
-        if(assigned?.type!=='ability'||assigned.id!==id)
-          throw Error('R32_INCOMPLETE_FOUR_SLOT_HOTBAR_'+(i+1)+'_'+id);
-      });
-    }
-    this.buildMobileConsumableSeat();""")
+        """    this.buildMobileConsumableSeat();
+    if (import.meta.env.VITE_HIGHFLY_ORIGIN_R32==='1' && this.sim.player.originResources) {
+      // Wait until the native Hud constructor, spellbook and action-bar
+      // controller have finished initializing. This never alters a normal game.
+      window.setTimeout(() => {
+        try {
+          const hunter = this.sim as unknown as import('../sim/sim').Sim;
+          r32StartSession(hunter);
+          for (const id of R32_P2_BASE_IDS) {
+            if (!this.sim.known.some(k=>k.def.id===id) || originSkillRole(id)!=='combat')
+              throw Error('R32_LATE_NATIVE_SKILL_NOT_ELIGIBLE_'+id);
+          }
+          let actions = this.hotbarActions;
+          R32_P2_BASE_IDS.forEach((id,i) => {
+            actions = placeAbilityOnSlot(actions,id,i);
+          });
+          this.commitHotbarActions(actions);
+          for (const [i,id] of R32_P2_BASE_IDS.entries()) {
+            const assigned = this.actionForSlot(i+1);
+            if (assigned?.type !== 'ability' || assigned.id !== id)
+              throw Error('R32_INCOMPLETE_FOUR_SLOT_HOTBAR_'+(i+1)+'_'+id);
+          }
+          document.body.dataset.hfR32SkillsReady = '1';
+        } catch (err) {
+          document.body.dataset.hfR32SkillsReady = 'error';
+          console.error('R32_HUNTER_POST_BOOT_LOADOUT_RED',err);
+        }
+      }, 0);
+    }""")
 
     # Existing C1 context function is still the sole handler for USE,
     # but ATK must not consume interaction in new R32 mode.
