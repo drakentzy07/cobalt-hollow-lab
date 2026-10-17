@@ -68,7 +68,7 @@ jobs:
               if not (src/item).is_file():raise SystemExit('R36A_CANDIDATE_MISSING_'+item)
           for folder in ('assets','media'):
               if not (src/folder).is_dir():raise SystemExit('R36A_CANDIDATE_MISSING_'+folder)
-          lab=site/'lab/origin-android-p35'
+          lab=site/'lab/origin-r36a-attack'
           if lab.exists():raise SystemExit('R36A_ALREADY_PUBLISHED_SAFE_ABORT')
           protected=['index.html','play.html','manifest.webmanifest',
               'lab/v15-2/index.html','lab/v15-2/highfly-v152-preview-qa.json',
