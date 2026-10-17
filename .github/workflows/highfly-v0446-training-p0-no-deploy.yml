@@ -37,6 +37,7 @@ jobs:
           sparse-checkout: |
             /src/
             /scripts/
+            /patches/
             /tests/global_setup.ts
             /tests/svelte_testing_setup.ts
             /tests/jsdom_local_storage_setup.ts
