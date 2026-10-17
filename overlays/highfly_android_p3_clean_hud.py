@@ -35,6 +35,13 @@ once('src/highfly/highfly_origin_trial_runtime.ts',
   installHighflyAndroidP3(sim,shell,toggle,panel);
   dispatch('sync');""")
 
+# The old C1 display transforms ATK into USAR when near an object.
+# P3 keeps ATK a combat control; the separately restored native #mobile-interact
+# button handles context use via its original event path.
+once('src/highfly/game_c1_runtime.ts',
+     "  const use = w.__highflyGameC1Context?.canUse?.() === true;",
+     "  const use = !document.body.classList.contains('hf-android-p3') && w.__highflyGameC1Context?.canUse?.() === true;")
+
 # P3 owns only presentation; native MobileActionRingPainter and four actual
 # mobile action slots still dispatch the exact native cast and cooldown routes.
 # C1/C25 are kept installed to avoid breaking any original game systems.
