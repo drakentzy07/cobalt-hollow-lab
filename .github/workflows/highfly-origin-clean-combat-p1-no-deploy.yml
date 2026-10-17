@@ -1,9 +1,9 @@
-name: HIGHFLY ORIGIN CLEAN R1 P1 - ONE HUNTER NO GEAR TWO GENDERS FULL BUILD NO DEPLOY
+name: HIGHFLY R23 GOLDEN - Hunter M/F Unarmed + Legacy Safe Full WebGL (NO DEPLOY)
 # Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
   push:
-    branches: [highfly-origin-clean-combat-r1]
+    branches: [highfly-origin-r23-hunter-moba-p1-20261017]
     paths:
       - ".github/workflows/highfly-origin-r0-forensic-no-deploy.yml"
       - "game/c1/highfly_origin_r0_diagnostic.test.ts"
@@ -161,6 +161,9 @@ jobs:
             /overlays/highfly_v15_pwa_manifest.py
             /overlays/rewrite_pages_static.py
             /tests/test_highfly_v15_pwa_manifest.py
+            /overlays/highfly_origin_clean_p1_hunter_starter.py
+            /game/c1/highfly_origin_clean_p1_hunter_starter.test.ts
+            /game/c1/highfly_origin_clean_p1_browser.mjs
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
