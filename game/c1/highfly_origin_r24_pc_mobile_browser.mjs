@@ -26,7 +26,7 @@ try {
       document.querySelector('#hf-clean-gender-picker button[data-origin-gender="'+gender+'"]')?.click();
       const name=document.getElementById('hf-origin-name');
       if(name instanceof HTMLInputElement){
-        name.value=gender==='male'?'R24 Pc Hunter':'R24 S23 Hunter';
+        name.value=gender==='male'?'Alpha Hunter':'Beta Hunter';
         name.dispatchEvent(new Event('input',{bubbles:true}));
       }
       document.querySelector('#hf-origin-entry > button')?.click();
