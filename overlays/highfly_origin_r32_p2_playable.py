@@ -55,6 +55,24 @@ const originR32Mode = import.meta.env.VITE_HIGHFLY_ORIGIN_R32 === '1';""")
 }
 
 function paintContextualAttack(): void {""")
+    # Native actionbar is nested inside ClaudeCraft's desktop bottom bar.
+    # That ANCESTOR is hidden on touch devices. Changing display on the
+    # descendant alone cannot override display:none of its ancestor.
+    # Move the already-wired DOM node; do not clone, recreate or fake casts.
+    replace_one(runtime,
+      "function paintContextualAttack(): void {",
+      """function ensureR32NativeSkillBar(): void {
+  if (!originR32Mode || !w.__game?.sim?.player?.originResources) return;
+  const bar = document.getElementById('actionbar');
+  if (!bar || bar.parentElement === document.body) return;
+  // Keep the original event listeners, authoritative Sim and 33-slot model.
+  document.body.appendChild(bar);
+}
+
+function paintContextualAttack(): void {""")
+    replace_one(runtime,
+      "    ensureR32UseButton();\n    installSkillTouch();",
+      "    ensureR32UseButton();\n    ensureR32NativeSkillBar();\n    installSkillTouch();")
     replace_one(runtime,
       "  const use = w.__highflyGameC1Context?.canUse?.() === true;",
       "  const use = !originR32Mode && w.__highflyGameC1Context?.canUse?.() === true;")
@@ -102,6 +120,56 @@ function paintContextualAttack(): void {""")
         raise SystemExit("R32_CSS_EXTENSION_MISSING")
     style.write_text(style.read_text(encoding="utf8") + chr(10) + r32_css[idx:],
                      encoding="utf8")
+    # R32/P3 visibility repair: the actionbar must be independently visible
+    # and touchable even if ClaudeCraft hides its parent desktop HUD container.
+    # Preserve native HP, joystick, ATK, menu, jump, dash, GEM, buffs and USAR.
+    style.write_text(style.read_text(encoding="utf8") + """
+/* HIGHFLY R32 P3: physical S23 native bar visibility correction. */
+body.mobile-touch.hf-origin-r32-combat #actionbar {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  z-index: 181 !important;
+  pointer-events: none !important;
+  overflow: visible !important;
+}
+body.mobile-touch.hf-origin-r32-combat #actionbar .action-btn[data-hotbar-slot] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+body.mobile-touch.hf-origin-r32-combat #actionbar :is(
+  .action-btn[data-hotbar-slot="1"],.action-btn[data-hotbar-slot="2"],
+  .action-btn[data-hotbar-slot="3"],.action-btn[data-hotbar-slot="4"]
+) {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  position: fixed !important;
+  z-index: 182 !important;
+  max-width: 48px !important;
+  max-height: 48px !important;
+  width: 48px !important;
+  height: 48px !important;
+  touch-action: none !important;
+}
+body.mobile-touch.hf-origin-r32-combat #actionbar [data-hotbar-slot="1"] { right: 185px !important; bottom: 40px !important; }
+body.mobile-touch.hf-origin-r32-combat #actionbar [data-hotbar-slot="2"] { right: 185px !important; bottom: 98px !important; }
+body.mobile-touch.hf-origin-r32-combat #actionbar [data-hotbar-slot="3"] { right: 179px !important; bottom: 156px !important; }
+body.mobile-touch.hf-origin-r32-combat #actionbar [data-hotbar-slot="4"] { right: 137px !important; bottom: 212px !important; }
+/* Keep the R18 training/editor implementation available in the build,
+   but do not display obsolete S1–S10/B1–B8 UI over the R32 HUD. */
+body.mobile-touch.hf-origin-r32-combat #hf-origin-training {
+  display: none !important;
+  pointer-events: none !important;
+}
+/* Keep the existing editor/menus and privacy of future unique skills. */
+""" ,encoding="utf8")
     if "VITE_HIGHFLY_ORIGIN_R32" not in runtime.read_text():
         raise SystemExit("R32_MISSING_ISOLATED_HUNTER_FLAG")
 
@@ -155,10 +223,18 @@ export function r28Reapply(meta:LabMeta,level=1):void {
         """    if(import.meta.env.VITE_HIGHFLY_ORIGIN_R32==='1' && this.sim.player.originResources){
       // Existing R17/Claude command -> original hotbar serialization in the
       // ephemeral R28 namespace. No fake buttons or bypassed cast mechanics.
-      (['fireball','heroic_leap','blink','flamestrike'] as const).forEach((id,i)=>
-        document.dispatchEvent(new CustomEvent('hf-origin-command',{
-          detail:{kind:'set',slot:i+1,id}
-        })));
+      (['fireball','heroic_leap','blink','flamestrike'] as const).forEach((id,i)=>{
+        if (!this.sim.known.some(k=>k.def.id===id) || originSkillRole(id)!=='combat')
+          throw Error('R32_EXPECT_FOUR_NATIVE_COMBAT_SKILLS_'+id);
+        // Do not trust an early UI event: use the SAME authoritative hotbar
+        // mutation that R17 invokes after player-driven equip, then verify.
+        this.commitHotbarActions(placeAbilityOnSlot(this.hotbarActions,id,i));
+      });
+      (['fireball','heroic_leap','blink','flamestrike'] as const).forEach((id,i)=>{
+        const assigned=this.actionForSlot(i+1);
+        if(assigned?.type!=='ability'||assigned.id!==id)
+          throw Error('R32_INCOMPLETE_FOUR_SLOT_HOTBAR_'+(i+1)+'_'+id);
+      });
     }
     this.buildMobileConsumableSeat();""")
 
