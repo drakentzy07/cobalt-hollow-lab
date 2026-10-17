@@ -138,7 +138,27 @@ jobs:
           """
           if original.count(marker) != 1:
               raise SystemExit('P1 fail closed: entry probe marker changed upstream')
-          p.write_text(original.replace(marker, patch + marker))
+          # Original feel_smoke moves the player far for repeatable direction
+          # probes. v0.44.6 correctly runs blocking zone warmup on teleport.
+          # Do not measure movement until the new zone becomes playable.
+          reset_marker = "  await sleep(SETTLE_MS);\\n}\\n\\nasync function state(page)"
+          reset_marker = reset_marker.replace("\\n", "\n")
+          ready_after_reposition = """  await sleep(SETTLE_MS);
+            await page.waitForFunction(
+              () => !!window.__game?.input && !window.__game.input.suspendMovement &&
+                document.getElementById('ui')?.style.display !== 'none',
+              { timeout: 120000, polling: 250 },
+            );
+            console.log('HF_P1_RESET_ZONE_READY=1');
+          }
+
+          async function state(page)"""
+          if original.count(reset_marker) != 1:
+              raise SystemExit('P1 fail closed: upstream resetRig marker changed')
+          p.write_text(
+              original.replace(marker, patch + marker)
+                      .replace(reset_marker, ready_after_reposition)
+          )
           PY
           git diff --exit-code -- src/main.ts src/sim src/ui
           node scripts/feel_smoke.mjs
