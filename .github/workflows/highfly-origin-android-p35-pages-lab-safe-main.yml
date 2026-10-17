@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   stage:
-    if: github.event.workflow_run.id == 39067407924 && github.event.workflow_run.conclusion == 'success'
+    if: github.event.workflow_run.id == 39067552938 && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -25,7 +25,7 @@ jobs:
         with:
           script: |
             for (const x of [
-              {id:39067407924,sha:'0cd47b46d3bfa282bf2caeca6b434072848d7bae'},
+              {id:39067552938,sha:'bd2a72943cb6ab1f57f213806234c6e835b6ee82'},
               {id:39063798048,sha:'5b59ecdb4f99b398e2e043884a4b2acd577cb6eb'}
             ]) {
               const r=(await github.rest.actions.getWorkflowRun({owner:context.repo.owner,repo:context.repo.repo,run_id:x.id})).data;
@@ -44,7 +44,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           repository: drakentzy07/cobalt-hollow-lab
-          run-id: 39067407924
+          run-id: 39067552938
           github-token: ${{ github.token }}
           name: HIGHFLY-ANDROID-P35-FOUR-AIMS-S23-WEBGL-NO-DEPLOY
           path: candidate
@@ -160,8 +160,8 @@ jobs:
           if not any(b'hf-android-p35' in f.read_bytes() for f in (src/'assets').glob('*.js')):
               raise SystemExit('P35_MISSING_COMPILED_HUD_MARKER')
           qa={'edition':'HIGHFLY ORIGIN Android P35 Hunter four BASE S23',
-              'sourceRun':39067407924,
-              'sourceCommit':'0cd47b46d3bfa282bf2caeca6b434072848d7bae',
+              'sourceRun':39067552938,
+              'sourceCommit':'bd2a72943cb6ab1f57f213806234c6e835b6ee82',
               'physicalS23':'PENDING PLAYER TEST',
               'oldFilesIntact':hashes,
               'playUrl':'/cobalt-hollow-lab/lab/origin-android-p35/?hf_android_p2=1&hf_android_p3=1&hf_android_p35=1'}
@@ -232,7 +232,7 @@ jobs:
           for i in range(35):
               try:
                   qa=json.loads(get('lab/origin-android-p35/highfly-origin-android-p35-qa.json?check='+str(i)))
-                  if qa.get('sourceRun')!=39067407924:raise RuntimeError('P35_NOT_LIVE')
+                  if qa.get('sourceRun')!=39067552938:raise RuntimeError('P35_NOT_LIVE')
                   html=get('lab/origin-android-p35/index.html?hf_android_p2=1&hf_android_p3=1&hf_android_p35=1&check='+str(i))
                   refs=re.findall(rb"""(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)""",html)
                   if not refs:raise RuntimeError('P35_LIVE_NO_ASSETS')
