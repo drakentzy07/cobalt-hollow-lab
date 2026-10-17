@@ -54,6 +54,20 @@ try {
       &&document.body.classList.contains('hf-origin-r32-combat')
       &&document.querySelectorAll('#actionbar [data-hotbar-slot="1"], #actionbar [data-hotbar-slot="2"], #actionbar [data-hotbar-slot="3"], #actionbar [data-hotbar-slot="4"]').length===4,
     null,{timeout:35000});
+  report.phase='4-visible-tappable-BASE-and-original-HUD';
+  await page.waitForFunction(()=>{
+    const bar=document.getElementById('actionbar');
+    if(bar?.parentElement!==document.body || getComputedStyle(bar).visibility==='hidden')return false;
+    return [1,2,3,4].every(n=>{
+      const btn=bar.querySelector('[data-hotbar-slot="'+n+'"]');
+      if(!(btn instanceof HTMLButtonElement)||btn.classList.contains('empty'))return false;
+      const style=getComputedStyle(btn),r=btn.getBoundingClientRect();
+      if(style.display==='none'||style.visibility!=='visible'||style.pointerEvents==='none'||r.width<38||r.height<38
+        ||r.top<0||r.left<0||r.bottom>innerHeight||r.right>innerWidth) return false;
+      const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+      return hit===btn||btn.contains(hit);
+    });
+  },null,{timeout:12000});
   report.diagnostics=await page.evaluate(()=>{
     const sim=window.__game?.sim;
     return {originHunter:!!sim?.player?.originResources,
@@ -70,18 +84,35 @@ try {
       legacySpecialSlots:!!document.getElementById('hf-c1-special-seats'),
       use:!!document.getElementById('hf-r32-use'),
       known:sim?.players?.get(sim?.playerId)?.known?.map(x=>x.def.id)||[],
+      nativeBarInBody:document.getElementById('actionbar')?.parentElement===document.body,
+      oldTrainingMenuHidden:(()=>{
+        const e=document.getElementById('hf-origin-training');
+        return !e||getComputedStyle(e).display==='none';
+      })(),
+      visibleHotbar:[1,2,3,4].map(n=>{
+        const e=document.querySelector('#actionbar [data-hotbar-slot="'+n+'"]');
+        if(!(e instanceof HTMLButtonElement))return {slot:n,missing:true};
+        const r=e.getBoundingClientRect(),css=getComputedStyle(e);
+        return {slot:n,empty:e.classList.contains('empty'),display:css.display,visibility:css.visibility,
+          pointerEvents:css.pointerEvents,rect:[r.x,r.y,r.width,r.height],
+          hit:!!e.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2))};
+      }),
     };
   });
   if(report.diagnostics.loadingVisible || !report.diagnostics.gameActive)
     throw Error('R32_HUNTER_BOOT_NOT_GAME_ACTIVE '+JSON.stringify(report.diagnostics));
   if(report.diagnostics.known.join(',')!==report.expectedIds.join(','))
     throw Error('R32_HUNTER_FOUR_WRONG_KNOWN '+JSON.stringify(report.diagnostics));
+  if(!report.diagnostics.nativeBarInBody || !report.diagnostics.oldTrainingMenuHidden ||
+     report.diagnostics.visibleHotbar.some(x=>x.empty||!x.hit||x.display==='none'||x.visibility!=='visible'))
+    throw Error('R32_REAL_S23_HOTBAR_NOT_VISIBLE_OR_TAPPABLE '+JSON.stringify(report.diagnostics));
+  await page.screenshot({path:'../r32-hunter-hud-p3.png',fullPage:true}).catch(()=>{});
   if(report.diagnostics.legacySpecialSlots)
     throw Error('R32_SECRET_SLOTS_LEAK');
   if(report.missing.length || report.errors.length)
     throw Error('R32_BOOT_BROWSER_ERRORS '+JSON.stringify({errors:report.errors.slice(0,5),missing:report.missing.slice(0,5)}));
   report.pass=true;
-  console.log('HIGHFLY_R32_REAL_HUNTER_WEBGL_4_NATIVE_SKILLS_S23_EMULATED_BOOT_GREEN=1');
+  console.log('HIGHFLY_R32_REAL_HUNTER_WEBGL_4_NATIVE_SKILLS_VISIBLE_TAPPABLE_S23_EMULATED_GREEN=1');
 } catch(error) {
   report.failure=String(error);
   try { report.diagnostics??=await page?.evaluate(()=>({
