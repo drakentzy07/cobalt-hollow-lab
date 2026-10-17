@@ -126,8 +126,12 @@ function paintContextualAttack(): void {""")
     # and touchable even if ClaudeCraft hides its parent desktop HUD container.
     # Preserve native HP, joystick, ATK, menu, jump, dash, GEM, buffs and USAR.
     style.write_text(style.read_text(encoding="utf8") + """
-/* HIGHFLY R32 P3: physical S23 native bar visibility correction. */
-body.mobile-touch.hf-origin-r32-combat #actionbar {
+/* HIGHFLY R32 P3: physical S23 native bar visibility correction.
+   Specificity: P1 hides .action-btn[data-hotbar-slot] with
+   body.mobile-touch.hf-game-c25.hf-origin-r32-combat.
+   The P3 visible four MUST match or exceed that specificity.
+   Runtime must retain the actual Claude button nodes (no imitation buttons). */
+body.mobile-touch.hf-game-c25.hf-origin-r32-combat #actionbar {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
@@ -139,12 +143,12 @@ body.mobile-touch.hf-origin-r32-combat #actionbar {
   pointer-events: none !important;
   overflow: visible !important;
 }
-body.mobile-touch.hf-origin-r32-combat #actionbar .action-btn[data-hotbar-slot] {
+body.mobile-touch.hf-game-c25.hf-origin-r32-combat #actionbar .action-btn[data-hotbar-slot] {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
 }
-body.mobile-touch.hf-origin-r32-combat #actionbar :is(
+body.mobile-touch.hf-game-c25.hf-origin-r32-combat #actionbar :is(
   .action-btn[data-hotbar-slot="1"],.action-btn[data-hotbar-slot="2"],
   .action-btn[data-hotbar-slot="3"],.action-btn[data-hotbar-slot="4"]
 ) {
@@ -160,13 +164,13 @@ body.mobile-touch.hf-origin-r32-combat #actionbar :is(
   height: 48px !important;
   touch-action: none !important;
 }
-body.mobile-touch.hf-origin-r32-combat #actionbar [data-hotbar-slot="1"] { right: 185px !important; bottom: 40px !important; }
-body.mobile-touch.hf-origin-r32-combat #actionbar [data-hotbar-slot="2"] { right: 185px !important; bottom: 98px !important; }
-body.mobile-touch.hf-origin-r32-combat #actionbar [data-hotbar-slot="3"] { right: 179px !important; bottom: 156px !important; }
-body.mobile-touch.hf-origin-r32-combat #actionbar [data-hotbar-slot="4"] { right: 137px !important; bottom: 212px !important; }
+body.mobile-touch.hf-game-c25.hf-origin-r32-combat #actionbar [data-hotbar-slot="1"] { right: 185px !important; bottom: 40px !important; }
+body.mobile-touch.hf-game-c25.hf-origin-r32-combat #actionbar [data-hotbar-slot="2"] { right: 185px !important; bottom: 98px !important; }
+body.mobile-touch.hf-game-c25.hf-origin-r32-combat #actionbar [data-hotbar-slot="3"] { right: 179px !important; bottom: 156px !important; }
+body.mobile-touch.hf-game-c25.hf-origin-r32-combat #actionbar [data-hotbar-slot="4"] { right: 137px !important; bottom: 212px !important; }
 /* Keep the R18 training/editor implementation available in the build,
    but do not display obsolete S1–S10/B1–B8 UI over the R32 HUD. */
-body.mobile-touch.hf-origin-r32-combat #hf-origin-training {
+body.mobile-touch.hf-game-c25.hf-origin-r32-combat #hf-origin-training {
   display: none !important;
   pointer-events: none !important;
 }
