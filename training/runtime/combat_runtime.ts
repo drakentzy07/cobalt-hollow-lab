@@ -1,4 +1,4 @@
-import { applyTrainingBridge } from './bridge';
+import { highflyUniqueCoreModifiers } from './stat_authority';
 import { getActiveHighflyHunterProfile } from './profile_store';
 
 export interface HighflyBridgeEntity {
@@ -9,6 +9,10 @@ export interface HighflyBridgeEntity {
   critChance: number;
   moveSpeed: number;
   dead: boolean;
+  hitBonus?: number;
+  critDmgPhysBonus?: number;
+  highflyResourceCostMultiplier?: number;
+  highflyResourceRecoveryMultiplier?: number;
 }
 
 export interface ActiveTrainingBridgeFlags {
@@ -23,6 +27,10 @@ interface CombatBaselineSnapshot {
   maxHp: number;
   critChance: number;
   moveSpeed: number;
+  hitBonus: number | undefined;
+  critDmgPhysBonus: number | undefined;
+  highflyResourceCostMultiplier: number | undefined;
+  highflyResourceRecoveryMultiplier: number | undefined;
 }
 
 let activeEntityId: number | null = null;
@@ -66,6 +74,12 @@ function applyFromBaseline(
   entity.maxHp = baseline.maxHp;
   entity.critChance = baseline.critChance;
   entity.moveSpeed = baseline.moveSpeed;
+  // Always reconstruct side effects from the donor baseline, never from a
+  // previously bridged result (refreshes must be strictly idempotent).
+  entity.hitBonus = baseline.hitBonus;
+  entity.critDmgPhysBonus = baseline.critDmgPhysBonus;
+  entity.highflyResourceCostMultiplier = baseline.highflyResourceCostMultiplier;
+  entity.highflyResourceRecoveryMultiplier = baseline.highflyResourceRecoveryMultiplier;
 
   if (!flags.enabled) {
     entity.hp = entity.dead
@@ -77,27 +91,23 @@ function applyFromBaseline(
   const profile = getActiveHighflyHunterProfile();
   if (!profile) return;
 
-  const result = applyTrainingBridge({
-    baseline: {
-      physicalAP: baseline.attackPower,
-      stagger: 1,
-      power: 1,
-      moveSpeed: baseline.moveSpeed,
-      maxHP: baseline.maxHp,
-      precision: 1,
-      weakPointMultiplier: 1,
-      critChance: baseline.critChance,
-      resourceCostMultiplier: 1,
-      resourceRecovery: 1,
-    },
-    core: profile.training.core,
-    flags,
-  });
-
-  entity.attackPower = Math.max(0, result.combat.physicalAP);
-  entity.maxHp = Math.max(1, Math.round(result.combat.maxHP));
-  entity.critChance = Math.max(0, Math.min(1, result.combat.critChance));
-  if (flags.applyMovement) entity.moveSpeed = Math.max(0, result.combat.moveSpeed);
+  // Primary-derived AP, HP, crit and dodge belong to ClaudeCraft's recalc.
+  // HIGHFLY applies only unique side mechanics absent from that native recalc.
+  const modifiers = highflyUniqueCoreModifiers(profile);
+  if (flags.applyMovement) {
+    entity.moveSpeed = Math.max(0, baseline.moveSpeed * (1 + modifiers.moveSpeedBonus));
+  }
+  if (flags.applyPerception) {
+    entity.hitBonus = (baseline.hitBonus ?? 0) + modifiers.hitBonus;
+    // Weak-point training augments physical critical impact, not crit chance.
+    entity.critDmgPhysBonus = (baseline.critDmgPhysBonus ?? 0) + modifiers.weakPointBonus;
+  }
+  if (flags.applyIntelligence) {
+    entity.highflyResourceCostMultiplier =
+      (baseline.highflyResourceCostMultiplier ?? 1) * (1 - modifiers.resourceCostReduction);
+    entity.highflyResourceRecoveryMultiplier =
+      (baseline.highflyResourceRecoveryMultiplier ?? 1) * (1 + modifiers.resourceRecoveryBonus);
+  }
   entity.hp = entity.dead
     ? 0
     : Math.max(1, Math.min(entity.maxHp, Math.round(entity.maxHp * hpFraction)));
@@ -118,6 +128,10 @@ export function applyActiveTrainingBridgeToEntity(entity: HighflyBridgeEntity): 
     maxHp: entity.maxHp,
     critChance: entity.critChance,
     moveSpeed: entity.moveSpeed,
+    hitBonus: entity.hitBonus,
+    critDmgPhysBonus: entity.critDmgPhysBonus,
+    highflyResourceCostMultiplier: entity.highflyResourceCostMultiplier,
+    highflyResourceRecoveryMultiplier: entity.highflyResourceRecoveryMultiplier,
   };
   applyFromBaseline(entity, lastClaudeBaseline, hpFraction);
 }
