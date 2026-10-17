@@ -113,7 +113,10 @@ code=""" private projectileLane(origin:P,end:P,length:number,width:number):void{
    this.strip(this.edge,leftA,leftB,.052);
    this.strip(this.edge,rightA,rightB,.052);
    // Impact location hint must never misrepresent native enemy collision.
-   this.annulus(this.glyph,end,Math.max(.23,half*.95),.065,24);
+   const impactRadius=Math.max(.23,half*.95);
+   const markerInset=Math.min(length*.35,impactRadius+.08);
+   const impact=point(end.x-dx*markerInset,end.z-dz*markerInset);
+   this.annulus(this.glyph,impact,impactRadius,.065,24);
  }
 """
 once(visual,point,code+point)
