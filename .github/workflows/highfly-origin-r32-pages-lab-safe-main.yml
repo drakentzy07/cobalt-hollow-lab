@@ -22,8 +22,8 @@ jobs:
         with:
           script: |
             for(const x of [
-              {id:38978773679,sha:'c2e9df51ebbf5cf18619bbd8624c0c4677866faf'},
-              {id:38960414989,sha:'24583bab43ae56856a0d5de26c08fe89b7b606ac'}
+              {id:38982633384,sha:'5cb73f78a1fd32e2dc55678348cb2633b7f8e341'},
+              {id:38980358902,sha:'aec73a50778170f95ba9b54a0ba3aafdca7ec804'}
             ]) {
               const r=(await github.rest.actions.getWorkflowRun({owner:context.repo.owner,repo:context.repo.repo,run_id:x.id})).data;
               if(r.status!=='completed'||r.conclusion!=='success'||r.head_sha!==x.sha)throw Error('R32_UNVERIFIED_PIN '+x.id);
@@ -32,7 +32,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           repository: drakentzy07/cobalt-hollow-lab
-          run-id: 38960414989
+          run-id: 38980358902
           github-token: ${{ github.token }}
           name: github-pages
           path: baseline
@@ -40,7 +40,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           repository: drakentzy07/cobalt-hollow-lab
-          run-id: 38978773679
+          run-id: 38982633384
           github-token: ${{ github.token }}
           name: HIGHFLY-ORIGIN-R32-NATIVE-FOUR-COMBAT-P2-NO-DEPLOY
           path: candidate
@@ -75,7 +75,16 @@ jobs:
           for name in protected:
               if not (site/name).is_file():raise SystemExit('R32_BASELINE_MISSING_'+name)
               keep[name]=sha(site/name)
-          if (site/'lab/origin-r32').exists():raise SystemExit('R32_LAB_EXISTS')
+          oldlab=site/'lab/origin-r32'
+          if not oldlab.is_dir():raise SystemExit('R32_EXPECT_PREVIOUS_LAB')
+          expected_old={'index.html','manifest.webmanifest','highfly-origin-r32-qa.json'}
+          found_old={p.name for p in oldlab.iterdir() if p.is_file()}
+          if found_old!=expected_old or any(p.is_dir() for p in oldlab.iterdir()):
+              raise SystemExit('R32_PREVIOUS_LAB_UNEXPECTED_FILES_'+repr(found_old))
+          oldqa=json.loads((oldlab/'highfly-origin-r32-qa.json').read_text())
+          if oldqa.get('sourceRun')!=38978773679 or oldqa.get('sourceCommit')!='c2e9df51ebbf5cf18619bbd8624c0c4677866faf':
+              raise SystemExit('R32_PREVIOUS_LAB_SOURCE_DRIFT')
+          oldlab_hashes={name:sha(oldlab/name) for name in expected_old}
           root='https://drakentzy07.github.io/cobalt-hollow-lab/'
           def web(rel):
               request=urllib.request.Request(root+rel,headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-R32-GUARD'})
@@ -85,6 +94,9 @@ jobs:
           for path,digest in keep.items():
               if hashlib.sha256(web(path+'?r32_guard=1')).hexdigest()!=digest:
                   raise SystemExit('R32_LIVE_BASELINE_CHANGED_'+path)
+          for filename,digest in oldlab_hashes.items():
+              if hashlib.sha256(web('lab/origin-r32/'+filename+'?r32_previous_guard=1')).hexdigest()!=digest:
+                  raise SystemExit('R32_PREVIOUS_LAB_LIVE_CHANGED_'+filename)
           # The previous R28 build applied lossless RGBE scanline RLE on some HDRs.
           def hdr_equivalent(previous,new):
               marker=re.compile(rb'(?m)^-Y ([0-9]+) \+X ([0-9]+)\r?\n')
@@ -137,7 +149,11 @@ jobs:
           if conflicts:
               print('R32_COLLISIONS='+json.dumps(conflicts[:60]))
               raise SystemExit('R32_SHARED_RESOURCE_CONFLICT')
-          lab=site/'lab/origin-r32';lab.mkdir(parents=True)
+          # Replace ONLY three R32 lab document files; never touch published
+          # main, R28/R29/R31, shared media or old hashed JS/CSS.
+          lab=oldlab
+          for filename in expected_old:
+              (lab/filename).unlink()
           html=(incoming/'index.html').read_text(encoding='utf8')
           if '/cobalt-hollow-lab/assets/' not in html:raise SystemExit('R32_BAD_VITE_BASE')
           html=html.replace('/cobalt-hollow-lab/manifest.webmanifest','/cobalt-hollow-lab/lab/origin-r32/manifest.webmanifest')
@@ -152,16 +168,17 @@ jobs:
           for url in refs:
               if not (site/url.removeprefix('/cobalt-hollow-lab/')).is_file():
                   raise SystemExit('R32_MISSING_ASSET_'+url)
-          if not any(b'hf-origin-r32-combat' in js.read_bytes() for js in (site/'assets').glob('*.js')):
+          if not any(b'hf-origin-r32-combat' in (site/url.removeprefix('/cobalt-hollow-lab/')).read_bytes()
+                     for url in refs if url.endswith('.js')):
               raise SystemExit('R32_RUNTIME_NOT_COMPILED')
           qa={'edition':'HIGHFLY ORIGIN R32 4 BASE skills native S23 lab; R31 library preserved',
-              'sourceRun':38978773679,'sourceCommit':'c2e9df51ebbf5cf18619bbd8624c0c4677866faf',
+              'sourceRun':38982633384,'sourceCommit':'5cb73f78a1fd32e2dc55678348cb2633b7f8e341',
               'originalNativeAttacks':45,'premiumNativeReady':14,
               'premiumOriginalVfxVisualOnly':9,'passivesServerPrototype':9,
               'totalCatalogIdentities':77,
-              'all77FullyPlayable':False,'r32BaseAbilityIds':['fireball','heroic_leap','charge','flamestrike'],
+              'all77FullyPlayable':False,'r32BaseAbilityIds':['fireball','heroic_leap','blink','flamestrike'],
               'r32NativeHudVisibleBase':4,'uniqueSlotsAtStart':0,'pending':['summon','portal','barrier'],
-              'physicalS23Test':'PENDING USER','preservedSiteHashes':keep,
+              'physicalS23Test':'PENDING USER','s23EmulatedHunterBoot':'GREEN RUN 38982633384','preservedSiteHashes':keep,
               'sitePath':'/cobalt-hollow-lab/lab/origin-r32/'}
           (lab/'highfly-origin-r32-qa.json').write_text(json.dumps(qa,indent=2)+'\n')
           (site/'.nojekyll').touch()
@@ -199,7 +216,7 @@ jobs:
           for ref in re.findall(r"""(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)""",html):
               with urllib.request.urlopen(root+ref,timeout=30) as response:
                   if response.status!=200 or not response.read(32):raise SystemExit('R32_HTTP_ASSET_FAIL_'+ref)
-          assert json.loads(Path('site/lab/origin-r32/highfly-origin-r32-qa.json').read_text())['sourceRun']==38978773679
+          assert json.loads(Path('site/lab/origin-r32/highfly-origin-r32-qa.json').read_text())['sourceRun']==38982633384
           print('HIGHFLY_R32_PAGES_LOCAL_HTTP_GREEN')
           PY
       - uses: actions/configure-pages@v5
@@ -231,7 +248,7 @@ jobs:
           for attempt in range(35):
               try:
                   qa=json.loads(get('lab/origin-r32/highfly-origin-r32-qa.json?check='+str(attempt)))
-                  if qa.get('sourceRun')!=38978773679:raise RuntimeError('R32_NOT_LIVE_YET')
+                  if qa.get('sourceRun')!=38982633384:raise RuntimeError('R32_NOT_LIVE_YET')
                   html=get('lab/origin-r32/index.html?check='+str(attempt))
                   files=re.findall(rb"""(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)""",html)
                   if not files:raise RuntimeError('R32_NO_ASSETS_ONLINE')
