@@ -1,0 +1,100 @@
+name: HIGHFLY CLAUDECRAFT v0.44.6 + TRAINING CORE P0 NO DEPLOY
+
+on:
+  push:
+    branches: [highfly-claudecraft-v0446-training-reset]
+    paths:
+      - .github/workflows/highfly-v0446-training-p0-no-deploy.yml
+      - docs/CLAUDECRAFT_V0446_TRAINING_RESET_P0.md
+      - training/runtime/**
+      - training/tests/**
+      - overlays/highfly_training_core_v1.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-claude-v0446-p0
+  cancel-in-progress: true
+
+jobs:
+  fresh-upstream-training:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout HIGHFLY Training modules only
+        uses: actions/checkout@v4
+
+      - name: Checkout exact NEW ClaudeCraft v0.44.6 upstream - sparse and immutable
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 86cc574989d03ac491563e26bd8fdf951dfeecfb
+          path: upstream
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /tests/global_setup.ts
+            /tests/svelte_testing_setup.ts
+            /tests/jsdom_local_storage_setup.ts
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /svelte.config.js
+            /.npmrc
+            /index.html
+
+      - name: Prove certified vanilla source and untouched donor combat
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream rev-parse HEAD)" = "86cc574989d03ac491563e26bd8fdf951dfeecfb"
+          grep -Fq 'export const MAX_LEVEL = 20;' upstream/src/sim/types.ts
+          grep -Fq '"version": "0.44.6"' upstream/package.json
+          echo "HF_RESET_PINNED_CLAUDECRAFT_V0446_LEVEL20_NATIVE_COMBAT=1"
+
+      - name: Import independent HIGHFLY Training modules (NO gameplay patch)
+        shell: bash
+        working-directory: upstream
+        run: |
+          set -euo pipefail
+          python3 ../overlays/highfly_training_core_v1.py
+          test -s src/highfly/training/core.ts
+          test -s src/highfly/training/engine.ts
+          test -s src/highfly/training/profile_store.ts
+          # Zero donor gameplay files modified, zero overwritten model sources.
+          git diff --exit-code -- src/main.ts src/ui/hud.ts src/sim
+          echo "HF_RESET_TRAINING_MODULES_IMPORTED_WITH_VANILLA_GAME_UNCHANGED=1"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+
+      - name: Install frozen upstream dependencies
+        working-directory: upstream
+        shell: bash
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Execute REAL HIGHFLY Training Core tests against v0.44.6
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run             tests/highfly_training_core.test.ts             tests/highfly_training_engine.test.ts             tests/highfly_training_persistence.test.ts             tests/highfly_training_e2e.test.ts
+          echo "HF_RESET_V0446_TRAINING_CORE_BASELINE_TESTS_GREEN=1"
+
+      - name: Final no-deploy no-saves safety
+        if: always()
+        run: |
+          echo "HF_RESET_NO_PAGES_WRITE_NO_ORIGIN_HUD_NO_SKILL_MUTATION=1"
