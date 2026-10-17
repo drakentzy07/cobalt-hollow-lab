@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   stage:
-    if: github.event.workflow_run.id == 39072550766 && github.event.workflow_run.conclusion == 'success'
+    if: github.event.workflow_run.id == 39075019482 && github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -25,7 +25,7 @@ jobs:
         with:
           script: |
             for (const x of [
-              {id:39072550766,sha:'38086a3ec26ad0b7c35449c0786d11400ec6129f'},
+              {id:39075019482,sha:'4fe39b0414e54f41b99e08f84faabd42a2dc777e'},
               {id:39069196247,sha:'2bdaf730e897b6d531e56f66d50b0f87a7504d5c'}
             ]) {
               const r=(await github.rest.actions.getWorkflowRun({owner:context.repo.owner,repo:context.repo.repo,run_id:x.id})).data;
@@ -44,7 +44,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           repository: drakentzy07/cobalt-hollow-lab
-          run-id: 39072550766
+          run-id: 39075019482
           github-token: ${{ github.token }}
           name: HIGHFLY-ORIGIN-R36A-REAL-MANUAL-ATK-S23-WEBGL-NO-DEPLOY
           path: candidate
@@ -161,8 +161,8 @@ jobs:
           if not any(b'hf-android-p35' in f.read_bytes() for f in (src/'assets').glob('*.js')):
               raise SystemExit('R36A_MISSING_COMPILED_HUD_MARKER')
           qa={'edition':'HIGHFLY ORIGIN Android R36A Hunter four BASE S23',
-              'sourceRun':39072550766,
-              'sourceCommit':'38086a3ec26ad0b7c35449c0786d11400ec6129f',
+              'sourceRun':39075019482,
+              'sourceCommit':'4fe39b0414e54f41b99e08f84faabd42a2dc777e',
               'physicalS23':'PENDING PLAYER TEST',
               'oldFilesIntact':hashes,
               'playUrl':'/cobalt-hollow-lab/lab/origin-r36a-attack/?hf_android_p2=1&hf_android_p3=1&hf_android_p35=1'}
@@ -233,7 +233,7 @@ jobs:
           for i in range(35):
               try:
                   qa=json.loads(get('lab/origin-r36a-attack/highfly-origin-r36a-attack-qa.json?check='+str(i)))
-                  if qa.get('sourceRun')!=39072550766:raise RuntimeError('R36A_NOT_LIVE')
+                  if qa.get('sourceRun')!=39075019482:raise RuntimeError('R36A_NOT_LIVE')
                   html=get('lab/origin-r36a-attack/index.html?hf_android_p2=1&hf_android_p3=1&hf_android_p35=1&check='+str(i))
                   refs=re.findall(rb"""(?:src|href)=["'](/cobalt-hollow-lab/assets/[^"']+)""",html)
                   if not refs:raise RuntimeError('R36A_LIVE_NO_ASSETS')
