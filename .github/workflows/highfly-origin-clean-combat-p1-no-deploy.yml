@@ -1,9 +1,9 @@
-name: HIGHFLY R23 GOLDEN - Hunter M/F Unarmed + Legacy Safe Full WebGL (NO DEPLOY)
+name: HIGHFLY ANDROID P2 — Hunter M/F 4 BASE + GOLDEN S23 (NO DEPLOY)
 # Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
 # Selective patch/build gates ONLY. Never writes GitHub Pages or main.
 on:
   push:
-    branches: [highfly-origin-r23-hunter-moba-p1-20261017]
+    branches: [highfly-origin-android-p2-hunter-four-base]
     paths:
       - ".github/workflows/highfly-origin-r0-forensic-no-deploy.yml"
       - "game/c1/highfly_origin_r0_diagnostic.test.ts"
@@ -52,6 +52,9 @@ on:
       - "overlays/highfly_origin_clean_p1_hunter_starter.py"
       - "game/c1/highfly_origin_clean_p1_hunter_starter.test.ts"
       - "game/c1/highfly_origin_clean_p1_browser.mjs"
+      - "overlays/highfly_android_p2_four_base.py"
+      - "game/c1/highfly_android_p2_four_base.test.ts"
+      - "game/c1/highfly_android_p2_browser.mjs"
       - ".github/workflows/highfly-origin-clean-combat-p1-no-deploy.yml"
       - "game/c1/highfly_origin_r22_premium_visual.test.ts"
       - "overlays/highfly_origin_r22_premium_visual.py"
@@ -164,6 +167,9 @@ jobs:
             /overlays/highfly_origin_clean_p1_hunter_starter.py
             /game/c1/highfly_origin_clean_p1_hunter_starter.test.ts
             /game/c1/highfly_origin_clean_p1_browser.mjs
+            /overlays/highfly_android_p2_four_base.py
+            /game/c1/highfly_android_p2_four_base.test.ts
+            /game/c1/highfly_android_p2_browser.mjs
       - name: Checkout exact frozen GREEN P02I Monster Lab modules
         uses: actions/checkout@v4
         with:
@@ -925,6 +931,17 @@ jobs:
           pnpm exec vitest run tests/highfly_origin_clean_p1_hunter_starter.test.ts
           git diff --check HEAD
           echo 'HIGHFLY_CLEAN_P1_NEW_HUNTER_UNARMED_TWO_GENDERS_LEGACY_SAVES_GREEN=1'
+      - name: Android P2 opt-in 4 native BASE HUD + R23 GOLDEN untouched
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_android_p2_four_base.py
+          cp ../v9-corrections/game/c1/highfly_android_p2_four_base.test.ts tests/highfly_android_p2_four_base.test.ts
+          pnpm exec vitest run tests/highfly_android_p2_four_base.test.ts
+          pnpm exec tsc --noEmit --incremental false
+          git diff --check HEAD
+          echo 'HIGHFLY_ANDROID_P2_NATIVE_4BASE_S23_WITHOUT_PC_PATCH_GREEN=1'
       - name: SUPREME mandatory native solo Captain LV99 9/9 victory gate (NO CHEATS)
         working-directory: upstream
         shell: bash
@@ -1059,16 +1076,36 @@ jobs:
           node scripts/highfly_clean_p1_browser.mjs
           test -s ../clean-p1-s23-report.json
           echo 'HIGHFLY_CLEAN_P1_S23_EMULATED_BOTH_GENDERS_NO_GEAR_GREEN=1'
+      - name: Android P2 real S23 landscape Hunter M/F four native BASE + ATK UI
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_android_p2_browser.mjs scripts/highfly_android_p2_browser.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory ../supreme-preview > ../highfly-android-p2-browser.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for n in $(seq 1 60); do
+            if curl -fsS 'http://127.0.0.1:4173/cobalt-hollow-lab/?hf_android_p2=1' >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_android_p2_browser.mjs
+          test -s ../highfly-android-p2-report.json
+          echo 'HIGHFLY_ANDROID_P2_EMULATED_TWO_HUNTERS_FOUR_BASE_UI_GREEN=1'
       - name: Preserve small CLEAN P1 diagnostics only
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-CLEAN-P1-S23-ENTRY-SMALL-QA
+          name: HIGHFLY-ANDROID-P2-S23-MALE-FEMALE-4BASE-QA
           path: |
             clean-p1-s23-report.json
             clean-p1-male.png
             clean-p1-female.png
             clean-p1-browser.log
+            highfly-android-p2-report.json
+            highfly-android-p2-male.png
+            highfly-android-p2-female.png
+            highfly-android-p2-browser.log
           if-no-files-found: warn
           retention-days: 7
       - name: Explicit safe stop — no main/Pages mutation
