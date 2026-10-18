@@ -64,5 +64,8 @@ def main():
               "skins",x["skinCount"],"anims",x["animationCount"],
               "tracks",x["trackTargets"],
               "commonNodes",x.get("trackNodeOverlapCore","base"))
+    print("HIGHFLY_R39_CORE_TRACK_NODES="+",".join(base["animatedNodeNames"]))
+    print("HIGHFLY_R39_CORE_CLIPS="+",".join(base["animationNames"]))
+    print("HIGHFLY_R39_CORE_TRACK_SAMPLES="+",".join(base["sampleTrackPaths"]))
     print("HIGHFLY_R39_A_RIG_TRACK_PREAUDIT_GREEN=1")
 if __name__=="__main__":main()
