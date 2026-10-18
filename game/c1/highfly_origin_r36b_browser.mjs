@@ -16,9 +16,15 @@ try {
     const page=await context.newPage();
     const errors=[];page.on('pageerror',e=>errors.push(String(e)));
     await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
-    await page.locator('#hf-clean-gender-picker button[data-origin-gender="'+gender+'"]').waitFor({timeout:50000});
+    // Reuse ACTUAL ClaudeCraft five-tab modular creator; never test a
+    // HIGHFLY-only gender picker or fake button state.
+    await page.locator('#hf-origin-native-appearance .ac-seg-btn').first().waitFor({state:'attached',timeout:50000});
     await page.evaluate(sex=>{
-      document.querySelector('#hf-clean-gender-picker button[data-origin-gender="'+sex+'"]')?.click();
+      const buttons=[...document.querySelectorAll('#hf-origin-native-appearance .ac-seg-btn')];
+      if(buttons.length<2)throw Error('R36B_NATIVE_CLAUDECRAFT_GENDER_BUTTONS_MISSING');
+      buttons[sex==='male'?0:1].click();
+      if(buttons[sex==='male'?0:1].getAttribute('aria-pressed')!=='true')
+        throw Error('R36B_NATIVE_CLAUDECRAFT_CREATOR_NO_CHANGE');
       const el=document.getElementById('hf-origin-name');
       if(el instanceof HTMLInputElement){
         el.value=sex==='male'?'Hunter Male':'Hunter Female';
