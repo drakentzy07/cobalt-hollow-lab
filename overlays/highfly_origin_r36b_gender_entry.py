@@ -20,15 +20,36 @@ once(main,
   originHunterChosenGender: 'male'|'female' = 'male',
 ): Promise<void> {""")
 
-once(main,
- """        return new Sim({...cfg,originHunterEnabled:true});""",
- """        // R36B fresh Origin Hunter: appear in the actual donor world with
-        // no compulsory bootcamp. Saved Draken restores use the branch above.
-        // No random unverified world coordinate or teleport on restore.
+# R15's initial Sim expression is changed by other frozen overlays before
+# R36B executes. Scope this to startOffline's ORIGIN fresh branch rather than
+# assuming identical text across 72 prior patches.
+import re
+file=Path(main)
+source=file.read_text(encoding='utf8')
+start=source.find('async function startOffline(')
+if start<0:raise SystemExit('R36B_MISSING_STARTOFFLINE')
+end=source.find('// Online flow:',start)
+if end<0:raise SystemExit('R36B_MISSING_END_OF_STARTOFFLINE')
+segment=source[start:end]
+# The constructor might now contain level/stat/resource flags; preserve all
+# other named settings, and inject the one opt-in override last.
+pattern=r'return new Sim\(\{(?P<args>[^{};]*originHunterEnabled\s*:\s*true[^{};]*)\}\);'
+matches=list(re.finditer(pattern,segment))
+if len(matches)!=1:
+    near=segment.find('originHunterEnabled')
+    excerpt=segment[max(0,near-280):near+460] if near>=0 else 'no originHunterEnabled in startOffline'
+    raise SystemExit('R36B_FRESH_CONSTRUCTOR_DRIFT count='+str(len(matches))+' excerpt='+repr(excerpt))
+match=matches[0]
+args=match.group('args').rstrip().rstrip(',')
+replacement="""// R36B: only FRESH Origin Hunter can skip compulsory tutorial.
+        // Restored Draken always uses the untouched load-save branch.
+        // No teleporting or changing the saved player profile.
         const r36b=new URLSearchParams(location.search).get('hf_origin_r36b')==='1';
-        return new Sim({...cfg,originHunterEnabled:true,
-          ...(r36b ? {compulsoryTutorial:false} : {})});
-""".rstrip())
+        return new Sim({"""+args+""",
+          ...(r36b ? {compulsoryTutorial:false} : {}),
+        });"""
+segment=segment[:match.start()]+replacement+segment[match.end():]
+file.write_text(source[:start]+segment+source[end:],encoding='utf8')
 
 once(main,
  """    offlinePlayer.modularAppearance = modularAppearance as unknown as Record<string, unknown>;
