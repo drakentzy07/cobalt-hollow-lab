@@ -97,18 +97,24 @@ once(main,
  """  originHunterTrial = false,
   originHunterChosenLook: ModularAppearance | null = null,
 ): Promise<void> {""")
+# The legacy appearance seeding block has been upgraded by previous
+# overlays. Do not replace it: let the legacy native flow run unchanged.
+# Apply the customizer's full look ONLY after R15's saved-appearance restore
+# hook and BEFORE startGame makes the 3D renderer. Stored saves always win.
 once(main,
- """    offlinePlayer.modularAppearance = modularAppearance as unknown as Record<string, unknown>;
-    offlinePlayer.helmHidden = !creationHelm;""",
- """    // Original ClaudeCraft editor -> real Hunter Entity -> renderer visual.
-    // Existing saves are explicitly restored below and MUST win.
-    const r36bFresh=originHunterTrial && !trialSave &&
-      new URLSearchParams(location.search).get('hf_origin_r36b')==='1';
-    offlinePlayer.modularAppearance = (
-      r36bFresh ? normalizeAppearance(originHunterChosenLook??modularAppearance)
-                 : modularAppearance
-    ) as unknown as Record<string, unknown>;
-    offlinePlayer.helmHidden = !creationHelm;""")
+ """  if (originHunterTrial && trialSave?.appearance && offlinePlayer)
+    offlinePlayer.modularAppearance = trialSave.appearance;""",
+ """  if (originHunterTrial && trialSave?.appearance && offlinePlayer)
+    offlinePlayer.modularAppearance = trialSave.appearance;
+  // R36B only fresh Hunter: canonical ClaudeCraft editor -> real Entity.
+  // Existing name/Draken restores keep their original exact saved body.
+  if (originHunterTrial && !trialSave && offlinePlayer &&
+      new URLSearchParams(location.search).get('hf_origin_r36b')==='1') {
+    offlinePlayer.modularAppearance=normalizeAppearance(
+      originHunterChosenLook??modularAppearance
+    ) as unknown as Record<string,unknown>;
+  }""")
+
 once(main,
  """  installOriginTrialEntrance((name,gender)=>{
     // NEW Hunter look: only the selected gender changes, all donor 3D
