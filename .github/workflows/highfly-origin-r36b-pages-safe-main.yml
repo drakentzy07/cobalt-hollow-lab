@@ -2,11 +2,11 @@ name: HIGHFLY ORIGIN R36B - Original ClaudeCraft creator protected Pages lab
 # Only the exact GREEN immutable R36B source run may publish. All existing
 # root, V15, R36A and R36A1 assets and HTML must remain byte-identical.
 on:
-  workflow_run:
-    workflows:
-      - "HIGHFLY ORIGIN R36B — True Female Mesh + Safe New Hunter Spawn No Mandatory Tutorial (NO DEPLOY)"
-    branches: [highfly-origin-r36b-hunter-gender-entrance]
-    types: [completed]
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/highfly-origin-r36b-pages-safe-main.yml"
+  workflow_dispatch:
 permissions:
   contents: read
   actions: read
@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   stage:
-    if: github.event.workflow_run.id == 39098478084 && github.event.workflow_run.conclusion == 'success'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
