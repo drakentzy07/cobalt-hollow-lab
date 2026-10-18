@@ -2,7 +2,7 @@ import {describe,it,expect} from 'vitest';
 import * as THREE from 'three';
 import {r39MaskedMobilePair,r39TrackBone} from '../src/render/characters/highfly_r39_anim_split';
 function track(n:string,axis=1) {
- return new THREE.NumberKeyframeTrack(n+'.position',[0,.15,.3],[0,axis,0,0,axis,0,0,axis,0]);
+ return new THREE.VectorKeyframeTrack(n+'.position',[0,.15,.3],[0,axis,0,0,axis,0,0,axis,0]);
 }
 function make(name:string,hasLeg=true){
  return new THREE.AnimationClip(name,.3,[
@@ -20,7 +20,7 @@ describe('HIGHFLY R39A: actual two-layer animation contract',()=>{
   expect(lo).toContain('hips');expect(lo).toContain('upperleg.l');
   expect(up).toContain('chest');expect(up).toContain('upperarm.r');
   expect(lo.every(x=>!up.includes(x))).toBe(true);
-  expect(run.tracks).toHaveLength(9);expect(attack.tracks).toHaveLength(9);
+  expect(run.tracks).toHaveLength(10);expect(attack.tracks).toHaveLength(10);
  });
  it('refuses incomplete donor rigs instead of deforming a character',()=>{
   expect(r39MaskedMobilePair(make('run',false),make('swing'))).toBeNull();
