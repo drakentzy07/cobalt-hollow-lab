@@ -1,0 +1,43 @@
+name: HIGHFLY ORIGIN R39 P0 — Combat Supreme pure action graph contract (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-origin-r39-combat-supreme-p0]
+    paths:
+      - "game/c1/highfly_combat_supreme_r39_p0.mjs"
+      - "game/c1/highfly_combat_supreme_r39_p0.test.mjs"
+      - "docs/highfly-origin/ADR-R39-COMBAT-SUPREME.md"
+      - ".github/workflows/highfly-origin-r39-combat-supreme-p0-no-deploy.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-r39-p0-pure-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout isolated HIGHFLY branch (not public Pages)
+        uses: actions/checkout@v4
+      - name: Node LTS runner for dependency-free reference model
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: R39 P0 isolated syntax, action graph, input-buffer and Break rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check game/c1/highfly_combat_supreme_r39_p0.mjs
+          node --check game/c1/highfly_combat_supreme_r39_p0.test.mjs
+          node --test game/c1/highfly_combat_supreme_r39_p0.test.mjs
+          test -s docs/highfly-origin/ADR-R39-COMBAT-SUPREME.md
+          git diff --check
+          echo HIGHFLY_R39_P0_CONTRACT_GREEN=1
+      - name: Confirm P0 is not a live Sim or public Pages modification
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -f game/c1/highfly_combat_supreme_r39_p0.ts
+          ! grep -E 'onStart|castAbility|dealDamage|localStorage|addPlayer|deploy-pages' game/c1/highfly_combat_supreme_r39_p0.mjs
+          echo HIGHFLY_R39_P0_NO_DONOR_NO_SAVE_NO_DEPLOY_GREEN=1
