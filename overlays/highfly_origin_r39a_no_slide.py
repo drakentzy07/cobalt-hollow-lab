@@ -34,6 +34,17 @@ one("  update(dt: number, s: AnimState, animate: boolean, reducedMotion = false)
       // If thumbstick is released mid-swing, stop advancing the stride until
       // the upper-body attack finishes rather than skating forward in place.
       this.r39MobileLower.paused=!this.r39MovingGround;
+      if(this.r39MovingGround && this.baseState==='run') {
+        // Use ClaudeCraft's SAME foot-speed matching as its native run loop:
+        // without this, legs move but gait cadence could still skate.
+        const scale=locomotionTimeScale(
+          'run',s,this.def.walkRef,this.def.runRef,this.def.prowlRef,
+          this.def.walkBackRef,this.def.runTimeScaleMin,
+          this.def.walkTimeScaleMax,this.def.runTimeScaleMax,
+        );
+        if(scale!==null && Number.isFinite(scale))
+          this.r39MobileLower.timeScale=scale;
+      }
     }""")
 # Splits are intentionally only for manual basic attacks; rush / magic /
 # signature / spells always retain original choreography.
