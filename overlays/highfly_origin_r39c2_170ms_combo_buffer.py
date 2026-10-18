@@ -31,7 +31,7 @@ once(guard,
 hud='src/ui/hud.ts'
 once(hud,
     """import { highflyOriginBufferedStrikeAllowed, highflyOriginReadCombatInterruptEpoch,""",
-    """import {r39CClassifyStrike} from './sim/highfly_r39c_combat_context';
+    """import {r39CClassifyStrike} from '../sim/highfly_r39c_combat_context';
 import { highflyOriginBufferedStrikeAllowed, highflyOriginReadCombatInterruptEpoch,""")
 # R39C1 is authored but under-used: classify based on native ACCEPTED swing,
 # never a speculative tap (online ack might refuse).
