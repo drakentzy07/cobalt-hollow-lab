@@ -2,7 +2,7 @@ import {describe,it,expect} from 'vitest';
 import * as THREE from 'three';
 import {r39MaskedMobilePair,r39TrackBone} from '../src/render/characters/highfly_r39_anim_split';
 function track(n:string,axis=1) {
- return new THREE.VectorKeyframeTrack(n+'.position',[0,.15,.3],[0,axis,0,0,axis,0,0,axis,0]);
+ return new THREE.VectorKeyframeTrack(n+'.position',[0,.15,.3],[0,0,0,axis,0,0,axis,0,0]);
 }
 function make(name:string,hasLeg=true){
  return new THREE.AnimationClip(name,.3,[
