@@ -1,0 +1,1435 @@
+name: HIGHFLY ORIGIN R39A — Running Basic Attack Layer Split S23 full world (NO DEPLOY)
+# Builds the ALREADY certified GREEN V3-06 integration from frozen donor.
+# Selective patch/build gates ONLY. Never writes GitHub Pages or main.
+on:
+  push:
+    branches: [highfly-origin-r39-combat-supreme-p0]
+    paths:
+      - ".github/workflows/highfly-origin-r0-forensic-no-deploy.yml"
+      - "game/c1/highfly_origin_r0_diagnostic.test.ts"
+      - "docs/HIGHFLY_ORIGIN_R0_COMBAT_CONTRACT.md"
+      - "docs/HIGHFLY_ORIGIN_MOBILE_AIM_RESEARCH.md"
+      - "overlays/highfly_origin_or1_buffer_guard.py"
+      - "game/c1/highfly_origin_buffer_guard.ts"
+      - "game/c1/highfly_origin_buffer_guard.test.ts"
+      - "overlays/highfly_origin_or1_online_ack.py"
+      - "game/c1/highfly_origin_strike_ack.ts"
+      - "game/c1/highfly_origin_online_ack.test.ts"
+      - "docs/HIGHFLY_ORIGIN_R1_HUNTER_RESET_ENTRY_GATE.md"
+      - "game/c1/highfly_origin_hunter_profile.ts"
+      - "game/c1/highfly_origin_hunter_profile.test.ts"
+      - "overlays/highfly_origin_r1_profile.py"
+      - "overlays/highfly_origin_r1_native_spellbook.py"
+      - "game/c1/highfly_origin_native_spellbook.ts"
+      - "game/c1/highfly_origin_native_spellbook.test.ts"
+      - "overlays/highfly_origin_r12_motion_catalog.py"
+      - "game/c1/highfly_origin_skill_motion_catalog.ts"
+      - "game/c1/highfly_origin_skill_motion_catalog.test.ts"
+      - "overlays/highfly_origin_r12b_visual_bridge.py"
+      - "game/c1/highfly_origin_r12b_visual_bridge.test.ts"
+      - "game/c1/highfly_origin_resource_admission.ts"
+      - "game/c1/highfly_origin_r12c_resource_gate.test.ts"
+      - "overlays/highfly_origin_r12c_resource_gate.py"
+      - "game/c1/highfly_origin_universal_resources.ts"
+      - "game/c1/highfly_origin_r14_resource_bundle.test.ts"
+      - "overlays/highfly_origin_r14_resource_bundle.py"
+      - "overlays/highfly_origin_r14c_hud_wire_bar.py"
+      - "game/c1/highfly_origin_r14c_hud_wire_bar.test.ts"
+      - "game/c1/highfly_origin_action_stamina.ts"
+      - "game/c1/highfly_origin_r14d_stamina_actions.test.ts"
+      - "overlays/highfly_origin_r14d_stamina_actions.py"
+      - "game/c1/highfly_origin_trial_runtime.ts"
+      - "overlays/highfly_origin_r15_r16_playable_trial.py"
+      - "game/c1/highfly_origin_r15_r16_playable_trial.test.ts"
+      - "game/c1/highfly_origin_r17_hud.ts"
+      - "game/c1/highfly_origin_r18_loadout.ts"
+      - "game/c1/highfly_origin_r19_selection.ts"
+      - "game/c1/highfly_origin_r20_premium_aim.ts"
+      - "game/c1/highfly_origin_r21_aim_intent.ts"
+      - "game/c1/highfly_origin_r22_premium_visual.ts"
+      - "game/c1/highfly_origin_r23_multitouch_buffs.test.ts"
+      - "overlays/highfly_origin_r23_multitouch_buffs.py"
+      - "overlays/highfly_origin_clean_p1_hunter_starter.py"
+      - "game/c1/highfly_origin_clean_p1_hunter_starter.test.ts"
+      - "game/c1/highfly_origin_clean_p1_browser.mjs"
+      - "overlays/highfly_android_p2_four_base.py"
+      - "overlays/highfly_android_p3_clean_hud.py"
+      - "overlays/highfly_android_p35_aim_hud_lab.py"
+      - "overlays/highfly_origin_r36a_air_strike.py"
+      - "overlays/highfly_origin_r36a1_direction_atk_use.py"
+      - "overlays/highfly_origin_r36b_gender_entry.py"
+      - "overlays/highfly_origin_r37_s1_meteor_aoe_lab.py"
+      - "overlays/highfly_origin_r38_simple_entry.py"
+      - "game/c1/highfly_origin_r38_simple_entry.test.ts"
+      - "game/c1/highfly_origin_r38_browser.mjs"
+      - "game/c1/highfly_origin_r37_aim_truth.ts"
+      - "game/c1/highfly_origin_r37_aim_lab.test.ts"
+      - ".github/workflows/highfly-origin-r39a-anti-slide-s23-no-deploy.yml"
+      - "overlays/highfly_origin_r39a_no_slide.py"
+      - "game/c1/highfly_origin_r39a_anim_split.ts"
+      - "game/c1/highfly_origin_r39a_antislide.test.ts"
+      - "game/c1/highfly_origin_r36b_gender_intro.test.ts"
+      - "game/c1/highfly_origin_r36b_browser.mjs"
+      - ".github/workflows/highfly-origin-r36b-gender-entrance-no-deploy.yml"
+      - "game/c1/highfly_r36a1_attack_heading.ts"
+      - "game/c1/highfly_origin_r36a1_direction_atk_use.test.ts"
+      - ".github/workflows/highfly-origin-r36a1-directional-atk-no-deploy.yml"
+      - "game/c1/highfly_origin_r36a_manual_attack.test.ts"
+      - "game/c1/highfly_origin_r36a_browser.mjs"
+      - "game/c1/highfly_r36a_soft_attack_target.ts"
+      - ".github/workflows/highfly-origin-r36a-manual-air-strike-no-deploy.yml"
+      - "game/c1/highfly_android_p35_aim_hud_lab.test.ts"
+      - "game/c1/highfly_android_p35_browser.mjs"
+      - ".github/workflows/highfly-origin-android-p35-aim-hud-no-deploy.yml"
+      - "game/c1/highfly_android_p3_runtime.ts"
+      - "game/c1/highfly_android_p3_clean_hud.test.ts"
+      - "game/c1/highfly_android_p3_browser.mjs"
+      - ".github/workflows/highfly-origin-android-p3-clean-hud-no-deploy.yml"
+      - "game/c1/highfly_android_p2_four_base.test.ts"
+      - "game/c1/highfly_android_p2_browser.mjs"
+      - ".github/workflows/highfly-origin-clean-combat-p1-no-deploy.yml"
+      - "game/c1/highfly_origin_r22_premium_visual.test.ts"
+      - "overlays/highfly_origin_r22_premium_visual.py"
+      - "game/c1/highfly_origin_r21_free_manual_aim.test.ts"
+      - "overlays/highfly_origin_r21_free_manual_aim.py"
+      - "game/c1/highfly_origin_r20_premium_aim.test.ts"
+      - "overlays/highfly_origin_r20_premium_aim.py"
+      - "game/c1/highfly_origin_r19_focus.test.ts"
+      - "overlays/highfly_origin_r19_focus.py"
+      - "game/c1/highfly_origin_r17_hud.test.ts"
+      - "overlays/highfly_origin_r17_patch.py"
+      - "overlays/highfly_v91_combat_feel.py"
+      - "game/c1/highfly_v91_combat_nine_classes.test.ts"
+      - "overlays/highfly_v15_manual_cast_p1.py"
+      - "game/c1/highfly_v15_manual_cast_p1.test.ts"
+      - "overlays/highfly_v15_manual_strike_p2.py"
+      - "game/c1/highfly_v15_manual_strike_p2.test.ts"
+      - "overlays/highfly_v15_skill_input_p0.py"
+      - "game/c1/highfly_v15_skill_input_nine_classes.test.ts"
+      - "overlays/highfly_v15_pwa_manifest.py"
+      - "tests/test_highfly_v15_pwa_manifest.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-origin-r39a-real-anti-slide-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  native_outdoor_camps_and_world_portals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout isolated HIGHFLY PR overlay
+        uses: actions/checkout@v4
+        with:
+          # Frozen QA commit: real native captain, nine classes each won.
+          # Deliberately immutable to avoid a moving dev branch changing the release.
+          ref: 8a3ddc93c9147e8c3320c04d4d2a13896b11e063
+      - name: Checkout isolated V9 correction script and regression tests
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: ${{ github.sha }}
+          path: v9-corrections
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /overlays/highfly_v9_p0_corrections.py
+            /game/c1/highfly_v9_p0_regression.test.ts
+            /overlays/highfly_v91_combat_feel.py
+            /game/c1/highfly_v91_combat_nine_classes.test.ts
+            /overlays/highfly_v15_manual_cast_p1.py
+            /game/c1/highfly_v15_manual_cast_p1.test.ts
+            /overlays/highfly_v15_manual_strike_p2.py
+            /game/c1/highfly_v15_manual_strike_p2.test.ts
+            /overlays/highfly_v15_skill_input_p0.py
+            /game/c1/highfly_v15_skill_input_nine_classes.test.ts
+            /game/c1/highfly_origin_r0_diagnostic.test.ts
+            /game/c1/highfly_origin_buffer_guard.ts
+            /game/c1/highfly_origin_buffer_guard.test.ts
+            /overlays/highfly_origin_or1_buffer_guard.py
+            /overlays/highfly_origin_or1_online_ack.py
+            /game/c1/highfly_origin_strike_ack.ts
+            /game/c1/highfly_origin_online_ack.test.ts
+            /game/c1/highfly_origin_hunter_profile.ts
+            /game/c1/highfly_origin_hunter_profile.test.ts
+            /overlays/highfly_origin_r1_profile.py
+            /overlays/highfly_origin_r1_native_spellbook.py
+            /game/c1/highfly_origin_native_spellbook.ts
+            /game/c1/highfly_origin_native_spellbook.test.ts
+            /overlays/highfly_origin_r12_motion_catalog.py
+            /game/c1/highfly_origin_skill_motion_catalog.ts
+            /game/c1/highfly_origin_skill_motion_catalog.test.ts
+            /overlays/highfly_origin_r12b_visual_bridge.py
+            /game/c1/highfly_origin_r12b_visual_bridge.test.ts
+            /game/c1/highfly_origin_resource_admission.ts
+            /game/c1/highfly_origin_r12c_resource_gate.test.ts
+            /overlays/highfly_origin_r12c_resource_gate.py
+            /game/c1/highfly_origin_universal_resources.ts
+            /game/c1/highfly_origin_r14_resource_bundle.test.ts
+            /overlays/highfly_origin_r14_resource_bundle.py
+            /overlays/highfly_origin_r14c_hud_wire_bar.py
+            /game/c1/highfly_origin_r14c_hud_wire_bar.test.ts
+            /game/c1/highfly_origin_action_stamina.ts
+            /game/c1/highfly_origin_r14d_stamina_actions.test.ts
+            /overlays/highfly_origin_r14d_stamina_actions.py
+            /game/c1/highfly_origin_trial_runtime.ts
+            /overlays/highfly_origin_r15_r16_playable_trial.py
+            /game/c1/highfly_origin_r15_r16_playable_trial.test.ts
+            /game/c1/highfly_origin_r17_hud.ts
+            /game/c1/highfly_origin_r18_loadout.ts
+            /game/c1/highfly_origin_r19_selection.ts
+            /game/c1/highfly_origin_r20_premium_aim.ts
+            /game/c1/highfly_origin_r21_aim_intent.ts
+            /game/c1/highfly_origin_r22_premium_visual.ts
+            /game/c1/highfly_origin_r23_multitouch_buffs.test.ts
+            /overlays/highfly_origin_r23_multitouch_buffs.py
+            /game/c1/highfly_origin_r22_premium_visual.test.ts
+            /overlays/highfly_origin_r22_premium_visual.py
+            /game/c1/highfly_origin_r21_free_manual_aim.test.ts
+            /overlays/highfly_origin_r21_free_manual_aim.py
+            /game/c1/highfly_origin_r20_premium_aim.test.ts
+            /overlays/highfly_origin_r20_premium_aim.py
+            /game/c1/highfly_origin_r19_focus.test.ts
+            /overlays/highfly_origin_r19_focus.py
+            /game/c1/highfly_origin_r17_hud.test.ts
+            /overlays/highfly_origin_r17_patch.py
+            /overlays/highfly_v15_pwa_manifest.py
+            /overlays/rewrite_pages_static.py
+            /tests/test_highfly_v15_pwa_manifest.py
+            /overlays/highfly_origin_clean_p1_hunter_starter.py
+            /game/c1/highfly_origin_clean_p1_hunter_starter.test.ts
+            /game/c1/highfly_origin_clean_p1_browser.mjs
+            /overlays/highfly_android_p2_four_base.py
+            /overlays/highfly_android_p3_clean_hud.py
+            /overlays/highfly_android_p35_aim_hud_lab.py
+            /overlays/highfly_origin_r36a_air_strike.py
+            /overlays/highfly_origin_r36a1_direction_atk_use.py
+            /overlays/highfly_origin_r36b_gender_entry.py
+            /overlays/highfly_origin_r37_s1_meteor_aoe_lab.py
+            /overlays/highfly_origin_r38_simple_entry.py
+            /game/c1/highfly_origin_r38_simple_entry.test.ts
+            /game/c1/highfly_origin_r38_browser.mjs
+            /overlays/highfly_origin_r39a_no_slide.py
+            /game/c1/highfly_origin_r39a_anim_split.ts
+            /game/c1/highfly_origin_r39a_antislide.test.ts
+            /game/c1/highfly_origin_r37_aim_truth.ts
+            /game/c1/highfly_origin_r37_aim_lab.test.ts
+            /game/c1/highfly_origin_r36b_gender_intro.test.ts
+            /game/c1/highfly_origin_r36b_browser.mjs
+            /game/c1/highfly_r36a1_attack_heading.ts
+            /game/c1/highfly_origin_r36a1_direction_atk_use.test.ts
+            /game/c1/highfly_origin_r36a_manual_attack.test.ts
+            /game/c1/highfly_origin_r36a_browser.mjs
+            /game/c1/highfly_r36a_soft_attack_target.ts
+            /game/c1/highfly_android_p35_aim_hud_lab.test.ts
+            /game/c1/highfly_android_p35_browser.mjs
+            /game/c1/highfly_android_p3_runtime.ts
+            /game/c1/highfly_android_p3_clean_hud.test.ts
+            /game/c1/highfly_android_p3_browser.mjs
+            /game/c1/highfly_android_p2_four_base.test.ts
+            /game/c1/highfly_android_p2_browser.mjs
+      - name: Checkout exact frozen GREEN P02I Monster Lab modules
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: e6f59079fdc3f278ef041fbc8354ca837aee42ab
+          path: monster-p02i
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /monsters/lv99/
+      - name: Checkout frozen ClaudeCraft code slice
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /android/
+            /capacitor.config.ts
+            /tests/professions_view.test.ts
+            /tests/crafting_view.test.ts
+            /tests/recipe_tracker_view.test.ts
+            /tests/global_setup.ts
+            /tests/professions.test.ts
+            /tests/professions_archetype.test.ts
+            /tests/archetype_ceiling.test.ts
+            /tests/professions_crafting.test.ts
+            /tests/professions_crafting_hub.test.ts
+            /tests/bags.test.ts
+            /tests/inscription_catalog.test.ts
+            /tests/professions_farming.test.ts
+            /tests/professions_fishing.test.ts
+            /tests/gather_rare_events.test.ts
+            /tests/helpers/farming_calendar_model.ts
+            /tests/helpers/bare_client.ts
+            /tests/helpers/defined.ts
+            /tests/server/ws_auth.test.ts
+            /tests/server/game_boot_order.test.ts
+            /tests/server/market_commands.test.ts
+            /tests/trade.test.ts
+            /tests/bop_party_trade.test.ts
+            /tests/inscription_scroll_exclusivity.test.ts
+            /tests/orange_promotion.test.ts
+            /tests/professions_enchanting.test.ts
+            /tests/professions_typed_reagents.test.ts
+            /tests/professions_enchant_family_cast.test.ts
+            /tests/professions_enchant_salvage_edges.test.ts
+            /tests/recipe_economy.test.ts
+            /tests/jewelcrafting_catalog.test.ts
+            /tests/jewelcrafting_flow.test.ts
+            /tests/gathering.test.ts
+            /tests/gather_rare_events.test.ts
+            /tests/farming_anti_chore.test.ts
+            /tests/fishing_zones.test.ts
+            /tests/corpse_harvest_grant.test.ts
+            /tests/harvest_preference.test.ts
+            /tests/perfecting.test.ts
+            /tests/character_state_backcompat.test.ts
+            /tests/character_state_module.test.ts
+            /tests/professions_blob_roundtrip.test.ts
+            /tests/professions_commissions.test.ts
+            /tests/highfly_pf6_xp_curve.test.ts
+            /tests/highfly_pf6_progression_sync.test.ts
+            /tests/highfly_pf6_real_sim_e2e.test.ts
+            /tests/helpers/defined.ts
+            /tests/helpers/enchant_family_cast.ts
+            /tests/helpers/harvest_spot.ts
+            /tests/helpers/open_field.ts
+            /tests/helpers/reagent_unit_value.ts
+            /tests/helpers/scan_guard_self_audit.ts
+            /tests/helpers/strip_comments.ts
+            /tests/helpers/ts_files_under.ts
+            /tests/helpers/unmapped_family.ts
+            /tests/sim_shared.ts
+            /tests/svelte_testing_setup.ts
+            /tests/jsdom_local_storage_setup.ts
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+
+      - name: Verify pinned donor and immutable CLEAN V1
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          test -s clean/canonical/HIGHFLY_CLEAN_V1.patch
+          expected="$(cut -d' ' -f1 clean/canonical/source-sha256.txt)"
+          actual="$(sha256sum clean/canonical/HIGHFLY_CLEAN_V1.patch | cut -d' ' -f1)"
+          test "$actual" = "$expected"
+          test "$(sha256sum clean/canonical/HIGHFLY_CLEAN_V1.patch | cut -d' ' -f1)" = "b78ba81e52b10b2ddba7c6fa829d436f59ad4594ec2a0d0d5f0341ce26773cb9"
+          git -C upstream apply --check ../clean/canonical/HIGHFLY_CLEAN_V1.patch
+          git -C upstream apply --binary ../clean/canonical/HIGHFLY_CLEAN_V1.patch
+          git -C upstream diff --check HEAD
+          test -f upstream/src/highfly/training/core.ts
+          test -f upstream/src/sim/professions/wheel.ts
+          test -f upstream/src/sim/professions/crafting.ts
+          test -f upstream/src/sim/professions/archetype.ts
+          echo "PR0_PINNED_DONOR_CLEAN_SHA_GREEN=1"
+
+      - name: Apply isolated PF-6 runtime exactly as certified
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmp training/runtime/core.ts upstream/src/highfly/training/core.ts
+          test -s training/runtime/pf6_xp_curve.ts
+          test -s training/runtime/pf6_progression_sync.ts
+          cp training/runtime/pf6_xp_curve.ts upstream/src/highfly/training/pf6_xp_curve.ts
+          cp training/runtime/pf6_progression_sync.ts upstream/src/highfly/training/pf6_progression_sync.ts
+          cp training/runtime/stat_authority.ts upstream/src/highfly/training/stat_authority.ts
+          cp training/tests/highfly_pf6_xp_curve.test.ts upstream/tests/highfly_pf6_xp_curve.test.ts
+          cp training/tests/highfly_pf6_progression_sync.test.ts upstream/tests/highfly_pf6_progression_sync.test.ts
+          cp training/tests/highfly_pf6_real_sim_e2e.test.ts upstream/tests/highfly_pf6_real_sim_e2e.test.ts
+          (cd upstream && python ../training/scripts/pf6_activate_gameplay.py)
+          (cd upstream && python ../training/scripts/pf6_sync_hud.py)
+          (cd upstream && python ../training/scripts/pf6_sync_before_recalc.py)
+          (cd upstream && git diff --check HEAD)
+          echo "PR0_PF6_LV99_REUSED=1"
+
+      - name: Guard professions and GAME-C2 freeze invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "export type GatheringProfessionId" upstream/src/sim/content/professions.ts
+          grep -q "CRAFT_RING" upstream/src/sim/content/professions.ts
+          grep -q "archetypeCeilingFor" upstream/src/sim/professions/archetype.ts
+          grep -q "gainCraftSkill" upstream/src/sim/professions/wheel.ts
+          grep -q "JEWELCRAFTING_RECIPES" upstream/src/sim/content/recipes.ts
+          grep -q "HIGHFLY_NORMAL_MAX_LEVEL = 99" upstream/src/highfly/training/core.ts
+          test -f upstream/tests/highfly_game_c28.test.ts
+          test -f upstream/src/highfly/game_c1_runtime.ts
+          test -f upstream/src/sim/professions/corpse_harvest_grant.ts
+          echo "PR0_PROFESSION_REUSE_NO_PARALLEL_ENGINE=1"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Enable pinned pnpm
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+      - name: Install unchanged donor lockfile
+        working-directory: upstream
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Activate PR-1 optional HIGHFLY profession state (no gameplay hooks)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr1/highfly_profession_state.ts
+          test -f professions/pr1/highfly_profession_state.test.ts
+          cp professions/pr1/highfly_profession_state.ts upstream/src/sim/professions/highfly_profession_state.ts
+          cp professions/pr1/highfly_profession_state.test.ts upstream/tests/highfly_profession_state.test.ts
+          (cd upstream && python ../professions/pr1/activate_pr1.py)
+          git -C upstream diff --check HEAD
+          echo "PR1_ONLY_ADDITIVE_SPARSE_PROFESSIONS_STATE=1"
+      - name: Activate PR-2 passive legacy profession gain bridge (no new XP)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr2/highfly_progress_bridge.ts
+          test -f professions/pr2/highfly_progress_bridge.test.ts
+          cp professions/pr2/highfly_progress_bridge.ts upstream/src/sim/professions/highfly_progress_bridge.ts
+          cp professions/pr2/highfly_progress_bridge.test.ts upstream/tests/highfly_progress_bridge.test.ts
+          (cd upstream && python ../professions/pr2/activate_pr2.py)
+          git -C upstream diff --check HEAD
+          echo "PR2_CLAUDE_LEGACY_GAIN_PASSIVE_BRIDGE=1"
+      - name: Activate PR-3 additive successful-craft XP and Practice
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr3/highfly_profession_progress.ts
+          test -f professions/pr3/highfly_profession_progress.test.ts
+          cp professions/pr3/highfly_profession_progress.ts upstream/src/sim/professions/highfly_profession_progress.ts
+          cp professions/pr3/highfly_profession_progress.test.ts upstream/tests/highfly_profession_progress.test.ts
+          (cd upstream && python ../professions/pr3/activate_pr3.py)
+          git -C upstream diff --check HEAD
+          echo "PR3_CRAFT_XP_PRACTICE_NO_RNG_NO_TRAINING_CHANGE=1"
+      - name: Activate PR-4 opt-in Cooking 24-to-25 Trial
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr4/highfly_profession_trials.ts
+          test -f professions/pr4/highfly_profession_trials.test.ts
+          cp professions/pr4/highfly_profession_trials.ts upstream/src/sim/professions/highfly_profession_trials.ts
+          cp professions/pr4/highfly_profession_trials.test.ts upstream/tests/highfly_profession_trials.test.ts
+          (cd upstream && python ../professions/pr4/activate_pr4.py)
+          git -C upstream diff --check HEAD
+          echo "PR4_SAFE_OPTIN_COOKING_TRIAL_PILOT=1"
+      - name: Activate PR-5 Smith dual-craft pilot (no new archetype or items)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr5/highfly_smith_pilot.ts
+          test -f professions/pr5/highfly_smith_pilot.test.ts
+          cp professions/pr5/highfly_smith_pilot.ts upstream/src/sim/professions/highfly_smith_pilot.ts
+          cp professions/pr5/highfly_smith_pilot.test.ts upstream/tests/highfly_smith_pilot.test.ts
+          (cd upstream && python ../professions/pr5/activate_pr5.py)
+          git -C upstream diff --check HEAD
+          echo "PR5_SMITH_REUSE_FIRST_DUAL_CRAFT_PILOT=1"
+      - name: Activate PR-6 Cooking provenance and Feast evidence (zero new XP)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr6/highfly_cooking_evidence.ts
+          test -f professions/pr6/highfly_cooking_evidence.test.ts
+          cp professions/pr6/highfly_cooking_evidence.ts upstream/src/sim/professions/highfly_cooking_evidence.ts
+          cp professions/pr6/highfly_cooking_evidence.test.ts upstream/tests/highfly_cooking_evidence.test.ts
+          (cd upstream && python ../professions/pr6/activate_pr6.py)
+          git -C upstream diff --check HEAD
+          echo "PR6_COOKING_FARM_FISH_MONSTER_FEAST_EVIDENCE=1"
+      - name: Activate PR-7 Knowledge Core (authored, no recipe/stat mutation)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr7/highfly_knowledge_core.ts
+          test -f professions/pr7/highfly_knowledge_core.test.ts
+          cp professions/pr7/highfly_knowledge_core.ts upstream/src/sim/professions/highfly_knowledge_core.ts
+          cp professions/pr7/highfly_knowledge_core.test.ts upstream/tests/highfly_knowledge_core.test.ts
+          (cd upstream && python ../professions/pr7/activate_pr7.py)
+          git -C upstream diff --check HEAD
+          echo "PR7_AUTHORED_KNOWLEDGE_REAL_EVIDENCE=1"
+      - name: Activate PR-8 authored event-indexed Discovery Core (no random rewards)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr8/highfly_discovery_core.ts
+          test -f professions/pr8/highfly_discovery_core.test.ts
+          cp professions/pr8/highfly_discovery_core.ts upstream/src/sim/professions/highfly_discovery_core.ts
+          cp professions/pr8/highfly_discovery_core.test.ts upstream/tests/highfly_discovery_core.test.ts
+          (cd upstream && python ../professions/pr8/activate_pr8.py)
+          git -C upstream diff --check HEAD
+          echo "PR8_AUTHORED_EVENT_INDEXED_DISCOVERY_NO_RNG=1"
+      - name: Activate PR-9 Alchemy and Jewelcrafting Catalyst/Prismglass
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr9/highfly_alchemy_jewel.ts
+          test -f professions/pr9/highfly_alchemy_jewel.test.ts
+          cp professions/pr9/highfly_alchemy_jewel.ts upstream/src/sim/professions/highfly_alchemy_jewel.ts
+          cp professions/pr9/highfly_alchemy_jewel.test.ts upstream/tests/highfly_alchemy_jewel.test.ts
+          (cd upstream && python ../professions/pr9/activate_pr9.py)
+          git -C upstream diff --check HEAD
+          echo "PR9_CATALYST_PRISMGLASS_NO_GEMCORE=1"
+      - name: Activate PR-10 real enchanting success actions and Engineering tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr10/highfly_enchant_engineering.ts
+          test -f professions/pr10/highfly_enchant_engineering.test.ts
+          cp professions/pr10/highfly_enchant_engineering.ts upstream/src/sim/professions/highfly_enchant_engineering.ts
+          cp professions/pr10/highfly_enchant_engineering.test.ts upstream/tests/highfly_enchant_engineering.test.ts
+          (cd upstream && python ../professions/pr10/activate_pr10.py)
+          git -C upstream diff --check HEAD
+          echo "PR10_ENCHANT_ACTIONS_ENGINEERING_REAL_DONOR=1"
+      - name: Activate PR-11 real Tannery & Loom craft evidence (no bag/equipment changes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f professions/pr11/highfly_leather_textile.ts
+          test -f professions/pr11/highfly_leather_textile.test.ts
+          cp professions/pr11/highfly_leather_textile.ts upstream/src/sim/professions/highfly_leather_textile.ts
+          cp professions/pr11/highfly_leather_textile.test.ts upstream/tests/highfly_leather_textile.test.ts
+          (cd upstream && python ../professions/pr11/activate_pr11.py)
+          git -C upstream diff --check HEAD
+          echo "PR11_TANNERY_LOOM_BAG_REAL_CRAFT_EVIDENCE=1"
+      - name: Activate PR-12 actual Inscription documents (no automatic Knowledge transfer)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s professions/pr12/highfly_inscription_docs.ts
+          test -s professions/pr12/highfly_inscription_docs.test.ts
+          cp professions/pr12/highfly_inscription_docs.ts upstream/src/sim/professions/highfly_inscription_docs.ts
+          cp professions/pr12/highfly_inscription_docs.test.ts upstream/tests/highfly_inscription_docs.test.ts
+          (cd upstream && python ../professions/pr12/activate_pr12.py)
+          git -C upstream diff --check HEAD
+          echo "PR12_REAL_INSCRIPTION_DOCUMENT_TYPES=1"
+      - name: Activate PR-13 authentic Mining, Logging, Herbalism, Farming and Fishing proofs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s professions/pr13/highfly_gathering_knowledge.ts
+          test -s professions/pr13/highfly_gathering_knowledge.test.ts
+          cp professions/pr13/highfly_gathering_knowledge.ts upstream/src/sim/professions/highfly_gathering_knowledge.ts
+          cp professions/pr13/highfly_gathering_knowledge.test.ts upstream/tests/highfly_gathering_knowledge.test.ts
+          (cd upstream && python ../professions/pr13/activate_pr13.py)
+          git -C upstream diff --check HEAD
+          echo "PR13_REAL_NODE_FARM_FISH_SOURCE_PROOFS=1"
+      - name: V4-02 PR14 — one real Jewelcrafting fire gem and per-weapon inlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp professions/pr14/highfly_gem_catalog.ts upstream/src/sim/professions/highfly_gem_catalog.ts
+          cp professions/pr14/highfly_gem_socket.ts upstream/src/sim/professions/highfly_gem_socket.ts
+          cp professions/pr14/highfly_gem_inlay_e2e.test.ts upstream/tests/highfly_gem_inlay_e2e.test.ts
+          (cd upstream && python ../professions/pr14/activate_pr14.py)
+          git -C upstream diff --check HEAD
+          echo "HIGHFLY_V4_02_PR14_GEM_ADAPTER_APPLIED=1"
+      - name: V4-02 PR15 reuse original PR14 socket for Frost and Lightning
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp professions/pr15/highfly_ice_lightning_e2e.test.ts upstream/tests/highfly_ice_lightning_e2e.test.ts
+          (cd upstream && python ../professions/pr15/activate_pr15.py)
+          git -C upstream diff --check HEAD
+          echo "HIGHFLY_V4_02_PR15_FROST_LIGHTNING_CRAFT_SOCKET_GREEN=1"
+      - name: V4-02 PR16 authentic trainer flow and mobile GEM guide
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s professions/pr16/activate_pr16.py
+          test -s professions/pr16/highfly_gem_trainer_e2e.test.ts
+          cp professions/pr16/highfly_gem_trainer_e2e.test.ts upstream/tests/highfly_gem_trainer_e2e.test.ts
+          (cd upstream && python ../professions/pr16/activate_pr16.py)
+          grep -q "function showHighflyGemGuide" upstream/src/highfly/game_c1_runtime.ts
+          git -C upstream diff --check HEAD
+          echo "HIGHFLY_V4_02_PR16_AUTHENTIC_TRAIN_AND_NATIVE_MENU=1"
+      - name: PR18 apply video-feedback GEM discoverability and native mobile scroll polish
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s professions/pr18/activate_pr18.py
+          test -s professions/pr18/highfly_v4_02_touch.css
+          cp professions/pr18/highfly_v4_02_touch.css upstream/src/styles/highfly_v4_02_touch.css
+          (cd upstream && python ../professions/pr18/activate_pr18.py)
+          grep -Fq "GEMAS Y FORJA" upstream/src/highfly/game_c1_runtime.ts || grep -Fq 'GEM · Abrir gemas y forja' upstream/src/highfly/game_c1_runtime.ts
+          git -C upstream diff --check HEAD
+          echo 'HIGHFLY_PR18_REAL_GEM_SEAT_AND_NATIVE_MORE_UI_APPLIED=1'
+      - name: PR19 overlay original mobile presentation (preserve ClaudeCraft and PR18 functional adapters)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s professions/pr19/activate_pr19.py
+          test -s professions/pr19/highfly_v4_02_pr19_mobile.css
+          cp professions/pr19/highfly_v4_02_pr19_mobile.css upstream/src/styles/highfly_v4_02_pr19_mobile.css
+          (cd upstream && python ../professions/pr19/activate_pr19.py)
+          git -C upstream diff --check HEAD
+          echo 'HIGHFLY_PR19_CLAUDECRAFT_NATIVE_UI_UNIFICATION_APPLIED=1'
+      - name: V4-03 — opt-in MONSTRUOS 21-99 with native AI, corpse and loot (NO persistent Hunter migration)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s monster-p02i/monsters/lv99/highfly_monster_content.ts
+          test -s monster-p02i/monsters/lv99/activate_content.py
+          test -s monster-p02i/monsters/lv99/activate_hunt_preview.py
+          test -s monster-p02i/monsters/lv99/activate_hunt_render_palette.py
+          mkdir -p monsters/lv99 upstream/src/highfly/monsters upstream/tests
+          cp -a monster-p02i/monsters/lv99/. monsters/lv99/
+          cp monsters/lv99/highfly_monster_content.ts upstream/src/highfly/monsters/level99.ts
+          cp monsters/lv99/highfly_hunt_rewards.ts upstream/src/highfly/monsters/hunt_rewards.ts
+          cp monsters/lv99/highfly_hunt_encounters.ts upstream/src/highfly/monsters/hunt_encounters.ts
+          cp monsters/lv99/highfly_hunt_scenarios.ts upstream/src/highfly/monsters/hunt_scenarios.ts
+          cp monsters/lv99/highfly_hunt_playtest_world.ts upstream/src/highfly/monsters/hunt_playtest_world.ts
+          cp monsters/lv99/highfly_hunt_browser_pilot.ts upstream/src/highfly/monsters/hunt_browser_pilot.ts
+          cp monsters/lv99/highfly_hunt_scenery.ts upstream/src/highfly/monsters/hunt_scenery.ts
+          cp monsters/lv99/highfly_hunt_render_palette.ts upstream/src/highfly/monsters/hunt_render_palette.ts
+          cp monsters/lv99/highfly_monster_content.test.ts upstream/tests/highfly_monster_content_lv99.test.ts
+          for f in highfly_hunt_rewards highfly_hunt_encounters highfly_hunt_scenarios highfly_hunt_playtest_world highfly_hunt_browser_pilot highfly_hunt_scenery highfly_hunt_render_palette; do
+            cp "monsters/lv99/${f}.test.ts" "upstream/tests/${f}.test.ts"
+          done
+          (cd upstream && python ../monsters/lv99/activate_content.py)
+          (cd upstream && python ../monsters/lv99/activate_hunt_preview.py)
+          (cd upstream && python ../monsters/lv99/activate_hunt_render_palette.py)
+          test "$(grep -c 'buildHighflyMonsterRoster(MOBS)' upstream/src/sim/data.ts)" = "1"
+          git -C upstream diff --check HEAD
+          echo 'V403_MONSTERS_ADDITIVE_OPTIN_NO_MAIN_APP_SAVE_MIGRATION=1'
+      - name: V4-03 P01 — install safe ONE-HUNTER, ONE-SIM coordinator (NO HuntPilot or production wiring)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s monsters/integration/highfly_persistent_hunt_bridge.ts
+          test -s monsters/integration/highfly_persistent_hunt_bridge.test.ts
+          cp monsters/integration/highfly_persistent_hunt_bridge.ts upstream/src/highfly/monsters/hunt_persistent.ts
+          cp monsters/integration/highfly_persistent_hunt_bridge.test.ts upstream/tests/highfly_v403_persistent_hunt.test.ts
+          ! grep -q 'setPlayerLevel' upstream/src/highfly/monsters/hunt_persistent.ts
+          ! grep -q 'new Sim' upstream/src/highfly/monsters/hunt_persistent.ts
+          ! grep -q 'maxHp \* 3' upstream/src/highfly/monsters/hunt_persistent.ts
+          git -C upstream diff --check HEAD
+          echo 'V403_P01_NATIVE_BRIDGE_NO_HP3_NO_SECOND_SIM=1'
+      - name: P02 — add native Dungeon claim-owned HIGHFLY enemy module (no second Sim)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s monsters/integration/highfly_native_dungeon_hunt.ts
+          test -s monsters/integration/highfly_native_dungeon_hunt.test.ts
+          cp monsters/integration/highfly_native_dungeon_hunt.ts upstream/src/highfly/monsters/hunt_native_dungeon.ts
+          cp monsters/integration/highfly_native_dungeon_hunt.test.ts upstream/tests/highfly_v403_native_dungeon_hunt.test.ts
+          ! grep -q 'new Sim' upstream/src/highfly/monsters/hunt_native_dungeon.ts
+          ! grep -q 'setPlayerLevel' upstream/src/highfly/monsters/hunt_native_dungeon.ts
+          git -C upstream diff --check HEAD
+          echo 'V403_P02_DONOR_REAL_DUNGEON_NATIVE_MOB_NO_SECOND_SIM=1'
+      - name: P03 — exact real Sim corpse XP loot inventory and save E2E (no gameplay changes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp monsters/integration/highfly_native_kill_loot_save.test.ts upstream/tests/highfly_v403_native_kill_loot_save.test.ts
+          test -s upstream/tests/highfly_v403_native_kill_loot_save.test.ts
+          git -C upstream diff --check HEAD
+          echo 'V403_P03_NATIVE_REWARD_PATH_TEST_INSTALLED=1'
+      - name: P04 — eight native dungeon tier prototypes and More → Cacerías (single Sim)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s monsters/integration/activate_p04.py
+          cp monsters/integration/highfly_hunt_dungeon_registry.ts upstream/src/highfly/monsters/hunt_dungeon_registry.ts
+          cp monsters/integration/highfly_eight_native_hunts.test.ts upstream/tests/highfly_v403_eight_hunts.test.ts
+          (cd upstream && python ../monsters/integration/activate_p04.py)
+          git -C upstream diff --check HEAD
+          echo 'V403_P04_EIGHT_ORIGINAL_DUNGEON_TIER_GATES_ADDED=1'
+      - name: P06 — real walk-up world doors, 8 native spawns and SERVER-side LV21-99 gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s monsters/integration/activate_p06_world_portals.py
+          cp monsters/integration/highfly_p06_world_portals.test.ts upstream/tests/highfly_v403_p06_world_portals.test.ts
+          (cd upstream && python ../monsters/integration/activate_p06_world_portals.py)
+          git -C upstream diff --check HEAD
+          echo 'V403_P07_8_WORLD_PORTALS_NATIVE_8_MOBS_SERVER_GATE_ADDED=1'
+      - name: P07 — opt-in outdoor mobs on SAME original WorldContent (32 native enemies max)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp monsters/integration/highfly_open_world_habitats.ts upstream/src/highfly/monsters/hunt_open_world.ts
+          cp monsters/integration/highfly_p07_open_world.test.ts upstream/tests/highfly_v403_p07_open_world.test.ts
+          cp monsters/integration/highfly_p08_world_class_save.test.ts upstream/tests/highfly_v403_p08_world_class_save.test.ts
+          cp monsters/integration/highfly_p08_optout.test.ts upstream/tests/highfly_v403_p08_optout.test.ts
+          cp monsters/integration/highfly_p08_loot_to_forge_gem_save.test.ts upstream/tests/highfly_v403_p08_loot_to_forge_gem_save.test.ts
+          (cd upstream && python ../monsters/integration/activate_p07_open_world.py)
+          git -C upstream diff --check HEAD
+          echo 'V403_P07_REAL_OPEN_WORLD_MONSTER_CAMP_OVERLAY=1'
+      - name: P09 — use MONSTRUOS 6 8 local elites + 8 captains in native V4 dungeon registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp monsters/integration/highfly_p09_native_challenges.ts upstream/src/highfly/monsters/hunt_p09_challenges.ts
+          cp monsters/integration/highfly_p09_native_challenges.test.ts upstream/tests/highfly_v403_p09_native_challenges.test.ts
+          cp monsters/integration/highfly_p10_extended_fights.test.ts upstream/tests/highfly_v403_p10_extended_fights.test.ts
+          cp monsters/integration/highfly_p11_all_systems_level99_coverage.test.ts upstream/tests/highfly_v403_p11_all_systems_level99_coverage.test.ts
+          cp monsters/integration/highfly_p12_local_save_compat.test.ts upstream/tests/highfly_v403_p12_local_save_compat.test.ts
+          (cd upstream && python ../monsters/integration/activate_p09_challenges.py)
+          git -C upstream diff --check HEAD
+          echo 'HF_P09_16_MONSTER6_LOCAL_CHALLENGES_REGISTERED_OPTIN=1'
+      - name: Reuse V3-06 native Training visibility adapter, no old regression re-run
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../demo/v3/fix_training_window_visibility.py
+          git diff --check HEAD
+          echo "V4_01_REUSED_V3_06_TRAINING_WINDOW_PATCH=1"
+      - name: P13 — add 15 level-gated native weapons and recipes only in disposable DEV worktree
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../professions/p13/highfly_lv99_native_equipment.ts src/sim/content/highfly_lv99_native_equipment.ts
+          cp ../professions/p13/highfly_lv99_native_equipment.test.ts tests/highfly_lv99_native_equipment.test.ts
+          cp ../professions/p14/highfly_p14_trainer_native_15_paths.test.ts tests/highfly_p14_trainer_native_15_paths.test.ts
+          cp ../professions/p14/highfly_dev2_lv99_economy_native_loot.test.ts tests/highfly_dev2_lv99_economy_native_loot.test.ts
+          cp ../professions/p14/highfly_dev3_native_gold_economy.test.ts tests/highfly_dev3_native_gold_economy.test.ts
+          cp ../professions/p15/highfly_dev4_nine_class_gear_band_audit.test.ts tests/highfly_dev4_nine_class_gear_band_audit.test.ts
+          cp ../professions/p14/highfly_gem_attribute_expansion_foundation.test.ts tests/highfly_gem_attribute_expansion_foundation.test.ts
+          cp ../professions/p13/highfly_full_227_recipes_catalog.test.ts tests/highfly_full_227_recipes_catalog.test.ts
+          cp ../professions/p15/highfly_p15_native_bridge35.ts src/sim/content/highfly_p15_native_bridge35.ts
+          cp ../professions/p15/highfly_p15_native_bridge35.test.ts tests/highfly_p15_native_bridge35.test.ts
+          cp ../professions/p16/highfly_p16_native_chest_armor.ts src/sim/content/highfly_p16_native_chest_armor.ts
+          cp ../professions/p16/highfly_p16_native_chest_armor.test.ts tests/highfly_p16_native_chest_armor.test.ts
+          cp ../monsters/integration/highfly_dev7_lv99_endgame_native.test.ts tests/highfly_dev7_lv99_endgame_native.test.ts
+          cp ../monsters/integration/highfly_supreme_dev8_p0_endgame_diagnostics.test.ts tests/highfly_supreme_dev8_p0_endgame_diagnostics.test.ts
+          cp ../monsters/integration/highfly_supreme_internal_autoplay.test.ts tests/highfly_supreme_internal_autoplay.test.ts
+          cp ../monsters/integration/highfly_supreme_internal_real_economy_tactical.test.ts tests/highfly_supreme_internal_real_economy_tactical.test.ts
+          cp ../professions/p13/highfly_complete_native_1_99_catalog.test.ts tests/highfly_complete_native_1_99_catalog.test.ts
+          python3 ../professions/p13/activate_p13.py
+          python3 ../professions/p15/activate_p15_bridge35.py
+          python3 ../professions/p16/activate_p16_armor.py
+          git diff --check HEAD
+          echo 'HF_P13_EXISTING_ITEM_RECIPES_RUNTIME_EXTENDED_50_99_DEV_ONLY=1'
+      - name: V9 P0 repairs - real assembled runtime, no LV99 content or save mutations
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_v9_p0_corrections.py
+          cp ../v9-corrections/game/c1/highfly_v9_p0_regression.test.ts tests/highfly_v9_p0_regression.test.ts
+          git diff --check HEAD
+          grep -Fq 'HIGHFLY V9 P0' src/styles/shell.css
+          grep -Fq 'currentId: number | null = null' src/game/auto_target.ts
+          echo 'HF_V9_P0_TARGET_360_TRAINING_HEADER_ROGUE90_APPLIED=1'
+      - name: V9 P0 targeted automated regression before all existing SUPREME gates
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/highfly_v9_p0_regression.test.ts
+          echo 'HF_V9_P0_NATIVE_TARGET_STEALTH_REGRESSION_GREEN=1'
+      - name: V9.1 genuine nine-class combat aim, Rogue opener, combo/touch feel (NO XP/HP/Training changes)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_v91_combat_feel.py
+          cp ../v9-corrections/game/c1/highfly_v91_combat_nine_classes.test.ts tests/highfly_v91_combat_nine_classes.test.ts
+          git diff --check HEAD
+          test -s src/sim/combat/highfly_v91_rogue_opener.ts
+          echo 'HF_V91_NINE_CLASS_AIM_ROGUE_SKILL_COMBO_PATCH_GREEN=1'
+      - name: V9.1 nine-class soft aim, honest Rogue positioning and touch response regressions
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/highfly_v9_p0_regression.test.ts tests/highfly_v91_combat_nine_classes.test.ts
+          echo 'HF_V91_ALL_NINE_CLASSES_AIM_AND_ROGUE_SKILL_GREEN=1'
+      - name: HF15.1 P1 manual skill intent and nine-class regression (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_v15_manual_cast_p1.py
+          cp ../v9-corrections/game/c1/highfly_v15_manual_cast_p1.test.ts tests/highfly_v15_manual_cast_p1.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_v15_manual_cast_p1.test.ts
+          echo 'HF15_1_P1_MANUAL_SKILL_INTENT_NINE_CLASS_GATE_GREEN=1'
+      - name: HF15.1 P2 native manual strike — nine classes and server protocol (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_v15_manual_strike_p2.py
+          cp ../v9-corrections/game/c1/highfly_v15_manual_strike_p2.test.ts tests/highfly_v15_manual_strike_p2.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_v15_manual_strike_p2.test.ts tests/highfly_v15_manual_cast_p1.test.ts
+          echo 'HF15_1_P2_NATIVE_SINGLE_STRIKE_NINE_CLASS_SERVER_GATE_GREEN=1'
+      - name: HF15.2 P0 native skill activation — 9 classes S1-S10 charge-safe touch (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_v15_skill_input_p0.py
+          cp ../v9-corrections/game/c1/highfly_v15_skill_input_nine_classes.test.ts tests/highfly_v15_skill_input_nine_classes.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_v15_skill_input_nine_classes.test.ts tests/highfly_v15_manual_strike_p2.test.ts tests/highfly_v91_combat_nine_classes.test.ts
+          echo 'HF15_V152_P0_ORIGINAL_NATIVE_SKILLS_NINE_CLASSES_TEN_TOUCH_SLOTS_GREEN=1'
+      - name: ORIGIN OR-1 P1 stop stale mobile queued ATK on skill, dash and target changes
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_or1_buffer_guard.py
+          cp ../v9-corrections/game/c1/highfly_origin_buffer_guard.test.ts tests/highfly_origin_buffer_guard.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_buffer_guard.test.ts
+          echo 'HIGHFLY_ORIGIN_OR1_P1_BUFFERED_ATTACK_INTERRUPTS_GREEN=1'
+      - name: ORIGIN OR-0 forensic manual combat baselines (assembled after all V15 patches)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_origin_r0_diagnostic.test.ts tests/highfly_origin_r0_diagnostic.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r0_diagnostic.test.ts tests/highfly_v15_manual_strike_p2.test.ts tests/highfly_v15_manual_cast_p1.test.ts tests/highfly_v15_skill_input_nine_classes.test.ts
+          echo 'HIGHFLY_ORIGIN_R0_FORENSIC_BASELINE_RETAINED_NOT_ANDROID_CERTIFIED=1'
+      - name: ORIGIN OR-1 P2 native online basic swing acknowledgement and combo gate
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_or1_online_ack.py
+          cp ../v9-corrections/game/c1/highfly_origin_online_ack.test.ts tests/highfly_origin_online_ack.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_online_ack.test.ts tests/highfly_origin_buffer_guard.test.ts
+          echo 'HIGHFLY_ORIGIN_OR1_P2_NATIVE_SERVER_COMBO_ACK_GATE_GREEN=1'
+      - name: ORIGIN R1-1 opt-in Hunter identity persistence / legacy save isolation
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r1_profile.py
+          cp ../v9-corrections/game/c1/highfly_origin_hunter_profile.test.ts tests/highfly_origin_hunter_profile.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_hunter_profile.test.ts
+          echo 'HIGHFLY_ORIGIN_R1_1_PERSISTENT_HUNTER_PROFILE_GREEN=1'
+      - name: ORIGIN R1-2A native learned spellbook (no free class skills)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r1_native_spellbook.py
+          cp ../v9-corrections/game/c1/highfly_origin_native_spellbook.test.ts tests/highfly_origin_native_spellbook.test.ts
+          git diff --check HEAD
+          # R1-1 test checks the pre-activation compatibility state, so run it
+          # in R1-1 only. R1-2A intentionally removes free class abilities.
+          pnpm exec vitest run tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R1_2A_NATIVE_LEARNED_SPELLBOOK_GREEN=1'
+      - name: ORIGIN R1-2 P0 cross-discipline original animation donor lookup
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r12_motion_catalog.py
+          cp ../v9-corrections/game/c1/highfly_origin_skill_motion_catalog.test.ts tests/highfly_origin_skill_motion_catalog.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_skill_motion_catalog.test.ts tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R1_2_P0_ORIGINAL_RIG_MEDIUM_ANIMATION_DONORS_GREEN=1'
+      - name: ORIGIN R1-2B P1 cross-discipline original Rig_Medium animation playback
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r12b_visual_bridge.py
+          cp ../v9-corrections/game/c1/highfly_origin_r12b_visual_bridge.test.ts tests/highfly_origin_r12b_visual_bridge.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r12b_visual_bridge.test.ts tests/highfly_origin_skill_motion_catalog.test.ts tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R12B_P1_CROSS_CLASS_NATIVE_MIXER_MOTION_GREEN=1'
+      - name: ORIGIN R1-2C native resource/weapon guards before HP-MP-Stamina bridge
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r12c_resource_gate.py
+          cp ../v9-corrections/game/c1/highfly_origin_r12c_resource_gate.test.ts tests/highfly_origin_r12c_resource_gate.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r12c_resource_gate.test.ts tests/highfly_origin_r12b_visual_bridge.test.ts tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R12C_NO_WRONG_RESOURCE_BILLING_GREEN=1'
+      - name: ORIGIN R1-4 AB bundle Hunter MP/stamina save, regeneration and server skill billing
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r14_resource_bundle.py
+          cp ../v9-corrections/game/c1/highfly_origin_r14_resource_bundle.test.ts tests/highfly_origin_r14_resource_bundle.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r14_resource_bundle.test.ts tests/highfly_origin_r12b_visual_bridge.test.ts tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R14_AB_HP_MP_STAMINA_BUNDLE_GREEN=1'
+      - name: ORIGIN R1-4C owner-only resource network, HP MP Stamina HUD and action bar
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r14c_hud_wire_bar.py
+          cp ../v9-corrections/game/c1/highfly_origin_r14c_hud_wire_bar.test.ts tests/highfly_origin_r14c_hud_wire_bar.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r14c_hud_wire_bar.test.ts tests/highfly_origin_r14_resource_bundle.test.ts tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R14C_OWNER_HUD_NETWORK_SKILL_COST_PARITY_GREEN=1'
+      - name: ORIGIN R1-4D atomic server stamina for manual basic, GOLDEN evade, double jump
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r14d_stamina_actions.py
+          cp ../v9-corrections/game/c1/highfly_origin_r14d_stamina_actions.test.ts tests/highfly_origin_r14d_stamina_actions.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r14d_stamina_actions.test.ts tests/highfly_origin_r14c_hud_wire_bar.test.ts tests/highfly_origin_r14_resource_bundle.test.ts tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R14D_GOLDEN_MOVEMENT_AND_MANUAL_ATK_STAMINA_GREEN=1'
+      - name: ORIGIN R1-5 + R1-6 P0 preview-only single Hunter, local saves and trainer UI
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r15_r16_playable_trial.py
+          cp ../v9-corrections/game/c1/highfly_origin_r15_r16_playable_trial.test.ts tests/highfly_origin_r15_r16_playable_trial.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r15_r16_playable_trial.test.ts tests/highfly_origin_r14d_stamina_actions.test.ts tests/highfly_origin_r14c_hud_wire_bar.test.ts tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R15_R16_SINGLE_HUNTER_PREVIEW_SAVE_TRAINER_GREEN=1'
+      - name: ORIGIN R1-7 true native Devotion, 18-slot separated loadout and preview target drag (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r17_patch.py
+          cp ../v9-corrections/game/c1/highfly_origin_r17_hud.test.ts tests/highfly_origin_r17_hud.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r15_r16_playable_trial.test.ts
+          echo 'HIGHFLY_ORIGIN_R18_MOBILE_RING_PREVIEW_PATCH_GREEN=1'
+      - name: ORIGIN R19 36 native ranked picks, specialist selection, premium support and clean entrance
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r19_focus.py
+          cp ../v9-corrections/game/c1/highfly_origin_r19_focus.test.ts tests/highfly_origin_r19_focus.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r17_hud.test.ts tests/highfly_origin_r19_focus.test.ts tests/highfly_origin_native_spellbook.test.ts
+          echo 'HIGHFLY_ORIGIN_R19_TOP36_LEVEL_GATES_PREMIUM_HUD_GREEN=1'
+      - name: R20 Premium Aim V1 native-scene 3D geometry and five-shape QA (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r20_premium_aim.py
+          cp ../v9-corrections/game/c1/highfly_origin_r20_premium_aim.test.ts tests/highfly_origin_r20_premium_aim.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r20_premium_aim.test.ts tests/highfly_origin_r19_focus.test.ts
+          echo 'HIGHFLY_ORIGIN_R20_PREMIUM_AIM_V1_FIVE_SHAPES_NATIVE_SCENE_GREEN=1'
+      - name: R21 Free Drag 1-to-1, zero enemy snapping, native melee and AoE QA (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r21_free_manual_aim.py
+          cp ../v9-corrections/game/c1/highfly_origin_r21_free_manual_aim.test.ts tests/highfly_origin_r21_free_manual_aim.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r21_free_manual_aim.test.ts tests/highfly_origin_r20_premium_aim.test.ts tests/highfly_origin_r19_focus.test.ts
+          echo 'HIGHFLY_ORIGIN_R21_MANUAL_DRAG_NO_SNAP_GREEN=1'
+      - name: R22 Premium Visual Polish and in-editor non-casting gallery QA (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r22_premium_visual.py
+          cp ../v9-corrections/game/c1/highfly_origin_r22_premium_visual.test.ts tests/highfly_origin_r22_premium_visual.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r22_premium_visual.test.ts tests/highfly_origin_r21_free_manual_aim.test.ts tests/highfly_origin_r20_premium_aim.test.ts
+          echo 'HIGHFLY_ORIGIN_R22_MOBILE_PREMIUM_VISUAL_GALLERY_GREEN=1'
+      - name: R23 real S23 dual touch and split GEM-size support bank gating (NO DEPLOY)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r23_multitouch_buffs.py
+          cp ../v9-corrections/game/c1/highfly_origin_r23_multitouch_buffs.test.ts tests/highfly_origin_r23_multitouch_buffs.test.ts
+          git diff --check HEAD
+          pnpm exec vitest run tests/highfly_origin_r23_multitouch_buffs.test.ts tests/highfly_origin_r22_premium_visual.test.ts tests/highfly_origin_r21_free_manual_aim.test.ts
+          echo 'HIGHFLY_ORIGIN_R23_TWO_THUMBS_INDEPENDENT_GEM_BANKS_GREEN=1'
+      - name: TypeScript all-source baseline
+        working-directory: upstream
+        run: pnpm exec tsc --noEmit --incremental false
+      - name: CLEAN P1 - unarmed new Hunter both genders, legacy save hard regression
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_HIGHFLY_ORIGIN_PREVIEW: "1"
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_clean_p1_hunter_starter.py
+          cp ../v9-corrections/game/c1/highfly_origin_clean_p1_hunter_starter.test.ts tests/highfly_origin_clean_p1_hunter_starter.test.ts
+          pnpm exec vitest run tests/highfly_origin_clean_p1_hunter_starter.test.ts
+          git diff --check HEAD
+          echo 'HIGHFLY_CLEAN_P1_NEW_HUNTER_UNARMED_TWO_GENDERS_LEGACY_SAVES_GREEN=1'
+      - name: Android P2 opt-in 4 native BASE HUD + R23 GOLDEN untouched
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_android_p2_four_base.py
+          cp ../v9-corrections/game/c1/highfly_android_p2_four_base.test.ts tests/highfly_android_p2_four_base.test.ts
+          pnpm exec vitest run tests/highfly_android_p2_four_base.test.ts
+          pnpm exec tsc --noEmit --incremental false
+          git diff --check HEAD
+          echo 'HIGHFLY_ANDROID_P2_NATIVE_4BASE_S23_WITHOUT_PC_PATCH_GREEN=1'
+      - name: Android P3 clean HUD — one native four-BASE owner, optional LAB, ATK separate USE
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_android_p3_clean_hud.py
+          cp ../v9-corrections/game/c1/highfly_android_p3_clean_hud.test.ts tests/highfly_android_p3_clean_hud.test.ts
+          pnpm exec vitest run tests/highfly_android_p3_clean_hud.test.ts
+          pnpm exec tsc --noEmit --incremental false
+          git diff --check HEAD
+          echo 'HIGHFLY_P3_NATIVE_ONE_HUD_CLEAN_AND_LAB_ONLY_GREEN=1'
+      - name: Android P35 premium four-shape aim + right-hand target ATK USE + top buffs
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_android_p35_aim_hud_lab.py
+          cp ../v9-corrections/game/c1/highfly_android_p35_aim_hud_lab.test.ts tests/highfly_android_p35_aim_hud_lab.test.ts
+          pnpm exec vitest run tests/highfly_android_p35_aim_hud_lab.test.ts tests/highfly_origin_r20_premium_aim.test.ts tests/highfly_origin_r22_premium_visual.test.ts
+          pnpm exec tsc --noEmit --incremental false
+          git diff --check HEAD
+          echo 'HIGHFLY_ANDROID_P35_PREMIUM_TRUE_AIMS_TOP_BUFFS_TARGET_ATK_USE_GREEN=1'
+      - name: R36A authoritative empty-air attack, real stamina and visual cue; no fake damage
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r36a_air_strike.py
+          cp ../v9-corrections/game/c1/highfly_origin_r36a_manual_attack.test.ts tests/highfly_origin_r36a_manual_attack.test.ts
+          pnpm exec vitest run tests/highfly_origin_r36a_manual_attack.test.ts
+          pnpm exec tsc --noEmit --incremental false
+          git diff --check HEAD
+          echo 'HIGHFLY_ORIGIN_R36A_NATIVE_AIR_STRIKE_AND_ATK_USE_SEPARATION_GREEN=1'
+      - name: R36A1 functional ATK heading and absolute no-USAR route, native original remain unchanged
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r36a1_direction_atk_use.py
+          cp ../v9-corrections/game/c1/highfly_origin_r36a1_direction_atk_use.test.ts tests/highfly_origin_r36a1_direction_atk_use.test.ts
+          pnpm exec vitest run tests/highfly_origin_r36a_manual_attack.test.ts tests/highfly_origin_r36a1_direction_atk_use.test.ts
+          pnpm exec tsc --noEmit --incremental false
+          git diff --check HEAD
+          echo 'HIGHFLY_ORIGIN_R36A1_MOVEMENT_DIRECTION_AND_TRUE_ATK_USE_DISPATCH_GREEN=1'
+      - name: R36B true entity appearance, saved Hunter and new-entry tutorial contract
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r36b_gender_entry.py
+          cp ../v9-corrections/game/c1/highfly_origin_r36b_gender_intro.test.ts tests/highfly_origin_r36b_gender_intro.test.ts
+          pnpm exec vitest run tests/highfly_origin_r36b_gender_intro.test.ts tests/highfly_origin_r36a1_direction_atk_use.test.ts
+          pnpm exec tsc --noEmit --incremental false
+          git diff --check HEAD
+          echo 'HIGHFLY_ORIGIN_R36B_FEMALE_MALE_REAL_ENTITY_LEGACY_UNTOUCHED_GREEN=1'
+      - name: R37 S1 true projectile-line vs native delayed Meteor and original AoE aim contract
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r37_s1_meteor_aoe_lab.py
+          cp ../v9-corrections/game/c1/highfly_origin_r37_aim_lab.test.ts tests/highfly_origin_r37_aim_lab.test.ts
+          pnpm exec vitest run tests/highfly_origin_r37_aim_lab.test.ts tests/highfly_android_p35_aim_hud_lab.test.ts
+          pnpm exec tsc --noEmit --incremental false
+          git diff --check HEAD
+          echo 'HIGHFLY_R37_NATIVE_S1_METEOR_AOE_TRUE_AIM_NO_SKILL_GRANT_GREEN=1'
+      - name: SUPREME mandatory native solo Captain LV99 9/9 victory gate (NO CHEATS)
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_HIGHFLY_NATIVE_HUNT: "1"
+          VITE_HIGHFLY_OPEN_WORLD_HUNTS: "1"
+          VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/highfly_supreme_internal_real_economy_tactical.test.ts 2>&1 | tee ../highfly_supreme_nine_of_nine_release.log
+          grep -q 'HF_SUPREME_SOLO99_TACTICAL_9=.*"wins":9,"losses":0,"timeouts":0' ../highfly_supreme_nine_of_nine_release.log
+          grep -q '"nineOfNineSoloCertified":true' ../highfly_supreme_nine_of_nine_release.log
+          grep -q '"noBossNerf":true,"noTrainingStatBoost":true' ../highfly_supreme_nine_of_nine_release.log
+          echo 'HF_SUPREME_LV99_ALL_NINE_ORIGINAL_SOLO_NATIVE_WIN_GATE_GREEN=1'
+      - name: SUPREME mandatory original LV1–99 and P16 class-gear QA gates
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_HIGHFLY_NATIVE_HUNT: "1"
+          VITE_HIGHFLY_OPEN_WORLD_HUNTS: "1"
+          VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run tests/highfly_supreme_internal_autoplay.test.ts tests/highfly_v403_p09_native_challenges.test.ts tests/highfly_p16_native_chest_armor.test.ts tests/highfly_gem_attribute_expansion_foundation.test.ts tests/highfly_v403_p12_local_save_compat.test.ts
+          echo 'HF_SUPREME_LV1_99_CONTENT_9CLASS_GEAR_GEM_SAVE_SMOKE_GREEN=1'
+      # The six worn-apex fixtures were authored with ClaudeCraft MAX_LEVEL=20.
+      # Its item_level_req clamps source-25 crafted gear to that old level cap.
+      # PF-6 correctly raises MAX_LEVEL to 99, so source-25 gear now requires 25.
+      # Rebase ONLY those six fixture setup levels; preserve ALL assertions,
+      # all 22 test files, and all production level/equipment/power behavior.
+      - name: Build actual integrated SUPREME donor+HIGHFLY WebGL — no Pages writes
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_HIGHFLY_ORIGIN_PREVIEW: "1"
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+          VITE_HIGHFLY_HUNT_PREVIEW: "0"
+          VITE_HIGHFLY_NATIVE_HUNT: "1"
+          VITE_HIGHFLY_OPEN_WORLD_HUNTS: "1"
+          VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
+        run: |
+          set -euo pipefail
+          node scripts/build_bundle_pregen.mjs
+          python3 ../overlays/rewrite_source_public_paths.py
+          pnpm exec vite build
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          python3 ../overlays/rewrite_pages_static.py
+          # HF15-PWA01: explicit manifest start_url/scope under GitHub Pages project.
+          # Changes disposable dist only, preserves donor identity and PUBLIC Pages.
+          python3 ../v9-corrections/overlays/highfly_v15_pwa_manifest.py
+          python3 -m unittest discover -s ../v9-corrections/tests -p 'test_highfly_v15_pwa_manifest.py' -v
+          python3 ../overlays/audit_pages_public_roots.py
+          test -s dist/index.html
+          test -d dist/media
+          echo "HF_SUPREME_INTEGRATED_REAL_WEBGL_BUILD=1"
+      - name: Stage EXACT isolated Pages subfolder and enforce size (NO DEPLOY)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p supreme-preview/cobalt-hollow-lab
+          cp -a upstream/dist/. supreme-preview/cobalt-hollow-lab/
+          python3 - <<'PY'
+          from pathlib import Path
+          root=Path('supreme-preview/cobalt-hollow-lab')
+          # Separate release QA metadata, NOT a game-play buff or stats edit.
+          import json
+          (root/'highfly-supreme-qa.json').write_text(json.dumps({
+            'edition':'HIGHFLY ORIGIN R1-5 R1-6 PLAYABLE SINGLE HUNTER PREVIEW (NO PUBLIC DEPLOY)',
+            'qaSourceCommit':'8a3ddc93c9147e8c3320c04d4d2a13896b11e063',
+            'nineClassesNativeSoloCaptainLv99':True,
+            'bossStatOverride':False,'trainingStatInjection':False,
+            'playerLevelAndEquipmentAreTestFixtures':True,
+            'multipleSeedsCertified':False,'physicalSamsungS23Tested':False,
+            'cooperativeMultiDeviceVerified':False,'extended100PlusEnabled':False,
+            'v9Corrections':{'target360':True,'trainingHeaderGrid':True,'rogueStealth90':True},
+            'v91Combat':{'allNineSoftAim':True,'meleeRangeAware':True,'rogueStealthUnawareBackstab':True,'oneHitComboBuffer':True,'mobileAttackPressFeedback':True},
+            'testType':'native-sim plus simulated S23 browser smoke; player manual QA needed'
+          },indent=2),encoding='utf-8')
+          assert (root/'index.html').is_file()
+          assert (root/'media').is_dir()
+          files=[p for p in root.rglob('*') if p.is_file()]
+          assert files and not any(p.is_symlink() for p in root.rglob('*'))
+          total=sum(p.stat().st_size for p in files)
+          print('HF_SUPREME_INTEGRATED_PAGES_BYTES='+str(total))
+          print('HF_SUPREME_INTEGRATED_PAGES_FILES='+str(len(files)))
+          if total>=995_000_000:raise SystemExit('SAFE_STOP_SUPREME_PAGES_SIZE_EXCEEDED')
+          PY
+          echo "HF_SUPREME_PAGES_CANDIDATE_ONLY_MAIN_UNTOUCHED=1"
+      - name: Real integrated S23 Chrome simulated touch/joystick/camera/WebGL smoke
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../monsters/integration/highfly_p06_mobile_smoke.mjs scripts/highfly_supreme_unified_s23.mjs
+          python3 ../monsters/integration/activate_p09_mobile_smoke.py scripts/highfly_supreme_unified_s23.mjs
+          # V15 UX02 menu-only experimental E2E is deferred; it is NOT a release gate.
+          # Keep the original frozen SUPREME S23 touch/joystick/camera/WebGL smoke
+          # mandatory. Do not inject unverified gesture or CSS overrides.
+          echo 'HF15_UX02_MENU_EXPERIMENT_DEFERRED_BASELINE_S23_GATE_REQUIRED=1'
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory ../supreme-preview > ../supreme-local-preview.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for n in $(seq 1 60); do
+            if curl -fsS 'http://127.0.0.1:4173/cobalt-hollow-lab/' >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_supreme_unified_s23.mjs
+          test -s ../demo-v4-02-pr19-s23-report.json
+          node - <<'JS'
+          const r=require('../demo-v4-02-pr19-s23-report.json');
+          if(!r.pass||r.static404?.length||r.pageErrors?.length||r.p06?.options!==8||
+             r.p06?.ordinaryCount!==6||r.p06?.eliteCount!==1||
+             r.p06?.captainCount!==1||!r.p06?.sameHunter||!r.p06?.sameSim)
+            throw Error('HF_SUPREME_INTEGRATED_REAL_S23_BROWSERQA_BLOCKED');
+          console.log('HF_SUPREME_INTEGRATED_PAGES_S23_CHROME_PREOPEN_QA_GREEN=1');
+          JS
+      - name: CLEAN P1 Android 844x390 - original world and native modular two-gender entry
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_origin_clean_p1_browser.mjs scripts/highfly_clean_p1_browser.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory ../supreme-preview > ../clean-p1-browser.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for n in $(seq 1 60); do
+            if curl -fsS 'http://127.0.0.1:4173/cobalt-hollow-lab/' >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_clean_p1_browser.mjs
+          test -s ../clean-p1-s23-report.json
+          echo 'HIGHFLY_CLEAN_P1_S23_EMULATED_BOTH_GENDERS_NO_GEAR_GREEN=1'
+      - name: Android P2 real S23 landscape Hunter M/F four native BASE + ATK UI
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_android_p2_browser.mjs scripts/highfly_android_p2_browser.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory ../supreme-preview > ../highfly-android-p2-browser.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for n in $(seq 1 60); do
+            if curl -fsS 'http://127.0.0.1:4173/cobalt-hollow-lab/?hf_android_p2=1' >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_android_p2_browser.mjs
+          test -s ../highfly-android-p2-report.json
+          echo 'HIGHFLY_ANDROID_P2_EMULATED_TWO_HUNTERS_FOUR_BASE_UI_GREEN=1'
+      - name: Archive EXACT green Android P2 WebGL site for isolated Pages
+        # Only archive after *all* native and browser QA gates are GREEN.
+        # This is an Actions artifact, NOT a GitHub Pages deploy.
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-ANDROID-P2-GREEN-FULL-WEBGL-NO-DEPLOY
+          path: supreme-preview/cobalt-hollow-lab/
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 1
+      - name: P3 real Android S23 Chrome M/F clean HUD and no duplicate skill buttons
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_android_p3_browser.mjs scripts/highfly_android_p3_browser.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory ../supreme-preview > ../highfly-android-p3-browser.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for n in $(seq 1 60); do
+            if curl -fsS 'http://127.0.0.1:4173/cobalt-hollow-lab/?hf_android_p2=1&hf_android_p3=1' >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_android_p3_browser.mjs
+          test -s ../highfly-android-p3-report.json
+          echo 'HIGHFLY_ANDROID_P3_TWO_HUNTERS_CLEAN_HUD_BROWSER_GREEN=1'
+      - name: Archive complete P3 WebGL only when all QA gates pass — no Pages deploy
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-ANDROID-P3-CLEAN-HUD-FULL-WEBGL-NO-DEPLOY
+          path: supreme-preview/cobalt-hollow-lab/
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 1
+      - name: P35 Chrome Samsung S23 real DOM — TARGET above ATK above USAR, no AUX, four native BASE
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_android_p35_browser.mjs scripts/highfly_android_p35_browser.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory ../supreme-preview > ../highfly-android-p35-browser.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for n in $(seq 1 60); do
+            if curl -fsS 'http://127.0.0.1:4173/cobalt-hollow-lab/?hf_android_p2=1&hf_android_p3=1&hf_android_p35=1' >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_android_p35_browser.mjs
+          test -s ../highfly-android-p35-report.json
+          echo 'HIGHFLY_ANDROID_P35_RIGHT_HUD_AND_GOLDEN_BROWSER_GREEN=1'
+      - name: R36A Samsung S23 true press ATK with no target followed by independent USAR
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_origin_r36a_browser.mjs scripts/highfly_origin_r36a_browser.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory ../supreme-preview > ../highfly-origin-r36a-browser.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for n in $(seq 1 60); do
+            if curl -fsS 'http://127.0.0.1:4173/cobalt-hollow-lab/?hf_android_p2=1&hf_android_p3=1&hf_android_p35=1' >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_origin_r36a_browser.mjs
+          test -s ../highfly-origin-r36a-report.json
+          echo 'HIGHFLY_ORIGIN_R36A_ACTUAL_MOBILE_ATK_USE_TAP_BROWSER_GREEN=1'
+      - name: R36B S23 full 3D renderer male vs female visualKey and fresh gear-safe spawn
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_origin_r36b_browser.mjs scripts/highfly_origin_r36b_browser.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory ../supreme-preview > ../highfly-origin-r36b-browser.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for n in $(seq 1 60); do
+            if curl -fsS 'http://127.0.0.1:4173/cobalt-hollow-lab/?hf_android_p2=1&hf_android_p3=1&hf_android_p35=1&hf_origin_r36b=1' >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_origin_r36b_browser.mjs
+          test -s ../highfly-origin-r36b-report.json
+          echo 'HIGHFLY_ORIGIN_R36B_REAL_RENDERER_GENDER_ON_ANDROID_S23_GREEN=1'
+      - name: R38 single world entrance / two native gender choices / existing Hunter save regressions
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r38_simple_entry.py
+          cp ../v9-corrections/game/c1/highfly_origin_r38_simple_entry.test.ts tests/highfly_origin_r38_simple_entry.test.ts
+          pnpm exec vitest run tests/highfly_origin_r38_simple_entry.test.ts
+          pnpm exec tsc --noEmit --incremental false
+          git diff --check HEAD
+          echo 'HIGHFLY_R38_SIMPLE_WELCOME_NO_EDITOR_NATIVE_HUNTER_SAFE_GREEN=1'
+      - name: R39A real KayKit running-attack leg/torso split over certified R38
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../v9-corrections/overlays/highfly_origin_r39a_no_slide.py
+          cp ../v9-corrections/game/c1/highfly_origin_r39a_antislide.test.ts tests/highfly_origin_r39a_antislide.test.ts
+          pnpm exec vitest run tests/highfly_origin_r39a_antislide.test.ts
+          pnpm exec tsc --noEmit --incremental false
+          git diff --check HEAD
+          echo 'HIGHFLY_R39A_REAL_NATIVE_ATTACK_SPLIT_TYPESCRIPT_VITEST_GREEN=1'
+      - name: Build R38 add-only entrance over already-certified R37 world and combat
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_HIGHFLY_ORIGIN_PREVIEW: "1"
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+          VITE_HIGHFLY_HUNT_PREVIEW: "0"
+          VITE_HIGHFLY_NATIVE_HUNT: "1"
+          VITE_HIGHFLY_OPEN_WORLD_HUNTS: "1"
+          VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
+        run: |
+          set -euo pipefail
+          # Earlier certified SUPREME stage already ran donor source prep once.
+          # Rebuild with R38's UI patch without touching that immutable prep.
+          pnpm exec vite build
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          python3 ../overlays/rewrite_pages_static.py
+          python3 ../v9-corrections/overlays/highfly_v15_pwa_manifest.py
+          python3 ../overlays/audit_pages_public_roots.py
+          test -s dist/index.html
+          test -d dist/media
+          echo 'HIGHFLY_R38_NATIVE_WEBGL_BUNDLE_GREEN=1'
+      - name: R38 rebuild isolated candidate only (no Pages writes, no live files touched)
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf supreme-preview/cobalt-hollow-lab
+          mkdir -p supreme-preview/cobalt-hollow-lab
+          cp -a upstream/dist/. supreme-preview/cobalt-hollow-lab/
+          python3 - <<'PY'
+          from pathlib import Path
+          root=Path('supreme-preview/cobalt-hollow-lab')
+          assert (root/'index.html').is_file() and (root/'manifest.webmanifest').is_file()
+          assert (root/'media').is_dir() and (root/'assets').is_dir()
+          assert not any(p.is_symlink() for p in root.rglob('*'))
+          size=sum(p.stat().st_size for p in root.rglob('*') if p.is_file())
+          print('HIGHFLY_R38_CANDIDATE_BYTES='+str(size))
+          if size>=995_000_000:raise SystemExit('R38_PAGES_CANDIDATE_OVERSIZE')
+          PY
+      - name: R38 S23 Chrome true single entry both original male/female mesh smoke
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_origin_r38_browser.mjs scripts/highfly_origin_r38_browser.mjs
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory ../supreme-preview > ../highfly-origin-r38-browser.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for n in $(seq 1 60); do
+            if curl -fsS 'http://127.0.0.1:4173/cobalt-hollow-lab/?hf_android_p2=1&hf_android_p3=1&hf_android_p35=1&hf_origin_r36b=1&hf_r37=1' >/dev/null;then break;fi
+            sleep 1
+          done
+          node scripts/highfly_origin_r38_browser.mjs
+          node - <<'JS'
+          const fs=require('node:fs');
+          const data=JSON.parse(fs.readFileSync('../highfly-origin-r38-report.json','utf8'));
+          if(!data.pass||data.hunters?.length!==2||!data.hunters.every(x=>x.pass))
+            throw Error('R38_S23_BOTH_HUNTER_GENDERS_RED');
+          console.log('HIGHFLY_R38_S23_NATIVE_TWO_BODIES_NO_GHOST_CREATOR_GREEN=1');
+          JS
+      - name: Archive R39A full WebGL only after R38 + anti-slide TypeScript/browser GREEN (NO DEPLOY)
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-ORIGIN-R39A-RUNNING-ATTACK-S23-WEBGL-NO-DEPLOY
+          path: supreme-preview/cobalt-hollow-lab/
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 1
+      - name: Preserve small CLEAN P1 diagnostics only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-ANDROID-P2-S23-MALE-FEMALE-4BASE-QA
+          path: |
+            clean-p1-s23-report.json
+            clean-p1-male.png
+            clean-p1-female.png
+            clean-p1-browser.log
+            highfly-android-p2-report.json
+            highfly-android-p2-male.png
+            highfly-android-p2-female.png
+            highfly-android-p2-browser.log
+            highfly-android-p3-report.json
+            highfly-android-p3-male.png
+            highfly-android-p3-female.png
+            highfly-android-p3-browser.log
+            highfly-android-p35-report.json
+            highfly-android-p35-male.png
+            highfly-android-p35-female.png
+            highfly-android-p35-browser.log
+            highfly-origin-r36a-browser.log
+            highfly-origin-r36a-report.json
+            highfly-origin-r36a-male.png
+            highfly-origin-r36a-female.png
+            highfly-origin-r36b-browser.log
+            highfly-origin-r36b-report.json
+            highfly-origin-r36b-male.png
+            highfly-origin-r36b-female.png
+            highfly-origin-r38-report.json
+            highfly-origin-r38-male.png
+            highfly-origin-r38-female.png
+            highfly-origin-r38-browser.log
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Explicit safe stop — no main/Pages mutation
+        if: always()
+        run: echo "HF_CLEAN_P1_STAGING_ONLY_NO_PUBLIC_DEPLOY=1"
+
+
+  # V15-only final outcome; the main job owns all build/test gates.
+  # Reporting has NO pages permission and never changes game code/artifacts.
