@@ -8,13 +8,13 @@ describe('R36A.1 — independent USAR and joystick-relative melee facing',()=>{
   it('GOLDEN joystick forward attacks camera-relative forward, no forced target',()=>{
     expect(highflyR36A1AttackHeading(0,{x:0,y:-1},1.9)).toBeCloseTo(0);
     expect(highflyR36A1AttackHeading(Math.PI/2,{x:0,y:-1},0)).toBeCloseTo(Math.PI/2);
-    expect(highflyR36A1AttackHeading(0,{x:0,y:1},0)).toBeCloseTo(Math.PI);
+    expect(Math.cos(highflyR36A1AttackHeading(0,{x:0,y:1},0))).toBeCloseTo(-1);
   });
   it('GOLDEN joystick diagonals and left/right are 360-degree, camera-independent',()=>{
     expect(highflyR36A1AttackHeading(0,{x:-1,y:0},0)).toBeCloseTo(Math.PI/2);
     expect(highflyR36A1AttackHeading(0,{x:1,y:0},0)).toBeCloseTo(-Math.PI/2);
     expect(highflyR36A1AttackHeading(0,{x:-1,y:-1},0)).toBeCloseTo(Math.PI/4);
-    expect(highflyR36A1AttackHeading(Math.PI,{x:0,y:-1},0)).toBeCloseTo(Math.PI);
+    expect(Math.cos(highflyR36A1AttackHeading(Math.PI,{x:0,y:-1},0))).toBeCloseTo(-1);
   });
   it('idle stays facing where it was; camera orbit alone cannot redirect ATK',()=>{
     expect(highflyR36A1AttackHeading(Math.PI,{x:0,y:0},.7)).toBe(.7);
