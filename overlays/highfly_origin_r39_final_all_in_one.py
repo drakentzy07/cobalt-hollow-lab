@@ -24,8 +24,26 @@ s=p.read_text(encoding='utf8')
 if 'r39AcceptedEvade' in s:raise SystemExit('R39_FINAL_ALREADY_INSTALLED')
 p.write_text("""import {
   r39AcceptedEvade,r39PhysicalDefense,r39RecordBasic,r39AddGuardPressure,
+  r39ConnectConfirmedSkill,
 } from './highfly_origin_r39_final_runtime';
 """+s,encoding='utf8')
+
+one('src/sim/sim.ts',
+    """    this.events.push(ev);
+  }
+
+  /** Drain queued events without advancing simulation (offline HUD sync). */""",
+    """    this.events.push(ev);
+    // A real castStart is emitted only after native Sim admission.
+    if(ev.type==='castStart'){
+      const actor=this.entities.get(ev.entityId);
+      if(actor && r39ConnectConfirmedSkill(actor,this.time))
+        this.events.push({type:'highflyR39SkillLink',
+          entityId:actor.id,ability:ev.ability});
+    }
+  }
+
+  /** Drain queued events without advancing simulation (offline HUD sync). */""")
 
 one('src/sim/player_motion.ts',
     """  originSpendMotionStamina?(p: Entity, action: OriginMotionAction): boolean;""",
@@ -111,6 +129,7 @@ one('src/sim/types.ts',
     """  | { type:'highflyR39Defense'; sourceId:number; targetId:number;
       action:'perfect-dodge'|'parry' }
   | { type:'highflyR39GuardBreak'; sourceId:number; targetId:number }
+  | { type:'highflyR39SkillLink'; entityId:number; ability:string }
   | {
       type: 'heal';
       targetId: number;""")
@@ -123,6 +142,11 @@ one('src/render/renderer.ts',
           this.triggerAttack(ev.targetId,'highfly_r39_parry');
         break;
       }
+      case 'highflyR39SkillLink': {
+        // Combo confirmed only when the native skill really starts.
+        this.vfx.meleeSpark(ev.entityId,false);
+        break;
+      }
       case 'highflyR39GuardBreak': {
         this.triggerHit(ev.targetId);
         this.vfx.meleeSpark(ev.targetId,true);
@@ -130,6 +154,13 @@ one('src/render/renderer.ts',
       }
       case 'damage': {
         // Every melee/ranged hit animates the attacker.""")
+
+one('src/render/renderer.ts',
+    """          this.triggerAttack(ev.sourceId, attackAbilityId(ev.ability));""",
+    """          this.triggerAttack(ev.sourceId,
+            sourceEntity?.originResources && /^highfly_basic_([1-4])(?:_|$)/.test(ev.abilityId ?? '')
+              ? 'highfly_basic_'+(ev.abilityId ?? '').match(/^highfly_basic_([1-4])/)![1]
+              : attackAbilityId(ev.ability));""")
 
 one('src/render/characters/visual.ts',
     """import {r39MaskedMobilePair, type R39MaskedPair} from './highfly_r39_anim_split';""",
