@@ -16,8 +16,8 @@ describe('HIGHFLY R36B — REUSE ORIGINAL ClaudeCraft creator and real rig',()=>
   it('passes full edited look to player Entity, not a cosmetic DOM field',()=>{
     const s=source('src/main.ts');
     expect(s).toContain('originHunterChosenLook: ModularAppearance | null = null');
-    expect(s).toContain('r36bFresh ? normalizeAppearance(originHunterChosenLook??modularAppearance)');
-    expect(s).toContain('offlinePlayer.modularAppearance = (');
+    expect(s).toContain('originHunterChosenLook??modularAppearance');
+    expect(s).toContain('offlinePlayer.modularAppearance=normalizeAppearance(');
     expect(s).toContain('installOriginTrialEntrance((name,chosenLook)=>');
     expect(s).toContain("startOffline('warrior',name,0,undefined,undefined,undefined,true,");
     expect(s).toContain('characterPreview?.setModular(modularAppearance,creationLoadout');
@@ -30,7 +30,7 @@ describe('HIGHFLY R36B — REUSE ORIGINAL ClaudeCraft creator and real rig',()=>
     expect(s).toContain('state:trialSave.state');
     expect(s).toContain('appearance:trialSave.appearance');
     expect(s).toContain('new Sim({...cfg,noPlayer:true,compulsoryTutorial:false})');
-    expect(s).toContain('r36bFresh=originHunterTrial && !trialSave');
+    expect(s).toContain('if (originHunterTrial && !trialSave && offlinePlayer &&');
   });
   it('existing P2 new Hunter tutorial skip remains unchanged, no random spawn coordinate',()=>{
     const s=source('src/main.ts');
