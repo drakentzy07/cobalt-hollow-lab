@@ -151,6 +151,7 @@ try {
             if(x.isSkinnedMesh)skinned++;
           });
           return {gender:v?.modularAppearance?.gender??null,
+            renderedGender:v?.visual?.modularLook?.app?.gender??null,
             key:v?.visualKey??null,meshes,skinned,
             visualPresent:!!v?.visual?.root};
         })(),
@@ -169,6 +170,7 @@ try {
     const ordered=!!target&&!!atk&&!!use&&target.bottom<atk.top&&atk.bottom<use.top;
     const okay=found.actualVisual.visualPresent&&
       found.actualVisual.gender===gender&&
+      found.actualVisual.renderedGender===gender&&
       found.actualVisual.meshes>0&&
       found.androidP2&&found.androidP3&&found.androidP35&&found.touch&&found.gameActive&&found.origin &&
       found.gender===gender&&!found.equipment?.mainhand&&!found.equipment?.offhand &&
@@ -188,8 +190,13 @@ try {
     if(!okay)throw Error('HIGHFLY_ORIGIN_R36B_HUD_BROWSER_RED '+JSON.stringify(entry));
   }
   const v=report.hunters.map(h=>h.found.actualVisual);
-  if(v.length!==2||!v[0].key||!v[1].key||v[0].key===v[1].key)
-    throw Error('R36B_RENDERER_SAME_RIG_KEY_BOTH_GENDERS_'+JSON.stringify(v));
+  // The real KayKit skeleton/visualKey is IDENTICAL for both bodies:
+  // "player_warrior". ClaudeCraft's modular assembly uses each look.app.gender
+  // to compose the corresponding visible meshes/morphs. Requiring DIFFERENT
+  // visual keys would be a false failure and would tempt us to fork the rig.
+  if(v.length!==2||!v[0].key||!v[1].key||
+     v[0].renderedGender!=='male'||v[1].renderedGender!=='female')
+    throw Error('R36B_RENDERER_ORIGINAL_MODULAR_COMPOSITION_MISMATCH_'+JSON.stringify(v));
   report.pass=true;
   console.log('HIGHFLY_ORIGIN_R36B_CLEAN_4BASE_NO_GHOST_HUNTER_MALE_FEMALE_S23_BROWSER_GREEN=1');
 }catch(e){
