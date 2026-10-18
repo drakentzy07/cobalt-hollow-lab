@@ -1316,8 +1316,8 @@ jobs:
           VITE_HIGHFLY_CHALLENGE_ENCOUNTERS: "1"
         run: |
           set -euo pipefail
-          node scripts/build_bundle_pregen.mjs
-          python3 ../overlays/rewrite_source_public_paths.py
+          # Earlier certified SUPREME stage already ran donor source prep once.
+          # Rebuild with R38's UI patch without touching that immutable prep.
           pnpm exec vite build
           node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune
