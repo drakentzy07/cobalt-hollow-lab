@@ -21,9 +21,9 @@ try{
     const page=await context.newPage(),err=[];
     page.on('pageerror',e=>err.push(String(e)));
     await page.goto(url,{waitUntil:'domcontentloaded',timeout:40000});
-    await page.locator('#hf-clean-gender-picker button[data-origin-gender="'+gender+'"]').waitFor({timeout:45000});
+    await page.locator('#hf-origin-native-appearance .ac-seg-btn').first().waitFor({timeout:45000});
     await page.evaluate((value)=>{
-      const btn=document.querySelector('#hf-clean-gender-picker button[data-origin-gender="'+value+'"]');
+      const btn=document.querySelectorAll('#hf-origin-native-appearance .ac-seg-btn')[value==='male'?0:1];
       btn?.click();
       const name=document.getElementById('hf-origin-name');
       if(name instanceof HTMLInputElement){
