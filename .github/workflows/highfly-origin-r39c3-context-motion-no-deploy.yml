@@ -1377,7 +1377,7 @@ jobs:
         run: |
           set -euo pipefail
           cp ../v9-corrections/game/c1/highfly_origin_r39c3_motion_policy.ts src/sim/highfly_origin_r39c3_motion_policy.ts
-          test -s src/sim/highfly_r39c_combat_context.ts
+          cp ../v9-corrections/game/c1/highfly_origin_r39c_combat_context.ts src/sim/highfly_origin_r39c_combat_context.ts
           cp ../v9-corrections/game/c1/highfly_origin_r39c3_motion_policy.test.ts tests/highfly_origin_r39c3_motion_policy.test.ts
           pnpm exec vitest run tests/highfly_origin_r39c3_motion_policy.test.ts
           pnpm exec tsc --noEmit --incremental false
