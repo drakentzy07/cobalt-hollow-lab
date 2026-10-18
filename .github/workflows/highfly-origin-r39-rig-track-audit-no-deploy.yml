@@ -1,0 +1,52 @@
+name: HIGHFLY ORIGIN R39A — Rig Medium clip-track compatibility audit (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-origin-r39-combat-supreme-p0]
+    paths:
+      - "scripts/r39_rig_track_audit.py"
+      - ".github/workflows/highfly-origin-r39-rig-track-audit-no-deploy.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout HIGHFLY audit script
+        uses: actions/checkout@v4
+        with:
+          path: highfly
+      - name: Checkout ONLY pinned donor animation files, never modify them
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: donor
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            public/models/chars/modular/warrior_modular.glb
+            public/models/chars/players/knight.glb
+            public/models/chars/players/mage.glb
+            public/models/chars/players/rogue.glb
+            public/models/chars/players/warrior_ability_anims.glb
+            public/models/chars/players/mage_ability_anims.glb
+            public/models/chars/players/rogue_ability_anims.glb
+      - name: Inspect native bone targets, gender-shared Rig_Medium and donor clips
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 highfly/scripts/r39_rig_track_audit.py \
+            donor/public/models/chars/modular/warrior_modular.glb \
+            donor/public/models/chars/players/knight.glb \
+            donor/public/models/chars/players/mage.glb \
+            donor/public/models/chars/players/rogue.glb \
+            donor/public/models/chars/players/warrior_ability_anims.glb \
+            donor/public/models/chars/players/mage_ability_anims.glb \
+            donor/public/models/chars/players/rogue_ability_anims.glb
+      - name: Preserve immutable technical inventory only (never donor binaries)
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-R39-RIG-TRACK-READONLY-AUDIT
+          path: r39-rig-track-inventory.json
+          retention-days: 14
