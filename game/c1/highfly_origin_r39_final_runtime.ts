@@ -78,6 +78,16 @@ export function r39AddGuardPressure(
   x.pressure=0;x.brokenUntil=now+1.1;x.recoverAt=now+2.5;
   return true;
 }
+/** A skill is linked ONLY after the existing Sim actually emits castStart.
+ * No cast admission, cooldown, MP or damage is invented by this contract.
+ */
+export function r39ConnectConfirmedSkill(p:Entity,now:number):boolean {
+  if(!p.originResources||p.dead||!finiteTime(now))return false;
+  const x=players.get(p);
+  if(!x||x.lastStep===0||x.lastAt<0||now-x.lastAt>.95)return false;
+  x.lastStep=0;x.chain=0;x.parryUntil=-1;
+  return true;
+}
 /** Native-Rig_Medium-only presentation; return null for non-contextual/unknown. */
 export function r39ContextualAttackClip(
  step:1|2|3|4, airborne:boolean, falling:boolean,
