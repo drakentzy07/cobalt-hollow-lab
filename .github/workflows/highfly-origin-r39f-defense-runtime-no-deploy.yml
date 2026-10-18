@@ -1406,6 +1406,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          cp ../v9-corrections/game/c1/highfly_origin_r39d_defense_policy.ts src/sim/highfly_origin_r39d_defense_policy.ts
           cp ../v9-corrections/game/c1/highfly_origin_r39f_defense_runtime_bridge.ts src/sim/highfly_origin_r39f_defense_runtime_bridge.ts
           cp ../v9-corrections/game/c1/highfly_origin_r39f_defense_runtime_bridge.test.ts tests/highfly_origin_r39f_defense_runtime_bridge.test.ts
           pnpm exec vitest run tests/highfly_origin_r39d_defense_policy.test.ts tests/highfly_origin_r39f_defense_runtime_bridge.test.ts
