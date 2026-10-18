@@ -1025,7 +1025,7 @@ jobs:
           pnpm exec tsc --noEmit --incremental false
           git diff --check HEAD
           echo 'HIGHFLY_ORIGIN_R36A1_MOVEMENT_DIRECTION_AND_TRUE_ATK_USE_DISPATCH_GREEN=1'
-      - name: R36B: female and male true entity appearance, legacy save and new Hunter optional tutorial
+      - name: R36B true entity appearance, saved Hunter and new-entry tutorial contract
         working-directory: upstream
         shell: bash
         run: |
