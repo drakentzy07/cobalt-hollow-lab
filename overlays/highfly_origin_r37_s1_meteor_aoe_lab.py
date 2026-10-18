@@ -34,11 +34,11 @@ once(aim,
 # native mesh controller. Include original position-AoE abilities.
 controller='src/highfly/highfly_origin_r17_hud.ts'
 once(controller,
- "       'fireball','heroic_leap','blink','flamestrike'].includes(shape??''))return;",
- "       'fireball','heroic_leap','blink','flamestrike','meteor','rain_of_fire','blizzard'].includes(shape??''))return;")
+ "      'fireball','heroic_leap','blink','flamestrike'].includes(shape??''))return;",
+ "      'fireball','heroic_leap','blink','flamestrike','meteor','rain_of_fire','blizzard'].includes(shape??''))return;")
 once(controller,
- "       :['fireball','heroic_leap','blink','flamestrike'].includes(shape??'')?shape!",
- "       :['fireball','heroic_leap','blink','flamestrike','meteor','rain_of_fire','blizzard'].includes(shape??'')?shape!")
+ "      :['fireball','heroic_leap','blink','flamestrike'].includes(shape??'')?shape!",
+ "      :['fireball','heroic_leap','blink','flamestrike','meteor','rain_of_fire','blizzard'].includes(shape??'')?shape!")
 # Standard R22 gallery uses sample.shape; the actual def's targetMode and
 # radius remain the source of truth. Meteor groundAoE is not given a fake cone.
 
