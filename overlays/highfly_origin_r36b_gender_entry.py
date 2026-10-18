@@ -21,44 +21,73 @@ once(entry,
  """import type { CharacterState } from '../sim/character_state';
 import {mountAppearanceCustomizer} from '../ui/appearance_customizer';
 import {type ModularAppearance, normalizeAppearance} from '../render/characters/modular';""")
-once(entry,
- "export function installOriginTrialEntrance(onStart:(name:string,gender:'male'|'female')=>void):void{",
- """export function installOriginTrialEntrance(
+# Swap ONLY our isolated optional Origin trial entrance; never patch the
+# native ClaudeCraft character creator or depend on P1's gender row markers.
+# P1 and P2 may have already changed the contents of this entry, so use the
+# TWO exported function boundaries as structural guards instead.
+f=Path(entry)
+s=f.read_text(encoding='utf8')
+begin=s.find('export function installOriginTrialEntrance(')
+finish=s.find('export function mountOriginTrialTrainer(',begin)
+if begin<0 or finish<=begin or s.count('export function installOriginTrialEntrance(')!=1 or s.count('export function mountOriginTrialTrainer(')!=1:
+ raise SystemExit('R36B_ORIGIN_ENTRY_EXPORT_BOUNDARY_DRIFT')
+old=s[begin:finish]
+if "hf-origin-entry" not in old or "loadOriginTrialSave" not in s:
+ raise SystemExit('R36B_ORIGIN_ENTRY_SAFETY_GUARD_FAILED')
+native_entry="""export function installOriginTrialEntrance(
   onStart:(name:string,appearance:ModularAppearance)=>void,
   initialAppearance:ModularAppearance,
   onAppearanceChange:(appearance:ModularAppearance)=>void,
-):void{""")
-
-f=Path(entry);s=f.read_text(encoding='utf8')
-start=s.find("  // CLEAN P1: use ClaudeCraft's shipped male/female modular shapes;")
-end=s.find("  const start=button('CREAR / CONTINUAR HUNTER ORIGIN');",start)
-if start<0 or end<0 or s.count("  const start=button('CREAR / CONTINUAR HUNTER ORIGIN');")!=1:
- raise SystemExit('R36B_OLD_DUPLICATE_GENDER_PICKER_DRIFT')
-s=s[:start]+"""  // ORIGINAL ClaudeCraft: actual five-tab body/face/hair/style/share editor,
-  // with the same normalized appearance object consumed by its 3D renderer.
-  // No separate gender button, no fake second appearance implementation.
+):void{
+  if(!ORIGIN_TRIAL_ONLY)return;
+  const host=document.querySelector('#mode-select');
+  if(!host||document.getElementById('hf-origin-entry'))return;
+  const section=document.createElement('section');
+  section.id='hf-origin-entry';
+  section.style.cssText='max-width:560px;margin:10px auto;padding:12px;background:#10192ce9;border:1px solid #5374a3;border-radius:12px;color:#fff;display:grid;gap:8px;z-index:3;position:relative;text-align:left;';
+  const title=document.createElement('strong');
+  title.textContent='⚔️ HIGHFLY ORIGIN · CREA TU HUNTER';
+  const desc=document.createElement('span');
+  desc.textContent='Usamos el creador original: cuerpo, rostro, cabello y estilo. Una sola identidad, sin clase obligatoria.';
+  desc.style.fontSize='12px';
+  const input=document.createElement('input');
+  input.type='text';input.maxLength=16;input.placeholder='Nombre del Hunter';
+  input.autocomplete='off';input.id='hf-origin-name';
+  input.style.cssText='min-width:0;padding:9px;border-radius:8px;background:#192945;color:#fff;border:1px solid #5a7398;font-size:16px;';
+  try{input.value=localStorage.getItem(LAST_NAME_KEY)||'Hunter';}catch{input.value='Hunter';}
+  // REUSE FIRST: the ONE official ClaudeCraft customizer implements BOTH
+  // modular body morphs and the male/female toggle (no parallel gender row).
   const appearanceHost=document.createElement('div');
   appearanceHost.id='hf-origin-native-appearance';
-  appearanceHost.style.cssText='max-height:34vh;overflow:auto;min-height:90px;';
+  appearanceHost.style.cssText='max-height:38vh;min-height:110px;overflow-y:auto;overscroll-behavior:contain;';
   const originalCustomizer=mountAppearanceCustomizer(appearanceHost,{
     value:normalizeAppearance(initialAppearance),
     onChange:next=>onAppearanceChange(next),
   });
-"""+s[end:]
-if "genderRow" not in s or "onStart(name,gender);" not in s:raise SystemExit('R36B_OLD_ENTRY_BODY_CHANGED')
-s=s.replace("  section.append(title,desc,input,genderRow,start,status);host.appendChild(section);",
-            "  section.append(title,desc,input,appearanceHost,start,status);host.appendChild(section);",1)
-s=s.replace("    onStart(name,gender);",
- """    const appearance=normalizeAppearance(originalCustomizer.value);
-    // An existing name is RESTORE, not a new character. Never rewrite the
-    // saved look, inventory, current zone or the player's training stats.
+  const start=button('CREAR / CONTINUAR HUNTER ORIGIN');
+  const status=document.createElement('small');
+  status.style.color='#b3d3ff';
+  start.addEventListener('click',()=>{
+    const name=input.value.trim();
+    if(!validName(name)){
+      status.textContent='Usá entre 2 y 16 letras y espacios (sin números ni símbolos).';
+      return;
+    }
+    start.disabled=true;
+    status.textContent='Ingresando al mundo...';
+    const appearance=normalizeAppearance(originalCustomizer.value);
+    // Restoring a known name always loads its saved character, not this draft.
     void loadOriginTrialSave(name).then(saved=>{
-      if(saved)status.textContent='Recuperando personaje guardado: la apariencia anterior tiene prioridad.';
+      if(saved)status.textContent='Restaurando Hunter guardado sin cambiar su apariencia.';
       onStart(name,appearance);
-    }).catch(()=>onStart(name,appearance));""",1)
-if "genderRow" in s or "let gender:'male'|'female'" in s:
- raise SystemExit('R36B_DUPLICATE_GENDER_UI_STILL_PRESENT')
-f.write_text(s,encoding='utf8')
+    }).catch(()=>onStart(name,appearance));
+  });
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')start.click();});
+  section.append(title,desc,input,appearanceHost,start,status);
+  host.appendChild(section);
+}
+"""
+f.write_text(s[:begin]+native_entry+s[finish:],encoding='utf8')
 
 # Preserve the original native class creator (unchanged), its style storage,
 # appearance-normalization, and KayKit animation skeleton.
