@@ -42,7 +42,7 @@ end=s.index('  /** Bladed Gyre',start)
 slice_=s[start:end]
 anchor='this.currentOneShotIsAttack = true;'
 count=slice_.count(anchor)
-if count!=4:raise SystemExit('R39A_ATTACK_BRANCH_COUNT_DRIFT:'+str(count))
+if count!=5:raise SystemExit('R39A_ATTACK_BRANCH_COUNT_DRIFT:'+str(count))
 slice_=slice_.replace(anchor,anchor+"\n      this.r39StartMobileBasic(abilityId);")
 s=s[:start]+slice_+s[end:]
 
@@ -126,5 +126,5 @@ p.write_text(s,'utf8')
 target=Path('src/render/characters/highfly_r39_anim_split.ts')
 shutil.copy2('../v9-corrections/game/c1/highfly_origin_r39a_anim_split.ts',target)
 assert 'r39StartMobileBasic(abilityId);' in s
-assert s.count('this.r39StartMobileBasic(abilityId);')==4
+assert s.count('this.r39StartMobileBasic(abilityId);')==5
 print('HIGHFLY_R39A_NATIVE_MANUAL_BASIC_SPLIT_NO_SKILL_OVERRIDES_APPLIED=1')
