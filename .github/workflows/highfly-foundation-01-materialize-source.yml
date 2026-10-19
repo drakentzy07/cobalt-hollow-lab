@@ -162,8 +162,28 @@ jobs:
             .browserslistrc .npmrc biome.json .gitignore \
             index.html admin.html guide.html editor.html play.html \
             wallet-handoff.html capacitor.config.ts
-          git diff --cached --check
+          # This first source import necessarily includes pre-existing donor
+          # whitespace. It has already passed "git diff --check HEAD" against
+          # the frozen donor after CLEAN apply. Do NOT silently rewrite 3,800
+          # upstream files or weaken the canonical clean patch integrity check.
           test "$(git diff --cached --name-only | grep -c '^src/')" -gt 3400
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+          for path in (
+              "src/main.ts",
+              "src/ui/appearance_customizer.ts",
+              "src/render/characters/modular.ts",
+              "src/sim/content/classes.ts",
+              "src/highfly/training/core.ts",
+              "src/render/ability_vfx_full_specs.ts",
+          ):
+              origin=Path("upstream")/path
+              dest=Path(path)
+              if hashlib.sha256(origin.read_bytes()).digest() != hashlib.sha256(dest.read_bytes()).digest():
+                  raise SystemExit("FOUNDATION_SOURCE_BYTE_DRIFT " + path)
+          print("FOUNDATION_01_CORE_BYTE_EXACT_GREEN=1")
+          PY
           if git diff --cached --name-only | grep -Eq '^(public/|electron/|ios/|\.github/workflows/)' ; then
             echo '::error::FORBIDDEN_ASSET_OR_DESKTOP_OR_WORKFLOW_MUTATION'
             exit 1
