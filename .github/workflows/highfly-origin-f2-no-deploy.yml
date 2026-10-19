@@ -1,0 +1,130 @@
+name: HIGHFLY ORIGIN F2.0 — Freedom 360 Android QA (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-origin-f2-combat-freedom-20261019]
+    paths:
+      - ".github/workflows/highfly-origin-f2-no-deploy.yml"
+      - "src/**"
+      - "tests/highfly_origin_f2_freedom360.test.ts"
+      - "docs/highfly/f2-combat-freedom.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-f2-combat-freedom
+  cancel-in-progress: true
+
+jobs:
+  free_combat_qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout standalone F2 source — never publish Pages
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+
+      - name: Confirm F2 reuses certified F1 hunter and sole movement Sim
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s src/highfly/combat/freedom_360.ts
+          test -s src/highfly/origin/f1_core.ts
+          test -s src/highfly/origin/f1_world_ui.ts
+          test -s tests/highfly_origin_f2_freedom360.test.ts
+          grep -F "resolveFreedom360(input.highflyTouchVector(), input.camYaw)" src/main.ts
+          echo "HIGHFLY_F2_MOVEMENT_SINGLE_AUTHORITY_GREEN=1"
+
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install frozen dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Typecheck and F2 + F1 regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec tsc --noEmit --incremental false
+          pnpm exec vitest run --exclude 'training/tests/**' \
+            tests/highfly_origin_f2_freedom360.test.ts \
+            tests/highfly_origin_f1_universal_hunter.test.ts \
+            tests/highfly_origin_f122_mobile_ux_save.test.ts \
+            tests/highfly_origin_f123_reset_hud.test.ts \
+            tests/highfly_game_c1.test.ts \
+            tests/highfly_game_c28.test.ts
+          echo "HIGHFLY_F20_TYPES_F1_F2_GREEN=1"
+
+      - name: Mount ONLY original pinned donor world assets
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: donor-media
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /public/
+
+      - name: Compile real Android-first WebGL candidate (do not publish)
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          test "$(git -C donor-media rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          test -d donor-media/public/models
+          mkdir -p public
+          rsync -a donor-media/public/ public/
+          node scripts/build_bundle_pregen.mjs
+          pnpm exec vite build
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          node scripts/highfly_f11_appshell.mjs
+          test -s dist/index.html
+          test -s dist/highfly-origin-sw.js
+          test -s dist/highfly-origin.webmanifest
+          echo "HIGHFLY_F20_WEBGL_LOCAL_ONLY_GREEN=1"
+
+      - name: S23 landscape creation, combat HUD, reset and true offline smoke
+        shell: bash
+        env:
+          F1_GAME_URL: "http://127.0.0.1:4173/cobalt-hollow-lab/"
+          F11_VERIFY_RELOAD: "1"
+          F121_SEED_LEGACY: "1"
+          F122_VERIFY_UX: "1"
+          F123_VERIFY_RESET_HUD: "1"
+        run: |
+          set -euo pipefail
+          command -v google-chrome || command -v chromium || command -v chromium-browser
+          mkdir -p f2-static-origin
+          ln -s ../dist f2-static-origin/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory f2-static-origin >/tmp/highfly-f20-static.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsSI http://127.0.0.1:4173/cobalt-hollow-lab/ >/dev/null;then break;fi
+            sleep 1
+          done
+          node scripts/highfly_origin_f1_browser.mjs
+          echo "HIGHFLY_F20_ANDROID_F1_REGRESSION_GREEN=1"
+
+      - name: Explicit no-deploy final gate
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -f dist/CNAME
+          echo "HIGHFLY_F20_NO_PAGES_DEPLOY_GREEN=1"

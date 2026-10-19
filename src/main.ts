@@ -1,4 +1,5 @@
 import './highfly/game_c1_runtime';
+import { resolveFreedom360 } from './highfly/combat/freedom_360';
 import {
   ORIGIN_HUNTER_CARRIER_CLASS,
   f1StartState,
@@ -4089,31 +4090,16 @@ async function startGame(
     // CAMERA-relative world vector; translation no longer depends on snapping
     // body-facing first. This fixes diagonal quadrant flips and the hard 180°
     // feel when dragging through the lower half of the joystick.
-    const highflyMove = input.highflyTouchVector();
-    const highflyMagnitude = Math.min(1, Math.hypot(highflyMove.x, highflyMove.y));
-    if (!input.suspendMovement && highflyMagnitude > 0.001) {
-      const localForward = -highflyMove.y;
-      // Exact Lucid rule: desired = cameraFlatForward * stickY
-      //                  + cameraFlatRight * stickX.
-      // ClaudeCraft's camera-flat-right basis is (-cos(yaw), sin(yaw)),
-      // therefore screen-stick X stays POSITIVE here.
-      const localRight = highflyMove.x;
-      const sin = Math.sin(input.camYaw);
-      const cos = Math.cos(input.camYaw);
-      const worldX = localForward * sin - localRight * cos;
-      const worldZ = localForward * cos + localRight * sin;
-      mi.highflyWorldX = worldX;
-      mi.highflyWorldZ = worldZ;
-      mi.highflyAnalog = highflyMagnitude;
-
-      // HIGHFLY/Lucid action rule: joystick direction IS body-forward.
-      // No strafing and no backpedal: left/right/back/diagonals rotate the whole
-      // avatar so its chest faces the same world vector it is travelling along.
-      const desired = Math.atan2(worldX, worldZ);
-      facing = desired;
-
-      // Keep ClaudeCraft's movement/cast gates alive, but the movement kernel
-      // below ignores these directional booleans whenever highflyWorld* exists.
+    // F2.0: move the already-validated analog camera-relative transformation
+    // into a pure, unit-certified kernel. The Sim stays movement authority.
+    const freedomMove = resolveFreedom360(input.highflyTouchVector(), input.camYaw);
+    if (!input.suspendMovement && freedomMove) {
+      mi.highflyWorldX = freedomMove.worldX;
+      mi.highflyWorldZ = freedomMove.worldZ;
+      mi.highflyAnalog = freedomMove.analog;
+      facing = freedomMove.facing;
+      // Preserve native ClaudeCraft cast/movement gates. The movement kernel
+      // consumes highflyWorldX/Z, never a second independent mover.
       mi.forward = true;
       mi.back = false;
       mi.turnLeft = false;
