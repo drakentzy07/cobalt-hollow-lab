@@ -1,0 +1,135 @@
+name: HIGHFLY ORIGIN FASE 1 — Universal Hunter Birth Android (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-origin-f1-universal-hunter-20261019]
+    paths:
+      - ".github/workflows/highfly-origin-f1-universal-hunter-no-deploy.yml"
+      - "src/**"
+      - "tests/highfly_origin_f1_universal_hunter.test.ts"
+      - "index.html"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-origin-f1-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  integral_birth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout committed F1 gameplay (no overlays)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+
+      - name: Confirm isolation and exact source contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.ref_name }}" = "highfly-origin-f1-universal-hunter-20261019"
+          test -s src/highfly/origin/f1_core.ts
+          test -s src/highfly/origin/f1_world_ui.ts
+          test -s src/ui/appearance_customizer.ts
+          test -s src/render/characters/modular.ts
+          test -s src/highfly/training/stat_authority.ts
+          test -s tests/highfly_origin_f1_universal_hunter.test.ts
+          grep -F "compulsoryTutorial: false" src/game/offline_world_config.ts
+          echo "HIGHFLY_F1_ISOLATION_GREEN=1"
+
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Frozen pnpm deps
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Full owned source TypeScript gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec tsc --noEmit --incremental false
+          echo "HIGHFLY_F1_TYPES_GREEN=1"
+
+      - name: Real Hunter birth and native Sim regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run --exclude 'training/tests/**' \
+            tests/highfly_origin_f1_universal_hunter.test.ts \
+            tests/highfly_game_c1.test.ts \
+            tests/highfly_game_c28.test.ts \
+            tests/highfly_training_core.test.ts \
+            tests/highfly_training_bridge.test.ts \
+            tests/highfly_training_pf5_stat_authority.test.ts
+          echo "HIGHFLY_F1_INTEGRAL_UNIT_GREEN=1"
+
+      - name: Retrieve frozen donor media ONLY (no source, R39 or R40)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: donor-media
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /public/
+
+      - name: Mount original world assets and pin provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C donor-media rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          test -d donor-media/public/models
+          test -d donor-media/public/ui/skills
+          mkdir -p public
+          rsync -a donor-media/public/ public/
+          test -d public/ui/skills/warrior
+          echo "HIGHFLY_F1_MEDIA_MOUNT_GREEN=1"
+
+      - name: Build Android-first game WebGL from own source
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/"
+        run: |
+          set -euo pipefail
+          node scripts/build_bundle_pregen.mjs
+          pnpm exec vite build
+          test -s dist/index.html
+          test -d dist/models
+          test -d dist/ui/skills/warrior
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          echo "HIGHFLY_F1_ANDROID_WEBGL_GREEN=1"
+
+      - name: Preserve F1 source, media and QA evidence (not public)
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p foundation-output
+          echo "f1_commit=${{ github.sha }}" > foundation-output/f1-validation.txt
+          echo "f0_verified=54653d5bb579b44fe3fecc8fd7377219213dc31e" >> foundation-output/f1-validation.txt
+          echo "upstream_media=9b57e49c9676d75962700f828cc00a50a9a988b5" >> foundation-output/f1-validation.txt
+          echo "legacy_overlays=NOT_APPLIED" >> foundation-output/f1-validation.txt
+          echo "public_pages=UNMODIFIED" >> foundation-output/f1-validation.txt
+          echo "physical_S23=NOT_TESTED" >> foundation-output/f1-validation.txt
+
+      - name: Upload F1 validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-F1-UNIVERSAL-HUNTER-QA-NO-DEPLOY
+          path: foundation-output/
+          retention-days: 14
