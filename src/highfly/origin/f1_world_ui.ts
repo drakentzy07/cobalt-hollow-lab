@@ -4,8 +4,10 @@
  */
 import type { Sim } from '../../sim/sim';
 import { ORIGIN_VETERAN_POS } from './f1_start';
+import { registerOriginResourceController, type OriginResourceController } from './f1_resource_bridge';
 import {
   claimOriginStarter,
+  consumeF1Resource,
   swapOriginStarter,
   ORIGIN_STARTER_WEAPONS,
   tickF1Resources,
@@ -35,7 +37,7 @@ export function mountOriginF1WorldUi(
   const root = node('aside', '', 'hf-origin-f1-hud');
   root.id = 'hf-origin-f1-hud';
   root.setAttribute('aria-label', 'Hunter: recursos y guía de inicio');
-  root.style.cssText = 'position:fixed;left:max(12px,env(safe-area-inset-left));top:55px;z-index:2147483000;color:#fff;font:600 12px system-ui;pointer-events:none;max-width:245px';
+  root.style.cssText = 'position:fixed;left:max(12px,env(safe-area-inset-left));top:55px;z-index:185;color:#fff;font:600 12px system-ui;pointer-events:none;max-width:245px';
   const meter = node('div', '', 'hf-origin-f1-resource-meter');
   meter.id = 'hf-origin-f1-resource-meter';
   meter.style.cssText = 'background:#0b1923d9;border:1px solid #63828a;border-radius:12px;padding:9px 12px;box-shadow:0 3px 15px #0007';
@@ -50,7 +52,7 @@ export function mountOriginF1WorldUi(
   const renderBars: Record<'mana'|'stamina', {wrap:HTMLDivElement;fill:HTMLDivElement;label:HTMLSpanElement}> =
     {} as Record<'hp'|'mana'|'stamina', {wrap:HTMLDivElement;fill:HTMLDivElement;label:HTMLSpanElement}>;
   for (const [key, title, color] of [
-    ['mana','MP','#4e98e8'],['stamina','ST','#54c48e'],
+    ['mana','MP','#4e98e8'],['stamina','ST','#e5b73a'],
   ] as const) {
     const row = node('div', '', '');
     row.style.cssText = 'display:flex;align-items:center;gap:8px;margin:3px 0';
@@ -58,8 +60,10 @@ export function mountOriginF1WorldUi(
     lab.style.width = '24px';
     const track = node('div', '');
     track.style.cssText='background:#364250;flex:1;width:150px;height:7px;border-radius:7px;overflow:hidden';
+    track.dataset.originResourceTrack=key;
     const fill = node('div', '');
     fill.style.cssText = `height:100%;background:${color};width:100%;border-radius:7px`;
+    fill.dataset.originResourceFill=key;
     track.append(fill);
     const value = node('span', '—');
     value.style.cssText='width:66px;text-align:right;font-size:10px';
@@ -105,9 +109,20 @@ export function mountOriginF1WorldUi(
   closeButton.style.cssText='display:block;width:100%;min-height:40px;margin-top:8px;background:#28394f;border:1px solid #a8b2c0;border-radius:9px;color:#fff;font:700 12px system-ui;cursor:pointer';
   modal.append(title,caption,options,status,closeButton);
   backdrop.append(modal);
-  root.append(backdrop);
-  document.body.append(root);
+  // A separate modal layer avoids the guide's stacking context covering Bags.
+  backdrop.style.zIndex='3200';
+  document.body.append(root,backdrop);
   let current=structuredClone(initial);
+  const resourceController: OriginResourceController = {
+    canSpend: (kind, amount) => consumeF1Resource(current.resources,kind,amount)!==null,
+    spend: (kind, amount) => {
+      const next=consumeF1Resource(current.resources,kind,amount);
+      if(!next)return false;
+      current={...current,resources:next};
+      return true;
+    },
+  };
+  registerOriginResourceController(resourceController);
   let last=performance.now();
   let open=false;
   const setOpen=(next:boolean)=>{
@@ -190,13 +205,13 @@ export function mountOriginF1WorldUi(
     const dx=p.pos.x-ORIGIN_GUIDE_POS.x, dz=p.pos.z-ORIGIN_GUIDE_POS.z;
     const nearby=(dx*dx+dz*dz)<(8*8);
     talk.textContent = current.starterClaimed?'VETERANO DEL CAMINO · CAMBIAR ARMA':'VETERANO DEL CAMINO · ELEGIR ARMA';
-    guide.style.display = nearby?'block':'none';
+    guide.style.display = nearby && !current.starterClaimed ? 'block':'none';
     if (!nearby) {
       if (open) setOpen(false);
     }
   },120);
   return {
     save:()=>structuredClone(current),
-    close:()=>{window.clearInterval(timer);meter.remove();root.remove();}
+    close:()=>{window.clearInterval(timer);registerOriginResourceController(null);backdrop.remove();meter.remove();root.remove();}
   };
 }
