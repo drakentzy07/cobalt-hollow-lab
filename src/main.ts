@@ -11466,6 +11466,21 @@ const diagnosticsAutoOffline =
   import.meta.env.DEV &&
   startupParams.get('diagnostics') === '1' &&
   startupParams.get('diagnosticsAuto') === '1';
+// F1.1 Android: install an optional same-origin offline cache without blocking
+// character creation or entry. Browsers install it only on secure origins (or
+// localhost). Co-op networking will be explicitly opted into in a later phase.
+if (HIGHFLY_F11_OFFLINE_FIRST && !import.meta.env.DEV &&
+    'serviceWorker' in navigator &&
+    (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
+  const registerOfflineShell = () => {
+    void navigator.serviceWorker.register(
+      `${import.meta.env.BASE_URL}highfly-origin-sw.js`,
+      { scope: import.meta.env.BASE_URL },
+    ).catch((err: unknown) => console.warn('[HIGHFLY F11] offline shell unavailable', err));
+  };
+  window.setTimeout(registerOfflineShell, 1000);
+}
+
 if (editorPlaytest) {
   if (!HIGHFLY_F11_OFFLINE_FIRST) startSitePresence('home');
   void startOffline(
