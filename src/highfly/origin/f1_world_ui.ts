@@ -37,11 +37,16 @@ export function mountOriginF1WorldUi(
   root.style.cssText = 'position:fixed;left:max(12px,env(safe-area-inset-left));top:55px;z-index:2147483000;color:#fff;font:600 12px system-ui;pointer-events:none;max-width:245px';
   const meter = node('div', '', 'hf-origin-f1-resource-meter');
   meter.style.cssText = 'background:#0b1923d9;border:1px solid #63828a;border-radius:12px;padding:9px 12px;box-shadow:0 3px 15px #0007';
-  root.append(meter);
-  const renderBars: Record<'hp'|'mana'|'stamina', {wrap:HTMLDivElement;fill:HTMLDivElement;label:HTMLSpanElement}> =
+  // The original ClaudeCraft unit frame is the only HP authority/display.
+  // Integrate Origin's MP/ST under that frame instead of drawing a duplicate
+  // floating HP/MP/ST block over the left side of the battlefield.
+  const originalBars=document.querySelector('#player-frame .uf-bars');
+  if (originalBars) originalBars.append(meter);
+  else root.append(meter);
+  const renderBars: Record<'mana'|'stamina', {wrap:HTMLDivElement;fill:HTMLDivElement;label:HTMLSpanElement}> =
     {} as Record<'hp'|'mana'|'stamina', {wrap:HTMLDivElement;fill:HTMLDivElement;label:HTMLSpanElement}>;
   for (const [key, title, color] of [
-    ['hp','HP','#df5266'],['mana','MP','#4e98e8'],['stamina','ST','#54c48e'],
+    ['mana','MP','#4e98e8'],['stamina','ST','#54c48e'],
   ] as const) {
     const row = node('div', '', '');
     row.style.cssText = 'display:flex;align-items:center;gap:8px;margin:3px 0';
@@ -144,7 +149,6 @@ export function mountOriginF1WorldUi(
     last=now;
     const p=sim.player;
     for(const [key,cur,max] of [
-      ['hp', p.hp, p.maxHp],
       ['mana',current.resources.mana,current.resources.maxMana],
       ['stamina',current.resources.stamina,current.resources.maxStamina],
     ] as const){
@@ -161,6 +165,6 @@ export function mountOriginF1WorldUi(
   },120);
   return {
     save:()=>structuredClone(current),
-    close:()=>{window.clearInterval(timer);root.remove();}
+    close:()=>{window.clearInterval(timer);meter.remove();root.remove();}
   };
 }
