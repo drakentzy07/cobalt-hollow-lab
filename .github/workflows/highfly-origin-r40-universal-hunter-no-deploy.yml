@@ -9,6 +9,7 @@ on:
       - "overlays/highfly_origin_r40_unified_pass.py"
       - "game/c1/highfly_origin_r40_browser.mjs"
       - "game/c1/highfly_origin_r40_feedback.ts"
+      - "game/c1/highfly_origin_r40_meteor_native.test.ts"
       - ".github/workflows/highfly-origin-r0-forensic-no-deploy.yml"
       - "game/c1/highfly_origin_r0_diagnostic.test.ts"
       - "docs/HIGHFLY_ORIGIN_R0_COMBAT_CONTRACT.md"
@@ -247,6 +248,7 @@ jobs:
             /overlays/highfly_origin_r40_unified_pass.py
             /game/c1/highfly_origin_r40_browser.mjs
             /game/c1/highfly_origin_r40_feedback.ts
+            /game/c1/highfly_origin_r40_meteor_native.test.ts
             /game/c1/highfly_origin_r39_final_runtime.ts
             /game/c1/highfly_origin_r39_final_gameplay.test.ts
             /game/c1/highfly_origin_r39_final_gate.test.ts
@@ -1463,6 +1465,8 @@ jobs:
         run: |
           set -euo pipefail
           python3 ../v9-corrections/overlays/highfly_origin_r40_unified_pass.py
+          cp ../v9-corrections/game/c1/highfly_origin_r40_meteor_native.test.ts tests/highfly_origin_r40_meteor_native.test.ts
+          pnpm exec vitest run tests/highfly_origin_r40_meteor_native.test.ts
           pnpm exec tsc --noEmit --incremental false
           git diff --check HEAD
           echo 'R40_NATIVE_RUNTIME_SOURCE_ADMISSION_READY=1'

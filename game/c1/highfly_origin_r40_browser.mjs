@@ -178,6 +178,19 @@ try {
       });
     });
     if(hits.some(x=>!x.okay))throw Error('R40_POINTER_INTERCEPTION_'+JSON.stringify(hits));
+    const skillTargets=await page.evaluate(()=>{
+      return [...document.querySelectorAll('#mobile-action-ring .mobile-action-slot')]
+        .map((el,index)=>{
+          const r=el.getBoundingClientRect();
+          const cx=r.left+r.width/2,cy=r.top+r.height/2;
+          const inViewport=cx>=0&&cy>=0&&cx<innerWidth&&cy<innerHeight;
+          const hit=inViewport?document.elementFromPoint(cx,cy):null;
+          return {slot:index+1,inViewport,hitOk:!!hit&&(hit===el||el.contains(hit)),
+            intercept:hit?.id??hit?.className??''};
+        });
+    });
+    if(skillTargets.length!==4||skillTargets.some(x=>!x.inViewport||!x.hitOk))
+      throw Error('R40_SKILL_BUTTON_CLIPPED_OR_INTERCEPTED_'+JSON.stringify(skillTargets));
     const rects=found.placement;const target=rects['mobile-target-cycle'],atk=rects['mobile-action-attack'],use=rects['mobile-interact'];
     const ordered=!!target&&!!atk&&!!use&&target.bottom<atk.top&&atk.bottom<use.top;
     const okay=found.actualVisual.visualPresent&&

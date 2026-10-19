@@ -81,15 +81,39 @@ once(renderer,
         break;
       }""")
 
+# A genuine ATK-timed parry becomes a weapon RIPOSTE instead of the old
+# misleading "Block" clip; native Sim and defense windows remain authoritative.
+once('src/render/characters/visual.ts',
+"""       if(abilityId==='highfly_r39_parry' && this.action('Block')){
+         this.playOneShot('Block',1.1);
+         this.currentOneShotIsAttack=false;
+         return;
+       }""",
+"""       if(abilityId==='highfly_r39_parry'){
+         const riposte='1H_Melee_Attack_Slice_Diagonal';
+         if(this.action(riposte)){
+           this.playOneShot(riposte,1.4);
+           this.currentOneShotIsAttack=true;
+           return;
+         }
+       }""")
+
 # Reuse the SAME native R22 preview: bright full-width fireball direction lane,
 # no bogus target circle, never extend beyond Sim's real projectile width.
 visual='src/highfly/highfly_origin_r22_premium_visual.ts'
 once(visual,"    const half=Math.max(.15,Math.min(.38,width*.35));",
             "    const half=Math.max(.15,Math.min(.50,width*.50));")
+once(visual,"    this.strip(this.edge,leftA,leftB,.052);",
+            "    this.strip(this.edge,leftA,leftB,.11);")
+once(visual,"    this.strip(this.edge,rightA,rightB,.052);",
+            "    this.strip(this.edge,rightA,rightB,.11);")
 
 # LAB-ONLY in-memory projections; only native castAbilityAt admits casts.
 # Actual originHunter learnedSkillIds, serialization and resource costs untouched.
 runtime='src/highfly/highfly_android_p3_runtime.ts'
+once(runtime,"import { ABILITIES } from '../sim/content/classes';",
+"""import { ABILITIES } from '../sim/content/classes';
+import { originCostDecision } from '../sim/highfly_origin_universal_resources';""")
 once(runtime,"    editorPanel.prepend(samples);\n  }\n  syncPanel();",
 """  editorPanel.prepend(preset);
   if(document.body.classList.contains('hf-r40-universal') &&
@@ -116,7 +140,12 @@ function installR40IsolatedCastLab(sim:Sim,parent:HTMLElement):void{
   for(const id of names){
     const def=ABILITIES[id];if(!def)throw Error('R40_NATIVE_SKILL_MISSING_'+id);
     const b=document.createElement('button');b.type='button';b.dataset.r40Cast=id;
-    b.textContent=(def.name??id)+' · '+String(def.cost??0)+' MP';
+    const permitted=originCostDecision(def);
+    b.disabled=!permitted.ok;
+    b.textContent=(id==='meteor'?'METEORITO / '+(def.name??id):(def.name??id))+
+      ' · '+String(def.cost??0)+' MP'+(permitted.ok?'':' · PENDIENTE');
+    b.title=!permitted.ok?'Recurso heredado pendiente de adaptar al Hunter universal':
+      (def.requiresTarget?'Requiere seleccionar objetivo':'Usa el coste y daño nativos');
     b.style.cssText='min-height:44px;padding:6px;border-radius:7px;border:1px solid #9acfed;background:#143555;color:white;touch-action:manipulation;';
     b.addEventListener('click',()=>{
       // Sim.known is the original primary PlayerMeta.known (session projection).

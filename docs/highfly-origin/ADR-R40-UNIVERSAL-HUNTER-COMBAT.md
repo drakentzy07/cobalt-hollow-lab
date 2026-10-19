@@ -24,3 +24,7 @@ Frozen baseline: `5c8233e082eacfe74040e5b627becfef8c936179`. Isolated branch onl
 ## Limits / red-gates
 
 The R40 code change is not proof of a full supreme-combat transition. No promise of 4D input buffering, 360 drag-to-cast meteor, or guaranteed combat animation perfection is made by a TypeScript GREEN. Physical S23 test remains mandatory. A WebGL artifact is staged only, not deployed to Pages.
+
+## Non-negotiable late audit corrections
+
+R40 replaces R39's misleading Block animation on a confirmed Parry with an existing KayKit diagonal riposte; this is still ATK-triggered, never a held guard. The projectile-line edges are widened within the native preview footprint. Rain of Fire has a native Ruin-cost gate and is explicitly disabled in the test panel until that cost is adapted; do not report it as castable merely because metadata exists. A new Vitest tests the actual native Meteor cast, MP debit, cooldown, delayed damage to a hostile mob and save safety. The browser QA now checks pointers on all four skill slots. An emulated Chrome screenshot is **not** a physical Samsung device test.
