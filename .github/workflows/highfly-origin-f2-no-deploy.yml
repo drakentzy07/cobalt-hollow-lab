@@ -1,7 +1,7 @@
-name: HIGHFLY ORIGIN F2 ATK melee recovery — Android QA (NO DEPLOY)
+name: HIGHFLY ORIGIN F2.0 — Freedom 360 Android QA (NO DEPLOY)
 on:
   push:
-    branches: [highfly-origin-f2-atk-melee-recovery-20261019]
+    branches: [highfly-origin-f2-combat-freedom-20261019]
     paths:
       - ".github/workflows/highfly-origin-f2-no-deploy.yml"
       - "src/**"
@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: highfly-f2-combat-freedom-atk-recovery
+  group: highfly-f2-combat-freedom
   cancel-in-progress: true
 
 jobs:
