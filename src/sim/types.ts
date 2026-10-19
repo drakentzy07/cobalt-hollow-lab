@@ -8699,6 +8699,9 @@ export interface MoveInput {
   highflyJumpSeq?: number;
   /** HIGHFLY evade edge token. This is locomotion, never a hotbar ability. */
   highflyEvadeSeq?: number;
+  /** HIGHFLY ORIGIN opt-in only; native ClaudeCraft never permits air dodge
+   * without this explicit local move intent flag. */
+  highflyAirDashEnabled?: boolean;
   /** Swim DOWN. Only ever read while swimming, where it is the mirror of
    *  `surface` below: together they are the vertical stick that lets a player
    *  leave the surface and travel underwater. Ignored on land. Set by the dive

@@ -316,7 +316,10 @@ function installSkillTouch(): void {
 function paintContextualAttack(): void {
   const attack = document.getElementById('mobile-action-attack');
   if (!(attack instanceof HTMLButtonElement)) return;
-  const use = w.__highflyGameC1Context?.canUse?.() === true;
+  // The independent USAR button owns interactions in ORIGIN.
+  // C1's contextual painter must never relabel the real physical ATK button.
+  const use = !document.body.classList.contains('hf-origin-f1') &&
+    w.__highflyGameC1Context?.canUse?.() === true;
   const label = use ? 'USAR' : 'ATK';
   if (attack.dataset.highflyContext !== label) {
     attack.dataset.highflyContext = label;
@@ -407,7 +410,26 @@ const HIGHFLY_HUD_TARGETS: HighflyHudTarget[] = [
   { id: 'debuffs', label: 'DEBUFFS', selectors: ['#debuff-bar'] },
 ];
 
+// Existing ClaudeCraft/C28 slots do not match the four ORIGIN native buttons.
+const ORIGIN_HUD_TARGETS: HighflyHudTarget[] = [
+  ...Array.from({length:4},(_,index)=>({
+    id:'s'+(index+1), label:'HABILIDAD BASE '+(index+1),
+    selectors:['#mobile-action-ring .mobile-action-slot[data-mobile-index="'+index+'"]'],
+  })),
+  ...HIGHFLY_HUD_TARGETS.filter(t =>
+    !/^s\d+$/.test(t.id) && !['esp1','esp2','ult','stance'].includes(t.id))
+    .map(t => t.id==='attack' ? {...t,label:'ATK'} : t),
+  {id:'use',label:'USAR',selectors:['#mobile-interact']},
+];
+function activeHighflyHudTargets(): HighflyHudTarget[] {
+  return document.body.classList.contains('hf-origin-f1')
+    ? ORIGIN_HUD_TARGETS : HIGHFLY_HUD_TARGETS;
+}
 const HIGHFLY_HUD_STORE_PREFIX = 'highfly:c282:hud:';
+function highflyHudStorePrefix(): string {
+  return document.body.classList.contains('hf-origin-f1')
+    ? 'highfly:origin:f21:hud:' : HIGHFLY_HUD_STORE_PREFIX;
+}
 
 const HIGHFLY_HUD_DEFAULTS: Record<string, HighflyHudTransform> = {
   s1: { x: 17, y: 15, scale: 1, opacity: 1 },
@@ -437,6 +459,10 @@ const HIGHFLY_HUD_DEFAULTS: Record<string, HighflyHudTransform> = {
 };
 
 function highflyHudDefault(targetId: string): HighflyHudTransform {
+  // All F2.1 offsets start at ZERO relative to the approved compact arc.
+  // The donor's s1–s10 offsets must not scatter four genuine BASE controls.
+  if (document.body.classList.contains('hf-origin-f1'))
+    return { x:0,y:0,scale:1,opacity:1 };
   const value = HIGHFLY_HUD_DEFAULTS[targetId];
   return value ? { ...value } : { x: 0, y: 0, scale: 1, opacity: 1 };
 }
@@ -462,7 +488,7 @@ function highflyHudElements(target: HighflyHudTarget): HTMLElement[] {
 function highflyHudRead(targetId: string): HighflyHudTransform {
   const fallback = highflyHudDefault(targetId);
   try {
-    const raw = localStorage.getItem(HIGHFLY_HUD_STORE_PREFIX + targetId);
+    const raw = localStorage.getItem(highflyHudStorePrefix() + targetId);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw) as Partial<HighflyHudTransform>;
     return {
@@ -481,7 +507,7 @@ function highflyHudRead(targetId: string): HighflyHudTransform {
 }
 
 function highflyHudApply(targetId: string, value = highflyHudRead(targetId)): void {
-  const target = HIGHFLY_HUD_TARGETS.find((candidate) => candidate.id === targetId);
+  const target = activeHighflyHudTargets().find((candidate) => candidate.id === targetId);
   if (!target) return;
   for (const el of highflyHudElements(target)) {
     el.dataset.hfHudTarget = targetId;
@@ -503,7 +529,7 @@ function highflyHudSave(targetId: string, value: HighflyHudTransform): void {
     opacity: Math.min(1, Math.max(0.35, Math.round(value.opacity * 100) / 100)),
   };
   try {
-    localStorage.setItem(HIGHFLY_HUD_STORE_PREFIX + targetId, JSON.stringify(normalized));
+    localStorage.setItem(highflyHudStorePrefix() + targetId, JSON.stringify(normalized));
   } catch {
     // Storage can be unavailable in a hardened browser; the live edit still works.
   }
@@ -512,16 +538,16 @@ function highflyHudSave(targetId: string, value: HighflyHudTransform): void {
 }
 
 function highflyHudApplyAll(): void {
-  for (const target of HIGHFLY_HUD_TARGETS) highflyHudApply(target.id);
+  for (const target of activeHighflyHudTargets()) highflyHudApply(target.id);
 }
 
 function highflyHudReset(targetId: string): void {
   try {
-    localStorage.removeItem(HIGHFLY_HUD_STORE_PREFIX + targetId);
+    localStorage.removeItem(highflyHudStorePrefix() + targetId);
   } catch {
     // no-op
   }
-  const target = HIGHFLY_HUD_TARGETS.find((candidate) => candidate.id === targetId);
+  const target = activeHighflyHudTargets().find((candidate) => candidate.id === targetId);
   if (!target) return;
   for (const el of highflyHudElements(target)) {
     el.style.removeProperty('transform');
@@ -533,15 +559,15 @@ function highflyHudReset(targetId: string): void {
 }
 
 function highflyHudResetAll(): void {
-  for (const target of HIGHFLY_HUD_TARGETS) highflyHudReset(target.id);
+  for (const target of activeHighflyHudTargets()) highflyHudReset(target.id);
   toast('HUD RESTAURADO', 'Volvimos a la distribución HIGHFLY por defecto.');
 }
 
 function highflyHudSelect(id: string): void {
-  if (!HIGHFLY_HUD_TARGETS.some((target) => target.id === id)) return;
+  if (!activeHighflyHudTargets().some((target) => target.id === id)) return;
   highflyHudSelected = id;
   document.body.dataset.hfHudSelected = id;
-  for (const target of HIGHFLY_HUD_TARGETS) {
+  for (const target of activeHighflyHudTargets()) {
     for (const el of highflyHudElements(target)) {
       el.classList.toggle('hf-c28-hud-selected', target.id === id);
     }
@@ -552,7 +578,7 @@ function highflyHudSelect(id: string): void {
 function highflyHudPaintToolbar(): void {
   const root = document.getElementById('hf-c28-hud-editor');
   if (!root) return;
-  const target = HIGHFLY_HUD_TARGETS.find((candidate) => candidate.id === highflyHudSelected);
+  const target = activeHighflyHudTargets().find((candidate) => candidate.id === highflyHudSelected);
   const value = highflyHudRead(highflyHudSelected);
   const label = root.querySelector<HTMLElement>('[data-hf-hud-label]');
   const scaleText = root.querySelector<HTMLElement>('[data-hf-hud-scale-text]');
@@ -580,7 +606,7 @@ function highflyHudUpdateSelected(patch: Partial<HighflyHudTransform>): void {
 
 function highflyHudPresetPayload(): string {
   const targets: Record<string, HighflyHudTransform> = {};
-  for (const target of HIGHFLY_HUD_TARGETS) targets[target.id] = highflyHudRead(target.id);
+  for (const target of activeHighflyHudTargets()) targets[target.id] = highflyHudRead(target.id);
   return JSON.stringify({
     version: 4,
     build: HIGHFLY_GAME_C22_BUILD,
@@ -712,7 +738,7 @@ function openHighflyMobileSettings(): void {
 
 function highflyHudTargetFromEvent(event: PointerEvent): HighflyHudTarget | null {
   const path = event.composedPath();
-  for (const target of HIGHFLY_HUD_TARGETS) {
+  for (const target of activeHighflyHudTargets()) {
     const elements = highflyHudElements(target);
     if (elements.some((el) => path.includes(el))) return target;
   }

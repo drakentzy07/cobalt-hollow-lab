@@ -7,6 +7,7 @@ import {
 } from './highfly/origin/f1_core';
 import { mountOriginF1WorldUi, type OriginF1WorldUi } from './highfly/origin/f1_world_ui';
 import { ORIGIN_HUNTER_START } from './highfly/origin/f1_start';
+import { getOriginResourceController } from './highfly/origin/f1_resource_bridge';
 import { writeHighflyOfflineSave } from './game/highfly_offline_save';
 import { applyFrameGeometrySetting } from './game/frame_geometry_settings';
 import { formatAbilityImbueDamage } from './ui/ability_imbue_text';
@@ -1975,8 +1976,19 @@ async function startGame(
   hud.onHighflyBasicAttack = (step) => {
     const actionWorld = world as typeof world & {
       highflyBasicAttack?: (comboStep: 1 | 2 | 3 | 4) => boolean;
+      highflyElementalFinisherReady?: () => boolean;
     };
-    return actionWorld.highflyBasicAttack?.(step) ?? false;
+    const resource = document.body.classList.contains('hf-origin-f1')
+      ? getOriginResourceController() : null;
+    // Existing Origin resource state; physical attacks spend ST, a ready
+    // elemental finisher spends MP. Spend only if the native attack succeeds.
+    const magical = step === 4 && actionWorld.highflyElementalFinisherReady?.()===true;
+    const kind = magical ? 'mana' : 'stamina';
+    const cost = magical ? 10 : [2,3,4,6][step-1];
+    if (resource && !resource.canSpend(kind,cost)) return false;
+    const success = actionWorld.highflyBasicAttack?.(step) ?? false;
+    if (success) resource?.spend(kind,cost);
+    return success;
   };
   hud.onHighflyElementalFinisherReady = () => {
     const actionWorld = world as typeof world & {
@@ -4099,6 +4111,9 @@ async function startGame(
     if (flight) return flight;
     attackMoveTick();
     const mi = input.readMoveInput();
+    // The optional air-combat rules belong only to our offline ORIGIN Hunter.
+    // Native ClaudeCraft and the donor's other classes keep ground dodge.
+    mi.highflyAirDashEnabled = document.body.classList.contains('hf-origin-f1');
     let facing: number | null = mouselook ? input.camYaw : null;
     // HIGHFLY RUN0.5 analog locomotion. The left stick becomes a continuous
     // CAMERA-relative world vector; translation no longer depends on snapping

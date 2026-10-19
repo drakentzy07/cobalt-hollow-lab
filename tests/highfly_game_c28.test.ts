@@ -31,7 +31,8 @@ describe('HIGHFLY GAME-C2.8 mobile HUD editor', () => {
     expect(runtime).toContain('data-hf-hud-opacity');
     expect(runtime).toContain('data-hf-hud-x');
     expect(runtime).toContain('data-hf-hud-y');
-    expect(runtime).toContain("localStorage.setItem(HIGHFLY_HUD_STORE_PREFIX + targetId");
+    expect(runtime).toContain('localStorage.setItem(highflyHudStorePrefix() + targetId');
+    expect(runtime).toContain("'highfly:origin:f21:hud:'");
     expect(runtime).toContain('version: 4');
     expect(runtime).toContain('EXPORTAR PRESET');
     expect(runtime).toContain('RESTABLECER ELEMENTO');

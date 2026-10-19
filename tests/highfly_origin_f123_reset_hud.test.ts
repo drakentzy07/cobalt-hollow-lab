@@ -62,7 +62,7 @@ describe('HIGHFLY ORIGIN F1.2.3 device reset and mobile HUD',()=>{
     const ferry=readFileSync('src/ui/hud/transport/ferry_hud_painter.ts','utf8');
     expect(ferry).toContain("close.className = 'ferry-hud-dismiss'");
     const guide=readFileSync('src/highfly/origin/f1_world_ui.ts','utf8');
-    expect(guide).toContain("guide.style.display = nearby?'block':'none'");
+    expect(guide).toContain("guide.style.display = nearby && !current.starterClaimed ? 'block':'none'");
     expect(guide).toContain("swapOriginStarter(current,item.id)");
     expect(guide).toContain("sim.removeItem(oldId,1,sim.playerId)");
     const ferryCss=readFileSync('src/styles/hud.css','utf8');

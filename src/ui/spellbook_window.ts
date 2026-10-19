@@ -354,13 +354,19 @@ export class SpellbookWindow {
     // The kit list is the display order, but spec signatures and other talent grants are
     // known WITHOUT being in the base kit (e.g. mortal_strike, chain_heal, stormstrike), so
     // append any known-but-not-in-kit ability so the spellbook shows everything the player has.
-    const kit = cls.abilities;
+    const universalHunter = document.body.classList.contains('hf-origin-f1');
+    // Reuse the existing Spellbook; show all nine school libraries as
+    // undiscovered techniques, without adding ANY to world.known.
+    const kit: readonly string[] = universalHunter
+      ? [...new Set(Object.values(CLASSES).flatMap(school => school.abilities))]
+      : cls.abilities;
     const grantedExtra = world.known
       .map((k) => k.def.id)
       .filter((id) => !kit.includes(id) && !!ABILITIES[id]);
     const view = buildSpellbookView({
       classId,
       abilities: [...kit, ...grantedExtra],
+      showUndiscovered: universalHunter,
       known: world.known,
       // Both bar views are derived from the one latched slot list: one allocation
       // per rebuild, where the per-frame path pays none. abilityIdByBarSlot feeds
@@ -375,7 +381,7 @@ export class SpellbookWindow {
       spec: world.talentSpec,
       level: world.player.level,
     });
-    const className = classDisplayName(view.classId);
+    const className = universalHunter ? 'Hunter Universal · 9 escuelas' : classDisplayName(view.classId);
     markDialogRoot(el, { label: t('abilityUi.spellbook.title') });
     // "Reset bar" only applies to classes with per-form bars (druid); other classes
     // have a single bar, so the button is omitted for them.
@@ -662,7 +668,7 @@ export class SpellbookWindow {
     );
     el.innerHTML = `<div class="spell-icon ui-socket ui-socket--bag" style="background-image:url(${iconDataUrl('ability', row.abilityId)})"></div>
         <div class="spell-text"><div class="spell-name">${esc(name)}${known && known.rank > 1 ? ` <span class="spell-rank">${esc(t('abilityUi.tooltip.rank', { rank: this.formatAbilityNumber(known.rank) }))}</span>` : ''}</div>
-        <div class="spell-sub">${locked ? esc(t('abilityUi.spellbook.trainableAtLevel', { level: learnLevel })) : esc(summary)}</div></div>`;
+        <div class="spell-sub">${locked ? (document.body.classList.contains('hf-origin-f1') ? 'Por descubrir · aprendé esta técnica durante tu aventura' : esc(t('abilityUi.spellbook.trainableAtLevel', { level: learnLevel }))) : esc(summary)}</div></div>`;
     if (known && isAbilityActionBarEligible(def)) {
       const toggle = document.createElement('button');
       toggle.type = 'button';

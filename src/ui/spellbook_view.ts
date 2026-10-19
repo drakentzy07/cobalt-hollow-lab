@@ -70,6 +70,9 @@ export interface SpellbookInput {
   classId: PlayerClass;
   /** The class kit ability ids, in display order (cls.abilities). */
   abilities: readonly string[];
+  /** HIGHFLY Hunter Universal can browse all nine schools without learning
+   * them. Only rows present in world.known may be equipped or cast. */
+  showUndiscovered?: boolean;
   /** The player's learned abilities (sim.known). */
   known: readonly ResolvedAbility[];
   /** Ability ids currently on the action bar (drives the onBar / toggle state). */
@@ -131,7 +134,7 @@ export function buildSpellbookView(input: SpellbookInput): SpellbookView {
   const learnable = input.abilities.filter(
     (id) =>
       ABILITIES[id]?.hiddenFromPlayer !== true &&
-      (knownIds.has(id) || specCanLearn(id, input.spec, input.level)),
+      (knownIds.has(id) || input.showUndiscovered === true || specCanLearn(id, input.spec, input.level)),
   );
   const rows: SpellbookRow[] = learnable.map((abilityId) => {
     const known = input.known.find((k) => k.def.id === abilityId) ?? null;
