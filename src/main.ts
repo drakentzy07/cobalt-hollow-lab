@@ -195,6 +195,7 @@ import {
   installHighflyOfflineAutosave,
   loadHighflyOfflineSave,
   loadOriginHunterSave,
+  resetOriginHunterSave,
   loadHighflyTrainingProfile,
 } from './game/highfly_offline_save';
 import {
@@ -9550,6 +9551,31 @@ function wireStartScreens(): void {
   const btnStartOffline = $('#btn-start-offline') as HTMLButtonElement;
   const offlineNameInput = $('#char-name') as HTMLInputElement;
   const offlineError = $('#offline-error');
+  const resetOriginHunterBtn = document.getElementById('hf-origin-reset-hunter') as HTMLButtonElement | null;
+  resetOriginHunterBtn?.addEventListener('click', () => {
+    if (originHunterEntering) return;
+    const wanted = window.confirm(
+      '¿Reiniciar tu Hunter en ESTE dispositivo? Se eliminarán nivel, inventario, ' +
+      'arma, posición y progreso de HIGHFLY ORIGIN. No se puede deshacer. ' +
+      'Las partidas antiguas de ClaudeCraft no se tocarán.',
+    );
+    if (!wanted) return;
+    resetOriginHunterBtn.disabled = true;
+    void resetOriginHunterSave().then(ok=>{
+      if (!ok) {
+        resetOriginHunterBtn.disabled=false;
+        offlineError.textContent='No se pudo reiniciar el Hunter. No se borró la partida.';
+        return;
+      }
+      // Release all in-memory original profile and creation UI with the reload;
+      // do not return to the same JS session (could keep an old Hunter alive).
+      location.reload();
+    }).catch(err=>{
+      console.error('[HIGHFLY ORIGIN] Reset failure',err);
+      resetOriginHunterBtn.disabled=false;
+      offlineError.textContent='No se pudo borrar la partida del Hunter.';
+    });
+  });
   // Offline mode runs an unauthenticated local Sim with no server authority:
   // a dev/local-testing convenience only. Disabled in production builds,
   // unchanged (enabled) under `npm run dev`.
@@ -9756,6 +9782,7 @@ function wireStartScreens(): void {
   const handleOfflineSelect = () => {
     if (!offlineAvailable) return;
     document.body.classList.add('hf-origin-f1-creator');
+    if(resetOriginHunterBtn)resetOriginHunterBtn.hidden=true;
     show('#offline-select');
     // Mount the modular creator immediately; never gate appearance on slow IDB.
     // The saved appearance is reconciled later by the guarded restore handler.
@@ -9769,6 +9796,7 @@ function wireStartScreens(): void {
       // resolving, their explicit choice wins over the stale primary snapshot.
       if (highflyOfflineSelectionRevision !== restoreRevision) return;
       const originSave = normalizeOriginF1Save(saved?.originF1);
+      if(resetOriginHunterBtn) resetOriginHunterBtn.hidden = !originSave;
       offlineNameInput.value = originSave ? saved?.name ?? '' : '';
       if (originSave && saved?.appearance) {
         modularAppearance = normalizeAppearance(saved.appearance as Partial<ModularAppearance>);
