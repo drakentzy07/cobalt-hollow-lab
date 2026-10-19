@@ -10920,4 +10920,18 @@ body.mobile-touch.mobile-left-handed #mobile-stance-anchor {
   body.hf-origin-f1.mobile-touch.game-active #party-frames {
     top:calc(max(16px,env(safe-area-inset-top)) + 183px) !important;
   }
+  /* GPU warning is cosmetic, not an input blocker. In landscape gameplay keep
+   * the real warning on screen but seat it LEFT of the combat arc. Let touches
+   * through the passive notice surface, while its dismiss action stays tappable.
+   * Pre-game, desktop and donor layouts keep their original notification UI. */
+  body.hf-origin-f1.mobile-touch.game-active #gpu-notice {
+    top: max(6px, env(safe-area-inset-top, 0px));
+    right: calc(260px + env(safe-area-inset-right, 0px));
+    max-width: min(300px, calc(100vw - 350px));
+    font-size: 11px;
+    pointer-events: none;
+  }
+  body.hf-origin-f1.mobile-touch.game-active #gpu-notice .gpu-notice-dismiss {
+    pointer-events: auto;
+  }
 }

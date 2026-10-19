@@ -193,7 +193,25 @@ try {
           computedDisplay:style.display,inlineDisplay:e.style.display,hidden:e.hidden,
           hitSurface:top?.id||top?.className||top?.tagName||null};
       });
-      return {attack,use,target,atkHit:hit('mobile-action-attack'),useHit:hit('mobile-interact'),
+      // SwiftShader in CI legitimately displays the real GPU warning. Verify
+      // it stays visible and dismissible without obscuring ANY combat skill.
+      // Never suppress the warning just to pass a browser test.
+      const gpuNotice=(()=>{
+        const notice=document.getElementById('gpu-notice');
+        if(!notice||notice.hidden||!notice.getClientRects().length)return {visible:false};
+        const nr=notice.getBoundingClientRect();
+        const dismiss=notice.querySelector('.gpu-notice-dismiss');
+        const dr=dismiss?.getBoundingClientRect();
+        const at=dr?document.elementFromPoint(dr.x+dr.width/2,dr.y+dr.height/2):null;
+        const skillRects=[...document.querySelectorAll('#mobile-action-ring .mobile-action-slot')]
+          .map(e=>e.getBoundingClientRect());
+        return {visible:true,dismissHit:!!dismiss&&!!dr&&dr.width>0&&
+          (at===dismiss||dismiss.contains(at)),
+          occludesSkill:skillRects.some(r=>r.width>0&&r.height>0&&
+            r.left<nr.right&&nr.left<r.right&&r.top<nr.bottom&&nr.top<r.bottom),
+          x:nr.x,y:nr.y,w:nr.width,h:nr.height};
+      })();
+      return {attack,use,target,gpuNotice,atkHit:hit('mobile-action-attack'),useHit:hit('mobile-interact'),
         slots,oldActionbar:pos('actionbar-group'),page:pos('mobile-action-page-toggle'),
         originMeterInFrame:!!document.querySelector('#player-frame #hf-origin-f1-resource-meter'),
         meterLabels:[...document.querySelectorAll('#player-frame #hf-origin-f1-resource-meter span')]
@@ -204,6 +222,7 @@ try {
     });
     report.hud= hud;
     if(hud.slots.length!==4||hud.slots.some(s=>!s.visible||!s.width||!s.hit)||
+       (hud.gpuNotice.visible&&(!hud.gpuNotice.dismissHit||hud.gpuNotice.occludesSkill))||
        hud.oldActionbar.visible||hud.page.visible||!hud.originMeterInFrame||
        hud.meterLabels.join(',')!=='MP,ST'||!hud.nativeHp.visible||hud.nativeWarriorRage.visible||
        !hud.atkHit||!hud.useHit||!hud.attack.visible||!hud.use.visible||

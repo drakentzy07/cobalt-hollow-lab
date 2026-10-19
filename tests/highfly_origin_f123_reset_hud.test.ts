@@ -38,6 +38,12 @@ describe('HIGHFLY ORIGIN F1.2.3 device reset and mobile HUD',()=>{
     // the real native buttons even when the donor pager paints empty slots.
     expect(css).toContain('#mobile-action-ring > .mobile-action-slot,');
     expect(css).toContain('display: flex !important;');
+    // Visual AND touch ownership: GPU diagnostics must not cover real skills;
+    // its own close button remains usable in the live Android layout.
+    expect(css).toContain('body.hf-origin-f1.mobile-touch.game-active #gpu-notice {');
+    expect(css).toContain('#gpu-notice .gpu-notice-dismiss {');
+    expect(css).toContain('pointer-events: none;');
+    expect(css).toContain('pointer-events: auto;');
     const browser=readFileSync('scripts/highfly_origin_f1_browser.mjs','utf8');
     expect(browser).toContain('!s.visible||!s.width||!s.hit');
     expect(css).toContain('#mobile-action-ring #mobile-action-attack');
