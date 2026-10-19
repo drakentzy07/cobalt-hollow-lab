@@ -6,6 +6,7 @@ on:
       - ".github/workflows/highfly-origin-f1-universal-hunter-no-deploy.yml"
       - "src/**"
       - "tests/highfly_origin_f1_universal_hunter.test.ts"
+      - "scripts/highfly_origin_f1_browser.mjs"
       - "index.html"
   workflow_dispatch:
 
