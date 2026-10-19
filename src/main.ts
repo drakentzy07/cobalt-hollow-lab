@@ -5428,6 +5428,8 @@ async function startOffline(
   installHighflyTrainingUi();
 
   const offlineCfg = offlineWorldConfig({
+    // One classless Hunter. The warrior ID is a hidden compatibility carrier.
+    originUniversalHunter: !world,
     playerClass,
     name,
     // A cloned content descriptor changes ONLY this solo Hunter's arrival.
