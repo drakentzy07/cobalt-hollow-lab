@@ -145,6 +145,43 @@ try {
   if(initial.equipment.mainhand||initial.equipment.offhand||initial.equipment.chest)throw Error('F1_NOT_UNARMED '+JSON.stringify(initial.equipment));
   if(initial.position.x < -180)throw Error('F1_TELEPORTED_TO_TUTORIAL_ISLAND');
   if(!initial.guidePresent||!initial.resourceHud)throw Error('F1_GUIDE_OR_RESOURCE_MISSING');
+  if(process.env.F123_VERIFY_RESET_HUD==='1'){
+    const hud=await page.evaluate(()=>{
+      const pos=id=>{
+        const e=document.getElementById(id);
+        const r=e?.getBoundingClientRect();
+        return {visible:!!e&&getComputedStyle(e).display!=='none',
+          x:r?.x??0,y:r?.y??0,w:r?.width??0,h:r?.height??0};
+      };
+      const hit=(id)=>{
+        const r=pos(id);if(!r.visible)return false;
+        const el=document.elementFromPoint(r.x+r.w/2,r.y+r.h/2);
+        return el===document.getElementById(id)||document.getElementById(id)?.contains(el);
+      };
+      const attack=pos('mobile-action-attack'),use=pos('mobile-interact'),target=pos('mobile-target-cycle');
+      const slots=[...document.querySelectorAll('#mobile-action-ring .mobile-action-slot')].map(e=>({
+        id:e.dataset.mobileIndex,visible:getComputedStyle(e).display!=='none',
+        width:e.getBoundingClientRect().width,
+      }));
+      return {attack,use,target,atkHit:hit('mobile-action-attack'),useHit:hit('mobile-interact'),
+        slots,oldActionbar:pos('actionbar-group'),page:pos('mobile-action-page-toggle'),
+        originMeterInFrame:!!document.querySelector('#player-frame #hf-origin-f1-resource-meter'),
+        meterLabels:[...document.querySelectorAll('#player-frame #hf-origin-f1-resource-meter span')]
+          .map(e=>e.textContent?.trim()).filter(x=>x==='HP'||x==='MP'||x==='ST'),
+        nativeHp:pos('pf-hp'),nativeWarriorRage:pos('pf-resource')};
+    });
+    report.hud= hud;
+    if(hud.slots.length!==4||hud.slots.some(s=>!s.visible||!s.width)||
+       hud.oldActionbar.visible||hud.page.visible||!hud.originMeterInFrame||
+       hud.meterLabels.join(',')!=='MP,ST'||!hud.nativeHp.visible||hud.nativeWarriorRage.visible||
+       !hud.atkHit||!hud.useHit||!hud.attack.visible||!hud.use.visible||
+       hud.use.y<=hud.attack.y+hud.attack.h-3||
+       hud.target.y+hud.target.h>hud.attack.y+10){
+      throw Error('F123_HUNTER_HUD_LAYOUT_REGRESSION '+JSON.stringify(hud));
+    }
+    await page.screenshot({path:OUT+'/f123-combat-hud-android.png'});
+    checkpoint('f123-hud-atk-use-four-skills-resources');
+  }
   await page.screenshot({path:OUT+'/f1-birth-android.png'});
   checkpoint('starter-npc');
   await page.waitForFunction(()=>{
@@ -302,6 +339,77 @@ try {
     if(legacyApiCalls.length)throw Error('F11_DONOR_API_DEPENDENCY '+JSON.stringify(legacyApiCalls));
     console.log('HIGHFLY_F11_ANDROID_OFFLINE_RESTORE_GREEN=1',JSON.stringify(offline));
   }
+
+  if(process.env.F123_VERIFY_RESET_HUD==='1'){
+    // User-confirmed deletion works on a live, previously saved Hunter and
+    // leaves unrelated archived same-name ClaudeCraft primary intact.
+    await page.setOfflineMode(false);
+    await page.reload({waitUntil:'domcontentloaded',timeout:120_000});
+    await page.waitForSelector('#btn-play',{timeout:90_000});
+    await page.evaluate(()=>document.getElementById('btn-play')?.click());
+    await page.waitForFunction(()=>{
+      const b=document.getElementById('hf-origin-reset-hunter');
+      return !!b&&!b.hidden;
+    },{timeout:55_000});
+    page.once('dialog',dialog=>dialog.accept());
+    await page.evaluate(()=>document.getElementById('hf-origin-reset-hunter')?.click());
+    await page.waitForFunction(()=>document.getElementById('btn-play')&&!document.getElementById('offline-select')?.hidden,
+       {timeout:12000}).catch(()=>{});
+    await page.waitForSelector('#btn-play',{timeout:110_000});
+    await page.evaluate(()=>document.getElementById('btn-play')?.click());
+    await page.waitForFunction(()=>document.getElementById('char-name')?.value==='' &&
+       document.getElementById('hf-origin-reset-hunter')?.hidden,
+       {timeout:65_000});
+    const fresh=await page.evaluate(async()=>{
+      const legacy=JSON.parse(localStorage.getItem('highfly.offline.primary.v1')??'null');
+      const origin=localStorage.getItem('highfly.origin.primary.v1');
+      const db=await new Promise((ok,fail)=>{
+        const q=indexedDB.open('highfly-offline',1);
+        q.onsuccess=()=>ok(q.result);q.onerror=()=>fail(q.error);
+      });
+      const savedKeys=await new Promise((ok,fail)=>{
+        const t=db.transaction('saves','readonly');
+        const req=t.objectStore('saves').getAllKeys();
+        req.onsuccess=()=>ok(req.result);
+        req.onerror=()=>fail(req.error);
+      });
+      db.close();
+      return {origin,legacyName:legacy?.name,legacyLevel:legacy?.state?.level,
+        ownKeys:savedKeys.filter(k=>String(k).startsWith('origin-f1:')),
+        resetBtnHidden:document.getElementById('hf-origin-reset-hunter')?.hidden};
+    });
+    report.reset=fresh;
+    if(fresh.origin||fresh.legacyName!=='Wayfarer'||fresh.legacyLevel!==20||
+       fresh.ownKeys.length!==0||!fresh.resetBtnHidden)
+      throw Error('F123_RESET_LEGACY_ISOLATION_FAILURE '+JSON.stringify(fresh));
+    checkpoint('f123-hunter-removed-legacy-safe');
+    // Rebirth uses SAME name, returns to native start, no initial weapon,
+    // and the optional Veteran is offered again.
+    await page.evaluate(()=>{
+      const e=document.getElementById('char-name');e.value='Wayfarer';
+      e.dispatchEvent(new Event('input',{bubbles:true}));
+      document.getElementById('btn-start-offline')?.click();
+    });
+    await page.waitForSelector('#mobile-preflight-continue',{visible:true,timeout:20_000})
+      .then(()=>page.evaluate(()=>document.getElementById('mobile-preflight-continue')?.click()))
+      .catch(()=>{});
+    await page.waitForFunction(()=>window.__game?.sim?.player,{timeout:180_000});
+    await page.waitForSelector('#hf-origin-f1-hud',{timeout:35000});
+    const rebirth=await page.evaluate(()=>{
+      const sim=window.__game.sim,meta=sim.players.get(sim.playerId);
+      return {name:meta?.name,level:sim.player.level,
+        equipment:{...meta?.equipment},
+        guide:!!document.getElementById('hf-origin-f1-guide'),
+        offer:getComputedStyle(document.getElementById('hf-origin-f1-guide')).display!=='none'};
+    });
+    report.rebirth=rebirth;
+    if(rebirth.name!=='Wayfarer'||rebirth.equipment.mainhand||rebirth.equipment.offhand||
+       !rebirth.guide||!rebirth.offer)
+      throw Error('F123_REBIRTH_NOT_UNARMED '+JSON.stringify(rebirth));
+    console.log('HIGHFLY_F123_RESET_AND_HUD_REBIRTH_GREEN=1',JSON.stringify({hud:report.hud,reset:fresh,rebirth}));
+    checkpoint('f123-new-hunter-starter-reset');
+  }
+
   fs.writeFileSync(OUT+'/f1-browser-report.json',JSON.stringify(report,null,2)+'\\n');
   console.log('HIGHFLY_F1_ANDROID_BROWSER_INTERACTION_GREEN=1',JSON.stringify(report));
 } catch(error) {
