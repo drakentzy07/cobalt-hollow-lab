@@ -90,7 +90,7 @@ once(visual,"    const half=Math.max(.15,Math.min(.38,width*.35));",
 # LAB-ONLY in-memory projections; only native castAbilityAt admits casts.
 # Actual originHunter learnedSkillIds, serialization and resource costs untouched.
 runtime='src/highfly/highfly_android_p3_runtime.ts'
-once(runtime,"  editorPanel.prepend(preset);\n  syncPanel();",
+once(runtime,"    editorPanel.prepend(samples);\n  }\n  syncPanel();",
 """  editorPanel.prepend(preset);
   if(document.body.classList.contains('hf-r40-universal') &&
      new URLSearchParams(location.search).get('hf_lab')==='1')
