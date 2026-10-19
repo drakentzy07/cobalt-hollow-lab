@@ -47,6 +47,17 @@ try {
   checkpoint('launcher');
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:120_000});
   await page.evaluate(()=>localStorage.clear());
+  if (process.env.F121_SEED_LEGACY === '1') {
+    // This is the physical S23 collision regression: a PRE-ORIGIN Warrior
+    // saved under the SAME NAME on this exact GitHub Pages origin. Fresh
+    // automated profiles used to skip it, so the public build was blocked.
+    await page.evaluate(()=>{
+      const old = {version:1,playerClass:'warrior',name:'Wayfarer',
+        state:{level:20},appearance:null,updatedAt:Date.now()+10000};
+      localStorage.setItem('highfly.offline.primary.v1',JSON.stringify(old));
+    });
+    checkpoint('legacy-name-collision-seeded');
+  }
   await page.reload({waitUntil:'domcontentloaded',timeout:120_000});
   await page.waitForSelector('#btn-play',{timeout:90_000});
   checkpoint('launcher-ready');
@@ -142,6 +153,22 @@ try {
   if(granted.weapon!=='worn_sword'||!granted.saved||granted.savedWeapon!=='worn_sword')throw Error('F1_STARTER_NOT_PERSISTED');
   await page.screenshot({path:OUT+'/f1-first-weapon-android.png'});
   checkpoint('starter-verified');
+  if (process.env.F121_SEED_LEGACY === '1') {
+    const saves=await page.evaluate(()=>{
+      const legacy=JSON.parse(localStorage.getItem('highfly.offline.primary.v1')??'null');
+      const origin=JSON.parse(localStorage.getItem('highfly.origin.primary.v1')??'null');
+      return {legacyName:legacy?.name,legacyLevel:legacy?.state?.level,
+        legacyOrigin:!!legacy?.originF1,originName:origin?.name,
+        originSaved:origin?.originF1?.version===1,starterClaimed:origin?.originF1?.starterClaimed};
+    });
+    report.sameNameCollision=saves;
+    if(saves.legacyName!=='Wayfarer'||saves.legacyLevel!==20||saves.legacyOrigin||
+       saves.originName!=='Wayfarer'||!saves.originSaved||!saves.starterClaimed)
+      throw Error('F121_LEGACY_NAME_COLLISION_OR_SAVE_OVERWRITE '+JSON.stringify(saves));
+    console.log('HIGHFLY_F121_EXISTING_NAME_WITH_LEGACY_GREEN=1',JSON.stringify(saves));
+    checkpoint('same-name-legacy-origin-isolation');
+  }
+
   if (process.env.F11_VERIFY_RELOAD === '1') {
     // F1.1: certify the actual player state survives two new browser entries,
     // with the second one having no network access at all.
