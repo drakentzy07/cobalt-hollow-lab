@@ -822,7 +822,19 @@ export class CharacterVisual {
     // wearer class's independent mainhand and offhand layout.
     // Override only the held-item layout on a shallow def clone, leaving the rest of
     // the def (clips/height/tint) intact and never mutating the shared cached def.
-    this.def = weaponOverride
+    // In ORIGIN an empty equipment snapshot means genuinely empty hands.
+    // The donor Warrior VisualDef has an ornamental *fallback* sword, which
+    // survived the correct null IDs and fooled our previous DOM-only tests.
+    // Suppress fallback hand attachments for the one unarmed Hunter/creator,
+    // WITHOUT touching the donor's shared VISUALS, other class rigs or clips.
+    const originBare = typeof document !== 'undefined' &&
+      (document.body.classList.contains('hf-origin-f1-creator') ||
+       document.body.classList.contains('hf-origin-f1')) &&
+      key === 'player_warrior_modular' && weaponItemId === null &&
+      offhandItemId === null && !weaponOverride;
+    this.def = originBare
+      ? { ...prep.def, attach: [], weaponSlots: [], offhandSlot: undefined }
+      : weaponOverride
       ? {
           ...prep.def,
           attach: weaponOverride.attach,
