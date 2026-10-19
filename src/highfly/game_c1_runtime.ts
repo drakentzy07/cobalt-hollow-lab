@@ -425,9 +425,10 @@ function activeHighflyHudTargets(): HighflyHudTarget[] {
   return document.body.classList.contains('hf-origin-f1')
     ? ORIGIN_HUD_TARGETS : HIGHFLY_HUD_TARGETS;
 }
+const HIGHFLY_HUD_STORE_PREFIX = 'highfly:c282:hud:';
 function highflyHudStorePrefix(): string {
   return document.body.classList.contains('hf-origin-f1')
-    ? 'highfly:origin:f21:hud:' : 'highfly:c282:hud:';
+    ? 'highfly:origin:f21:hud:' : HIGHFLY_HUD_STORE_PREFIX;
 }
 
 const HIGHFLY_HUD_DEFAULTS: Record<string, HighflyHudTransform> = {
