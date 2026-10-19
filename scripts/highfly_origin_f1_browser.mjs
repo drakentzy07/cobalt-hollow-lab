@@ -211,7 +211,9 @@ try {
             r.left<nr.right&&nr.left<r.right&&r.top<nr.bottom&&nr.top<r.bottom),
           x:nr.x,y:nr.y,w:nr.width,h:nr.height};
       })();
-      return {attack,use,target,gpuNotice,atkHit:hit('mobile-action-attack'),useHit:hit('mobile-interact'),
+      return {attack,use,target,gpuNotice,
+        consumable:pos('mobile-consumable-seat'),consumableHit:hit('mobile-consumable-seat'),
+        atkHit:hit('mobile-action-attack'),useHit:hit('mobile-interact'),
         slots,oldActionbar:pos('actionbar-group'),page:pos('mobile-action-page-toggle'),
         originMeterInFrame:!!document.querySelector('#player-frame #hf-origin-f1-resource-meter'),
         meterLabels:[...document.querySelectorAll('#player-frame #hf-origin-f1-resource-meter span')]
@@ -226,7 +228,8 @@ try {
        (hud.gpuNotice.visible&&(!hud.gpuNotice.dismissHit||hud.gpuNotice.occludesSkill))||
        hud.oldActionbar.visible||hud.page.visible||!hud.originMeterInFrame||
        hud.meterLabels.join(',')!=='MP,ST'||!hud.nativeHp.visible||hud.nativeWarriorRage.visible||
-       !hud.atkHit||!hud.useHit||!hud.attack.visible||!hud.use.visible||
+       !hud.atkHit||!hud.useHit||!hud.consumable.visible||!hud.consumableHit||
+       !hud.attack.visible||!hud.use.visible||
        !hud.target.visible||!hud.nativeHp.visible||hud.nativeHp.w<=0||
        !hud.hudContainers.ui.visible||!hud.hudContainers.mobileControls.visible||
        hud.use.y<=hud.attack.y+hud.attack.h-3||
@@ -249,6 +252,20 @@ try {
     if(exclusive.modal!=='none'||exclusive.combo<=attackBefore||
        exclusive.playedAttackAnimation<=animatedBefore)
       throw Error('F1_ATK_MUST_STRIKE_NOT_USE '+JSON.stringify({attackBefore,exclusive}));
+    const ferry=await page.evaluate(()=>{
+      const root=document.getElementById('ferry-hud');
+      const btn=root?.querySelector('.ferry-hud-dismiss');
+      if(!root||getComputedStyle(root).display==='none'||!btn)return {visible:false};
+      const r=btn.getBoundingClientRect(),top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+      return {visible:true,hit:top===btn||btn.contains(top),x:r.x+r.width/2,y:r.y+r.height/2};
+    });
+    report.ferryClose=ferry;
+    if(ferry.visible){
+      if(!ferry.hit)throw Error('F1_FERRY_CLOSE_TOUCH_BLOCKED '+JSON.stringify(ferry));
+      await page.touchscreen.tap(ferry.x,ferry.y);
+      const closed=await page.evaluate(()=>getComputedStyle(document.getElementById('ferry-hud')).display==='none');
+      if(!closed)throw Error('F1_FERRY_CLOSE_DID_NOT_DISMISS');
+    }
     await page.screenshot({path:OUT+'/f123-combat-hud-android.png'});
     checkpoint('f123-hud-atk-use-four-skills-resources');
   }
@@ -301,6 +318,38 @@ try {
   if(granted.weapon!=='worn_sword'||!granted.saved||granted.savedWeapon!=='worn_sword')throw Error('F1_STARTER_NOT_PERSISTED');
   await page.screenshot({path:OUT+'/f1-first-weapon-android.png'});
   checkpoint('starter-verified');
+  if (process.env.F123_VERIFY_RESET_HUD === '1') {
+    // Reopening MUST allow a 1-for-1 change — no lost choice button and no
+    // duplicate starter grants when switching sword -> axe -> sword.
+    await page.waitForFunction(()=>{
+      const btn=document.getElementById('hf-origin-f1-open');
+      return btn&&getComputedStyle(btn.parentElement).display!=='none';
+    },{timeout:12000});
+    await page.evaluate(()=>document.getElementById('hf-origin-f1-open')?.click());
+    await page.waitForFunction(()=>document.getElementById('hf-origin-f1-modal-backdrop')?.style.display==='flex');
+    await page.evaluate(()=>document.querySelector('#hf-origin-f1-options [data-starter="rusty_hatchet"]')?.click());
+    await page.waitForFunction(()=>window.__game.sim.equipment.mainhand==='rusty_hatchet',{timeout:8000});
+    const swapped=await page.evaluate(()=>{
+      const s=window.__game.sim;
+      return {weapon:s.equipment.mainhand,
+        oldCopies:s.inventory.filter(e=>e.itemId==='worn_sword').reduce((n,e)=>n+e.count,0),
+        newCopies:s.inventory.filter(e=>e.itemId==='rusty_hatchet').reduce((n,e)=>n+e.count,0)};
+    });
+    report.starterExchange=swapped;
+    if(swapped.weapon!=='rusty_hatchet'||swapped.oldCopies!==0)
+      throw Error('F1_STARTER_SWAP_MINTED_EXTRA_WEAPON '+JSON.stringify(swapped));
+    await page.evaluate(()=>document.getElementById('hf-origin-f1-open')?.click());
+    await page.waitForFunction(()=>document.getElementById('hf-origin-f1-modal-backdrop')?.style.display==='flex');
+    await page.evaluate(()=>document.querySelector('#hf-origin-f1-options [data-starter="worn_sword"]')?.click());
+    await page.waitForFunction(()=>window.__game.sim.equipment.mainhand==='worn_sword',{timeout:8000});
+    const restored=await page.evaluate(()=>{
+      const s=window.__game.sim;
+      return {weapon:s.equipment.mainhand,staleCopies:s.inventory.filter(e=>e.itemId==='rusty_hatchet').reduce((n,e)=>n+e.count,0)};
+    });
+    if(restored.weapon!=='worn_sword'||restored.staleCopies!==0)
+      throw Error('F1_STARTER_SWAP_ROLLBACK_FAILED '+JSON.stringify(restored));
+    checkpoint('f123-starter-switch-without-extra-grants');
+  }
   if (process.env.F121_SEED_LEGACY === '1') {
     const saves=await page.evaluate(()=>{
       const legacy=JSON.parse(localStorage.getItem('highfly.offline.primary.v1')??'null');

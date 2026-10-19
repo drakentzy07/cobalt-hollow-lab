@@ -56,6 +56,9 @@ describe('HIGHFLY ORIGIN F1.2.3 device reset and mobile HUD',()=>{
     const guide=readFileSync('src/highfly/origin/f1_world_ui.ts','utf8');
     expect(guide).toContain("guide.style.display = nearby?'block':'none'");
     expect(guide).toContain("swapOriginStarter(current,item.id)");
+    expect(guide).toContain("sim.removeItem(oldId,1,sim.playerId)");
+    const ferryCss=readFileSync('src/styles/hud.css','utf8');
+    expect(ferryCss).toContain('left: max(8px, env(safe-area-inset-left, 0px));');
     for(let i=0;i<4;i++) expect(css).toContain(`#mobile-action-ring .mobile-action-slot[data-mobile-index="${i}"]`);
     expect(html).toContain('id="mobile-action-attack"');
     expect(html).toContain('id="mobile-interact"');

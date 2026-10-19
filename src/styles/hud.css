@@ -15263,7 +15263,14 @@
   }
   .ferry-hud .ferry-hud-dismiss { display: none; }
   body.hf-origin-f1.mobile-touch.game-active .ferry-hud {
+    /* An optional pier timetable must NEVER cover the right-side abilities.
+     * Place it below the player portrait on the LEFT, not over the combat arc. */
     position: absolute;
+    top: 116px;
+    left: max(8px, env(safe-area-inset-left, 0px));
+    transform: none;
+    width: min(305px, 36vw);
+    max-width: 36vw;
     padding-right: 43px;
   }
   body.hf-origin-f1.mobile-touch.game-active .ferry-hud .ferry-hud-dismiss {
