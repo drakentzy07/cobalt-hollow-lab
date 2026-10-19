@@ -1129,3 +1129,17 @@ body.hf-origin-f1.mobile-touch.game-active #hf-c1-esp2 {
 body.hf-origin-f1.mobile-touch.game-active #hf-c1-ult {
   right: 264px !important; bottom: 215px !important;
 }
+
+/* F2.1: real inventory/character/skills windows ALWAYS outrank the
+ * gameplay utility lane, buff labels and the Veteran proximity CTA. The
+ * items themselves had stronger visibility rules than the parent; hiding
+ * BOTH avoids children reappearing through a hidden ancestor. */
+body.hf-origin-f1.mobile-touch:is(.mobile-more-open,.mobile-window-open,.hf-origin-f21-window-open) #hf-c1-utility-lane,
+body.hf-origin-f1.mobile-touch:is(.mobile-more-open,.mobile-window-open,.hf-origin-f21-window-open) #hf-c1-utility-lane > *,
+body.hf-origin-f1.mobile-touch:is(.mobile-more-open,.mobile-window-open,.hf-origin-f21-window-open) #buff-bar,
+body.hf-origin-f1.mobile-touch:is(.mobile-more-open,.mobile-window-open,.hf-origin-f21-window-open) #debuff-bar,
+body.hf-origin-f1.mobile-touch:is(.mobile-more-open,.mobile-window-open,.hf-origin-f21-window-open) #hf-origin-f1-guide {
+  display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
