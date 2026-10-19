@@ -6,6 +6,7 @@ import {
   normalizeOriginF1Save,
 } from './highfly/origin/f1_core';
 import { mountOriginF1WorldUi, type OriginF1WorldUi } from './highfly/origin/f1_world_ui';
+import { ORIGIN_HUNTER_START } from './highfly/origin/f1_start';
 import { writeHighflyOfflineSave } from './game/highfly_offline_save';
 import { applyFrameGeometrySetting } from './game/frame_geometry_settings';
 import { formatAbilityImbueDamage } from './ui/ability_imbue_text';
@@ -445,6 +446,7 @@ import { HEROIC_VENDOR_STOCK } from './sim/content/heroic_vendor';
 import { MECH_CHROMAS } from './sim/content/skins';
 import { rowTreeFor } from './sim/content/talents';
 import {
+  BUILTIN_WORLD,
   GATHER_NODES,
   ITEMS,
   isRiftPos,
@@ -5413,7 +5415,9 @@ async function startOffline(
   const offlineCfg = offlineWorldConfig({
     playerClass,
     name,
-    world,
+    // A cloned content descriptor changes ONLY this solo Hunter's arrival.
+    // The donor map, port, boat, NPC quests and world generation stay intact.
+    world: world ?? { ...BUILTIN_WORLD, playerStart: ORIGIN_HUNTER_START },
     seedOverride,
     devCommands: import.meta.env.DEV,
   });
