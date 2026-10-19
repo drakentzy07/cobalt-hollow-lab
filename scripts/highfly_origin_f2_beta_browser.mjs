@@ -170,12 +170,32 @@ try {
   },{timeout:10000});
   // Real INPUT edges into the ONE Sim: first jump -> airborne dodge -> second
   // directional jump. The authored flip belongs to the renderer, not teleport.
-  await page.evaluate(()=>window.__game.input.triggerTouchJump());
-  await page.waitForFunction(()=>window.__game?.sim?.player?.jumping===true,{timeout:12000});
+  // Software-GPU CI can drop below 5fps under GLB compilation, while the
+  // production tap latch is intentionally 220ms. Keep the exact real edge
+  // but lengthen its QA holding interval until the next simulation tick.
+  await page.evaluate(()=>{
+    window.__game.input.triggerTouchJump();
+    window.__game.input.touchJumpUntil=performance.now()+1500;
+  });
+  const jumpStarted=await page.waitForFunction(()=>window.__game?.sim?.player?.jumping===true,{timeout:12000})
+    .then(()=>true).catch(()=>false);
+  if(!jumpStarted) {
+    const diagnosis=await page.evaluate(()=>{
+      const g=window.__game,p=g.sim.player;
+      return {input:g.input.readMoveInput(),suspended:g.input.suspendMovement,
+        jumpSeq:g.input.highflyJumpSeq,lastJumpSeq:p.highflyLastJumpSeq,
+        onGround:p.onGround,jumping:p.jumping,vy:p.vy,dead:p.dead,
+        rooted:p.auras?.map(x=>x.id).slice(0,12),pos:p.pos,time:g.sim.time};
+    });
+    throw Error('F22_FIRST_JUMP_NOT_OBSERVED '+JSON.stringify(diagnosis));
+  }
   await page.evaluate(()=>window.__game.input.triggerHighflyEvade());
   await page.waitForFunction(()=>window.__game?.sim?.player?.highflyLastEvadeSeq>0,{timeout:11000});
   await page.evaluate(()=>window.__game.input.setHighflyTouchVector({x:1,y:0}));
-  await page.evaluate(()=>window.__game.input.triggerTouchJump());
+  await page.evaluate(()=>{
+    window.__game.input.triggerTouchJump();
+    window.__game.input.touchJumpUntil=performance.now()+1500;
+  });
   await page.waitForFunction(()=>window.__game?.sim?.player?.highflyAirJumpUsed===true,{timeout:15000});
   const chain=await page.evaluate(()=>({
     secondJump:window.__game.sim.player.highflyAirJumpUsed,
