@@ -5852,11 +5852,13 @@ let highflyPreviewClassRequest = 0;
 
 async function ensureHighflyPreviewClassReady(cls: PlayerClass): Promise<void> {
   const classDef = CLASSES[cls];
-  const bareHunter = document.body.classList.contains('hf-origin-f1-creator');
+  // The KayKit modular visual's asset dependency graph still needs the donor
+  // class weapon model preloaded even when the F1.2.1 turntable equips NOTHING.
+  // Prefetching an asset does not visually equip it.
   await previewVisualReady(
     modularVisualKey(cls),
-    bareHunter ? null : (classDef.startWeapon ?? null),
-    bareHunter ? null : (classDef.startOffhand ?? null),
+    classDef.startWeapon ?? null,
+    classDef.startOffhand ?? null,
     3,
   );
 }
