@@ -10863,20 +10863,24 @@ body.mobile-touch.mobile-left-handed #mobile-stance-anchor {
     top: auto !important;
     bottom: 167px !important;
   }
-  /* FOUR real native mobile skill seats on a distinct ascending left arc. */
+  /* Four BASE skills curve around the BIG native ATK button as one balanced
+   * inward-facing CRESCENT, not the donor C1 ten-button scatter. Coordinates
+   * are for the actual four native buttons: 1 lower-left, 2 mid-lower-left,
+   * 3 mid-upper-left, 4 upper-left. All four have ≥48px touch rectangles.
+   * The upper one stays to the LEFT of minimap (S23 viewport 844×390).
+   * The second three-seat OUTER crescent is staged in hf_game_c1.css but
+   * remains invisible until each UNIQUE skill is truly unlocked. */
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring .mobile-action-slot[data-mobile-index="0"] {
-    left:auto !important;right:145px !important;top:auto !important;bottom:72px !important;
+    left:auto !important;right:138px !important;top:auto !important;bottom:39px !important;
   }
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring .mobile-action-slot[data-mobile-index="1"] {
-    left:auto !important;right:185px !important;top:auto !important;bottom:124px !important;
+    left:auto !important;right:170px !important;top:auto !important;bottom:96px !important;
   }
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring .mobile-action-slot[data-mobile-index="2"] {
-    left:auto !important;right:196px !important;top:auto !important;bottom:176px !important;
+    left:auto !important;right:170px !important;top:auto !important;bottom:156px !important;
   }
-  /* Four genuine skill buttons rise in numeric order along one uncluttered
-   * arc, kept below-left of the minimap and the GPU warning. */
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring .mobile-action-slot[data-mobile-index="3"] {
-    left:auto !important;right:209px !important;top:auto !important;bottom:230px !important;
+    left:auto !important;right:138px !important;top:auto !important;bottom:211px !important;
   }
   /* Auxiliaries along the lower middle, separated from left joystick. */
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring #mobile-jump {
