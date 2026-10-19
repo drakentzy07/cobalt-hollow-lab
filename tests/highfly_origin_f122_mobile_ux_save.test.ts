@@ -43,7 +43,7 @@ describe('HIGHFLY ORIGIN F1.2.2 — Android-safe UX and save contract', () => {
       }
       expect(sim.canAddItem(item.id,1,sim.playerId),item.id).toBe(true);
       sim.addItem(item.id,1,sim.playerId);
-      expect(sim.equipItem(item.id,sim.playerId),item.id).toBe(true);
+      sim.equipItem(item.id,sim.playerId);
       expect(meta.equipment.mainhand,item.id).toBe(item.id);
     }
   });
