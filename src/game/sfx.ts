@@ -33,6 +33,16 @@ import {
 import { loadRuntimeSfxPack } from './sfx_runtime_pack';
 import { type WaterElementalCue, waterElementalSamples } from './water_elemental_audio';
 
+/** Vite deploys on /cobalt-hollow-lab/, while the frozen SFX catalog ships
+ * immutable URLs rooted at /audio/sfx. Route first-party static audio through
+ * the exact Pages base; leave absolute remote/runtime origins unchanged.
+ */
+function publicSfxUrl(url: string): string {
+  const base = import.meta.env.BASE_URL || '/';
+  if (base === '/' || !url.startsWith('/audio/sfx/')) return url;
+  return base.replace(/\/$/, '') + url;
+}
+
 const SAMPLE_GAIN = 0.85; // base level for sampled clips; sfxVolume multiplies this
 /** Per-call level for the movement one-shots (jump / land / splash / swim). */
 const MOVE_GAIN = 0.7;
@@ -326,7 +336,7 @@ class Sfx {
       this.installProceduralBuffers();
       if (typeof window !== 'undefined') {
         this.clipsReady = loadRuntimeSfxPack(
-          apiUrl(SFX_RUNTIME_PACK_URL),
+          apiUrl(publicSfxUrl(SFX_RUNTIME_PACK_URL)),
           SFX_CATALOG_HASH,
           SFX_CLIPS,
         ).then((clips) => {
@@ -403,7 +413,7 @@ class Sfx {
           this.failedLoads.add(cacheKey);
           return null;
         }
-        const res = await fetch(variant.url);
+        const res = await fetch(publicSfxUrl(variant.url));
         if (!res.ok) {
           this.failedLoads.add(cacheKey);
           return null;
