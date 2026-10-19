@@ -185,10 +185,12 @@ try {
       const attack=pos('mobile-action-attack'),use=pos('mobile-interact'),target=pos('mobile-target-cycle');
       const slots=[...document.querySelectorAll('#mobile-action-ring .mobile-action-slot')].map(e=>{
         const r=e.getBoundingClientRect(),style=getComputedStyle(e);
+        const x=r.x+r.width/2,y=r.y+r.height/2,top=document.elementFromPoint(x,y);
         return {id:e.dataset.mobileIndex,
           visible:e.isConnected&&e.getClientRects().length>0&&style.display!=='none'&&
             style.visibility!=='hidden'&&r.width>=40&&r.height>=40,
-          width:r.width,height:r.height};
+          width:r.width,height:r.height,hit:top===e||e.contains(top),
+          computedDisplay:style.display,inlineDisplay:e.style.display,hidden:e.hidden};
       });
       return {attack,use,target,atkHit:hit('mobile-action-attack'),useHit:hit('mobile-interact'),
         slots,oldActionbar:pos('actionbar-group'),page:pos('mobile-action-page-toggle'),
@@ -200,7 +202,7 @@ try {
           ring:pos('mobile-action-ring')}};
     });
     report.hud= hud;
-    if(hud.slots.length!==4||hud.slots.some(s=>!s.visible||!s.width)||
+    if(hud.slots.length!==4||hud.slots.some(s=>!s.visible||!s.width||!s.hit)||
        hud.oldActionbar.visible||hud.page.visible||!hud.originMeterInFrame||
        hud.meterLabels.join(',')!=='MP,ST'||!hud.nativeHp.visible||hud.nativeWarriorRage.visible||
        !hud.atkHit||!hud.useHit||!hud.attack.visible||!hud.use.visible||

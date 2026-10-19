@@ -10828,6 +10828,19 @@ body.mobile-touch.mobile-left-handed #mobile-stance-anchor {
     transform: scale(var(--btn-scale,1));
     transform-origin: right bottom;
   }
+  /* ORIGIN's four permanent BASE seats and contextual USAR are ALWAYS real,
+   * reachable buttons. The inherited action-bar pager/control policy may
+   * issue display:none for unused/unassigned donor seats. In ORIGIN those four
+   * seats are intentionally reserved even before a skill is learned, so an
+   * empty slot stays on screen (the native painter still renders its empty
+   * state and the native gesture/cast binding remains authoritative).
+   * Keep this scoped to ORIGIN only; other game modes retain normal paging. */
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring > .mobile-action-slot,
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring > #mobile-interact {
+    display: flex !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring #mobile-action-attack {
     left: auto !important;
     right: 8px !important;

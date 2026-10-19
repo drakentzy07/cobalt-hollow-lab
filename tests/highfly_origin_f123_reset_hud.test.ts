@@ -34,6 +34,12 @@ describe('HIGHFLY ORIGIN F1.2.3 device reset and mobile HUD',()=>{
     expect(css).toContain('body.hf-origin-f1.mobile-touch.game-active #actionbar-group');
     expect(css).toContain('body.hf-origin-f1.mobile-touch.game-active #mobile-action-page-toggle');
     expect(css).toContain('#mobile-action-ring #mobile-interact');
+    // This is a deliberate ORIGIN-only layout override; it must preserve
+    // the real native buttons even when the donor pager paints empty slots.
+    expect(css).toContain('#mobile-action-ring > .mobile-action-slot,');
+    expect(css).toContain('display: flex !important;');
+    const browser=readFileSync('scripts/highfly_origin_f1_browser.mjs','utf8');
+    expect(browser).toContain('!s.visible||!s.width||!s.hit');
     expect(css).toContain('#mobile-action-ring #mobile-action-attack');
     for(let i=0;i<4;i++) expect(css).toContain(`#mobile-action-ring .mobile-action-slot[data-mobile-index="${i}"]`);
     expect(html).toContain('id="mobile-action-attack"');
