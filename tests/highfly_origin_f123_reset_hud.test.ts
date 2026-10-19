@@ -47,10 +47,12 @@ describe('HIGHFLY ORIGIN F1.2.3 device reset and mobile HUD',()=>{
     const browser=readFileSync('scripts/highfly_origin_f1_browser.mjs','utf8');
     expect(browser).toContain('!s.visible||!s.width||!s.hit');
     expect(css).toContain('#mobile-action-ring #mobile-action-attack');
-    expect(css).toContain('#mobile-action-ring #mobile-consumable-seat {');
-    expect(css).toContain('right: 235px !important;');
-    expect(css).toContain('width: 44px !important;');
-    expect(css).toContain('height: 44px !important;');
+    const c1Css=readFileSync('src/styles/hf_game_c1.css','utf8');
+    expect(css).not.toContain('#mobile-action-ring #mobile-consumable-seat {');
+    expect(c1Css).toContain('#hf-c1-utility-lane > #mobile-consumable-seat {');
+    expect(c1Css).toContain('width: 44px !important;');
+    expect(c1Css).toContain('max-width: 44px !important;');
+    expect(c1Css).toContain('body.hf-origin-f1.mobile-touch.game-active #hf-c22-ghost-skills');
     expect(browser).toContain('!hud.consumableHit');
     expect(css).not.toContain('#mobile-action-page-toggle,\\n  body.hf-origin-f1.mobile-touch.game-active #mobile-consumable-seat,');
     const ring=readFileSync('src/ui/hud/action_bar/mobile_action_ring_controller.ts','utf8');

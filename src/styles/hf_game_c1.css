@@ -1069,3 +1069,30 @@ body.hf-c28-hud-editing .hf-c28-hud-selected {
     font-size: 7px;
   }
 }
+
+/* HIGHFLY ORIGIN F1 FIX — bridge retired C1 chrome to one Hunter HUD.
+ * GAME-C1 moves the REAL consumable into #hf-c1-utility-lane alongside
+ * #hf-c1-gem-seat (game_c1_runtime.ensureUtilityLane). The 36px C2.5
+ * override below the touch target floor must NEVER beat this Origin rule.
+ * C1 standalone lab and donor modes keep their own presentation. */
+body.hf-origin-f1.mobile-touch.game-active #hf-c1-utility-lane > #hf-c1-gem-seat,
+body.hf-origin-f1.mobile-touch.game-active #hf-c1-utility-lane > #mobile-consumable-seat {
+  display: grid !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  max-width: 44px !important;
+  max-height: 44px !important;
+  box-sizing: border-box !important;
+}
+/* The ten old C1 seats and three placeholder specials MUST remain invisible
+ * in the one-Hunter production game. They are not unlocked unique abilities. */
+body.hf-origin-f1.mobile-touch.game-active #hf-c1-special-seats,
+body.hf-origin-f1.mobile-touch.game-active #hf-c22-ghost-skills,
+body.hf-origin-f1.mobile-touch.game-active #actionbar {
+  display: none !important;
+  pointer-events: none !important;
+}

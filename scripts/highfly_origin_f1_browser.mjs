@@ -213,6 +213,9 @@ try {
       })();
       return {attack,use,target,gpuNotice,
         consumable:pos('mobile-consumable-seat'),consumableHit:hit('mobile-consumable-seat'),
+        gem:pos('hf-c1-gem-seat'),gemHit:hit('hf-c1-gem-seat'),
+        consumableOwner:document.getElementById('mobile-consumable-seat')?.parentElement?.id,
+        c1Ghosts:pos('hf-c22-ghost-skills'),c1Specials:pos('hf-c1-special-seats'),
         consumableTop:(()=>{
           const r=pos('mobile-consumable-seat');
           const e=document.elementFromPoint(r.x+r.w/2,r.y+r.h/2);
@@ -234,6 +237,10 @@ try {
        hud.oldActionbar.visible||hud.page.visible||!hud.originMeterInFrame||
        hud.meterLabels.join(',')!=='MP,ST'||!hud.nativeHp.visible||hud.nativeWarriorRage.visible||
        !hud.atkHit||!hud.useHit||!hud.consumable.visible||!hud.consumableHit||
+       !hud.gem.visible||!hud.gemHit||hud.consumableOwner!=='hf-c1-utility-lane'||
+       Math.abs(hud.gem.y-hud.consumable.y)>12||
+       Math.abs(hud.consumable.x-(hud.gem.x+hud.gem.w))>25||
+       hud.c1Ghosts.visible||hud.c1Specials.visible||
        !hud.attack.visible||!hud.use.visible||
        !hud.target.visible||!hud.nativeHp.visible||hud.nativeHp.w<=0||
        !hud.hudContainers.ui.visible||!hud.hudContainers.mobileControls.visible||
