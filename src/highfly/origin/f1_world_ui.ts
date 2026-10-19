@@ -144,6 +144,10 @@ export function mountOriginF1WorldUi(
   }
   const timer=window.setInterval(()=>{
     if(!root.isConnected) {window.clearInterval(timer);return;}
+    // HUD frames may remount/move AFTER the game-ready callback. Always seat
+    // this one shared MP/ST meter alongside the LIVE native portrait/HP bars.
+    const liveUnitBars=document.querySelector('#player-frame .uf-bars');
+    if(liveUnitBars && meter.parentElement !== liveUnitBars) liveUnitBars.append(meter);
     const now=performance.now();
     current={...current,resources:tickF1Resources(current.resources,(now-last)/1000)};
     last=now;
