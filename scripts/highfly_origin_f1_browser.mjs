@@ -128,16 +128,49 @@ try {
   if(initial.equipment.mainhand||initial.equipment.offhand||initial.equipment.chest)throw Error('F1_NOT_UNARMED '+JSON.stringify(initial.equipment));
   if(initial.position.x < -180)throw Error('F1_TELEPORTED_TO_TUTORIAL_ISLAND');
   if(!initial.guidePresent||!initial.resourceHud)throw Error('F1_GUIDE_OR_RESOURCE_MISSING');
+  if(process.env.F122_VERIFY_UX==='1') {
+    const creator=await page.evaluate(()=>({
+      weapon:document.getElementById('char-preview-canvas')?.dataset.highflyPreviewWeaponItem,
+      offhand:document.getElementById('char-preview-canvas')?.dataset.highflyPreviewOffhandItem,
+    }));
+    report.unarmedPreview=creator;
+    if(creator.weapon||creator.offhand)
+      throw Error('F122_PREVIEW_HAD_LEGACY_SWORD_OR_SHIELD '+JSON.stringify(creator));
+  }
   await page.screenshot({path:OUT+'/f1-birth-android.png'});
   checkpoint('starter-npc');
   await page.waitForFunction(()=>{
     const guide=document.getElementById('hf-origin-f1-guide');
     return guide&&getComputedStyle(guide).display!=='none';
   },{timeout:15000});
-  await page.evaluate(()=>{
-    document.querySelector('#hf-origin-f1-guide button')?.click();
-    document.querySelector('#hf-origin-f1-guide div:nth-of-type(2) button')?.click();
-  });
+  await page.evaluate(()=>document.getElementById('hf-origin-f1-open')?.click());
+  await page.waitForFunction(()=>getComputedStyle(document.getElementById('hf-origin-f1-modal-backdrop')).display==='flex');
+  if(process.env.F122_VERIFY_UX==='1'){
+    const geometry=await page.evaluate(()=>{
+      const modal=document.getElementById('hf-origin-f1-weapon-dialog');
+      const bounds=modal.getBoundingClientRect();
+      const options=[...document.querySelectorAll('#hf-origin-f1-options button')];
+      const buttonHits=options.map(el=>{
+        const r=el.getBoundingClientRect();
+        const cx=r.left+r.width/2,cy=r.top+r.height/2;
+        const top=document.elementFromPoint(cx,cy);
+        return {label:el.textContent,rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom},
+          within:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight,
+          hittable:top===el||el.contains(top)};
+      });
+      return {bounds:{left:bounds.left,top:bounds.top,right:bounds.right,bottom:bounds.bottom},
+        viewport:{w:innerWidth,h:innerHeight},buttonHits};
+    });
+    report.starterModal=geometry;
+    if(geometry.buttonHits.length!==3||
+      geometry.buttonHits.some(x=>!x.within||!x.hittable))
+      throw Error('F122_STARTER_HIDDEN_BEHIND_JOYSTICK '+JSON.stringify(geometry));
+    await page.screenshot({path:OUT+'/f122-starter-android-choices-visible.png'});
+    await page.evaluate(()=>document.getElementById('hf-origin-f1-close')?.click());
+    await page.waitForFunction(()=>getComputedStyle(document.getElementById('hf-origin-f1-modal-backdrop')).display==='none');
+    await page.evaluate(()=>document.getElementById('hf-origin-f1-open')?.click());
+  }
+  await page.evaluate(()=>document.querySelector('#hf-origin-f1-options [data-starter="worn_sword"]')?.click());
   await page.waitForFunction(()=>window.__game.sim.players.get(window.__game.sim.playerId)?.equipment.mainhand==='worn_sword',{timeout:13000});
   const granted=await page.evaluate(()=>{
     const raw=(localStorage.getItem('highfly.origin.primary.v1') ?? localStorage.getItem('highfly.offline.primary.v1'));
@@ -198,6 +231,18 @@ try {
         npcOffersAgain:getComputedStyle(document.getElementById('hf-origin-f1-guide')).display!=='none',
       };
     });
+    if(process.env.F122_VERIFY_UX==='1'){
+      const currentSaved=await page.evaluate(()=>{
+        const p=JSON.parse(localStorage.getItem('highfly.origin.primary.v1')??'null');
+        const c=window.__game.sim.player.pos;
+        return {saved:p?.state?.pos,actual:{x:c.x,z:c.z},savedDead:p?.state?.dead};
+      });
+      report.positionRestore=currentSaved;
+      if(!currentSaved.saved||Math.hypot(currentSaved.saved.x-currentSaved.actual.x,
+        currentSaved.saved.z-currentSaved.actual.z)>4)
+        throw Error('F122_POSITION_RESTORE_FAILED '+JSON.stringify(currentSaved));
+      checkpoint('f122-position-restored');
+    }
     report.resumed=resumed;
     if(resumed.count!==1||resumed.name!=='Wayfarer'||resumed.mainhand!=='worn_sword'||!resumed.claimed||resumed.npcOffersAgain)
       throw Error('F11_RESUME_HUNTER_REGRESSION '+JSON.stringify(resumed));
