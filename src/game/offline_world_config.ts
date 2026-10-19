@@ -22,7 +22,8 @@ export function offlineWorldConfig(options: {
     devCommands: options.devCommands,
     // Editor play-test maps opt out of the live world's entry features.
     riftPortals: options.world === undefined,
-    compulsoryTutorial: options.world === undefined,
+    // F1: tutorial island is optional, never forces a newborn ferry.
+    compulsoryTutorial: false,
     // Match live idle-AI throttling outside the player's actionable interest.
     idleMobTickRadius: PLAYER_INTEREST_DROP_RADIUS,
     world: options.world,

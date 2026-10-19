@@ -1,6 +1,7 @@
 import type { CharacterState } from '../sim/character_state';
 import type { PlayerClass } from '../sim/types';
 import { HIGHFLY_TRAINING_SCHEMA_VERSION, type HighflyHunterProfile } from '../highfly/training/core';
+import type { OriginF1Save } from '../highfly/origin/f1_core';
 
 export interface HighflyOfflineSave {
   version: 1;
@@ -8,6 +9,7 @@ export interface HighflyOfflineSave {
   name: string;
   state: CharacterState;
   appearance: Record<string, unknown> | null;
+  originF1?: OriginF1Save;
   trainingProfile?: HighflyHunterProfile;
   updatedAt: number;
 }

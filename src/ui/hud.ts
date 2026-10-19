@@ -8846,8 +8846,12 @@ export class Hud {
     this.mountRaceControls.update();
     this.vehicleControls.update();
     this.lockpickController.repaintIfChanged();
-    this.tutorial.update(sim, this.renderer, this.keybinds);
-    this.bootcamp.update(sim, this.renderer, this.keybinds, this.optionsHooks?.gamepad ?? null);
+    // The island and tutorial lessons stay in world data, but F1's original
+    // isekai birth deliberately has no compulsory classic HUD coach.
+    if (!document.body.classList.contains('hf-origin-f1')) {
+      this.tutorial.update(sim, this.renderer, this.keybinds);
+      this.bootcamp.update(sim, this.renderer, this.keybinds, this.optionsHooks?.gamepad ?? null);
+    }
     if (slowHud) this.updateRaidLockoutBadge();
     if (slowHud) this.dailyRewardsLauncher.refresh();
     this.maybeRestoreActionBarLayout();

@@ -506,6 +506,17 @@ export const NPCS: Record<string, NpcDef> = {
   // presence in this record moves no id.
   ...HUB_PRACTICE_NPCS,
   ...WORLD_QUEST_CALLIGRAPHY_NPCS,
+  // Optional HIGHFLY F1 first-weapon guide: an actual native world NPC.
+  // Appended at the tail to preserve existing entity order as far as possible.
+  hf_origin_wayfarer: {
+    id: 'hf_origin_wayfarer',
+    name: 'Veterano del Camino',
+    title: 'Guia del viajero',
+    pos: { x: EASTBROOK_LAYOUT.services.playerStart.position.x + 5,
+           z: EASTBROOK_LAYOUT.services.playerStart.position.z + 2 },
+    facing: 1.5, color: 0xc5a66f, questIds: [],
+    greeting: 'Bienvenido, viajero. Puedes elegir un arma o seguir con tus punos. Ninguna clase te define.',
+  },
   [FORGE_NPC_DEF.id]: FORGE_NPC_DEF,
   [WISP_MAZE_NPC_DEF.id]: WISP_MAZE_NPC_DEF,
   [WEEKLY_EMISSARY_NPC_DEF.id]: WEEKLY_EMISSARY_NPC_DEF,
