@@ -6,6 +6,9 @@ on:
       - ".github/workflows/highfly-origin-f2-no-deploy.yml"
       - "src/**"
       - "tests/highfly_origin_f2_freedom360.test.ts"
+      - "tests/highfly_game_c1.test.ts"
+      - "tests/highfly_origin_f123_reset_hud.test.ts"
+      - "scripts/highfly_origin_f1_browser.mjs"
       - "docs/highfly/f2-combat-freedom.md"
   workflow_dispatch:
 
