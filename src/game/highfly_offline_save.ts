@@ -22,14 +22,18 @@ interface HighflyTrainingSlot {
   updatedAt: number;
 }
 
-const DB_NAME = 'highfly-offline';
+// The F2 Pages laboratory shares GitHub's ORIGIN with public F1, not its saves.
+// Its own IndexedDB and local mirror prevent tester/reset actions touching F1.
+const F2_PAGES_LAB = typeof location !== 'undefined' &&
+  location.pathname.startsWith('/cobalt-hollow-lab/lab/f2-combat-beta/');
+const DB_NAME = F2_PAGES_LAB ? 'highfly-offline-f2-combat-beta' : 'highfly-offline';
 const STORE_NAME = 'saves';
 const PRIMARY_SLOT_KEY = 'primary';
 const LOCAL_KEY = 'highfly.offline.primary.v1';
 // Keep the NEW persistent Hunter separate from the old ClaudeCraft/R39 data.
 // Both live under the same Pages origin and must not compete for 'primary'.
 const ORIGIN_PRIMARY_SLOT_KEY = 'origin-f1:primary';
-const ORIGIN_LOCAL_KEY = 'highfly.origin.primary.v1';
+const ORIGIN_LOCAL_KEY = F2_PAGES_LAB ? 'highfly.origin.f2-combat-beta.primary.v1' : 'highfly.origin.primary.v1';
 const hasOriginIdentity = (s: HighflyOfflineSave | null): boolean =>
   !!s && normalizeOriginF1Save(s.originF1) !== null;
 const originIdentitySlotKey = (cls: PlayerClass, name: string): string =>
@@ -315,6 +319,8 @@ export async function loadHighflyTrainingProfile(
   const originSlot = await readIdbTrainingSlot('origin-f1:' + trainingSlotKey(playerClass, name));
   if (originSlot && trainingProfileMatchesClass(originSlot.profile, playerClass))
     return originSlot.profile;
+  // A beta with no training must start fresh, NEVER inherit public F1/R39 data.
+  if (F2_PAGES_LAB) return null;
   const primary = newest(readLocal(), await readIdbKey(PRIMARY_SLOT_KEY));
   const primaryTraining =
     primary &&
@@ -381,11 +387,11 @@ export async function loadOriginHunterSave(
   name?: string,
 ): Promise<HighflyOfflineSave | null> {
   const ownPrimary = newest(readLocal(ORIGIN_LOCAL_KEY), await readIdbKey(ORIGIN_PRIMARY_SLOT_KEY));
-  const oldPrimary = newest(readLocal(), await readIdbKey(PRIMARY_SLOT_KEY));
+  const oldPrimary = F2_PAGES_LAB ? null : newest(readLocal(), await readIdbKey(PRIMARY_SLOT_KEY));
   const primary = ownPrimary ?? (hasOriginIdentity(oldPrimary) ? oldPrimary : null);
   if (!playerClass || !name) return primary;
   const ownExact = await readIdbKey(originIdentitySlotKey(playerClass, name));
-  const oldExact = await readIdbKey(identitySlotKey(playerClass, name));
+  const oldExact = F2_PAGES_LAB ? null : await readIdbKey(identitySlotKey(playerClass, name));
   const exact = ownExact ?? (hasOriginIdentity(oldExact) ? oldExact : null);
   const matchingPrimary = primary && primary.playerClass === playerClass &&
     normalizedHunterName(primary.name) === normalizedHunterName(name)
@@ -438,7 +444,7 @@ export async function resetOriginHunterSave(): Promise<boolean> {
   try {
     globalThis.localStorage?.removeItem(ORIGIN_LOCAL_KEY);
     // Pre-namespaced F1/F1.1 saves must not resurrect the one deleted Hunter.
-    if(hasOriginIdentity(readLocal())) globalThis.localStorage?.removeItem(LOCAL_KEY);
+    if(!F2_PAGES_LAB && hasOriginIdentity(readLocal())) globalThis.localStorage?.removeItem(LOCAL_KEY);
   } catch {
     return false;
   }
