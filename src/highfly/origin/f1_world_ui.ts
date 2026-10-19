@@ -3,7 +3,7 @@
  * teleports the actor, creates a second player, or alters quest progression.
  */
 import type { Sim } from '../../sim/sim';
-import { PLAYER_START } from '../../sim/data';
+import { ORIGIN_VETERAN_POS } from './f1_start';
 import {
   claimOriginStarter,
   swapOriginStarter,
@@ -13,7 +13,7 @@ import {
 } from './f1_core';
 
 export const ORIGIN_GUIDE_ID = 'hf_origin_wayfarer';
-export const ORIGIN_GUIDE_POS = { x: PLAYER_START.x + 5, z: PLAYER_START.z + 2 };
+export const ORIGIN_GUIDE_POS = ORIGIN_VETERAN_POS;
 
 export interface OriginF1WorldUi {
   save(): OriginF1Save;
