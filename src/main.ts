@@ -5866,6 +5866,7 @@ async function ensureHighflyPreviewClassReady(cls: PlayerClass): Promise<void> {
 /** Preview Origin's real unequipped hands, never the donor Warrior shield. */
 function setOriginCreatorPreview(app: ModularAppearance, worn: ArmorLoadout, cls: PlayerClass): void {
   const bare = document.body.classList.contains('hf-origin-f1-creator');
+  if (bare) characterPreview?.setWeaponSkin(null); // donor cosmetic must not resurrect a sword
   characterPreview?.setModular(app, worn, cls, bare ? null : undefined, bare ? null : undefined);
 }
 
