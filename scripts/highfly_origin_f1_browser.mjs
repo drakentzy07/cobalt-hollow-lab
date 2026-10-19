@@ -140,7 +140,7 @@ try {
   });
   await page.waitForFunction(()=>window.__game.sim.players.get(window.__game.sim.playerId)?.equipment.mainhand==='worn_sword',{timeout:13000});
   const granted=await page.evaluate(()=>{
-    const raw=localStorage.getItem('highfly.offline.primary.v1');
+    const raw=(localStorage.getItem('highfly.origin.primary.v1') ?? localStorage.getItem('highfly.offline.primary.v1'));
     const slot=raw?JSON.parse(raw):null;
     return {
       weapon:window.__game.sim.players.get(window.__game.sim.playerId)?.equipment.mainhand,
@@ -194,7 +194,7 @@ try {
         count:sim.players.size,
         name:meta?.name,
         mainhand:meta?.equipment.mainhand,
-        claimed:JSON.parse(localStorage.getItem('highfly.offline.primary.v1')??'{}')?.originF1?.starterClaimed,
+        claimed:JSON.parse((localStorage.getItem('highfly.origin.primary.v1') ?? localStorage.getItem('highfly.offline.primary.v1'))??'{}')?.originF1?.starterClaimed,
         npcOffersAgain:getComputedStyle(document.getElementById('hf-origin-f1-guide')).display!=='none',
       };
     });
