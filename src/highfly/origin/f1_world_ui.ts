@@ -36,6 +36,7 @@ export function mountOriginF1WorldUi(
   root.setAttribute('aria-label', 'Hunter: recursos y guía de inicio');
   root.style.cssText = 'position:fixed;left:max(12px,env(safe-area-inset-left));top:55px;z-index:2147483000;color:#fff;font:600 12px system-ui;pointer-events:none;max-width:245px';
   const meter = node('div', '', 'hf-origin-f1-resource-meter');
+  meter.id = 'hf-origin-f1-resource-meter';
   meter.style.cssText = 'background:#0b1923d9;border:1px solid #63828a;border-radius:12px;padding:9px 12px;box-shadow:0 3px 15px #0007';
   // The original ClaudeCraft unit frame is the only HP authority/display.
   // Integrate Origin's MP/ST under that frame instead of drawing a duplicate
