@@ -142,6 +142,65 @@ try {
   if(granted.weapon!=='worn_sword'||!granted.saved||granted.savedWeapon!=='worn_sword')throw Error('F1_STARTER_NOT_PERSISTED');
   await page.screenshot({path:OUT+'/f1-first-weapon-android.png'});
   checkpoint('starter-verified');
+  if (process.env.F11_VERIFY_RELOAD === '1') {
+    // F1.1: certify the actual player state survives two new browser entries,
+    // with the second one having no network access at all.
+    await page.waitForFunction(()=>navigator.serviceWorker?.controller,{timeout:120_000});
+    checkpoint('offline-worker-controlling');
+    await page.reload({waitUntil:'domcontentloaded',timeout:120_000});
+    checkpoint('restart-online');
+    await page.waitForSelector('#btn-play',{timeout:90_000});
+    await page.evaluate(()=>document.getElementById('btn-play')?.click());
+    await page.waitForFunction(()=>document.getElementById('char-name')?.value==='Wayfarer',{timeout:40_000});
+    await page.evaluate(()=>document.getElementById('btn-start-offline')?.click());
+    await page.waitForFunction(()=>window.__game?.sim?.player,{timeout:180_000});
+    await page.waitForSelector('#hf-origin-f1-hud',{timeout:35000});
+    const resumed=await page.evaluate(()=>{
+      const sim=window.__game.sim;
+      const meta=sim.players.get(sim.playerId);
+      return {
+        count:sim.players.size,
+        name:meta?.name,
+        mainhand:meta?.equipment.mainhand,
+        claimed:JSON.parse(localStorage.getItem('highfly.offline.primary.v1')??'{}')?.originF1?.starterClaimed,
+        npcOffersAgain:getComputedStyle(document.getElementById('hf-origin-f1-guide')).display!=='none',
+      };
+    });
+    report.resumed=resumed;
+    if(resumed.count!==1||resumed.name!=='Wayfarer'||resumed.mainhand!=='worn_sword'||!resumed.claimed||resumed.npcOffersAgain)
+      throw Error('F11_RESUME_HUNTER_REGRESSION '+JSON.stringify(resumed));
+    await page.screenshot({path:OUT+'/f11-resumed-online-android.png'});
+    checkpoint('save-recovery-verified');
+
+    // Keep the HTTP server running, but force Chrome itself offline. Only
+    // ServiceWorker CacheStorage can satisfy the next navigation and modules.
+    await page.setOfflineMode(true);
+    await page.reload({waitUntil:'domcontentloaded',timeout:120_000});
+    checkpoint('restart-no-network');
+    await page.waitForSelector('#btn-play',{timeout:90_000});
+    await page.evaluate(()=>document.getElementById('btn-play')?.click());
+    await page.waitForFunction(()=>document.getElementById('char-name')?.value==='Wayfarer',{timeout:40_000});
+    await page.evaluate(()=>document.getElementById('btn-start-offline')?.click());
+    await page.waitForFunction(()=>window.__game?.sim?.player,{timeout:180_000});
+    await page.waitForSelector('#hf-origin-f1-hud',{timeout:35000});
+    const offline=await page.evaluate(()=>{
+      const sim=window.__game.sim;
+      const meta=sim.players.get(sim.playerId);
+      return {name:meta?.name,count:sim.players.size,mainhand:meta?.equipment.mainhand,
+        serviceWorker:!!navigator.serviceWorker?.controller,
+        navigatorOffline:!navigator.onLine};
+    });
+    report.offline=offline;
+    if(offline.name!=='Wayfarer'||offline.count!==1||offline.mainhand!=='worn_sword'||
+        !offline.serviceWorker||!offline.navigatorOffline)
+      throw Error('F11_TRUE_OFFLINE_WORLD_FAILURE '+JSON.stringify(offline));
+    await page.screenshot({path:OUT+'/f11-offline-restored-android.png'});
+    checkpoint('offline-world-verified');
+    const legacyApiCalls=failedRequests.filter(q=>
+      /\\/api\\/(?:site-presence|project-stats)/.test(q.url));
+    if(legacyApiCalls.length)throw Error('F11_DONOR_API_DEPENDENCY '+JSON.stringify(legacyApiCalls));
+    console.log('HIGHFLY_F11_ANDROID_OFFLINE_RESTORE_GREEN=1',JSON.stringify(offline));
+  }
   fs.writeFileSync(OUT+'/f1-browser-report.json',JSON.stringify(report,null,2)+'\\n');
   console.log('HIGHFLY_F1_ANDROID_BROWSER_INTERACTION_GREEN=1',JSON.stringify(report));
 } catch(error) {
