@@ -25,7 +25,7 @@ jobs:
       - name: Checkout immutable HIGHFLY ORIGIN F1.2 source only
         uses: actions/checkout@v4
         with:
-          ref: 6f4e8c56133f7680ccda8c01fb27d720ab7e4159
+          ref: 6fb8dd6746a71b6743d8010f2b5855a6c413fe0e
           persist-credentials: false
           filter: blob:none
 
@@ -33,7 +33,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "6f4e8c56133f7680ccda8c01fb27d720ab7e4159"
+          test "$(git rev-parse HEAD)" = "6fb8dd6746a71b6743d8010f2b5855a6c413fe0e"
           test -s src/highfly/origin/f1_core.ts
           test -s src/highfly/origin/f1_world_ui.ts
           test -s src/game/highfly_offline_save.ts
@@ -102,6 +102,7 @@ jobs:
           test -s dist/highfly-origin-sw.js
           test -s dist/highfly-origin.webmanifest
           test -s dist/highfly-origin-appshell.json
+          test -s dist/audio/sfx/runtime-pack.json
           test -d dist/media
           touch dist/.nojekyll
           echo "HIGHFLY_F121_ROOT_WEBGL_GREEN=1"
@@ -131,7 +132,7 @@ jobs:
               if not (dist/f).is_file():raise SystemExit('F12_MISSING_'+f)
           qa={
             'edition':'HIGHFLY ORIGIN F1.2 ONE HUNTER — ROOT PAGES',
-            'sourceCommit':'6f4e8c56133f7680ccda8c01fb27d720ab7e4159',
+            'sourceCommit':'6fb8dd6746a71b6743d8010f2b5855a6c413fe0e',
             'cleanFoundation':True,'legacyOverlaysApplied':False,
             'oldPagesLabsRemovedFromPublishedSnapshot':True,
             'physicalS23':'PENDING PLAYER TEST',
@@ -196,7 +197,7 @@ jobs:
           python3 - <<'PY'
           import json,time,urllib.request
           root='https://drakentzy07.github.io/cobalt-hollow-lab/'
-          expected='6f4e8c56133f7680ccda8c01fb27d720ab7e4159'
+          expected='6fb8dd6746a71b6743d8010f2b5855a6c413fe0e'
           for attempt in range(30):
               try:
                   def get(path):
