@@ -133,9 +133,14 @@ jobs:
           node scripts/build_bundle_pregen.mjs
           pnpm exec vite build
           test -s dist/index.html
-          test -d dist/media
+          # Vite copies public/ models/skills, while /media is not a
+          # guaranteed root folder in the current donor asset layout.
+          test -d dist/assets
+          test -d dist/models
+          test -d dist/ui/skills/warrior
           node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune
+          test -s dist/index.html
           du -sh dist
           echo "FOUNDATION_02_OWN_SOURCE_WEBGL_GREEN=1"
 
