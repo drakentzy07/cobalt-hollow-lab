@@ -12,7 +12,7 @@ describe('HIGHFLY ORIGIN F1.2.3 device reset and mobile HUD',()=>{
     expect(saved).not.toContain('indexedDB.deleteDatabase(DB_NAME)');
     expect(saved).not.toContain('localStorage.clear()');
     expect(main).toContain("window.confirm(");
-    expect(main).toContain('await resetOriginHunterSave()');
+    expect(main).toContain('resetOriginHunterSave().then(');
     expect(html).toContain('id="hf-origin-reset-hunter" hidden');
   });
   it('integrates MP and stamina under the real HP frame without duplicate HP',()=>{
