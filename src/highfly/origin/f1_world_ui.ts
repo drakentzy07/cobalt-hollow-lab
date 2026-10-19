@@ -59,6 +59,8 @@ export function mountOriginF1WorldUi(
     renderBars[key] = {wrap:row,fill,label:value};
   }
   const guide = node('div', '', 'hf-origin-f1-guide');
+  // Stable DOM identity for interaction, accessibility and Android E2E checks.
+  guide.id = 'hf-origin-f1-guide';
   guide.style.cssText='display:none;pointer-events:auto;margin-top:10px;padding:12px;background:#111e30eb;border:1px solid #cca96f;border-radius:12px;max-width:245px';
   const title=node('div', 'Veterano del Camino');
   title.style.cssText='font-size:14px;font-weight:750;color:#f1d29b';
