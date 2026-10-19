@@ -10871,8 +10871,12 @@ body.mobile-touch.mobile-left-handed #mobile-stance-anchor {
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring .mobile-action-slot[data-mobile-index="2"] {
     left:auto !important;right:138px !important;top:auto !important;bottom:187px !important;
   }
+  /* BASE 4 stays clear of the mobile minimap's top-right interactive disc.
+   * The earlier x~734/y~129 seat sat UNDER the minimap, so a tap went
+   * to map chrome instead of this real skill button. Place the fourth
+   * ascending seat above-left of BASE 3, within the right-hand thumb zone. */
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring .mobile-action-slot[data-mobile-index="3"] {
-    left:auto !important;right:78px !important;top:auto !important;bottom:229px !important;
+    left:auto !important;right:200px !important;top:auto !important;bottom:229px !important;
   }
   /* Auxiliaries along the lower middle, separated from left joystick. */
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring #mobile-jump {

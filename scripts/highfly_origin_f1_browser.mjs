@@ -190,7 +190,8 @@ try {
           visible:e.isConnected&&e.getClientRects().length>0&&style.display!=='none'&&
             style.visibility!=='hidden'&&r.width>=40&&r.height>=40,
           width:r.width,height:r.height,hit:top===e||e.contains(top),
-          computedDisplay:style.display,inlineDisplay:e.style.display,hidden:e.hidden};
+          computedDisplay:style.display,inlineDisplay:e.style.display,hidden:e.hidden,
+          hitSurface:top?.id||top?.className||top?.tagName||null};
       });
       return {attack,use,target,atkHit:hit('mobile-action-attack'),useHit:hit('mobile-interact'),
         slots,oldActionbar:pos('actionbar-group'),page:pos('mobile-action-page-toggle'),
