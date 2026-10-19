@@ -299,7 +299,16 @@ function wireAttackButton(attackBtn: HTMLButtonElement, deps: MobileActionRingDe
     deps.consumePeekGuard();
     deps.hideTooltip();
     audio.click();
-    if (!document.body.classList.contains('hf-origin-f1') && deps.contextualUse()) {
+    // ORIGIN's ATK is an ACTION ATTACK, never contextual USAR or the donor's
+    // auto-attack-toggle behavior. Select a camera-forward soft enemy when one
+    // is present; otherwise accept an actual zero-damage attack animation.
+    if (document.body.classList.contains('hf-origin-f1')) {
+      deps.attackNearest?.();
+      deps.activateFixedAttackSlot();
+      attackBtn.blur();
+      return;
+    }
+    if (deps.contextualUse()) {
       attackBtn.blur();
       return;
     }
