@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { Sim } from '../src/sim/sim';
 import { BUILTIN_WORLD } from '../src/sim/data';
 import { TRANSPORT_ROUTES } from '../src/sim/content/transport_ships';
+import { ORIGIN_STARTER_WEAPONS } from '../src/highfly/origin/f1_core';
 
 describe('HIGHFLY ORIGIN F1.2.2 — Android-safe UX and save contract', () => {
   it('keeps all 3 optional weapon choices in an accessible centered modal',()=>{
@@ -22,6 +23,29 @@ describe('HIGHFLY ORIGIN F1.2.2 — Android-safe UX and save contract', () => {
     const preview=readFileSync('src/render/characters/preview.ts','utf8');
     expect(preview).toContain("this.canvas.dataset.highflyPreviewWeaponItem = weaponItemId ?? ''");
     expect(preview).toContain("this.canvas.dataset.highflyPreviewOffhandItem = offhandItemId ?? ''");
+  });
+  it('can equip every offered weapon natively rather than only showing a button',()=>{
+    for(const item of ORIGIN_STARTER_WEAPONS){
+      const sim=new Sim({
+        seed:161,
+        playerClass:'warrior',
+        playerName:'Universal Hunter',
+        compulsoryTutorial:false,
+        world:BUILTIN_WORLD,
+      });
+      const meta=sim.players.get(sim.playerId)!;
+      for(const slot of ['mainhand','offhand'] as const){
+        const worn=meta.equipment[slot];
+        if(worn){
+          expect(sim.unequipItem(slot,sim.playerId),slot).toBe(true);
+          sim.removeItem(worn,1,sim.playerId);
+        }
+      }
+      expect(sim.canAddItem(item.id,1,sim.playerId),item.id).toBe(true);
+      sim.addItem(item.id,1,sim.playerId);
+      expect(sim.equipItem(item.id,sim.playerId),item.id).toBe(true);
+      expect(meta.equipment.mainhand,item.id).toBe(item.id);
+    }
   });
   it('serializes a passenger on a sailing ferry to the destination pier (not open sea)',()=>{
     const route=TRANSPORT_ROUTES[0];
