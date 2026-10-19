@@ -1,0 +1,159 @@
+name: HIGHFLY FOUNDATION-02 — Build directly from consolidated source (ANDROID / NO DEPLOY)
+# Final F0 gate: no historical overlay, no CLEAN patch on this branch's source.
+on:
+  push:
+    branches: [highfly-origin-foundation-clean-20261019]
+    paths:
+      - ".github/workflows/highfly-foundation-02-source-gate.yml"
+      - "src/**"
+      - "server/**"
+      - "headless/**"
+      - "bot/**"
+      - "scripts/**"
+      - "tests/highfly_*.test.ts"
+      - "source/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "vite.config.ts"
+      - "tsconfig.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-foundation-02-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  consolidated_source_build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout verified self-owned HIGHFLY source (read-only)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+
+      - name: Verify source identity, upstream provenance, editor, and no legacy overlay execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.ref_name }}" = "highfly-origin-foundation-clean-20261019"
+          test -s src/main.ts
+          test -s src/ui/appearance_customizer.ts
+          test -s src/render/characters/modular.ts
+          test -s src/highfly/training/stat_authority.ts
+          test -s src/sim/content/classes.ts
+          test -s source/source-provenance.json
+          python3 - <<'PY'
+          import json
+          with open("source/source-provenance.json", encoding="utf8") as f: x=json.load(f)
+          assert x["upstream_sha"]=="9b57e49c9676d75962700f828cc00a50a9a988b5"
+          assert x["canonical_clean_patch_sha256"]=="b78ba81e52b10b2ddba7c6fa829d436f59ad4594ec2a0d0d5f0341ce26773cb9"
+          assert x["legacy_r39_r40_overlays"]=="not applied"
+          assert x["android_only_release_target"] is True
+          print("FOUNDATION_02_OWN_SOURCE_PROVENANCE_GREEN=1")
+          PY
+          count="$(git ls-files 'src/*' | wc -l)"
+          test "$count" -gt 3400
+          test -z "$(git status --porcelain)"
+          echo "FOUNDATION_02_OWNED_SRC_FILES=$count"
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install frozen dependencies without executing setup scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Validate own consolidated TypeScript directly
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec tsc --noEmit --incremental false
+          echo "FOUNDATION_02_OWN_CODE_TSC_GREEN=1"
+
+      - name: Run focused gameplay and Training regression against own code
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run \
+            tests/highfly_game_c1.test.ts \
+            tests/highfly_game_c28.test.ts \
+            tests/highfly_training_core.test.ts \
+            tests/highfly_training_bridge.test.ts \
+            tests/highfly_training_pf5_stat_authority.test.ts
+          echo "FOUNDATION_02_OWN_CODE_REGRESSION_GREEN=1"
+
+      - name: Retrieve only frozen ClaudeCraft media for build (NEVER source or patches)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: donor-media
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /public/
+
+      - name: Mount donor static media temporarily without altering own source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C donor-media rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          test -f donor-media/public/manifest.webmanifest
+          test -d donor-media/public/models
+          test -d donor-media/public/ui/skills
+          mkdir -p public
+          rsync -a donor-media/public/ public/
+          test -d public/ui/skills/warrior
+          test -d public/ui/skills/mage
+          test -d public/ui/skills/rogue
+          echo "FOUNDATION_02_FROZEN_MEDIA_ONLY_MOUNTED=1"
+
+      - name: Build Android-target WebGL from committed HIGHFLY source, no overlay, no deploy
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/"
+        run: |
+          set -euo pipefail
+          node scripts/build_bundle_pregen.mjs
+          pnpm exec vite build
+          test -s dist/index.html
+          test -d dist/media
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          du -sh dist
+          echo "FOUNDATION_02_OWN_SOURCE_WEBGL_GREEN=1"
+
+      - name: Capture SHA of exact source and test/build outcome
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p foundation-output
+          echo "tested_source_commit=${{ github.sha }}" > foundation-output/foundation-02.txt
+          echo "donor_media_pin=9b57e49c9676d75962700f828cc00a50a9a988b5" >> foundation-output/foundation-02.txt
+          echo "legacy_overlay_application=NONE" >> foundation-output/foundation-02.txt
+          echo "android_first=1" >> foundation-output/foundation-02.txt
+          echo "pages_modified=NO" >> foundation-output/foundation-02.txt
+          if [ -e source/source-provenance.json ]; then
+            cp source/source-provenance.json foundation-output/
+          fi
+
+      - name: Archive source-gate evidence only — no public release
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-FOUNDATION-02-OWN-SOURCE-ANDROID-GATE
+          path: foundation-output/
+          retention-days: 14
