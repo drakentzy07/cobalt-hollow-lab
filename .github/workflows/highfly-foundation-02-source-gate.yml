@@ -85,7 +85,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          pnpm exec vitest run \
+          # Archived training/tests/*.test.ts used the old staging layout;
+          # preserve them for migration, but test the runnable consolidated
+          # tests/ suite only. Vitest's filename filter otherwise matches both.
+          pnpm exec vitest run --exclude 'training/tests/**' \
             tests/highfly_game_c1.test.ts \
             tests/highfly_game_c28.test.ts \
             tests/highfly_training_core.test.ts \
