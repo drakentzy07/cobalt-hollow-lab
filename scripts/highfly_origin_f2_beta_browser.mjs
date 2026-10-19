@@ -80,6 +80,10 @@ try {
     throw Error('F2_BETA_NOT_SYMMETRIC_CRESCENT '+JSON.stringify(seats));
   await page.touchscreen.tap(state.atk.x+state.atk.w/2,state.atk.y+state.atk.h/2);
   await page.waitForFunction(()=>Number(document.body.dataset.highflyBasicAttackCount||0)>0,{timeout:11000});
+  // Sim accepts the attack on the input tick, while a separate WebGL frame
+  // picks up the renderer event. Under emulated S23/software GPU they may
+  // settle on different frames. Wait for ACTUAL animation, never fake it.
+  await page.waitForFunction(()=>Number(window.__game?.renderer?.abilityVfxAttackCount?.()||0)>0,{timeout:11000}).catch(()=>{});
   const attack=await page.evaluate(()=>({
     combo:Number(document.body.dataset.highflyBasicAttackCount||0),
     animation:window.__game?.renderer?.abilityVfxAttackCount()||0,
