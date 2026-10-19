@@ -54,7 +54,9 @@ describe('HIGHFLY ORIGIN F1.2.3 device reset and mobile HUD',()=>{
     expect(browser).toContain('!hud.consumableHit');
     expect(css).not.toContain('#mobile-action-page-toggle,\\n  body.hf-origin-f1.mobile-touch.game-active #mobile-consumable-seat,');
     const ring=readFileSync('src/ui/hud/action_bar/mobile_action_ring_controller.ts','utf8');
-    expect(ring).toContain("!document.body.classList.contains('hf-origin-f1') && deps.contextualUse()");
+    expect(ring).toContain("if (document.body.classList.contains('hf-origin-f1')) {");
+    expect(ring).toContain('deps.attackNearest?.();');
+    expect(ring).toContain('deps.activateFixedAttackSlot();');
     const ferry=readFileSync('src/ui/hud/transport/ferry_hud_painter.ts','utf8');
     expect(ferry).toContain("close.className = 'ferry-hud-dismiss'");
     const guide=readFileSync('src/highfly/origin/f1_world_ui.ts','utf8');

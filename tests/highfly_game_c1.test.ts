@@ -148,7 +148,7 @@ describe('HIGHFLY GAME-C1 character + combat + HUD foundation', () => {
     expect(controller).toContain('contextualUse(): boolean');
     // The legacy GAME-C1 branch keeps contextual ATK; ORIGIN's deliberate
     // split must bypass it so USAR remains the only interaction control.
-    expect(controller).toContain("!document.body.classList.contains('hf-origin-f1') && deps.contextualUse()");
+    expect(controller).toContain("if (document.body.classList.contains('hf-origin-f1')) {");
     expect(controller).toContain('contextualUse(): boolean');
     expect(main).toContain('resolveNearbyInteractionCandidate');
     expect(main).toContain('hud.onMobileContextualUse = highflyContextualUse');
