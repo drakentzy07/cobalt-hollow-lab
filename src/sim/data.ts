@@ -327,6 +327,7 @@ import {
 } from './content/zone3';
 import { DUNGEON_WALL_HW, DUNGEON_WALL_X } from './dungeon_layout';
 import { EASTBROOK_LAYOUT } from './eastbrook_layout';
+import { ORIGIN_VETERAN_POS } from '../highfly/origin/f1_start';
 import { JAIL_BLOCKERS, JAIL_TERRAIN_EDITS } from './jail';
 
 export type { DelveShopEntry, DelveShopGate, DelveShopOffer } from './content/delves';
@@ -512,8 +513,7 @@ export const NPCS: Record<string, NpcDef> = {
     id: 'hf_origin_wayfarer',
     name: 'Veterano del Camino',
     title: 'Guia del viajero',
-    pos: { x: EASTBROOK_LAYOUT.services.playerStart.position.x + 5,
-           z: EASTBROOK_LAYOUT.services.playerStart.position.z + 2 },
+    pos: ORIGIN_VETERAN_POS,
     facing: 1.5, color: 0xc5a66f, questIds: [],
     greeting: 'Bienvenido, viajero. Puedes elegir un arma o seguir con tus punos. Ninguna clase te define.',
   },
