@@ -13,6 +13,7 @@ import {
   tickF1Resources,
 } from '../src/highfly/origin/f1_core';
 import { ORIGIN_GUIDE_ID, ORIGIN_GUIDE_POS } from '../src/highfly/origin/f1_world_ui';
+import { ORIGIN_HUNTER_START } from '../src/highfly/origin/f1_start';
 import { offlineWorldConfig } from '../src/game/offline_world_config';
 
 describe('HIGHFLY F1 integral — one Hunter, safe birth, first weapon and resources',()=>{
@@ -33,13 +34,19 @@ describe('HIGHFLY F1 integral — one Hunter, safe birth, first weapon and resou
     expect(hud).toContain("classList.contains('hf-origin-f1')");
   });
 
-  it('places the optional NPC in the same world, close to normal Eastbrook birth',()=>{
+  it('places the optional NPC with the independent Hunter away from the native port',()=>{
     expect(BUILTIN_WORLD.npcs[ORIGIN_GUIDE_ID]?.id).toBe(ORIGIN_GUIDE_ID);
     expect(BUILTIN_WORLD.npcs[ORIGIN_GUIDE_ID].questIds).toEqual([]);
     expect(Math.hypot(
-      ORIGIN_GUIDE_POS.x-BUILTIN_WORLD.playerStart.x,
-      ORIGIN_GUIDE_POS.z-BUILTIN_WORLD.playerStart.z,
+      ORIGIN_GUIDE_POS.x-ORIGIN_HUNTER_START.x,
+      ORIGIN_GUIDE_POS.z-ORIGIN_HUNTER_START.z,
     )).toBeLessThan(8);
+    expect(Math.hypot(
+      ORIGIN_HUNTER_START.x-BUILTIN_WORLD.playerStart.x,
+      ORIGIN_HUNTER_START.z-BUILTIN_WORLD.playerStart.z,
+    )).toBeGreaterThan(40);
+    const src=readFileSync('src/main.ts','utf8');
+    expect(src).toContain('world: world ?? { ...BUILTIN_WORLD, playerStart: ORIGIN_HUNTER_START }');
   });
 
   it('can actually unequip the native default weapon, offhand and chest',()=>{
@@ -95,8 +102,10 @@ describe('HIGHFLY F1 integral — one Hunter, safe birth, first weapon and resou
     expect(main).toContain('setOriginCreatorPreview(look.app, look.worn, cls)');
     expect(main).toContain('bare ? null : undefined');
     expect(store).toContain("const ORIGIN_PRIMARY_SLOT_KEY = 'origin-f1:primary'");
-    expect(store).toContain("const ORIGIN_LOCAL_KEY = 'highfly.origin.primary.v1'");
+    expect(store).toContain("'highfly.origin.primary.v1'");
+    expect(store).toContain("'highfly.origin.f2-combat-beta.primary.v1'");
     expect(store).toContain('originIdentitySlotKey(save.playerClass, save.name)');
     expect(store).toContain('hasOriginIdentity(oldExact) ? oldExact : null');
+    expect(store).toContain("F2_PAGES_LAB ? 'highfly-offline-f2-combat-beta'");
   });
 });
