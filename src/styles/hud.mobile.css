@@ -10880,6 +10880,10 @@ body.mobile-touch.mobile-left-handed #mobile-stance-anchor {
     border-radius:0 !important;
     margin-top:2px !important;
     padding:0 !important;
+    position:absolute;
+    left:76px;
+    top:57px;
+    z-index:3;
     width:215px;
     pointer-events:none;
     color:#f4e8d6;
