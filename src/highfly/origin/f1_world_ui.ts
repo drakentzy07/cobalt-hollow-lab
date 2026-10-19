@@ -40,9 +40,11 @@ export function mountOriginF1WorldUi(
   // The original ClaudeCraft unit frame is the only HP authority/display.
   // Integrate Origin's MP/ST under that frame instead of drawing a duplicate
   // floating HP/MP/ST block over the left side of the battlefield.
-  const originalBars=document.querySelector('#player-frame .uf-bars');
-  if (originalBars) originalBars.append(meter);
-  else root.append(meter);
+  // The frame's native inner .uf-bars node can be replaced by the HUD
+  // lifecycle. Attach to its stable #player-frame shell instead.
+  root.append(meter);
+  const originalFrame=document.getElementById('player-frame');
+  if (originalFrame) originalFrame.append(meter);
   const renderBars: Record<'mana'|'stamina', {wrap:HTMLDivElement;fill:HTMLDivElement;label:HTMLSpanElement}> =
     {} as Record<'hp'|'mana'|'stamina', {wrap:HTMLDivElement;fill:HTMLDivElement;label:HTMLSpanElement}>;
   for (const [key, title, color] of [
@@ -146,8 +148,8 @@ export function mountOriginF1WorldUi(
     if(!root.isConnected) {window.clearInterval(timer);return;}
     // HUD frames may remount/move AFTER the game-ready callback. Always seat
     // this one shared MP/ST meter alongside the LIVE native portrait/HP bars.
-    const liveUnitBars=document.querySelector('#player-frame .uf-bars');
-    if(liveUnitBars && meter.parentElement !== liveUnitBars) liveUnitBars.append(meter);
+    const liveFrame=document.getElementById('player-frame');
+    if(liveFrame && meter.parentElement !== liveFrame) liveFrame.append(meter);
     const now=performance.now();
     current={...current,resources:tickF1Resources(current.resources,(now-last)/1000)};
     last=now;
