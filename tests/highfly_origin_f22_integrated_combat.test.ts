@@ -18,6 +18,7 @@ describe('HIGHFLY ORIGIN F2.2 MASSIVE combat and classless Hunter integration',(
     const vis=f('src/render/characters/visual.ts');
     expect(vis).toContain('this.playOriginPhysicalGesture(name,');
     expect(vis).toContain('this.playOriginPhysicalGesture(handClip,');
+    expect(vis).toContain('this.playOriginPhysicalGesture(override,');
     expect(vis).toContain('tracks.filter(track=>isHighflyUpperBodyTrack(track.name))');
     expect(vis).toContain('this.originGroundMoving');
     expect(vis).toContain('this.mixer.clipAction(masked)');
