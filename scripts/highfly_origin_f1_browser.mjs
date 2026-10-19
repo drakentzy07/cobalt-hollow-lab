@@ -197,7 +197,7 @@ try {
     await page.screenshot({path:OUT+'/f11-offline-restored-android.png'});
     checkpoint('offline-world-verified');
     const legacyApiCalls=failedRequests.filter(q=>
-      /\\/api\\/(?:site-presence|project-stats)/.test(q.url));
+      /\/api\/(?:site-presence|project-stats)/.test(q.url));
     if(legacyApiCalls.length)throw Error('F11_DONOR_API_DEPENDENCY '+JSON.stringify(legacyApiCalls));
     console.log('HIGHFLY_F11_ANDROID_OFFLINE_RESTORE_GREEN=1',JSON.stringify(offline));
   }
