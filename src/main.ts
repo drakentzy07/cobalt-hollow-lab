@@ -5046,7 +5046,10 @@ async function startGame(
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const introPolicy = decideSpawnCinematic({
-    requested: playIntro,
+    // ORIGIN is a direct isekai spawn: the donor's first-spawn cinematic
+    // hides both #ui and #mobile-controls (and blocks the Hunter's input).
+    // Keep the cinematic intact for every non-ORIGIN game mode.
+    requested: playIntro && !document.body.classList.contains('hf-origin-f1'),
     seen: introSeen,
     playerLevel: world.player.level,
     reducedMotion: settings.get('reduceMotion') || osReducedMotion,

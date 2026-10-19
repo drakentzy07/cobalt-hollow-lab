@@ -13,6 +13,9 @@ describe('HIGHFLY ORIGIN F1.2.3 device reset and mobile HUD',()=>{
     expect(saved).not.toContain('localStorage.clear()');
     expect(main).toContain("window.confirm(");
     expect(main).toContain('resetOriginHunterSave().then(');
+    // An ORIGIN birth must NEVER hide the native touch HUD behind ClaudeCraft's
+    // first-spawn fly-in cinematic; other modes keep that original intro.
+    expect(main).toContain("requested: playIntro && !document.body.classList.contains('hf-origin-f1')");
     expect(html).toContain('id="hf-origin-reset-hunter" hidden');
   });
   it('integrates MP and stamina under the real HP frame without duplicate HP',()=>{

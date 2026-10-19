@@ -168,31 +168,44 @@ try {
       const pos=id=>{
         const e=document.getElementById(id);
         const r=e?.getBoundingClientRect();
-        return {visible:!!e&&getComputedStyle(e).display!=='none',
-          x:r?.x??0,y:r?.y??0,w:r?.width??0,h:r?.height??0};
+        const style=e?getComputedStyle(e):null;
+        // getComputedStyle(child).display is NOT sufficient when #ui or
+        // #mobile-controls (an ancestor) has display:none. getClientRects()
+        // detects that, and the positive bounds certify real rendered UI.
+        const visible=!!e&&e.isConnected&&e.getClientRects().length>0&&
+          style?.display!=='none'&&style?.visibility!=='hidden'&&
+          (r?.width??0)>0&&(r?.height??0)>0;
+        return {visible,x:r?.x??0,y:r?.y??0,w:r?.width??0,h:r?.height??0};
       };
       const hit=(id)=>{
-        const r=pos(id);if(!r.visible)return false;
+        const r=pos(id);if(!r.visible||r.w<40||r.h<40)return false;
         const el=document.elementFromPoint(r.x+r.w/2,r.y+r.h/2);
         return el===document.getElementById(id)||document.getElementById(id)?.contains(el);
       };
       const attack=pos('mobile-action-attack'),use=pos('mobile-interact'),target=pos('mobile-target-cycle');
-      const slots=[...document.querySelectorAll('#mobile-action-ring .mobile-action-slot')].map(e=>({
-        id:e.dataset.mobileIndex,visible:getComputedStyle(e).display!=='none',
-        width:e.getBoundingClientRect().width,
-      }));
+      const slots=[...document.querySelectorAll('#mobile-action-ring .mobile-action-slot')].map(e=>{
+        const r=e.getBoundingClientRect(),style=getComputedStyle(e);
+        return {id:e.dataset.mobileIndex,
+          visible:e.isConnected&&e.getClientRects().length>0&&style.display!=='none'&&
+            style.visibility!=='hidden'&&r.width>=40&&r.height>=40,
+          width:r.width,height:r.height};
+      });
       return {attack,use,target,atkHit:hit('mobile-action-attack'),useHit:hit('mobile-interact'),
         slots,oldActionbar:pos('actionbar-group'),page:pos('mobile-action-page-toggle'),
         originMeterInFrame:!!document.querySelector('#player-frame #hf-origin-f1-resource-meter'),
         meterLabels:[...document.querySelectorAll('#player-frame #hf-origin-f1-resource-meter span')]
           .map(e=>e.textContent?.trim()).filter(x=>x==='HP'||x==='MP'||x==='ST'),
-        nativeHp:pos('pf-hp'),nativeWarriorRage:pos('pf-resource')};
+        nativeHp:pos('pf-hp'),nativeWarriorRage:pos('pf-resource'),
+        hudContainers:{ui:pos('ui'),mobileControls:pos('mobile-controls'),
+          ring:pos('mobile-action-ring')}};
     });
     report.hud= hud;
     if(hud.slots.length!==4||hud.slots.some(s=>!s.visible||!s.width)||
        hud.oldActionbar.visible||hud.page.visible||!hud.originMeterInFrame||
        hud.meterLabels.join(',')!=='MP,ST'||!hud.nativeHp.visible||hud.nativeWarriorRage.visible||
        !hud.atkHit||!hud.useHit||!hud.attack.visible||!hud.use.visible||
+       !hud.target.visible||!hud.nativeHp.visible||hud.nativeHp.w<=0||
+       !hud.hudContainers.ui.visible||!hud.hudContainers.mobileControls.visible||
        hud.use.y<=hud.attack.y+hud.attack.h-3||
        hud.target.y+hud.target.h>hud.attack.y+10){
       throw Error('F123_HUNTER_HUD_LAYOUT_REGRESSION '+JSON.stringify(hud));
