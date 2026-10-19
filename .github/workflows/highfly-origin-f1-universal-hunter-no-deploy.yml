@@ -1,12 +1,15 @@
-name: HIGHFLY ORIGIN FASE 1 — Universal Hunter Birth Android (NO DEPLOY)
+name: HIGHFLY ORIGIN FASE 1.1 — Offline Android and Hunter Restore (NO DEPLOY)
 on:
   push:
-    branches: [highfly-origin-f1-universal-hunter-20261019]
+    branches: [highfly-origin-f11-offline-android-20261019]
     paths:
       - ".github/workflows/highfly-origin-f1-universal-hunter-no-deploy.yml"
       - "src/**"
       - "tests/highfly_origin_f1_universal_hunter.test.ts"
       - "scripts/highfly_origin_f1_browser.mjs"
+      - "scripts/highfly_f11_appshell.mjs"
+      - "public/highfly-origin-sw.js"
+      - "public/highfly-origin.webmanifest"
       - "index.html"
   workflow_dispatch:
 
@@ -32,7 +35,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "${{ github.ref_name }}" = "highfly-origin-f1-universal-hunter-20261019"
+          test "${{ github.ref_name }}" = "highfly-origin-f11-offline-android-20261019"
           test -s src/highfly/origin/f1_core.ts
           test -s src/highfly/origin/f1_world_ui.ts
           test -s src/ui/appearance_customizer.ts
@@ -109,17 +112,22 @@ jobs:
           node scripts/build_bundle_pregen.mjs
           pnpm exec vite build
           test -s dist/index.html
+          test -s dist/highfly-origin-sw.js
+          test -s dist/highfly-origin.webmanifest
           test -d dist/models
           test -d dist/ui/skills/warrior
           node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune
-          echo "HIGHFLY_F1_ANDROID_WEBGL_GREEN=1"
+          node scripts/highfly_f11_appshell.mjs
+          test -s dist/highfly-origin-appshell.json
+          echo "HIGHFLY_F11_ANDROID_WEBGL_GREEN=1"
 
       - name: Android S23 landscape browser creation / world / starter proof
         shell: bash
         env:
           VITE_COBALT_OFFLINE: "1"
           F1_GAME_URL: "http://127.0.0.1:4173/"
+          F11_VERIFY_RELOAD: "1"
         run: |
           set -euo pipefail
           command -v google-chrome || command -v chromium || command -v chromium-browser
@@ -131,7 +139,7 @@ jobs:
             sleep 1
           done
           node scripts/highfly_origin_f1_browser.mjs
-          echo "HIGHFLY_F1_BROWSER_S23_EMULATION_GREEN=1"
+          echo "HIGHFLY_F11_ANDROID_OFFLINE_RESTORE_RUN_GREEN=1"
 
       - name: Preserve F1 source, media and QA evidence (not public)
         if: always()
@@ -144,11 +152,12 @@ jobs:
           echo "legacy_overlays=NOT_APPLIED" >> foundation-output/f1-validation.txt
           echo "public_pages=UNMODIFIED" >> foundation-output/f1-validation.txt
           echo "physical_S23=NOT_TESTED" >> foundation-output/f1-validation.txt
+          echo "offline_android_browser=VALIDATED_ONLY_IF_BROWSER_STEP_PASSES" >> foundation-output/f1-validation.txt
 
       - name: Upload F1 validation evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: HIGHFLY-F1-UNIVERSAL-HUNTER-QA-NO-DEPLOY
+          name: HIGHFLY-F11-OFFLINE-ANDROID-QA-NO-DEPLOY
           path: foundation-output/
           retention-days: 14
