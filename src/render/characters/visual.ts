@@ -827,13 +827,19 @@ export class CharacterVisual {
     // survived the correct null IDs and fooled our previous DOM-only tests.
     // Suppress fallback hand attachments for the one unarmed Hunter/creator,
     // WITHOUT touching the donor's shared VISUALS, other class rigs or clips.
-    const originBare = typeof document !== 'undefined' &&
+    // Keep the real swap socket throughout the Hunter's entire lifetime.
+    // F2 hid the sword by deleting attach/weaponSlots when born unarmed;
+    // subsequent inventory equips could then NEVER draw a model.
+    const originHunter = typeof document !== 'undefined' &&
       (document.body.classList.contains('hf-origin-f1-creator') ||
        document.body.classList.contains('hf-origin-f1')) &&
-      key === 'player_warrior_modular' && weaponItemId === null &&
-      offhandItemId === null && !weaponOverride;
-    this.def = originBare
-      ? { ...prep.def, attach: [], weaponSlots: [], offhandSlot: undefined }
+      key === 'player_warrior_modular' && !weaponOverride;
+    this.def = originHunter
+      ? {
+          ...prep.def,
+          attach: prep.def.attach?.map((slot, index) =>
+            prep.def.weaponSlots?.includes(index) ? { ...slot, swapOnly: true } : slot),
+        }
       : weaponOverride
       ? {
           ...prep.def,
