@@ -3471,6 +3471,17 @@ async function startGame(
   function attackNearest(): void {
     const p = world.player;
     const activePvpOpponents = activePvpOpponentIds(world);
+    // HIGHFLY ORIGIN's manual ATK must swing toward the movement stick when no
+    // hostile is in *actual striking range*. The native soft-aim selector may
+    // prefer a distant enemy (within its wider acquisition cone), which made
+    // highflyBasicAttack reject the entire tap rather than play a whiff clip.
+    // Limit this ATK-only acquisition; explicit TARGET/LOCK still uses its own
+    // full-range path, and original ClaudeCraft targeting is unchanged.
+    const meleeOnly = document.body.classList.contains('hf-origin-f1');
+    const withinStrikeRange = (e: { pos: { x: number; z: number } }): boolean =>
+      !meleeOnly ||
+      (e.pos.x - p.pos.x) ** 2 + (e.pos.z - p.pos.z) ** 2 <=
+        ATTACK_MOVE_MELEE_STOP ** 2;
 
     // TARGET/LOCK is the explicit exception to camera-forward soft aim.
     const locked = highflyManualTargetLocked();
@@ -3492,7 +3503,7 @@ async function startGame(
           world.entities.get(e.id),
           world.playerId,
           activePvpOpponents,
-        ),
+        ) && withinStrikeRange(e),
     );
 
     // C2.3 competitive hysteresis. The old C2.2 early-return made a target
@@ -3503,6 +3514,7 @@ async function startGame(
       if (
         current &&
         isAttackableEntity(current, world.playerId, activePvpOpponents) &&
+        withinStrikeRange(current) &&
         highflySoftTargetStillAligned(p.targetId)
       ) {
         if (best === null || best === p.targetId) return;
