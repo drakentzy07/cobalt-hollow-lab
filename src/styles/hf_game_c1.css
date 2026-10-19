@@ -1096,3 +1096,36 @@ body.hf-origin-f1.mobile-touch.game-active #actionbar {
   display: none !important;
   pointer-events: none !important;
 }
+
+/* ORIGIN F2 — the second, larger moon is reserved for THREE future UNIQUE
+ * skills. The donor's ESP1/ESP2/ULT placeholders have no valid skills and
+ * therefore MUST NOT render, receive taps, or imply unlocked abilities.
+ * Only an explicit later unlock class may display the positions.
+ * Outer crescent aligns around the same ATK center as BASE 1–4. */
+body.hf-origin-f1.mobile-touch.game-active #hf-c1-special-seats,
+body.hf-origin-f1.mobile-touch.game-active #hf-c1-esp1,
+body.hf-origin-f1.mobile-touch.game-active #hf-c1-esp2,
+body.hf-origin-f1.mobile-touch.game-active #hf-c1-ult,
+body.hf-origin-f1.mobile-touch.game-active #hf-c22-ghost-skills,
+body.hf-origin-f1.mobile-touch.game-active #actionbar,
+body.hf-origin-f1.mobile-touch.game-active #actionbar-group,
+body.hf-origin-f1.mobile-touch.game-active #cross-hotbar {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+body.hf-origin-f1.mobile-touch.game-active .hf-c1-special-seat {
+  display: none !important;
+  pointer-events: none !important;
+}
+/* Coordinates are intentionally preplanned, but NOT visible until an
+ * actual unique ability is earned. Do not add a visibility override in F2. */
+body.hf-origin-f1.mobile-touch.game-active #hf-c1-esp1 {
+  right: 264px !important; bottom: 49px !important;
+}
+body.hf-origin-f1.mobile-touch.game-active #hf-c1-esp2 {
+  right: 306px !important; bottom: 134px !important;
+}
+body.hf-origin-f1.mobile-touch.game-active #hf-c1-ult {
+  right: 264px !important; bottom: 215px !important;
+}
