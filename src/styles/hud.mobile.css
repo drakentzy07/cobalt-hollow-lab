@@ -10797,3 +10797,106 @@ body.mobile-touch.mobile-left-handed #mobile-stance-anchor {
   visibility: visible !important;
   opacity: 1 !important;
 }
+
+
+/* HIGHFLY ORIGIN F1.2.3 — one-Hunter Android combat HUD staging.
+ * Reuses existing clickable native ATK/USE/TARGET/JUMP/EVADE and the four
+ * engine-bound action seats. No parallel buttons or phantom specials.
+ * The three secret UNIQUE buttons do not exist until a future unlock.
+ * Restricted to ORIGIN mode; donor desktop/other mobile modes are untouched.
+ */
+@media (orientation: landscape) {
+  body.hf-origin-f1.mobile-touch.game-active #actionbar-group,
+  body.hf-origin-f1.mobile-touch.game-active #cross-hotbar,
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-page-toggle,
+  body.hf-origin-f1.mobile-touch.game-active #mobile-consumable-seat,
+  body.hf-origin-f1.mobile-touch.game-active #mobile-stance-anchor {
+    display: none !important;
+    pointer-events: none !important;
+  }
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring {
+    --mobile-ring-attack-size: 74px;
+    --mobile-ring-action-size: 48px;
+    --mobile-ring-secondary-size: 46px;
+    position: absolute;
+    right: max(8px,env(safe-area-inset-right));
+    bottom: max(8px,env(safe-area-inset-bottom));
+    width: 420px;
+    height: 310px;
+    max-width: 53vw;
+    max-height: 90vh;
+    transform: scale(var(--btn-scale,1));
+    transform-origin: right bottom;
+  }
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring #mobile-action-attack {
+    left: auto !important;
+    right: 8px !important;
+    top: auto !important;
+    bottom: 70px !important;
+  }
+  /* USAR physically below ATK, separate native event handlers. */
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring #mobile-interact {
+    left: auto !important;
+    right: 22px !important;
+    top: auto !important;
+    bottom: 5px !important;
+  }
+  /* OBJETIVO is above ATK, never overlaps USAR. */
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring #mobile-target-cycle {
+    left: auto !important;
+    right: 22px !important;
+    top: auto !important;
+    bottom: 167px !important;
+  }
+  /* FOUR real native mobile skill seats on a distinct ascending left arc. */
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring .mobile-action-slot[data-mobile-index="0"] {
+    left:auto !important;right:145px !important;top:auto !important;bottom:72px !important;
+  }
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring .mobile-action-slot[data-mobile-index="1"] {
+    left:auto !important;right:172px !important;top:auto !important;bottom:128px !important;
+  }
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring .mobile-action-slot[data-mobile-index="2"] {
+    left:auto !important;right:138px !important;top:auto !important;bottom:187px !important;
+  }
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring .mobile-action-slot[data-mobile-index="3"] {
+    left:auto !important;right:78px !important;top:auto !important;bottom:229px !important;
+  }
+  /* Auxiliaries along the lower middle, separated from left joystick. */
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring #mobile-jump {
+    left:auto !important;right:287px !important;top:auto !important;bottom:5px !important;
+  }
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring #mobile-evade {
+    left:auto !important;right:347px !important;top:auto !important;bottom:5px !important;
+  }
+  /* Keep ClaudeCraft's ORIGINAL HP meter and portrait; its Warrior rage
+     resource is NOT MP. MP and ST become its two adjacent ORIGIN native rows. */
+  body.hf-origin-f1.mobile-touch.game-active #player-frame #pf-resource {
+    display:none !important;
+  }
+  body.hf-origin-f1.mobile-touch.game-active #player-frame #hf-origin-f1-resource-meter {
+    background:transparent !important;
+    box-shadow:none !important;
+    border:0 !important;
+    border-radius:0 !important;
+    margin-top:2px !important;
+    padding:0 !important;
+    width:215px;
+    pointer-events:none;
+    color:#f4e8d6;
+  }
+  body.hf-origin-f1.mobile-touch.game-active #player-frame #hf-origin-f1-resource-meter > div {
+    height:16px;
+    margin:0 !important;
+    gap:4px !important;
+    font-size:9px;
+  }
+  body.hf-origin-f1.mobile-touch.game-active #player-frame #hf-origin-f1-resource-meter > div > span:last-child {
+    width:56px !important;
+  }
+  body.hf-origin-f1.mobile-touch.game-active #target-frame {
+    top:calc(max(16px,env(safe-area-inset-top)) + 133px) !important;
+  }
+  body.hf-origin-f1.mobile-touch.game-active #party-frames {
+    top:calc(max(16px,env(safe-area-inset-top)) + 183px) !important;
+  }
+}
