@@ -1,4 +1,4 @@
-name: HIGHFLY ORIGIN F1.2 — Replace Legacy Pages With New Hunter (APPROVED)
+name: HIGHFLY ORIGIN F1.2.1 — Restore Same Hunter & Fix Unarmed Preview (APPROVED)
 # Approved: replace the PUBLISHED Pages snapshot, NOT delete repository history.
 # Source is pinned to the isolated F1.2 branch. No old R39/R40 overlays.
 on:
@@ -25,7 +25,7 @@ jobs:
       - name: Checkout immutable HIGHFLY ORIGIN F1.2 source only
         uses: actions/checkout@v4
         with:
-          ref: 65de878512d8a8362fe54e663ab2b7f94b68183b
+          ref: 69f504653d162e696652e21e2d07bdb4cdd0988c
           persist-credentials: false
           filter: blob:none
 
@@ -33,7 +33,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "65de878512d8a8362fe54e663ab2b7f94b68183b"
+          test "$(git rev-parse HEAD)" = "69f504653d162e696652e21e2d07bdb4cdd0988c"
           test -s src/highfly/origin/f1_core.ts
           test -s src/highfly/origin/f1_world_ui.ts
           test -s src/game/highfly_offline_save.ts
@@ -103,7 +103,7 @@ jobs:
           test -s dist/highfly-origin-appshell.json
           test -d dist/media
           touch dist/.nojekyll
-          echo "HIGHFLY_F12_ROOT_WEBGL_GREEN=1"
+          echo "HIGHFLY_F121_ROOT_WEBGL_GREEN=1"
 
       - name: Enforce new Pages replaces old root and fits hosting size
         shell: bash
@@ -130,7 +130,7 @@ jobs:
               if not (dist/f).is_file():raise SystemExit('F12_MISSING_'+f)
           qa={
             'edition':'HIGHFLY ORIGIN F1.2 ONE HUNTER — ROOT PAGES',
-            'sourceCommit':'65de878512d8a8362fe54e663ab2b7f94b68183b',
+            'sourceCommit':'69f504653d162e696652e21e2d07bdb4cdd0988c',
             'cleanFoundation':True,'legacyOverlaysApplied':False,
             'oldPagesLabsRemovedFromPublishedSnapshot':True,
             'physicalS23':'PENDING PLAYER TEST',
@@ -147,6 +147,7 @@ jobs:
           VITE_COBALT_OFFLINE: "1"
           F1_GAME_URL: "http://127.0.0.1:4173/cobalt-hollow-lab/"
           F11_VERIFY_RELOAD: "1"
+          F121_SEED_LEGACY: "1"
         run: |
           set -euo pipefail
           command -v google-chrome || command -v chromium || command -v chromium-browser
@@ -164,7 +165,7 @@ jobs:
           done
           curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/highfly-origin-sw.js >/dev/null
           node scripts/highfly_origin_f1_browser.mjs
-          echo "HIGHFLY_F12_PUBLIC_BASE_ANDROID_BROWSER_GREEN=1"
+          echo "HIGHFLY_F121_LEGACY_COLLISION_AND_RESTORE_BROWSER_GREEN=1"
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -193,7 +194,7 @@ jobs:
           python3 - <<'PY'
           import json,time,urllib.request
           root='https://drakentzy07.github.io/cobalt-hollow-lab/'
-          expected='65de878512d8a8362fe54e663ab2b7f94b68183b'
+          expected='69f504653d162e696652e21e2d07bdb4cdd0988c'
           for attempt in range(30):
               try:
                   def get(path):
