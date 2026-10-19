@@ -20,16 +20,39 @@ const browser=await puppeteer.launch({
   defaultViewport:{width:844,height:390,isMobile:true,hasTouch:true,deviceScaleFactor:1},
 });
 const page=await browser.newPage();
-page.on('pageerror',e=>console.log('F1_PAGE_ERROR',e.message));
+const failedRequests=[];
+const pageErrors=[];
+let phase='boot';
+const report={url:BASE,browser:'Chrome S23 viewport emulation (not physical device)',phases:[],failedRequests,pageErrors};
+const checkpoint=(next)=>{phase=next;report.phases.push({name:next,at:new Date().toISOString()});console.log('F1_CHECKPOINT',next);};
+page.on('pageerror',e=>{const detail={phase,message:e.message,stack:e.stack?.slice(0,1600)};pageErrors.push(detail);console.log('F1_PAGE_ERROR',JSON.stringify(detail));});
 page.on('console',m=>{if(m.type()==='error')console.log('F1_BROWSER_CONSOLE_ERROR',m.text().slice(0,450));});
-const report={url:BASE,browser:'Chrome S23 viewport emulation (not physical device)'};
+page.on('requestfailed',req=>{const detail={phase,url:req.url(),error:req.failure()?.errorText??'unknown'};failedRequests.push(detail);console.log('F1_REQUEST_FAILED',JSON.stringify(detail));});
+page.on('response',res=>{
+  if(res.status()<400)return;
+  const detail={phase,url:res.url(),status:res.status()};
+  failedRequests.push(detail);
+  console.log('F1_HTTP_ERROR',JSON.stringify(detail));
+});
+// Simulate connectivity being OFF while bundled assets remain reachable on localhost.
+// The offline game must not require Turnstile, CDN fonts, analytics or a realm.
+await page.setRequestInterception(true);
+const ownOrigin=new URL(BASE).origin;
+page.on('request',req=>{
+  const url=req.url();
+  if(url.startsWith('data:')||url.startsWith('blob:')||new URL(url).origin===ownOrigin)void req.continue();
+  else {console.log('F1_OPTIONAL_REMOTE_BLOCKED',url.slice(0,220));void req.abort();}
+});
 try {
+  checkpoint('launcher');
   await page.goto(BASE,{waitUntil:'domcontentloaded',timeout:120_000});
   await page.evaluate(()=>localStorage.clear());
   await page.reload({waitUntil:'domcontentloaded',timeout:120_000});
   await page.waitForSelector('#btn-play',{timeout:90_000});
+  checkpoint('launcher-ready');
   await page.evaluate(()=>document.getElementById('btn-play')?.click());
   await page.waitForFunction(()=>{const e=document.getElementById('offline-select');return e&&!e.hidden;},{timeout:60_000});
+  checkpoint('creator-panel');
   // The renderer creates the modular editor only AFTER an asynchronous
   // IndexedDB primary-slot lookup and its class-detail mount. A visible panel
   // is NOT proof the editor is mounted; sample neither in the same tick.
@@ -59,6 +82,7 @@ try {
   if(creator.classCards!==1||!creator.classPickerHidden||!creator.femaleMaleEditor){
     throw Error('F1_CREATOR_NOT_CLASSLESS '+JSON.stringify(creator));
   }
+  checkpoint('creator-ready');
   await page.screenshot({path:OUT+'/f1-creator-android.png'});
   await page.evaluate(()=>{
     localStorage.setItem('woc.cameraModePrompt.shown','1');
@@ -70,8 +94,11 @@ try {
   await page.waitForSelector('#mobile-preflight-continue',{visible:true,timeout:20000})
     .then(()=>page.evaluate(()=>document.getElementById('mobile-preflight-continue')?.click()))
     .catch(()=>{});
+  checkpoint('enter-world');
   await page.waitForFunction(()=>window.__game?.sim?.player,{timeout:180_000});
+  checkpoint('world-sim-and-renderer-ready');
   await page.waitForSelector('#hf-origin-f1-hud',{timeout:35000});
+  checkpoint('world-hud-ready');
   const initial=await page.evaluate(()=>{
     const sim=window.__game.sim;
     const meta=sim.players.get(sim.playerId);
@@ -91,6 +118,7 @@ try {
   if(initial.position.x < -180)throw Error('F1_TELEPORTED_TO_TUTORIAL_ISLAND');
   if(!initial.guidePresent||!initial.resourceHud)throw Error('F1_GUIDE_OR_RESOURCE_MISSING');
   await page.screenshot({path:OUT+'/f1-birth-android.png'});
+  checkpoint('starter-npc');
   await page.waitForFunction(()=>{
     const guide=document.getElementById('hf-origin-f1-guide');
     return guide&&getComputedStyle(guide).display!=='none';
@@ -113,8 +141,30 @@ try {
   report.starter=granted;
   if(granted.weapon!=='worn_sword'||!granted.saved||granted.savedWeapon!=='worn_sword')throw Error('F1_STARTER_NOT_PERSISTED');
   await page.screenshot({path:OUT+'/f1-first-weapon-android.png'});
-  fs.writeFileSync(OUT+'/f1-browser-report.json',JSON.stringify(report,null,2)+'\n');
+  checkpoint('starter-verified');
+  fs.writeFileSync(OUT+'/f1-browser-report.json',JSON.stringify(report,null,2)+'\\n');
   console.log('HIGHFLY_F1_ANDROID_BROWSER_INTERACTION_GREEN=1',JSON.stringify(report));
+} catch(error) {
+  report.error={phase,message:String(error),stack:error?.stack?.slice(0,3500)};
+  try {
+    report.browserState=await page.evaluate(()=>({
+      href:location.href,
+      bodyClass:document.body.className,
+      readyState:document.readyState,
+      loadingStatus:document.getElementById('ls-status')?.textContent,
+      loadingPercent:document.getElementById('ls-fill')?.style.width,
+      loadingVisible:document.getElementById('loading-screen')?.className,
+      fatal:document.querySelector('#fatal-overlay,.fatal-overlay')?.textContent?.slice(0,700),
+      preflightVisible:document.getElementById('mobile-preflight')?.classList.contains('visible'),
+      gameActive:document.body.classList.contains('game-active'),
+      gameReady:!!window.__game?.sim?.player,
+      resourceCount:performance.getEntriesByType('resource').length,
+    }));
+    await page.screenshot({path:OUT+'/f1-failure-android.png'});
+  } catch (diagError) {report.diagnosticFailure=String(diagError);}
+  fs.writeFileSync(OUT+'/f1-browser-report.json',JSON.stringify(report,null,2)+'\\n');
+  console.error('F1_DIAGNOSTIC_FAILURE',JSON.stringify(report).slice(0,24000));
+  throw error;
 } finally {
   await browser.close();
 }
