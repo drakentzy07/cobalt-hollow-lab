@@ -1,0 +1,209 @@
+name: HIGHFLY ORIGIN F1.2 — Replace Legacy Pages With New Hunter (APPROVED)
+# Approved: replace the PUBLISHED Pages snapshot, NOT delete repository history.
+# Source is pinned to the isolated F1.2 branch. No old R39/R40 overlays.
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/highfly-origin-f12-replace-legacy-pages-main.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build_and_android_certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout immutable HIGHFLY ORIGIN F1.2 source only
+        uses: actions/checkout@v4
+        with:
+          ref: 65de878512d8a8362fe54e663ab2b7f94b68183b
+          persist-credentials: false
+          filter: blob:none
+
+      - name: Verify EXACT F1.2 new foundation; no old overlays
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "65de878512d8a8362fe54e663ab2b7f94b68183b"
+          test -s src/highfly/origin/f1_core.ts
+          test -s src/highfly/origin/f1_world_ui.ts
+          test -s src/game/highfly_offline_save.ts
+          test -s scripts/highfly_origin_f1_browser.mjs
+          test -s public/highfly-origin-sw.js
+          grep -F "compulsoryTutorial: false" src/game/offline_world_config.ts
+          echo "HIGHFLY_F12_IMMUTABLE_CLEAN_SOURCE_GREEN=1"
+
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Pinned pnpm dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: F1.2 types and one-Hunter regression gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec tsc --noEmit --incremental false
+          pnpm exec vitest run --exclude 'training/tests/**' \
+            tests/highfly_origin_f1_universal_hunter.test.ts \
+            tests/highfly_game_c1.test.ts \
+            tests/highfly_game_c28.test.ts \
+            tests/highfly_training_core.test.ts \
+            tests/highfly_training_bridge.test.ts \
+            tests/highfly_training_pf5_stat_authority.test.ts
+          echo "HIGHFLY_F12_UNIT_TYPES_GREEN=1"
+
+      - name: Retrieve ONLY world assets from frozen original
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: donor-media
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /public/
+
+      - name: Compile new Hunter on real public Pages root
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          test "$(git -C donor-media rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          test -d donor-media/public/models
+          mkdir -p public
+          rsync -a donor-media/public/ public/
+          node scripts/build_bundle_pregen.mjs
+          pnpm exec vite build
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          node scripts/highfly_f11_appshell.mjs
+          test -s dist/index.html
+          test -s dist/highfly-origin-sw.js
+          test -s dist/highfly-origin.webmanifest
+          test -s dist/highfly-origin-appshell.json
+          test -d dist/media
+          touch dist/.nojekyll
+          echo "HIGHFLY_F12_ROOT_WEBGL_GREEN=1"
+
+      - name: Enforce new Pages replaces old root and fits hosting size
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,json
+          dist=Path('dist')
+          html=(dist/'index.html').read_text()
+          base='/cobalt-hollow-lab/'
+          if base+'assets/' not in html:raise SystemExit('F12_BAD_PUBLIC_BASE')
+          if 'highfly-origin.webmanifest' not in html:raise SystemExit('F12_WRONG_MANIFEST')
+          if 'challenges.cloudflare.com/turnstile/v0/api.js' in html:raise SystemExit('F12_DONOR_AUTH_SCRIPT')
+          files=[p for p in dist.rglob('*') if p.is_file()]
+          total=sum(p.stat().st_size for p in files)
+          if total>=1_000_000_000:raise SystemExit(f'F12_PAGES_SIZE_LIMIT_{total}')
+          jsrefs=re.findall(r'(?:src|href)="(/cobalt-hollow-lab/assets/[^"]+)"',html)
+          if not jsrefs:raise SystemExit('F12_NO_ENTRY_ASSETS')
+          for ref in jsrefs:
+              rel=ref.removeprefix(base)
+              if not (dist/rel).is_file():raise SystemExit('F12_MISSING_ASSET_'+rel)
+          for f in ['highfly-origin-sw.js','highfly-origin.webmanifest']:
+              if not (dist/f).is_file():raise SystemExit('F12_MISSING_'+f)
+          qa={
+            'edition':'HIGHFLY ORIGIN F1.2 ONE HUNTER — ROOT PAGES',
+            'sourceCommit':'65de878512d8a8362fe54e663ab2b7f94b68183b',
+            'cleanFoundation':True,'legacyOverlaysApplied':False,
+            'oldPagesLabsRemovedFromPublishedSnapshot':True,
+            'physicalS23':'PENDING PLAYER TEST',
+            'androidEmulation':'VERIFIED BY WORKFLOW BROWSER TEST',
+            'playUrl':'https://drakentzy07.github.io/cobalt-hollow-lab/',
+            'bytes':total,'files':len(files)}
+          (dist/'highfly-origin-f12-qa.json').write_text(json.dumps(qa,indent=2)+'\n')
+          print('HIGHFLY_F12_NEW_PUBLIC_SITE_ONLY='+json.dumps(qa))
+          PY
+
+      - name: Android browser S23 landscape; Hunter creation, restart and TRUE offline
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          F1_GAME_URL: "http://127.0.0.1:4173/cobalt-hollow-lab/"
+          F11_VERIFY_RELOAD: "1"
+        run: |
+          set -euo pipefail
+          command -v google-chrome || command -v chromium || command -v chromium-browser
+          pnpm exec vite preview --host 127.0.0.1 --port 4173 --strictPort >/tmp/highfly-f12-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl -fsSI http://127.0.0.1:4173/cobalt-hollow-lab/ >/dev/null;then break;fi
+            sleep 1
+          done
+          node scripts/highfly_origin_f1_browser.mjs
+          echo "HIGHFLY_F12_PUBLIC_BASE_ANDROID_BROWSER_GREEN=1"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload NEW Pages snapshot (removes previous labs from publication)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build_and_android_certify
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/
+    steps:
+      - name: Publish MAIN new HIGHFLY ORIGIN instead of obsolete site
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Confirm deployed F1.2 marker and new world entry over public HTTP
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,time,urllib.request
+          root='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          expected='65de878512d8a8362fe54e663ab2b7f94b68183b'
+          for attempt in range(30):
+              try:
+                  def get(path):
+                      req=urllib.request.Request(root+path,headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-F12-VERIFY'})
+                      with urllib.request.urlopen(req,timeout=35) as r:
+                          if r.status!=200:raise RuntimeError(str(r.status))
+                          return r.read()
+                  qa=json.loads(get('highfly-origin-f12-qa.json?check='+str(attempt)))
+                  if qa['sourceCommit']!=expected:raise RuntimeError('F12_OLD_PUBLIC_VERSION')
+                  html=get('index.html?check='+str(attempt))
+                  if b'highfly-origin.webmanifest' not in html:raise RuntimeError('F12_ENTRY_NOT_REPLACED')
+                  if not get('highfly-origin-sw.js?check='+str(attempt)):raise RuntimeError('F12_NO_SW')
+                  print('HIGHFLY_F12_PUBLIC_ANDROID_LIVE_GREEN='+root)
+                  break
+              except Exception as e:
+                  print('F12_WAIT_PUBLIC_PROPAGATION',attempt,str(e)[:170])
+                  time.sleep(5)
+          else:raise SystemExit('F12_PUBLIC_NOT_READY')
+          PY
