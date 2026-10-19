@@ -150,13 +150,19 @@ jobs:
         run: |
           set -euo pipefail
           command -v google-chrome || command -v chromium || command -v chromium-browser
-          pnpm exec vite preview --host 127.0.0.1 --port 4173 --strictPort >/tmp/highfly-f12-preview.log 2>&1 &
+          # A static Pages-shaped origin is required: vite preview can serve
+          # index.html at a nested Vite base while returning 404 for its
+          # /cobalt-hollow-lab/assets/* modules.
+          mkdir -p f12-static-origin
+          ln -s ../dist f12-static-origin/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory f12-static-origin >/tmp/highfly-f12-static.log 2>&1 &
           PREVIEW_PID=$!
           trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 40); do
             if curl -fsSI http://127.0.0.1:4173/cobalt-hollow-lab/ >/dev/null;then break;fi
             sleep 1
           done
+          curl -fsS http://127.0.0.1:4173/cobalt-hollow-lab/highfly-origin-sw.js >/dev/null
           node scripts/highfly_origin_f1_browser.mjs
           echo "HIGHFLY_F12_PUBLIC_BASE_ANDROID_BROWSER_GREEN=1"
 
