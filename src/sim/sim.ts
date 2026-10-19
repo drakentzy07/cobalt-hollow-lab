@@ -2213,6 +2213,7 @@ export class Sim {
     this.worldPvpDisabled = cfg.worldPvpDisabled ?? false;
     this.hillProbe = hillProbeFor(cfg.seed);
     this.cfg = {
+      originUniversalHunter: cfg.originUniversalHunter === true,
       seed: cfg.seed,
       playerClass: cfg.playerClass,
       // Deliberately NOT defaulted: the respawn policy (respawn_policy.ts) has to
