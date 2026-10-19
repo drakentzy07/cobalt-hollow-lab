@@ -7,7 +7,7 @@
  */
 export function isHighflyUpperBodyTrack(path: string): boolean {
   if (!/\.(?:quaternion|rotation)(?:\[[^\]]+\])?$/.test(path)) return false;
-  return /(?:spine|chest|clavicle|shoulder|upperarm|lowerarm|forearm|wrist|hand|finger|thumb|neck|head|torso|arm_l|arm_r)/i.test(path);
+  return /(?:spine|chest|clavicle|shoulder|upperarm|lowerarm|forearm|rightarm|leftarm|wrist|hand|finger|thumb|neck|head|torso|arm_l|arm_r)/i.test(path);
 }
 
 export function highflyPhysicalBasic(abilityId: string | undefined): boolean {
