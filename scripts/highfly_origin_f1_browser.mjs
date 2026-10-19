@@ -94,6 +94,23 @@ try {
     throw Error('F1_CREATOR_NOT_CLASSLESS '+JSON.stringify(creator));
   }
   checkpoint('creator-ready');
+  if(process.env.F122_VERIFY_UX==='1') {
+    // Check the creation screen BEFORE the same shared preview canvas is
+    // reattached to the in-world character sheet (which can show real gear).
+    await page.waitForFunction(()=>
+      !!document.getElementById('char-preview-canvas')?.dataset.highflyPreviewVisual,
+      {timeout:75_000,polling:250});
+    const creator=await page.evaluate(()=>({
+      class:document.body.className,
+      preview:document.getElementById('char-preview-canvas')?.dataset.highflyPreviewVisual,
+      weapon:document.getElementById('char-preview-canvas')?.dataset.highflyPreviewWeaponItem,
+      offhand:document.getElementById('char-preview-canvas')?.dataset.highflyPreviewOffhandItem,
+    }));
+    report.unarmedPreview=creator;
+    if(!creator.class.includes('hf-origin-f1-creator')||creator.weapon||creator.offhand)
+      throw Error('F122_CREATOR_HAS_DONOR_ARMOR_OR_WEAPON '+JSON.stringify(creator));
+    checkpoint('creator-truly-unarmed');
+  }
   await page.screenshot({path:OUT+'/f1-creator-android.png'});
   await page.evaluate(()=>{
     localStorage.setItem('woc.cameraModePrompt.shown','1');
@@ -128,15 +145,6 @@ try {
   if(initial.equipment.mainhand||initial.equipment.offhand||initial.equipment.chest)throw Error('F1_NOT_UNARMED '+JSON.stringify(initial.equipment));
   if(initial.position.x < -180)throw Error('F1_TELEPORTED_TO_TUTORIAL_ISLAND');
   if(!initial.guidePresent||!initial.resourceHud)throw Error('F1_GUIDE_OR_RESOURCE_MISSING');
-  if(process.env.F122_VERIFY_UX==='1') {
-    const creator=await page.evaluate(()=>({
-      weapon:document.getElementById('char-preview-canvas')?.dataset.highflyPreviewWeaponItem,
-      offhand:document.getElementById('char-preview-canvas')?.dataset.highflyPreviewOffhandItem,
-    }));
-    report.unarmedPreview=creator;
-    if(creator.weapon||creator.offhand)
-      throw Error('F122_PREVIEW_HAD_LEGACY_SWORD_OR_SHIELD '+JSON.stringify(creator));
-  }
   await page.screenshot({path:OUT+'/f1-birth-android.png'});
   checkpoint('starter-npc');
   await page.waitForFunction(()=>{
