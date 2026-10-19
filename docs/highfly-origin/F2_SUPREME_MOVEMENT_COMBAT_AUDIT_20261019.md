@@ -138,7 +138,24 @@ Un solo Hunter persistente y universal, creado hombre/mujer. No elegir clase obl
 
 **Implementation priority:** install CombatFlow movement/animation contracts before dozens of new skill clips. This is the gate between F2.2 and F2.3. All future skills must satisfy it to be considered complete.
 
-## 6. Decisiones para que revise el creador antes de iniciar F2
+## 6. Referencias estudiadas y compatibilidad REAL del rig (no copiar código ajeno)
+1. **KayKit Character Animations moderno** — https://kaylousberg.itch.io/kaykit-character-animations
+   - Pack oficial CC0 con animaciones `Rig_Medium`/`Rig_Large`, movimiento, dodges, combate desarmado/armado y magia. **Candidato prioritario para ampliar clips**, auditando por nombre, skeleton, orientation, root transform y bind pose. No afirmar que un clip concreto está ya incluido sin enumerar el GLB real.
+   - **ATENCIÓN: Legacy KayKit Animations** — https://kaylousberg.itch.io/kaykit-animations — tiene clips `Roll` y `Dash Front/Back/Left/Right` PERO especifica que son para los modelos ANTIGUOS *sin piernas*. No integrarlo directamente al Hunter actual; requiere retarget/rehacer y verificación, o mejor encontrar su equivalente Rig_Medium en el pack moderno.
+2. **Three.js AnimationClip, AnimationMixer y keyframe tracks** — https://threejs.org/docs/pages/AnimationClip y https://threejs.org/manual/pages/animation-system.html
+   - No existe un simple interruptor universal de "máscara de torso": preparar derivados de `AnimationClip` filtrando tracks de bones superiores según la jerarquía real, y/o crear overlays aditivos con referencia de pose correcta. Mantener mixer/skin existentes, no duplicarlos. La versión combinada no puede perder weights y caer en T-pose.
+3. **Granblue Fantasy: Relink** — https://relink.granbluefantasy.jp/en/gameplay
+   - Referente de combos con habilidades, economía de cuatro botones skill, link attacks, puesta en escena. Solo trasladar principios de respuesta/combos, NO party de cambio de personajes; un Hunter permanente.
+4. **Wuthering Waves** — https://wutheringwaves.fandom.com/wiki/Basic_Attack
+   - Ejemplos verificables de ofensivas aéreas, plunging attacks, counters tras evasión y recuperación de paso de combo; prototipar transiciones ATK normal → esquiva → ATK y salto→ATK→slam. No copiar animaciones propietarias ni permitir impulso/teletransporte por defecto.
+5. **Punishing: Gray Raven** — https://punishing-gray-raven.fandom.com/wiki/Combat_Guide
+   - Timing de evasión perfecta y recompensa visual. Adoptar de forma opcional ventana de evasión precisa y micro-slowdown EXCLUSIVAMENTE visual; sin parry ni botón bloqueo.
+6. **DMC / spectacle fighters** — inspiración en mantener juggle aéreo/inputs contextualizados, NO prometer combo aéreo físico sin antes desarrollar hitboxes y trayectoria determinista.
+
+### Prueba de rig ANTES de construir un mortal direccional
+Inventariar clips cargados de `warrior_modular.glb` y otros `Rig_Medium`; verificar duración y tracks/bones, key poses, y compatibilidad hombre/mujer. Elegir por preferencia: (1) clip moderno KayKit Rig_Medium, (2) animación procedimental ligera / retarget validado, (3) nuevo clip authored compatible. Prototipar delante/atrás/izquierda/derecha sobre dummy con cámara y joystick activos. Un salto mortal solo se considera terminado si visual, collider, posición de suelo, muñecas/pies y fase de ataque convergen sin deslizamiento.
+
+## 7. Decisiones para que revise el creador antes de iniciar F2
 A. ¿Combo desarmado de 3 golpes + 1 remate contextual o 5 golpes básicos con remates variables? Propuesta: secuencias de 3–5, gobernadas por contexto, no número rígido.
 B. ¿I-frames de evasión? Propuesta: cortos y explícitos, sin invulnerabilidad durante todo el dash.
 C. ¿Wall-run/voltereta desde primera F2 o fase de parkour posterior? Propuesta: primero movimiento/golpes imprescindibles, parkour espectacular después de cerrar colisión.
