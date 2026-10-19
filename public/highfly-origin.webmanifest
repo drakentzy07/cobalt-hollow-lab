@@ -1,0 +1,25 @@
+{
+  "name": "HIGHFLY ORIGIN",
+  "short_name": "HIGHFLY",
+  "description": "Hunter universal — aventura offline y futuro cooperativo",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#050509",
+  "theme_color": "#050509",
+  "icons": [
+    {
+      "src": "./highfly/highfly-logo-official.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "./highfly/highfly-logo-official.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any"
+    }
+  ]
+}
