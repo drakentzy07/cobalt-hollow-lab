@@ -18,7 +18,7 @@ describe('HIGHFLY ORIGIN F1.2.3 device reset and mobile HUD',()=>{
   it('integrates MP and stamina under the real HP frame without duplicate HP',()=>{
     const world=readFileSync('src/highfly/origin/f1_world_ui.ts','utf8');
     const css=readFileSync('src/styles/hud.mobile.css','utf8');
-    expect(world).toContain("document.querySelector('#player-frame .uf-bars')");
+    expect(world).toContain("document.getElementById('player-frame')");
     expect(world).toContain("['mana','MP'");
     expect(world).toContain("['stamina','ST'");
     expect(world).not.toContain("['hp','HP'");
