@@ -6512,7 +6512,7 @@ export class Hud {
       if (armorTypeKey) {
         // Red armor type = the viewing player's class cannot wear this armor weight
         // (e.g. a mage hovering Mail), so they know it is not for them at a glance.
-        const badClass = canEquipItem(this.sim.cfg.playerClass, item) ? '' : ' tt-armor-bad';
+        const badClass = this.sim.cfg.originUniversalHunter || canEquipItem(this.sim.cfg.playerClass, item) ? '' : ' tt-armor-bad';
         html += `<div class="tt-sub tt-row"><span>${esc(slotName)}</span><span class="tt-armor${badClass}">${esc(t(armorTypeKey))}</span></div>`;
         if (uniqueTag) {
           html += `<div class="tt-sub" style="color:var(--gold)">${esc(uniqueTag)}</div>`;
