@@ -160,6 +160,14 @@ try {
   });
   if(movingAttack.maskedClips<1||movingAttack.fullBodyBlocking)
     throw Error('F22_SKATING_STILL_FULL_BODY '+JSON.stringify(movingAttack));
+  // The moving-attack test holds a continuous left stick. Release it BEFORE
+  // starting the next independent chain or the player may run off the town
+  // terrain while Puppeteer waits for GPU pose updates.
+  await page.evaluate(()=>window.__game.input.clearHighflyTouchVector());
+  await page.waitForFunction(()=>{
+    const p=window.__game?.sim?.player;
+    return p && p.onGround && !p.dead && !p.climb && !p.mountKey;
+  },{timeout:10000});
   // Real INPUT edges into the ONE Sim: first jump -> airborne dodge -> second
   // directional jump. The authored flip belongs to the renderer, not teleport.
   await page.evaluate(()=>window.__game.input.triggerTouchJump());
