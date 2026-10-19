@@ -50,7 +50,7 @@ jobs:
       - name: Checkout immutable F2 Android beta source
         uses: actions/checkout@v4
         with:
-          ref: d3ab2049a2bf064cd6648ca7461f4d4f26e74742
+          ref: f969ddfab1a120b54bf8b91db76f6d27cbe08e8d
           path: beta-src
           persist-credentials: false
           filter: blob:none
@@ -59,7 +59,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git -C beta-src rev-parse HEAD)" = "d3ab2049a2bf064cd6648ca7461f4d4f26e74742"
+          test "$(git -C beta-src rev-parse HEAD)" = "f969ddfab1a120b54bf8b91db76f6d27cbe08e8d"
           grep -F "highfly-offline-f2-combat-beta" beta-src/src/game/highfly_offline_save.ts
           grep -F "!location.pathname.startsWith('/cobalt-hollow-lab/lab/f2-combat-beta/')" beta-src/src/main.ts
           grep -F "ATTACK_MOVE_MELEE_STOP ** 2" beta-src/src/main.ts
@@ -128,7 +128,7 @@ jobs:
           set -euo pipefail
           test -s baseline/artifact.tar
           python3 beta-src/scripts/highfly_origin_f2_stage_safe.py \
-            baseline/artifact.tar beta-src/dist site d3ab2049a2bf064cd6648ca7461f4d4f26e74742
+            baseline/artifact.tar beta-src/dist site f969ddfab1a120b54bf8b91db76f6d27cbe08e8d
 
       - name: Browser test beta entry, ATK, weapon and independent save
         shell: bash
@@ -187,7 +187,7 @@ jobs:
                   f2=json.loads(get('lab/f2-combat-beta/f2-beta-qa.json'))
                   if f1.get('sourceCommit')!='7518c22c11ff5ddffe09bb7792f8d67bb9e82038':
                       raise RuntimeError('F1_ROOT_CHANGED')
-                  if f2.get('sourceCommit')!='d3ab2049a2bf064cd6648ca7461f4d4f26e74742':
+                  if f2.get('sourceCommit')!='f969ddfab1a120b54bf8b91db76f6d27cbe08e8d':
                       raise RuntimeError('F2_BETA_STALE')
                   if b'/cobalt-hollow-lab/assets/' not in get('lab/f2-combat-beta/index.html'):
                       raise RuntimeError('F2_HTML_MISSING_ASSETS')
