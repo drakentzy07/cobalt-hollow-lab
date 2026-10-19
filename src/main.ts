@@ -471,6 +471,9 @@ import {
 } from './sim/types';
 import { zoneBiomeAt } from './sim/world';
 import { startSitePresence } from './site_presence';
+// F1.1: localhost/Pages offline birth does not contact ClaudeCraft's backend.
+// Co-op will explicitly opt into its own API later; never infer it from hostname.
+const HIGHFLY_F11_OFFLINE_FIRST = import.meta.env.VITE_COBALT_OFFLINE === '1';
 import { applyAbsorbOverlayGate } from './ui/absorb_overlay_gate';
 import {
   accountPortalModel,
@@ -9521,7 +9524,7 @@ function wireStartScreens(): void {
   // owns the fallback.
   for (const ensure of CONTENT_LOCALE_CHANNEL_ENSURERS) void ensure(bootLang).catch(() => {});
   hydrateIcons();
-  void loadProjectStats();
+  if (!HIGHFLY_F11_OFFLINE_FIRST) void loadProjectStats();
   wireHomepageMusicToggle();
   void wireWallet();
   wireGithubLink();
@@ -11464,7 +11467,7 @@ const diagnosticsAutoOffline =
   startupParams.get('diagnostics') === '1' &&
   startupParams.get('diagnosticsAuto') === '1';
 if (editorPlaytest) {
-  startSitePresence('home');
+  if (!HIGHFLY_F11_OFFLINE_FIRST) startSitePresence('home');
   void startOffline(
     editorPlaytest.playerClass,
     editorPlaytest.playerName,
@@ -11473,10 +11476,10 @@ if (editorPlaytest) {
     editorPlaytest.seed,
   );
 } else if (diagnosticsAutoOffline) {
-  startSitePresence('home');
+  if (!HIGHFLY_F11_OFFLINE_FIRST) startSitePresence('home');
   void startOffline('warrior', 'Diagnostics', 0);
 } else {
-  startSitePresence('home');
+  if (!HIGHFLY_F11_OFFLINE_FIRST) startSitePresence('home');
   wireStartScreens();
   initHomepageMusic();
 }
