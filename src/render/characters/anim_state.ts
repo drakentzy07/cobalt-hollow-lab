@@ -10,6 +10,9 @@ export interface AnimState {
    *  speed-threshold compare: that flips on every noisy frame under load) */
   running: boolean;
   airborne: boolean;
+  /** F2 Hunter Universal second jump: presentation-only flip, gated by ORIGIN.
+   * No locomotion, collision or client/world authority comes from this flag. */
+  highflyAirFlip?: boolean;
   /** Airborne AND genuinely falling (past any hop's landing speed, see
    *  isFallingAtSpeed): the base pose flails instead of holding the jump
    *  loop. Renderer-derived from displayed vertical speed, so peers flail
