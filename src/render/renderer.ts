@@ -10800,6 +10800,11 @@ export class Renderer {
       const logicallyMounted = mountLook !== '';
       const riderMounted = v.mountLift > 0;
       st.airborne = airborne && !riderMounted;
+      // HIGHFLY: this is only a local second-jump animation marker.
+      // Native ClaudeCraft/online clients have no flip and remain unchanged.
+      st.highflyAirFlip = document.body.classList.contains('hf-origin-f1') &&
+        e.id === this.sim.player.id && st.airborne &&
+        e.highflyAirJumpUsed === true;
       // Long-fall flail: displayed vertical speed past what any hop reaches
       // (the same displayed-motion discipline as swimPitch, so peers flail
       // identically with no wire traffic). Mounted riders never flail:
