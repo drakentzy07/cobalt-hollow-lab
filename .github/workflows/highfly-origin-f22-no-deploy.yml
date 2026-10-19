@@ -1,7 +1,7 @@
 name: HIGHFLY F2.2 — Native Reuse Combat HUD QA (NO DEPLOY)
 on:
   push:
-    branches: [highfly-origin-f22-combat-hud-skills-20261019]
+    branches: [highfly-origin-f22-combat-hunter-integration-20261019]
     paths:
       - ".github/workflows/highfly-origin-f22-no-deploy.yml"
       - "src/**"
