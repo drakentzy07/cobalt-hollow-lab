@@ -1,7 +1,7 @@
 import type { CharacterState } from '../sim/character_state';
 import type { PlayerClass } from '../sim/types';
 import { HIGHFLY_TRAINING_SCHEMA_VERSION, type HighflyHunterProfile } from '../highfly/training/core';
-import type { OriginF1Save } from '../highfly/origin/f1_core';
+import { normalizeOriginF1Save, type OriginF1Save } from '../highfly/origin/f1_core';
 
 export interface HighflyOfflineSave {
   version: 1;
@@ -26,6 +26,15 @@ const DB_NAME = 'highfly-offline';
 const STORE_NAME = 'saves';
 const PRIMARY_SLOT_KEY = 'primary';
 const LOCAL_KEY = 'highfly.offline.primary.v1';
+// Keep the NEW persistent Hunter separate from the old ClaudeCraft/R39 data.
+// Both live under the same Pages origin and must not compete for 'primary'.
+const ORIGIN_PRIMARY_SLOT_KEY = 'origin-f1:primary';
+const ORIGIN_LOCAL_KEY = 'highfly.origin.primary.v1';
+const hasOriginIdentity = (s: HighflyOfflineSave | null): boolean =>
+  !!s && normalizeOriginF1Save(s.originF1) !== null;
+const originIdentitySlotKey = (cls: PlayerClass, name: string): string =>
+  'origin-f1:' + identitySlotKey(cls, name);
+
 
 function normalizedHunterName(name: string): string {
   return name.trim().toLowerCase();
@@ -89,9 +98,9 @@ function validTrainingSlot(value: unknown): value is HighflyTrainingSlot {
   );
 }
 
-function readLocal(): HighflyOfflineSave | null {
+function readLocal(key = LOCAL_KEY): HighflyOfflineSave | null {
   try {
-    const raw = globalThis.localStorage?.getItem(LOCAL_KEY);
+    const raw = globalThis.localStorage?.getItem(key);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
     return valid(parsed) ? parsed : null;
@@ -102,7 +111,9 @@ function readLocal(): HighflyOfflineSave | null {
 
 function writeLocal(save: HighflyOfflineSave): void {
   try {
-    globalThis.localStorage?.setItem(LOCAL_KEY, JSON.stringify(save));
+    globalThis.localStorage?.setItem(
+      hasOriginIdentity(save) ? ORIGIN_LOCAL_KEY : LOCAL_KEY, JSON.stringify(save),
+    );
   } catch {
     // IndexedDB below remains the durable path when localStorage is unavailable/full.
   }
@@ -212,8 +223,12 @@ async function writeIdb(save: HighflyOfflineSave): Promise<void> {
       const store = tx.objectStore(STORE_NAME);
       // "primary" is only the last-played pointer/snapshot used by the launcher.
       // The identity slot preserves each tested Hunter independently.
-      store.put(save, PRIMARY_SLOT_KEY);
-      store.put(save, identitySlotKey(save.playerClass, save.name));
+      // F1.2.1: new Hunter slots do not overwrite archived legacy identities.
+      const origin = hasOriginIdentity(save);
+      store.put(save, origin ? ORIGIN_PRIMARY_SLOT_KEY : PRIMARY_SLOT_KEY);
+      store.put(save, origin
+        ? originIdentitySlotKey(save.playerClass, save.name)
+        : identitySlotKey(save.playerClass, save.name));
       if (save.trainingProfile && validTrainingProfile(save.trainingProfile) &&
           trainingProfileMatchesClass(save.trainingProfile, save.playerClass)) {
         const trainingSlot: HighflyTrainingSlot = {
@@ -343,6 +358,26 @@ export async function loadHighflyOfflineSave(
   if (best) return best;
 
   return null;
+}
+
+/** Only the new Universal Hunter; original ClaudeCraft saves remain untouched.
+ * A F1/F1.1 save stored before F1.2.1 is accepted and promoted on next autosave.
+ */
+export async function loadOriginHunterSave(
+  playerClass?: PlayerClass,
+  name?: string,
+): Promise<HighflyOfflineSave | null> {
+  const ownPrimary = newest(readLocal(ORIGIN_LOCAL_KEY), await readIdbKey(ORIGIN_PRIMARY_SLOT_KEY));
+  const oldPrimary = newest(readLocal(), await readIdbKey(PRIMARY_SLOT_KEY));
+  const primary = ownPrimary ?? (hasOriginIdentity(oldPrimary) ? oldPrimary : null);
+  if (!playerClass || !name) return primary;
+  const ownExact = await readIdbKey(originIdentitySlotKey(playerClass, name));
+  const oldExact = await readIdbKey(identitySlotKey(playerClass, name));
+  const exact = ownExact ?? (hasOriginIdentity(oldExact) ? oldExact : null);
+  const matchingPrimary = primary && primary.playerClass === playerClass &&
+    normalizedHunterName(primary.name) === normalizedHunterName(name)
+    ? primary : null;
+  return newest(exact, matchingPrimary);
 }
 
 export function writeHighflyOfflineSave(save: HighflyOfflineSave): void {
