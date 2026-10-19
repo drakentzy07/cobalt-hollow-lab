@@ -221,6 +221,7 @@ try {
           ring:pos('mobile-action-ring')}};
     });
     report.hud= hud;
+    if(!hud.gpuNotice||!hud.slots.length)throw Error('F1_HUD_NO_TOUCH_ACTIONS');
     if(hud.slots.length!==4||hud.slots.some(s=>!s.visible||!s.width||!s.hit)||
        (hud.gpuNotice.visible&&(!hud.gpuNotice.dismissHit||hud.gpuNotice.occludesSkill))||
        hud.oldActionbar.visible||hud.page.visible||!hud.originMeterInFrame||
@@ -232,6 +233,17 @@ try {
        hud.target.y+hud.target.h>hud.attack.y+10){
       throw Error('F123_HUNTER_HUD_LAYOUT_REGRESSION '+JSON.stringify(hud));
     }
+    // ATK is COMBAT ONLY. A nearby guide/ship may offer contextual USAR,
+    // but the identical touch on ATK must never activate that interaction.
+    const attackBefore=await page.evaluate(()=>Number(document.body.dataset.highflyBasicAttackCount||'0'));
+    await page.touchscreen.tap(hud.attack.x+hud.attack.w/2,hud.attack.y+hud.attack.h/2);
+    const exclusive=await page.evaluate(()=>({
+      combo:Number(document.body.dataset.highflyBasicAttackCount||'0'),
+      modal:document.getElementById('hf-origin-f1-modal-backdrop')?.style.display,
+    }));
+    report.attackExclusive=exclusive;
+    if(exclusive.modal!=='none'||exclusive.combo<=attackBefore)
+      throw Error('F1_ATK_MUST_STRIKE_NOT_USE '+JSON.stringify({attackBefore,exclusive}));
     await page.screenshot({path:OUT+'/f123-combat-hud-android.png'});
     checkpoint('f123-hud-atk-use-four-skills-resources');
   }
@@ -353,7 +365,7 @@ try {
       checkpoint('f122-position-restored');
     }
     report.resumed=resumed;
-    if(resumed.count!==1||resumed.name!=='Wayfarer'||resumed.mainhand!=='worn_sword'||!resumed.claimed||resumed.npcOffersAgain)
+    if(resumed.count!==1||resumed.name!=='Wayfarer'||resumed.mainhand!=='worn_sword'||!resumed.claimed||!resumed.npcOffersAgain)
       throw Error('F11_RESUME_HUNTER_REGRESSION '+JSON.stringify(resumed));
     await page.screenshot({path:OUT+'/f11-resumed-online-android.png'});
     checkpoint('save-recovery-verified');

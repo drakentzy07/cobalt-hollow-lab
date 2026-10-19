@@ -67,6 +67,14 @@ export function consumeF1Resource(
   if (state[kind] + 0.000001 < amount) return null;
   return { ...state, [kind]: Math.max(0, state[kind] - amount) };
 }
+/** Swap one already-claimed starter for another, never grant an additional
+ * weapon. The live Sim verifies and exchanges the actual equipped item. */
+export function swapOriginStarter(state: OriginF1Save, itemId: string): OriginF1Save | null {
+  if (!state.starterClaimed || state.starterWeaponId === null) return null;
+  const starter = ORIGIN_STARTER_WEAPONS.find(w => w.id === itemId);
+  if (!starter || starter.id === state.starterWeaponId) return null;
+  return { ...state, starterWeaponId: starter.id };
+}
 export function claimOriginStarter(state: OriginF1Save, itemId: string): OriginF1Save | null {
   if (state.starterClaimed) return null;
   const starter = ORIGIN_STARTER_WEAPONS.find(w => w.id === itemId);

@@ -47,6 +47,15 @@ describe('HIGHFLY ORIGIN F1.2.3 device reset and mobile HUD',()=>{
     const browser=readFileSync('scripts/highfly_origin_f1_browser.mjs','utf8');
     expect(browser).toContain('!s.visible||!s.width||!s.hit');
     expect(css).toContain('#mobile-action-ring #mobile-action-attack');
+    expect(css).toContain('#mobile-action-ring #mobile-consumable-seat {');
+    expect(css).not.toContain('#mobile-action-page-toggle,\\n  body.hf-origin-f1.mobile-touch.game-active #mobile-consumable-seat,');
+    const ring=readFileSync('src/ui/hud/action_bar/mobile_action_ring_controller.ts','utf8');
+    expect(ring).toContain("!document.body.classList.contains('hf-origin-f1') && deps.contextualUse()");
+    const ferry=readFileSync('src/ui/hud/transport/ferry_hud_painter.ts','utf8');
+    expect(ferry).toContain("close.className = 'ferry-hud-dismiss'");
+    const guide=readFileSync('src/highfly/origin/f1_world_ui.ts','utf8');
+    expect(guide).toContain("guide.style.display = nearby?'block':'none'");
+    expect(guide).toContain("swapOriginStarter(current,item.id)");
     for(let i=0;i<4;i++) expect(css).toContain(`#mobile-action-ring .mobile-action-slot[data-mobile-index="${i}"]`);
     expect(html).toContain('id="mobile-action-attack"');
     expect(html).toContain('id="mobile-interact"');

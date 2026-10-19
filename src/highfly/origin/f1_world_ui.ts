@@ -6,6 +6,7 @@ import type { Sim } from '../../sim/sim';
 import { PLAYER_START } from '../../sim/data';
 import {
   claimOriginStarter,
+  swapOriginStarter,
   ORIGIN_STARTER_WEAPONS,
   tickF1Resources,
   type OriginF1Save,
@@ -90,7 +91,7 @@ export function mountOriginF1WorldUi(
   modal.style.cssText='box-sizing:border-box;width:min(490px,100%);max-height:100%;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;background:#111e30;border:2px solid #cca96f;border-radius:16px;padding:14px;color:#fff;box-shadow:0 10px 32px #000b;font:500 14px system-ui';
   const title=node('div','Veterano del Camino');
   title.style.cssText='font-size:18px;font-weight:800;color:#f1d29b;margin:0 0 6px';
-  const caption=node('p','Elegí un arma inicial, o seguí a puño limpio. Es opcional.');
+  const caption=node('p','Elegí un arma inicial, o seguí a puño limpio. Podés volver a hablar con el veterano y cambiarla por otra sin duplicar armas.');
   caption.style.cssText='margin:0 0 10px;line-height:1.35';
   const options=node('div','','hf-origin-f1-options');
   options.id='hf-origin-f1-options';
@@ -115,7 +116,7 @@ export function mountOriginF1WorldUi(
     talk.setAttribute('aria-expanded',String(open));
     if(open)closeButton.focus({preventScroll:true});
   };
-  talk.addEventListener('click',()=>setOpen(true));
+  talk.addEventListener('click',()=>{status.textContent='';setOpen(true)});
   closeButton.addEventListener('click',()=>setOpen(false));
   backdrop.addEventListener('click',e=>{if(e.target===backdrop)setOpen(false)});
   for(const item of ORIGIN_STARTER_WEAPONS){
@@ -124,8 +125,19 @@ export function mountOriginF1WorldUi(
     b.dataset.starter=item.id;
     b.style.cssText='width:100%;min-height:44px;padding:10px 12px;border:1px solid #8395ab;border-radius:9px;background:#33465d;color:white;text-align:center;font:700 13px system-ui;cursor:pointer;touch-action:manipulation';
     b.addEventListener('click',()=>{
-      if (current.starterClaimed) return;
-      const next=claimOriginStarter(current,item.id);
+      const oldId=current.starterClaimed?current.starterWeaponId:null;
+      if (oldId===item.id) {
+        status.textContent='Esa ya es tu arma inicial. Podés regresar cuando quieras.';
+        return;
+      }
+      // Re-selection is a STRICT 1-for-1 exchange: the Hunter must still
+      // have the previously granted starter equipped. Never mint a second
+      // weapon if the first was sold, dropped, or replaced by other gear.
+      if (oldId && sim.players.get(sim.playerId)?.equipment.mainhand!==oldId) {
+        status.textContent='Equipá tu arma inicial antes de cambiarla por otra.';
+        return;
+      }
+      const next=oldId?swapOriginStarter(current,item.id):claimOriginStarter(current,item.id);
       if (!next || !sim.canAddItem(item.id,1,sim.playerId)) {
         status.textContent='No hay espacio en el inventario.';
         return;
@@ -138,10 +150,22 @@ export function mountOriginF1WorldUi(
         status.textContent='Esta arma aún requiere adaptación al Hunter.';
         return;
       }
+      if (oldId) {
+        // EquipItem moves the previously worn starter into the player's bag.
+        // Remove that exact old copy or roll the exchange back; never leave
+        // both choices in circulation.
+        const inBag=sim.inventory.some(slot=>slot.itemId===oldId&&slot.count>0);
+        if (!inBag) {
+          sim.equipItem(oldId,sim.playerId);
+          sim.removeItem(item.id,1,sim.playerId);
+          status.textContent='No se pudo intercambiar el arma anterior.';
+          return;
+        }
+        sim.removeItem(oldId,1,sim.playerId);
+      }
       current=next;
-      setOpen(false);
       onStarterGranted();
-      guide.style.display='none';
+      setOpen(false);
     });
     options.append(b);
   }
@@ -165,8 +189,9 @@ export function mountOriginF1WorldUi(
     }
     const dx=p.pos.x-ORIGIN_GUIDE_POS.x, dz=p.pos.z-ORIGIN_GUIDE_POS.z;
     const nearby=(dx*dx+dz*dz)<(8*8);
-    guide.style.display = nearby&&!current.starterClaimed?'block':'none';
-    if (!nearby || current.starterClaimed) {
+    talk.textContent = current.starterClaimed?'VETERANO DEL CAMINO · CAMBIAR ARMA':'VETERANO DEL CAMINO · ELEGIR ARMA';
+    guide.style.display = nearby?'block':'none';
+    if (!nearby) {
       if (open) setOpen(false);
     }
   },120);

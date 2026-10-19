@@ -10809,7 +10809,6 @@ body.mobile-touch.mobile-left-handed #mobile-stance-anchor {
   body.hf-origin-f1.mobile-touch.game-active #actionbar-group,
   body.hf-origin-f1.mobile-touch.game-active #cross-hotbar,
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-page-toggle,
-  body.hf-origin-f1.mobile-touch.game-active #mobile-consumable-seat,
   body.hf-origin-f1.mobile-touch.game-active #mobile-stance-anchor {
     display: none !important;
     pointer-events: none !important;
@@ -10841,6 +10840,17 @@ body.mobile-touch.mobile-left-handed #mobile-stance-anchor {
     visibility: visible !important;
     pointer-events: auto !important;
   }
+  /* Real native consumable seat, beside the auxiliary/gem row — never lost.
+   * The donor's consumable strip remains usable and populated by inventory. */
+  body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring #mobile-consumable-seat {
+    display: flex !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    left: auto !important;
+    right: 430px !important;
+    top: auto !important;
+    bottom: 5px !important;
+  }
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring #mobile-action-attack {
     left: auto !important;
     right: 8px !important;
@@ -10866,17 +10876,15 @@ body.mobile-touch.mobile-left-handed #mobile-stance-anchor {
     left:auto !important;right:145px !important;top:auto !important;bottom:72px !important;
   }
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring .mobile-action-slot[data-mobile-index="1"] {
-    left:auto !important;right:172px !important;top:auto !important;bottom:128px !important;
+    left:auto !important;right:185px !important;top:auto !important;bottom:124px !important;
   }
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring .mobile-action-slot[data-mobile-index="2"] {
-    left:auto !important;right:138px !important;top:auto !important;bottom:187px !important;
+    left:auto !important;right:196px !important;top:auto !important;bottom:176px !important;
   }
-  /* BASE 4 stays clear of the mobile minimap's top-right interactive disc.
-   * The earlier x~734/y~129 seat sat UNDER the minimap, so a tap went
-   * to map chrome instead of this real skill button. Place the fourth
-   * ascending seat above-left of BASE 3, within the right-hand thumb zone. */
+  /* Four genuine skill buttons rise in numeric order along one uncluttered
+   * arc, kept below-left of the minimap and the GPU warning. */
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring .mobile-action-slot[data-mobile-index="3"] {
-    left:auto !important;right:200px !important;top:auto !important;bottom:229px !important;
+    left:auto !important;right:209px !important;top:auto !important;bottom:230px !important;
   }
   /* Auxiliaries along the lower middle, separated from left joystick. */
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring #mobile-jump {

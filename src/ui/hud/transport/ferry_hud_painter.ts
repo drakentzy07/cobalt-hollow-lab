@@ -32,6 +32,7 @@ function clock(seconds: number): string {
 export class FerryHudPainter {
   private els: FerryHudEls | null = null;
   private readonly model: FerryHudModel = emptyFerryHudModel();
+  private dismissed = false;
 
   constructor(
     private readonly w: PainterHostWriters,
@@ -40,11 +41,12 @@ export class FerryHudPainter {
 
   update(view: TransportFerryView | null, player: Entity | undefined): void {
     const m = ferryHudModel(view, player?.pos.x ?? 0, player?.pos.z ?? 0, this.model);
+    if (m.line === 'none') this.dismissed = false;
     if (m.line === 'none' && !this.els) return;
     const els = this.ensureEls();
     if (!els) return;
     const dest = poiMarkLabel(m.destPoi) ?? '';
-    this.w.setDisplay(els.root, m.line === 'none' ? 'none' : 'flex');
+    this.w.setDisplay(els.root, m.line === 'none' || this.dismissed ? 'none' : 'flex');
     if (m.line === 'departsIn') {
       this.w.setText(els.line, t('hudChrome.ferry.departsIn', { dest, time: clock(m.seconds) }));
     } else if (m.line === 'castingOff') {
@@ -73,7 +75,18 @@ export class FerryHudPainter {
     line.className = 'ferry-hud-line';
     const hint = document.createElement('div');
     hint.className = 'ferry-hud-hint';
-    root.append(line, hint);
+    // A real dismiss control — the ferry timetable is optional information,
+    // never a modal and never a travel/camera lock. Only Origin exposes it.
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'ferry-hud-dismiss';
+    close.setAttribute('aria-label', 'Cerrar aviso del barco');
+    close.textContent = '×';
+    close.addEventListener('click', () => {
+      this.dismissed = true;
+      this.w.setDisplay(root, 'none');
+    });
+    root.append(line, hint, close);
     mount.append(root);
     this.els = { root, line, hint };
     return this.els;

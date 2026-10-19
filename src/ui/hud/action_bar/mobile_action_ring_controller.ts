@@ -299,7 +299,7 @@ function wireAttackButton(attackBtn: HTMLButtonElement, deps: MobileActionRingDe
     deps.consumePeekGuard();
     deps.hideTooltip();
     audio.click();
-    if (deps.contextualUse()) {
+    if (!document.body.classList.contains('hf-origin-f1') && deps.contextualUse()) {
       attackBtn.blur();
       return;
     }
