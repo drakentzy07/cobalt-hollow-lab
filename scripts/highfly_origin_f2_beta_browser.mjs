@@ -53,7 +53,7 @@ try {
     return {pos:{x:player.pos.x,z:player.pos.z},name:meta?.name,
       eq:meta?.equipment,atk:{x:atk?.x,y:atk?.y,w:atk?.width,h:atk?.height},
       slots:slots.filter(x=>x.getBoundingClientRect().width>=40).length,
-      positions:slots.map(el=>{
+      positions:slots.filter(el=>el.getBoundingClientRect().width>=40).map(el=>{
         const r=el.getBoundingClientRect();
         return {index:Number(el.dataset.mobileIndex),cx:r.x+r.width/2,cy:r.y+r.height/2,w:r.width,h:r.height};
       }).sort((a,b)=>a.index-b.index),
