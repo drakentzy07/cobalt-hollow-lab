@@ -146,7 +146,14 @@ try {
   if(initial.position.x < -180)throw Error('F1_TELEPORTED_TO_TUTORIAL_ISLAND');
   if(!initial.guidePresent||!initial.resourceHud)throw Error('F1_GUIDE_OR_RESOURCE_MISSING');
   if(process.env.F123_VERIFY_RESET_HUD==='1'){
+    await page.waitForFunction(
+      ()=>!!document.querySelector('#player-frame #hf-origin-f1-resource-meter'),
+      {timeout:15000,polling:200});
     const hud=await page.evaluate(()=>{
+      // Chrome's touch chrome enters a transient idle mode until the first
+      // phone gesture. Inspect exactly the awake gameplay controls, not the
+      // hidden-for-idle DOM boxes (which legitimately have zero rectangles).
+      document.body.classList.remove('mobile-chrome-idle');
       const pos=id=>{
         const e=document.getElementById(id);
         const r=e?.getBoundingClientRect();
