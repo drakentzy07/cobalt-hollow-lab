@@ -114,6 +114,24 @@ jobs:
           node scripts/build_media_manifest.mjs prune
           echo "HIGHFLY_F1_ANDROID_WEBGL_GREEN=1"
 
+      - name: Android S23 landscape browser creation / world / starter proof
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          F1_GAME_URL: "http://127.0.0.1:4173/"
+        run: |
+          set -euo pipefail
+          command -v google-chrome || command -v chromium || command -v chromium-browser
+          pnpm exec vite preview --host 127.0.0.1 --port 4173 --strictPort > foundation-f1-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsSI http://127.0.0.1:4173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_origin_f1_browser.mjs
+          echo "HIGHFLY_F1_BROWSER_S23_EMULATION_GREEN=1"
+
       - name: Preserve F1 source, media and QA evidence (not public)
         if: always()
         shell: bash
