@@ -70,6 +70,11 @@ for src in sorted(candidate.rglob("*")):
     if not src.is_file():
         continue
     rel = src.relative_to(candidate)
+    # The Vite manifest is build metadata, NOT a runtime resource. The certified
+    # F1 baseline owns its own .vite/manifest.json; copying F2's manifest would
+    # change a protected original file for no user-visible benefit.
+    if rel.parts[0] == ".vite":
+        continue
     if rel.name in skip or rel.suffix == ".html" or rel.name.endswith("-qa.json"):
         continue
     dst = site / rel
