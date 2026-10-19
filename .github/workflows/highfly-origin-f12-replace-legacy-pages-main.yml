@@ -25,7 +25,7 @@ jobs:
       - name: Checkout immutable HIGHFLY ORIGIN F1.2 source only
         uses: actions/checkout@v4
         with:
-          ref: 6fb8dd6746a71b6743d8010f2b5855a6c413fe0e
+          ref: cccf5422cff9657a6a1ed516f7a75b00448ca61e
           persist-credentials: false
           filter: blob:none
 
@@ -33,7 +33,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "6fb8dd6746a71b6743d8010f2b5855a6c413fe0e"
+          test "$(git rev-parse HEAD)" = "cccf5422cff9657a6a1ed516f7a75b00448ca61e"
           test -s src/highfly/origin/f1_core.ts
           test -s src/highfly/origin/f1_world_ui.ts
           test -s src/game/highfly_offline_save.ts
@@ -132,7 +132,7 @@ jobs:
               if not (dist/f).is_file():raise SystemExit('F12_MISSING_'+f)
           qa={
             'edition':'HIGHFLY ORIGIN F1.2 ONE HUNTER — ROOT PAGES',
-            'sourceCommit':'6fb8dd6746a71b6743d8010f2b5855a6c413fe0e',
+            'sourceCommit':'cccf5422cff9657a6a1ed516f7a75b00448ca61e',
             'cleanFoundation':True,'legacyOverlaysApplied':False,
             'oldPagesLabsRemovedFromPublishedSnapshot':True,
             'physicalS23':'PENDING PLAYER TEST',
@@ -197,7 +197,7 @@ jobs:
           python3 - <<'PY'
           import json,time,urllib.request
           root='https://drakentzy07.github.io/cobalt-hollow-lab/'
-          expected='6fb8dd6746a71b6743d8010f2b5855a6c413fe0e'
+          expected='cccf5422cff9657a6a1ed516f7a75b00448ca61e'
           for attempt in range(30):
               try:
                   def get(path):
