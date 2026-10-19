@@ -1,0 +1,204 @@
+name: HIGHFLY FOUNDATION-01 — Consolidate editable Android-first source (NO DEPLOY)
+# One-time materialization of frozen donor + canonical CLEAN delta into tracked source.
+# No old R20–R40 overlay chain. No Pages, release publishing, or main writes.
+on:
+  push:
+    branches: [highfly-origin-foundation-clean-20261019]
+    paths: [".github/workflows/highfly-foundation-01-materialize-source.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: highfly-foundation-01-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  commit_consolidated_source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout isolated writable foundation branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 1
+
+      - name: Enforce source branch and one-time safety
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.ref_name }}" = "highfly-origin-foundation-clean-20261019"
+          test "$(git branch --show-current)" = "highfly-origin-foundation-clean-20261019"
+          test ! -e src/main.ts
+          test ! -e source/source-provenance.json
+          test -s clean/canonical/HIGHFLY_CLEAN_V1.patch
+          test "$(sha256sum clean/canonical/HIGHFLY_CLEAN_V1.patch | cut -d ' ' -f1)" = "b78ba81e52b10b2ddba7c6fa829d436f59ad4594ec2a0d0d5f0341ce26773cb9"
+          echo "FOUNDATION_01_SAFE_MATERIALIZATION_GATE_GREEN=1"
+
+      - name: Checkout frozen ClaudeCraft source and essential patch targets (read-only)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /android/
+            /public/manifest.webmanifest
+            /tests/global_setup.ts
+            /tests/svelte_testing_setup.ts
+            /tests/jsdom_local_storage_setup.ts
+            /capacitor.config.ts
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /.gitignore
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+
+      - name: Apply exactly one pinned CLEAN patch to the donor staging tree
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          git apply --check ../clean/canonical/HIGHFLY_CLEAN_V1.patch
+          git apply --binary ../clean/canonical/HIGHFLY_CLEAN_V1.patch
+          git diff --check HEAD
+          test -s src/main.ts
+          test -s src/highfly/training/core.ts
+          test -s src/ui/appearance_customizer.ts
+          test -s src/render/characters/modular.ts
+          test -s src/sim/content/classes.ts
+          test -s tests/highfly_game_c28.test.ts
+          echo "FOUNDATION_01_CANONICAL_MATERIALIZATION_GREEN=1"
+
+      - name: Consolidate source and Android build code into the foundation repo
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Move full editable TS/Svelte engine to this repository.
+          # scripts/assets contains binary art-source GLBs and is NOT client code.
+          for dir in src server headless bot data patches android; do
+            test -d "upstream/$dir"
+            mkdir -p "$dir"
+            rsync -a "upstream/$dir/" "$dir/"
+          done
+          mkdir -p scripts tests source
+          rsync -a --exclude='/assets/' "upstream/scripts/" scripts/
+          for file in upstream/tests/highfly_*.test.ts \
+                      upstream/tests/global_setup.ts \
+                      upstream/tests/svelte_testing_setup.ts \
+                      upstream/tests/jsdom_local_storage_setup.ts; do
+            test -f "$file"
+            cp "$file" tests/
+          done
+          for file in package.json pnpm-lock.yaml vite.config.ts tsconfig.json \
+                      tsconfig.admin.json tsconfig.bot.json svelte.config.js \
+                      .browserslistrc .npmrc biome.json .gitignore \
+                      index.html admin.html guide.html editor.html play.html \
+                      wallet-handoff.html capacitor.config.ts; do
+            test -f "upstream/$file"
+            cp "upstream/$file" "$file"
+          done
+          # The frozen donor's heavy media remains referenced by SHA, not
+          # vendored with each source change. Existing public branding and
+          # origin files stay unchanged until an audited asset intake.
+          cat > source/source-provenance.json <<'JSON'
+          {
+            "schema": 1,
+            "product": "HIGHFLY ORIGIN Android-first",
+            "state": "clean-v1-source-materialized; gameplay-unmodified",
+            "upstream_repo": "levy-street/world-of-claudecraft",
+            "upstream_sha": "9b57e49c9676d75962700f828cc00a50a9a988b5",
+            "canonical_clean_patch_sha256": "b78ba81e52b10b2ddba7c6fa829d436f59ad4594ec2a0d0d5f0341ce26773cb9",
+            "donor_media": "frozen-by-upstream-SHA; not committed here",
+            "legacy_r39_r40_overlays": "not applied",
+            "editor": ["src/ui/appearance_customizer.ts", "src/render/characters/modular.ts"],
+            "android_only_release_target": true,
+            "tests_scope": "HIGHFLY CLEAN baseline; broader compatibility not certified",
+            "public_pages_deployed": false
+          }
+          JSON
+          test "$(find src -type f | wc -l)" -gt 3400
+          test -s src/ui/appearance_customizer.ts
+          test -s src/render/characters/modular.ts
+          test -s source/source-provenance.json
+          echo "FOUNDATION_01_EDITABLE_SOURCE_TREE_READY=1"
+
+      - name: Commit tracked CLEAN game code only to the isolated foundation branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "highfly-foundation-bot"
+          git config user.email "highfly-foundation-bot@users.noreply.github.com"
+          git add -A -- src scripts server headless bot data patches android tests \
+            source/source-provenance.json \
+            package.json pnpm-lock.yaml vite.config.ts tsconfig.json \
+            tsconfig.admin.json tsconfig.bot.json svelte.config.js \
+            .browserslistrc .npmrc biome.json .gitignore \
+            index.html admin.html guide.html editor.html play.html \
+            wallet-handoff.html capacitor.config.ts
+          git diff --cached --check
+          test "$(git diff --cached --name-only | grep -c '^src/')" -gt 3400
+          if git diff --cached --name-only | grep -Eq '^(public/|electron/|ios/|\.github/workflows/)' ; then
+            echo '::error::FORBIDDEN_ASSET_OR_DESKTOP_OR_WORKFLOW_MUTATION'
+            exit 1
+          fi
+          git diff --cached --stat | tail -12
+          git commit -m "feat(foundation): consolidate pinned CLEAN gameplay and Android source into editable tree"
+          git push origin HEAD:refs/heads/highfly-origin-foundation-clean-20261019
+          echo "FOUNDATION_01_SOURCE_COMMIT_PUSHED=1"
+
+      - name: Verify source commit and branch push without touching public deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s source/source-provenance.json
+          test -s src/main.ts
+          test -s src/render/characters/modular.ts
+          echo "FOUNDATION_01_HEAD=$(git rev-parse HEAD)"
+          echo "FOUNDATION_01_TRACKED_SRC=$(git ls-files 'src/*' | wc -l)"
+          echo "NO_PAGES_DEPLOY=1"
+
+      - name: Write report for recovery if branch-write permission is unavailable
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p foundation-output
+          printf 'donor=9b57e49c9676d75962700f828cc00a50a9a988b5\nbranch=highfly-origin-foundation-clean-20261019\nno_pages_deploy=1\n' > foundation-output/foundation-01-status.txt
+          if [ -e source/source-provenance.json ]; then
+            cp source/source-provenance.json foundation-output/
+          fi
+
+      - name: Preserve consolidation report (NO PUBLIC DEPLOY)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-FOUNDATION-01-CONSOLIDATION-REPORT
+          path: foundation-output/
+          if-no-files-found: warn
+          retention-days: 14
