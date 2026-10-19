@@ -324,6 +324,13 @@ export class CharacterPreview {
       this.currentVisualSig = nextSig;
       this.characterGroup.add(this.currentVisual.root);
       this.canvas.dataset.highflyPreviewVisual = visualKey;
+      // Geometry truth: the donor's default sword used to survive NULL hand
+      // IDs, so inventory attributes alone were never a sufficient proof.
+      let heldProps = 0;
+      this.currentVisual.root.traverse((object) => {
+        if (object.userData.heldPropHolder) heldProps += 1;
+      });
+      this.canvas.dataset.highflyPreviewHeldPropCount = String(heldProps);
       // Testable active hand slots; asset preloading is NOT the same as wearing.
       this.canvas.dataset.highflyPreviewWeaponItem = weaponItemId ?? '';
       this.canvas.dataset.highflyPreviewOffhandItem = offhandItemId ?? '';
