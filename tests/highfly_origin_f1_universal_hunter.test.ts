@@ -10,7 +10,6 @@ import {
   consumeF1Resource,
   f1StartState,
   normalizeOriginF1Save,
-  originF1CanMakeFresh,
   tickF1Resources,
 } from '../src/highfly/origin/f1_core';
 import { ORIGIN_GUIDE_ID, ORIGIN_GUIDE_POS } from '../src/highfly/origin/f1_world_ui';
@@ -87,9 +86,17 @@ describe('HIGHFLY F1 integral — one Hunter, safe birth, first weapon and resou
       .toEqual({mana:0,maxMana:200,stamina:100,maxStamina:100});
   });
 
-  it('does not silently adopt or overwrite legacy saves',()=>{
-    expect(originF1CanMakeFresh(null)).toBe(true);
-    expect(originF1CanMakeFresh({version:1,playerClass:'warrior',name:'OldHero'})).toBe(false);
-    expect(originF1CanMakeFresh({originF1:f1StartState()})).toBe(true);
+  it('resumes the same Hunter while isolating old same-name saves',()=>{
+    const main=readFileSync('src/main.ts','utf8');
+    const store=readFileSync('src/game/highfly_offline_save.ts','utf8');
+    expect(main).toContain('const restored = exact ?? primary;');
+    expect(main).toContain('await loadOriginHunterSave(ORIGIN_HUNTER_CARRIER_CLASS, rawName)');
+    expect(main).not.toContain('Existe una partida antigua con ese nombre');
+    expect(main).toContain('setOriginCreatorPreview(look.app, look.worn, cls)');
+    expect(main).toContain('bare ? null : undefined');
+    expect(store).toContain("const ORIGIN_PRIMARY_SLOT_KEY = 'origin-f1:primary'");
+    expect(store).toContain("const ORIGIN_LOCAL_KEY = 'highfly.origin.primary.v1'");
+    expect(store).toContain('originIdentitySlotKey(save.playerClass, save.name)');
+    expect(store).toContain('hasOriginIdentity(oldExact) ? oldExact : null');
   });
 });
