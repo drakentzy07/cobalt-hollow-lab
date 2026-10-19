@@ -393,6 +393,58 @@ export async function loadOriginHunterSave(
   return newest(exact, matchingPrimary);
 }
 
+/** User-confirmed device-only Hunter deletion. Never clear the shared IndexedDB
+ * database: archived ClaudeCraft identity slots and unrelated data survive.
+ * Returns false if the active IDB cannot be opened/deleted, so the launcher
+ * cannot falsely promise a reset while a dormant save would respawn.
+ */
+export async function resetOriginHunterSave(): Promise<boolean> {
+  const db = await openDb();
+  if (typeof indexedDB !== 'undefined' && !db) return false;
+  if (db) {
+    const deleted = await new Promise<boolean>(resolve => {
+      let finished = false;
+      const finish = (ok:boolean) => {
+        if(finished) return;
+        finished = true;
+        db.close();
+        resolve(ok);
+      };
+      try {
+        const tx=db.transaction(STORE_NAME,'readwrite');
+        const store=tx.objectStore(STORE_NAME);
+        const request=store.openCursor();
+        request.onsuccess=()=>{
+          const cursor=request.result;
+          if(!cursor) return;
+          const key=String(cursor.key);
+          const data=valid(cursor.value) ? cursor.value : null;
+          if(key.startsWith('origin-f1:') ||
+             ((key===PRIMARY_SLOT_KEY || key.startsWith('hunter:')) && hasOriginIdentity(data))) {
+            cursor.delete();
+          }
+          cursor.continue();
+        };
+        request.onerror=()=>{ try { tx.abort(); } catch { /* handled below */ } };
+        tx.oncomplete=()=>finish(true);
+        tx.onerror=()=>finish(false);
+        tx.onabort=()=>finish(false);
+      } catch {
+        finish(false);
+      }
+    });
+    if(!deleted) return false;
+  }
+  try {
+    globalThis.localStorage?.removeItem(ORIGIN_LOCAL_KEY);
+    // Pre-namespaced F1/F1.1 saves must not resurrect the one deleted Hunter.
+    if(hasOriginIdentity(readLocal())) globalThis.localStorage?.removeItem(LOCAL_KEY);
+  } catch {
+    return false;
+  }
+  return (await loadOriginHunterSave()) === null;
+}
+
 export function writeHighflyOfflineSave(save: HighflyOfflineSave): void {
   // Keep only the last-played snapshot in localStorage (sync pagehide fallback);
   // all independent Hunter slots live in IndexedDB so they do not exhaust the
