@@ -352,9 +352,10 @@ try {
       return !!b&&!b.hidden;
     },{timeout:55_000});
     page.once('dialog',dialog=>dialog.accept());
-    await page.evaluate(()=>document.getElementById('hf-origin-reset-hunter')?.click());
-    await page.waitForFunction(()=>document.getElementById('btn-play')&&!document.getElementById('offline-select')?.hidden,
-       {timeout:12000}).catch(()=>{});
+    await Promise.all([
+      page.waitForNavigation({waitUntil:'domcontentloaded',timeout:120_000}),
+      page.evaluate(()=>document.getElementById('hf-origin-reset-hunter')?.click()),
+    ]);
     await page.waitForSelector('#btn-play',{timeout:110_000});
     await page.evaluate(()=>document.getElementById('btn-play')?.click());
     await page.waitForFunction(()=>document.getElementById('char-name')?.value==='' &&
