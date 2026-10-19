@@ -202,6 +202,17 @@ try {
     checkpoint('same-name-legacy-origin-isolation');
   }
 
+  if(process.env.F122_VERIFY_UX==='1'){
+    const wronglyRootedSfx=failedRequests.filter(({url})=>{
+      try {return new URL(url).pathname.startsWith('/audio/sfx/');}
+      catch {return false;}
+    });
+    report.wronglyRootedSfx=wronglyRootedSfx.slice(0,5);
+    if(wronglyRootedSfx.length)
+      throw Error('F122_SFX_WRONG_ROOT '+JSON.stringify(wronglyRootedSfx.slice(0,7)));
+    console.log('HIGHFLY_F122_SFX_PAGES_ASSET_URL_GREEN=1');
+  }
+
   if (process.env.F11_VERIFY_RELOAD === '1') {
     // F1.1: certify the actual player state survives two new browser entries,
     // with the second one having no network access at all.
