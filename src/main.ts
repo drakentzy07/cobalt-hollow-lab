@@ -3,7 +3,6 @@ import {
   ORIGIN_HUNTER_CARRIER_CLASS,
   f1StartState,
   normalizeOriginF1Save,
-  originF1CanMakeFresh,
 } from './highfly/origin/f1_core';
 import { mountOriginF1WorldUi, type OriginF1WorldUi } from './highfly/origin/f1_world_ui';
 import { writeHighflyOfflineSave } from './game/highfly_offline_save';
@@ -195,6 +194,7 @@ import { offlineWorldConfig } from './game/offline_world_config';
 import {
   installHighflyOfflineAutosave,
   loadHighflyOfflineSave,
+  loadOriginHunterSave,
   loadHighflyTrainingProfile,
 } from './game/highfly_offline_save';
 import {
@@ -5365,7 +5365,7 @@ async function startOffline(
 
   // RUN0.6: restore through ClaudeCraft's canonical CharacterState loader.
   const storedOfflineSave =
-    world ? null : await loadHighflyOfflineSave(playerClass, name);
+    world ? null : await loadOriginHunterSave(playerClass, name);
   const storedTrainingProfile =
     world ? null : await loadHighflyTrainingProfile(playerClass, name);
   const trainingHasRealProgress =
@@ -5852,12 +5852,19 @@ let highflyPreviewClassRequest = 0;
 
 async function ensureHighflyPreviewClassReady(cls: PlayerClass): Promise<void> {
   const classDef = CLASSES[cls];
+  const bareHunter = document.body.classList.contains('hf-origin-f1-creator');
   await previewVisualReady(
     modularVisualKey(cls),
-    classDef.startWeapon ?? null,
-    classDef.startOffhand ?? null,
+    bareHunter ? null : (classDef.startWeapon ?? null),
+    bareHunter ? null : (classDef.startOffhand ?? null),
     3,
   );
+}
+
+/** Preview Origin's real unequipped hands, never the donor Warrior shield. */
+function setOriginCreatorPreview(app: ModularAppearance, worn: ArmorLoadout, cls: PlayerClass): void {
+  const bare = document.body.classList.contains('hf-origin-f1-creator');
+  characterPreview?.setModular(app, worn, cls, bare ? null : undefined, bare ? null : undefined);
 }
 
 function previewClassBody(cls: PlayerClass): void {
@@ -5867,8 +5874,11 @@ function previewClassBody(cls: PlayerClass): void {
     .then(() => {
       if (!characterPreview || request !== highflyPreviewClassRequest) return;
       const look = modularLookForClass(cls);
-      if (look) characterPreview.setModular(look.app, look.worn, cls);
-      else characterPreview.setClass(cls);
+      if (look) setOriginCreatorPreview(look.app, look.worn, cls);
+      else {
+        const bare = document.body.classList.contains('hf-origin-f1-creator');
+        characterPreview.setClass(cls, bare ? null : undefined, bare ? null : undefined);
+      }
     })
     .catch((err: unknown) => {
       console.error('[HIGHFLY preview] selected class assets failed', cls, err);
@@ -5924,13 +5934,13 @@ function syncAppearanceUi(panelId: string, cls: PlayerClass): void {
         modularAppearance = next;
         storeAppearance(next);
         const c = panelClass();
-        characterPreview?.setModular(next, creationLoadout(c), c);
+        setOriginCreatorPreview(next, creationLoadout(c), c);
       },
       helm: creationHelm,
       onHelm: (on) => {
         creationHelm = on;
         const c = panelClass();
-        characterPreview?.setModular(modularAppearance, creationLoadout(c), c);
+        setOriginCreatorPreview(modularAppearance, creationLoadout(c), c);
       },
       // The chips must preview against the set the composed body actually
       // wears: the stored override when one exists, not the class default.
@@ -9597,7 +9607,9 @@ function wireStartScreens(): void {
     show('#login-panel');
   };
 
+  let originHunterEntering = false;
   const handleOfflineStart = async (_carrier: PlayerClass) => {
+    if (originHunterEntering) return;
     const rawName = offlineNameInput.value.trim();
     if (!rawName) {
       offlineError.textContent = t('errors.characterNameRequired');
@@ -9614,27 +9626,38 @@ function wireStartScreens(): void {
       return;
     }
 
+    // Same button serves BOTH birth and recovery. The new game never treats
+    // a same-name donor save as a fatal collision, and never overwrites it.
+    originHunterEntering = true;
+    btnStartOffline.disabled = true;
     offlineError.textContent = '';
     offlineNameInput.classList.remove('user-invalid-fallback');
     offlineNameInput.removeAttribute('aria-invalid');
-
-    // The old primary slot and all pre-F1 identities stay read-only.
-    const existing = await loadHighflyOfflineSave();
-    const exact = await loadHighflyOfflineSave(ORIGIN_HUNTER_CARRIER_CLASS, rawName);
-    if (!originF1CanMakeFresh(exact)) {
-      offlineError.textContent = 'Existe una partida antigua con ese nombre. No se modificó. Elegí otro nombre.';
-      return;
+    try {
+      const exact = await loadOriginHunterSave(ORIGIN_HUNTER_CARRIER_CLASS, rawName);
+      const primary = await loadOriginHunterSave();
+      // Exactly one persistent Hunter. If a previously-created Hunter exists,
+      // continue them even if the launcher field was changed by accident.
+      const restored = exact ?? primary;
+      const name = restored?.name ?? sanitizeOfflineName(rawName);
+      if (restored && rawName.toLowerCase() !== restored.name.toLowerCase()) {
+        offlineNameInput.value = restored.name;
+      }
+      audio.init();
+      music.init();
+      sfx.init();
+      await startOffline(
+        ORIGIN_HUNTER_CARRIER_CLASS,
+        name,
+        selectedSkin('#offline-skin-row', offlineSkin),
+      );
+    } catch (error) {
+      console.error('[HIGHFLY ORIGIN] Hunter entry failed', error);
+      offlineError.textContent = 'No se pudo ingresar al mundo. Tu Hunter sigue guardado. Volvé a intentar.';
+    } finally {
+      originHunterEntering = false;
+      btnStartOffline.disabled = false;
     }
-    if (normalizeOriginF1Save(existing?.originF1) &&
-        existing?.name.toLowerCase() !== rawName.toLowerCase()) {
-      offlineError.textContent = 'Tu Hunter ya existe: ' + existing?.name + '. Continuá esa aventura.';
-      return;
-    }
-    audio.init();
-    music.init();
-    sfx.init();
-    const name = sanitizeOfflineName(rawName);
-    void startOffline(ORIGIN_HUNTER_CARRIER_CLASS, name, selectedSkin('#offline-skin-row', offlineSkin));
   };
 
   const recoverHighflyOfflinePreview = async (cls: PlayerClass): Promise<void> => {
@@ -9738,7 +9761,7 @@ function wireStartScreens(): void {
     // Restore the primary Hunter's identity before the player presses Enter
     // World. The actual RPG snapshot is restored by startOffline().
     const restoreRevision = highflyOfflineSelectionRevision;
-    void loadHighflyOfflineSave().then((saved) => {
+    void loadOriginHunterSave().then((saved) => {
       // If the player typed a name or picked a class while IndexedDB was
       // resolving, their explicit choice wins over the stale primary snapshot.
       if (highflyOfflineSelectionRevision !== restoreRevision) return;
