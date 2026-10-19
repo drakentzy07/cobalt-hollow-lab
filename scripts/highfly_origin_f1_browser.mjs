@@ -148,7 +148,18 @@ try {
   if(process.env.F123_VERIFY_RESET_HUD==='1'){
     await page.waitForFunction(
       ()=>!!document.querySelector('#player-frame #hf-origin-f1-resource-meter'),
-      {timeout:15000,polling:200});
+      {timeout:12000,polling:200}).catch(async()=>{
+        const diag=await page.evaluate(()=>{
+          const meter=document.getElementById('hf-origin-f1-resource-meter');
+          const frame=document.getElementById('player-frame');
+          const root=document.getElementById('hf-origin-f1-hud');
+          return {meter:!!meter,meterParent:meter?.parentElement?.id,
+            rootConnected:root?.isConnected,frame:!!frame,frameParent:frame?.parentElement?.id,
+            frameChildCount:frame?.children.length,
+            hostBars:!!frame?.querySelector('.uf-bars')};
+        });
+        throw Error('F123_RESOURCE_METER_MOUNT_FAILED '+JSON.stringify(diag));
+      });
     const hud=await page.evaluate(()=>{
       // Chrome's touch chrome enters a transient idle mode until the first
       // phone gesture. Inspect exactly the awake gameplay controls, not the
