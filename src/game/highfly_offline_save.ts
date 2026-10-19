@@ -111,17 +111,32 @@ function writeLocal(save: HighflyOfflineSave): void {
 function openDb(): Promise<IDBDatabase | null> {
   if (typeof indexedDB === 'undefined') return Promise.resolve(null);
   return new Promise((resolve) => {
+    // F1.1 Android: a stalled/blocked IndexedDB open must never strand the
+    // character creator or world entry. The synchronous primary localStorage
+    // mirror remains a safe recovery path when IDB cannot open.
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const finish = (db: IDBDatabase | null) => {
+      if (settled) {
+        db?.close(); // Late success after timeout: release the handle.
+        return;
+      }
+      settled = true;
+      if (timer !== null) clearTimeout(timer);
+      resolve(db);
+    };
+    timer = setTimeout(() => finish(null), 7000);
     try {
       const request = indexedDB.open(DB_NAME, 1);
       request.onupgradeneeded = () => {
         const db = request.result;
         if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
       };
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => resolve(null);
-      request.onblocked = () => resolve(null);
+      request.onsuccess = () => finish(request.result);
+      request.onerror = () => finish(null);
+      request.onblocked = () => finish(null);
     } catch {
-      resolve(null);
+      finish(null);
     }
   });
 }
@@ -199,10 +214,8 @@ async function writeIdb(save: HighflyOfflineSave): Promise<void> {
       // The identity slot preserves each tested Hunter independently.
       store.put(save, PRIMARY_SLOT_KEY);
       store.put(save, identitySlotKey(save.playerClass, save.name));
-      if (save.trainingProfile && validTrainingProfile(save.trainingProfile)) {
-        if (!trainingProfileMatchesClass(save.trainingProfile, save.playerClass)) {
-          return;
-        }
+      if (save.trainingProfile && validTrainingProfile(save.trainingProfile) &&
+          trainingProfileMatchesClass(save.trainingProfile, save.playerClass)) {
         const trainingSlot: HighflyTrainingSlot = {
           version: 2,
           playerClass: save.playerClass,
