@@ -4099,6 +4099,9 @@ async function startGame(
     if (flight) return flight;
     attackMoveTick();
     const mi = input.readMoveInput();
+    // The optional air-combat rules belong only to our offline ORIGIN Hunter.
+    // Native ClaudeCraft and the donor's other classes keep ground dodge.
+    mi.highflyAirDashEnabled = document.body.classList.contains('hf-origin-f1');
     let facing: number | null = mouselook ? input.camYaw : null;
     // HIGHFLY RUN0.5 analog locomotion. The left stick becomes a continuous
     // CAMERA-relative world vector; translation no longer depends on snapping
