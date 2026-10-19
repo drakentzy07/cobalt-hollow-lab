@@ -30,6 +30,20 @@ try {
   await page.waitForSelector('#btn-play',{timeout:90_000});
   await page.evaluate(()=>document.getElementById('btn-play')?.click());
   await page.waitForFunction(()=>{const e=document.getElementById('offline-select');return e&&!e.hidden;},{timeout:60_000});
+  // The renderer creates the modular editor only AFTER an asynchronous
+  // IndexedDB primary-slot lookup and its class-detail mount. A visible panel
+  // is NOT proof the editor is mounted; sample neither in the same tick.
+  await page.waitForFunction(
+    ()=>!!document.querySelector('#offline-appearance .appearance-customizer'),
+    {timeout:65_000,polling:250},
+  ).catch(async(error)=>{
+    const diag=await page.evaluate(()=>({
+      panel:document.getElementById('offline-select')?.hidden,
+      editorHtml:document.getElementById('offline-appearance')?.innerHTML?.slice(0,800),
+      button:document.querySelector('#offline-select .mini-class')?.outerHTML,
+    }));
+    throw new Error('F1_EDITOR_MOUNT_TIMEOUT '+JSON.stringify(diag)+' '+error.message);
+  });
   const creator=await page.evaluate(()=>{
     const panel=document.getElementById('offline-select');
     const cards=panel?.querySelectorAll('.mini-class');
