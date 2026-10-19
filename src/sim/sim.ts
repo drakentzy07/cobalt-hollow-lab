@@ -5683,6 +5683,10 @@ export class Sim {
   private refreshKnownAbilities(meta: PlayerMeta, announce: boolean): void {
     const e = this.entities.get(meta.entityId);
     if (!e) return;
+    // The single ORIGIN Hunter learns from world rewards and masters, NOT the
+    // Warrior carrier's auto-unlock list on XP/level-up/respec. Preserve every
+    // independently acquired spell (including another school) verbatim.
+    if (this.cfg.originUniversalHunter) return;
     const before = new Map(meta.known.map((k) => [k.def.id, k.rank]));
     // (Frost's second Ice Block charge is resolved inside abilitiesKnownAt, the
     // shared known-list builder, so ClientWorld's recomputed list matches.)
