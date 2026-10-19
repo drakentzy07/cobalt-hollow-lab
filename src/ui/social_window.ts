@@ -1,0 +1,1791 @@
+// Social panel painter: owns the #social-window DOM + the window-local state
+// (current tab, the split structural/content signatures, the inline notice, the
+// username typeahead). It reads socialInfo / partyInfo / realm from IWorld and
+// dispatches every friend/guild/raid command through IWorld; the cross-window
+// chrome (whisper, confirm prompts, close-others, focus return) comes through the
+// injected deps. The pure row + signature decisions live in social_view.ts; this
+// is the thin DOM consumer per the unit_portrait / talents_window template.
+//
+// Visibility is the '.open' CLASS on #social-window (not style.display), matching
+// the window-manager (closeManagedWindow / topmostOpenWindow read '.open').
+//
+// LISTENER CHURN (social is NOT purely cold): the panel repaints on the
+// slow-HUD divider (refreshIfChanged), so re-attaching a click handler to every
+// row each tick would churn handlers. Instead the row actions use ONE delegated
+// click listener on the persistent `.soc-body` container, wired once per full
+// render; a content refresh only swaps the body's innerHTML, so no per-row handler
+// is re-attached. The chrome (close/tabs/footer/typeahead) is wired on a full
+// render and survives a content refresh untouched.
+//
+// No raw hex / magic numbers: the status dots are CSS-classed (no
+// color literal here) and the two typeahead timings are named constants.
+
+import { CLASSES } from '../sim/data';
+import {
+  GUILD_RANK_MAX,
+  GUILD_RANK_NAME_MAX,
+  GUILD_RANK_PERMISSIONS,
+  type GuildRankDef,
+  type GuildRankPermission,
+  sanitizeGuildRankLadder,
+} from '../sim/guild_ranks';
+import { GUILD_ROSTER_PAGE_SEATS } from '../sim/guild_roster';
+import type { PlayerClass } from '../sim/types';
+import type { IWorld, WhoRosterInfo } from '../world_api';
+import { formatCount } from './count_format';
+import { deedTitleText } from './deed_i18n';
+import { markDialogRoot } from './dialog_root';
+import { classDisplayName } from './entity_i18n';
+import { esc } from './esc';
+import { captureFormDraft, restoreFormDraft } from './form_draft';
+import { loadGuildHideOffline, saveGuildHideOffline } from './guild_hide_offline';
+import {
+  addGuildRank,
+  type GuildRankLabel,
+  type GuildRanksPanelView,
+  guildLadder,
+  guildRankLabel,
+  guildRanksPanelView,
+  moveGuildRank,
+  removeGuildRank,
+  viewerGuildCan,
+} from './guild_ranks_view';
+import { formatDateTime, formatNumber, t, tPlural } from './i18n';
+import { classColorCss } from './inspect_view';
+import { moneyHtml } from './money_html';
+import { localizeZone } from './server_i18n';
+import {
+  blockRows,
+  friendRows,
+  type GuildRosterChip,
+  type GuildRow,
+  type GuildView,
+  guildRosterChip,
+  guildRosterItems,
+  guildRosterView,
+  guildView,
+  ignoreRows,
+  myPledgeView,
+  pledgePanelView,
+  raidView,
+  type SocialTab,
+  socialStructSig,
+  tenureTier,
+} from './social_view';
+import { focusActiveTab, wireTabStrip } from './tab_strip_painter';
+import { tabStripHtml, tabStripModel } from './tab_strip_view';
+import { svgIcon } from './ui_icons';
+import {
+  DEFAULT_WHO_TAB_STATE,
+  toggleWhoSort,
+  WHO_SORT_KEYS,
+  type WhoSortKey,
+  type WhoTabState,
+  whoClassOptions,
+  whoCountView,
+  whoTabRows,
+  whoTabSig,
+} from './who_tab_view';
+
+// Typeahead timings (named, not bare literals): debounce a keystroke
+// before searching, and clear the suggestion list shortly after blur so a pending
+// mousedown on a suggestion can still fire first.
+const SUGGEST_DEBOUNCE_MS = 160;
+const SUGGEST_BLUR_CLEAR_MS = 150;
+
+// Founding a guild rides the metered name_screen WS lane (refill 2/s, burst 5,
+// shared with pet_rename and the named perfect_item promotion): a lane DROP
+// sends NOTHING back, so a mashed Found button would read as dead. Hold the
+// submit for a beat after each send, exactly as the legendary naming dialog
+// does (src/ui/hud/professions/legendary_naming_controller.ts, the same lane).
+// About 600ms: longer than the lane's 500ms per-token refill, so an honest
+// retry after the lock lifts always has a token waiting. Re-submitting is
+// always safe; the server re-validates the name.
+export const GUILD_CREATE_LOCK_MS = 600;
+
+// Guild billboard input cap; mirrors GUILD_MOTD_MAX in server/social.ts (the
+// server clamps authoritatively, this is UX only).
+const GUILD_MOTD_MAX = 240;
+
+// Pledge-board recruiting note cap; mirrors the setGuildPledgeSettings slice in
+// server/social.ts (the server clamps authoritatively, this is UX only). The
+// level floor bounds mirror the same server clamp.
+const PLEDGE_NOTE_MAX = 90;
+const PLEDGE_MIN_LEVEL_FLOOR = 1;
+const PLEDGE_MIN_LEVEL_CEIL = 60;
+
+// Who tab search cap; mirrors WHO_FILTER_MAX in server/who_roster.ts (the
+// server clamps authoritatively, this is UX only).
+const WHO_SEARCH_MAX = 32;
+// Slow-HUD ticks between re-asks while the Who tab still has no answer.
+const WHO_RETRY_SLOW_TICKS = 4;
+
+/**
+ * Hud-supplied glue. The social window renders no item rows (it uses CSS-classed
+ * status dots and title= hovers, not the floating item tooltip), so it composes no
+ * PainterHostPresentation bag; it just reads/commands IWorld and routes the shared
+ * HUD chrome (whisper, confirm prompt, close-others, focus return) through these
+ * closures. The module never reaches into Hud directly.
+ */
+export interface SocialWindowDeps {
+  /** The #social-window root (Hud owns the id; the painter stays instance-parameterized). */
+  root(): HTMLElement;
+  /** The live world (offline Sim or online ClientWorld mirror). */
+  world(): IWorld;
+  /** Close the other managed windows when this one opens. */
+  closeOthers(): void;
+  hideTooltip(): void;
+  // Focus management (WCAG 2.2 AA): capture the opener on open, restore it on close.
+  captureFocus(): HTMLElement | null;
+  restoreFocus(target: HTMLElement | null): void;
+  /** The shared confirm prompt (guild leave / disband / transfer). */
+  showPrompt(text: string, acceptLabel: string, onAccept: () => void, onDecline: () => void): void;
+  /** Open the chat bar pre-filled with a whisper to this player. */
+  startWhisper(name: string): void;
+}
+
+function cap(s: string): string {
+  return s ? s[0].toUpperCase() + s.slice(1) : s;
+}
+
+function playerClassDisplayName(value: string): string {
+  const cls = value as PlayerClass;
+  return CLASSES[cls] ? classDisplayName(cls) : cap(value);
+}
+
+function statusLabel(status: string | undefined): string {
+  switch (status) {
+    case 'combat':
+      return t('hud.social.status.combat');
+    case 'dungeon':
+      return t('hud.social.status.dungeon');
+    case 'dead':
+      return t('hud.social.status.dead');
+    case 'afk':
+      return t('hud.social.status.afk');
+    default:
+      return t('hud.social.status.online');
+  }
+}
+
+// Hover text spelling out what a status dot means, so the orange/grey circles
+// aren't a mystery (issue 100).
+function dotTitle(online: boolean, status: string | undefined, zone: string | undefined): string {
+  if (!online) return t('hud.social.status.offline');
+  const label = statusLabel(status);
+  return zone ? t('hud.social.statusWithZone', { status: label, zone: localizeZone(zone) }) : label;
+}
+
+/** A keyed rank label (guild_ranks_view.ts guildRankLabel) as display text:
+ *  the guild's own title verbatim (player text: callers escape it), a
+ *  built-in rank's localized default, or 'Rank N' for an untitled custom rank. */
+export function rankLabelText(label: GuildRankLabel): string {
+  if (label.kind === 'custom') return label.name;
+  if (label.kind === 'numbered')
+    return t('hudChrome.guildRanks.numbered', {
+      n: formatNumber(label.n, { maximumFractionDigits: 0 }),
+    });
+  return label.rank === 'leader'
+    ? t('hud.social.ranks.leader')
+    : label.rank === 'officer'
+      ? t('hud.social.ranks.officer')
+      : t('hud.social.ranks.member');
+}
+
+// Displayed-role chip text for a keyed chip from the pure core
+// (guildRosterChip): the two tenure tiers get their tier labels, every rank
+// chip maps through rankLabelText, so the core stays i18n-free.
+function chipLabel(chip: GuildRosterChip): string {
+  if (chip.kind === 'rank') return rankLabelText(chip.label);
+  return chip.tier === 'recruit' ? t('hud.social.tenure.recruit') : t('hud.social.tenure.veteran');
+}
+
+// The Ranks tab's permission columns: label + hover keys per permission,
+// typed against the vocabulary so a permission added to
+// GUILD_RANK_PERMISSIONS without a column fails tsc.
+const PERM_LABEL: Record<GuildRankPermission, { label: () => string; hint: () => string }> = {
+  invite: {
+    label: () => t('hudChrome.guildRanks.perm.invite'),
+    hint: () => t('hudChrome.guildRanks.permHint.invite'),
+  },
+  remove: {
+    label: () => t('hudChrome.guildRanks.perm.remove'),
+    hint: () => t('hudChrome.guildRanks.permHint.remove'),
+  },
+  promote: {
+    label: () => t('hudChrome.guildRanks.perm.promote'),
+    hint: () => t('hudChrome.guildRanks.permHint.promote'),
+  },
+  bank: {
+    label: () => t('hudChrome.guildRanks.perm.bank'),
+    hint: () => t('hudChrome.guildRanks.permHint.bank'),
+  },
+  officerChat: {
+    label: () => t('hudChrome.guildRanks.perm.officerChat'),
+    hint: () => t('hudChrome.guildRanks.permHint.officerChat'),
+  },
+  motd: {
+    label: () => t('hudChrome.guildRanks.perm.motd'),
+    hint: () => t('hudChrome.guildRanks.permHint.motd'),
+  },
+  events: {
+    label: () => t('hudChrome.guildRanks.perm.events'),
+    hint: () => t('hudChrome.guildRanks.permHint.events'),
+  },
+};
+
+/** The data-field a rank title input / permission checkbox carries, keyed by
+ *  the stable rank id (never the row index) so a draft survives a reorder. */
+const rankNameField = (id: string): string => `rank-name:${id}`;
+const rankPermField = (id: string, perm: GuildRankPermission): string => `rank-perm:${id}:${perm}`;
+
+/**
+ * The Ranks tab body (docs/prd/guild-custom-ranks.md): the guild's rank table,
+ * one row per rank (most senior first), one column per permission, like a
+ * classic guild-control sheet. Every member reads it; for the Guild Master the
+ * titles are inputs, the permissions live checkboxes, and each middle rank
+ * carries reorder and remove controls, with Add and Save under the table.
+ * Inputs render their SERVER value as the default so the delegated refresh
+ * can tell a draft from a stale paint (refreshList's defaultValue check).
+ * A stateless builder, exported so the render arm is behavior-testable.
+ */
+export function guildRanksPanelHtml(view: GuildRanksPanelView): string {
+  const head =
+    `<tr><th scope="col" class="soc-ranks-idx">${esc(t('hudChrome.guildRanks.colRank'))}</th>` +
+    `<th scope="col" class="soc-ranks-title">${esc(t('hudChrome.guildRanks.colTitle'))}</th>` +
+    GUILD_RANK_PERMISSIONS.map(
+      (p) =>
+        `<th scope="col" class="soc-ranks-perm" title="${esc(PERM_LABEL[p].hint())}">${esc(PERM_LABEL[p].label())}</th>`,
+    ).join('') +
+    `<th scope="col" class="soc-ranks-count">${esc(t('hudChrome.guildRanks.colMembers'))}</th>` +
+    (view.editable
+      ? `<th scope="col" class="soc-ranks-order">${esc(t('hudChrome.guildRanks.colActions'))}</th>`
+      : '') +
+    `</tr>`;
+  const rows = view.rows
+    .map((r) => {
+      const label = rankLabelText(r.label);
+      const defaultLabel = rankLabelText(r.name === '' ? r.label : defaultRankLabel(r));
+      const title = view.editable
+        ? `<input class="ui-input" maxlength="${GUILD_RANK_NAME_MAX}" value="${esc(r.name)}" placeholder="${esc(defaultLabel)}" aria-label="${esc(t('hudChrome.guildRanks.titleLabel', { rank: label }))}" data-field="${esc(rankNameField(r.id))}" autocomplete="off" spellcheck="false"/>`
+        : `<span class="soc-ranks-name">${esc(label)}</span>`;
+      const perms = GUILD_RANK_PERMISSIONS.map((p) => {
+        const aria = esc(
+          t('hudChrome.guildRanks.permLabel', { perm: PERM_LABEL[p].label(), rank: label }),
+        );
+        const lockTip = r.locked ? ` title="${esc(t('hudChrome.guildRanks.leaderLocked'))}"` : '';
+        const disabled = !view.editable || r.locked ? ' disabled' : '';
+        return `<td class="soc-ranks-perm"${lockTip}><input class="ui-check" type="checkbox" data-field="${esc(rankPermField(r.id, p))}" aria-label="${aria}"${r.perms[p] ? ' checked' : ''}${disabled}/></td>`;
+      }).join('');
+      const order = view.editable
+        ? `<td class="soc-ranks-order">` +
+          (r.canMoveUp
+            ? `<button type="button" class="soc-x ui-disc" data-act="rank-up" data-rank="${esc(r.id)}" title="${esc(t('hudChrome.guildRanks.moveUp', { rank: label }))}" aria-label="${esc(t('hudChrome.guildRanks.moveUp', { rank: label }))}">${svgIcon('promote')}</button>`
+            : '') +
+          (r.canMoveDown
+            ? `<button type="button" class="soc-x ui-disc" data-act="rank-down" data-rank="${esc(r.id)}" title="${esc(t('hudChrome.guildRanks.moveDown', { rank: label }))}" aria-label="${esc(t('hudChrome.guildRanks.moveDown', { rank: label }))}">${svgIcon('demote')}</button>`
+            : '') +
+          (r.canRemove
+            ? `<button type="button" class="soc-x ui-disc" data-act="rank-remove" data-rank="${esc(r.id)}" data-count="${r.memberCount}" title="${esc(t('hudChrome.guildRanks.remove', { rank: label }))}" aria-label="${esc(t('hudChrome.guildRanks.remove', { rank: label }))}">${svgIcon('trash')}</button>`
+            : '') +
+          `</td>`
+        : '';
+      return (
+        `<tr>` +
+        `<td class="soc-ranks-idx">${esc(formatNumber(r.index, { maximumFractionDigits: 0 }))}</td>` +
+        `<th scope="row" class="soc-ranks-title">${title}</th>` +
+        perms +
+        `<td class="soc-ranks-count">${esc(formatNumber(r.memberCount, { maximumFractionDigits: 0 }))}</td>` +
+        order +
+        `</tr>`
+      );
+    })
+    .join('');
+  const actions = view.editable
+    ? `<div class="soc-ranks-actions">` +
+      `<button type="button" class="btn ui-btn" data-act="rank-add"${view.canAdd ? '' : ' disabled'}>${esc(t('hudChrome.guildRanks.add'))}</button>` +
+      `<button type="button" class="btn ui-btn" data-act="rank-save">${esc(t('hudChrome.guildRanks.save'))}</button>` +
+      `</div>`
+    : '';
+  return (
+    `<div class="soc-ranks ui-card">` +
+    `<div class="soc-ranks-intro">${esc(t(view.editable ? 'hudChrome.guildRanks.introEdit' : 'hudChrome.guildRanks.introView'))}</div>` +
+    `<div class="soc-ranks-scroll"><table class="soc-ranks-table"><thead>${head}</thead><tbody>${rows}</tbody></table></div>` +
+    actions +
+    `</div>`
+  );
+}
+
+/** A titled rank's DEFAULT label (the input placeholder a cleared title falls
+ *  back to): the built-in default for the three built-in ids, 'Rank N' for a
+ *  custom rank. */
+function defaultRankLabel(row: { id: string; index: number }): GuildRankLabel {
+  return row.id === 'leader' || row.id === 'officer' || row.id === 'member'
+    ? { kind: 'default', rank: row.id }
+    : { kind: 'numbered', n: row.index };
+}
+
+// The roster-expansion confirm body. The price is coin-icon markup (gold and
+// silver glyphs, bare digits), so the localized sentence is escaped FIRST with an
+// inert slot in the price position and the trusted markup spliced in afterwards:
+// catalog and overlay text never reaches innerHTML raw. The NUL slot cannot occur
+// in catalog text and esc() leaves it untouched (deed_i18n.ts uses the same token).
+const PRICE_SLOT = '\u0000';
+export function rosterExpandConfirmHtml(seats: string, priceHtml: string): string {
+  return splicePriceHtml(
+    esc(t('hudChrome.social.roster.confirm', { seats, price: PRICE_SLOT })),
+    priceHtml,
+  );
+}
+
+/** Fill EVERY price slot of an escaped sentence with the trusted price markup
+ *  (split/join: verbatim, no replacement-pattern parsing). A sentence with no slot
+ *  at all (H10 pins the placeholder set, so only a hand-edited overlay could lose
+ *  it) still shows the price after the sentence: a gold spend is never confirmed
+ *  unpriced. */
+export function splicePriceHtml(escapedSentence: string, priceHtml: string): string {
+  if (!escapedSentence.includes(PRICE_SLOT)) return `${escapedSentence} ${priceHtml}`;
+  return escapedSentence.split(PRICE_SLOT).join(priceHtml);
+}
+
+/** One guild-roster row. A stateless string builder (module-level, exported so
+ *  the render arm is behavior-testable in Node): the caller reads the clock
+ *  once per rebuild and threads it through, so every row in the same rebuild
+ *  resolves its tenure tier against the same instant. */
+export function guildMemberRowHtml(m: GuildRow, now: number): string {
+  // Offline rows carry a "last seen" line: a locale-formatted date/time,
+  // or the localized "never" when no login has been recorded.
+  const lastSeenWhen = m.lastLogin
+    ? formatDateTime(new Date(m.lastLogin), { dateStyle: 'medium', timeStyle: 'short' })
+    : t('hudChrome.social.lastSeenNever');
+  const meta = m.online
+    ? `<span class="zone">${esc(m.zone ? localizeZone(m.zone) : '')}</span><br>${esc(statusLabel(m.status))}`
+    : `${esc(t('hud.social.status.offline'))}<br>${esc(t('hudChrome.social.lastSeen', { when: lastSeenWhen }))}`;
+  // The title sits AFTER the rank chip so the chip stays glued to the
+  // name; the ellipsized .soc-name cell trims the title tail first.
+  const memberTitle = m.activeTitle ? deedTitleText(m.activeTitle) : '';
+  const memberTitleSpan = memberTitle ? `<span class="soc-title">${esc(memberTitle)}</span>` : '';
+  // The ONE role chip per row: officers and the leader show their rank label
+  // (never a tenure label); a regular member shows the tenure tier AS the
+  // role (Recruit under 7 days, Veteran at 30+, Member in between or with an
+  // unknown joinedAt). Always-visible chip text (never hover-only), before
+  // the deed title; display-only (rank, permissions, and sort untouched).
+  // The client clock is fine here (ui code, not sim). Known cosmetic quirk,
+  // by design: the repaint gate keys on socialInfo content, not the clock,
+  // so a member crossing a threshold while the panel sits open keeps the old
+  // label until the next social frame or reopen (a wall-clock driver would
+  // break the cold-window "no repeating driver" contract).
+  // All five role labels share the one .rank chip treatment (user call: the
+  // label alone distinguishes the tiers; no per-tier tint).
+  const chip = guildRosterChip(m.rankLabel, tenureTier(m.joinedAt, now));
+  const nameInner = `${esc(m.name)}<span class="rank">${esc(chipLabel(chip))}</span>${memberTitleSpan}`;
+  const name =
+    m.online && !m.self
+      ? `<button type="button" class="soc-name soc-link" style="--class-color:${classColorCss(m.cls)}" data-whisper="${esc(m.name)}" title="${esc(t('hud.social.whisperTitle', { name: m.name }))}">${nameInner}</button>`
+      : `<span class="soc-name" style="--class-color:${classColorCss(m.cls)}">${nameInner}</span>`;
+  let actions = m.canWhisper
+    ? `<button type="button" class="soc-x ui-disc" data-whisper="${esc(m.name)}" title="${esc(t('hud.social.whisperTitle', { name: m.name }))}">${svgIcon('whisper')}</button>`
+    : '';
+  if (m.canTransfer)
+    actions += `<button type="button" class="soc-x ui-disc" data-act="gtransfer" data-name="${esc(m.name)}" title="${esc(t('hud.social.makeGuildMasterTitle', { name: m.name }))}">${svgIcon('crown')}</button>`;
+  // The hovers name the rank the click moves the member to (the guild's own
+  // title, or the localized default).
+  if (m.canPromote && m.promoteLabel)
+    actions += `<button type="button" class="soc-x ui-disc" data-act="promote" data-name="${esc(m.name)}" title="${esc(t('hudChrome.guildRanks.promoteTo', { name: m.name, rank: rankLabelText(m.promoteLabel) }))}">${svgIcon('promote')}</button>`;
+  if (m.canDemote && m.demoteLabel)
+    actions += `<button type="button" class="soc-x ui-disc" data-act="demote" data-name="${esc(m.name)}" title="${esc(t('hudChrome.guildRanks.demoteTo', { name: m.name, rank: rankLabelText(m.demoteLabel) }))}">${svgIcon('demote')}</button>`;
+  if (m.canKick)
+    actions += `<button type="button" class="soc-x ui-disc" data-act="gkick" data-name="${esc(m.name)}" title="${esc(t('hud.social.removeGuildTitle', { name: m.name }))}">${svgIcon('close')}</button>`;
+  const tip = esc(dotTitle(m.online, m.status, m.zone));
+  return (
+    `<div class="soc-row${m.online ? '' : ' is-offline'}">` +
+    `<span class="soc-dot ${m.dot === 'off' ? '' : m.dot}" title="${tip}"></span>` +
+    `<span class="soc-id">${name}<span class="soc-sub">${esc(t('hud.social.levelClass', { level: formatNumber(m.level, { maximumFractionDigits: 0 }), className: playerClassDisplayName(m.cls) }))}</span></span>` +
+    `<span class="soc-meta" title="${tip}">${meta}</span>` +
+    (actions ? `<span class="soc-actions">${actions}</span>` : '') +
+    `</div>`
+  );
+}
+
+export class SocialWindow {
+  private tab: SocialTab = 'friends';
+  // split signatures: structural changes (tab, guild membership, raid roster)
+  // rebuild the whole panel; content-only changes (a friend's presence) refresh
+  // just the list, so an open typeahead / half-typed name survives a snapshot
+  private lastStruct = '';
+  private lastContent = '';
+  private notice: { text: string; error: boolean } | null = null;
+  private suggestTimer: number | undefined;
+  private suggest: {
+    field: string;
+    items: { name: string; cls: string; level: number }[];
+    index: number;
+  } = { field: '', items: [], index: -1 };
+  // The element to refocus when the window closes (WCAG 2.2 AA focus return).
+  private returnFocus: HTMLElement | null = null;
+  // Guild-tab "hide offline members" toggle: a persisted USER choice (guild presence
+  // is actionable info, never gated on graphics tier). Loaded once; the delegated body
+  // handler flips + persists it and refreshes the list in place.
+  private hideOffline = loadGuildHideOffline();
+  // The name_screen lane hold on the Found button (GUILD_CREATE_LOCK_MS). It lives
+  // on the instance, not on the button, because the panel rebuilds its footer on
+  // every structural repaint; applyGuildCreateLock re-stamps the fresh button.
+  private guildCreateLocked = false;
+  private guildCreateTimer: number | undefined;
+  // Who tab: the local sort / class chip plus the last server-side search
+  // (who_tab_view.ts owns the decisions). Window-local like the tab itself.
+  private who: WhoTabState = { ...DEFAULT_WHO_TAB_STATE };
+  private whoRetryTicks = 0;
+  // Answer identity for the content signature: ClientWorld builds a fresh
+  // whoInfo object per `who` frame, so a reference change is exactly "a new
+  // answer landed", even when the filter, row count, and total all match the
+  // previous one (a re-submitted search after someone logged off and someone
+  // else logged on, or the same names with new levels or zones).
+  private whoSeen: WhoRosterInfo | null = null;
+  private whoAnswerSeq = 0;
+
+  constructor(private readonly deps: SocialWindowDeps) {}
+
+  get isOpen(): boolean {
+    return this.deps.root().classList.contains('open');
+  }
+
+  toggle(): void {
+    const el = this.deps.root();
+    if (el.classList.contains('open')) {
+      this.close();
+      return;
+    }
+    this.returnFocus = this.deps.captureFocus();
+    this.deps.closeOthers();
+    el.classList.add('open');
+    this.notice = null;
+    this.lastStruct = this.structSig();
+    this.lastContent = this.contentSig();
+    this.render();
+    if (this.tab === 'who') this.requestWho();
+  }
+
+  // The chat `/who [filter]` command lands here online: open the window on the
+  // Who tab with the filter applied and ask the server. Returns false offline,
+  // so the caller falls through to the normal send path (the offline Sim
+  // answers the classic "online play only" line itself).
+  openWhoTab(filter: string): boolean {
+    const w = this.deps.world();
+    // Spectating drops every command but chat before the socket, so the
+    // classic chat dump (which chat still delivers) is the honest answer there.
+    if (w.socialInfo === null || w.spectating !== null) return false;
+    this.who = { ...this.who, search: filter.slice(0, WHO_SEARCH_MAX) };
+    this.tab = 'who';
+    this.notice = null;
+    if (this.isOpen) {
+      this.lastStruct = this.structSig();
+      this.render();
+      this.requestWho();
+    } else {
+      this.toggle();
+    }
+    return true;
+  }
+
+  // Ask the server for the roster under the current search. Online only (the
+  // offline Sim's whoRequest is inert anyway); the answer lands as whoInfo and
+  // the content signature repaints the list on the next slow tick.
+  private requestWho(): void {
+    const w = this.deps.world();
+    if (w.socialInfo === null || w.spectating !== null) return;
+    this.whoRetryTicks = 0;
+    w.whoRequest(this.who.search);
+  }
+
+  // While the tab shows the pending state (no answer yet: the viewer's block
+  // list was still loading server-side, a shed request, or a transport that
+  // reset the mirror), re-ask every few slow ticks. Bounded by the server's
+  // list-read guard and by the tab being open; stops on the first answer.
+  private retryWhoIfPending(): void {
+    const w = this.deps.world();
+    if (
+      this.tab !== 'who' ||
+      (w.whoInfo !== null && w.whoInfo.filter === this.who.search) ||
+      w.spectating !== null
+    )
+      return;
+    if (++this.whoRetryTicks < WHO_RETRY_SLOW_TICKS) return;
+    this.requestWho();
+  }
+
+  // A local who-state change (sort, chip, search) repaints the list itself, so
+  // the content signature is re-latched here: otherwise the next slow tick sees
+  // the moved whoTabSig and rebuilds the body a second time, dropping the focus
+  // the handler just restored (the file's "re-latch, never clear" rule).
+  private refreshWhoList(): void {
+    this.refreshList();
+    this.lastContent = this.contentSig();
+  }
+
+  private searchWho(filter: string): void {
+    this.who = { ...this.who, search: filter.slice(0, WHO_SEARCH_MAX) };
+    this.requestWho();
+    this.refreshWhoList();
+  }
+
+  // Close path (toggle close + the window-manager's closeManagedWindow case): drop
+  // the '.open' class + tooltip and return focus to the opener (WCAG 2.2 AA).
+  close(): void {
+    const el = this.deps.root();
+    el.classList.remove('open');
+    this.deps.hideTooltip();
+    const target = this.returnFocus;
+    this.returnFocus = null;
+    this.deps.restoreFocus(target);
+  }
+
+  // The context-menu "convert to raid/party" path: switch to the raid tab (so the
+  // next open shows it) and re-render the panel if it is currently open.
+  selectRaidTab(): void {
+    this.tab = 'raid';
+    if (this.isOpen) this.render();
+  }
+
+  // Called each slow-HUD frame by the update loop: full rebuild on a structural
+  // change, else an in-place list refresh on a content change.
+  refreshIfChanged(): void {
+    if (!this.isOpen) return;
+    this.retryWhoIfPending();
+    const struct = this.structSig();
+    if (struct !== this.lastStruct) {
+      this.lastStruct = struct;
+      this.lastContent = this.contentSig();
+      // A structural change mid-session (a bought roster page re-pricing the
+      // footer button, a rank change) rebuilds the whole panel, which would
+      // otherwise wipe a half-typed invite or billboard draft: capture and
+      // restore them around the rebuild, the relocalize() recipe.
+      const el = this.deps.root();
+      const draft = captureFormDraft(el);
+      this.render();
+      restoreFormDraft(el, draft);
+    } else {
+      const content = this.contentSig();
+      if (content !== this.lastContent) {
+        this.lastContent = content;
+        this.refreshList();
+      }
+    }
+  }
+
+  /**
+   * Re-localize after an in-game language switch (the Hud's woc:languagechange
+   * fan-out). Self-gated on isOpen so the fan-out can call it unconditionally.
+   *
+   * A full render() is what this needs and refreshList() is not a substitute:
+   * the panel title, the five tab labels and the footer's placeholders and
+   * button labels are all emitted by render(), which refreshList never reaches
+   * (it swaps `.soc-body` only). Three things have to survive that rebuild:
+   *   - the half-typed name in the tab's typeahead, emitted with no value;
+   *   - the guild billboard draft. refreshList protects it by reading the live
+   *     input, but render() destroys `.soc-body` BEFORE calling refreshList, so
+   *     by then there is nothing left to read. Capture happens first here.
+   *   - `this.suggest`, which render() strands: it destroys the `.soc-suggest`
+   *     listbox and leaves the field populated, so ArrowDown/Enter would act on
+   *     items no longer on screen. The pending search is dropped with the DOM
+   *     that showed it.
+   *
+   * Both signatures are RE-LATCHED rather than cleared: render() does not touch
+   * them, and clearing would buy a second full rebuild on the next slow tick
+   * that would wipe the draft this just restored.
+   */
+  relocalize(): void {
+    if (!this.isOpen) return;
+    const el = this.deps.root();
+    const draft = captureFormDraft(el);
+    window.clearTimeout(this.suggestTimer);
+    this.suggest = { field: '', items: [], index: -1 };
+    this.render();
+    restoreFormDraft(el, draft);
+    this.lastStruct = this.structSig();
+    this.lastContent = this.contentSig();
+  }
+
+  private structSig(): string {
+    const w = this.deps.world();
+    return socialStructSig(this.tab, w.socialInfo, w.partyInfo);
+  }
+
+  private whoAnswerId(info: WhoRosterInfo | null): number {
+    if (info !== this.whoSeen) {
+      this.whoSeen = info;
+      this.whoAnswerSeq++;
+    }
+    return this.whoAnswerSeq;
+  }
+
+  private contentSig(): string {
+    const w = this.deps.world();
+    return JSON.stringify({
+      social: w.socialInfo,
+      // The Who tab paints nothing from the party mirror, whose members carry
+      // live hp/resource; keeping it in would rebuild the tab every slow tick
+      // while partied in combat (and drop a focused header or chip each time).
+      party: this.tab === 'who' ? null : w.partyInfo,
+      // A cheap digest of the roster answer (never the 200 rows themselves):
+      // the answer's identity, so a same-count answer still repaints.
+      who: this.whoAnswerId(w.whoInfo),
+      whoTab: whoTabSig(this.who),
+    });
+  }
+
+  // Full rebuild: title, tabs, body, notice, and the tab's footer (with its
+  // typeahead). Used on open, tab switch, and guild-membership changes.
+  private render(): void {
+    const el = this.deps.root();
+    if (!el.classList.contains('open')) return;
+    // WCAG 2.2 AA: name the focus-trapped root so AT users entering the trap
+    // land on a labeled dialog (the sibling cold windows all set this).
+    markDialogRoot(el, { label: t('hud.social.title') });
+    const w = this.deps.world();
+    // The Pledges tab exists only for officer-plus members; a demotion (or
+    // guild leave) while it is selected falls back to the guild tab rather
+    // than rendering an un-tabbed orphan board (the leaderboard devs-tab
+    // pattern).
+    const pledgePanel = pledgePanelView(w.socialInfo);
+    if (this.tab === 'pledges' && !pledgePanel) this.tab = 'guild';
+    // The Ranks tab exists for every guild member (read-only below the Guild
+    // Master); leaving the guild while it is selected falls back the same way.
+    const guilded = !!w.socialInfo?.guild;
+    if (this.tab === 'ranks' && !guilded) this.tab = 'guild';
+    const tab = this.tab;
+    const online = w.socialInfo !== null;
+    const realmTag =
+      online && w.realm ? ` <span class="soc-realm-tag">- ${esc(w.realm)}</span>` : '';
+    el.innerHTML =
+      `<div class="panel-title ui-win-head"><span class="ui-win-title">${esc(t('hud.social.title'))}${realmTag}</span><button type="button" class="x-btn ui-x-btn" data-close aria-label="${esc(t('hud.options.returnToGame'))}">${svgIcon('close')}</button></div>` +
+      // WAI-ARIA tabs: a real role=tablist / role=tab / role=tabpanel with a
+      // roving tabindex (0 on the active tab, -1 on the rest) and aria-selected, built
+      // from the shared tab_strip_view core (same markup contract talents_window
+      // follows). Ignore and block are two distinct tiers, so they get a tab each:
+      // the Ignored tab lists the chat-only mutes, the Blocked tab the hard blocks.
+      // The roving Arrow/Home/End handler is wired in wireChrome via wireTabStrip.
+      tabStripHtml(
+        tabStripModel({
+          ariaLabel: t('hud.social.title'),
+          panelId: 'soc-body-panel',
+          stripClass: 'soc-tabs ui-tabs',
+          tabClass: 'soc-tab ui-tab',
+          selectedClass: 'on',
+          tabs: [
+            { id: 'friends', label: t('hud.social.friendsTab') },
+            { id: 'guild', label: t('hud.social.guildTab') },
+            ...(guilded ? [{ id: 'ranks', label: t('hudChrome.guildRanks.tab') }] : []),
+            { id: 'who', label: t('hudChrome.social.who.tab') },
+            // Officer-plus only: the pledge dashboard. The label carries the
+            // live open-pledge count (the count is in the structural
+            // signature, so a new pledge rebuilds the strip).
+            ...(pledgePanel
+              ? [
+                  {
+                    id: 'pledges',
+                    label:
+                      pledgePanel.rows.length > 0
+                        ? t('hudChrome.pledge.tabWithCount', {
+                            count: formatNumber(pledgePanel.rows.length, {
+                              maximumFractionDigits: 0,
+                            }),
+                          })
+                        : t('hudChrome.pledge.tab'),
+                  },
+                ]
+              : []),
+            { id: 'ignore', label: t('hudChrome.social.ignoredTab') },
+            { id: 'block', label: t('hudChrome.social.blockedTab') },
+            { id: 'raid', label: t('hud.social.raidTab') },
+          ],
+          selected: tab,
+        }),
+      ) +
+      `<div class="soc-body" id="soc-body-panel" role="tabpanel"></div>` +
+      `<div class="soc-notice"></div>` +
+      // The raid tab has no footer; the pledges and ranks tabs' actions all
+      // live in the body (their editors + per-row decisions), so they take
+      // none either.
+      (tab === 'raid' || tab === 'pledges' || tab === 'ranks' ? '' : online ? this.footer() : '');
+    this.wireChrome(el);
+    // Delegate every row action to ONE listener on the persistent body, so a
+    // content refresh (innerHTML swap) never re-attaches per-row handlers.
+    const body = el.querySelector('.soc-body') as HTMLElement | null;
+    if (body) {
+      body.addEventListener('click', (e) => this.onBodyClick(e));
+      // Enter in the billboard edit input saves. Delegated on the persistent
+      // body like the click handler, so it survives every refreshList swap.
+      body.addEventListener('keydown', (e) => {
+        const ke = e as KeyboardEvent;
+        if (ke.key !== 'Enter') return;
+        const target = ke.target as HTMLElement;
+        if (target.matches?.('input[data-field="gmotd"]')) {
+          ke.preventDefault();
+          this.saveBillboard();
+        } else if (target.matches?.('input[data-field="pnote"], input[data-field="pminlvl"]')) {
+          ke.preventDefault();
+          this.savePledgeSettings();
+        } else if (target.matches?.('.soc-ranks input[data-field^="rank-name:"]')) {
+          ke.preventDefault();
+          this.sendRanks(this.readRanksDraft());
+        }
+      });
+      // The Who tab's class chip is a native select inside the body (rebuilt
+      // by every refreshList swap), so its change is delegated like the clicks.
+      body.addEventListener('change', (e) => {
+        const target = e.target as HTMLSelectElement;
+        if (!target.matches?.('select[data-field="who-cls"]')) return;
+        this.who = { ...this.who, cls: target.value };
+        this.refreshWhoList();
+        (
+          this.deps.root().querySelector('select[data-field="who-cls"]') as HTMLElement | null
+        )?.focus();
+      });
+    }
+    this.refreshList();
+    this.renderNotice();
+    // The footer was rebuilt above, so a hold taken before this repaint has to be
+    // re-stamped onto the fresh Found button.
+    this.applyGuildCreateLock();
+  }
+
+  // Lighter refresh: just the list inside the current tab, leaving the footer
+  // (and any half-typed name / open suggestions) untouched. No re-wiring: the
+  // delegated body listener wired in render() keeps working across the swap.
+  private refreshList(): void {
+    const body = this.deps.root().querySelector('.soc-body') as HTMLElement | null;
+    if (!body) return;
+    // Preserve the in-body edit drafts across the innerHTML swap: the panel
+    // repaints on the slow-HUD divider whenever ANY social/party content moves
+    // (a guildmate's presence, party hp), which would otherwise clobber typing.
+    // defaultValue is the value rendered at the last paint, so an untouched
+    // input (value === defaultValue, unfocused) takes the fresh server value.
+    // Covers the billboard edit (gmotd), the pledge settings editor
+    // (pnote / pminlvl text-likes, popen checkbox via defaultChecked), and the
+    // Ranks tab's titles and permission checkboxes (keyed by rank id).
+    const drafts: {
+      field: string;
+      value: string;
+      checked: boolean;
+      isCheckbox: boolean;
+      focused: boolean;
+      selStart: number | null;
+      selEnd: number | null;
+    }[] = [];
+    for (const prev of Array.from(
+      body.querySelectorAll<HTMLInputElement>(
+        'input[data-field="gmotd"], .soc-pledge-settings input[data-field], .soc-ranks input[data-field]',
+      ),
+    )) {
+      const isCheckbox = prev.type === 'checkbox';
+      const dirty = isCheckbox
+        ? prev.checked !== prev.defaultChecked
+        : prev.value !== prev.defaultValue;
+      const focused = document.activeElement === prev;
+      if (!dirty && !focused) continue;
+      drafts.push({
+        field: prev.dataset.field ?? '',
+        value: prev.value,
+        checked: prev.checked,
+        isCheckbox,
+        focused,
+        selStart: isCheckbox ? null : prev.selectionStart,
+        selEnd: isCheckbox ? null : prev.selectionEnd,
+      });
+    }
+    // The Who tab's focusable controls outside the draft inputs: a sort header
+    // (by column key) or the class chip. Both are re-emitted from `this.who`,
+    // so focus can be handed back to the freshly rendered element.
+    const active = document.activeElement as HTMLElement | null;
+    const whoFocus =
+      active && body.contains(active)
+        ? active.dataset.act === 'who-sort'
+          ? `[data-act="who-sort"][data-key="${active.dataset.key}"]`
+          : active.dataset.field === 'who-cls'
+            ? 'select[data-field="who-cls"]'
+            : null
+        : null;
+    const online = this.deps.world().socialInfo !== null;
+    body.innerHTML =
+      this.tab === 'raid'
+        ? this.raidHtml()
+        : !online
+          ? `<div class="soc-empty">${esc(t('hud.social.offlineEmpty'))}</div>`
+          : this.tab === 'friends'
+            ? this.friendsHtml()
+            : this.tab === 'who'
+              ? this.whoHtml()
+              : this.tab === 'guild'
+                ? this.guildHtml()
+                : this.tab === 'ranks'
+                  ? this.ranksHtml()
+                  : this.tab === 'pledges'
+                    ? this.pledgesHtml()
+                    : this.tab === 'block'
+                      ? this.blockHtml()
+                      : this.ignoreHtml();
+    for (const draft of drafts) {
+      const next = body.querySelector(
+        `input[data-field="${draft.field}"]`,
+      ) as HTMLInputElement | null;
+      // A demotion mid-draft removes the edit row entirely (editor-only), so
+      // `next` is null then and the draft is dropped.
+      if (!next) continue;
+      if (draft.isCheckbox) next.checked = draft.checked;
+      else next.value = draft.value;
+      if (draft.focused) {
+        next.focus();
+        // selStart is null for the checkbox (and for any input type without a
+        // selection API); setSelectionRange would throw there.
+        if (!draft.isCheckbox && draft.selStart !== null)
+          next.setSelectionRange(draft.selStart, draft.selEnd);
+      }
+    }
+    if (whoFocus) (body.querySelector(whoFocus) as HTMLElement | null)?.focus();
+  }
+
+  // The single delegated row handler (click + whisper). Resolves the nearest
+  // actionable ancestor so a click on an icon inside a button still dispatches.
+  private onBodyClick(e: Event): void {
+    const node = (e.target as HTMLElement).closest(
+      '[data-act],[data-whisper]',
+    ) as HTMLElement | null;
+    if (!node) return;
+    if (node.dataset.whisper !== undefined) {
+      this.deps.startWhisper(node.dataset.whisper ?? '');
+      return;
+    }
+    // The guild-tab hide-offline toggle: flip + persist the USER choice, then refresh
+    // the roster in place (no structural change, so refreshList not a full render).
+    if (node.dataset.act === 'toggle-hide-offline') {
+      this.hideOffline = !this.hideOffline;
+      saveGuildHideOffline(this.hideOffline);
+      this.refreshList();
+      // refreshList swaps the body innerHTML, destroying the button that was just
+      // activated; restore keyboard focus to the freshly rendered toggle so repeated
+      // keyboard presses keep working (WCAG 2.2 AA focus management).
+      (
+        this.deps.root().querySelector('[data-act="toggle-hide-offline"]') as HTMLElement | null
+      )?.focus();
+      return;
+    }
+    // Who tab column header: re-sort the delivered rows locally (no round-trip),
+    // then hand focus back to the freshly rendered header button.
+    if (node.dataset.act === 'who-sort') {
+      const key = node.dataset.key as WhoSortKey | undefined;
+      if (!key || !WHO_SORT_KEYS.includes(key)) return;
+      this.who = toggleWhoSort(this.who, key);
+      this.refreshWhoList();
+      (
+        this.deps
+          .root()
+          .querySelector(`[data-act="who-sort"][data-key="${key}"]`) as HTMLElement | null
+      )?.focus();
+      return;
+    }
+    if (node.dataset.act === 'gmotd-save') {
+      this.saveBillboard();
+      return;
+    }
+    if (node.dataset.act === 'pledge-settings-save') {
+      this.savePledgeSettings();
+      return;
+    }
+    if (node.dataset.act?.startsWith('rank-')) {
+      this.onRankAction(node);
+      return;
+    }
+    const w = this.deps.world();
+    const act = node.dataset.act;
+    const name = node.dataset.name ?? '';
+    if (act === 'unfriend') w.friendRemove(name);
+    else if (act === 'unblock') w.blockRemove(name);
+    else if (act === 'unignore') w.ignoreRemove(name);
+    else if (act === 'gkick') w.guildKick(name);
+    else if (act === 'promote') w.guildPromote(name);
+    else if (act === 'demote') w.guildDemote(name);
+    else if (act === 'pledge-accept') w.guildPledgeDecide(name, true);
+    else if (act === 'pledge-reject') w.guildPledgeDecide(name, false);
+    else if (act === 'pledge-withdraw') w.guildPledgeWithdraw();
+    else if (act === 'gtransfer')
+      this.deps.showPrompt(
+        t('hud.social.transferPrompt', { name: `<b>${esc(name)}</b>` }),
+        t('hud.social.transferConfirm'),
+        () => w.guildTransfer(name),
+        () => {
+          /* keep */
+        },
+      );
+    else if (act === 'raid-move') {
+      const pid = Number(node.dataset.pid);
+      const group = Number(node.dataset.group);
+      if (Number.isFinite(pid) && (group === 1 || group === 2)) w.moveRaidMember(pid, group);
+    } else if (act === 'convert-raid') {
+      w.convertPartyToRaid();
+      this.tab = 'raid';
+      this.render();
+    } else if (act === 'convert-party') {
+      w.convertRaidToParty();
+      this.tab = 'raid';
+      this.render();
+    }
+  }
+
+  // The Ranks tab body: null (hidden tab) falls back to the empty state.
+  private ranksHtml(): string {
+    const view = guildRanksPanelView(this.deps.world().socialInfo);
+    if (!view) return `<div class="soc-empty">${esc(t('hud.social.noGuild'))}</div>`;
+    return guildRanksPanelHtml(view);
+  }
+
+  // The Ranks tab's editor, read from the live DOM over the server ladder:
+  // each rank's title input and permission checkboxes (the Guild Master's
+  // permissions are fixed and never read). Structure (ids, order) always comes
+  // from the server ladder, so a draft can only differ in titles and grants.
+  private readRanksDraft(): GuildRankDef[] {
+    const root = this.deps.root();
+    return guildLadder(this.deps.world().socialInfo?.guild).map((rank, index) => {
+      const input = root.querySelector(
+        `input[data-field="${rankNameField(rank.id)}"]`,
+      ) as HTMLInputElement | null;
+      const perms =
+        index === 0
+          ? [...rank.perms]
+          : GUILD_RANK_PERMISSIONS.filter((p) => {
+              const box = root.querySelector(
+                `input[data-field="${rankPermField(rank.id, p)}"]`,
+              ) as HTMLInputElement | null;
+              return box ? box.checked : rank.perms.includes(p);
+            });
+      return { id: rank.id, name: input ? input.value : rank.name, perms };
+    });
+  }
+
+  // Send a ladder up through IWorld after the same validation the server runs
+  // (sanitizeGuildRankLadder). Structure comes from the server ladder and the
+  // pure edits, so a refusal here can only be a title outside the alphabet or
+  // over length: say so locally instead of sending a frame the server drops.
+  private sendRanks(ladder: GuildRankDef[] | null): void {
+    if (!ladder) return;
+    const clean = sanitizeGuildRankLadder(ladder);
+    if (!clean) {
+      this.setNotice(t('hudChrome.guildRanks.invalidTitle', { max: GUILD_RANK_NAME_MAX }), true);
+      return;
+    }
+    this.deps.world().guildSetRanks(clean);
+  }
+
+  // Add / reorder / remove: each applies to the CURRENT draft (so unsaved
+  // title and permission edits ride along) and sends at once, the Save
+  // button's contract. Removing a rank that members hold asks first, since
+  // its holders fall back to the joining rank.
+  private onRankAction(node: HTMLElement): void {
+    const act = node.dataset.act;
+    if (act === 'rank-save') {
+      this.sendRanks(this.readRanksDraft());
+      return;
+    }
+    const draft = this.readRanksDraft();
+    const id = node.dataset.rank ?? '';
+    if (act === 'rank-add') {
+      const next = addGuildRank(draft);
+      if (!next) this.setNotice(t('hudChrome.guildRanks.full', { max: GUILD_RANK_MAX }), true);
+      else this.sendRanks(next);
+    } else if (act === 'rank-up' || act === 'rank-down') {
+      this.sendRanks(moveGuildRank(draft, id, act === 'rank-up' ? -1 : 1));
+    } else if (act === 'rank-remove') {
+      const next = removeGuildRank(draft, id);
+      if (!next) return;
+      if (Number(node.dataset.count) > 0) {
+        const guild = this.deps.world().socialInfo?.guild;
+        const ladder = guildLadder(guild);
+        this.deps.showPrompt(
+          esc(
+            t('hudChrome.guildRanks.removeConfirm', {
+              rank: rankLabelText(guildRankLabel(ladder, id)),
+              fallback: rankLabelText(guildRankLabel(ladder, ladder[ladder.length - 1].id)),
+            }),
+          ),
+          t('hudChrome.guildRanks.removeAccept'),
+          () => this.sendRanks(next),
+          () => {
+            /* keep */
+          },
+        );
+      } else this.sendRanks(next);
+    }
+  }
+
+  // Send the billboard edit up through IWorld. Empty is allowed (clears the
+  // billboard); the input only exists for editors, and either way the server
+  // owns the real rank/mute/rate/content gates and the clamp.
+  private saveBillboard(): void {
+    const input = this.deps
+      .root()
+      .querySelector('input[data-field="gmotd"]') as HTMLInputElement | null;
+    if (!input) return;
+    this.deps.world().guildSetMotd(input.value);
+  }
+
+  // Send the pledge-board recruiting settings up through IWorld: the accepting
+  // toggle, the level floor (parsed + clamped here for UX; the server clamps
+  // authoritatively), the board note ('' clears it), and the new-player
+  // friendly opt-in. A malformed level falls back to the floor, matching an
+  // unset field.
+  private savePledgeSettings(): void {
+    const root = this.deps.root();
+    const open = root.querySelector('input[data-field="popen"]') as HTMLInputElement | null;
+    const level = root.querySelector('input[data-field="pminlvl"]') as HTMLInputElement | null;
+    const note = root.querySelector('input[data-field="pnote"]') as HTMLInputElement | null;
+    const newbie = root.querySelector('input[data-field="pnewbie"]') as HTMLInputElement | null;
+    if (!open || !level || !note || !newbie) return;
+    const parsed = Number.parseInt(level.value, 10);
+    const minLevel = Number.isFinite(parsed)
+      ? Math.min(PLEDGE_MIN_LEVEL_CEIL, Math.max(PLEDGE_MIN_LEVEL_FLOOR, parsed))
+      : PLEDGE_MIN_LEVEL_FLOOR;
+    this.deps.world().setGuildPledgeSettings({
+      enabled: open.checked,
+      minLevel,
+      note: note.value,
+      newPlayerFriendly: newbie.checked,
+    });
+  }
+
+  private friendsHtml(): string {
+    const rows = friendRows(this.deps.world().socialInfo);
+    if (rows.length === 0)
+      return `<div class="soc-empty">${esc(t('hud.social.friendsEmpty'))}</div>`;
+    return rows
+      .map((f) => {
+        const meta = f.online
+          ? `<span class="zone">${esc(f.zone ? localizeZone(f.zone) : '')}</span><br>${esc(statusLabel(f.status))}`
+          : esc(t('hud.social.status.offline'));
+        // The friend's Book of Deeds title (a deed id, localized here; '' for
+        // untitled/stale hides the span entirely). It rides INSIDE the
+        // ellipsized .soc-name cell, so a long combo trims the title tail and
+        // never pushes the meta column or action buttons.
+        const titleText = f.activeTitle ? deedTitleText(f.activeTitle) : '';
+        const titleSpan = titleText ? `<span class="soc-title">${esc(titleText)}</span>` : '';
+        const name = f.online
+          ? `<button type="button" class="soc-name soc-link" style="--class-color:${classColorCss(f.cls)}" data-whisper="${esc(f.name)}" title="${esc(t('hud.social.whisperTitle', { name: f.name }))}">${esc(f.name)}${titleSpan}</button>`
+          : `<span class="soc-name" style="--class-color:${classColorCss(f.cls)}">${esc(f.name)}${titleSpan}</span>`;
+        const whisper = f.online
+          ? `<button type="button" class="soc-x ui-disc" data-whisper="${esc(f.name)}" title="${esc(t('hud.social.whisperTitle', { name: f.name }))}">${svgIcon('whisper')}</button>`
+          : '';
+        const tip = esc(dotTitle(f.online, f.status, f.zone));
+        return (
+          `<div class="soc-row${f.online ? '' : ' is-offline'}">` +
+          `<span class="soc-dot ${f.dot === 'off' ? '' : f.dot}" title="${tip}"></span>` +
+          `<span class="soc-id">${name}<span class="soc-sub">${esc(t('hud.social.levelClass', { level: formatNumber(f.level, { maximumFractionDigits: 0 }), className: playerClassDisplayName(f.cls) }))}</span></span>` +
+          `<span class="soc-meta" title="${tip}">${meta}</span>` +
+          `<span class="soc-actions">${whisper}<button type="button" class="soc-x ui-disc" data-act="unfriend" data-name="${esc(f.name)}" title="${esc(t('hud.social.removeFriendTitle', { name: f.name }))}">${svgIcon('close')}</button></span>` +
+          `</div>`
+        );
+      })
+      .join('');
+  }
+
+  // The two PLAYER tiers get a tab each, so a row can never be mistaken for the
+  // other tier. IGNORED is chat-only; BLOCKED also kills whispers, invites, mail
+  // and /who. (Neither is the admin "mute".)
+  private listHtml(
+    rows: { name: string }[],
+    emptyKey: 'hudChrome.social.ignoredEmpty' | 'hudChrome.social.blockedEmpty',
+    act: 'unignore' | 'unblock',
+    title: (name: string) => string,
+  ): string {
+    if (rows.length === 0) return `<div class="soc-empty">${esc(t(emptyKey))}</div>`;
+    return rows
+      .map(
+        (r) =>
+          `<div class="soc-row">` +
+          `<span class="soc-name">${esc(r.name)}</span>` +
+          `<span class="soc-actions soc-actions-end"><button type="button" class="soc-x ui-disc" data-act="${act}" data-name="${esc(r.name)}" title="${esc(title(r.name))}">${svgIcon('close')}</button></span>` +
+          `</div>`,
+      )
+      .join('');
+  }
+
+  private ignoreHtml(): string {
+    return this.listHtml(
+      ignoreRows(this.deps.world().socialInfo),
+      'hudChrome.social.ignoredEmpty',
+      'unignore',
+      (name) => t('hud.social.stopIgnoringTitle', { name }),
+    );
+  }
+
+  private blockHtml(): string {
+    return this.listHtml(
+      blockRows(this.deps.world().socialInfo),
+      'hudChrome.social.blockedEmpty',
+      'unblock',
+      (name) => t('hudChrome.social.stopBlockingTitle', { name }),
+    );
+  }
+
+  private guildHtml(): string {
+    const w = this.deps.world();
+    const view = guildView(w.socialInfo, w.player.name);
+    if (!view.guild)
+      return `<div class="soc-empty">${esc(t('hud.social.noGuild'))}</div>${this.myPledgeHtml()}`;
+    const g = view.guild;
+    const guildCount = formatNumber(g.memberCount, { maximumFractionDigits: 0 });
+    // The guild name carries its lifetime-XP colour tier (the nameplate ladder,
+    // shared .guild-tier-N classes with the guild board).
+    // The seat readout beside the rank line: the roster's bought cap
+    // (memberCap) is what the count is measured against, so a guild that has
+    // outgrown its base roster can see the ceiling it is buying pages toward.
+    const seats = esc(
+      t('hudChrome.social.roster.seats', {
+        count: guildCount,
+        cap: formatNumber(g.memberCap, { maximumFractionDigits: 0 }),
+      }),
+    );
+    const head = `<div class="soc-guild-head"><span class="guild-tier-${g.tier}">${esc(g.name)}</span> <span class="gm">${esc(tPlural('hudChrome.plurals.guildMembers', g.memberCount, { rank: rankLabelText(g.rankLabel), count: guildCount }))}</span> <span class="gm" data-field="roster-seats">${seats}</span></div>`;
+    // The persisted "hide offline" toggle: a pressed-state button (a single click event
+    // through the delegated body handler, unlike a label+checkbox that double-fires).
+    const toggle =
+      `<button type="button" class="soc-hide-offline ui-btn${this.hideOffline ? ' on' : ''}" data-act="toggle-hide-offline" aria-pressed="${this.hideOffline ? 'true' : 'false'}" title="${esc(t('hudChrome.social.hideOfflineTitle'))}">` +
+      `<span class="soc-hide-box" aria-hidden="true"></span>${esc(t('hudChrome.social.hideOffline'))}</button>`;
+    // Online-first grouping with per-group count headers; the offline group (header +
+    // rows) is suppressed when the toggle is on. Empty groups emit no header.
+    // One clock read per rebuild (loop-invariant), so every row in the same
+    // rebuild resolves its tenure tier against the same instant.
+    const now = Date.now();
+    const body = guildRosterItems(g.rows, this.hideOffline)
+      .map((item) =>
+        item.kind === 'header'
+          ? `<div class="soc-group-head">${esc(t(item.group === 'online' ? 'hudChrome.social.onlineHeader' : 'hudChrome.social.offlineHeader', { n: formatNumber(item.count, { maximumFractionDigits: 0 }) }))}</div>`
+          : guildMemberRowHtml(item.row, now),
+      )
+      .join('');
+    return head + this.billboardHtml(g) + toggle + body;
+  }
+
+  // The guild billboard: the officer-set message pinned between the guild head
+  // and the roster. PLAIN ESCAPED TEXT only, deliberately: the message is
+  // player-controlled, so it is never linkified or rendered as HTML (phishing /
+  // XSS surface; nothing else in chat linkifies either). The message div IS the
+  // read view, so the edit row (input + save) renders only for editors (leader
+  // and officer, UX only; the server enforces the real gate): a member never
+  // sees a disabled duplicate of the text above it. With no message set,
+  // members get no billboard box at all; editors keep it (empty-state line +
+  // input) so the feature is discoverable and the first message can be written.
+  private billboardHtml(g: NonNullable<GuildView['guild']>): string {
+    if (!g.motd && !g.canEditMotd) return '';
+    const message = g.motd
+      ? `<div class="soc-billboard-msg">${esc(g.motd)}</div>`
+      : `<div class="soc-billboard-msg empty">${esc(t('hudChrome.social.billboard.empty'))}</div>`;
+    const setBy =
+      g.motd && g.motdSetBy
+        ? `<div class="soc-billboard-by">${esc(t('hudChrome.social.billboard.setBy', { name: g.motdSetBy }))}</div>`
+        : '';
+    const inputLabel = esc(t('hudChrome.social.billboard.inputLabel'));
+    const edit = g.canEditMotd
+      ? `<div class="soc-billboard-edit">` +
+        `<input class="ui-input" maxlength="${GUILD_MOTD_MAX}" value="${esc(g.motd)}" aria-label="${inputLabel}" placeholder="${esc(t('hudChrome.social.billboard.placeholder'))}" data-field="gmotd" autocomplete="off" spellcheck="false"/>` +
+        `<button type="button" class="btn ui-btn" data-act="gmotd-save">${esc(t('hudChrome.social.billboard.save'))}</button>` +
+        `</div>`
+      : '';
+    return (
+      `<div class="soc-billboard ui-card">` +
+      `<div class="soc-billboard-label">${esc(t('hudChrome.social.billboard.label'))}</div>` +
+      message +
+      setBy +
+      edit +
+      `</div>`
+    );
+  }
+
+  // The unguilded viewer's own standing pledge, under the guild tab's empty
+  // state (docs/prd/guild-pledge-board.md): which guild the pledge names (in
+  // its colour tier), since when, and the withdraw action. Empty when not
+  // pledged; pledging itself lives on the guild high-score board.
+  private myPledgeHtml(): string {
+    const pledge = myPledgeView(this.deps.world().socialInfo);
+    if (!pledge) return '';
+    // The guild name rides pre-escaped markup INTO the template (the
+    // transferPrompt pattern), so the locale owns the sentence order while the
+    // name still carries its colour-tier span.
+    const line = t('hudChrome.pledge.yourPledge', {
+      guild: `<span class="guild-tier-${pledge.tier}">${esc(pledge.guildName)}</span>`,
+    });
+    return (
+      `<div class="soc-my-pledge ui-card">` +
+      `<span class="soc-my-pledge-line">${line}</span>` +
+      `<span class="soc-my-pledge-since">${esc(t('hudChrome.pledge.since', { date: formatDateTime(new Date(pledge.sinceMs), { dateStyle: 'medium' }) }))}</span>` +
+      `<button type="button" class="btn ui-btn" data-act="pledge-withdraw">${esc(t('hudChrome.pledge.withdraw'))}</button>` +
+      `</div>`
+    );
+  }
+
+  // The officer Pledges tab: the recruiting settings editor (accepting toggle,
+  // level floor, the board note) over the open pledges awaiting a decision.
+  // UX-only gating: the server enforces the real officer-plus checks on every
+  // command this tab sends.
+  private pledgesHtml(): string {
+    const panel = pledgePanelView(this.deps.world().socialInfo);
+    if (!panel) return `<div class="soc-empty">${esc(t('hud.social.noGuild'))}</div>`;
+    const s = panel.settings;
+    const settings =
+      `<div class="soc-pledge-settings ui-card">` +
+      `<div class="soc-billboard-label">${esc(t('hudChrome.pledge.settings'))}</div>` +
+      `<label class="soc-pledge-open"><input class="ui-check" type="checkbox" data-field="popen"${s.enabled ? ' checked' : ''}/> ${esc(t('hudChrome.pledge.acceptingLabel'))}</label>` +
+      `<label class="soc-pledge-minlvl">${esc(t('hudChrome.pledge.minLevelLabel'))} ` +
+      `<input class="ui-input" inputmode="numeric" pattern="[0-9]*" maxlength="2" data-field="pminlvl" value="${esc(String(s.minLevel))}" autocomplete="off"/></label>` +
+      // Guild board categories: the new-player-friendly opt-in, with the
+      // board's own sprout glyph so the editor and the signpost chip match.
+      `<label class="soc-pledge-open soc-pledge-category"><input class="ui-check" type="checkbox" data-field="pnewbie"${s.newPlayerFriendly ? ' checked' : ''}/> ` +
+      `<span class="soc-pledge-category-icon" aria-hidden="true">${svgIcon('sprout')}</span>${esc(t('hudChrome.pledge.newPlayerFriendlyLabel'))}</label>` +
+      `<div class="soc-pledge-hint">${esc(t('hudChrome.pledge.newPlayerFriendlyHint'))}</div>` +
+      `<div class="soc-pledge-note-row">` +
+      `<input class="ui-input" maxlength="${PLEDGE_NOTE_MAX}" value="${esc(s.note)}" aria-label="${esc(t('hudChrome.pledge.noteLabel'))}" placeholder="${esc(t('hudChrome.pledge.notePlaceholder'))}" data-field="pnote" autocomplete="off" spellcheck="false"/>` +
+      `<button type="button" class="btn ui-btn" data-act="pledge-settings-save">${esc(t('hudChrome.pledge.save'))}</button>` +
+      `</div></div>`;
+    if (panel.rows.length === 0)
+      return `${settings}<div class="soc-empty">${esc(t('hudChrome.pledge.empty'))}</div>`;
+    const rows = panel.rows
+      .map((p) => {
+        const since = formatDateTime(new Date(p.sinceMs), { dateStyle: 'medium' });
+        return (
+          `<div class="soc-row">` +
+          `<span class="soc-id"><span class="soc-name" style="--class-color:${classColorCss(p.cls)}">${esc(p.name)}</span><span class="soc-sub">${esc(t('hud.social.levelClass', { level: formatNumber(p.level, { maximumFractionDigits: 0 }), className: playerClassDisplayName(p.cls) }))}</span></span>` +
+          `<span class="soc-meta">${esc(t('hudChrome.pledge.since', { date: since }))}</span>` +
+          `<span class="soc-actions">` +
+          `<button type="button" class="soc-x soc-pledge-accept ui-disc" data-act="pledge-accept" data-name="${esc(p.name)}" title="${esc(t('hudChrome.pledge.acceptTitle', { name: p.name }))}">${svgIcon('check')}</button>` +
+          `<button type="button" class="soc-x ui-disc" data-act="pledge-reject" data-name="${esc(p.name)}" title="${esc(t('hudChrome.pledge.rejectTitle', { name: p.name }))}">${svgIcon('close')}</button>` +
+          `</span></div>`
+        );
+      })
+      .join('');
+    return settings + rows;
+  }
+
+  private raidHtml(): string {
+    const w = this.deps.world();
+    const view = raidView(w.partyInfo, w.playerId);
+    if (!view.raid) {
+      return `<div class="soc-empty">${esc(t('hud.social.raidEmpty'))}${view.canConvert ? `<div class="soc-empty-action"><button type="button" class="soc-x ui-btn" data-act="convert-raid">${esc(t('hud.chat.context.convertToRaid'))}</button></div>` : ''}</div>`;
+    }
+    const groupHtml = (grp: NonNullable<typeof view.groups>[number]): string => {
+      const rows =
+        grp.members
+          .map((m) => {
+            const move =
+              m.moveTo !== null
+                ? `<button type="button" class="soc-x ui-disc" data-act="raid-move" data-pid="${m.pid}" data-group="${m.moveTo}" title="${esc(t('hud.social.raidMoveToGroup', { group: formatNumber(m.moveTo, { maximumFractionDigits: 0 }) }))}">${esc(formatNumber(m.moveTo, { maximumFractionDigits: 0 }))}</button>`
+                : '';
+            return (
+              `<div class="soc-row raid-row">` +
+              `<span class="soc-id"><span class="soc-name" style="--class-color:${classColorCss(m.cls)}">${esc(m.name)}${m.isLead ? `<span class="rank">${esc(t('hud.social.raidLeader'))}</span>` : ''}</span><span class="soc-sub">${esc(t('hud.social.levelClass', { level: formatNumber(m.level, { maximumFractionDigits: 0 }), className: playerClassDisplayName(m.cls) }))}</span></span>` +
+              `<span class="soc-meta">${esc(formatNumber(m.hpPct, { maximumFractionDigits: 0 }))}%</span>` +
+              (move ? `<span class="soc-actions">${move}</span>` : '') +
+              `</div>`
+            );
+          })
+          .join('') || `<div class="soc-empty">${esc(t('hud.social.raidGroupEmpty'))}</div>`;
+      return `<div class="raid-group"><div class="soc-guild-head">${esc(t('hud.social.raidGroupTitle', { position: formatNumber(grp.group, { maximumFractionDigits: 0 }), count: formatNumber(grp.count, { maximumFractionDigits: 0 }) }))}</div>${rows}</div>`;
+    };
+    if (!view.groups) return '';
+    const [g1, g2] = view.groups;
+    const footer = view.canUnconvert
+      ? `<div class="soc-empty-action"><button type="button" class="soc-x ui-btn" data-act="convert-party">${esc(t('hud.chat.context.convertToParty'))}</button></div>`
+      : '';
+    return `<div class="raid-groups">${groupHtml(g1)}${groupHtml(g2)}</div>${footer}`;
+  }
+
+  // The Who tab body: the count line + class chip, then a sortable table of the
+  // delivered rows (who_tab_view.ts decides the order and the chip options).
+  private whoHtml(): string {
+    const w = this.deps.world();
+    // Spectating drops every command but chat before the socket, so the tab
+    // can never be answered there: show the same online-only empty state the
+    // offline window shows rather than a loading line that never resolves.
+    if (w.spectating !== null)
+      return `<div class="soc-empty">${esc(t('hud.social.offlineEmpty'))}</div>`;
+    const info = w.whoInfo;
+    if (!info || info.filter !== this.who.search)
+      return `<div class="soc-empty">${esc(t('hudChrome.social.who.loading'))}</div>`;
+    const labels = { cls: playerClassDisplayName, zone: localizeZone };
+    const rows = whoTabRows(info, this.who, w.player.name, labels);
+    const count = whoCountView(info, rows.length);
+    const n = formatCount;
+    const countText =
+      count.shown === count.total
+        ? t('hudChrome.social.who.count', { total: n(count.total) })
+        : t('hudChrome.social.who.countFiltered', { shown: n(count.shown), total: n(count.total) });
+    const capped = count.capped
+      ? ` <span class="soc-who-capped">${esc(t('hudChrome.social.who.capped', { delivered: n(count.delivered) }))}</span>`
+      : '';
+    const options = whoClassOptions(info, labels)
+      .map(
+        (cls) =>
+          `<option value="${esc(cls)}"${cls === this.who.cls ? ' selected' : ''}>${esc(playerClassDisplayName(cls))}</option>`,
+      )
+      .join('');
+    const chip =
+      `<select class="ui-input soc-who-cls" data-field="who-cls" aria-label="${esc(t('hudChrome.social.who.classFilter'))}">` +
+      `<option value=""${this.who.cls === '' ? ' selected' : ''}>${esc(t('hudChrome.social.who.allClasses'))}</option>${options}</select>`;
+    const head = `<div class="soc-who-head"><span class="soc-who-count">${esc(countText)}${capped}</span>${chip}</div>`;
+    const columns: { key: WhoSortKey; label: string }[] = [
+      { key: 'name', label: t('hudChrome.social.who.colName') },
+      { key: 'level', label: t('hudChrome.social.who.colLevel') },
+      { key: 'cls', label: t('hudChrome.social.who.colClass') },
+      { key: 'zone', label: t('hudChrome.social.who.colZone') },
+      { key: 'guild', label: t('hudChrome.social.who.colGuild') },
+    ];
+    const headerCell = (c: { key: WhoSortKey; label: string }): string => {
+      const active = this.who.sort === c.key;
+      const ariaSort = active ? (this.who.desc ? 'descending' : 'ascending') : 'none';
+      return `<span class="soc-who-cell who-${c.key}" role="columnheader" aria-sort="${ariaSort}"><button type="button" class="soc-who-sort${active ? ' on' : ''}" data-act="who-sort" data-key="${c.key}" title="${esc(t('hudChrome.social.who.sortTitle', { column: c.label }))}">${esc(c.label)}${active ? `<span class="soc-who-dir">${this.who.desc ? svgIcon('demote') : svgIcon('promote')}</span>` : ''}</button></span>`;
+    };
+    // The class / zone / guild trio is grouped (.soc-who-meta: display contents
+    // on the desktop grid, one wrapped line under the name on a touch window).
+    const header =
+      `<div class="soc-who-row soc-who-header" role="row"><span class="soc-who-cell who-dot" role="columnheader" aria-label="${esc(t('hudChrome.social.who.colStatus'))}"></span>` +
+      columns.slice(0, 2).map(headerCell).join('') +
+      `<span class="soc-who-meta" role="presentation">${columns.slice(2).map(headerCell).join('')}</span>` +
+      `</div>`;
+    if (rows.length === 0)
+      return `${head}<div class="soc-empty">${esc(t('hudChrome.social.who.empty'))}</div>`;
+    const body = rows
+      .map((r) => {
+        const tip = esc(dotTitle(true, r.status, r.zone));
+        const name = r.self
+          ? `<span class="soc-name" style="--class-color:${classColorCss(r.cls)}">${esc(r.name)}</span>`
+          : `<button type="button" class="soc-name soc-link" style="--class-color:${classColorCss(r.cls)}" data-whisper="${esc(r.name)}" title="${esc(t('hud.social.whisperTitle', { name: r.name }))}">${esc(r.name)}</button>`;
+        return (
+          `<div class="soc-row soc-who-row" role="row">` +
+          `<span class="soc-who-cell who-dot" role="cell"><span class="soc-dot ${r.dot}" title="${tip}"></span></span>` +
+          `<span class="soc-who-cell who-name" role="cell">${name}</span>` +
+          `<span class="soc-who-cell who-level" role="cell">${n(r.level)}</span>` +
+          `<span class="soc-who-meta" role="presentation">` +
+          `<span class="soc-who-cell who-cls" role="cell">${esc(playerClassDisplayName(r.cls))}</span>` +
+          `<span class="soc-who-cell who-zone" role="cell" title="${tip}">${esc(localizeZone(r.zone))}</span>` +
+          `<span class="soc-who-cell who-guild" role="cell">${esc(r.guild)}</span>` +
+          `</span></div>`
+        );
+      })
+      .join('');
+    return `${head}<div class="soc-who-list" role="table" aria-label="${esc(t('hudChrome.social.who.tab'))}">${header}${body}</div>`;
+  }
+
+  // The add/action row changes with the tab (and guild membership). Inputs
+  // tagged data-suggest get the username typeahead.
+  private footer(): string {
+    if (this.tab === 'who')
+      return (
+        `<div class="soc-add">` +
+        `<input class="ui-input" maxlength="${WHO_SEARCH_MAX}" aria-label="${esc(t('hudChrome.social.who.searchPlaceholder'))}" placeholder="${esc(t('hudChrome.social.who.searchPlaceholder'))}" data-field="who" value="${esc(this.who.search)}" autocomplete="off" spellcheck="false"/>` +
+        `<button class="btn ui-btn" data-act="who-search">${esc(t('hudChrome.social.who.search'))}</button></div>`
+      );
+    if (this.tab === 'friends')
+      return this.addRow(
+        'friend',
+        'friend-add',
+        t('hud.social.friendSearchPlaceholder'),
+        t('hud.social.add'),
+        16,
+        true,
+      );
+    if (this.tab === 'ignore')
+      return this.addRow(
+        'ignore',
+        'ignore-add',
+        t('hud.social.ignoreSearchPlaceholder'),
+        t('hud.social.ignoreAction'),
+        16,
+        true,
+      );
+    if (this.tab === 'block')
+      return this.addRow(
+        'block',
+        'block-add',
+        t('hudChrome.social.blockSearchPlaceholder'),
+        t('hudChrome.social.blockAction'),
+        16,
+        true,
+      );
+    const guild = this.deps.world().socialInfo?.guild ?? null;
+    if (!guild)
+      return this.addRow(
+        'gname',
+        'guild-create',
+        t('hud.social.guildNamePlaceholder'),
+        t('hud.social.found'),
+        24,
+        false,
+      );
+    let foot = '';
+    if (viewerGuildCan(guild, 'invite'))
+      foot += this.addRow(
+        'ginvite',
+        'guild-invite',
+        t('hud.social.guildInvitePlaceholder'),
+        t('hud.social.invite'),
+        16,
+        true,
+      );
+    // Roster expansion (the pure core decides who may buy and at what price;
+    // the server re-prices and refuses everyone but the Guild Master anyway):
+    // the leader sees an Expand roster button (the seats and price live in the
+    // confirm prompt), or a disabled button once the ladder is complete; other
+    // ranks see nothing here. It leads the same footer row the disband / leave
+    // button ends (.soc-foot-start pushes it to the start edge).
+    const roster = guildRosterView(this.deps.world().socialInfo);
+    const expand =
+      roster && guild.rank === 'leader'
+        ? roster.nextRosterPrice === null
+          ? `<button class="btn ui-btn soc-foot-start" data-act="guild-expand" disabled>${esc(t('hudChrome.social.roster.maxed'))}</button>`
+          : `<button class="btn ui-btn soc-foot-start" data-act="guild-expand">${esc(t('hudChrome.social.roster.expand'))}</button>`
+        : '';
+    // classic MMOs: a Guild Master with other members can't just leave (they disband,
+    // or hand over leadership via the crown action). Everyone else can leave.
+    const leave =
+      guild.rank === 'leader' && guild.members.length > 1
+        ? `<button class="btn ui-btn ui-btn--red" data-act="guild-disband">${esc(t('hud.social.disbandGuild'))}</button>`
+        : `<button class="btn ui-btn ui-btn--red" data-act="guild-leave">${esc(t('hud.social.leaveGuild'))}</button>`;
+    foot += `<div class="soc-add soc-leave">${expand}${leave}</div>`;
+    return foot;
+  }
+
+  private addRow(
+    field: string,
+    act: string,
+    placeholder: string,
+    label: string,
+    maxlen: number,
+    suggest: boolean,
+  ): string {
+    // The typeahead is an ARIA 1.2 combobox: the input owns the .soc-suggest listbox
+    // via aria-controls, toggles aria-expanded as suggestions appear, and points
+    // aria-activedescendant at the highlighted option as the arrow keys move.
+    const listId = `soc-suggest-${field}`;
+    return (
+      `<div class="soc-add">` +
+      (suggest
+        ? `<div class="soc-suggest" id="${listId}" data-for="${field}" role="listbox"></div>`
+        : '') +
+      `<input class="ui-input" maxlength="${maxlen}" aria-label="${esc(placeholder)}" placeholder="${esc(placeholder)}" data-field="${field}"${suggest ? ` data-suggest="1" role="combobox" aria-autocomplete="list" aria-controls="${listId}" aria-expanded="false"` : ''} autocomplete="off" spellcheck="false"/>` +
+      `<button class="btn ui-btn" data-act="${act}">${esc(label)}</button></div>`
+    );
+  }
+
+  /** The typeahead input for a field, for combobox aria state (expanded / activedescendant). */
+  private suggestInput(field: string): HTMLInputElement | null {
+    return this.deps
+      .root()
+      .querySelector(`input[data-field="${field}"]`) as HTMLInputElement | null;
+  }
+
+  // Wire the parts that survive a content refresh: close, tabs, footer + search.
+  private wireChrome(el: HTMLElement): void {
+    el.querySelector('[data-close]')?.addEventListener('click', () => this.toggle());
+    // WAI-ARIA tabs: click OR roving Arrow/Home/End select a tab, wired through the
+    // shared tab_strip_painter core. render() rebuilds the strip, so a keyboard move
+    // refocuses the freshly active tab afterward (the roving-tabindex focus must follow
+    // the selection); a click never moves focus programmatically. Both match the prior
+    // hand-rolled handler byte-for-byte.
+    wireTabStrip(el, 'soc-tab', (id, focusFollow) => {
+      this.tab = id as SocialTab;
+      this.notice = null;
+      this.lastStruct = this.structSig();
+      this.render();
+      if (this.tab === 'who') this.requestWho();
+      if (focusFollow) focusActiveTab(el, 'soc-tab', 'on');
+    });
+    const w = this.deps.world();
+    const field = (sel: string): string =>
+      (el.querySelector(`input[data-field="${sel}"]`) as HTMLInputElement | null)?.value.trim() ??
+      '';
+    const submit = (act: string | undefined): void => {
+      if (act === 'who-search') this.searchWho(field('who'));
+      else if (act === 'friend-add') void this.resolveAndAct('friend', field('friend'));
+      else if (act === 'ignore-add') void this.resolveAndAct('ignore', field('ignore'));
+      else if (act === 'block-add') void this.resolveAndAct('block', field('block'));
+      else if (act === 'guild-invite') void this.resolveAndAct('ginvite', field('ginvite'));
+      else if (act === 'guild-create') {
+        const n = field('gname');
+        if (n && !this.guildCreateLocked) {
+          w.guildCreate(n);
+          this.clearInput('gname');
+          this.lockGuildCreate();
+        }
+      } else if (act === 'guild-expand') {
+        // Gold leaves the buyer's own purse and never comes back, so the page
+        // is bought through the shared confirm prompt like a disband. The
+        // prompt re-reads the price from the pure core at click time.
+        const roster = guildRosterView(w.socialInfo);
+        if (roster?.canExpandRoster && roster.nextRosterPrice !== null) {
+          this.deps.showPrompt(
+            rosterExpandConfirmHtml(
+              formatNumber(GUILD_ROSTER_PAGE_SEATS, { maximumFractionDigits: 0 }),
+              moneyHtml(roster.nextRosterPrice, { compact: true, grouping: false }),
+            ),
+            t('hudChrome.social.roster.confirmAction'),
+            () => w.guildBuyRosterPage(),
+            () => {},
+          );
+        }
+      } else if (act === 'guild-leave')
+        this.deps.showPrompt(
+          esc(t('hud.social.leavePrompt')),
+          t('hud.social.leaveGuild'),
+          () => w.guildLeave(),
+          () => {},
+        );
+      else if (act === 'guild-disband')
+        this.deps.showPrompt(
+          esc(t('hud.social.disbandPrompt')),
+          t('hud.social.disbandConfirm'),
+          () => w.guildDisband(),
+          () => {
+            /* keep */
+          },
+        );
+    };
+    el.querySelectorAll('.soc-add .btn').forEach((b) => {
+      b.addEventListener('click', () => submit((b as HTMLElement).dataset.act));
+    });
+    // Enter-to-submit only for plain inputs (the guild name). Search inputs get
+    // richer keyboard handling (arrows + Enter to pick a suggestion) below.
+    el.querySelectorAll('.soc-add input:not([data-suggest])').forEach((inp) => {
+      inp.addEventListener('keydown', (e) => {
+        if ((e as KeyboardEvent).key !== 'Enter') return;
+        submit((inp.parentElement?.querySelector('.btn') as HTMLElement | null)?.dataset.act);
+      });
+    });
+    this.wireSuggest(el);
+  }
+
+  private suggestKind(field: string): 'friend' | 'ignore' | 'block' | 'ginvite' {
+    if (field === 'friend') return 'friend';
+    if (field === 'ignore') return 'ignore';
+    if (field === 'block') return 'block';
+    return 'ginvite';
+  }
+
+  // Username typeahead: debounced search against same-realm characters, with
+  // arrow-key navigation and Enter to pick the highlighted name.
+  private wireSuggest(el: HTMLElement): void {
+    el.querySelectorAll('input[data-suggest]').forEach((node) => {
+      const input = node as HTMLInputElement;
+      const field = input.dataset.field ?? '';
+      input.addEventListener('input', () => {
+        const q = input.value.trim();
+        window.clearTimeout(this.suggestTimer);
+        if (!q) {
+          this.renderSuggest(field, []);
+          return;
+        }
+        this.suggestTimer = window.setTimeout(async () => {
+          const results = await this.deps.world().searchCharacters(q);
+          this.renderSuggest(
+            field,
+            results.filter((r) => r.name !== this.deps.world().player.name).slice(0, 8),
+          );
+        }, SUGGEST_DEBOUNCE_MS);
+      });
+      input.addEventListener('keydown', (e) => {
+        const ke = e as KeyboardEvent;
+        const open = this.suggest.field === field && this.suggest.items.length > 0;
+        if (ke.key === 'ArrowDown' && open) {
+          ke.preventDefault();
+          this.moveSuggest(field, 1);
+        } else if (ke.key === 'ArrowUp' && open) {
+          ke.preventDefault();
+          this.moveSuggest(field, -1);
+        } else if (ke.key === 'Escape' && open) {
+          ke.preventDefault();
+          this.renderSuggest(field, []);
+        } else if (ke.key === 'Enter') {
+          ke.preventDefault();
+          const picked =
+            open && this.suggest.index >= 0
+              ? this.suggest.items[this.suggest.index].name
+              : input.value;
+          void this.resolveAndAct(this.suggestKind(field), picked);
+        }
+      });
+      // let a suggestion's mousedown fire before blur clears the list
+      input.addEventListener('blur', () =>
+        window.setTimeout(() => this.renderSuggest(field, []), SUGGEST_BLUR_CLEAR_MS),
+      );
+    });
+  }
+
+  private renderSuggest(
+    field: string,
+    results: { name: string; cls: string; level: number }[],
+  ): void {
+    const box = this.deps
+      .root()
+      .querySelector(`.soc-suggest[data-for="${field}"]`) as HTMLElement | null;
+    if (!box) return;
+    this.suggest = { field, items: results, index: -1 };
+    const input = this.suggestInput(field);
+    if (results.length === 0) {
+      box.style.display = 'none';
+      box.innerHTML = '';
+      input?.setAttribute('aria-expanded', 'false');
+      input?.removeAttribute('aria-activedescendant');
+      return;
+    }
+    const kind = this.suggestKind(field);
+    box.innerHTML = results
+      .map((r, i) => {
+        const meta = t('hud.social.levelClass', {
+          level: formatNumber(r.level, { maximumFractionDigits: 0 }),
+          className: playerClassDisplayName(r.cls),
+        });
+        // A non-focusable <div role=option>, not a <button>: in an
+        // aria-activedescendant combobox the DOM focus stays on the input while the
+        // arrow keys move the active option, so the options must NOT be in the tab
+        // order (a focusable button would also be pulled into the window's focus-trap
+        // cycle). Mirrors the .ui-dd-item listbox; the mousedown/mousemove handlers
+        // below key off .soc-sugg-item, so a div keeps them working.
+        return `<div id="soc-sugg-${field}-${i}" class="soc-sugg-item" data-i="${i}" data-name="${esc(r.name)}" role="option" aria-selected="false"><span class="soc-name">${esc(r.name)}</span><span class="soc-meta">${esc(meta)}</span></div>`;
+      })
+      .join('');
+    box.style.display = 'block';
+    input?.setAttribute('aria-expanded', 'true');
+    input?.removeAttribute('aria-activedescendant');
+    box.querySelectorAll('.soc-sugg-item').forEach((it) => {
+      it.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        void this.resolveAndAct(kind, (it as HTMLElement).dataset.name ?? '');
+      });
+      it.addEventListener('mousemove', () => {
+        this.suggest.index = Number((it as HTMLElement).dataset.i);
+        this.highlightSuggest(field);
+      });
+    });
+  }
+
+  private moveSuggest(field: string, delta: number): void {
+    const n = this.suggest.items.length;
+    if (n === 0) return;
+    // start at the top when nothing is highlighted yet, then wrap
+    this.suggest.index =
+      this.suggest.index < 0 ? (delta > 0 ? 0 : n - 1) : (this.suggest.index + delta + n) % n;
+    this.highlightSuggest(field);
+  }
+
+  private highlightSuggest(field: string): void {
+    const box = this.deps
+      .root()
+      .querySelector(`.soc-suggest[data-for="${field}"]`) as HTMLElement | null;
+    if (!box) return;
+    box.querySelectorAll('.soc-sugg-item').forEach((it) => {
+      const on = Number((it as HTMLElement).dataset.i) === this.suggest.index;
+      it.classList.toggle('active', on);
+      it.setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on) (it as HTMLElement).scrollIntoView({ block: 'nearest' });
+    });
+    const input = this.suggestInput(field);
+    if (this.suggest.index >= 0)
+      input?.setAttribute('aria-activedescendant', `soc-sugg-${field}-${this.suggest.index}`);
+    else input?.removeAttribute('aria-activedescendant');
+  }
+
+  // Authoritative existence check (realm-scoped) before acting, so we can give
+  // clear inline "no such player" feedback instead of a silent failure.
+  private async resolveAndAct(
+    kind: 'friend' | 'ignore' | 'block' | 'ginvite',
+    rawName: string,
+  ): Promise<void> {
+    const name = rawName.trim();
+    if (!name) return;
+    const w = this.deps.world();
+    const results = await w.searchCharacters(name);
+    const exact = results.find((r) => r.name.toLowerCase() === name.toLowerCase());
+    if (!exact) {
+      this.setNotice(
+        t('hud.social.noPlayerNamed', {
+          name,
+          realm: w.realm || t('hud.social.currentRealm'),
+        }),
+        true,
+      );
+      return;
+    }
+    if (exact.name === w.player.name) {
+      this.setNotice(t('hud.social.selfNotice'), true);
+      return;
+    }
+    if (kind === 'friend') {
+      w.friendAdd(exact.name);
+      this.setNotice(t('hud.social.friendAdded', { name: exact.name }), false);
+      this.clearInput('friend');
+    } else if (kind === 'ignore') {
+      // the Ignored tab writes to the IGNORE list (chat-only), not the block list
+      w.ignoreAdd(exact.name);
+      this.setNotice(t('hud.social.nowIgnoring', { name: exact.name }), false);
+      this.clearInput('ignore');
+    } else if (kind === 'block') {
+      w.blockAdd(exact.name);
+      this.setNotice(t('hudChrome.social.nowBlocking', { name: exact.name }), false);
+      this.clearInput('block');
+    } else {
+      w.guildInvite(exact.name);
+      this.setNotice(t('hud.social.guildInvited', { name: exact.name }), false);
+      this.clearInput('ginvite');
+    }
+    this.renderSuggest(kind, []);
+  }
+
+  // Hold the Found button for one lane beat after a send. One-shot re-arm: the
+  // timer lifts the hold, and a landed creation lifts it sooner by retiring the
+  // create row entirely (the guild footer replaces it on the next repaint).
+  private lockGuildCreate(): void {
+    this.guildCreateLocked = true;
+    window.clearTimeout(this.guildCreateTimer);
+    this.guildCreateTimer = window.setTimeout(() => {
+      this.guildCreateTimer = undefined;
+      this.guildCreateLocked = false;
+      this.applyGuildCreateLock();
+    }, GUILD_CREATE_LOCK_MS);
+    this.applyGuildCreateLock();
+  }
+
+  // Stamp the hold onto whichever Found button is currently mounted. Called
+  // after every full render so a structural repaint mid-hold cannot hand the
+  // player a live button, and no player-visible string changes (disabled +
+  // aria-busy is the house busy form; `.btn:disabled` carries the visuals).
+  private applyGuildCreateLock(): void {
+    const btn = this.deps
+      .root()
+      .querySelector('.soc-add .btn[data-act="guild-create"]') as HTMLButtonElement | null;
+    if (!btn) return;
+    btn.disabled = this.guildCreateLocked;
+    if (this.guildCreateLocked) btn.setAttribute('aria-busy', 'true');
+    else btn.removeAttribute('aria-busy');
+  }
+
+  private clearInput(field: string): void {
+    const inp = this.deps
+      .root()
+      .querySelector(`input[data-field="${field}"]`) as HTMLInputElement | null;
+    if (inp) inp.value = '';
+  }
+
+  private setNotice(text: string, error: boolean): void {
+    this.notice = { text, error };
+    this.renderNotice();
+  }
+
+  private renderNotice(): void {
+    const box = this.deps.root().querySelector('.soc-notice') as HTMLElement | null;
+    if (!box) return;
+    if (!this.notice) {
+      box.style.display = 'none';
+      box.textContent = '';
+      return;
+    }
+    box.textContent = this.notice.text;
+    box.className = `soc-notice${this.notice.error ? ' err' : ' ok'}`;
+    box.style.display = 'block';
+  }
+}

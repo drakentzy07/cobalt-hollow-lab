@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">HIGHFLY</string>
+    <string name="title_activity_main">HIGHFLY</string>
+    <string name="package_name">com.worldofclaudecraft</string>
+    <string name="custom_url_scheme">com.worldofclaudecraft</string>
+</resources>

@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "product": "HIGHFLY ORIGIN Android-first",
+  "state": "clean-v1-source-materialized; gameplay-unmodified",
+  "upstream_repo": "levy-street/world-of-claudecraft",
+  "upstream_sha": "9b57e49c9676d75962700f828cc00a50a9a988b5",
+  "canonical_clean_patch_sha256": "b78ba81e52b10b2ddba7c6fa829d436f59ad4594ec2a0d0d5f0341ce26773cb9",
+  "donor_media": "frozen-by-upstream-SHA; not committed here",
+  "legacy_r39_r40_overlays": "not applied",
+  "editor": ["src/ui/appearance_customizer.ts", "src/render/characters/modular.ts"],
+  "android_only_release_target": true,
+  "tests_scope": "HIGHFLY CLEAN baseline; broader compatibility not certified",
+  "public_pages_deployed": false
+}
