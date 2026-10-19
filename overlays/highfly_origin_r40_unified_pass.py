@@ -84,19 +84,19 @@ once(renderer,
 # A genuine ATK-timed parry becomes a weapon RIPOSTE instead of the old
 # misleading "Block" clip; native Sim and defense windows remain authoritative.
 once('src/render/characters/visual.ts',
-"""       if(abilityId==='highfly_r39_parry' && this.action('Block')){
-         this.playOneShot('Block',1.1);
-         this.currentOneShotIsAttack=false;
-         return;
-       }""",
-"""       if(abilityId==='highfly_r39_parry'){
-         const riposte='1H_Melee_Attack_Slice_Diagonal';
-         if(this.action(riposte)){
-           this.playOneShot(riposte,1.4);
-           this.currentOneShotIsAttack=true;
-           return;
-         }
-       }""")
+"""      if(abilityId==='highfly_r39_parry' && this.action('Block')){
+        this.playOneShot('Block',1.1);
+        this.currentOneShotIsAttack=false;
+        return;
+      }""",
+"""      if(abilityId==='highfly_r39_parry'){
+        const riposte='1H_Melee_Attack_Slice_Diagonal';
+        if(this.action(riposte)){
+          this.playOneShot(riposte,1.4);
+          this.currentOneShotIsAttack=true;
+          return;
+        }
+      }""")
 
 # Reuse the SAME native R22 preview: bright full-width fireball direction lane,
 # no bogus target circle, never extend beyond Sim's real projectile width.
@@ -115,7 +115,8 @@ once(runtime,"import { ABILITIES } from '../sim/content/classes';",
 """import { ABILITIES } from '../sim/content/classes';
 import { originCostDecision } from '../sim/highfly_origin_universal_resources';""")
 once(runtime,"    editorPanel.prepend(samples);\n  }\n  syncPanel();",
-"""  editorPanel.prepend(preset);
+"""    editorPanel.prepend(samples);
+  }
   if(document.body.classList.contains('hf-r40-universal') &&
      new URLSearchParams(location.search).get('hf_lab')==='1')
     installR40IsolatedCastLab(sim,editorPanel);
