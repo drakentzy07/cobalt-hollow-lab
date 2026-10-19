@@ -239,7 +239,20 @@ export function highflyBasicAttack(
   if (p.auras.some((a) => isTravelFormAuraKind(a.kind))) return false;
 
   const t = p.targetId !== null ? ctx.entities.get(p.targetId) : null;
-  if (!t || t.dead || !ctx.isHostileTo(p, t) || hasEscapeStealth(t)) return false;
+  if (!t || t.dead || !ctx.isHostileTo(p, t) || hasEscapeStealth(t)) {
+    // FREEDOM 360: a valid manual ATK press is an actual empty-space swing,
+    // not USE and not a silent failed cast. It has no hitbox victim and deals
+    // zero damage, while the shared render event plays the real rig clip.
+    if (step === 4 && !highflyElementalFinisherReady(p)) return false;
+    if (p.mountKey !== '') forceDismount(ctx, p);
+    if (p.sitting) ctx.standUp(p);
+    if (p.weaponStowed) drawWeapon(p);
+    p.autoAttack = false;
+    r.meta.lastActiveTick = ctx.tickCount;
+    p.swingTimer = step === 1 ? 0.36 : step === 2 ? 0.4 : step === 3 ? 0.58 : 0.68;
+    ctx.emit({ type: 'highflyBasicWhiff', sourceId: p.id, comboStep: step });
+    return true;
+  }
 
   // HIGHFLY cadence is owned by the action HUD's real-time gate. Do not also
   // reject on ClaudeCraft's simulation-time swingTimer: under mobile/frame

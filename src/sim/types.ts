@@ -7080,6 +7080,10 @@ export type SimEvent = { pid?: number } & (
       // fresh application.
       refresh?: boolean;
     }
+  // HIGHFLY F2: a player deliberately swung in free space; animation only.
+  // No target or damage record exists, so the renderer cues the normal attack
+  // rig without inventing a hit, kill, aggro, or a phantom enemy.
+  | { type: 'highflyBasicWhiff'; sourceId: number; comboStep: 1 | 2 | 3 | 4 }
   | {
       type: 'castStart';
       entityId: number;

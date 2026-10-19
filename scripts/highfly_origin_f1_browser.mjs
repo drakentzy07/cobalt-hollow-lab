@@ -236,13 +236,18 @@ try {
     // ATK is COMBAT ONLY. A nearby guide/ship may offer contextual USAR,
     // but the identical touch on ATK must never activate that interaction.
     const attackBefore=await page.evaluate(()=>Number(document.body.dataset.highflyBasicAttackCount||'0'));
+    const animatedBefore=await page.evaluate(()=>window.__game?.renderer?.abilityVfxAttackCount()??0);
     await page.touchscreen.tap(hud.attack.x+hud.attack.w/2,hud.attack.y+hud.attack.h/2);
+    await page.waitForFunction(before=>window.__game?.renderer?.abilityVfxAttackCount()>before,
+      {timeout:8000,polling:120},animatedBefore).catch(()=>{});
     const exclusive=await page.evaluate(()=>({
       combo:Number(document.body.dataset.highflyBasicAttackCount||'0'),
+      playedAttackAnimation:window.__game?.renderer?.abilityVfxAttackCount()??0,
       modal:document.getElementById('hf-origin-f1-modal-backdrop')?.style.display,
     }));
     report.attackExclusive=exclusive;
-    if(exclusive.modal!=='none'||exclusive.combo<=attackBefore)
+    if(exclusive.modal!=='none'||exclusive.combo<=attackBefore||
+       exclusive.playedAttackAnimation<=animatedBefore)
       throw Error('F1_ATK_MUST_STRIKE_NOT_USE '+JSON.stringify({attackBefore,exclusive}));
     await page.screenshot({path:OUT+'/f123-combat-hud-android.png'});
     checkpoint('f123-hud-atk-use-four-skills-resources');

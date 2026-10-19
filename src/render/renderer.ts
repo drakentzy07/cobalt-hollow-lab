@@ -7069,6 +7069,11 @@ export class Renderer {
     this.riftDeathZoneVisuals?.handleEvent(ev);
     if (ev.type === 'damage') paintHighflyElementalBasic(ev, this.sim.entities.get(ev.sourceId), this.vfx);
     switch (ev.type) {
+      case 'highflyBasicWhiff':
+        // One actor, one real Rig_Medium attack animation. A whiff is NOT a
+        // damage event; no target, damage VFX, combat log or XP is produced.
+        this.triggerAttack(ev.sourceId, 'highfly_basic_' + ev.comboStep);
+        break;
       case 'castStart': {
         if (ev.ability === 'needle_of_fate') {
           this.needleOfFateVfx.beginCast(ev.entityId, ev.time);
