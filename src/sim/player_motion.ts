@@ -508,7 +508,7 @@ export function stepPlayerMotion(deps: PlayerMotionDeps, p: Entity, inp: MoveInp
     // HIGHFLY free-combat chain: Jump -> Air Dash -> directional second Jump.
     // Only allow the aerial dodge after a real jump, before the one air refresh.
     // The same cooldown protects ground and air; no infinite air dash.
-    (p.onGround || (p.jumping && !p.highflyAirJumpUsed)) &&
+    (p.onGround || (inp.highflyAirDashEnabled === true && p.jumping && !p.highflyAirJumpUsed)) &&
     !swimming &&
     !steepGround &&
     !mountLocked &&
@@ -532,7 +532,7 @@ export function stepPlayerMotion(deps: PlayerMotionDeps, p: Entity, inp: MoveInp
 
   const highflyEvading =
     (p.highflyEvadeRemaining ?? 0) > 0 &&
-    (p.onGround || p.jumping) &&
+    (p.onGround || (inp.highflyAirDashEnabled === true && p.jumping)) &&
     !swimming &&
     !steepGround &&
     !mountLocked;
