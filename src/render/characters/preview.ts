@@ -324,6 +324,9 @@ export class CharacterPreview {
       this.currentVisualSig = nextSig;
       this.characterGroup.add(this.currentVisual.root);
       this.canvas.dataset.highflyPreviewVisual = visualKey;
+      // Testable active hand slots; asset preloading is NOT the same as wearing.
+      this.canvas.dataset.highflyPreviewWeaponItem = weaponItemId ?? '';
+      this.canvas.dataset.highflyPreviewOffhandItem = offhandItemId ?? '';
       // Re-apply the persisted weapon-skin cosmetic to the rebuilt visual (the
       // constructor attaches the equipped item's own model).
       if (this.currentWeaponSkinId) this.currentVisual.setWeaponSkin(this.currentWeaponSkinId);
