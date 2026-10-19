@@ -1894,8 +1894,7 @@ export class CharacterVisual {
       const authoredTimeScale = abilityId
         ? this.def.clips.attackTimeScaleByAbility?.[abilityId]
         : undefined;
-      this.playOneShot(override, authoredTimeScale ?? this.def.attackTimeScale ?? 1.3);
-      this.currentOneShotIsAttack = true;
+      this.playOriginPhysicalGesture(override, authoredTimeScale ?? this.def.attackTimeScale ?? 1.3, originPhysical);
       if (override === PALADIN_TEMPLARS_VERDICT_CLIP) {
         this.templarsVerdictAction = this.action(override);
       } else if (override === PALADIN_BASTION_SWEEP_CLIP) {
