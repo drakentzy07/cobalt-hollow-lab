@@ -9728,6 +9728,9 @@ function wireStartScreens(): void {
     if (!offlineAvailable) return;
     document.body.classList.add('hf-origin-f1-creator');
     show('#offline-select');
+    // Mount the modular creator immediately; never gate appearance on slow IDB.
+    // The saved appearance is reconciled later by the guarded restore handler.
+    selectHighflyOfflineClass(ORIGIN_HUNTER_CARRIER_CLASS);
 
     // Restore the primary Hunter's identity before the player presses Enter
     // World. The actual RPG snapshot is restored by startOffline().
