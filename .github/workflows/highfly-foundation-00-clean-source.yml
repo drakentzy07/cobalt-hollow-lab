@@ -1,0 +1,183 @@
+name: HIGHFLY FOUNDATION-00 — Frozen CLEAN Source + Hunter Editor Gate (NO DEPLOY)
+# F0 only. No main/Pages writes. Does not import R39 or R40 overlays.
+on:
+  push:
+    branches:
+      - highfly-origin-foundation-clean-20261019
+    paths:
+      - ".github/workflows/highfly-foundation-00-clean-source.yml"
+      - "foundation/**"
+      - "clean/canonical/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-foundation-00-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  foundation_source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout safe HIGHFLY foundation branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Assert isolated branch, frozen upstream and canonical CLEAN patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.ref_name }}" = "highfly-origin-foundation-clean-20261019"
+          test -s clean/canonical/HIGHFLY_CLEAN_V1.patch
+          test "$(sha256sum clean/canonical/HIGHFLY_CLEAN_V1.patch | cut -d ' ' -f1)" = "b78ba81e52b10b2ddba7c6fa829d436f59ad4594ec2a0d0d5f0341ce26773cb9"
+          grep -Fx "COMMIT=9b57e49c9676d75962700f828cc00a50a9a988b5" CLAUDECRAFT_UPSTREAM.lock
+          test -s foundation/foundation_00_inventory.py
+          echo "FOUNDATION_00_SAFE_BRANCH_AND_LOCK_GREEN=1"
+
+      - name: Checkout exact frozen ClaudeCraft code and media (read-only donor)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: upstream
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /android/
+            /tests/
+            /capacitor.config.ts
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+
+      - name: Materialize CLEAN V1 directly (one canonical patch, no historic overlay chain)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          git apply --check ../clean/canonical/HIGHFLY_CLEAN_V1.patch
+          git apply --binary ../clean/canonical/HIGHFLY_CLEAN_V1.patch
+          git diff --check HEAD
+          test -f src/main.ts
+          test -f src/sim/content/classes.ts
+          test -f src/ui/character_appearance.ts
+          test -f src/render/characters/preview_appearance.ts
+          test -f src/highfly/training/stat_authority.ts
+          echo "FOUNDATION_00_CANONICAL_CLEAN_MATERIALIZED=1"
+
+      - name: Inventory actual code, nine donor schools, appearance editor, and training
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 foundation/foundation_00_inventory.py --upstream upstream --output foundation-output/foundation-00-inventory.json
+          python3 -m json.tool foundation-output/foundation-00-inventory.json >/dev/null
+
+      - name: Snapshot source code only — heavy world media stays in frozen donor
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p foundation-output
+          tar --exclude='*.tmp' --exclude='*.log' -czf foundation-output/foundation-00-clean-source.tar.gz \
+            -C upstream src server package.json pnpm-lock.yaml vite.config.ts tsconfig.json capacitor.config.ts
+          test -s foundation-output/foundation-00-clean-source.tar.gz
+          tar -tzf foundation-output/foundation-00-clean-source.tar.gz | grep -Fx 'src/main.ts'
+          du -sh foundation-output/foundation-00-clean-source.tar.gz
+          echo "FOUNDATION_00_SOURCE_SNAPSHOT_READY=1"
+
+      - name: Setup Node 24 and exact pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install frozen dependencies (no third-party install scripts)
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Validate type authority — native Sim + training + editor imports
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec tsc --noEmit --incremental false
+          echo "FOUNDATION_00_TYPES_GREEN=1"
+
+      - name: Run focused CLEAN gameplay and Training tests
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run \
+            tests/highfly_game_c1.test.ts \
+            tests/highfly_game_c28.test.ts \
+            tests/highfly_training_core.test.ts \
+            tests/highfly_training_bridge.test.ts \
+            tests/highfly_training_pf5_stat_authority.test.ts
+          echo "FOUNDATION_00_GAMEPLAY_TRAINING_SMOKE_GREEN=1"
+
+      - name: Build isolated WebGL bundle from CLEAN source (NO PAGES)
+        working-directory: upstream
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          node scripts/build_bundle_pregen.mjs
+          python ../overlays/rewrite_source_public_paths.py
+          pnpm exec vite build
+          test -s dist/index.html
+          du -sh dist
+          echo "FOUNDATION_00_WEBGL_BUILD_GREEN=1"
+
+      - name: Record artifact hashes and publish QA report — not a deploy
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p foundation-output
+          sha256sum clean/canonical/HIGHFLY_CLEAN_V1.patch > foundation-output/clean-patch-sha256.txt
+          if [ -s foundation-output/foundation-00-clean-source.tar.gz ]; then
+            sha256sum foundation-output/foundation-00-clean-source.tar.gz > foundation-output/source-snapshot-sha256.txt
+          fi
+          echo "NO_PUBLIC_DEPLOY=1" > foundation-output/no-deploy.txt
+
+      - name: Preserve source inventory and compressed source (private CI artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-FOUNDATION-00-CLEAN-SOURCE-NO-DEPLOY
+          path: foundation-output/
+          if-no-files-found: warn
+          retention-days: 14
