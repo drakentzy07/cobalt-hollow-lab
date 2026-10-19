@@ -10847,9 +10847,14 @@ body.mobile-touch.mobile-left-handed #mobile-stance-anchor {
     visibility: visible !important;
     pointer-events: auto !important;
     left: auto !important;
-    right: 430px !important;
+    /* Keep the whole touch rectangle INSIDE the ring's hit-test box. The
+     * old right:430px pushed this button outside its pointer-events:none
+     * parent. The old 36px circle was also below the 40px touch floor. */
+    right: 235px !important;
     top: auto !important;
     bottom: 5px !important;
+    width: 44px !important;
+    height: 44px !important;
   }
   body.hf-origin-f1.mobile-touch.game-active #mobile-action-ring #mobile-action-attack {
     left: auto !important;

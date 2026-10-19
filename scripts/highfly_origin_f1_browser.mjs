@@ -213,6 +213,11 @@ try {
       })();
       return {attack,use,target,gpuNotice,
         consumable:pos('mobile-consumable-seat'),consumableHit:hit('mobile-consumable-seat'),
+        consumableTop:(()=>{
+          const r=pos('mobile-consumable-seat');
+          const e=document.elementFromPoint(r.x+r.w/2,r.y+r.h/2);
+          return e?.id||e?.className||e?.tagName||null;
+        })(),
         atkHit:hit('mobile-action-attack'),useHit:hit('mobile-interact'),
         slots,oldActionbar:pos('actionbar-group'),page:pos('mobile-action-page-toggle'),
         originMeterInFrame:!!document.querySelector('#player-frame #hf-origin-f1-resource-meter'),
