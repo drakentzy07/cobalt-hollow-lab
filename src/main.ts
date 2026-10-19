@@ -11524,7 +11524,9 @@ const diagnosticsAutoOffline =
 // F1.1 Android: install an optional same-origin offline cache without blocking
 // character creation or entry. Browsers install it only on secure origins (or
 // localhost). Co-op networking will be explicitly opted into in a later phase.
+// Beta cannot register (or update) the public F1 root-scoped service worker.
 if (HIGHFLY_F11_OFFLINE_FIRST && !import.meta.env.DEV &&
+    !location.pathname.startsWith('/cobalt-hollow-lab/lab/f2-combat-beta/') &&
     'serviceWorker' in navigator &&
     (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
   const registerOfflineShell = () => {
