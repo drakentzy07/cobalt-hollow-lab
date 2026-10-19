@@ -34,7 +34,7 @@ try {
   // IndexedDB primary-slot lookup and its class-detail mount. A visible panel
   // is NOT proof the editor is mounted; sample neither in the same tick.
   await page.waitForFunction(
-    ()=>!!document.querySelector('#offline-appearance .appearance-customizer'),
+    ()=>!!document.querySelector('#offline-appearance.appearance-customizer'),
     {timeout:65_000,polling:250},
   ).catch(async(error)=>{
     const diag=await page.evaluate(()=>({
@@ -51,7 +51,7 @@ try {
     return {
       classCards:cards?.length??0,
       classPickerHidden:hiddenCards,
-      femaleMaleEditor:!!panel?.querySelector('#offline-appearance .appearance-customizer'),
+      femaleMaleEditor:!!panel?.querySelector('#offline-appearance.appearance-customizer'),
       title:panel?.querySelector('h2')?.textContent?.trim(),
     };
   });
