@@ -238,7 +238,9 @@ async function writeIdb(save: HighflyOfflineSave): Promise<void> {
           profile: save.trainingProfile,
           updatedAt: save.updatedAt,
         };
-        const key = trainingSlotKey(save.playerClass, save.name);
+        const key = origin
+          ? 'origin-f1:' + trainingSlotKey(save.playerClass, save.name)
+          : trainingSlotKey(save.playerClass, save.name);
         const existingRequest = store.get(key);
         existingRequest.onsuccess = () => {
           const existing = validTrainingSlot(existingRequest.result)
@@ -302,6 +304,17 @@ export async function loadHighflyTrainingProfile(
   playerClass: PlayerClass,
   name: string,
 ): Promise<HighflyHunterProfile | null> {
+  // F1.2.1 restores this Hunter's actual training first, never the donor
+  // Warrior's unrelated training merely because the name happens to match.
+  const origin = await loadOriginHunterSave(playerClass, name);
+  if (origin?.trainingProfile &&
+      validTrainingProfile(origin.trainingProfile) &&
+      trainingProfileMatchesClass(origin.trainingProfile, playerClass)) {
+    return origin.trainingProfile;
+  }
+  const originSlot = await readIdbTrainingSlot('origin-f1:' + trainingSlotKey(playerClass, name));
+  if (originSlot && trainingProfileMatchesClass(originSlot.profile, playerClass))
+    return originSlot.profile;
   const primary = newest(readLocal(), await readIdbKey(PRIMARY_SLOT_KEY));
   const primaryTraining =
     primary &&
