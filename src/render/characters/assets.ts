@@ -478,7 +478,7 @@ function swapAttachDef(
   base: AttachDef,
   weaponItemId: string | null | undefined,
   weaponSkinId: string | null | undefined = null,
-): AttachDef {
+): AttachDef | null {
   // A DISPLAYED ranged skin takes the ranged hand rule here too, not only on
   // the fixed-attach path (rangedSkinAttachDef): the Combat Mech is a swap-slot
   // body that a hunter can wear, so a drawn bow must move to the left handslot
@@ -496,7 +496,10 @@ function swapAttachDef(
     return { url: skinUrl, bone };
   }
   const url = itemWeaponModelUrl(weaponItemId);
-  return url ? { url, bone: base.bone } : base;
+  // Origin's single Hunter keeps a swappable hand slot but never displays
+  // the donor fallback sword while the equipment slot is empty. A later equip
+  // fills this SAME socket through setHeldWeapon, no CharacterVisual rebuild.
+  return url ? { url, bone: base.bone } : (base.swapOnly ? null : base);
 }
 
 // The AttachDef for the actual equipped offhand. Its model is the offhand item's
@@ -1870,6 +1873,7 @@ export function setHeldWeapon(
     const att = def.weaponSlots?.includes(i)
       ? swapAttachDef(base, weaponItemId, weaponSkinId)
       : (rangedSkinAttachDef(base, weaponSkinId) ?? base);
+    if (!att) continue;
     const bone = attachTargetBone(root, att, stowed);
     if (!bone) continue;
     payloads.push(attachProp(root, bone, att, 'mainhand', stowed));
