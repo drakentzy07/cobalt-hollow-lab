@@ -101,7 +101,44 @@ Un solo Hunter persistente y universal, creado hombre/mujer. No elegir clase obl
 9. No regresiones de mundo, NPC de arma inicial, entrenamiento, inventario, combate PVE normal y guardado offline.
 10. Cada RUN Android automatizado GREEN; aprobación visual/mecánica real S23 antes de congelar.
 
-## 5. Decisiones para que revise el creador antes de iniciar F2
+## 5. REGLA FUNDAMENTAL — COMBAT FLOW 360 (decisión del creador, 19/10/2026)
+**La locomoción no debe bloquear el ataque ni el cast de forma arbitraria.** El Hunter debe poder atacar y lanzar las habilidades compatibles caminando, corriendo, en salto, doble salto, caída y tras una evasión, conservando input de stick/cámara. Queda PROHIBIDO el "ice-skating": personaje que se desplaza mientras corre una animación con pies estáticos o sin locomoción correspondiente. La continuidad jugable NO es permiso para animaciones físicamente imposibles.
+
+### A. Arquitectura de capas; elegir por acción
+1. **Locomotion layer**: feet/hips/gait driven by actual grounded speed, input heading, acceleration, vertical velocity and ground contact. Supports walk/run/sprint/strafe/turn/jump/fall/landing. Measured world displacement rules; do not infer gait from whether "ATK" is held.
+2. **Action overlay upper-body**: one/two-arm attacks, swings, sword cuts and suitable spell casts. Apply bone masked/additive layers (when clips permit), maintain hip and leg gait continuously. Transitions and weapon props must remain coherent with KayKit Rig_Medium for male/female modular Hunter.
+3. **Whole-body actions**: rolls, flips, uppercuts that plant the legs, jump slams, vaults and airborne kicks. Use full-body clips blended with a physics-controlled path; gait is SUPPRESSED during an actual roll/flip rather than visually marching in midair. Synchronize hip/body rotation and landing exactly with Sim contacts.
+4. **Root-motion policy**: never add unbounded clip root translation to the Sim body. Prefer in-place/masked clips, controlled motion-warp for full-body only with swept collision; root orientation offset may drive cosmetic rotation but game facing is authoritative. No teleport/blink.
+5. **Foot IK / contact**: foot lock, steps and turns grounded on terrain; speed-aware playback/stride synchronization, acceleration/deceleration blends, anti-foot-slide phase correction, no duplicate foot planting. Test slopes, stairs, dodging into walls and abrupt stick reversals. On mobile, fall back to cheap IK/pose adjustments at low FPS rather than allocating per-frame bone objects.
+
+### B. Normal jump, DIRECTIONAL DOUBLE-JUMP FLIP and directional dodge ROLL
+- **First jump = normal physically-based jump**.
+- **Second jump = directional aerial somersault**, controlled by joystick intent at takeoff: forward -> forward flip, back -> backward flip, left/right -> lateral aerial/side flip, neutral -> safe controlled neutral twist or generic flip. Blend based on facing and camera-relative vector. Movement is physical; flip is visual, not force movement across walls. Maintain air steering and prepare land / cancel edges. On cramped scenery choose a safe non-clipping variant.
+- **DASH/EVADE = physical travel + direction-aware cinematic roll or evasive step**. Forward roll, backward recovery, left/right roll or sidestep, diagonal blends. Roll keeps swept collision; use clip phase synced to distance, halt at obstruction without continuing phantom displacement; dodge i-frames short and controllable, not full animation-length immunity.
+- **Exits**: roll -> stand-run, roll -> ATK, jump1 -> air ATK, jump2 flip -> air ATK, air ATK -> fall -> landing -> run/attack. Cancellation cannot teleport the rig into another pose; limb/hip stabilization and motion sync mandatory.
+- **Preview target**: mobile S23 horizontal, one finger on stick and one on camera while ATK/skill/dodge/jump works; no frozen input due to casting except explicitly designed commitments with clearly communicated intent.
+
+### C. Skill behavior contract, no "cast-and-slide"
+- For every BASE/UNIQUE spell/action, declare `movementPolicy: 'free' | 'speedLimited' | 'committed'`, `airbornePolicy`, `rotationPolicy`, `animationLayer: 'upper' | 'full'`, `locomotionBlend`, `hitboxWindow`, `cancelWindows`, `groundContactRules`.
+- **Default HIGHFLY new combat skill** = `movementPolicy:'free'` unless its physical choreography intentionally commits body motion; even committed abilities use swept physics and an explained anticipation/active/recovery, never freeze the player in place due to ClaudeCraft's generic cast restriction.
+- **Fireball while running**: feet continue gait, shoulders and hands cast, recoil readable; actual projectile launches on active marker, not early. Running/diagonal camera movement unaffected.
+- **Meteorito while moving**: target circle projected onto terrain and adjusted by drag; caster can walk/run; casting effect attached to hands/body, AoE impact resolves on chosen actual ground point.
+- **Airborne shot/cast**: full-body pose only as needed for twist/kick, inertia persists; no feet running in air; landing interrupts/blends correctly.
+- **Charge/leap**: own physical trajectory, no instant reposition; strike and landing events align with hitboxes and VFX. Player retains permitted steering.
+- **No double movement**: if an action supplies physical thrust, do not ALSO apply inherited locomotion every tick on top of root translation. Choose single authority for every horizontal/vertical component.
+- **Existing donor gate** `src/sim/combat/cast_move_gate.ts` currently allows motion only for `castWhileMoving` and selected exceptions. F2 must route ORIGIN actions through new explicit policy without changing donor behavior globally. Verify cancelCast calls in `src/sim/player_motion.ts` and world/physics tests.
+
+### D. Fail conditions for the Android gate (non-negotiable)
+- No idle legs while body visibly translates; no full run animation during flip/roll.
+- No locked zero-velocity while ability marked `free`; no instant 180° rotations or stuck facing.
+- No mismatched body translation/weapon hitbox; no damage from a disconnected trail or through wall.
+- No ragdoll/T-pose transition on cancellation, knockback, jump/roll, weapon equip or hit reaction.
+- No repeated unintended input when the screen has 2–3 fingers on different controls.
+- Instrument actual speed, foot slip distance, layer weights, cancelled action tags, action-to-hit timing and time-to-input-resumption; require screenshots/video and real device review.
+
+**Implementation priority:** install CombatFlow movement/animation contracts before dozens of new skill clips. This is the gate between F2.2 and F2.3. All future skills must satisfy it to be considered complete.
+
+## 6. Decisiones para que revise el creador antes de iniciar F2
 A. ¿Combo desarmado de 3 golpes + 1 remate contextual o 5 golpes básicos con remates variables? Propuesta: secuencias de 3–5, gobernadas por contexto, no número rígido.
 B. ¿I-frames de evasión? Propuesta: cortos y explícitos, sin invulnerabilidad durante todo el dash.
 C. ¿Wall-run/voltereta desde primera F2 o fase de parkour posterior? Propuesta: primero movimiento/golpes imprescindibles, parkour espectacular después de cerrar colisión.
