@@ -1,4 +1,12 @@
 import './highfly/game_c1_runtime';
+import {
+  ORIGIN_HUNTER_CARRIER_CLASS,
+  f1StartState,
+  normalizeOriginF1Save,
+  originF1CanMakeFresh,
+} from './highfly/origin/f1_core';
+import { mountOriginF1WorldUi, type OriginF1WorldUi } from './highfly/origin/f1_world_ui';
+import { writeHighflyOfflineSave } from './game/highfly_offline_save';
 import { applyFrameGeometrySetting } from './game/frame_geometry_settings';
 import { formatAbilityImbueDamage } from './ui/ability_imbue_text';
 import { bindChatComposerFocusState, resetChatComposer } from './ui/chat_composer_focus_controller';
@@ -5377,10 +5385,15 @@ async function startOffline(
   // stale level-20 seed when no real Training evidence exists.
   const staleDonorLevel20 =
     storedOfflineSave?.state.level === 20 && !trainingHasRealProgress;
-  const matchingOfflineSave = staleDonorLevel20 ? null : storedOfflineSave;
+  // Legacy saves never become the single Hunter implicitly. The launcher
+  // refuses a colliding identity before this loader is reached.
+  const matchingOfflineSave = staleDonorLevel20 || !normalizeOriginF1Save(storedOfflineSave?.originF1)
+    ? null : storedOfflineSave;
+  let originState = normalizeOriginF1Save(matchingOfflineSave?.originF1) ?? f1StartState();
+  let originWorldUi: OriginF1WorldUi | null = null;
 
   const baseTrainingProfile =
-    storedTrainingProfile ??
+    (matchingOfflineSave ? storedTrainingProfile : null) ??
     createHighflyHunterProfile({
       profileId: `offline:${playerClass}:${encodeURIComponent(name.trim().toLowerCase())}`,
       classId: playerClass,
@@ -5413,7 +5426,24 @@ async function startOffline(
     });
     return restored;
   });
-  if (!matchingOfflineSave) sim.setPlayerSkin(sim.playerId, skin);
+  if (!matchingOfflineSave) {
+    sim.setPlayerSkin(sim.playerId, skin);
+    if (!world) {
+      // Native Sim-verified removal recalculates equipment stats. Unlike simply
+      // hiding models, the Hunter actually begins with empty equipment slots.
+      for (const slot of ['mainhand', 'offhand', 'chest'] as const) {
+        const inheritedId = sim.players.get(sim.playerId)?.equipment[slot];
+        if (!inheritedId) continue;
+        if (!sim.unequipItem(slot, sim.playerId)) {
+          throw new Error('F1_UNARMED_START_REFUSED_' + slot);
+        }
+        sim.removeItem(inheritedId, 1, sim.playerId);
+      }
+      // No class-derived spells before the player learns anything.
+      const meta = sim.players.get(sim.playerId);
+      if (meta) meta.known.length = 0;
+    }
+  }
 
   const loadedTrainingProfile = getActiveHighflyHunterProfile();
   if (loadedTrainingProfile) {
@@ -5525,14 +5555,39 @@ async function startOffline(
         name,
         state,
         appearance,
+        originF1: originWorldUi?.save() ?? originState,
         trainingProfile: getActiveHighflyHunterProfile() ?? undefined,
         updatedAt: Date.now(),
       };
     });
   }
 
-  // Stable local identity also scopes keybinds; the RPG state itself now persists.
-  void startGame(sim, sim, null, `offline:${playerClass}:${name}`, true);
+  // The only gameplay entry: no duplicated Sim, no mandatory tutorial.
+  if (!world) {
+    document.body.classList.remove('hf-origin-f1-creator');
+    document.body.classList.add('hf-origin-f1');
+  }
+  void startGame(sim, sim, null, `offline:${playerClass}:${name}`, true)
+    .then(() => {
+      if (world) return;
+      originWorldUi?.close();
+      originWorldUi = mountOriginF1WorldUi(sim, originState, () => {
+        // Persist on a real NPC grant; do not rely on a delayed autosave if
+        // the user immediately closes the Android app after the choice.
+        const saved = sim.serializeCharacter(sim.playerId);
+        if (!saved) return;
+        originState = originWorldUi?.save() ?? originState;
+        const hunter = sim.entities.get(sim.playerId);
+        writeHighflyOfflineSave({
+          version: 1, playerClass, name, state: saved,
+          appearance: (hunter?.modularAppearance as Record<string,unknown>|undefined) ?? null,
+          originF1: originState,
+          trainingProfile: getActiveHighflyHunterProfile() ?? undefined,
+          updatedAt: Date.now(),
+        });
+      });
+    })
+    .catch((err:unknown) => console.error('[HIGHFLY F1] start failed',err));
 }
 
 // ---------------------------------------------------------------------------
@@ -5780,6 +5835,10 @@ let creationHelm = false;
 function creationLoadout(cls: PlayerClass): ArmorLoadout {
   const set = readStoredArmorSet(cls);
   const full = fullSet(set);
+  if (document.body.classList.contains('hf-origin-f1-creator')) {
+    // Real bare-bodied modular preview, not a warrior chest/helmet disguise.
+    return { head:null, chest:null, arms:null, hands:null, legs:null, feet:null, back:null };
+  }
   return creationHelm ? full : { ...full, head: null };
 }
 
@@ -9535,7 +9594,7 @@ function wireStartScreens(): void {
     show('#login-panel');
   };
 
-  const handleOfflineStart = (cls: PlayerClass) => {
+  const handleOfflineStart = async (_carrier: PlayerClass) => {
     const rawName = offlineNameInput.value.trim();
     if (!rawName) {
       offlineError.textContent = t('errors.characterNameRequired');
@@ -9556,11 +9615,23 @@ function wireStartScreens(): void {
     offlineNameInput.classList.remove('user-invalid-fallback');
     offlineNameInput.removeAttribute('aria-invalid');
 
+    // The old primary slot and all pre-F1 identities stay read-only.
+    const existing = await loadHighflyOfflineSave();
+    const exact = await loadHighflyOfflineSave(ORIGIN_HUNTER_CARRIER_CLASS, rawName);
+    if (!originF1CanMakeFresh(exact)) {
+      offlineError.textContent = 'Existe una partida antigua con ese nombre. No se modificó. Elegí otro nombre.';
+      return;
+    }
+    if (normalizeOriginF1Save(existing?.originF1) &&
+        existing?.name.toLowerCase() !== rawName.toLowerCase()) {
+      offlineError.textContent = 'Tu Hunter ya existe: ' + existing?.name + '. Continuá esa aventura.';
+      return;
+    }
     audio.init();
     music.init();
     sfx.init();
     const name = sanitizeOfflineName(rawName);
-    void startOffline(cls, name, selectedSkin('#offline-skin-row', offlineSkin));
+    void startOffline(ORIGIN_HUNTER_CARRIER_CLASS, name, selectedSkin('#offline-skin-row', offlineSkin));
   };
 
   const recoverHighflyOfflinePreview = async (cls: PlayerClass): Promise<void> => {
@@ -9655,6 +9726,7 @@ function wireStartScreens(): void {
 
   const handleOfflineSelect = () => {
     if (!offlineAvailable) return;
+    document.body.classList.add('hf-origin-f1-creator');
     show('#offline-select');
 
     // Restore the primary Hunter's identity before the player presses Enter
@@ -9664,9 +9736,13 @@ function wireStartScreens(): void {
       // If the player typed a name or picked a class while IndexedDB was
       // resolving, their explicit choice wins over the stale primary snapshot.
       if (highflyOfflineSelectionRevision !== restoreRevision) return;
-      const cls = saved?.playerClass ?? 'warrior';
-      offlineNameInput.value = saved?.name ?? '';
-      selectHighflyOfflineClass(cls);
+      const originSave = normalizeOriginF1Save(saved?.originF1);
+      offlineNameInput.value = originSave ? saved?.name ?? '' : '';
+      if (originSave && saved?.appearance) {
+        modularAppearance = normalizeAppearance(saved.appearance as Partial<ModularAppearance>);
+        appearanceUis.get('offline-class-details')?.set(modularAppearance);
+      }
+      selectHighflyOfflineClass(ORIGIN_HUNTER_CARRIER_CLASS);
     });
   };
 
@@ -9844,7 +9920,7 @@ function wireStartScreens(): void {
         '#offline-select .mini-class.sel',
       ) as HTMLElement | null;
       if (selCard) {
-        handleOfflineStart(selCard.dataset.class as PlayerClass);
+        void handleOfflineStart(ORIGIN_HUNTER_CARRIER_CLASS);
       } else {
         offlineError.textContent = t('errors.selectClass');
       }
@@ -9955,6 +10031,7 @@ function wireStartScreens(): void {
 
   const offlineBackBtn = $('#btn-offline-back');
   const handleOfflineBack = () => {
+    document.body.classList.remove('hf-origin-f1-creator');
     show('#mode-select');
     offlineError.textContent = '';
     offlineNameInput.value = '';
