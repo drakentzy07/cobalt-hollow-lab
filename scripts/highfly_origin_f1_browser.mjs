@@ -153,6 +153,11 @@ try {
     await page.evaluate(()=>document.getElementById('btn-play')?.click());
     await page.waitForFunction(()=>document.getElementById('char-name')?.value==='Wayfarer',{timeout:40_000});
     await page.evaluate(()=>document.getElementById('btn-start-offline')?.click());
+    // The landscape/fullscreen approval is per game entry, not per
+    // browser session. Reopening saved Hunters must pass it again.
+    await page.waitForSelector('#mobile-preflight-continue',{visible:true,timeout:20_000})
+      .then(()=>page.evaluate(()=>document.getElementById('mobile-preflight-continue')?.click()))
+      .catch(()=>{});
     await page.waitForFunction(()=>window.__game?.sim?.player,{timeout:180_000});
     await page.waitForSelector('#hf-origin-f1-hud',{timeout:35000});
     const resumed=await page.evaluate(()=>{
@@ -181,6 +186,11 @@ try {
     await page.evaluate(()=>document.getElementById('btn-play')?.click());
     await page.waitForFunction(()=>document.getElementById('char-name')?.value==='Wayfarer',{timeout:40_000});
     await page.evaluate(()=>document.getElementById('btn-start-offline')?.click());
+    // The landscape/fullscreen approval is per game entry, not per
+    // browser session. Reopening saved Hunters must pass it again.
+    await page.waitForSelector('#mobile-preflight-continue',{visible:true,timeout:20_000})
+      .then(()=>page.evaluate(()=>document.getElementById('mobile-preflight-continue')?.click()))
+      .catch(()=>{});
     await page.waitForFunction(()=>window.__game?.sim?.player,{timeout:180_000});
     await page.waitForSelector('#hf-origin-f1-hud',{timeout:35000});
     const offline=await page.evaluate(()=>{
