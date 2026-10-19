@@ -19,10 +19,13 @@ import {
   stashKtx2TranscodeSource,
 } from './ktx2_mip_release';
 
-// Served verbatim from public/basis/ in every host (vite dev, the deployed
-// site, the Capacitor native bundle, the Electron app scheme). The files are
-// deliberately not media-manifest hashed: KTX2Loader fetches them by path.
-const TRANSCODER_PATH = '/cobalt-hollow-lab/basis/';
+// Served verbatim from public/basis/ in every host (Vite preview, Pages,
+// Capacitor, native shells). Honor Vite's base path: F1 previews use '/',
+// Pages can use '/cobalt-hollow-lab/'. The previous hardcoded Pages path
+// served index.html in local preview, making the KTX2 worker parse HTML as JS
+// and stalling hundreds of critical texture/GLB preloads.
+// Deliberately not media-manifest hashed: KTX2Loader fetches by directory.
+const TRANSCODER_PATH = `${import.meta.env.BASE_URL}basis/`;
 
 let ktx2: KTX2Loader | null = null;
 
