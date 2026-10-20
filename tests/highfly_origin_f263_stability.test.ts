@@ -35,7 +35,7 @@ describe('F2.6.3 S23 root-cause stability',()=>{
   it('imports previous lab without overwriting it and shows MP ST under HP',()=>{
     const save=readFileSync('src/game/highfly_offline_save.ts','utf8');
     expect(save).toContain('highfly.origin.f263-combat-beta.primary.v1');
-    expect(save).toContain("readLocal('highfly.origin.f262-combat-beta.primary.v1')");
+    expect(save).toContain("readLocal(F27_PAGES_LAB?'highfly.origin.f263-combat-beta.primary.v1':'highfly.origin.f262-combat-beta.primary.v1')");
     const css=readFileSync('src/styles/hud.css','utf8');
     expect(css).toContain('body.hf-origin-f263 #player-frame #pf-resource');
     expect(css).toContain('body.hf-origin-f263 #player-frame #hf-origin-f1-resource-meter');
