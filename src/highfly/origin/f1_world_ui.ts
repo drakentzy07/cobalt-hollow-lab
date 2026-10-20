@@ -116,7 +116,8 @@ export function mountOriginF1WorldUi(
   backdrop.style.zIndex='3200';
   document.body.append(root,backdrop);
   let current=structuredClone(initial);
-  const f23Trainer=location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/');
+  const f23Trainer=location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/') ||
+    location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/');
   // One native Sim, one Hunter. Persist knowledge in the existing Origin save,
   // not in the donor Warrior's level-up list, which is intentionally disabled.
   // Hydrate only the explicitly learned spells into its already-authoritative

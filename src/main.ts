@@ -226,6 +226,7 @@ import { createGroundAimReticleSync, padGroundAimCallbacks } from './game/pad_gr
 import { padReelItemId } from './game/pad_reel';
 import { dispatchPadSharedEdgeAction } from './game/pad_shared_edge_action';
 import { openTargetSubcommands } from './game/pad_subcommands';
+import {highflyAimShape,highflyWorldAim,highflyAimTarget} from './highfly/combat/f24_aim_core';
 import { bestSoftAutoTarget } from './game/auto_target';
 import { createPadTargetPick } from './game/pad_target_pick';
 import { createPerfMonitor } from './game/perf';
@@ -1972,7 +1973,51 @@ async function startGame(
   // with no live hostile target (the HUD falls back to plain castSlot(0) until
   // this is wired); the Target button cycles targets via the Tab path below.
   hud.onMobileAttackNearest = () => attackNearest();
-  hud.onMobileActionIntent = (action) => padTargetPick.autoTarget(action);
+  hud.onMobileActionIntent = (action) => {
+    if(location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') &&
+       action.type==='ability' && highflyAimShape(action.id)){
+      // Aimed abilities already chose their target on pointer release.
+      return;
+    }
+    padTargetPick.autoTarget(action);
+  };
+  type F24Preview={x:number;z:number;radius:number;school:string;dimmed:boolean;
+    shape:'line'|'cone'|'circle'|'leap';originX:number;originZ:number};
+  let f24AimPreview:F24Preview|null=null;
+  let f24AimPending:{id:string;point:{x:number;z:number}}|null=null;
+  hud.onHighflyGroundAimPoint=(id)=>{
+    if(f24AimPending?.id!==id)return null;
+    const point=f24AimPending.point;
+    f24AimPending=null;
+    return point;
+  };
+  hud.onHighflyAimGesture=(phase,action,dx,dy)=>{
+    if(!location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') ||
+       action.type!=='ability' || !highflyAimShape(action.id) ||
+       !world.known.some(k=>k.def.id===action.id))return false;
+    if(phase==='cancel'){f24AimPreview=null;return true;}
+    const shape=highflyAimShape(action.id)!;
+    const p=world.player;
+    const def=world.known.find(k=>k.def.id===action.id)?.def;
+    const maxRange=Math.max(5,def?.range??12);
+    const aim=highflyWorldAim(p.pos,input.camYaw,dx,dy,maxRange);
+    const point=shape==='circle' ? {x:p.pos.x,z:p.pos.z} : {x:aim.x,z:aim.z};
+    f24AimPreview={...point,radius:shape==='circle'?6:shape==='leap'?2:0.7,
+      school:def?.school??'physical',dimmed:false,shape,
+      originX:p.pos.x,originZ:p.pos.z};
+    if(phase==='start'||phase==='move')return true;
+    const opponents=activePvpOpponentIds(world);
+    if(shape!=='circle'){
+      const picked=highflyAimTarget(world.entities.values(),p.pos,aim.facing,maxRange,
+        Math.hypot(dx,dy)>12,
+        e=>isAttackableEntity(e,world.playerId,opponents));
+      if(picked!==null)world.targetEntity(picked.id);
+      else if(action.id==='fireball'||action.id==='charge')world.targetEntity(null);
+    }
+    if(shape==='leap')f24AimPending={id:action.id,point};
+    f24AimPreview=null;
+    return true;
+  };
   hud.onHighflyBasicAttack = (step) => {
     const actionWorld = world as typeof world & {
       highflyBasicAttack?: (comboStep: 1 | 2 | 3 | 4) => boolean;
@@ -3571,6 +3616,7 @@ async function startGame(
 
   function syncGroundAimReticle(): void {
     groundAimReticleSync();
+    if(f24AimPreview)renderer.setGroundAimReticle(f24AimPreview);
   }
   const groundAimReticleSync = createGroundAimReticleSync({
     hud,
@@ -11550,6 +11596,7 @@ if (HIGHFLY_F11_OFFLINE_FIRST && !import.meta.env.DEV &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f2-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/') &&
+    !location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') &&
     'serviceWorker' in navigator &&
     (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
   const registerOfflineShell = () => {
