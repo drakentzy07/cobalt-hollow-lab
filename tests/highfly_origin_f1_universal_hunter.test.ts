@@ -97,15 +97,16 @@ describe('HIGHFLY F1 integral — one Hunter, safe birth, first weapon and resou
     const main=readFileSync('src/main.ts','utf8');
     const store=readFileSync('src/game/highfly_offline_save.ts','utf8');
     expect(main).toContain('const restored = exact ?? primary;');
-    expect(main).toContain('await loadOriginHunterSave(ORIGIN_HUNTER_CARRIER_CLASS, rawName)');
+    expect(main).toContain('await loadOriginHunterSave(ORIGIN_HUNTER_CARRIER_CLASS, rawName, mode)');
     expect(main).not.toContain('Existe una partida antigua con ese nombre');
     expect(main).toContain('setOriginCreatorPreview(look.app, look.worn, cls)');
     expect(main).toContain('bare ? null : undefined');
     expect(store).toContain("const ORIGIN_PRIMARY_SLOT_KEY = 'origin-f1:primary'");
     expect(store).toContain("'highfly.origin.primary.v1'");
     expect(store).toContain("'highfly.origin.f2-combat-beta.primary.v1'");
-    expect(store).toContain('originIdentitySlotKey(save.playerClass, save.name)');
+    expect(store).toContain('originIdentitySlotKey(save.playerClass, save.name, mode)');
     expect(store).toContain('hasOriginIdentity(oldExact) ? oldExact : null');
+    expect(store).toContain("mode === 'lab' || F2_PAGES_LAB ? null");
     expect(store).toContain("F2_PAGES_LAB ? 'highfly-offline-f2-combat-beta'");
   });
 });
