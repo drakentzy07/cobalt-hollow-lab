@@ -3733,6 +3733,8 @@ export interface AbilityDef {
   // the cast lifecycle validates and spends this deterministic 0..5 meter too.
   ruinCost?: number;
   castTime: number; // 0 = instant
+  /** F2.6 Hunter-only physical cost; the donor uses normal cost as before. */
+  highflyStaminaCost?: number;
   // Hold-to-charge spell. The server derives the released stage from its own
   // cast clock; clients send only the release intent.
   empowerStages?: number;
@@ -5311,6 +5313,7 @@ export interface Entity extends ClientMirroredEntityFields {
   highflyF25CombatFreedom?: boolean;
   /** F2.6 only: manual aim and no-homing cast policy. */
   highflyF26CombatFreedom?: boolean;
+  highflyOriginStamina?: number;
   highflyF26FireballAim?: {x:number;z:number};
   /** Authoritative, transient intentional free-space Fireball endpoint. */
   highflyF25EmptyFireballAim?: {x:number;z:number};

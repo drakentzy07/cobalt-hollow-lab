@@ -1,6 +1,15 @@
 import {describe,it,expect} from 'vitest';
+import {readFileSync} from 'node:fs';
 import {highflyF26SegmentSphereHit,highflyF26TrajectoryPoint} from '../src/highfly/combat/f26_skillshot_core';
 describe('F2.6 true-skillshot (no homing)',()=>{
+ it('isolates Hunter physical stamina spending from native rage mana and focus',()=>{
+  const w=readFileSync('src/highfly/origin/f1_world_ui.ts','utf8');
+  const c=readFileSync('src/sim/combat/casting_lifecycle.ts','utf8');
+  expect(w).toContain('highflyStaminaCost');
+  expect(w).toContain('sim.player.highflyOriginStamina');
+  expect(c).toContain('Not enough stamina!');
+  expect(c).toContain('p.highflyOriginStamina=Math.max');
+ });
  it('curved trajectory keeps launch and destination but bulges sideways',()=>{
   const a={x:0,y:1,z:0},b={x:0,y:1,z:20};
   expect(highflyF26TrajectoryPoint(a,b,0,3)).toEqual(a);

@@ -1179,6 +1179,10 @@ export function castAbility(
     }
     return; // an earlier press stays silent, classic spams this
   }
+  const highflyStCost=p.highflyF26CombatFreedom===true?(ability.highflyStaminaCost??0):0;
+  if(highflyStCost>0 && (p.highflyOriginStamina??0)<highflyStCost){
+    ctx.error(p.id,'Not enough stamina!');return;
+  }
   const togglingOff = isToggleBuff(ability) && p.auras.some((a) => a.id === ability.id);
   // sharedCooldownIds generalizes the release's shaman-shock special case (it
   // returns the same SHAMAN_SHOCK_COOLDOWN_IDS for those ids), so the shock
@@ -2177,6 +2181,10 @@ function spendAbilityCost(
   res: ResolvedAbility,
   _target: Entity | null = null,
 ): void {
+  if(p.highflyF26CombatFreedom===true && (res.def.highflyStaminaCost??0)>0){
+    p.highflyOriginStamina=Math.max(0,(p.highflyOriginStamina??0)-res.def.highflyStaminaCost!);
+    return;
+  }
   if (isToggleBuff(res.def) && p.auras.some((a) => a.id === res.def.id)) return;
   if (res.def.devotionCost) spendDevotion(p, res.def.devotionCost);
   const spentRage = p.resourceType === 'rage' ? res.cost : 0;

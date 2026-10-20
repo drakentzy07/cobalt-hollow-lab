@@ -129,6 +129,7 @@ export function mountOriginF1WorldUi(
   backdrop.style.zIndex='3200';
   document.body.append(root,backdrop);
   let current=structuredClone(initial);
+  if(f26)sim.player.highflyOriginStamina=current.resources.stamina;
   const f23Trainer=location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/') ||
     location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') || f25;
   if(f25)sim.player.highflyF25CombatFreedom=true;
@@ -158,6 +159,10 @@ export function mountOriginF1WorldUi(
       if(!row || !def || def.learnLevel>sim.player.level || def.hiddenFromPlayer)return [];
       const useDef=f26 && id==='fireball'
         ? {...def,castTime:0,cooldown:3,requiresTarget:false,castWhileMoving:true}
+        : f26 && (id==='charge'||id==='heroic_leap')
+          ? {...def,cost:0,highflyStaminaCost:id==='charge'?14:22,
+              effects:def.effects.filter(effect=>effect.type!=='gainResource'),
+              castWhileMoving:true}
         : f25 && id==='fireball' ? {...def,castWhileMoving:true} : def;
       return [{def:useDef,rank:1,cost:useDef.cost,castTime:useDef.castTime,cooldown:useDef.cooldown,
         effects:useDef.effects,castWhileMoving:f25 && id==='fireball',
@@ -183,14 +188,21 @@ export function mountOriginF1WorldUi(
     hydrateMasterSkills();
   }
   const resourceController: OriginResourceController = {
-    canSpend: (kind, amount) => consumeF1Resource(f23Trainer && kind==='mana'
-      ? {...current.resources,mana:sim.player.resource} : current.resources,kind,amount)!==null,
+    canSpend: (kind, amount) => {
+      const live={...current.resources,
+        ...(f23Trainer?{mana:sim.player.resource}:{}),
+        ...(f26?{stamina:sim.player.highflyOriginStamina??current.resources.stamina}:{})};
+      return consumeF1Resource(live,kind,amount)!==null;
+    },
     spend: (kind, amount) => {
-      const live=f23Trainer && kind==='mana' ? {...current.resources,mana:sim.player.resource} : current.resources;
+      const live={...current.resources,
+        ...(f23Trainer?{mana:sim.player.resource}:{}),
+        ...(f26?{stamina:sim.player.highflyOriginStamina??current.resources.stamina}:{})};
       const next=consumeF1Resource(live,kind,amount);
       if(!next)return false;
       current={...current,resources:next};
       if(f23Trainer && kind==='mana')sim.player.resource=next.mana;
+      if(f26 && kind==='stamina')sim.player.highflyOriginStamina=next.stamina;
       return true;
     },
   };
@@ -325,7 +337,9 @@ export function mountOriginF1WorldUi(
       }
     }
     const now=performance.now();
+    if(f26)current.resources.stamina=sim.player.highflyOriginStamina??current.resources.stamina;
     current={...current,resources:tickF1Resources(current.resources,(now-last)/1000)};
+    if(f26)sim.player.highflyOriginStamina=current.resources.stamina;
     if(f23Trainer){
       rebindOriginMana();
       current.resources.mana=sim.player.resource;
