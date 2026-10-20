@@ -1,7 +1,7 @@
 import {describe,it,expect} from 'vitest';
 import {readFileSync} from 'node:fs';
 import {HIGHFLY_F263_GROUND_HIT_RADIUS,highflyF262GroundContact} from '../src/highfly/combat/f26_skillshot_core';
-import {HIGHFLY_SOMERSAULT_SECONDS,highflyF263DirectionalFlip} from '../src/render/characters/highfly_combat_presentation';
+import {HIGHFLY_SOMERSAULT_SECONDS,highflyF263DirectionalFlip,highflyWeaponBasicClips,isHighflyLeftArmTrack} from '../src/render/characters/highfly_combat_presentation';
 describe('F2.6.3 S23 root-cause stability',()=>{
   it('forward second-jump visibly pitches forward while lateral remains lateral',()=>{
     const f=highflyF263DirectionalFlip(HIGHFLY_SOMERSAULT_SECONDS/2,'forward');
@@ -20,6 +20,17 @@ describe('F2.6.3 S23 root-cause stability',()=>{
     const s=readFileSync('src/ui/hud/action_bar/mobile_action_ring_controller.ts','utf8');
     expect(s).toContain('if(commit && !cancel)deps.castSlot(currentSlot)');
     expect(s).toContain("cancel?'cancel':'end'");
+  });
+  it('weapon attacks differ by family and dual-wield second strike uses LEFT tracks',()=>{
+    expect(highflyWeaponBasicClips('rusty_hatchet',2)[0]).toBe('Warrior_Brute_Swing');
+    expect(highflyWeaponBasicClips('bronzework_mace',1)[0]).toBe('Warrior_Brute_Swing');
+    expect(highflyWeaponBasicClips('worn_sword',1)[0]).toBe('1H_Melee_Attack_Chop');
+    expect(isHighflyLeftArmTrack('upperarm.l.quaternion')).toBe(true);
+    expect(isHighflyLeftArmTrack('upperarm.r.quaternion')).toBe(false);
+    expect(isHighflyLeftArmTrack('hips.position')).toBe(false);
+    const visual=readFileSync('src/render/characters/visual.ts','utf8');
+    expect(visual).toContain('highflyWeaponBasicClips(this.weaponItemId,step)');
+    expect(visual).toContain('step===2?1.26:1.1,true,abilityId,step===2');
   });
   it('imports previous lab without overwriting it and shows MP ST under HP',()=>{
     const save=readFileSync('src/game/highfly_offline_save.ts','utf8');

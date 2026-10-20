@@ -119,7 +119,7 @@ import { stoneboundShellStyle } from './stonebound_shell_core';
 import { createStowTransition, forceStow, requestStow, tickStow } from './stow_transition';
 import { CharacterSurfaceResponse, SURFACE_RESPONSE_PROGRAM } from './surface_response';
 import { warriorActionBlend } from './warrior_action_blend';
-import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, highflyDirectionalFlip, highflyF263DirectionalFlip, isHighflyUpperBodyTrack, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
+import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, highflyDirectionalFlip, highflyF263DirectionalFlip, isHighflyUpperBodyTrack, isHighflyLeftArmTrack, highflyWeaponBasicClips, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
 import { WarriorActionProps } from './warrior_action_props';
 import { WarriorBodyEffects } from './warrior_body_effects';
 import { SPIN_ATTACK_VISUAL_DURATION, weaponAttackStyle } from './weapon_attack_style_core';
@@ -1865,19 +1865,21 @@ export class CharacterVisual {
    * one-shot to an upper mask at low speed was holding the legs in place and
    * looking like slow-motion skating. The ONE native locomotion Sim remains
    * authoritative; donor/non-Hunter attacks retain their original animation. */
-  private playOriginPhysicalGesture(name:string, timeScale:number, physical:boolean, abilityId?:string):void {
+  private playOriginPhysicalGesture(name:string, timeScale:number, physical:boolean, abilityId?:string, leftArmOnly=false):void {
     const presentationScale = this.originHunterCombat && physical
       ? highflyComboAnimationRate(abilityId, timeScale) : timeScale;
     if (physical && this.originHunterCombat) {
       const source=this.action(name)?.getClip();
       if (source) {
-        let layer=this.originUpperAttack.get(name);
+        const maskKey=leftArmOnly?name+'__hf_left':name;
+        let layer=this.originUpperAttack.get(maskKey);
         if (!layer) {
-          const tracks=source.tracks.filter(track=>isHighflyUpperBodyTrack(track.name));
-          if (tracks.length >= 4) {
-            const masked=new THREE.AnimationClip('hf_origin_upper_'+name,source.duration,tracks);
+          const tracks=source.tracks.filter(track=>leftArmOnly
+            ? isHighflyLeftArmTrack(track.name) : isHighflyUpperBodyTrack(track.name));
+          if (tracks.length >= (leftArmOnly?2:4)) {
+            const masked=new THREE.AnimationClip('hf_origin_upper_'+maskKey,source.duration,tracks);
             layer=this.mixer.clipAction(masked);
-            this.originUpperAttack.set(name,layer);
+            this.originUpperAttack.set(maskKey,layer);
             this.actions.set(masked.name,layer);
           }
         }
@@ -1919,17 +1921,31 @@ export class CharacterVisual {
         const aerial=clips.find(clip=>this.action(clip)!==null);
         if(aerial){this.playOriginPhysicalGesture(aerial,1.26,true,abilityId);return;}
       }
-      // F2.6.1: the second physical contact favours a visibly LEFT-arm
-      // authored gesture even for a one-weapon Hunter. No invented offhand
-      // weapon, second attack event, or additional damage.
       const dual=weaponAttackStyle(this.weaponItemId,this.offhandItemId)==='dualwield';
-      // This is an ACTUAL KayKit clip in player_warrior's loaded
-      // attackByHand map. The earlier invented "DualWield_Left" never loaded.
-      // Reuse its upper-body motion for both hands; the normal melee combo
-      // remains on the same authoritative damage/contact timings.
-      if(dual && (abilityId==='highfly_basic_2'||abilityId==='highfly_basic_4')){
+      const step=Number(abilityId?.match(/^highfly_basic_([1-4])(?:_|$)/)?.[1]??0);
+      const f263=this.originHunterCombat && typeof document!=='undefined' &&
+        document.body.classList.contains('hf-origin-f263');
+      if(f263&&step){
+        // True dual-wield: right contact -> LEFT arm only -> cross slash ->
+        // BOTH arms finish. Only the existing authoritative Sim applies hits.
+        if(dual&&(step===2||step===4)){
+          const dualClip=this.def.clips.attackByHand?.dualwield;
+          if(dualClip&&this.action(dualClip)){
+            this.playOriginPhysicalGesture(dualClip,step===2?1.26:1.1,true,abilityId,step===2);
+            return;
+          }
+        }
+        // Distinct native strike rhythm by equipped weapon family; a single
+        // sword never falsely claims an offhand contact.
+        const clip=highflyWeaponBasicClips(this.weaponItemId,step)
+          .find(name=>this.action(name)!==null);
+        if(clip){
+          this.playOriginPhysicalGesture(clip,step===4?.98:1.18,true,abilityId);
+          return;
+        }
+      }else if(dual&&(abilityId==='highfly_basic_2'||abilityId?.startsWith('highfly_basic_4'))){
         const dualClip=this.def.clips.attackByHand?.dualwield;
-        if(dualClip && this.action(dualClip)){
+        if(dualClip&&this.action(dualClip)){
           this.playOriginPhysicalGesture(dualClip,abilityId==='highfly_basic_2'?1.38:1.18,true,abilityId);
           return;
         }

@@ -10,6 +10,30 @@ export function isHighflyUpperBodyTrack(path: string): boolean {
   return /(?:spine|chest|clavicle|shoulder|upperarm|lowerarm|forearm|rightarm|leftarm|wrist|hand|finger|thumb|neck|head|torso|arm_l|arm_r)/i.test(path);
 }
 
+/** Filter a real KayKit dualwield clip to just the left hand/arm while
+ * leaving pelvis, legs and right-side weapon motions to the base movement.
+ * Never invents an attack hit, weapon or animation. */
+export function isHighflyLeftArmTrack(path:string):boolean{
+  if(!isHighflyUpperBodyTrack(path))return false;
+  return /(?:clavicle|shoulder|upperarm|lowerarm|forearm|hand|finger|thumb)[._]l(?:[.\[]|$)|(?:leftarm|arm_l|hand_l)/i.test(path);
+}
+/** F2.6.3: four authored strike choices per actual weapon family.
+ * All names belong to the already-shipped KayKit/Warrior library; the
+ * renderer tests clip availability before playing. No gameplay rebalancing. */
+export function highflyWeaponBasicClips(id:string|null,step:number):readonly string[]{
+  const weapon=(id??'').toLowerCase();
+  const axe=/axe|hatchet|cleaver|woodaxe|chopper/.test(weapon);
+  const blunt=/mace|hammer|maul|club/.test(weapon);
+  const dagger=/dagger|dirk|knife|stiletto/.test(weapon);
+  const clips=axe
+    ? ['1H_Melee_Attack_Chop','Warrior_Brute_Swing','1H_Melee_Attack_Slice_Diagonal','Warrior_Reaping_Arc']
+    :blunt
+    ? ['Warrior_Brute_Swing','2H_Melee_Attack_Chop','1H_Melee_Attack_Chop','Warrior_Reaping_Arc']
+    :dagger
+    ? ['1H_Melee_Attack_Slice_Diagonal','Dualwield_Melee_Attack_Chop','1H_Melee_Attack_Chop','Dualwield_Melee_Attack_Chop']
+    : ['1H_Melee_Attack_Chop','1H_Melee_Attack_Slice_Diagonal','Warrior_Reaping_Arc','1H_Melee_Attack_Slice_Diagonal'];
+  return [clips[(Math.max(1,Math.min(4,step))-1)],...clips];
+}
 export function highflyPhysicalBasic(abilityId: string | undefined): boolean {
   return !abilityId || /^highfly_basic_(?:[1-4]|whiff|air)(?:_|$)/.test(abilityId);
 }
