@@ -282,7 +282,8 @@ export function mountOriginF1WorldUi(
     talk.textContent = f23Trainer
       ? 'VETERANO · ARMAS Y MAESTRÍA'
       : (current.starterClaimed?'VETERANO DEL CAMINO · CAMBIAR ARMA':'VETERANO DEL CAMINO · ELEGIR ARMA');
-    guide.style.display = nearby && (f23Trainer || !current.starterClaimed) ? 'block':'none';
+    if(f23Trainer)guide.style.display = nearby ? 'block':'none';
+    else guide.style.display = nearby && !current.starterClaimed ? 'block':'none';
     if (!nearby) {
       if (open) setOpen(false);
     }
