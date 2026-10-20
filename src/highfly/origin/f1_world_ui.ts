@@ -299,10 +299,10 @@ export function mountOriginF1WorldUi(
     }
     last=now;
     const p=sim.player;
-    for(const [key,cur,max] of [
-      ['mana',current.resources.mana,current.resources.maxMana],
-      ['stamina',current.resources.stamina,current.resources.maxStamina],
-    ] as const){
+    for(const [key,cur,max] of (f25
+      ? [['stamina',current.resources.stamina,current.resources.maxStamina]] as const
+      : [['mana',current.resources.mana,current.resources.maxMana],
+         ['stamina',current.resources.stamina,current.resources.maxStamina]] as const)){
       const bar=renderBars[key];
       bar.fill.style.width = `${Math.round(100*Math.max(0,Math.min(1,max>0?cur/max:0)))}%`;
       bar.label.textContent = `${Math.round(cur)} / ${Math.round(max)}`;
