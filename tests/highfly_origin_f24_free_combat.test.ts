@@ -20,6 +20,7 @@ describe('F2.4 physical freedom, no manual target required',()=>{
     expect(read('src/render/characters/visual.ts')).toContain("'2H_Melee_Attack_Chop'");
     expect(read('src/render/characters/visual.ts')).toContain('this.playOriginPhysicalGesture(aerial,1.26,true,abilityId)');
     expect(read('src/render/renderer.ts')).toContain("? 'highfly_basic_air' : 'highfly_basic_'");
+    expect(read('src/render/renderer.ts')).toContain('highflyHit ? ev.abilityId : attackAbilityId(ev.ability)');
   });
   it('finisher is more emphasized than taps; manually performed flip renders',()=>{
     const a=highflyComboAccent('highfly_basic_1',0.26);

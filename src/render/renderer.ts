@@ -7517,8 +7517,21 @@ export class Renderer {
           warrior ? ev.abilityId : undefined,
           warrior && ev.sourceId === ev.targetId,
         );
-        if (ev.school === 'physical' && ev.sourceId !== -1 && startsAttackAnimation)
-          this.triggerAttack(ev.sourceId, attackAbilityId(ev.ability));
+        if (ev.school === 'physical' && ev.sourceId !== -1 && startsAttackAnimation) {
+          // F2.4: hit events carry the native HIGHFLY step in abilityId.
+          // "HIGHFLY Basic" is only the combat-log label; converting THAT
+          // text to an attack ID discarded 1/2/3 and replayed a generic tap.
+          const highflyHit=sourceEntity?.kind==='player' &&
+            sourceEntity.id===this.sim.playerId &&
+            ev.abilityId?.startsWith('highfly_basic_')===true;
+          this.triggerAttack(ev.sourceId,highflyHit ? ev.abilityId : attackAbilityId(ev.ability));
+          if(highflyHit && ev.kind==='hit' && ev.amount>0 &&
+             (ev.abilityId==='highfly_basic_3'||ev.abilityId==='highfly_basic_air') &&
+             !this.reducedMotion()){
+            this.addShake(0.075);
+            this.punchFov(0.34);
+          }
+        }
         const authoredContact = warrior && this.abilityVfx.onDamage(ev) === true;
         if (ev.kind === 'hit' && ev.amount > 0 && !authoredContact) {
           if (warrior && ev.ability) {
