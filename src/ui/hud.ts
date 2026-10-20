@@ -1347,6 +1347,9 @@ export class Hud {
   onMobileContextualUse: (() => boolean) | null = null;
   /** Mobile skill intent hook: acquire before the existing cast path. */
   onMobileActionIntent: ((action: Exclude<HotbarAction, null>) => void) | null = null;
+  onHighflyAimGesture: ((phase:'start'|'move'|'end'|'cancel', action:Exclude<HotbarAction,null>,
+    dx:number,dy:number)=>boolean)|null=null;
+  onHighflyGroundAimPoint: ((abilityId:string)=>AimPoint|null)|null=null;
   private highflyComboStep: 0 | 1 | 2 | 3 | 4 = 0;
   private highflyComboExpiresAt = 0;
   private highflyComboReadyAt = 0;
@@ -7490,6 +7493,12 @@ export class Hud {
     resolved: ResolvedAbility,
     slotForAim: number,
   ): void {
+    const originAim=this.onHighflyGroundAimPoint?.(abilityId)??null;
+    if(originAim && document.body.classList.contains('hf-origin-f1')){
+      this.playerGroundAim.begin(abilityId,slotForAim);
+      this.playerGroundAim.commitAt(originAim);
+      return;
+    }
     const cdReady =
       abilityId === 'clockwork_shock_bomb'
         ? (this.sim.player.cooldowns.get(abilityId) ?? 0) <= 0
@@ -8105,6 +8114,10 @@ export class Hud {
           this.groundAim.activeSlot(),
         ),
       cancelAim: () => this.cancelGroundAim(),
+      originAimGesture:(phase,slot,dx,dy)=>{
+        const action=this.actionForSlot(slot);
+        return action ? this.onHighflyAimGesture?.(phase,action,dx,dy)??false : false;
+      },
       castSlot: (slot) => {
         const action = this.actionForSlot(slot);
         if (action) this.onMobileActionIntent?.(action);

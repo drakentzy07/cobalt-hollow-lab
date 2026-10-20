@@ -93,6 +93,8 @@ export interface MobileActionRingDeps {
   /** Read and clear the drag path's "this release was a drag, not a tap" flag. */
   takeSuppressedClick(): boolean;
   castSlot(slot: number): void;
+  /** F2.4-only single-thumb directional aim; donor radical remains unchanged. */
+  originAimGesture?: (phase:'start'|'move'|'end'|'cancel',slot:number,dx:number,dy:number)=>boolean;
   cyclePage(): void;
   activateFixedAttackSlot(): void;
   attackNearest: (() => void) | null;
@@ -206,6 +208,42 @@ export function buildMobileActionRing(deps: MobileActionRingDeps): MobileActionR
 
   slotBtns.forEach((btn, i) => {
     deps.bindEmpoweredHold(btn, () => (deps.aimOwnsButton(i) ? -1 : deps.sourceSlot(i, 'center')));
+    // Aimed Origin abilities claim the pointer BEFORE the original radial
+    // handler; regular classes and all older beta paths keep their behavior.
+    let pointer:number|null=null,startX=0,startY=0,suppressClick=false;
+    const slot=()=>deps.sourceSlot(i,'center');
+    btn.addEventListener('pointerdown',event=>{
+      if(pointer!==null||event.button!==0)return;
+      if(!deps.originAimGesture?.('start',slot(),0,0))return;
+      pointer=event.pointerId;startX=event.clientX;startY=event.clientY;
+      btn.style.touchAction='none';
+      try{btn.setPointerCapture(event.pointerId)}catch{}
+      event.preventDefault();event.stopImmediatePropagation();
+    },{capture:true});
+    btn.addEventListener('pointermove',event=>{
+      if(pointer!==event.pointerId)return;
+      deps.originAimGesture?.('move',slot(),event.clientX-startX,event.clientY-startY);
+      event.preventDefault();event.stopImmediatePropagation();
+    },{capture:true});
+    btn.addEventListener('pointerup',event=>{
+      if(pointer!==event.pointerId)return;
+      pointer=null;const currentSlot=slot();
+      const commit=deps.originAimGesture?.('end',currentSlot,event.clientX-startX,event.clientY-startY);
+      suppressClick=true;btn.style.touchAction='';
+      try{btn.releasePointerCapture(event.pointerId)}catch{}
+      if(commit)deps.castSlot(currentSlot);
+      event.preventDefault();event.stopImmediatePropagation();
+    },{capture:true});
+    btn.addEventListener('pointercancel',event=>{
+      if(pointer!==event.pointerId)return;
+      pointer=null;btn.style.touchAction='';
+      deps.originAimGesture?.('cancel',slot(),0,0);
+      event.preventDefault();event.stopImmediatePropagation();
+    },{capture:true});
+    btn.addEventListener('click',event=>{
+      if(!suppressClick)return;
+      suppressClick=false;event.preventDefault();event.stopImmediatePropagation();
+    },{capture:true});
   });
   gesture.attach();
 
