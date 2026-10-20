@@ -1872,8 +1872,8 @@ export class CharacterVisual {
         const layerKey=leftOnly?'hf_f263_left_'+name:name;
         let layer=this.originUpperAttack.get(layerKey);
         if (!layer) {
-          const tracks=source.tracks.filter(track=>isHighflyUpperBodyTrack(track.name) &&
-            (!leftOnly || isHighflyLeftArmTrack(track.name)));
+          const tracks=source.tracks.filter(track=>isHighflyUpperBodyTrack(track.name))
+            .filter(track=>!leftOnly || isHighflyLeftArmTrack(track.name));
           if (tracks.length >= 4) {
             const masked=new THREE.AnimationClip('hf_origin_upper_'+layerKey,source.duration,tracks);
             layer=this.mixer.clipAction(masked);
