@@ -1985,7 +1985,7 @@ async function startGame(
     padTargetPick.autoTarget(action);
   };
   type F24Preview={x:number;z:number;radius:number;school:string;dimmed:boolean;bend?:number;
-    shape:'line'|'cone'|'circle'|'leap';originX:number;originZ:number};
+    shape:'line'|'cone'|'circle'|'leap'|'ground-circle';originX:number;originZ:number};
   let f24AimPreview:F24Preview|null=null;
   let f24AimPending:{id:string;point:{x:number;z:number}}|null=null;
   hud.onHighflyGroundAimPoint=(id)=>{
@@ -1999,7 +1999,7 @@ async function startGame(
          (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/')))))) ||
        action.type!=='ability' || !highflyAimShape(action.id) ||
        !world.known.some(k=>k.def.id===action.id))return false;
-    if(phase==='cancel'){f24AimPreview=null;delete world.player.highflyF25EmptyFireballAim;delete world.player.highflyF26FireballAim;return true;}
+    if(phase==='cancel'){f24AimPreview=null;f24AimPending=null;delete world.player.highflyF25EmptyFireballAim;delete world.player.highflyF26FireballAim;return true;}
     const shape=highflyAimShape(action.id)!;
     const p=world.player;
     if(action.id==='fireball' && phase==='start')delete p.highflyF25EmptyFireballAim;
@@ -2012,12 +2012,12 @@ async function startGame(
     const bend=p.highflyF262ContactAssist&&shape==='line'
       ? highflyF26LateralBend(p.onGround,!!p.highflyAirJumpUsed,p.highflyFlipDir,aim.range)
       :0;
-    f24AimPreview={...point,bend,radius:shape==='circle'?6:shape==='leap'?2:0.7,
+    f24AimPreview={...point,bend,radius:shape==='ground-circle'?8:shape==='circle'?6:shape==='leap'?2:0.7,
       school:def?.school??'physical',dimmed:false,shape,
       originX:p.pos.x,originZ:p.pos.z};
     if(phase==='start'||phase==='move')return true;
     const opponents=activePvpOpponentIds(world);
-    if(shape!=='circle'){
+    if(shape!=='circle'&&shape!=='ground-circle'){
       if(p.highflyF26CombatFreedom && action.id==='fireball'){
         // Releasing a manually aimed shot is never a target-selection request.
         // No magnetism or native homing; the Sim's sweep decides hits.
@@ -2042,7 +2042,7 @@ async function startGame(
         }
       }
     }
-    if(shape==='leap')f24AimPending={id:action.id,point};
+    if(shape==='leap'||shape==='ground-circle')f24AimPending={id:action.id,point};
     f24AimPreview=null;
     return true;
   };
