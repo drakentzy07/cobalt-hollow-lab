@@ -1,0 +1,211 @@
+name: HIGHFLY F2.6.1 — Publish isolated combat lab ONLY
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/highfly-origin-f261-beta-safe-main.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - name: Require certified F2.6.1 GREEN and last published F2.6 Pages
+        uses: actions/github-script@v7
+        with:
+          script: |
+            for (const x of [
+              {id:39447604565,sha:'0b80d0d4926441c4cff14f4893193d96e713cc43'},
+              {id:39428795289,sha:'75210303586a6e12c483371a689c79386b936c09'},
+            ]) {
+              const r=(await github.rest.actions.getWorkflowRun({
+                owner:context.repo.owner,repo:context.repo.repo,run_id:x.id
+              })).data;
+              if(r.head_sha!==x.sha||r.status!=='completed'||r.conclusion!=='success')
+                throw Error('F261_SOURCE_NOT_CERTIFIED_'+x.id);
+            }
+            console.log('HIGHFLY_F261_EXACT_GREEN_SOURCES=1');
+
+      - name: Download LAST published Pages snapshot (preserve all existing labs)
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 39428795289
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: baseline
+
+      - name: Checkout new workflow staging guard only
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: pages-ci
+          persist-credentials: false
+          filter: blob:none
+
+      - name: Checkout immutable F2.6.1 GREEN source
+        uses: actions/checkout@v4
+        with:
+          ref: 0b80d0d4926441c4cff14f4893193d96e713cc43
+          path: beta-src
+          persist-credentials: false
+          filter: blob:none
+
+      - name: Verify F2.6.1 isolation, source and certified tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C beta-src rev-parse HEAD)" = "0b80d0d4926441c4cff14f4893193d96e713cc43"
+          grep -F 'highfly-offline-f261-combat-beta' beta-src/src/game/highfly_offline_save.ts
+          grep -F 'highfly.origin.f261-combat-beta.primary.v1' beta-src/src/game/highfly_offline_save.ts
+          grep -F 'highfly:origin:f261:hud:' beta-src/src/highfly/game_c1_runtime.ts
+          test -s beta-src/tests/highfly_origin_f26_skillshot.test.ts
+          test -s beta-src/tests/highfly_origin_f261_controls.test.ts
+          test -s beta-src/scripts/highfly_origin_f261_beta_browser.mjs
+          test -s pages-ci/scripts/highfly_origin_f261_stage_safe.py
+          echo "HIGHFLY_F261_ISOLATED_SOURCE_GREEN=1"
+
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Re-check TypeScript and F2.6.1 gameplay regressions
+        working-directory: beta-src
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm exec tsc --noEmit --incremental false
+          pnpm exec vitest run --exclude 'training/tests/**' \
+            tests/highfly_origin_f26_skillshot.test.ts \
+            tests/highfly_origin_f261_controls.test.ts \
+            tests/highfly_origin_f25_combat_unleashed.test.ts \
+            tests/highfly_origin_f24_aim.test.ts \
+            tests/highfly_origin_f24_free_combat.test.ts \
+            tests/highfly_origin_f23_skill_master.test.ts \
+            tests/highfly_origin_f1_universal_hunter.test.ts
+          echo "HIGHFLY_F261_PUBLISH_RECHECK_GREEN=1"
+
+      - name: Mount frozen ClaudeCraft WORLD assets
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: donor-media
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /public/
+
+      - name: Build isolated WebGL lab without replacing root
+        shell: bash
+        working-directory: beta-src
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          rsync -a ../donor-media/public/ public/
+          node scripts/build_bundle_pregen.mjs
+          pnpm exec vite build
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          node scripts/highfly_f11_appshell.mjs
+          test -s dist/index.html
+          test -s dist/highfly-origin.webmanifest
+          echo "HIGHFLY_F261_PAGES_BUILD_GREEN=1"
+
+      - name: Stage ONLY F2.6.1 on last certified Pages artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s baseline/artifact.tar
+          python3 pages-ci/scripts/highfly_origin_f261_stage_safe.py \
+            baseline/artifact.tar beta-src/dist site 0b80d0d4926441c4cff14f4893193d96e713cc43
+
+      - name: Browser smoke on composite Pages (S23 touch emulated)
+        shell: bash
+        env:
+          F261_BETA_URL: "http://127.0.0.1:4173/cobalt-hollow-lab/lab/f261-combat-beta/"
+        run: |
+          set -euo pipefail
+          mkdir -p pages-test
+          ln -s ../site pages-test/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory pages-test >/tmp/f261-http.log 2>&1 &
+          P=$!
+          trap 'kill "$P" 2>/dev/null || true' EXIT
+          for i in $(seq 1 50); do
+            if curl -fsSI "$F261_BETA_URL" >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS "$F261_BETA_URL/f261-beta-qa.json" >/dev/null
+          curl -fsS "http://127.0.0.1:4173/cobalt-hollow-lab/lab/f26-combat-beta/f26-beta-qa.json" >/dev/null
+          (cd beta-src && node scripts/highfly_origin_f261_beta_browser.mjs)
+          echo "HIGHFLY_F261_COMPOSITE_PAGES_BROWSER_GREEN=1"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload exact composite Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publish:
+    needs: stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/lab/f261-combat-beta/
+    steps:
+      - name: Deploy additive F2.6.1 without changing F1 or previous labs
+        uses: actions/deploy-pages@v4
+      - name: Verify public F2.6.1 QA identity and preserved F2.6
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,time,urllib.request
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for attempt in range(35):
+              try:
+                  def get(path):
+                      req=urllib.request.Request(base+path+'?f261='+str(attempt),
+                          headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-F261-LIVE-QA'})
+                      with urllib.request.urlopen(req,timeout=40) as r:
+                          if r.status!=200:raise RuntimeError('HTTP_'+str(r.status))
+                          return r.read()
+                  root=json.loads(get('highfly-origin-f12-qa.json'))
+                  old=json.loads(get('lab/f26-combat-beta/f26-beta-qa.json'))
+                  new=json.loads(get('lab/f261-combat-beta/f261-beta-qa.json'))
+                  if root.get('sourceCommit')!='7518c22c11ff5ddffe09bb7792f8d67bb9e82038':
+                      raise RuntimeError('F1_ROOT_CHANGED')
+                  if old.get('sourceCommit')!='2fcc8857d140860129dcfaeb3c7862667e09b089':
+                      raise RuntimeError('F26_CHANGED')
+                  if new.get('sourceCommit')!='0b80d0d4926441c4cff14f4893193d96e713cc43':
+                      raise RuntimeError('F261_WRONG_SOURCE')
+                  if b'/cobalt-hollow-lab/assets/' not in get('lab/f261-combat-beta/index.html'):
+                      raise RuntimeError('F261_MISSING_ASSETS')
+                  print('HIGHFLY_F261_LIVE_GREEN='+base+'lab/f261-combat-beta/')
+                  break
+              except Exception as e:
+                  print('F261_PAGES_PROPAGATION',attempt,str(e)[:160],flush=True)
+                  time.sleep(6)
+          else:raise SystemExit('F261_NOT_PUBLIC')
+          PY
