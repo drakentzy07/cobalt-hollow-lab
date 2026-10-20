@@ -3,6 +3,7 @@
  * teleports the actor, creates a second player, or alters quest progression.
  */
 import type { Sim } from '../../sim/sim';
+import { getActiveHighflyOriginMode, isUnifiedOriginRuntime } from './unified_mode';
 import { ABILITIES } from '../../sim/data';
 import { ORIGIN_VETERAN_POS } from './f1_start';
 import { registerOriginResourceController, type OriginResourceController } from './f1_resource_bridge';
@@ -37,7 +38,7 @@ export function mountOriginF1WorldUi(
   sim: Sim, initial: OriginF1Save, onStarterGranted: () => void,
 ): OriginF1WorldUi {
   document.getElementById('hf-origin-f1-hud')?.remove();
-  const f27Preview=location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/');
+  const f27Preview=(isUnifiedOriginRuntime() || location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/'));
   const f263=f27Preview||location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/');
   if(f27Preview)document.body.classList.add('hf-origin-f27');
   const f262=f263||location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/');
@@ -166,7 +167,10 @@ export function mountOriginF1WorldUi(
     // F2.7 beta ONLY: four non-persistent preview abilities. Do not mutate
     // learnedAbilityIds, trainer prices, XP, or the player's saved progression.
     const trial=f27Preview?['fireball','sinister_strike','highfly_blade_rush','meteor']:[];
+    // Unified WORLD never receives free trial spells. LAB and historical beta do.
+    if(isUnifiedOriginRuntime() && getActiveHighflyOriginMode()==='world') trial.length=0;
     const available=[...new Set([...(current.learnedAbilityIds??[]),...trial])];
+    const previewBypass = f27Preview && (!isUnifiedOriginRuntime() || getActiveHighflyOriginMode()==='lab');
     hunter.known=available.flatMap(id=>{
       const row=ORIGIN_F23_MASTER_SKILLS.find(x=>x.id===id);
       // Extend the native Onrush definition, keeping the SAME Sim charge route.
@@ -176,7 +180,7 @@ export function mountOriginF1WorldUi(
             cost:0,cooldown:12,range:16,minRange:3,highflyStaminaCost:18,
             effects:[{type:'charge' as const}],castWhileMoving:true}
         : ABILITIES[id] : undefined;
-      if(!row || !def || (!f27Preview && def.learnLevel>sim.player.level) || def.hiddenFromPlayer)return [];
+      if(!row || !def || (!previewBypass && def.learnLevel>sim.player.level) || def.hiddenFromPlayer)return [];
       const useDef=f26 && id==='fireball'
         ? {...def,castTime:0,cooldown:3,requiresTarget:false,castWhileMoving:true}
         : f26 && (id==='charge'||id==='heroic_leap')
