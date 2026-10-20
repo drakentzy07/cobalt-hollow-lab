@@ -58,6 +58,14 @@ jobs:
           name: github-pages
           path: baseline
 
+      - name: Checkout pinned Pages staging guard (workflow source only)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: pages-ci
+          persist-credentials: false
+          filter: blob:none
+
       - name: Checkout immutable F2.3 Android beta source
         uses: actions/checkout@v4
         with:
@@ -78,7 +86,7 @@ jobs:
           grep -F "ATTACK_MOVE_MELEE_STOP ** 2" beta-src/src/main.ts
           test -s beta-src/scripts/highfly_origin_f23_beta_browser.mjs
           test -s beta-src/tests/highfly_origin_f23_skill_master.test.ts
-          test -s scripts/highfly_origin_f23_stage_safe.py
+          test -s pages-ci/scripts/highfly_origin_f23_stage_safe.py
           test -s beta-src/scripts/highfly_origin_f23_beta_browser.mjs
           echo "HIGHFLY_F2_IMMUTABLE_BETA_AND_F1_ISOLATION_GREEN=1"
 
@@ -146,7 +154,7 @@ jobs:
         run: |
           set -euo pipefail
           test -s baseline/artifact.tar
-          python3 scripts/highfly_origin_f23_stage_safe.py \
+          python3 pages-ci/scripts/highfly_origin_f23_stage_safe.py \
             baseline/artifact.tar beta-src/dist site d3fa189b086b4c38d48aa770415de6cb2c5dcdc6
 
       - name: Browser test beta entry, ATK, weapon and independent save
