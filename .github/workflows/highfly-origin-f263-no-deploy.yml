@@ -1,0 +1,166 @@
+name: HIGHFLY F2.6.3 — Native Reuse Combat HUD QA (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-origin-f263-collision-gesture-save-polish-20261020]
+    paths:
+      - ".github/workflows/highfly-origin-f263-no-deploy.yml"
+      - "src/**"
+      - "tests/highfly_origin_f21_reuse_audit.test.ts"
+      - "tests/highfly_origin_f23_hunter_unchained.test.ts"
+      - "tests/highfly_origin_f24_free_combat.test.ts"
+      - "tests/highfly_origin_f24_aim.test.ts"
+      - "tests/highfly_origin_f26_skillshot.test.ts"
+      - "tests/highfly_origin_f261_controls.test.ts"
+      - "tests/highfly_origin_f262_skillshot.test.ts"
+      - "tests/highfly_origin_f263_regression.test.ts"
+      - "tests/highfly_origin_f25_combat_unleashed.test.ts"
+      - "scripts/highfly_origin_f262_beta_browser.mjs"
+      - "scripts/highfly_origin_f262_beta_browser.mjs"
+      - "tests/highfly_origin_f23_skill_master.test.ts"
+      - "src/highfly/origin/f1_core.ts"
+      - "src/highfly/origin/f1_world_ui.ts"
+      - "tests/highfly_origin_f22_integrated_combat.test.ts"
+      - "tests/highfly_origin_f1_universal_hunter.test.ts"
+      - "tests/highfly_origin_f123_reset_hud.test.ts"
+      - "tests/highfly_game_c28.test.ts"
+      - "scripts/highfly_origin_f2_beta_browser.mjs"
+      - "scripts/highfly_origin_f22_beta_browser.mjs"
+      - "scripts/highfly_origin_f23_beta_browser.mjs"
+      - "src/highfly/game_c1_runtime.ts"
+      - "scripts/highfly_origin_f22_stage_safe.py"
+      - "src/game/highfly_offline_save.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-origin-f263-critical-fixes
+  cancel-in-progress: true
+
+jobs:
+  android_safe_qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout F2.6.3 isolated work — NOT Pages
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+
+      - name: Enforce one native Sim, F2.1 foundation and no donor replacement
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s src/highfly/combat/freedom_360.ts
+          test -s src/highfly/origin/f1_core.ts
+          test -s src/highfly/origin/f1_resource_bridge.ts
+          test -s src/ui/spellbook_window.ts
+          grep -F 'mi.highflyAirDashEnabled = document.body.classList.contains' src/main.ts
+          grep -F 'document.body.classList.contains' src/highfly/game_c1_runtime.ts
+          echo "HIGHFLY_F263_EXISTING_SYSTEMS_REUSED_GREEN=1"
+
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Restore dependencies without package changes
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Typecheck and pre-existing F1 / F2 / C28 plus F2.6.3 regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec tsc --noEmit --incremental false
+          pnpm exec vitest run --exclude 'training/tests/**' \
+            tests/highfly_origin_f26_skillshot.test.ts \
+            tests/highfly_origin_f261_controls.test.ts \
+            tests/highfly_origin_f262_skillshot.test.ts \
+            tests/highfly_origin_f263_regression.test.ts \
+            tests/highfly_origin_f21_reuse_audit.test.ts \
+            tests/highfly_origin_f23_hunter_unchained.test.ts \
+            tests/highfly_origin_f24_free_combat.test.ts \
+            tests/highfly_origin_f24_aim.test.ts \
+            tests/highfly_origin_f25_combat_unleashed.test.ts \
+            tests/highfly_origin_f23_skill_master.test.ts \
+            tests/highfly_origin_f22_integrated_combat.test.ts \
+            tests/highfly_origin_f2_freedom360.test.ts \
+            tests/highfly_origin_f1_universal_hunter.test.ts \
+            tests/highfly_origin_f122_mobile_ux_save.test.ts \
+            tests/highfly_origin_f123_reset_hud.test.ts \
+            tests/highfly_game_c1.test.ts \
+            tests/highfly_game_c28.test.ts
+          echo "HIGHFLY_F263_TYPES_EXISTING_TESTS_GREEN=1"
+
+      - name: Mount frozen native donor WORLD assets only
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: donor-media
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /public/
+
+      - name: Compile complete Android-first WebGL F2.6.3 without publication
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          test "$(git -C donor-media rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          rsync -a donor-media/public/ public/
+          node scripts/build_bundle_pregen.mjs
+          pnpm exec vite build
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          node scripts/highfly_f11_appshell.mjs
+          test -s dist/index.html
+          echo "HIGHFLY_F263_WEBGL_LOCAL_BUILD_GREEN=1"
+
+      - name: S23 landscape E2E — three live 3D weapons, moving ATK, aerial chain, save
+        shell: bash
+        env:
+          F2_BETA_URL: "http://127.0.0.1:4173/cobalt-hollow-lab/lab/f2-combat-beta/"
+        run: |
+          set -euo pipefail
+          command -v google-chrome || command -v chromium || command -v chromium-browser
+          mkdir -p dist/lab/f2-combat-beta
+          cp dist/index.html dist/lab/f2-combat-beta/index.html
+          cp dist/highfly-origin.webmanifest dist/lab/f2-combat-beta/
+          cp dist/highfly-origin-icon-192.png dist/lab/f2-combat-beta/
+          cp dist/highfly-origin-icon-512.png dist/lab/f2-combat-beta/
+          mkdir -p f262-web
+          ln -s ../dist f262-web/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory f262-web >/tmp/highfly-f262-static.log 2>&1 &
+          P=$!
+          trap 'kill "$P" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -fsSI "$F2_BETA_URL" >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_origin_f2_beta_browser.mjs
+          # Verify the release path, not just the predecessor lab path: its
+          # data must NOT load, overwrite or reset either F1 or F2.
+          mkdir -p dist/lab/f262-combat-beta
+          cp dist/index.html dist/lab/f262-combat-beta/index.html
+          cp dist/highfly-origin.webmanifest dist/lab/f262-combat-beta/
+          cp dist/highfly-origin-icon-192.png dist/lab/f262-combat-beta/
+          cp dist/highfly-origin-icon-512.png dist/lab/f262-combat-beta/
+          F263_BETA_URL="http://127.0.0.1:4173/cobalt-hollow-lab/lab/f262-combat-beta/" node scripts/highfly_origin_f262_beta_browser.mjs
+          echo "HIGHFLY_F263_S23_BROWSER_GREEN=1"
+
+      - name: No public Pages was touched
+        shell: bash
+        run: |
+          test ! -f dist/CNAME
+          echo "HIGHFLY_F263_NO_DEPLOY_GREEN=1"
