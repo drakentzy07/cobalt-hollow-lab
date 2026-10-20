@@ -118,6 +118,28 @@ try {
   },{timeout:25000});
   const sword=await page.evaluate(heldBody);
   if(sword.held.length<1)throw Error('F23_SWORD_IN_INVENTORY_BUT_NOT_IN_HAND '+JSON.stringify(sword));
+  // F2.3: the Veteran is a real paid teacher, not just a cosmetic skill list.
+  // Supply TEST-ONLY earned currency through the native Sim, pay exactly five,
+  // hydrate the spellbook and confirm the save keeps it (no free spawn skills).
+  await page.evaluate(()=>{
+    const g=window.__game;
+    g.sim.players.get(g.sim.playerId).copper=25;
+    document.getElementById('hf-origin-f1-open')?.click();
+  });
+  await page.waitForSelector('#hf-origin-f23-trainer [data-learn-skill="fireball"]',{visible:true,timeout:15000});
+  await page.evaluate(()=>document.querySelector('[data-learn-skill="fireball"]')?.click());
+  await page.waitForFunction(()=>window.__game?.sim?.known?.some(k=>k.def.id==='fireball'),{timeout:18000});
+  const skillPurchase=await page.evaluate(()=>{
+    const g=window.__game;
+    const hunter=g.sim.players.get(g.sim.playerId);
+    const save=JSON.parse(localStorage.getItem('highfly.origin.f23-combat-beta.primary.v1')??'null');
+    return {copper:hunter.copper,known:g.sim.known.map(k=>k.def.id),
+      manaType:g.sim.player.resourceType,persisted:save?.originF1?.learnedAbilityIds};
+  });
+  if(skillPurchase.copper!==20 || !skillPurchase.known.includes('fireball') ||
+     skillPurchase.manaType!=='mana'||!skillPurchase.persisted?.includes('fireball'))
+    throw Error('F23_MASTER_TRAINING_NOT_PERSISTENT '+JSON.stringify(skillPurchase));
+  await page.evaluate(()=>document.getElementById('hf-origin-f1-close')?.click());
   const swaps=[];
   for(const weapon of ['rusty_hatchet','training_mace','worn_sword']){
     await page.evaluate((id)=>{
