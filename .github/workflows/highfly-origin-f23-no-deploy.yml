@@ -7,6 +7,9 @@ on:
       - "src/**"
       - "tests/highfly_origin_f21_reuse_audit.test.ts"
       - "tests/highfly_origin_f23_hunter_unchained.test.ts"
+      - "tests/highfly_origin_f23_skill_master.test.ts"
+      - "src/highfly/origin/f1_core.ts"
+      - "src/highfly/origin/f1_world_ui.ts"
       - "tests/highfly_origin_f22_integrated_combat.test.ts"
       - "tests/highfly_origin_f1_universal_hunter.test.ts"
       - "tests/highfly_origin_f123_reset_hud.test.ts"
@@ -69,6 +72,7 @@ jobs:
           pnpm exec vitest run --exclude 'training/tests/**' \
             tests/highfly_origin_f21_reuse_audit.test.ts \
             tests/highfly_origin_f23_hunter_unchained.test.ts \
+            tests/highfly_origin_f23_skill_master.test.ts \
             tests/highfly_origin_f22_integrated_combat.test.ts \
             tests/highfly_origin_f2_freedom360.test.ts \
             tests/highfly_origin_f1_universal_hunter.test.ts \

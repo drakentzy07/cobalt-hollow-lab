@@ -3,6 +3,7 @@
  * teleports the actor, creates a second player, or alters quest progression.
  */
 import type { Sim } from '../../sim/sim';
+import { ABILITIES } from '../../sim/data';
 import { ORIGIN_VETERAN_POS } from './f1_start';
 import { registerOriginResourceController, type OriginResourceController } from './f1_resource_bridge';
 import {
@@ -10,6 +11,8 @@ import {
   consumeF1Resource,
   swapOriginStarter,
   ORIGIN_STARTER_WEAPONS,
+  ORIGIN_F23_MASTER_SKILLS,
+  originCanTrainSkill,
   tickF1Resources,
   type OriginF1Save,
 } from './f1_core';
@@ -113,12 +116,39 @@ export function mountOriginF1WorldUi(
   backdrop.style.zIndex='3200';
   document.body.append(root,backdrop);
   let current=structuredClone(initial);
+  const f23Trainer=location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/');
+  // One native Sim, one Hunter. Persist knowledge in the existing Origin save,
+  // not in the donor Warrior's level-up list, which is intentionally disabled.
+  // Hydrate only the explicitly learned spells into its already-authoritative
+  // native spellbook and cast pipeline, with their native cost/effects.
+  const hunter=sim.players.get(sim.playerId);
+  const hydrateMasterSkills=()=>{
+    if(!f23Trainer || !hunter)return;
+    hunter.known=(current.learnedAbilityIds??[]).flatMap(id=>{
+      const row=ORIGIN_F23_MASTER_SKILLS.find(x=>x.id===id);
+      const def=row ? ABILITIES[id] : undefined;
+      if(!row || !def || def.learnLevel>sim.player.level || def.hiddenFromPlayer)return [];
+      return [{def,rank:1,cost:def.cost,castTime:def.castTime,cooldown:def.cooldown,
+        effects:def.effects,threatFlat:def.threat?.flat??0,threatMult:def.threat?.mult??1}];
+    });
+  };
+  if(f23Trainer){
+    // ORIGIN uses MP for every acquired school; ST remains the separate
+    // physical-attacks pool. Donor characters retain their original resource.
+    sim.player.resourceType='mana';
+    sim.player.maxResource=current.resources.maxMana;
+    sim.player.resource=current.resources.mana;
+    hydrateMasterSkills();
+  }
   const resourceController: OriginResourceController = {
-    canSpend: (kind, amount) => consumeF1Resource(current.resources,kind,amount)!==null,
+    canSpend: (kind, amount) => consumeF1Resource(f23Trainer && kind==='mana'
+      ? {...current.resources,mana:sim.player.resource} : current.resources,kind,amount)!==null,
     spend: (kind, amount) => {
-      const next=consumeF1Resource(current.resources,kind,amount);
+      const live=f23Trainer && kind==='mana' ? {...current.resources,mana:sim.player.resource} : current.resources;
+      const next=consumeF1Resource(live,kind,amount);
       if(!next)return false;
       current={...current,resources:next};
+      if(f23Trainer && kind==='mana')sim.player.resource=next.mana;
       return true;
     },
   };
@@ -184,6 +214,47 @@ export function mountOriginF1WorldUi(
     });
     options.append(b);
   }
+  if(f23Trainer){
+    const title=node('h3','MAESTRO · APRENDER HABILIDADES');
+    title.style.cssText='margin:16px 0 6px;font-size:15px;color:#f1d29b';
+    const info=node('p','Aprendé las nueve escuelas progresivamente. Estas cuatro técnicas se compran con monedas y nivel; nunca se regalan al elegir un arma. Para equiparlas, abrí el Libro de Habilidades.');
+    info.style.cssText='font-size:12px;line-height:1.45;margin:0 0 8px';
+    const list=node('div','','hf-origin-f23-trainer');
+    list.id='hf-origin-f23-trainer';
+    list.style.cssText='display:flex;flex-direction:column;gap:7px';
+    const refresh=()=>{
+      list.replaceChildren();
+      const learned=current.learnedAbilityIds??[];
+      for(const skill of ORIGIN_F23_MASTER_SKILLS){
+        const known=learned.includes(skill.id);
+        const eligible=originCanTrainSkill(skill.id,sim.player.level,hunter?.copper??0,learned);
+        const button=node('button',skill.label+' · '+(known?'APRENDIDA':skill.copper+' cobre · NV '+skill.level));
+        button.type='button';button.dataset.learnSkill=skill.id;
+        button.disabled=known;
+        button.style.cssText='width:100%;min-height:44px;padding:9px 10px;border:1px solid #a7a27b;border-radius:8px;background:#33465d;color:white;text-align:left;font:650 12px system-ui;touch-action:manipulation;opacity:'+(known?'.64':'1');
+        button.addEventListener('click',()=>{
+          const earned=current.learnedAbilityIds??[];
+          if(!hunter || !originCanTrainSkill(skill.id,sim.player.level,hunter.copper,earned)){
+            status.textContent='Necesitás el nivel indicado y monedas suficientes para aprender esta técnica.';return;
+          }
+          hunter.copper-=skill.copper;
+          current={...current,learnedAbilityIds:[...earned,skill.id]};
+          hydrateMasterSkills();
+          onStarterGranted(); // existing save/refresh hook, not a weapon reward
+          status.textContent='¡Técnica aprendida! Abrí tu libro para asignarla al HUD.';
+          refresh();
+        });
+        if(!eligible && !known)button.title='Falta nivel o cobre';
+        list.append(button);
+      }
+    };
+    // Reuse the existing full-screen scrollable Veteran dialog, not a second
+    // overlay beneath the joystick or a class-selection menu.
+    modal.insertBefore(title,closeButton);
+    modal.insertBefore(info,closeButton);
+    modal.insertBefore(list,closeButton);
+    talk.addEventListener('click',refresh);
+  }
   const timer=window.setInterval(()=>{
     if(!root.isConnected) {window.clearInterval(timer);return;}
     // HUD frames may remount/move AFTER the game-ready callback. Always seat
@@ -192,6 +263,10 @@ export function mountOriginF1WorldUi(
     if(liveFrame && meter.parentElement !== liveFrame) liveFrame.append(meter);
     const now=performance.now();
     current={...current,resources:tickF1Resources(current.resources,(now-last)/1000)};
+    if(f23Trainer){
+      current.resources.mana=sim.player.resource;
+      current.resources.maxMana=sim.player.maxResource;
+    }
     last=now;
     const p=sim.player;
     for(const [key,cur,max] of [
@@ -204,8 +279,10 @@ export function mountOriginF1WorldUi(
     }
     const dx=p.pos.x-ORIGIN_GUIDE_POS.x, dz=p.pos.z-ORIGIN_GUIDE_POS.z;
     const nearby=(dx*dx+dz*dz)<(8*8);
-    talk.textContent = current.starterClaimed?'VETERANO DEL CAMINO · CAMBIAR ARMA':'VETERANO DEL CAMINO · ELEGIR ARMA';
-    guide.style.display = nearby && !current.starterClaimed ? 'block':'none';
+    talk.textContent = f23Trainer
+      ? 'VETERANO · ARMAS Y MAESTRÍA'
+      : (current.starterClaimed?'VETERANO DEL CAMINO · CAMBIAR ARMA':'VETERANO DEL CAMINO · ELEGIR ARMA');
+    guide.style.display = nearby && (f23Trainer || !current.starterClaimed) ? 'block':'none';
     if (!nearby) {
       if (open) setOpen(false);
     }

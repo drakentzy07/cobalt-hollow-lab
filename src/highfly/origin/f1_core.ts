@@ -11,6 +11,21 @@ export const ORIGIN_STARTER_WEAPONS = [
   { id: 'training_mace', label: 'Maza de entrenamiento' },
 ] as const;
 export type OriginStarterId = (typeof ORIGIN_STARTER_WEAPONS)[number]['id'];
+/** F2.3: four authored native skills, bought from the Veteran, never awarded
+ * by weapon choice, level-up or initial spawn. The rest of the 9-school book
+ * remains discoverable but NOT granted until a trainer/reward teaches it. */
+export const ORIGIN_F23_MASTER_SKILLS = [
+  { id:'fireball', label:'Cinderbolt · proyectil de fuego', school:'mage', level:1, copper:5 },
+  { id:'charge', label:'Onrush · avance físico', school:'warrior', level:3, copper:10 },
+  { id:'frost_nova', label:'Frost Nova · área circular', school:'mage', level:3, copper:10 },
+  { id:'heroic_leap', label:'Vaulting Charge · salto dirigido', school:'warrior', level:6, copper:20 },
+] as const;
+export type OriginMasterSkillId = (typeof ORIGIN_F23_MASTER_SKILLS)[number]['id'];
+export function originCanTrainSkill(skillId:string, hunterLevel:number, copper:number, learned:readonly string[]):boolean {
+  const row=ORIGIN_F23_MASTER_SKILLS.find(s=>s.id===skillId);
+  return !!row && Number.isFinite(hunterLevel) && hunterLevel>=row.level &&
+    Number.isFinite(copper) && copper>=row.copper && !learned.includes(skillId);
+}
 
 export interface OriginResources {
   mana: number;
@@ -23,6 +38,8 @@ export interface OriginF1Save {
   starterClaimed: boolean;
   starterWeaponId: OriginStarterId | null;
   resources: OriginResources;
+  /** Acquired via an in-world teacher; optional for unchanged F1/F2 saves. */
+  learnedAbilityIds?: string[];
 }
 
 export function f1StartState(): OriginF1Save {
@@ -46,6 +63,7 @@ export function normalizeOriginF1Save(value: unknown): OriginF1Save | null {
     version: ORIGIN_F1_SCHEMA,
     starterClaimed: raw.starterClaimed === true,
     starterWeaponId: raw.starterClaimed === true ? starterId : null,
+    ...(Array.isArray(raw.learnedAbilityIds) ? { learnedAbilityIds: [...new Set(raw.learnedAbilityIds)].filter(id => ORIGIN_F23_MASTER_SKILLS.some(s => s.id === id)) } : {}),
     resources: {
       mana: clamp(finite(r?.mana, maxMana), 0, maxMana), maxMana,
       stamina: clamp(finite(r?.stamina, maxStamina), 0, maxStamina), maxStamina,
