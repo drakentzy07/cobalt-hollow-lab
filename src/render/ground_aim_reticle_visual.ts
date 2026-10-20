@@ -21,7 +21,7 @@ export interface GroundAimVisualState {
   color: number;
   dimmed: boolean;
   blocked?: boolean;
-  shape?: 'line'|'cone'|'circle'|'leap';
+  shape?: 'line'|'cone'|'circle'|'leap'|'ground-circle';
   originX?:number;
   originZ?:number;
   bend?:number;
@@ -175,7 +175,7 @@ export class GroundAimReticleVisual {
   private rebuildDirectional(aim:GroundAimVisualState):void{
     const shape=aim.shape;
     const p=this.directionalGeometry.getAttribute('position') as THREE.BufferAttribute;
-    if(!shape||shape==='circle'||shape==='leap' ||
+    if(!shape||shape==='circle'||shape==='ground-circle'||shape==='leap' ||
        !Number.isFinite(aim.originX)||!Number.isFinite(aim.originZ)){
       this.directionalGeometry.setDrawRange(0,0);
       this.softLaneGeometry.setDrawRange(0,0);return;
