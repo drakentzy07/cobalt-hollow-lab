@@ -419,8 +419,14 @@ export async function loadOriginHunterSave(
   name?: string,
 ): Promise<HighflyOfflineSave | null> {
   const ownPrimary = newest(readLocal(ORIGIN_LOCAL_KEY), await readIdbKey(ORIGIN_PRIMARY_SLOT_KEY));
+  // F2.6.3 opt-in only: carry the previous isolated beta's Hunter forward
+  // ONCE, without ever rewriting or deleting the old F2.6.2 slot.
+  // A newer saved F2.6.3 Hunter always wins on subsequent boots.
+  const previousBeta = F263_PAGES_LAB
+    ? readLocal('highfly.origin.f262-combat-beta.primary.v1') : null;
+  const priorHunter = hasOriginIdentity(previousBeta) ? previousBeta : null;
   const oldPrimary = F2_PAGES_LAB ? null : newest(readLocal(), await readIdbKey(PRIMARY_SLOT_KEY));
-  const primary = ownPrimary ?? (hasOriginIdentity(oldPrimary) ? oldPrimary : null);
+  const primary = ownPrimary ?? priorHunter ?? (hasOriginIdentity(oldPrimary) ? oldPrimary : null);
   if (!playerClass || !name) return primary;
   const ownExact = await readIdbKey(originIdentitySlotKey(playerClass, name));
   const oldExact = F2_PAGES_LAB ? null : await readIdbKey(identitySlotKey(playerClass, name));
