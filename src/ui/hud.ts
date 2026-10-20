@@ -7390,7 +7390,6 @@ export class Hud {
       this.highflyComboEvadeGraceUsed = false;
     }
 
-    const elemental = this.onHighflyElementalFinisherReady?.() ?? false;
     // F2.7: the fourth PHYSICAL contact is always reachable. An equipped
     // elemental gem enriches it; it never gates an entire authored animation.
     const next: 1 | 2 | 3 | 4 =
