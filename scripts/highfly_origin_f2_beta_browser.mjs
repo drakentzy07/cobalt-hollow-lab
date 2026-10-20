@@ -97,6 +97,113 @@ try {
   await page.waitForFunction(()=>document.getElementById('hf-origin-f1-modal-backdrop')?.style.display==='flex',{timeout:15000});
   await page.evaluate(()=>document.querySelector('#hf-origin-f1-options [data-starter="worn_sword"]')?.click());
   await page.waitForFunction(()=>window.__game.sim.players.get(window.__game.sim.playerId)?.equipment.mainhand==='worn_sword',{timeout:15000});
+  // F2.2: logical inventory equality was not enough. Count the REAL GLB
+  // prop holders in the ACTIVE skinned rig (no screenshot/DOM shortcuts).
+  const heldBody=() => ({
+    equipment:window.__game?.sim?.players?.get(window.__game.sim.playerId)?.equipment?.mainhand,
+    held:(()=>{
+      const v=window.__game?.renderer?.views?.get(window.__game.sim.playerId)?.visual;
+      const holders=[];
+      v?.model?.traverse?.(o=>{if(o.userData?.swapWeaponHolder)holders.push(o.uuid)});
+      return holders;
+    })()
+  });
+  await page.waitForFunction(heldBody,{timeout:15000}).catch(()=>{});
+  await page.waitForFunction(()=>{
+    const v=window.__game?.renderer?.views?.get(window.__game.sim.playerId)?.visual;
+    let count=0;v?.model?.traverse?.(o=>{if(o.userData?.swapWeaponHolder)count++});
+    return count>0;
+  },{timeout:25000});
+  const sword=await page.evaluate(heldBody);
+  if(sword.held.length<1)throw Error('F22_SWORD_IN_INVENTORY_BUT_NOT_IN_HAND '+JSON.stringify(sword));
+  const swaps=[];
+  for(const weapon of ['rusty_hatchet','training_mace','worn_sword']){
+    await page.evaluate((id)=>{
+      const sim=window.__game.sim;
+      // An inventory pickup—not a second Veteran grant—is how later gear is changed.
+      if(!sim.players.get(sim.playerId).inventory.some(slot=>slot?.itemId===id))
+        sim.addItem(id,1,sim.playerId);
+      sim.equipItemToSlot(id,'mainhand');
+    },weapon);
+    await page.waitForFunction(id=>{
+      const sim=window.__game.sim;
+      return sim.players.get(sim.playerId)?.equipment?.mainhand===id &&
+        sim.player.mainhandItemId===id;
+    },{timeout:12000},weapon);
+    await page.waitForFunction(oldUuid=>{
+      const v=window.__game?.renderer?.views?.get(window.__game.sim.playerId)?.visual;
+      let count=0;
+      v?.model?.traverse?.(o=>{if(o.userData?.swapWeaponHolder && o.uuid!==oldUuid)count++});
+      return count>0;
+    },{timeout:22000},swaps.length?swaps[swaps.length-1].held[0]:sword.held[0]);
+    const current=await page.evaluate(heldBody);
+    if(current.held.length<1)throw Error('F22_EQUIPMENT_RENDER_MISSING '+weapon);
+    swaps.push(current);
+  }
+  // Verify physical ATK is now an OVERLAY while real run gait remains active.
+  await page.evaluate(()=>window.__game.input.setHighflyTouchVector({x:0,y:-1}));
+  await page.waitForFunction(()=>{
+    const v=window.__game?.renderer?.views?.get(window.__game.sim.playerId)?.visual;
+    return v?.originGroundMoving===true;
+  },{timeout:14000});
+  const comboBefore=await page.evaluate(()=>Number(document.body.dataset.highflyBasicAttackCount||0));
+  await page.touchscreen.tap(state.atk.x+state.atk.w/2,state.atk.y+state.atk.h/2);
+  await page.waitForFunction(n=>Number(document.body.dataset.highflyBasicAttackCount||0)>n,{timeout:12000},comboBefore);
+  await page.waitForFunction(()=>{
+    const v=window.__game?.renderer?.views?.get(window.__game.sim.playerId)?.visual;
+    return v?.originUpperAttack?.size>0;
+  },{timeout:14000});
+  const movingAttack=await page.evaluate(()=>{
+    const v=window.__game.renderer.views.get(window.__game.sim.playerId)?.visual;
+    return {maskedClips:v.originUpperAttack.size,fullBodyBlocking:v.currentIsOneShot===true,
+      groundMoving:v.originGroundMoving};
+  });
+  if(movingAttack.maskedClips<1||movingAttack.fullBodyBlocking)
+    throw Error('F22_SKATING_STILL_FULL_BODY '+JSON.stringify(movingAttack));
+  // The moving-attack test holds a continuous left stick. Release it BEFORE
+  // starting the next independent chain or the player may run off the town
+  // terrain while Puppeteer waits for GPU pose updates.
+  await page.evaluate(()=>window.__game.input.clearHighflyTouchVector());
+  await page.waitForFunction(()=>{
+    const p=window.__game?.sim?.player;
+    return p && p.onGround && !p.dead && !p.climb && !p.mountKey;
+  },{timeout:10000});
+  // Real INPUT edges into the ONE Sim: first jump -> airborne dodge -> second
+  // directional jump. The authored flip belongs to the renderer, not teleport.
+  // Software-GPU CI can drop below 5fps under GLB compilation, while the
+  // production tap latch is intentionally 220ms. Keep the exact real edge
+  // but lengthen its QA holding interval until the next simulation tick.
+  await page.evaluate(()=>{
+    window.__game.input.triggerTouchJump();
+    window.__game.input.touchJumpUntil=performance.now()+1500;
+  });
+  const jumpStarted=await page.waitForFunction(()=>window.__game?.sim?.player?.jumping===true,{timeout:12000})
+    .then(()=>true).catch(()=>false);
+  if(!jumpStarted) {
+    const diagnosis=await page.evaluate(()=>{
+      const g=window.__game,p=g.sim.player;
+      return {input:g.input.readMoveInput(),suspended:g.input.suspendMovement,
+        jumpSeq:g.input.highflyJumpSeq,lastJumpSeq:p.highflyLastJumpSeq,
+        onGround:p.onGround,jumping:p.jumping,vy:p.vy,dead:p.dead,
+        rooted:p.auras?.map(x=>x.id).slice(0,12),pos:p.pos,time:g.sim.time};
+    });
+    throw Error('F22_FIRST_JUMP_NOT_OBSERVED '+JSON.stringify(diagnosis));
+  }
+  await page.evaluate(()=>window.__game.input.triggerHighflyEvade());
+  await page.waitForFunction(()=>window.__game?.sim?.player?.highflyLastEvadeSeq>0,{timeout:11000});
+  await page.evaluate(()=>window.__game.input.setHighflyTouchVector({x:1,y:0}));
+  await page.evaluate(()=>{
+    window.__game.input.triggerTouchJump();
+    window.__game.input.touchJumpUntil=performance.now()+1500;
+  });
+  await page.waitForFunction(()=>window.__game?.sim?.player?.highflyAirJumpUsed===true,{timeout:15000});
+  const chain=await page.evaluate(()=>({
+    secondJump:window.__game.sim.player.highflyAirJumpUsed,
+    dashEdge:window.__game.sim.player.highflyLastEvadeSeq,
+    flipState:window.__game.renderer.views.get(window.__game.sim.playerId)?.visual?.originWasAirFlip,
+  }));
+  await page.evaluate(()=>window.__game.input.clearHighflyTouchVector());
+  if(!chain.secondJump||!chain.dashEdge)throw Error('F22_PHYSICAL_CHAIN_FAILED '+JSON.stringify(chain));
   const saved=await page.evaluate(()=>({
     beta:JSON.parse(localStorage.getItem('highfly.origin.f2-combat-beta.primary.v1')??'null'),
     f1:localStorage.getItem('highfly.origin.primary.v1')
@@ -108,7 +215,7 @@ try {
   await page.evaluate(()=>document.getElementById('btn-play')?.click());
   await page.waitForFunction(()=>document.getElementById('char-name')?.value==='Wayfarer',{timeout:60000});
   console.log('HIGHFLY_F2_PAGES_BETA_BROWSER_GREEN=1',JSON.stringify({
-    url:BASE,attack,starter:'worn_sword',safeTownBirth:state.pos,
+    url:BASE,attack,starter:'worn_sword',renderedWeapons:[sword,...swaps],movingAttack,physicalChain:chain,safeTownBirth:state.pos,
     innerCrescent:seats,previewHeldProps:before.heldPropCount,legacyButtons:state.legacies,
     saveNamespace:betaKey,
     rootSaveIntact:saved.f1==='F1_SAVE_MUST_SURVIVE',resume:true,

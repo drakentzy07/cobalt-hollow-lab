@@ -5428,6 +5428,8 @@ async function startOffline(
   installHighflyTrainingUi();
 
   const offlineCfg = offlineWorldConfig({
+    // One classless Hunter. The warrior ID is a hidden compatibility carrier.
+    originUniversalHunter: !world,
     playerClass,
     name,
     // A cloned content descriptor changes ONLY this solo Hunter's arrival.
@@ -11546,6 +11548,7 @@ const diagnosticsAutoOffline =
 // Beta cannot register (or update) the public F1 root-scoped service worker.
 if (HIGHFLY_F11_OFFLINE_FIRST && !import.meta.env.DEV &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f2-combat-beta/') &&
+    !location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/') &&
     'serviceWorker' in navigator &&
     (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
   const registerOfflineShell = () => {

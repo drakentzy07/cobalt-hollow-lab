@@ -119,6 +119,7 @@ import { stoneboundShellStyle } from './stonebound_shell_core';
 import { createStowTransition, forceStow, requestStow, tickStow } from './stow_transition';
 import { CharacterSurfaceResponse, SURFACE_RESPONSE_PROGRAM } from './surface_response';
 import { warriorActionBlend } from './warrior_action_blend';
+import { highflyPhysicalBasic, highflySomersaultPitch, isHighflyUpperBodyTrack, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
 import { WarriorActionProps } from './warrior_action_props';
 import { WarriorBodyEffects } from './warrior_body_effects';
 import { SPIN_ATTACK_VISUAL_DURATION, weaponAttackStyle } from './weapon_attack_style_core';
@@ -586,6 +587,14 @@ export class CharacterVisual {
   private mixer: THREE.AnimationMixer;
   private skeletonUpdates: SkeletonUpdateCache;
   private actions = new Map<string, THREE.AnimationAction>();
+  /** Only ORIGIN's Hunter uses attack-on-the-move overlays. Donor rigs retain
+   * their original full-body attacks and normal animation clips. */
+  private originHunterCombat = false;
+  private originGroundMoving = false;
+  private originUpperAttack = new Map<string, THREE.AnimationAction>();
+  private originLastUpperAttack: THREE.AnimationAction | null = null;
+  private originWasAirFlip = false;
+  private originFlipTime = HIGHFLY_SOMERSAULT_SECONDS;
   private model: THREE.Object3D;
   private modelWrap = new THREE.Group();
   private modelWrapGroundY = 0;
@@ -833,7 +842,8 @@ export class CharacterVisual {
     const originHunter = typeof document !== 'undefined' &&
       (document.body.classList.contains('hf-origin-f1-creator') ||
        document.body.classList.contains('hf-origin-f1')) &&
-      key === 'player_warrior_modular' && !weaponOverride;
+      key.startsWith('player_warrior_modular') && !weaponOverride;
+    this.originHunterCombat = originHunter;
     this.def = originHunter
       ? {
           ...prep.def,
@@ -1050,6 +1060,16 @@ export class CharacterVisual {
   /** `animate=false` skips mixer integration (distance throttling); state
    *  edges still latch so the pose catches up when the entity nears. */
   update(dt: number, s: AnimState, animate: boolean, reducedMotion = false): void {
+    this.originGroundMoving = this.originHunterCombat && s.moving &&
+      !s.airborne && !s.swimming && s.speed > 0.6 && !s.dead;
+    // The second physical jump is a rising edge. It rotates the existing rig;
+    // there is NO teleport and no independent simulation movement authority.
+    const flipping = this.originHunterCombat && s.highflyAirFlip === true &&
+      s.airborne && !s.dead;
+    if (flipping && !this.originWasAirFlip) this.originFlipTime = 0;
+    this.originWasAirFlip = flipping;
+    if (!flipping) this.originFlipTime = HIGHFLY_SOMERSAULT_SECONDS;
+    else this.originFlipTime = Math.min(HIGHFLY_SOMERSAULT_SECONDS, this.originFlipTime + dt);
     if (this.surfaceResponse.update(dt, this.root, this.height)) this.applyVisualMaterials();
     // A transparent effect whose clones finished linking: swap them in HERE,
     // on the per-frame path, never in the gate callback (see effectSwapSettled).
@@ -1324,7 +1344,8 @@ export class CharacterVisual {
     // upright body.
     const swimPitch = s.swimPitch * (1 + (TREAD_PITCH_SCALE - 1) * this.treadBlend);
     this.poseWrap.rotation.x =
-      (proneAngle + swimPitch) * this.swimBlend + this.lean + CLIMB_BODY_PITCH * climb * climbLevel;
+      (proneAngle + swimPitch) * this.swimBlend + this.lean + CLIMB_BODY_PITCH * climb * climbLevel +
+      (flipping ? highflySomersaultPitch(this.originFlipTime, reducedMotion) : 0);
     this.poseWrap.rotation.z = 0;
     this.poseWrap.position.y =
       this.swimBlend * (swimRise + Math.sin(this.swimBobTime * 2 + this.bobPhase) * 0.08) +
@@ -1789,7 +1810,50 @@ export class CharacterVisual {
     return override !== undefined && this.action(override) !== null;
   }
 
+  /** Full-body hits while stationary, upper-body ONLY while traveling.
+   * The existing base run/walk drives the legs at the true sim velocity;
+   * authored upper-arm attack rotations blend above it. This removes skating
+   * without altering hitboxes, combo timings, movement speed or the donor. */
+  private playOriginPhysicalGesture(name:string, timeScale:number, physical:boolean):void {
+    if (this.originGroundMoving && physical && this.originHunterCombat) {
+      const source=this.action(name)?.getClip();
+      if (source) {
+        let layer=this.originUpperAttack.get(name);
+        if (!layer) {
+          const tracks=source.tracks.filter(track=>isHighflyUpperBodyTrack(track.name));
+          if (tracks.length >= 4) {
+            const masked=new THREE.AnimationClip('hf_origin_upper_'+name,source.duration,tracks);
+            layer=this.mixer.clipAction(masked);
+            this.originUpperAttack.set(name,layer);
+            this.actions.set(masked.name,layer);
+          }
+        }
+        if (layer) {
+          // Recover from a previous full-body swing before driving a layer.
+          if (this.currentIsOneShot) {
+            this.currentIsOneShot=false;
+            this.fadeTo(this.baseAction(),0.045,false);
+          }
+          if (this.originLastUpperAttack && this.originLastUpperAttack!==layer)
+            this.originLastUpperAttack.fadeOut(0.06);
+          layer.reset();
+          layer.setLoop(THREE.LoopOnce,1);
+          layer.clampWhenFinished=false;
+          layer.timeScale=timeScale;
+          layer.setEffectiveWeight(1);
+          layer.fadeIn(0.045).play();
+          this.originLastUpperAttack=layer;
+          this.currentOneShotIsAttack=false;
+          return;
+        }
+      }
+    }
+    this.playOneShot(name,timeScale);
+    this.currentOneShotIsAttack=true;
+  }
+
   playAttack(abilityId?: string): void {
+    const originPhysical = highflyPhysicalBasic(abilityId);
     if (this.deadLock) return;
     if ((abilityId === 'charge' || abilityId === 'intervene') && this.action(this.def.clips.rush)) {
       this.warriorBody.beginRush(abilityId);
@@ -1830,8 +1894,7 @@ export class CharacterVisual {
       const authoredTimeScale = abilityId
         ? this.def.clips.attackTimeScaleByAbility?.[abilityId]
         : undefined;
-      this.playOneShot(override, authoredTimeScale ?? this.def.attackTimeScale ?? 1.3);
-      this.currentOneShotIsAttack = true;
+      this.playOriginPhysicalGesture(override, authoredTimeScale ?? this.def.attackTimeScale ?? 1.3, originPhysical);
       if (override === PALADIN_TEMPLARS_VERDICT_CLIP) {
         this.templarsVerdictAction = this.action(override);
       } else if (override === PALADIN_BASTION_SWEEP_CLIP) {
@@ -1842,15 +1905,13 @@ export class CharacterVisual {
     const style = weaponAttackStyle(this.weaponItemId, this.offhandItemId);
     const handClip = style ? this.def.clips.attackByHand?.[style] : undefined;
     if (!skinAttack && handClip && this.action(handClip)) {
-      this.playOneShot(handClip, this.def.attackTimeScale ?? 1.3);
-      this.currentOneShotIsAttack = true;
+      this.playOriginPhysicalGesture(handClip, this.def.attackTimeScale ?? 1.3, originPhysical);
       return;
     }
     const clips = skinAttack?.clips ?? this.def.clips.attack;
     if (clips.length === 0) return;
     const name = clips[this.attackIdx++ % clips.length];
-    this.playOneShot(name, skinAttack?.timeScale ?? this.def.attackTimeScale ?? 1.3);
-    this.currentOneShotIsAttack = true;
+    this.playOriginPhysicalGesture(name, skinAttack?.timeScale ?? this.def.attackTimeScale ?? 1.3, originPhysical);
   }
 
   /** Bladed Gyre is instant, so it uses one short body spin instead of the

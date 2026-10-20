@@ -49,6 +49,7 @@ import { ITEMS, NPCS } from './data';
 import { markItemDiscovered } from './deeds';
 import { openEmissaryCache } from './emissary_cache';
 import { recalcPlayerStats } from './entity';
+import { universalHunterCanEquip, universalHunterCanEquipSlot } from '../highfly/origin/universal_equipment';
 import {
   canDualWield,
   canDualWieldTwoHand,
@@ -571,7 +572,8 @@ export function equipItem(
     ctx.error(meta.entityId, 'That does not go in that slot.');
     return;
   }
-  if (!canEquipItem(meta.cls, def)) {
+  const originUniversal = ctx.cfg.originUniversalHunter === true;
+  if (!(originUniversal ? universalHunterCanEquip(def) : canEquipItem(meta.cls, def))) {
     ctx.error(meta.entityId, 'You cannot equip that.');
     return;
   }
@@ -586,9 +588,11 @@ export function equipItem(
   // specialization (desiredEquipSlot), and the chosen slot, aimed or resolved,
   // is re-validated against the spec-aware rules.
   const spec = meta.talents.spec;
-  const slot = targetSlot ?? desiredEquipSlot(meta, itemId);
+  const slot = targetSlot ?? (originUniversal && def.kind === 'weapon' &&
+    weaponHand(def)==='onehand' && meta.equipment.mainhand && !meta.equipment.offhand
+      ? 'offhand' : desiredEquipSlot(meta, itemId));
   if (!slot) return;
-  if (!canEquipItemInSlot(meta.cls, def, slot, spec)) {
+  if (!(originUniversal ? universalHunterCanEquipSlot(def, slot) : canEquipItemInSlot(meta.cls, def, slot, spec))) {
     ctx.error(meta.entityId, 'You cannot equip that.');
     return;
   }
@@ -749,7 +753,9 @@ export function revalidateOffhandForSpec(ctx: SimContext, pid?: number): void {
   if (!offhandId) return;
   const def = ITEMS[offhandId];
   if (!def) return;
-  if (canEquipItemInSlot(meta.cls, def, 'offhand', meta.talents.spec)) return;
+  if (ctx.cfg.originUniversalHunter
+    ? universalHunterCanEquipSlot(def,'offhand')
+    : canEquipItemInSlot(meta.cls, def, 'offhand', meta.talents.spec)) return;
 
   const instance = meta.equipmentInstance?.offhand;
   delete meta.equipment.offhand;

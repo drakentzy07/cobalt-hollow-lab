@@ -11,6 +11,7 @@ export function offlineWorldConfig(options: {
   readonly world?: SimConfig['world'];
   readonly seedOverride?: number;
   readonly devCommands: boolean;
+  readonly originUniversalHunter?: boolean;
 }): SimConfig {
   return {
     lockoutNowMs: Date.now,
@@ -18,6 +19,7 @@ export function offlineWorldConfig(options: {
     weeklyRaidResetMs: nextWeeklyRaidResetMs,
     seed: options.seedOverride ?? WORLD_SEED,
     playerClass: options.playerClass,
+    originUniversalHunter: options.originUniversalHunter === true,
     playerName: options.name,
     devCommands: options.devCommands,
     // Editor play-test maps opt out of the live world's entry features.
