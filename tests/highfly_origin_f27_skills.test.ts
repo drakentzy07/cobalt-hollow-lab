@@ -8,6 +8,7 @@ describe('F2.7 P2: genuine original cross-school skills and native MOBA targetin
     expect(highflyAimShape('fireball')).toBe('line');
     expect(highflyAimShape('sinister_strike')).toBe('cone');
     expect(highflyAimShape('meteor')).toBe('ground-circle');
+    expect(highflyAimShape('highfly_blade_rush')).toBe('dash');
     expect(highflyAimShape('frost_nova')).toBe('circle');
     const placed=highflyWorldAim({x:0,z:0},0,0,-94,30);
     expect(placed.z).toBeCloseTo(30);
@@ -16,7 +17,7 @@ describe('F2.7 P2: genuine original cross-school skills and native MOBA targetin
   it('preserves acquired cross-school IDs while dropping corrupted IDs',()=>{
     const saved=normalizeOriginF1Save({...f1StartState(),learnedAbilityIds:['fireball','meteor','sinister_strike','meteor','unknown']});
     expect(saved?.learnedAbilityIds).toEqual(['fireball','meteor','sinister_strike']);
-    expect(ORIGIN_F23_MASTER_SKILLS.length).toBe(6);
+    expect(ORIGIN_F23_MASTER_SKILLS.length).toBe(7);
     expect(originCanTrainSkill('meteor',1,1000,[])).toBe(false);
     expect(originCanTrainSkill('meteor',16,120,[])).toBe(true);
     expect(originCanTrainSkill('sinister_strike',1,8,[])).toBe(true);
