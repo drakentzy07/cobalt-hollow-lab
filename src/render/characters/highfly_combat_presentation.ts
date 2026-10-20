@@ -53,8 +53,8 @@ export function highflyDirectionalFlip(t:number,dir:'forward'|'back'|'left'|'rig
   if(!Number.isFinite(t)||t<=0||t>=HIGHFLY_SOMERSAULT_SECONDS)return {pitch:0,roll:0};
   const u=Math.max(0,Math.min(1,t/HIGHFLY_SOMERSAULT_SECONDS));
   const turn=2*Math.PI*(u*u*(3-2*u));
-  return dir==='forward' ? {pitch:-turn,roll:0}
+  return dir==='forward' ? {pitch:turn,roll:0}
     : dir==='left' ? {pitch:0,roll:-turn}
     : dir==='right' ? {pitch:0,roll:turn}
-    : {pitch:turn,roll:0};
+    : {pitch:-turn,roll:0};
 }

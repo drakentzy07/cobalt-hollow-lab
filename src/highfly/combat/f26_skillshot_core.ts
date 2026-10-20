@@ -23,7 +23,7 @@ export function highflyF26LateralBend(
  * Actual 3D collision is preserved for airborne enemies. */
 export function highflyF262GroundContact(
   from:HighflyF26Point,to:HighflyF26Point,
-  target:{x:number;z:number}, radius=1.35,
+  target:{x:number;z:number}, radius=2.1,
 ):number|null{
   return highflyF26SegmentSphereHit(
     {x:from.x,y:0,z:from.z},{x:to.x,y:0,z:to.z},

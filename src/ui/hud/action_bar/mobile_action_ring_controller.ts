@@ -255,7 +255,8 @@ export function buildMobileActionRing(deps: MobileActionRingDeps): MobileActionR
       resetCancel();
       suppressClick=true;btn.style.touchAction='';
       try{btn.releasePointerCapture(event.pointerId)}catch{}
-      if(commit)deps.castSlot(currentSlot);
+      // Acknowledging a cancel must never execute the ability.
+      if(commit && !cancel)deps.castSlot(currentSlot);
       event.preventDefault();event.stopImmediatePropagation();
     },{capture:true});
     btn.addEventListener('pointercancel',event=>{
