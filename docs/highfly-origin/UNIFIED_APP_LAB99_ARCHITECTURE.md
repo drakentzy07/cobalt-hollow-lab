@@ -1,5 +1,5 @@
 # HIGHFLY ORIGIN — UNA APP, DOS MODOS + MACRO (20 octubre 2026)
-**Status:** design and pure contract committed in isolated F2.7-derived branch; launcher/save/runtime NOT YET WIRED; NO RUN / NO DEPLOY / NO S23 CERTIFICATION.
+**Status (20 Oct):** UNIFIED 01 launcher, isolated WORLD/LAB saves and native F2.7 four-skill runtime ARE WIRED AND GREEN in automated TypeScript, Vitest, full WebGL build and Chromium touch E2E; **NOT DEPLOYED / NOT YET VERIFIED ON PHYSICAL S23**. Evidence: [UNIFIED_01_RUN_RECEIPT.md](./UNIFIED_01_RUN_RECEIPT.md) / [GitHub Actions RUN #39517223542](https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/39517223542). Additional skill/equipment/loot catalogue and combat polish still pending.
 **Branch historical name:** highfly-origin-unified-app-lab99-20261020 (do not create a new branch just to rename). **LATEST PRODUCT DECISION: DrakenLAB begins at LV1, NOT LV99.**
 
 ## Product decision — one game, no lab-version explosion
