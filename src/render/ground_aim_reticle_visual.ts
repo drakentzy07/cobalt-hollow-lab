@@ -21,7 +21,7 @@ export interface GroundAimVisualState {
   color: number;
   dimmed: boolean;
   blocked?: boolean;
-  shape?: 'line'|'cone'|'circle'|'leap'|'ground-circle';
+  shape?: 'line'|'cone'|'circle'|'leap'|'ground-circle'|'dash';
   originX?:number;
   originZ?:number;
   bend?:number;
@@ -218,6 +218,16 @@ export class GroundAimReticleVisual {
       const vx=tx/td,vz=tz/td;
       segment(end.x-vx*.7-vz*.45,end.z-vz*.7+vx*.45,end.x,end.z);
       segment(end.x-vx*.7+vz*.45,end.z-vz*.7-vx*.45,end.x,end.z);
+    }else if(shape==='dash'){
+      // The two edges describe the native charge ROUTE direction only:
+      // no filled damage corridor, because Blade Rush lands one true melee
+      // strike at the target on physical arrival (not all along this path).
+      this.softLaneGeometry.setDrawRange(0,0);
+      const width=0.75,ox=-uz*width,oz=ux*width;
+      segment(x+ox,z+oz,aim.x+ox,aim.z+oz);
+      segment(x-ox,z-oz,aim.x-ox,aim.z-oz);
+      segment(aim.x-ux*.8-uz*.5,aim.z-uz*.8+ux*.5,aim.x,aim.z);
+      segment(aim.x-ux*.8+uz*.5,aim.z-uz*.8-ux*.5,aim.x,aim.z);
     }else if(shape==='cone'){
       this.softLaneGeometry.setDrawRange(0,0);
       const facing=Math.atan2(ux,uz),angle=0.43;
