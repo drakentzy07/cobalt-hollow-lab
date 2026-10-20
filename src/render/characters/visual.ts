@@ -119,7 +119,7 @@ import { stoneboundShellStyle } from './stonebound_shell_core';
 import { createStowTransition, forceStow, requestStow, tickStow } from './stow_transition';
 import { CharacterSurfaceResponse, SURFACE_RESPONSE_PROGRAM } from './surface_response';
 import { warriorActionBlend } from './warrior_action_blend';
-import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, highflyDirectionalFlip, highflyF263DirectionalFlip, isHighflyUpperBodyTrack, isHighflyLeftArmTrack, highflyWeaponBasicClips, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
+import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, highflyDirectionalFlip, highflyF263DirectionalFlip, isHighflyUpperBodyTrack, isHighflyLeftArmTrack, isHighflyRightArmTrack, highflyDualComboClips, highflyWeaponBasicClips, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
 import { WarriorActionProps } from './warrior_action_props';
 import { WarriorBodyEffects } from './warrior_body_effects';
 import { SPIN_ATTACK_VISUAL_DURATION, weaponAttackStyle } from './weapon_attack_style_core';
@@ -1865,18 +1865,19 @@ export class CharacterVisual {
    * one-shot to an upper mask at low speed was holding the legs in place and
    * looking like slow-motion skating. The ONE native locomotion Sim remains
    * authoritative; donor/non-Hunter attacks retain their original animation. */
-  private playOriginPhysicalGesture(name:string, timeScale:number, physical:boolean, abilityId?:string, leftArmOnly=false):void {
+  private playOriginPhysicalGesture(name:string, timeScale:number, physical:boolean, abilityId?:string, leftArmOnly=false, rightArmOnly=false):void {
     const presentationScale = this.originHunterCombat && physical
       ? highflyComboAnimationRate(abilityId, timeScale) : timeScale;
     if (physical && this.originHunterCombat) {
       const source=this.action(name)?.getClip();
       if (source) {
-        const maskKey=leftArmOnly?name+'__hf_left':name;
+        const maskKey=leftArmOnly?name+'__hf_left':rightArmOnly?name+'__hf_right':name;
         let layer=this.originUpperAttack.get(maskKey);
         if (!layer) {
           const upper=source.tracks.filter(track=>isHighflyUpperBodyTrack(track.name));
-          const tracks=leftArmOnly?upper.filter(track=>isHighflyLeftArmTrack(track.name)):upper;
-          if (tracks.length >= (leftArmOnly?2:4)) {
+          const tracks=leftArmOnly?upper.filter(track=>isHighflyLeftArmTrack(track.name)):
+            rightArmOnly?upper.filter(track=>isHighflyRightArmTrack(track.name)):upper;
+          if (tracks.length >= (leftArmOnly||rightArmOnly?2:4)) {
             const masked=new THREE.AnimationClip('hf_origin_upper_'+maskKey,source.duration,tracks);
             layer=this.mixer.clipAction(masked);
             this.originUpperAttack.set(maskKey,layer);
@@ -1926,12 +1927,16 @@ export class CharacterVisual {
       const f263=this.originHunterCombat && typeof document!=='undefined' &&
         document.body.classList.contains('hf-origin-f263');
       if(f263&&step){
-        // True dual-wield: right contact -> LEFT arm only -> cross slash ->
-        // BOTH arms finish. Only the existing authoritative Sim applies hits.
-        if(dual&&(step===2||step===4)){
-          const dualClip=this.def.clips.attackByHand?.dualwield;
-          if(dualClip&&this.action(dualClip)){
-            this.playOriginPhysicalGesture(dualClip,step===2?1.26:1.1,true,abilityId,step===2);
+        // F2.7: right -> left -> paired rising slice -> paired downstroke.
+        // Exactly one native Sim damage contact per press; legs keep running.
+        if(dual){
+          const fallback=this.def.clips.attackByHand?.dualwield;
+          const choices=[...highflyDualComboClips(step),...(fallback?[fallback]:[])];
+          const clip=choices.find(name=>this.action(name)!==null);
+          if(clip){
+            this.playOriginPhysicalGesture(clip,
+              step===1?1.26:step===2?1.3:step===3?1.15:1.1,
+              true,abilityId,step===2,step===1);
             return;
           }
         }
