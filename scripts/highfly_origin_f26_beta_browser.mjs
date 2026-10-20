@@ -158,6 +158,37 @@ try {
     return {visible:v.group.visible,geometry:v.directionalGeometry.drawRange.count};
   });
   if(worldAim.geometry<4)throw Error('F26_FIREBALL_3D_LINE_NOT_DRAWN '+JSON.stringify(worldAim));
+  // F2.6: use the one authoritative native Sim to prove the new mechanics,
+  // not only the cursor and decorative missile meshes.
+  const f26=await page.evaluate(()=>{
+    const g=window.__game,p=g.sim.player;
+    const a={type:'ability',id:'fireball'};
+    const cancelExists=!!document.getElementById('highfly-f26-aim-cancel');
+    const flashExists=!!document.getElementById('hf-origin-f26-flash');
+    const flashKnown=g.sim.known.some(s=>s.def.id==='blink');
+    const manaBefore=p.resource;
+    g.hud.onHighflyAimGesture?.('cancel',a,0,0);
+    const manaCancelled=p.resource;
+    const end=g.hud.onHighflyAimGesture?.('end',a,0,-94);
+    g.sim.castAbility('fireball');
+    const manaAfterFireball=p.resource;
+    const fireCd=p.cooldowns.get('fireball')??0;
+    g.sim.castAbility('fireball'); // recast refused by the GCD/cooldown
+    const manaAfterRejected=p.resource;
+    g.sim.castAbility('blink'); // off-GCD Flash based on native safe teleport
+    const flashCd=p.cooldowns.get('blink')??0;
+    const manaAfterFlash=p.resource;
+    return {cancelExists,flashExists,flashKnown,manaBefore,manaCancelled,
+      end,manaAfterFireball,manaAfterRejected,fireCd,flashCd,manaAfterFlash};
+  });
+  if(!f26.cancelExists||!f26.flashExists||!f26.flashKnown||
+     f26.manaCancelled!==f26.manaBefore||!f26.end||
+     !(f26.manaAfterFireball<f26.manaBefore)||f26.fireCd<=0||
+     f26.manaAfterRejected!==f26.manaAfterFireball||f26.flashCd<=0||
+     !(f26.manaAfterFlash<f26.manaAfterFireball))
+    throw Error('F26_TRUE_SKILLSHOT_FLASH_CANCEL_NOT_LIVE '+JSON.stringify(f26));
+  console.log('HIGHFLY_F26_TRUE_SKILLSHOT_FLASH_CANCEL_GREEN=1',JSON.stringify(f26));
+
   await page.evaluate(()=>{
     window.__game.hud.onHighflyAimGesture?.('cancel',{type:'ability',id:'fireball'},0,0);
     document.getElementById('hf-origin-f1-close')?.click();
