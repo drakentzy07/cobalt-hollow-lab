@@ -1580,7 +1580,7 @@ export function castAbility(
     const dx=endpoint.x-p.pos.x,dz=endpoint.z-p.pos.z;
     if(!Number.isFinite(dx)||!Number.isFinite(dz)||
        Math.hypot(dx,dz)>ability.range+0.001){ctx.error(p.id,'Out of range.');return;}
-    p.facing=angleTo(p.pos,endpoint);
+    p.facing=angleTo(p.pos,{x:endpoint.x,y:p.pos.y,z:endpoint.z});
   } else if (ability.requiresTarget) {
     if (p.targetId !== null) {
       target = ctx.entities.get(p.targetId) ?? null;
