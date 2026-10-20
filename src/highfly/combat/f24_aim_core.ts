@@ -1,11 +1,13 @@
 /** F2.4 camera-relative skill aiming. Pure presentation math: no second movement motor. */
 export const HIGHFLY_AIM_DRAG_PX=94;
-export type HighflyAimShape='line'|'cone'|'circle'|'leap';
+export type HighflyAimShape='line'|'cone'|'circle'|'leap'|'ground-circle';
 export function highflyAimShape(id:string):HighflyAimShape|null{
   if(id==='fireball')return 'line';
-  if(id==='charge')return 'cone';
+  if(id==='charge'||id==='sinister_strike')return 'cone';
   if(id==='frost_nova')return 'circle';
   if(id==='heroic_leap')return 'leap';
+  // F2.7: world-positioned circular impact, unlike self-centered Frost Nova.
+  if(id==='meteor')return 'ground-circle';
   return null;
 }
 export function highflyWorldAim(from:{x:number;z:number},camYaw:number,dx:number,dy:number,range:number){
