@@ -1977,7 +1977,7 @@ async function startGame(
   hud.onMobileAttackNearest = () => attackNearest();
   hud.onMobileActionIntent = (action) => {
     if((location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') ||
-        (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/')))))) &&
+        (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/'))))))) &&
        action.type==='ability' && highflyAimShape(action.id)){
       // Aimed abilities already chose their target on pointer release.
       return;
@@ -1996,7 +1996,7 @@ async function startGame(
   };
   hud.onHighflyAimGesture=(phase,action,dx,dy)=>{
     if(!(location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') ||
-         (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/')))))) ||
+         (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/'))))))) ||
        action.type!=='ability' || !highflyAimShape(action.id) ||
        !world.known.some(k=>k.def.id===action.id))return false;
     if(phase==='cancel'){f24AimPreview=null;f24AimPending=null;delete world.player.highflyF25EmptyFireballAim;delete world.player.highflyF26FireballAim;return true;}
@@ -2035,7 +2035,7 @@ async function startGame(
       }else if(action.id==='fireball'||action.id==='charge'){
         world.targetEntity(null);
         if(action.id==='fireball'&&
-           (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/')))))){
+           (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/'))))))){
           // Real targetless cast: the ONE Sim bills MP/GCD and checks stun,
           // cast windup and cancellation; the visual projectile deals NO damage.
           p.highflyF25EmptyFireballAim={x:point.x,z:point.z};
@@ -2105,7 +2105,7 @@ async function startGame(
     entryDiagnostics.checkpoint(questDialogOpen ? 'quest-dialog-open' : 'quest-dialog-closed');
   };
 
-  const f25Traversal = (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/')))));
+  const f25Traversal = (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/'))))));
   const canF25Traverse=(kind:'jump'|'evade'):boolean=>{
     if(!f25Traversal)return true;
     const p=world.player;
@@ -11653,7 +11653,7 @@ if (HIGHFLY_F11_OFFLINE_FIRST && !import.meta.env.DEV &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') &&
-    !(location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/'))))) &&
+    !(location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/')))))) &&
     'serviceWorker' in navigator &&
     (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
   const registerOfflineShell = () => {
