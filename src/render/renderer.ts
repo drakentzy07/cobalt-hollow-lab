@@ -7072,7 +7072,9 @@ export class Renderer {
       case 'highflyBasicWhiff':
         // One actor, one real Rig_Medium attack animation. A whiff is NOT a
         // damage event; no target, damage VFX, combat log or XP is produced.
-        this.triggerAttack(ev.sourceId, 'highfly_basic_' + ev.comboStep);
+        this.triggerAttack(ev.sourceId,
+          this.sim.entities.get(ev.sourceId)?.onGround===false
+            ? 'highfly_basic_air' : 'highfly_basic_' + ev.comboStep);
         break;
       case 'castStart': {
         if (ev.ability === 'needle_of_fate') {

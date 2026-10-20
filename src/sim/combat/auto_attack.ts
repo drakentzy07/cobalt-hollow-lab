@@ -1,3 +1,4 @@
+import { pickHighflyFreeTarget } from './highfly_free_target';
 import { applyHighflyElementalFinisher, highflyElementalFinisherReady, highflyWeaponElement } from './highfly_elemental_basic';
 import { gliderActionsLocked } from '../glider_action_lock';
 import { shadowActionsLocked } from '../shadow_action_lock';
@@ -238,8 +239,20 @@ export function highflyBasicAttack(
   if (isStunned(p) || isDisarmed(p)) return false;
   if (p.auras.some((a) => isTravelFormAuraKind(a.kind))) return false;
 
-  const t = p.targetId !== null ? ctx.entities.get(p.targetId) : null;
-  if (!t || t.dead || !ctx.isHostileTo(p, t) || hasEscapeStealth(t)) {
+  // F2.4: freely reacquire a strikeable hostile even when nothing was marked.
+  // The native Sim remains the only hit/damage/target authority; this is not
+  // auto-attack. The explicit target is preferred only while truly in range.
+  const current = p.targetId !== null ? ctx.entities.get(p.targetId) : null;
+  const valid = (e:Entity) => e.id!==p.id && !e.dead && ctx.isHostileTo(p,e) &&
+    !hasEscapeStealth(e) && (!isArenaPos(p.pos.x)||ctx.hasLineOfSight(p,e));
+  const inReach = (e:Entity) =>
+    dist2d(p.pos,e.pos) <= effectivePlayerAttackRange(e,MELEE_RANGE,meleeReachActor(ctx,p));
+  const t = current && valid(current) && inReach(current)
+    ? current
+    : pickHighflyFreeTarget(ctx.entities.values(),p.pos,p.facing,valid,
+        (e)=>effectivePlayerAttackRange(e,MELEE_RANGE,meleeReachActor(ctx,p)));
+  if(t && p.targetId!==t.id)p.targetId=t.id;
+  if (!t || !valid(t)) {
     // FREEDOM 360: a valid manual ATK press is an actual empty-space swing,
     // not USE and not a silent failed cast. It has no hitbox victim and deals
     // zero damage, while the shared render event plays the real rig clip.
@@ -293,7 +306,7 @@ export function highflyBasicAttack(
   ctx.breakGhostWolf(p);
   const landed = meleeSwing(ctx, p, t, 0, 'HIGHFLY Basic', {
     autoAttackHand: 'mainhand',
-    abilityId: step === 4 && element !== 'base' ? 'highfly_basic_4_' + element : 'highfly_basic_' + step,
+    abilityId: step === 4 && element !== 'base' ? 'highfly_basic_4_' + element : !p.onGround ? 'highfly_basic_air' : 'highfly_basic_' + step,
     weaponMult: 1,
     autoAttack: false,
   });

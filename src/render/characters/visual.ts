@@ -119,7 +119,7 @@ import { stoneboundShellStyle } from './stonebound_shell_core';
 import { createStowTransition, forceStow, requestStow, tickStow } from './stow_transition';
 import { CharacterSurfaceResponse, SURFACE_RESPONSE_PROGRAM } from './surface_response';
 import { warriorActionBlend } from './warrior_action_blend';
-import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, isHighflyUpperBodyTrack, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
+import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, isHighflyUpperBodyTrack, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
 import { WarriorActionProps } from './warrior_action_props';
 import { WarriorBodyEffects } from './warrior_body_effects';
 import { SPIN_ATTACK_VISUAL_DURATION, weaponAttackStyle } from './weapon_attack_style_core';
@@ -595,6 +595,8 @@ export class CharacterVisual {
   private originLastUpperAttack: THREE.AnimationAction | null = null;
   private originWasAirFlip = false;
   private originFlipTime = HIGHFLY_SOMERSAULT_SECONDS;
+  private originAccentAbility:string|undefined;
+  private originAccentElapsed=1;
   private model: THREE.Object3D;
   private modelWrap = new THREE.Group();
   private modelWrapGroundY = 0;
@@ -1070,6 +1072,7 @@ export class CharacterVisual {
     this.originWasAirFlip = flipping;
     if (!flipping) this.originFlipTime = HIGHFLY_SOMERSAULT_SECONDS;
     else this.originFlipTime = Math.min(HIGHFLY_SOMERSAULT_SECONDS, this.originFlipTime + dt);
+    this.originAccentElapsed=Math.min(1,this.originAccentElapsed+dt);
     if (this.surfaceResponse.update(dt, this.root, this.height)) this.applyVisualMaterials();
     // A transparent effect whose clones finished linking: swap them in HERE,
     // on the per-frame path, never in the gate callback (see effectSwapSettled).
@@ -1345,8 +1348,10 @@ export class CharacterVisual {
     const swimPitch = s.swimPitch * (1 + (TREAD_PITCH_SCALE - 1) * this.treadBlend);
     this.poseWrap.rotation.x =
       (proneAngle + swimPitch) * this.swimBlend + this.lean + CLIMB_BODY_PITCH * climb * climbLevel +
-      (flipping ? highflySomersaultPitch(this.originFlipTime, reducedMotion) : 0);
-    this.poseWrap.rotation.z = 0;
+      (flipping ? highflySomersaultPitch(this.originFlipTime, false) : 0) +
+      (this.originHunterCombat ? highflyComboAccent(this.originAccentAbility,this.originAccentElapsed).pitch : 0);
+    this.poseWrap.rotation.z = this.originHunterCombat
+      ? highflyComboAccent(this.originAccentAbility,this.originAccentElapsed).roll : 0;
     this.poseWrap.position.y =
       this.swimBlend * (swimRise + Math.sin(this.swimBobTime * 2 + this.bobPhase) * 0.08) +
       // Compress at the start of the pull, back to neutral as the body rises.
@@ -1858,6 +1863,18 @@ export class CharacterVisual {
   playAttack(abilityId?: string): void {
     const originPhysical = highflyPhysicalBasic(abilityId);
     if (this.deadLock) return;
+    if(this.originHunterCombat && originPhysical){
+      this.originAccentAbility=abilityId;
+      this.originAccentElapsed=0;
+      if(abilityId==='highfly_basic_air'){
+        const aerial=['2H_Melee_Attack_Chop','Warrior_Brute_Swing','1H_Melee_Attack_Chop']
+          .find(clip=>this.action(clip)!==null);
+        if(aerial){
+          this.playOriginPhysicalGesture(aerial,1.26,true,abilityId);
+          return;
+        }
+      }
+    }
     if ((abilityId === 'charge' || abilityId === 'intervene') && this.action(this.def.clips.rush)) {
       this.warriorBody.beginRush(abilityId);
       return;
