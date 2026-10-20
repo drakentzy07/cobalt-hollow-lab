@@ -7524,7 +7524,7 @@ export class Renderer {
           const highflyHit=sourceEntity?.kind==='player' &&
             sourceEntity.id===this.sim.playerId &&
             ev.abilityId?.startsWith('highfly_basic_')===true;
-          this.triggerAttack(ev.sourceId,highflyHit ? ev.abilityId : attackAbilityId(ev.ability));
+          this.triggerAttack(ev.sourceId,highflyHit ? (ev.abilityId ?? undefined) : attackAbilityId(ev.ability));
           if(highflyHit && ev.kind==='hit' && ev.amount>0 &&
              (ev.abilityId==='highfly_basic_3'||ev.abilityId==='highfly_basic_air') &&
              !this.reducedMotion()){
