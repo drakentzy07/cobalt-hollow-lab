@@ -3,8 +3,8 @@
 import puppeteer from 'puppeteer-core';
 import { BROWSER_PATH } from './browser_path.mjs';
 
-const BASE = process.env.F26_BETA_URL ?? 'http://127.0.0.1:4173/cobalt-hollow-lab/lab/f261-combat-beta/';
-const betaKey = 'highfly.origin.f2611-combat-beta.primary.v1';
+const BASE = process.env.F261_BETA_URL ?? 'http://127.0.0.1:4173/cobalt-hollow-lab/lab/f261-combat-beta/';
+const betaKey = 'highfly.origin.f261-combat-beta.primary.v1';
 const rootKey = 'highfly.origin.primary.v1';
 const browser = await puppeteer.launch({
   executablePath:BROWSER_PATH,headless:'new',protocolTimeout:240000,
@@ -33,7 +33,7 @@ try {
     name:document.getElementById('char-name')?.value,
     hasRootSentinel:localStorage.getItem('highfly.origin.primary.v1')==='F1_SAVE_MUST_SURVIVE',
     hasOldF2Sentinel:localStorage.getItem('highfly.origin.f2-combat-beta.primary.v1')==='OLD_F2_SAVE_MUST_SURVIVE',
-    betaSave:localStorage.getItem('highfly.origin.f2611-combat-beta.primary.v1')
+    betaSave:localStorage.getItem('highfly.origin.f261-combat-beta.primary.v1')
   }));
   if(before.name||!before.hasRootSentinel||!before.hasOldF2Sentinel||before.betaSave)throw Error('F26_BETA_INHERITED_F1_DATA '+JSON.stringify(before));
   if(before.heldPropCount!==0)throw Error('F26_BETA_CREATOR_STILL_SHOWS_DONOR_SWORD '+JSON.stringify(before));
@@ -47,6 +47,25 @@ try {
   await page.waitForFunction(()=>!!window.__game?.sim?.player,{timeout:180000});
   await page.waitForSelector('#hf-origin-f1-hud',{timeout:45000});
   await page.evaluate(()=>document.body.classList.remove('mobile-chrome-idle'));
+  await page.waitForFunction(()=>document.getElementById('hf-origin-f26-flash')?.getBoundingClientRect().width>35,{timeout:12000});
+  const comfort=await page.evaluate(()=>{
+    const jump=document.getElementById('mobile-jump');
+    const evade=document.getElementById('mobile-evade');
+    const flash=document.getElementById('hf-origin-f26-flash');
+    const f=flash.getBoundingClientRect(),e=evade?.getBoundingClientRect();
+    const player=window.__game.sim.player;
+    return {on:player.highflyF261Controls===true,
+      flashCircular:getComputedStyle(flash).borderRadius==='50%',
+      icon:!!flash.querySelector('svg'),cd:!!flash.querySelector('.hf-f261-flash-cd'),
+      jumpLeft:jump?.style.translate==='-38px 0',
+      evadeLeft:evade?.style.translate==='-38px 0',
+      flashNextToEvade:!!e&&Math.abs(f.left-(e.right+9))<5,
+      isolatedSave:!!localStorage.getItem('highfly.origin.f261-combat-beta.primary.v1')};
+  });
+  if(!comfort.on||!comfort.flashCircular||!comfort.icon||!comfort.cd||
+     !comfort.jumpLeft||!comfort.evadeLeft||!comfort.flashNextToEvade)
+    throw Error('F261_S23_CONTROLS_MISSING '+JSON.stringify(comfort));
+  console.log('HIGHFLY_F261_S23_COMFORT_HUD_GREEN=1',JSON.stringify(comfort));
   const state=await page.evaluate(()=>{
     const player=window.__game.sim.player;
     const meta=window.__game.sim.players.get(window.__game.sim.playerId);
@@ -132,7 +151,7 @@ try {
   const skillPurchase=await page.evaluate(()=>{
     const g=window.__game;
     const hunter=g.sim.players.get(g.sim.playerId);
-    const save=JSON.parse(localStorage.getItem('highfly.origin.f2611-combat-beta.primary.v1')??'null');
+    const save=JSON.parse(localStorage.getItem('highfly.origin.f261-combat-beta.primary.v1')??'null');
     return {copper:hunter.copper,known:g.sim.known.map(k=>k.def.id),
       manaType:g.sim.player.resourceType,persisted:save?.originF1?.learnedAbilityIds};
   });
@@ -282,7 +301,7 @@ try {
   await page.evaluate(()=>window.__game.input.clearHighflyTouchVector());
   if(!chain.secondJump||!chain.dashEdge)throw Error('F26_PHYSICAL_CHAIN_FAILED '+JSON.stringify(chain));
   const saved=await page.evaluate(()=>({
-    beta:JSON.parse(localStorage.getItem('highfly.origin.f2611-combat-beta.primary.v1')??'null'),
+    beta:JSON.parse(localStorage.getItem('highfly.origin.f261-combat-beta.primary.v1')??'null'),
     f1:localStorage.getItem('highfly.origin.primary.v1'),
     f2:localStorage.getItem('highfly.origin.f2-combat-beta.primary.v1')
   }));
