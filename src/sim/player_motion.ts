@@ -867,10 +867,10 @@ function verticalPass(
       const fx=Math.sin(p.facing), fz=Math.cos(p.facing);
       const forward=wishX*fx+wishZ*fz;
       const side=wishX*fz-wishZ*fx;
-      p.highflyFlipDir = wishSpeed<=0.01 ? 'back'
+      p.highflyFlipDir = inp.highflyFlipDirInput ?? (wishSpeed<=0.01 ? 'back'
         : Math.abs(forward)>=Math.abs(side)
           ? (forward>=0 ? 'forward' : 'back')
-          : (side>=0 ? 'right' : 'left');
+          : (side>=0 ? 'right' : 'left'));
     }
     p.highflyAirJumpUsed = true;
   }

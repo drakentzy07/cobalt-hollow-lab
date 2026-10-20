@@ -8703,6 +8703,8 @@ export interface MoveInput {
   highflyJumpSeq?: number;
   /** HIGHFLY evade edge token. This is locomotion, never a hotbar ability. */
   highflyEvadeSeq?: number;
+  /** F2.5 camera-relative four-way second-jump intent (input only). */
+  highflyFlipDirInput?: 'forward'|'back'|'left'|'right';
   /** HIGHFLY ORIGIN opt-in only; native ClaudeCraft never permits air dodge
    * without this explicit local move intent flag. */
   highflyAirDashEnabled?: boolean;
