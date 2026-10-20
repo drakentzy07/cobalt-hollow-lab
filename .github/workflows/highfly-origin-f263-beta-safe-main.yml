@@ -1,5 +1,6 @@
 name: HIGHFLY F2.6.3 — Publish isolated combat lab ONLY
 # Isolated release from F2.6.3 GREEN: do not replace previous Pages labs.
+# Recheck with strict sub-GiB artifact budget; no baseline files removed.
 on:
   push:
     branches: [main]
