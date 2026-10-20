@@ -2,6 +2,11 @@ import {describe,it,expect} from 'vitest';
 import {readFileSync} from 'node:fs';
 import {highflyF26SegmentSphereHit,highflyF26TrajectoryPoint} from '../src/highfly/combat/f26_skillshot_core';
 describe('F2.6 true-skillshot (no homing)',()=>{
+ it('keeps the aerial cast gesture on the upper body',()=>{
+  const v=readFileSync('src/render/characters/visual.ts','utf8');
+  expect(v).toContain('playHighflyF26InstantCast');
+  expect(v).toContain('isHighflyUpperBodyTrack(t.name)');
+ });
  it('isolates Hunter physical stamina spending from native rage mana and focus',()=>{
   const w=readFileSync('src/highfly/origin/f1_world_ui.ts','utf8');
   const c=readFileSync('src/sim/combat/casting_lifecycle.ts','utf8');

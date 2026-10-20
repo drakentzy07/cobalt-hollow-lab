@@ -7087,6 +7087,8 @@ export class Renderer {
         // terrain. A visible fire orb flies there; no fake target/damage/loot.
         const source=this.sim.entities.get(ev.sourceId);
         if(source){
+          const view=this.views.get(ev.sourceId);
+          if(view)this.activeVisual(view)?.playHighflyF26InstantCast();
           const mesh=new THREE.Mesh(
             new THREE.SphereGeometry(0.21,12,8),
             new THREE.MeshBasicMaterial({color:0xff6b17,transparent:true,opacity:0.95}));

@@ -2144,6 +2144,25 @@ export class CharacterVisual {
    * own rotation every frame for the swim pose, so a lean applied there would
    * be stomped. Two float writes, elided when the plan has not moved.
    */
+  /** Instant-cast upper-body gesture while gait and aerial flip keep the legs. */
+  playHighflyF26InstantCast():void{
+    const src=this.action('Spellcast_Raise')??this.action(this.def.clips.cast);
+    if(!src)return;
+    const tracks=src.getClip().tracks.filter(t=>isHighflyUpperBodyTrack(t.name));
+    if(tracks.length<4)return;
+    const clipName='hf_f26_instant_upper_cast';
+    let action=this.actions.get(clipName);
+    if(!action){
+      const clip=new THREE.AnimationClip(clipName,src.getClip().duration,tracks);
+      action=this.mixer.clipAction(clip);
+      this.actions.set(clipName,action);
+    }
+    action.stop().reset().setLoop(THREE.LoopOnce,1);
+    action.clampWhenFinished=false;
+    action.setEffectiveWeight(1);
+    action.setEffectiveTimeScale(2.2);
+    action.fadeIn(.045).play();
+  }
   setGroundTilt(pitch: number, roll: number): void {
     if (this.root.rotation.x === pitch && this.root.rotation.z === roll) return;
     this.root.rotation.x = pitch;
