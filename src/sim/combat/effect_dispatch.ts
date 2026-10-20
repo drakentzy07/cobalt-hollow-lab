@@ -4191,6 +4191,8 @@ export function runEffects(
         if (!target || hasUnbreakableMovementLock(p)) break;
         // the stun effect in the same ability lands this tick; the player
         // then runs the route at charge speed instead of teleporting
+        if(ability.id==='highfly_blade_rush' && p.highflyF26CombatFreedom===true)
+          p.highflyBladeRushPending=true;
         p.chargeTargetId = target.id;
         p.chargeTimeLeft = CHARGE_MAX_DURATION;
         p.chargePath = ctx.findChargePath(p, target);
