@@ -227,6 +227,7 @@ import { padReelItemId } from './game/pad_reel';
 import { dispatchPadSharedEdgeAction } from './game/pad_shared_edge_action';
 import { openTargetSubcommands } from './game/pad_subcommands';
 import {highflyAimShape,highflyWorldAim,highflyAimTarget} from './highfly/combat/f24_aim_core';
+import {highflyF261Aim,highflyF261FlipDirection} from './highfly/combat/f261_controls';
 import { bestSoftAutoTarget } from './game/auto_target';
 import { createPadTargetPick } from './game/pad_target_pick';
 import { createPerfMonitor } from './game/perf';
@@ -1975,7 +1976,7 @@ async function startGame(
   hud.onMobileAttackNearest = () => attackNearest();
   hud.onMobileActionIntent = (action) => {
     if((location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') ||
-        (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/'))) &&
+        (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/')))) &&
        action.type==='ability' && highflyAimShape(action.id)){
       // Aimed abilities already chose their target on pointer release.
       return;
@@ -1994,7 +1995,7 @@ async function startGame(
   };
   hud.onHighflyAimGesture=(phase,action,dx,dy)=>{
     if(!(location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') ||
-         (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/'))) ||
+         (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/')))) ||
        action.type!=='ability' || !highflyAimShape(action.id) ||
        !world.known.some(k=>k.def.id===action.id))return false;
     if(phase==='cancel'){f24AimPreview=null;delete world.player.highflyF25EmptyFireballAim;delete world.player.highflyF26FireballAim;return true;}
@@ -2003,7 +2004,9 @@ async function startGame(
     if(action.id==='fireball' && phase==='start')delete p.highflyF25EmptyFireballAim;
     const def=world.known.find(k=>k.def.id===action.id)?.def;
     const maxRange=Math.max(5,def?.range??12);
-    const aim=highflyWorldAim(p.pos,input.camYaw,dx,dy,maxRange);
+    const aim=p.highflyF261Controls
+      ? highflyF261Aim(p.pos,input.camYaw,dx,dy,maxRange)
+      : highflyWorldAim(p.pos,input.camYaw,dx,dy,maxRange);
     const point=shape==='circle' ? {x:p.pos.x,z:p.pos.z} : {x:aim.x,z:aim.z};
     f24AimPreview={...point,radius:shape==='circle'?6:shape==='leap'?2:0.7,
       school:def?.school??'physical',dimmed:false,shape,
@@ -2028,7 +2031,7 @@ async function startGame(
       }else if(action.id==='fireball'||action.id==='charge'){
         world.targetEntity(null);
         if(action.id==='fireball'&&
-           (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/'))){
+           (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/')))){
           // Real targetless cast: the ONE Sim bills MP/GCD and checks stun,
           // cast windup and cancellation; the visual projectile deals NO damage.
           p.highflyF25EmptyFireballAim={x:point.x,z:point.z};
@@ -2098,7 +2101,7 @@ async function startGame(
     entryDiagnostics.checkpoint(questDialogOpen ? 'quest-dialog-open' : 'quest-dialog-closed');
   };
 
-  const f25Traversal = (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/'));
+  const f25Traversal = (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/')));
   const canF25Traverse=(kind:'jump'|'evade'):boolean=>{
     if(!f25Traversal)return true;
     const p=world.player;
@@ -4196,7 +4199,9 @@ async function startGame(
     mi.highflyAirDashEnabled = document.body.classList.contains('hf-origin-f1');
     if(document.body.classList.contains('hf-origin-f25')){
       const stick=input.highflyTouchVector();
-      if(world.player.highflyF26CombatFreedom){
+      if(world.player.highflyF261Controls){
+        mi.highflyFlipDirInput=highflyF261FlipDirection(stick);
+      }else if(world.player.highflyF26CombatFreedom){
         mi.highflyFlipDirInput=Math.abs(stick.x)>=0.25
           ?(stick.x>0?'right':'left')
           :(stick.y<0?'forward':'back');
@@ -11644,7 +11649,7 @@ if (HIGHFLY_F11_OFFLINE_FIRST && !import.meta.env.DEV &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') &&
-    !(location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/')) &&
+    !(location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/'))) &&
     'serviceWorker' in navigator &&
     (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
   const registerOfflineShell = () => {

@@ -1380,8 +1380,12 @@ export class CharacterVisual {
     // that reads as aiming on a prone stroke reads as a faceplant on an
     // upright body.
     const swimPitch = s.swimPitch * (1 + (TREAD_PITCH_SCALE - 1) * this.treadBlend);
+    const f261BackHop=this.originHunterCombat && typeof document!=='undefined' &&
+      document.body.classList.contains('hf-origin-f261') && s.highflyFlipDir==='back';
     const directionalFlip=flipping && originF25
-      ? highflyDirectionalFlip(this.originFlipTime,s.highflyFlipDir??'back')
+      ? (f261BackHop
+        ? {pitch:-0.18*Math.sin(Math.PI*Math.min(1,this.originFlipTime/HIGHFLY_SOMERSAULT_SECONDS)),roll:0}
+        : highflyDirectionalFlip(this.originFlipTime,s.highflyFlipDir??'back'))
       : {pitch:flipping?highflySomersaultPitch(this.originFlipTime, false):0,roll:0};
     this.poseWrap.rotation.x =
       (proneAngle + swimPitch) * this.swimBlend + this.lean + CLIMB_BODY_PITCH * climb * climbLevel +
@@ -1911,9 +1915,10 @@ export class CharacterVisual {
         const aerial=clips.find(clip=>this.action(clip)!==null);
         if(aerial){this.playOriginPhysicalGesture(aerial,1.26,true,abilityId);return;}
       }
-      // A true equipped second weapon gets a different authored strike on the
-      // second contact. Never invents a hand or an extra combat hit.
-      if(abilityId==='highfly_basic_2'&&this.offhandItemId){
+      // F2.6.1: the second physical contact favours a visibly LEFT-arm
+      // authored gesture even for a one-weapon Hunter. No invented offhand
+      // weapon, second attack event, or additional damage.
+      if(abilityId==='highfly_basic_2'){
         const alternate=['Warrior_DualWield_Left','1H_Melee_Attack_Slash_Left',
           'Warrior_Brute_Swing',...this.def.clips.attack]
           .find(clip=>this.action(clip)!==null);

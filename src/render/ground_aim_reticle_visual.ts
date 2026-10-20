@@ -173,10 +173,19 @@ export class GroundAimReticleVisual {
       v(ax,az);v(bx,bz);
     };
     if(shape==='line'){
-      const width=0.48;
+      // S23 feedback: wider lane, center spine and crossbars for visibility
+      // against grass without requiring unsupported GPU lineWidth.
+      const width=0.76;
       for(const sign of [-1,1]){
         const off=width*sign,ox=-uz*off,oz=ux*off;
         segment(x+ox,z+oz,aim.x+ox,aim.z+oz);
+      }
+      segment(x,z,aim.x,aim.z);
+      for(let k=1;k<=24;k++){
+        const t=k/25;
+        const mx=x+dx*t,mz=z+dz*t;
+        segment(mx-uz*width*0.72,mz+ux*width*0.72,
+                mx+uz*width*0.72,mz-ux*width*0.72);
       }
       segment(aim.x-ux*0.9-uz*1,aim.z-uz*0.9+ux*1,aim.x,aim.z);
       segment(aim.x-ux*0.9+uz*1,aim.z-uz*0.9-ux*1,aim.x,aim.z);

@@ -73,6 +73,7 @@ export const JUMP_VELOCITY = 6; // apex = v^2/2g ≈ 1.125 yd
 // F2.3 ORIGIN-only: ~0.91s rising/falling total on each hop vs 0.75s donor.
 // Give the real second-jump flip room without slowing gravity or changing other players.
 export const HIGHFLY_ORIGIN_JUMP_VELOCITY = 7.25;
+export const HIGHFLY_F261_JUMP_VELOCITY = 7.85;
 // A mounted rider springs higher so a paddock show-jump reads as clearable: the
 // apex rises to (JUMP_VELOCITY * MOUNT_JUMP_MULT)^2 / 2g ≈ 1.76 yd. Applied in
 // jumpMult, so it flows through the one shared movement kernel (offline, server,
@@ -836,7 +837,7 @@ function verticalPass(
     inp.jump && (p.onGround || coyote) && !isRooted(p) && !steepGround && !mountLocked;
   if (startsGroundJump) {
     p.vy = (inp.highflyAirDashEnabled === true && !p.mountKey
-      ? HIGHFLY_ORIGIN_JUMP_VELOCITY : JUMP_VELOCITY) * jumpMult(p);
+      ? (p.highflyF261Controls ? HIGHFLY_F261_JUMP_VELOCITY : HIGHFLY_ORIGIN_JUMP_VELOCITY) : JUMP_VELOCITY) * jumpMult(p);
     p.vx = wishX * wishSpeed;
     p.vz = wishZ * wishSpeed;
     p.onGround = false;
@@ -856,7 +857,7 @@ function verticalPass(
     // One mid-air refresh. Horizontal velocity follows the CURRENT wish vector,
     // so the second tap can redirect naturally with the approved 360 joystick.
     p.vy = (inp.highflyAirDashEnabled === true && !p.mountKey
-      ? HIGHFLY_ORIGIN_JUMP_VELOCITY : JUMP_VELOCITY) * jumpMult(p);
+      ? (p.highflyF261Controls ? HIGHFLY_F261_JUMP_VELOCITY : HIGHFLY_ORIGIN_JUMP_VELOCITY) : JUMP_VELOCITY) * jumpMult(p);
     if (wishSpeed > 0) {
       p.vx = wishX * wishSpeed;
       p.vz = wishZ * wishSpeed;

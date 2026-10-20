@@ -208,7 +208,8 @@ export function buildMobileActionRing(deps: MobileActionRingDeps): MobileActionR
 
   // F2.6 only: the cancellation cross shares the active aiming pointer.
   // It never calls castSlot and cannot bill mana/cooldown on a cancelled aim.
-  const f26Cancel=location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/')
+  const f26Cancel=(location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') ||
+    location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/'))
     ? document.createElement('div'):null;
   if(f26Cancel){
     f26Cancel.id='highfly-f26-aim-cancel';

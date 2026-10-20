@@ -37,9 +37,11 @@ export function mountOriginF1WorldUi(
   sim: Sim, initial: OriginF1Save, onStarterGranted: () => void,
 ): OriginF1WorldUi {
   document.getElementById('hf-origin-f1-hud')?.remove();
-  const f26=location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/');
+  const f261=location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/');
+  const f26=f261||location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/');
   const f25=f26||location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/');
   if(f25) document.body.classList.add('hf-origin-f25');
+  if(f261) document.body.classList.add('hf-origin-f261');
   const root = node('aside', '', 'hf-origin-f1-hud');
   root.id = 'hf-origin-f1-hud';
   root.setAttribute('aria-label', 'Hunter: recursos y guía de inicio');
@@ -134,6 +136,7 @@ export function mountOriginF1WorldUi(
     location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') || f25;
   if(f25)sim.player.highflyF25CombatFreedom=true;
   if(f26)sim.player.highflyF26CombatFreedom=true;
+  if(f261)sim.player.highflyF261Controls=true;
   // One native Sim, one Hunter. Persist knowledge in the existing Origin save,
   // not in the donor Warrior's level-up list, which is intentionally disabled.
   // Hydrate only the explicitly learned spells into its already-authoritative
@@ -207,15 +210,27 @@ export function mountOriginF1WorldUi(
     },
   };
   registerOriginResourceController(resourceController);
-  const flashButton=f26?node('button','FLASH','hf-origin-f26-flash'):null;
+  const flashButton=f26?node('button','','hf-origin-f26-flash'):null;
+  const jumpButton=f261?document.getElementById('mobile-jump'):null;
+  const evadeButton=f261?document.getElementById('mobile-evade'):null;
+  if(f261){
+    if(jumpButton)jumpButton.style.translate='-38px 0';
+    if(evadeButton)evadeButton.style.translate='-38px 0';
+  }
   if(flashButton){
     flashButton.id='hf-origin-f26-flash';
     flashButton.setAttribute('aria-label','FLASH · desplazamiento instantáneo');
-    flashButton.style.cssText='position:fixed;right:216px;bottom:30px;z-index:285;min-width:54px;height:48px;border-radius:18px;border:2px solid #b4c8f5;background:#273d78e8;color:#fff;font:800 12px system-ui;touch-action:none;user-select:none;box-shadow:0 3px 9px #0008';
+    flashButton.style.cssText=f261
+      ? 'position:fixed;right:160px;bottom:28px;z-index:285;width:52px;height:52px;box-sizing:border-box;padding:0;border-radius:50%;border:2px solid #9db4ef;background:linear-gradient(135deg,#243454,#304577);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;font:600 9px system-ui;touch-action:none;user-select:none;box-shadow:0 3px 9px #0008'
+      : 'position:fixed;right:216px;bottom:30px;z-index:285;min-width:54px;height:48px;border-radius:18px;border:2px solid #b4c8f5;background:#273d78e8;color:#fff;font:800 12px system-ui;touch-action:none;user-select:none;box-shadow:0 3px 9px #0008';
+    if(f261){
+      flashButton.innerHTML='<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13h7L10 22l9.5-12h-7L13 2Z"/></svg><span style="font-size:9px;line-height:10px">Flash</span><span class="hf-f261-flash-cd" style="position:absolute;inset:0;border-radius:50%;display:none;align-items:center;justify-content:center;color:#fff;background:#111b2ad9;font:700 17px system-ui"></span>';
+    }else flashButton.textContent='FLASH';
     flashButton.addEventListener('pointerdown',event=>{
       if(event.button!==0)return;
       event.preventDefault();event.stopPropagation();
-      if(!sim.player.dead)sim.castAbility('blink');
+      if(!sim.player.dead && (!f261||(sim.player.cooldowns.get('blink')??0)<=0))
+        sim.castAbility('blink');
     });
     document.body.append(flashButton);
   }
@@ -331,12 +346,21 @@ export function mountOriginF1WorldUi(
     if(flashButton){
       const evade=document.getElementById('mobile-evade')?.getBoundingClientRect();
       if(evade&&evade.width>4){
-        flashButton.style.left=Math.min(innerWidth-58,evade.right+9)+'px';
-        flashButton.style.top=evade.top+'px';
+        const diameter=f261?52:58;
+        flashButton.style.left=Math.min(innerWidth-diameter-8,evade.right+9)+'px';
+        flashButton.style.top=(f261?evade.top+(evade.height-diameter)/2:evade.top)+'px';
         flashButton.style.right='auto';flashButton.style.bottom='auto';
       }
     }
     const now=performance.now();
+    if(f261&&flashButton){
+      const cd=Math.max(0,sim.player.cooldowns.get('blink')??0);
+      const label=flashButton.querySelector<HTMLElement>('.hf-f261-flash-cd');
+      if(label){label.style.display=cd>0?'flex':'none';label.textContent=cd>0?String(Math.ceil(cd)):'';}
+      const locked=cd>0||sim.player.dead||sim.player.resource<25;
+      flashButton.setAttribute('aria-disabled',String(locked));
+      flashButton.style.filter=locked?'saturate(.5)':'none';
+    }
     if(f26)current.resources.stamina=sim.player.highflyOriginStamina??current.resources.stamina;
     current={...current,resources:tickF1Resources(current.resources,(now-last)/1000)};
     if(f26)sim.player.highflyOriginStamina=current.resources.stamina;
@@ -368,6 +392,6 @@ export function mountOriginF1WorldUi(
   },120);
   return {
     save:()=>structuredClone(current),
-    close:()=>{window.clearInterval(timer);registerOriginResourceController(null);flashButton?.remove();delete sim.player.highflyF26CombatFreedom;if(f25){delete sim.player.highflyF25CombatFreedom;document.body.classList.remove('hf-origin-f25');}backdrop.remove();meter.remove();root.remove();}
+    close:()=>{window.clearInterval(timer);registerOriginResourceController(null);flashButton?.remove();if(jumpButton)jumpButton.style.translate='';if(evadeButton)evadeButton.style.translate='';delete sim.player.highflyF261Controls;delete sim.player.highflyF26CombatFreedom;if(f25){delete sim.player.highflyF25CombatFreedom;document.body.classList.remove('hf-origin-f25','hf-origin-f261');}backdrop.remove();meter.remove();root.remove();}
   };
 }
