@@ -1,7 +1,7 @@
-name: HIGHFLY F2.6.3 — Native Reuse Combat HUD QA (NO DEPLOY)
+name: HIGHFLY F2.7 P1 — Native Combat MOBA Reference QA (NO DEPLOY)
 on:
   push:
-    branches: [highfly-origin-f263-s23-combat-stability-20261020]
+    branches: [highfly-origin-f27-combat-moba-20261020]
     paths:
       - ".github/workflows/highfly-origin-f263-no-deploy.yml"
       - "src/**"
@@ -13,6 +13,7 @@ on:
       - "tests/highfly_origin_f261_controls.test.ts"
       - "tests/highfly_origin_f262_skillshot.test.ts"
       - "tests/highfly_origin_f263_stability.test.ts"
+      - "tests/highfly_origin_f27_moba.test.ts"
       - "tests/highfly_origin_f25_combat_unleashed.test.ts"
       - "scripts/highfly_origin_f263_beta_browser.mjs"
       - "scripts/highfly_origin_f263_beta_browser.mjs"
@@ -35,7 +36,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: highfly-origin-f263-native-reuse
+  group: highfly-origin-f27-native-reuse
   cancel-in-progress: true
 
 jobs:
@@ -83,6 +84,7 @@ jobs:
             tests/highfly_origin_f261_controls.test.ts \
             tests/highfly_origin_f262_skillshot.test.ts \
             tests/highfly_origin_f263_stability.test.ts \
+            tests/highfly_origin_f27_moba.test.ts \
             tests/highfly_origin_f21_reuse_audit.test.ts \
             tests/highfly_origin_f23_hunter_unchained.test.ts \
             tests/highfly_origin_f24_free_combat.test.ts \
