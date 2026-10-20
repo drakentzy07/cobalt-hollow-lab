@@ -5483,7 +5483,10 @@ async function startOffline(
   if (!world) {
     setActiveHighflyOriginMode(mode);
     // Legacy F2.x /lab/ routes retain their original isolated QA behavior.
-    if (!location.pathname.includes('/lab/')) document.body.classList.add('hf-origin-unified');
+    if (!location.pathname.includes('/lab/')) {
+      document.body.classList.add('hf-origin-unified');
+      document.body.classList.toggle('hf-origin-lab', mode === 'lab');
+    }
   }
   resetLoadProfile();
   loadPhaseStart('entry');
