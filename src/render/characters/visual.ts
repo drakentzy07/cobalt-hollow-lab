@@ -1918,12 +1918,15 @@ export class CharacterVisual {
       // F2.6.1: the second physical contact favours a visibly LEFT-arm
       // authored gesture even for a one-weapon Hunter. No invented offhand
       // weapon, second attack event, or additional damage.
-      if(abilityId==='highfly_basic_2'){
-        const alternate=['Warrior_DualWield_Left','1H_Melee_Attack_Slash_Left',
-          'Warrior_Brute_Swing',...this.def.clips.attack]
-          .find(clip=>this.action(clip)!==null);
-        if(alternate){
-          this.playOriginPhysicalGesture(alternate,1.3,true,abilityId);
+      const dual=weaponAttackStyle(this.weaponItemId,this.offhandItemId)==='dualwield';
+      // This is an ACTUAL KayKit clip in player_warrior's loaded
+      // attackByHand map. The earlier invented "DualWield_Left" never loaded.
+      // Reuse its upper-body motion for both hands; the normal melee combo
+      // remains on the same authoritative damage/contact timings.
+      if(dual && (abilityId==='highfly_basic_2'||abilityId==='highfly_basic_4')){
+        const dualClip=this.def.clips.attackByHand?.dualwield;
+        if(dualClip && this.action(dualClip)){
+          this.playOriginPhysicalGesture(dualClip,abilityId==='highfly_basic_2'?1.38:1.18,true,abilityId);
           return;
         }
       }

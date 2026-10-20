@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { floorVfxRenderOrder } from './floor_vfx_layer';
+import {highflyF26TrajectoryPoint} from '../highfly/combat/f26_skillshot_core';
 import { type GroundAimGeometryState, sameGroundAimGeometry } from './ground_aim_reticle_core';
 
 const SEGMENTS = 96;
@@ -23,6 +24,7 @@ export interface GroundAimVisualState {
   shape?: 'line'|'cone'|'circle'|'leap';
   originX?:number;
   originZ?:number;
+  bend?:number;
 }
 
 /** Terrain-draped ground targeting guide. Its outer edge is the gameplay radius. */
@@ -46,6 +48,13 @@ export class GroundAimReticleVisual {
   private readonly directionalMaterial = lineMaterial();
   private readonly directionalGeometry = new THREE.BufferGeometry();
   private readonly directionalLine = new THREE.LineSegments(this.directionalGeometry,this.directionalMaterial);
+  // A soft continuous 3D lane instead of the previous 24 railroad sleepers.
+  private readonly softLaneGeometry=new THREE.BufferGeometry();
+  private readonly softLaneMaterial=new THREE.MeshBasicMaterial({
+    transparent:true,depthTest:false,depthWrite:false,
+    side:THREE.DoubleSide,blending:THREE.AdditiveBlending,opacity:.12,
+  });
+  private readonly softLane=new THREE.Mesh(this.softLaneGeometry,this.softLaneMaterial);
   private readonly outer: THREE.LineLoop;
   private readonly inner: THREE.LineLoop;
   private readonly band: THREE.Mesh;
@@ -69,6 +78,12 @@ export class GroundAimReticleVisual {
     this.directionalGeometry.setAttribute('position',
       new THREE.BufferAttribute(new Float32Array(256*3),3));
     this.directionalGeometry.setDrawRange(0,0);
+    this.softLaneGeometry.setAttribute('position',
+      new THREE.BufferAttribute(new Float32Array(32*6*3),3));
+    this.softLaneGeometry.setDrawRange(0,0);
+    this.softLane.name='highfly-f262-soft-skillshot-lane';
+    this.softLane.frustumCulled=false;
+    this.softLane.renderOrder=floorVfxRenderOrder('reticle',0);
     this.directionalLine.name='highfly-f24-ground-direction';
     this.directionalLine.frustumCulled=false;
     this.directionalLine.renderOrder=floorVfxRenderOrder('reticle',0);
@@ -87,7 +102,7 @@ export class GroundAimReticleVisual {
       object.renderOrder = floorVfxRenderOrder('reticle', 0);
       this.group.add(object);
     }
-    this.group.add(this.directionalLine);
+    this.group.add(this.softLane,this.directionalLine);
     this.scene.add(this.group);
   }
 
@@ -99,6 +114,7 @@ export class GroundAimReticleVisual {
       this.geometryState.z = Number.NaN;
       this.geometryState.radius = Number.NaN;
       this.directionalGeometry.setDrawRange(0,0);
+      this.softLaneGeometry.setDrawRange(0,0);
       return;
     }
 
@@ -121,6 +137,7 @@ export class GroundAimReticleVisual {
       this.bandMaterial,
       this.tickMaterial,
       this.directionalMaterial,
+      this.softLaneMaterial,
     ]) {
       material.color.setHex(color);
       material.color.multiplyScalar(this.colorBoost);
@@ -149,6 +166,8 @@ export class GroundAimReticleVisual {
     this.tickMaterial.dispose();
     this.directionalMaterial.dispose();
     this.directionalGeometry.dispose();
+    this.softLaneGeometry.dispose();
+    this.softLaneMaterial.dispose();
   }
 
   /** An actual terrain-draped aiming line / cone. Circular and leap skills
@@ -158,11 +177,12 @@ export class GroundAimReticleVisual {
     const p=this.directionalGeometry.getAttribute('position') as THREE.BufferAttribute;
     if(!shape||shape==='circle'||shape==='leap' ||
        !Number.isFinite(aim.originX)||!Number.isFinite(aim.originZ)){
-      this.directionalGeometry.setDrawRange(0,0);return;
+      this.directionalGeometry.setDrawRange(0,0);
+      this.softLaneGeometry.setDrawRange(0,0);return;
     }
     const x=aim.originX!,z=aim.originZ!,dx=aim.x-x,dz=aim.z-z;
     const len=Math.hypot(dx,dz);
-    if(len<0.05){this.directionalGeometry.setDrawRange(0,0);return;}
+    if(len<0.05){this.directionalGeometry.setDrawRange(0,0);this.softLaneGeometry.setDrawRange(0,0);return;}
     const ux=dx/len,uz=dz/len;
     let i=0;
     const v=(ax:number,az:number)=>{
@@ -173,23 +193,33 @@ export class GroundAimReticleVisual {
       v(ax,az);v(bx,bz);
     };
     if(shape==='line'){
-      // S23 feedback: wider lane, center spine and crossbars for visibility
-      // against grass without requiring unsupported GPU lineWidth.
-      const width=0.76;
-      for(const sign of [-1,1]){
-        const off=width*sign,ox=-uz*off,oz=ux*off;
-        segment(x+ox,z+oz,aim.x+ox,aim.z+oz);
+      // One gentle continuous band, no rails or crossbars. During a lateral
+      // flip the visual and the real projectile share the SAME curve kernel.
+      const at=(u:number)=>highflyF26TrajectoryPoint(
+        {x,y:0,z},{x:aim.x,y:0,z:aim.z},u,aim.bend??0);
+      const lane=this.softLaneGeometry.getAttribute('position') as THREE.BufferAttribute;
+      let li=0;
+      const vertex=(px:number,pz:number)=>{
+        lane.setXYZ(li++,px,this.heightAt(px,pz)+.096,pz);
+      };
+      const halfWidth=.93; // includes the 0.4yd semi-assisted side tolerance
+      for(let k=0;k<24;k++){
+        const a=at(k/24),b=at((k+1)/24);
+        const vx=b.x-a.x,vz=b.z-a.z,vd=Math.hypot(vx,vz)||1;
+        const ox=-vz/vd*halfWidth,oz=vx/vd*halfWidth;
+        vertex(a.x-ox,a.z-oz);vertex(a.x+ox,a.z+oz);vertex(b.x+ox,b.z+oz);
+        vertex(a.x-ox,a.z-oz);vertex(b.x+ox,b.z+oz);vertex(b.x-ox,b.z-oz);
+        segment(a.x,a.z,b.x,b.z);
       }
-      segment(x,z,aim.x,aim.z);
-      for(let k=1;k<=24;k++){
-        const t=k/25;
-        const mx=x+dx*t,mz=z+dz*t;
-        segment(mx-uz*width*0.72,mz+ux*width*0.72,
-                mx+uz*width*0.72,mz-ux*width*0.72);
-      }
-      segment(aim.x-ux*0.9-uz*1,aim.z-uz*0.9+ux*1,aim.x,aim.z);
-      segment(aim.x-ux*0.9+uz*1,aim.z-uz*0.9-ux*1,aim.x,aim.z);
+      this.softLaneGeometry.setDrawRange(0,li);
+      lane.needsUpdate=true;
+      const end=at(1),pre=at(.93);
+      const tx=end.x-pre.x,tz=end.z-pre.z,td=Math.hypot(tx,tz)||1;
+      const vx=tx/td,vz=tz/td;
+      segment(end.x-vx*.7-vz*.45,end.z-vz*.7+vx*.45,end.x,end.z);
+      segment(end.x-vx*.7+vz*.45,end.z-vz*.7-vx*.45,end.x,end.z);
     }else if(shape==='cone'){
+      this.softLaneGeometry.setDrawRange(0,0);
       const facing=Math.atan2(ux,uz),angle=0.43;
       const at=(theta:number)=>({x:x+Math.sin(theta)*len,z:z+Math.cos(theta)*len});
       const left=at(facing-angle),right=at(facing+angle);
@@ -218,7 +248,8 @@ export class GroundAimReticleVisual {
     this.innerMaterial.opacity = pulse * 0.52 * dim;
     this.bandMaterial.opacity = pulse * 0.15 * dim;
     this.tickMaterial.opacity = pulse * 0.82 * dim;
-    this.directionalMaterial.opacity=pulse*0.95*dim;
+    this.directionalMaterial.opacity=pulse*0.85*dim;
+    this.softLaneMaterial.opacity=pulse*0.18*dim;
   }
 }
 

@@ -12712,6 +12712,7 @@ export class Renderer {
       shape?: 'line'|'cone'|'circle'|'leap';
       originX?:number;
       originZ?:number;
+      bend?:number;
     } | null,
   ): void {
     this.groundAimReticle.setAim(
@@ -12726,6 +12727,7 @@ export class Renderer {
             shape:aim.shape,
             originX:aim.originX,
             originZ:aim.originZ,
+            bend:aim.bend,
           }
         : null,
     );
