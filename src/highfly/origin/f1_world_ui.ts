@@ -343,6 +343,14 @@ export function mountOriginF1WorldUi(
     const liveFrame=document.getElementById('player-frame');
     const host=(f25?liveFrame?.querySelector('.uf-bars'):liveFrame)??liveFrame;
     if(host && meter.parentElement!==host)host.append(meter);
+    if(f261){
+      // Mobile chrome can mount after origin world UI. Re-seat via the live
+      // controls on every UI tick; do not capture missing bootstrap nodes.
+      const liveJump=document.getElementById('mobile-jump');
+      const liveEvade=document.getElementById('mobile-evade');
+      if(liveJump && liveJump.style.translate!=='-38px 0')liveJump.style.translate='-38px 0';
+      if(liveEvade && liveEvade.style.translate!=='-38px 0')liveEvade.style.translate='-38px 0';
+    }
     if(flashButton){
       const evade=document.getElementById('mobile-evade')?.getBoundingClientRect();
       if(evade&&evade.width>4){
@@ -392,6 +400,6 @@ export function mountOriginF1WorldUi(
   },120);
   return {
     save:()=>structuredClone(current),
-    close:()=>{window.clearInterval(timer);registerOriginResourceController(null);flashButton?.remove();if(jumpButton)jumpButton.style.translate='';if(evadeButton)evadeButton.style.translate='';delete sim.player.highflyF261Controls;delete sim.player.highflyF26CombatFreedom;if(f25){delete sim.player.highflyF25CombatFreedom;document.body.classList.remove('hf-origin-f25','hf-origin-f261');}backdrop.remove();meter.remove();root.remove();}
+    close:()=>{window.clearInterval(timer);registerOriginResourceController(null);flashButton?.remove();if(f261){const jb=document.getElementById('mobile-jump'),eb=document.getElementById('mobile-evade');if(jb)jb.style.translate='';if(eb)eb.style.translate='';}delete sim.player.highflyF261Controls;delete sim.player.highflyF26CombatFreedom;if(f25){delete sim.player.highflyF25CombatFreedom;document.body.classList.remove('hf-origin-f25','hf-origin-f261');}backdrop.remove();meter.remove();root.remove();}
   };
 }
