@@ -12709,7 +12709,7 @@ export class Renderer {
       school: string;
       dimmed: boolean;
       blocked?: boolean;
-      shape?: 'line'|'cone'|'circle'|'leap'|'ground-circle';
+      shape?: 'line'|'cone'|'circle'|'leap'|'ground-circle'|'dash';
       originX?:number;
       originZ?:number;
       bend?:number;
