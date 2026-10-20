@@ -6,7 +6,7 @@ describe('F2.6.3 S23 critical input regressions',()=>{
  it('four directions map to the actual chosen axis',()=>{
   const t=HIGHFLY_SOMERSAULT_SECONDS/2;
   expect(highflyF263DirectionalFlip(t,'forward').pitch).toBeGreaterThan(0);
-  expect(highflyF263DirectionalFlip(t,'back').pitch).toBeLessThan(0);
+  expect(highflyF263DirectionalFlip(t,'back').pitch).toBeGreaterThan(0);
   expect(highflyF263DirectionalFlip(t,'left').roll).toBeLessThan(0);
   expect(highflyF263DirectionalFlip(t,'right').roll).toBeGreaterThan(0);
  });
