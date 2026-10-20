@@ -7195,10 +7195,12 @@ export class Hud {
   }
 
   private applyHighflyF27PreviewLoadout(): void {
+    const unifiedLab = document.body.classList.contains('hf-origin-unified') &&
+      document.body.classList.contains('hf-origin-lab');
     if(this.f27PreviewLoadoutApplied ||
-       !location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/') ||
+       !(unifiedLab || location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/')) ||
        !this.actionBarLayoutRestored)return;
-    const key='highfly.origin.f27.preview.loadout.v1';
+    const key=unifiedLab?'highfly.origin.unified.lab.preview.loadout.v1':'highfly.origin.f27.preview.loadout.v1';
     if(localStorage.getItem(key)==='1'){
       this.f27PreviewLoadoutApplied=true;
       return;
