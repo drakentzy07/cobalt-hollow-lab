@@ -27,7 +27,9 @@ describe('HIGHFLY F2.3 HUNTER UNCHAINED first integrated mobility + combo pass',
     expect(manifest).toContain("highfly_basic_1: '1H_Melee_Attack_Chop'");
     expect(manifest).toContain("highfly_basic_2: '1H_Melee_Attack_Slice_Diagonal'");
     expect(manifest).toContain("highfly_basic_3: 'Warrior_Reaping_Arc'");
-    for(const step of [1,2,3,4]) expect(highflyComboAnimationRate('highfly_basic_'+step, 1.3)).toBeGreaterThan(1.3);
+    for(const step of [1,2,4]) expect(highflyComboAnimationRate('highfly_basic_'+step, 1.3)).toBeGreaterThan(1.3);
+    // The last strike now has heavier follow-through, deliberately slower than the tap.
+    expect(highflyComboAnimationRate('highfly_basic_3',1.3)).toBeLessThan(1.3);
     expect(highflyComboAnimationRate('heroic_leap',1.3)).toBe(1.3);
     expect(highflyComboAnimationRate(undefined,1.3)).toBe(1.3);
   });
