@@ -65,3 +65,10 @@ export function highflyF263DirectionalFlip(t:number,dir:'forward'|'back'|'left'|
   const pose=highflyDirectionalFlip(t,dir);
   return dir==='forward'?{pitch:-pose.pitch,roll:pose.roll}:pose;
 }
+
+/** Keep the rig's chest / spine support while isolating the LEFT blade stroke.
+ * Matching the actual Rig_Medium bone names avoids mirror-faking a weapon. */
+export function isHighflyLeftArmTrack(path:string):boolean{
+  if(!isHighflyUpperBodyTrack(path))return false;
+  return /(?:spine|chest|torso|neck|head|clavicle[._-]?l|shoulder[._-]?l|upperarm[._-]?l|lowerarm[._-]?l|forearm[._-]?l|hand[._-]?l|wrist[._-]?l|arm_l|leftarm|lefthand|leftshoulder)/i.test(path);
+}

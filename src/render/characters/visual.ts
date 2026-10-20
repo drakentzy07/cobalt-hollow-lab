@@ -119,7 +119,7 @@ import { stoneboundShellStyle } from './stonebound_shell_core';
 import { createStowTransition, forceStow, requestStow, tickStow } from './stow_transition';
 import { CharacterSurfaceResponse, SURFACE_RESPONSE_PROGRAM } from './surface_response';
 import { warriorActionBlend } from './warrior_action_blend';
-import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, highflyDirectionalFlip, highflyF263DirectionalFlip, isHighflyUpperBodyTrack, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
+import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, highflyDirectionalFlip, highflyF263DirectionalFlip, isHighflyUpperBodyTrack, isHighflyLeftArmTrack, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
 import { WarriorActionProps } from './warrior_action_props';
 import { WarriorBodyEffects } from './warrior_body_effects';
 import { SPIN_ATTACK_VISUAL_DURATION, weaponAttackStyle } from './weapon_attack_style_core';
@@ -1863,19 +1863,21 @@ export class CharacterVisual {
    * one-shot to an upper mask at low speed was holding the legs in place and
    * looking like slow-motion skating. The ONE native locomotion Sim remains
    * authoritative; donor/non-Hunter attacks retain their original animation. */
-  private playOriginPhysicalGesture(name:string, timeScale:number, physical:boolean, abilityId?:string):void {
+  private playOriginPhysicalGesture(name:string, timeScale:number, physical:boolean, abilityId?:string, leftOnly=false):void {
     const presentationScale = this.originHunterCombat && physical
       ? highflyComboAnimationRate(abilityId, timeScale) : timeScale;
     if (physical && this.originHunterCombat) {
       const source=this.action(name)?.getClip();
       if (source) {
-        let layer=this.originUpperAttack.get(name);
+        const layerKey=leftOnly?'hf_f263_left_'+name:name;
+        let layer=this.originUpperAttack.get(layerKey);
         if (!layer) {
-          const tracks=source.tracks.filter(track=>isHighflyUpperBodyTrack(track.name));
+          const tracks=source.tracks.filter(track=>isHighflyUpperBodyTrack(track.name) &&
+            (!leftOnly || isHighflyLeftArmTrack(track.name)));
           if (tracks.length >= 4) {
-            const masked=new THREE.AnimationClip('hf_origin_upper_'+name,source.duration,tracks);
+            const masked=new THREE.AnimationClip('hf_origin_upper_'+layerKey,source.duration,tracks);
             layer=this.mixer.clipAction(masked);
-            this.originUpperAttack.set(name,layer);
+            this.originUpperAttack.set(layerKey,layer);
             this.actions.set(masked.name,layer);
           }
         }
@@ -1928,7 +1930,14 @@ export class CharacterVisual {
       if(dual && (abilityId==='highfly_basic_2'||abilityId==='highfly_basic_4')){
         const dualClip=this.def.clips.attackByHand?.dualwield;
         if(dualClip && this.action(dualClip)){
-          this.playOriginPhysicalGesture(dualClip,abilityId==='highfly_basic_2'?1.38:1.18,true,abilityId);
+          const f263=typeof document!=='undefined'&&document.body.classList.contains('hf-origin-f263');
+          // New four-contact duel identity: #1 right chop (native), #2 LEFT
+          // arm only, #3 reaping arc (native), #4 both blades as the finisher.
+          // This is presentation only; authoritative attack/damage frames
+          // continue unchanged. Donor and earlier beta clips stay intact.
+          this.playOriginPhysicalGesture(dualClip,
+            abilityId==='highfly_basic_2'?1.27:1.12,true,abilityId,
+            f263 && abilityId==='highfly_basic_2');
           return;
         }
       }
