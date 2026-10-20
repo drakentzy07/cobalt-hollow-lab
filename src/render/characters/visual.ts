@@ -119,7 +119,7 @@ import { stoneboundShellStyle } from './stonebound_shell_core';
 import { createStowTransition, forceStow, requestStow, tickStow } from './stow_transition';
 import { CharacterSurfaceResponse, SURFACE_RESPONSE_PROGRAM } from './surface_response';
 import { warriorActionBlend } from './warrior_action_blend';
-import { highflyPhysicalBasic, highflySomersaultPitch, isHighflyUpperBodyTrack, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
+import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, isHighflyUpperBodyTrack, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
 import { WarriorActionProps } from './warrior_action_props';
 import { WarriorBodyEffects } from './warrior_body_effects';
 import { SPIN_ATTACK_VISUAL_DURATION, weaponAttackStyle } from './weapon_attack_style_core';
@@ -1810,12 +1810,15 @@ export class CharacterVisual {
     return override !== undefined && this.action(override) !== null;
   }
 
-  /** Full-body hits while stationary, upper-body ONLY while traveling.
-   * The existing base run/walk drives the legs at the true sim velocity;
-   * authored upper-arm attack rotations blend above it. This removes skating
-   * without altering hitboxes, combo timings, movement speed or the donor. */
-  private playOriginPhysicalGesture(name:string, timeScale:number, physical:boolean):void {
-    if (this.originGroundMoving && physical && this.originHunterCombat) {
+  /** F2.3: an ORIGIN physical combo stays on the upper body even if the Hunter
+   * starts a swing standing and immediately runs. Switching from a full-body
+   * one-shot to an upper mask at low speed was holding the legs in place and
+   * looking like slow-motion skating. The ONE native locomotion Sim remains
+   * authoritative; donor/non-Hunter attacks retain their original animation. */
+  private playOriginPhysicalGesture(name:string, timeScale:number, physical:boolean, abilityId?:string):void {
+    const presentationScale = this.originHunterCombat && physical
+      ? highflyComboAnimationRate(abilityId, timeScale) : timeScale;
+    if (physical && this.originHunterCombat) {
       const source=this.action(name)?.getClip();
       if (source) {
         let layer=this.originUpperAttack.get(name);
@@ -1839,7 +1842,7 @@ export class CharacterVisual {
           layer.reset();
           layer.setLoop(THREE.LoopOnce,1);
           layer.clampWhenFinished=false;
-          layer.timeScale=timeScale;
+          layer.timeScale=presentationScale;
           layer.setEffectiveWeight(1);
           layer.fadeIn(0.045).play();
           this.originLastUpperAttack=layer;
@@ -1848,7 +1851,7 @@ export class CharacterVisual {
         }
       }
     }
-    this.playOneShot(name,timeScale);
+    this.playOneShot(name,presentationScale);
     this.currentOneShotIsAttack=true;
   }
 
@@ -1894,7 +1897,7 @@ export class CharacterVisual {
       const authoredTimeScale = abilityId
         ? this.def.clips.attackTimeScaleByAbility?.[abilityId]
         : undefined;
-      this.playOriginPhysicalGesture(override, authoredTimeScale ?? this.def.attackTimeScale ?? 1.3, originPhysical);
+      this.playOriginPhysicalGesture(override, authoredTimeScale ?? this.def.attackTimeScale ?? 1.3, originPhysical, abilityId);
       if (override === PALADIN_TEMPLARS_VERDICT_CLIP) {
         this.templarsVerdictAction = this.action(override);
       } else if (override === PALADIN_BASTION_SWEEP_CLIP) {
@@ -1905,13 +1908,13 @@ export class CharacterVisual {
     const style = weaponAttackStyle(this.weaponItemId, this.offhandItemId);
     const handClip = style ? this.def.clips.attackByHand?.[style] : undefined;
     if (!skinAttack && handClip && this.action(handClip)) {
-      this.playOriginPhysicalGesture(handClip, this.def.attackTimeScale ?? 1.3, originPhysical);
+      this.playOriginPhysicalGesture(handClip, this.def.attackTimeScale ?? 1.3, originPhysical, abilityId);
       return;
     }
     const clips = skinAttack?.clips ?? this.def.clips.attack;
     if (clips.length === 0) return;
     const name = clips[this.attackIdx++ % clips.length];
-    this.playOriginPhysicalGesture(name, skinAttack?.timeScale ?? this.def.attackTimeScale ?? 1.3, originPhysical);
+    this.playOriginPhysicalGesture(name, skinAttack?.timeScale ?? this.def.attackTimeScale ?? 1.3, originPhysical, abilityId);
   }
 
   /** Bladed Gyre is instant, so it uses one short body spin instead of the

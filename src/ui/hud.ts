@@ -7405,11 +7405,11 @@ export class Hud {
       } else {
         this.highflyComboStep = next;
         // Bounded human timing window: enough for aim/reposition, not mash spam.
-        this.highflyComboExpiresAt = now + 1.15;
+        this.highflyComboExpiresAt = now + 1.35;
       }
 
       this.highflyComboReadyAt =
-        now + (next === 1 ? 0.30 : next === 2 ? 0.34 : next === 3 ? (elemental ? 0.38 : 0.62) : 0.72);
+        now + (next === 1 ? 0.31 : next === 2 ? 0.35 : next === 3 ? (elemental ? 0.40 : 0.55) : 0.68);
       this.highflyAcceptedBasicAttacks += 1;
       document.body.dataset.highflyBasicAttackCount = String(this.highflyAcceptedBasicAttacks);
       document.body.dataset.highflyBasicAttackStep = String(next);
