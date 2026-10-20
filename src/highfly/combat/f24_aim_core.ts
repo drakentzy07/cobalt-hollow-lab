@@ -4,6 +4,7 @@ export type HighflyAimShape='line'|'cone'|'circle'|'leap'|'ground-circle';
 export function highflyAimShape(id:string):HighflyAimShape|null{
   if(id==='fireball')return 'line';
   if(id==='charge'||id==='sinister_strike')return 'cone';
+  if(id==='highfly_blade_rush')return 'line';
   if(id==='frost_nova')return 'circle';
   if(id==='heroic_leap')return 'leap';
   // F2.7: world-positioned circular impact, unlike self-centered Frost Nova.
