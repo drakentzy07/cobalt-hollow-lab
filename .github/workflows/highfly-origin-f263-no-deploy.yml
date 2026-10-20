@@ -13,6 +13,8 @@ on:
       - "tests/highfly_origin_f261_controls.test.ts"
       - "tests/highfly_origin_f262_skillshot.test.ts"
       - "tests/highfly_origin_f263_regression.test.ts"
+      - "tests/highfly_origin_f263_assisted_aim.test.ts"
+      - "tests/highfly_origin_f263_dualwield.test.ts"
       - "tests/highfly_origin_f25_combat_unleashed.test.ts"
       - "scripts/highfly_origin_f263_beta_browser.mjs"
       - "scripts/highfly_origin_f262_beta_browser.mjs"
@@ -83,6 +85,8 @@ jobs:
             tests/highfly_origin_f261_controls.test.ts \
             tests/highfly_origin_f262_skillshot.test.ts \
             tests/highfly_origin_f263_regression.test.ts \
+            tests/highfly_origin_f263_assisted_aim.test.ts \
+            tests/highfly_origin_f263_dualwield.test.ts \
             tests/highfly_origin_f21_reuse_audit.test.ts \
             tests/highfly_origin_f23_hunter_unchained.test.ts \
             tests/highfly_origin_f24_free_combat.test.ts \
@@ -156,7 +160,7 @@ jobs:
           cp dist/highfly-origin.webmanifest dist/lab/f263-combat-beta/
           cp dist/highfly-origin-icon-192.png dist/lab/f263-combat-beta/
           cp dist/highfly-origin-icon-512.png dist/lab/f263-combat-beta/
-          F263_BETA_URL="http://127.0.0.1:4173/cobalt-hollow-lab/lab/f262-combat-beta/" node scripts/highfly_origin_f262_beta_browser.mjs
+          F263_BETA_URL="http://127.0.0.1:4173/cobalt-hollow-lab/lab/f263-combat-beta/" node scripts/highfly_origin_f263_beta_browser.mjs
           echo "HIGHFLY_F263_S23_BROWSER_GREEN=1"
 
       - name: No public Pages was touched

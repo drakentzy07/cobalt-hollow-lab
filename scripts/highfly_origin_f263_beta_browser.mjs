@@ -71,6 +71,20 @@ try {
      !comfort.noFlashButton||!comfort.noFlashInSkills||!comfort.noMovedControls)
     throw Error('F261_S23_JUMP_EVADE_ONLY_MISSING '+JSON.stringify(comfort));
   console.log('HIGHFLY_F261_S23_JUMP_EVADE_ONLY_GREEN=1',JSON.stringify(comfort));
+  const f263Meter=await page.evaluate(()=>{
+    const meter=document.getElementById('hf-origin-f1-resource-meter');
+    const parent=meter?.parentElement;
+    const kinds=[...meter?.querySelectorAll('[data-origin-resource-fill]')??[]]
+      .map(n=>n.getAttribute('data-origin-resource-fill'));
+    const a=meter?.getBoundingClientRect(),b=parent?.getBoundingClientRect();
+    return {withinNativeBars:parent?.classList.contains('uf-bars')===true,
+      rowCount:meter?.children?.length??0,kinds,
+      aligned:!!a&&!!b&&Math.abs(a.left-b.left)<6&&Math.abs(a.width-b.width)<6};
+  });
+  if(!f263Meter.withinNativeBars||f263Meter.rowCount!==2||!f263Meter.aligned||
+     !f263Meter.kinds.includes('mana')||!f263Meter.kinds.includes('stamina'))
+    throw Error('F263_HP_MP_ST_NOT_ONE_FRAME '+JSON.stringify(f263Meter));
+  console.log('HIGHFLY_F263_HP_MP_ST_NATIVE_FRAME_GREEN=1',JSON.stringify(f263Meter));
   const state=await page.evaluate(()=>{
     const player=window.__game.sim.player;
     const meta=window.__game.sim.players.get(window.__game.sim.playerId);
