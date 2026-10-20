@@ -163,7 +163,13 @@ export function mountOriginF1WorldUi(
     rebindOriginMana();
     hunter.known=(current.learnedAbilityIds??[]).flatMap(id=>{
       const row=ORIGIN_F23_MASTER_SKILLS.find(x=>x.id===id);
-      const def=row ? ABILITIES[id] : undefined;
+      // Extend the native Onrush definition, keeping the SAME Sim charge route.
+      // Damage is settled only by its original arrival callback, not on cast.
+      const def=row ? id==='highfly_blade_rush'
+        ? {...ABILITIES.charge,id:'highfly_blade_rush',name:'Blade Rush',learnLevel:3,
+            cost:0,cooldown:12,range:16,minRange:3,highflyStaminaCost:18,
+            effects:[{type:'charge' as const}],castWhileMoving:true}
+        : ABILITIES[id] : undefined;
       if(!row || !def || def.learnLevel>sim.player.level || def.hiddenFromPlayer)return [];
       const useDef=f26 && id==='fireball'
         ? {...def,castTime:0,cooldown:3,requiresTarget:false,castWhileMoving:true}
