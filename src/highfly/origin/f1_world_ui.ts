@@ -177,7 +177,7 @@ export function mountOriginF1WorldUi(
           ? {...def,castTime:0,castWhileMoving:true}
         : f25 && id==='fireball' ? {...def,castWhileMoving:true} : def;
       return [{def:useDef,rank:1,cost:useDef.cost,castTime:useDef.castTime,cooldown:useDef.cooldown,
-        effects:useDef.effects,castWhileMoving:f25 && id==='fireball',
+        effects:useDef.effects,castWhileMoving:useDef.castWhileMoving===true,
         threatFlat:useDef.threat?.flat??0,threatMult:useDef.threat?.mult??1}];
     });
     if(f26 && !f261){
