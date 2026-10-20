@@ -20,6 +20,9 @@ export interface GroundAimVisualState {
   color: number;
   dimmed: boolean;
   blocked?: boolean;
+  shape?: 'line'|'cone'|'circle'|'leap';
+  originX?:number;
+  originZ?:number;
 }
 
 /** Terrain-draped ground targeting guide. Its outer edge is the gameplay radius. */
@@ -40,6 +43,9 @@ export class GroundAimReticleVisual {
     blending: THREE.AdditiveBlending,
   });
   private readonly tickMaterial = lineMaterial();
+  private readonly directionalMaterial = lineMaterial();
+  private readonly directionalGeometry = new THREE.BufferGeometry();
+  private readonly directionalLine = new THREE.LineSegments(this.directionalGeometry,this.directionalMaterial);
   private readonly outer: THREE.LineLoop;
   private readonly inner: THREE.LineLoop;
   private readonly band: THREE.Mesh;
@@ -60,6 +66,12 @@ export class GroundAimReticleVisual {
   ) {
     this.group.name = 'ground-aim-reticle';
     this.group.visible = false;
+    this.directionalGeometry.setAttribute('position',
+      new THREE.BufferAttribute(new Float32Array(256*3),3));
+    this.directionalGeometry.setDrawRange(0,0);
+    this.directionalLine.name='highfly-f24-ground-direction';
+    this.directionalLine.frustumCulled=false;
+    this.directionalLine.renderOrder=floorVfxRenderOrder('reticle',0);
 
     this.band = new THREE.Mesh(this.bandGeometry, this.bandMaterial);
     this.band.name = 'ground-aim-band';
@@ -75,6 +87,7 @@ export class GroundAimReticleVisual {
       object.renderOrder = floorVfxRenderOrder('reticle', 0);
       this.group.add(object);
     }
+    this.group.add(this.directionalLine);
     this.scene.add(this.group);
   }
 
@@ -85,6 +98,7 @@ export class GroundAimReticleVisual {
       this.geometryState.x = Number.NaN;
       this.geometryState.z = Number.NaN;
       this.geometryState.radius = Number.NaN;
+      this.directionalGeometry.setDrawRange(0,0);
       return;
     }
 
@@ -95,6 +109,7 @@ export class GroundAimReticleVisual {
       this.geometryState.z = aim.z;
       this.geometryState.radius = radius;
     }
+    this.rebuildDirectional(aim);
     this.dimmed = aim.dimmed || aim.blocked === true;
     // A blocked aim (inside the ability's minimum range) will be REFUSED at
     // commit, so it drops the school identity for a refusal red; a merely
@@ -105,6 +120,7 @@ export class GroundAimReticleVisual {
       this.innerMaterial,
       this.bandMaterial,
       this.tickMaterial,
+      this.directionalMaterial,
     ]) {
       material.color.setHex(color);
       material.color.multiplyScalar(this.colorBoost);
@@ -131,6 +147,52 @@ export class GroundAimReticleVisual {
     this.innerMaterial.dispose();
     this.bandMaterial.dispose();
     this.tickMaterial.dispose();
+    this.directionalMaterial.dispose();
+    this.directionalGeometry.dispose();
+  }
+
+  /** An actual terrain-draped aiming line / cone. Circular and leap skills
+   * retain the donor's original ground ring. No camera-facing 2D substitute. */
+  private rebuildDirectional(aim:GroundAimVisualState):void{
+    const shape=aim.shape;
+    const p=this.directionalGeometry.getAttribute('position') as THREE.BufferAttribute;
+    if(!shape||shape==='circle'||shape==='leap' ||
+       !Number.isFinite(aim.originX)||!Number.isFinite(aim.originZ)){
+      this.directionalGeometry.setDrawRange(0,0);return;
+    }
+    const x=aim.originX!,z=aim.originZ!,dx=aim.x-x,dz=aim.z-z;
+    const len=Math.hypot(dx,dz);
+    if(len<0.05){this.directionalGeometry.setDrawRange(0,0);return;}
+    const ux=dx/len,uz=dz/len;
+    let i=0;
+    const v=(ax:number,az:number)=>{
+      if(i+3>p.count*3)return;
+      p.setXYZ(i++,ax,this.heightAt(ax,az)+0.105,az);
+    };
+    const segment=(ax:number,az:number,bx:number,bz:number)=>{
+      v(ax,az);v(bx,bz);
+    };
+    if(shape==='line'){
+      const width=0.48;
+      for(const sign of [-1,1]){
+        const off=width*sign,ox=-uz*off,oz=ux*off;
+        segment(x+ox,z+oz,aim.x+ox,aim.z+oz);
+      }
+      segment(aim.x-ux*0.9-uz*1,aim.z-uz*0.9+ux*1,aim.x,aim.z);
+      segment(aim.x-ux*0.9+uz*1,aim.z-uz*0.9-ux*1,aim.x,aim.z);
+    }else if(shape==='cone'){
+      const facing=Math.atan2(ux,uz),angle=0.43;
+      const at=(theta:number)=>({x:x+Math.sin(theta)*len,z:z+Math.cos(theta)*len});
+      const left=at(facing-angle),right=at(facing+angle);
+      segment(x,z,left.x,left.z);segment(x,z,right.x,right.z);
+      let prev=left;
+      for(let k=1;k<=14;k++){
+        const next=at(facing-angle+2*angle*k/14);
+        segment(prev.x,prev.z,next.x,next.z);prev=next;
+      }
+    }
+    this.directionalGeometry.setDrawRange(0,i);
+    p.needsUpdate=true;
   }
 
   private rebuild(x: number, z: number, radius: number): void {
@@ -147,6 +209,7 @@ export class GroundAimReticleVisual {
     this.innerMaterial.opacity = pulse * 0.52 * dim;
     this.bandMaterial.opacity = pulse * 0.15 * dim;
     this.tickMaterial.opacity = pulse * 0.82 * dim;
+    this.directionalMaterial.opacity=pulse*0.95*dim;
   }
 }
 

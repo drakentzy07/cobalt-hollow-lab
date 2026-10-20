@@ -12658,6 +12658,9 @@ export class Renderer {
       school: string;
       dimmed: boolean;
       blocked?: boolean;
+      shape?: 'line'|'cone'|'circle'|'leap';
+      originX?:number;
+      originZ?:number;
     } | null,
   ): void {
     this.groundAimReticle.setAim(
@@ -12669,6 +12672,9 @@ export class Renderer {
             color: SCHOOL_COLORS[aim.school] ?? 0xffffff,
             dimmed: aim.dimmed,
             blocked: aim.blocked === true,
+            shape:aim.shape,
+            originX:aim.originX,
+            originZ:aim.originZ,
           }
         : null,
     );
