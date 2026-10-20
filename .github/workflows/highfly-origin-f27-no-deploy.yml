@@ -1,4 +1,4 @@
-name: HIGHFLY F2.7 P2 — Native Rogue Slash + Meteor AoE + MOBA Aim (NO DEPLOY)
+name: HIGHFLY F2.7 P3 — True Blade Rush + 4-Hit Combo + Universal Skills (NO DEPLOY)
 on:
   push:
     branches: [highfly-origin-f27-combat-moba-20261020]
@@ -15,6 +15,7 @@ on:
       - "tests/highfly_origin_f263_stability.test.ts"
       - "tests/highfly_origin_f27_moba.test.ts"
       - "tests/highfly_origin_f27_skills.test.ts"
+      - "tests/highfly_origin_f27_blade_rush.test.ts"
       - "tests/highfly_origin_f25_combat_unleashed.test.ts"
       - "scripts/highfly_origin_f263_beta_browser.mjs"
       - "scripts/highfly_origin_f263_beta_browser.mjs"
@@ -87,6 +88,7 @@ jobs:
             tests/highfly_origin_f263_stability.test.ts \
             tests/highfly_origin_f27_moba.test.ts \
             tests/highfly_origin_f27_skills.test.ts \
+            tests/highfly_origin_f27_blade_rush.test.ts \
             tests/highfly_origin_f21_reuse_audit.test.ts \
             tests/highfly_origin_f23_hunter_unchained.test.ts \
             tests/highfly_origin_f24_free_combat.test.ts \
