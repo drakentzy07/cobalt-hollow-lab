@@ -22,6 +22,7 @@ export const ORIGIN_F23_MASTER_SKILLS = [
   // F2.7 P2: explicitly acquired, never silently gifted during migration.
   { id:'sinister_strike', label:'Wicked Slash · tajo con arma', school:'rogue', level:1, copper:8 },
   { id:'meteor', label:'Skystone · meteorito de área', school:'mage', level:16, copper:120 },
+  { id:'highfly_blade_rush', label:'Blade Rush · carrera de cuchillas', school:'warrior', level:3, copper:12 },
 ] as const;
 export type OriginMasterSkillId = (typeof ORIGIN_F23_MASTER_SKILLS)[number]['id'];
 export function originCanTrainSkill(skillId:string, hunterLevel:number, copper:number, learned:readonly string[]):boolean {
