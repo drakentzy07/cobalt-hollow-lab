@@ -1,4 +1,5 @@
 name: HIGHFLY F2.6.2 — Publish isolated combat lab ONLY
+# Isolated release from F2.6.2 GREEN: do not replace previous Pages labs.
 on:
   push:
     branches: [main]
