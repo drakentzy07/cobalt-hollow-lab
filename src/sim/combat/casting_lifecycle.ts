@@ -510,7 +510,11 @@ export function updateCasting(ctx: SimContext, p: Entity, meta: PlayerMeta): voi
     activeCast.def.targetType !== 'friendly'
   ) {
     const liveTarget = p.castTargetId !== null ? (ctx.entities.get(p.castTargetId) ?? null) : null;
-    if (!liveTarget || liveTarget.dead) {
+    if(p.highflyF25CombatFreedom===true && p.castingAbility==='fireball' &&
+       p.highflyF25EmptyFireballAim && !liveTarget){
+      // No enemy was ever requested. Targetless launch is a valid cast,
+      // so normal target-loss interruption must not cancel it.
+    }else if (!liveTarget || liveTarget.dead) {
       cancelCast(ctx, p);
       ctx.error(p.id, 'You have no target.', liveTarget?.dead ? 'target_dead' : undefined);
       return;
@@ -732,12 +736,22 @@ export function updateCasting(ctx: SimContext, p: Entity, meta: PlayerMeta): voi
       }
     }
     const res = ctx.resolvedAbility(castId, p.id);
-    if (res) {
+    const emptyFireball=castId==='fireball' && p.highflyF25CombatFreedom===true
+      ? p.highflyF25EmptyFireballAim : undefined;
+    if(res && emptyFireball){
+      // All ordinary cast-time preconditions held for 1.5s; bill real MP
+      // and cooldown, but NEVER call directDamage with an invented target.
+      spendAbilityCost(ctx,p,meta,res);
+      armAbilityCooldownWithReflection(ctx,p,meta,res);
+      ctx.emit({type:'highflyFireballMiss',sourceId:p.id,
+        x:emptyFireball.x,z:emptyFireball.z});
+    }else if(res){
       const resolved = res.def.empowerStages
         ? { ...res, empowerLevel: res.def.empowerStages }
         : res;
       applyAbility(ctx, p, meta, resolved);
     }
+    delete p.highflyF25EmptyFireballAim;
     clearRadiantResonanceReservation(p);
     // the aim point is consumed by the resolved area effects; drop it so a later
     // non-aimed cast can't inherit a stale target point.
@@ -865,6 +879,7 @@ export function cancelCast(ctx: SimContext, p: Entity): void {
   clearAfflictionConsumeThreads(ctx, p);
   emitRainOfFireStop(ctx, p);
   p.castingAbility = null;
+  delete p.highflyF25EmptyFireballAim;
   p.castRemaining = 0;
   p.channeling = false;
   p.channelTicksLeft = 0; // an interrupted channel owes no more ticks
@@ -1555,6 +1570,17 @@ export function castAbility(
       ctx.error(p.id, 'Line of sight.');
       return;
     }
+  } else if (p.highflyF25CombatFreedom===true &&
+             ability.id==='fireball' && p.highflyF25EmptyFireballAim &&
+             p.targetId===null) {
+    // Shoot where aimed, including clean terrain. A MISS is never silently
+    // redirected to the nearest attacking mob. The normal cast-time, mana,
+    // interruption and GCD engine below remains authoritative.
+    const endpoint=p.highflyF25EmptyFireballAim;
+    const dx=endpoint.x-p.pos.x,dz=endpoint.z-p.pos.z;
+    if(!Number.isFinite(dx)||!Number.isFinite(dz)||
+       Math.hypot(dx,dz)>ability.range+0.001){ctx.error(p.id,'Out of range.');return;}
+    p.facing=angleTo(p.pos,endpoint);
   } else if (ability.requiresTarget) {
     if (p.targetId !== null) {
       target = ctx.entities.get(p.targetId) ?? null;

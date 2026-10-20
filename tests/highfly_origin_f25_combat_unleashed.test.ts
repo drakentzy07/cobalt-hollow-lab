@@ -42,6 +42,13 @@ describe('HIGHFLY F2.5 Unleashed — one native Sim, no donor regressions',()=>{
     expect(code('src/game/highfly_offline_save.ts')).toContain("'highfly-offline-f25-combat-beta'");
     expect(code('src/highfly/game_c1_runtime.ts')).toContain("'highfly:origin:f25:hud:'");
   });
+  it('real MP-paid empty-space fireball never invents enemy damage',()=>{
+    const cast=code('src/sim/combat/casting_lifecycle.ts');
+    expect(cast).toContain("type:'highflyFireballMiss'");
+    expect(cast).toContain("spendAbilityCost(ctx,p,meta,res)");
+    expect(cast).toContain("delete p.highflyF25EmptyFireballAim");
+    expect(code('src/render/renderer.ts')).toContain("highfly-f25-fireball-open-air");
+  });
   it('aim and targeting retain F24 true world preview without mandatory lock',()=>{
     const main=code('src/main.ts');
     expect(main).toContain("location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/')");

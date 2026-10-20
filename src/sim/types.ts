@@ -5309,6 +5309,8 @@ export interface Entity extends ClientMirroredEntityFields {
   highflyAirJumpUsed?: boolean;
   /** F2.5 isolated Hunter-only casting freedoms. No online/donor effect. */
   highflyF25CombatFreedom?: boolean;
+  /** Authoritative, transient intentional free-space Fireball endpoint. */
+  highflyF25EmptyFireballAim?: {x:number;z:number};
   /** Direction of the second real physical jump, latched at impulse. */
   highflyFlipDir?: 'forward'|'back'|'left'|'right';
   highflyLastJumpSeq?: number;
@@ -7088,6 +7090,8 @@ export type SimEvent = { pid?: number } & (
   // No target or damage record exists, so the renderer cues the normal attack
   // rig without inventing a hit, kill, aggro, or a phantom enemy.
   | { type: 'highflyBasicWhiff'; sourceId: number; comboStep: 1 | 2 | 3 | 4 }
+  /** Valid resource-paid Fireball cast into open terrain: NEVER grants damage. */
+  | { type: 'highflyFireballMiss'; sourceId:number; x:number; z:number }
   | {
       type: 'castStart';
       entityId: number;

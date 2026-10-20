@@ -1997,9 +1997,10 @@ async function startGame(
          location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/')) ||
        action.type!=='ability' || !highflyAimShape(action.id) ||
        !world.known.some(k=>k.def.id===action.id))return false;
-    if(phase==='cancel'){f24AimPreview=null;return true;}
+    if(phase==='cancel'){f24AimPreview=null;delete world.player.highflyF25EmptyFireballAim;return true;}
     const shape=highflyAimShape(action.id)!;
     const p=world.player;
+    if(action.id==='fireball' && phase==='start')delete p.highflyF25EmptyFireballAim;
     const def=world.known.find(k=>k.def.id===action.id)?.def;
     const maxRange=Math.max(5,def?.range??12);
     const aim=highflyWorldAim(p.pos,input.camYaw,dx,dy,maxRange);
@@ -2013,8 +2014,18 @@ async function startGame(
       const picked=highflyAimTarget(world.entities.values(),p.pos,aim.facing,maxRange,
         Math.hypot(dx,dy)>12,
         e=>isAttackableEntity(e,world.playerId,opponents));
-      if(picked!==null)world.targetEntity(picked.id);
-      else if(action.id==='fireball'||action.id==='charge')world.targetEntity(null);
+      if(picked!==null){
+        world.targetEntity(picked.id);
+        delete p.highflyF25EmptyFireballAim;
+      }else if(action.id==='fireball'||action.id==='charge'){
+        world.targetEntity(null);
+        if(action.id==='fireball'&&
+           location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/')){
+          // Real targetless cast: the ONE Sim bills MP/GCD and checks stun,
+          // cast windup and cancellation; the visual projectile deals NO damage.
+          p.highflyF25EmptyFireballAim={x:point.x,z:point.z};
+        }
+      }
     }
     if(shape==='leap')f24AimPending={id:action.id,point};
     f24AimPreview=null;

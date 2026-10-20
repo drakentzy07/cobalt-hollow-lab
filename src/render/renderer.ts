@@ -1376,6 +1376,7 @@ export class Renderer {
   private aoeRingNext = 0;
   private recklessSkulls = new RecklessSkullPainter();
   private groundAimReticle: GroundAimReticleVisual;
+  private readonly highflyMissiles: {mesh:THREE.Mesh;from:THREE.Vector3;to:THREE.Vector3;elapsed:number}[]=[];
   raycaster = new THREE.Raycaster();
   private readonly raycastNdc = new THREE.Vector2();
   private readonly raycastGroundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -7069,6 +7070,22 @@ export class Renderer {
     this.riftDeathZoneVisuals?.handleEvent(ev);
     if (ev.type === 'damage') paintHighflyElementalBasic(ev, this.sim.entities.get(ev.sourceId), this.vfx);
     switch (ev.type) {
+      case 'highflyFireballMiss': {
+        // The original mage spell's own timed cast just finished in empty
+        // terrain. A visible fire orb flies there; no fake target/damage/loot.
+        const source=this.sim.entities.get(ev.sourceId);
+        if(source){
+          const mesh=new THREE.Mesh(
+            new THREE.SphereGeometry(0.21,12,8),
+            new THREE.MeshBasicMaterial({color:0xff6b17,transparent:true,opacity:0.95}));
+          mesh.name='highfly-f25-fireball-open-air';
+          const from=new THREE.Vector3(source.pos.x,source.pos.y+1.35,source.pos.z);
+          const to=new THREE.Vector3(ev.x,groundHeight(ev.x,ev.z,this.sim.cfg.seed)+0.45,ev.z);
+          mesh.position.copy(from);this.scene.add(mesh);
+          this.highflyMissiles.push({mesh,from,to,elapsed:0});
+        }
+        break;
+      }
       case 'highflyBasicWhiff':
         // One actor, one real Rig_Medium attack animation. A whiff is NOT a
         // damage event; no target, damage VFX, combat log or XP is produced.
@@ -12063,6 +12080,11 @@ export class Renderer {
 
   /** Release host-owned workers, overlay canvases, and document listeners. */
   dispose(): void {
+    for(const ball of this.highflyMissiles){
+      this.scene.remove(ball.mesh);ball.mesh.geometry.dispose();
+      (ball.mesh.material as THREE.Material).dispose();
+    }
+    this.highflyMissiles.length=0;
     setBuildSpanSink(null);
     this.cancelTerrainStreaming();
     this.nameplatePainter.dispose();
@@ -12710,6 +12732,20 @@ export class Renderer {
 
   private updateGroundAimReticle(dt: number): void {
     this.groundAimReticle.update(dt);
+    for(let i=this.highflyMissiles.length-1;i>=0;i--){
+      const ball=this.highflyMissiles[i];
+      ball.elapsed+=Math.max(0,dt);
+      const u=Math.min(1,ball.elapsed/0.45);
+      ball.mesh.position.lerpVectors(ball.from,ball.to,u);
+      ball.mesh.scale.setScalar(1+0.25*Math.sin(u*Math.PI));
+      if(u>=1){
+        this.vfx.burst(ball.to,'fire',12,0.85);
+        this.scene.remove(ball.mesh);
+        ball.mesh.geometry.dispose();
+        (ball.mesh.material as THREE.Material).dispose();
+        this.highflyMissiles.splice(i,1);
+      }
+    }
   }
 
   worldToScreen(x: number, y: number, z: number): { x: number; y: number; behind: boolean } {
