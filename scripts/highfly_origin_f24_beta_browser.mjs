@@ -126,7 +126,7 @@ try {
     g.sim.players.get(g.sim.playerId).copper=25;
     document.getElementById('hf-origin-f1-open')?.click();
   });
-  await page.waitForSelector('#hf-origin-f24-trainer [data-learn-skill="fireball"]',{visible:true,timeout:15000});
+  await page.waitForSelector('#hf-origin-f23-trainer [data-learn-skill="fireball"]',{visible:true,timeout:15000});
   await page.evaluate(()=>document.querySelector('[data-learn-skill="fireball"]')?.click());
   await page.waitForFunction(()=>window.__game?.sim?.known?.some(k=>k.def.id==='fireball'),{timeout:18000});
   const skillPurchase=await page.evaluate(()=>{
