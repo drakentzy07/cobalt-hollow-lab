@@ -1,0 +1,215 @@
+name: HIGHFLY F2.2 Combat Beta — preserve F1 and original F2
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/highfly-origin-f22-beta-safe-main.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  validate_stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - name: Verify certified public F1 and separate GREEN combat QA
+        uses: actions/github-script@v7
+        with:
+          script: |
+            for (const req of [
+              { id: 39315808327, sha: 'afaf430020dc43affde8bcd2e5384969f16aa7bf' },
+              { id: 39331357655, sha: '4b7be578040b531ce6c467b329f46bc93fb7c4b4' },
+              { id: 39349581065, sha: 'd7098417925310862b22a3bcaf4bd862515ef61c' },
+            ]) {
+              for (let attempt=0;attempt<30;attempt++) {
+                const {data:r}=await github.rest.actions.getWorkflowRun({
+                  owner:context.repo.owner,repo:context.repo.repo,run_id:req.id
+                });
+                if (r.head_sha!==req.sha)throw Error('WRONG_SOURCE_SHA_'+req.id);
+                if (r.status==='completed') {
+                  if (r.conclusion!=='success')throw Error('UNCERTIFIED_RUN_'+req.id+'_'+r.conclusion);
+                  console.log('CERTIFIED_RUN_GREEN='+req.id);
+                  break;
+                }
+                if (attempt===29)throw Error('QA_RUN_NOT_FINISHED_'+req.id);
+                await new Promise(ok=>setTimeout(ok,10000));
+              }
+            }
+            console.log('HIGHFLY_F2_F1_AND_ATK_QA_CERTIFIED_GREEN=1');
+
+      - name: Download certified F1 and original F2 Pages artifact
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 39331357655
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: baseline
+
+      - name: Checkout immutable F2.2 Android beta source
+        uses: actions/checkout@v4
+        with:
+          ref: d7098417925310862b22a3bcaf4bd862515ef61c
+          path: beta-src
+          persist-credentials: false
+          filter: blob:none
+
+      - name: Confirm F2.2 isolated source, savings and no root SW
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C beta-src rev-parse HEAD)" = "d7098417925310862b22a3bcaf4bd862515ef61c"
+          grep -F "highfly-offline-f22-combat-beta" beta-src/src/game/highfly_offline_save.ts
+          grep -F "!location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/')" beta-src/src/main.ts
+          grep -F "ATTACK_MOVE_MELEE_STOP ** 2" beta-src/src/main.ts
+          test -s beta-src/scripts/highfly_origin_f22_beta_browser.mjs
+          test -s beta-src/scripts/highfly_origin_f22_stage_safe.py
+          test -s beta-src/scripts/highfly_origin_f22_beta_browser.mjs
+          echo "HIGHFLY_F2_IMMUTABLE_BETA_AND_F1_ISOLATION_GREEN=1"
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies and certify F1/F2 types and unit tests
+        shell: bash
+        working-directory: beta-src
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm exec tsc --noEmit --incremental false
+          pnpm exec vitest run --exclude 'training/tests/**' \
+            tests/highfly_origin_f22_integrated_combat.test.ts \
+            tests/highfly_origin_f21_reuse_audit.test.ts \
+            tests/highfly_origin_f2_freedom360.test.ts \
+            tests/highfly_origin_f1_universal_hunter.test.ts \
+            tests/highfly_origin_f122_mobile_ux_save.test.ts \
+            tests/highfly_origin_f123_reset_hud.test.ts \
+            tests/highfly_game_c1.test.ts \
+            tests/highfly_game_c28.test.ts
+          echo "HIGHFLY_F22_BETA_UNIT_TYPES_GREEN=1"
+
+      - name: Checkout frozen original donor assets (never change ClaudeCraft)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: donor-media
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /public/
+
+      - name: Build F2 Android WebGL candidate without deployment
+        shell: bash
+        working-directory: beta-src
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          test "$(git -C ../donor-media rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          test -d ../donor-media/public/models
+          rsync -a ../donor-media/public/ public/
+          node scripts/build_bundle_pregen.mjs
+          pnpm exec vite build
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          node scripts/highfly_f11_appshell.mjs
+          test -s dist/index.html
+          test -s dist/highfly-origin-sw.js
+          echo "HIGHFLY_F22_BETA_COMPILED_GREEN=1"
+
+      - name: Build immutable F1 plus original F2 plus add-only F2.2 beta
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s baseline/artifact.tar
+          python3 beta-src/scripts/highfly_origin_f22_stage_safe.py \
+            baseline/artifact.tar beta-src/dist site d7098417925310862b22a3bcaf4bd862515ef61c
+
+      - name: Browser test beta entry, ATK, weapon and independent save
+        shell: bash
+        env:
+          F22_BETA_URL: "http://127.0.0.1:4173/cobalt-hollow-lab/lab/f22-combat-beta/"
+        run: |
+          set -euo pipefail
+          command -v google-chrome || command -v chromium || command -v chromium-browser
+          mkdir -p pages-test
+          ln -s ../site pages-test/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory pages-test >/tmp/f2-beta-http.log 2>&1 &
+          P=$!
+          trap 'kill "$P" 2>/dev/null || true' EXIT
+          for i in $(seq 1 35); do
+            if curl -fsSI "$F22_BETA_URL" >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS "http://127.0.0.1:4173/cobalt-hollow-lab/highfly-origin-f12-qa.json" >/dev/null
+          curl -fsS "$F22_BETA_URL/f22-beta-qa.json" >/dev/null
+          (cd beta-src && node scripts/highfly_origin_f22_beta_browser.mjs)
+          echo "HIGHFLY_F22_BETA_ANDROID_BROWSER_GREEN=1"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload composite preserving F1 and original F2 plus F2.2
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publish:
+    needs: validate_stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/lab/f22-combat-beta/
+    steps:
+      - name: Deploy certified Pages without changing F1 or original F2
+        uses: actions/deploy-pages@v4
+      - name: Verify F1, original F2 and new F2.2 beta live
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,time,urllib.request
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for i in range(30):
+              try:
+                  def get(path):
+                      req=urllib.request.Request(base+path+'?f2check='+str(i),
+                          headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-F2-BETA-VERIFY'})
+                      with urllib.request.urlopen(req,timeout=45) as r:
+                          if r.status!=200:raise RuntimeError('HTTP_'+str(r.status))
+                          return r.read()
+                  f1=json.loads(get('highfly-origin-f12-qa.json'))
+                  f2=json.loads(get('lab/f22-combat-beta/f22-beta-qa.json'))
+                  if f1.get('sourceCommit')!='7518c22c11ff5ddffe09bb7792f8d67bb9e82038':
+                      raise RuntimeError('F1_ROOT_CHANGED')
+                  oldf2=json.loads(get('lab/f2-combat-beta/f2-beta-qa.json'))
+                  if oldf2.get('sourceCommit')!='f969ddfab1a120b54bf8b91db76f6d27cbe08e8d':
+                      raise RuntimeError('ORIGINAL_F2_CHANGED')
+                  if f2.get('sourceCommit')!='d7098417925310862b22a3bcaf4bd862515ef61c':
+                      raise RuntimeError('F2_BETA_STALE')
+                  if f2.get('parentF2Source')!='f969ddfab1a120b54bf8b91db76f6d27cbe08e8d':
+                      raise RuntimeError('F22_WRONG_BASE')
+                  if b'/cobalt-hollow-lab/assets/' not in get('lab/f22-combat-beta/index.html'):
+                      raise RuntimeError('F2_HTML_MISSING_ASSETS')
+                  print('HIGHFLY_F22_BETA_LIVE_GREEN='+base+'lab/f22-combat-beta/')
+                  break
+              except Exception as e:
+                  print('F2_BETA_PROPAGATION',i,str(e)[:170]);time.sleep(6)
+          else:raise SystemExit('F2_BETA_NOT_PUBLIC')
+          PY
