@@ -1,16 +1,18 @@
-/** HIGHFLY ORIGIN — single-app world/laboratory mode contract.
+/** HIGHFLY ORIGIN — one game, two safe save identities.
  *
- * This module is deliberately side-effect-free. It describes the two profiles
- * for the future unified launcher without activating a lab or migrating
- * existing saves. Do NOT infer the mode from a Pages URL or character name.
+ * Decision 20 Oct 2026: DrakenLAB is a LEVEL-1 test Hunter with temporary
+ * access to content, NOT a level-99/stat-99 Hunter. The production definition
+ * and progression requirements remain untouched.
  *
- * Integration MUST make the launcher choose the mode explicitly, then route
- * load/write/reset/autosave and combat flags through that same selection.
+ * This is only a pure contract. Wiring mode-specific save instances, content
+ * gates, launcher, and same-engine combat is a separate integration step.
+ * NEVER use a pathname, nickname or persisted user string as a dev privilege.
  */
 export type HighflyOriginMode = 'world' | 'lab';
-export const HIGHFLY_LAB_LEVEL = 99 as const;
+export type HighflyPreviewContent = 'skill' | 'equipment' | 'loot' | 'recipe' | 'monster' | 'scenario';
+export const HIGHFLY_LAB_START_LEVEL = 1 as const;
 
-/** The production keys are existing F1 keys: changing them loses Draken. */
+/** Existing Draken storage keys must remain byte-identical to F1. */
 export const HIGHFLY_ORIGIN_MODE_CONTRACT = {
   world: {
     label: 'Entrar al mundo',
@@ -18,25 +20,49 @@ export const HIGHFLY_ORIGIN_MODE_CONTRACT = {
     saveSlot: 'origin-f1:primary',
     saveLocal: 'highfly.origin.primary.v1',
     levelOverride: null,
-    temporarySkillAccess: false,
+    temporaryContentAccess: false,
     progressAffectsHunter: true,
   },
   lab: {
     label: 'Entrar al laboratorio',
-    saveDb: 'highfly-offline-lab99-v1',
-    saveSlot: 'origin-lab99:primary',
-    saveLocal: 'highfly.origin.lab99.primary.v1',
-    levelOverride: HIGHFLY_LAB_LEVEL,
-    temporarySkillAccess: true,
+    saveDb: 'highfly-offline-lab-v1',
+    saveSlot: 'origin-lab:primary',
+    saveLocal: 'highfly.origin.lab.primary.v1',
+    levelOverride: null,
+    temporaryContentAccess: true,
     progressAffectsHunter: false,
   },
 } as const;
 
-/** An absent/invalid choice must never open developer privileges. */
+/** An absent or invalid choice MUST fall back to the real Hunter. */
 export function normalizeHighflyOriginMode(value: unknown): HighflyOriginMode {
   return value === 'lab' ? 'lab' : 'world';
 }
 
 export function highflyOriginModeContract(mode: HighflyOriginMode) {
   return HIGHFLY_ORIGIN_MODE_CONTRACT[mode];
+}
+
+/** Level-gate check for an explicitly selected preview, not the full
+ * authorization to learn/equip/grant an item. Other native checks still run:
+ * spell geometry, hit, resource costs, equipment type, recipes, save, etc.
+ *
+ * Do not alter source definitions (learnLevel/requiredLevel), set the real
+ * character level to 99, or attach this bypass to an untrusted string.
+ */
+export function highflyMeetsContentLevelGate(
+  mode: HighflyOriginMode, currentLevel: number, requiredLevel: number,
+): boolean {
+  if (!Number.isInteger(currentLevel) || currentLevel < 1 ||
+      !Number.isInteger(requiredLevel) || requiredLevel < 1) return false;
+  return mode === 'lab' || currentLevel >= requiredLevel;
+}
+
+/** Lab preview capability only; the actual item/skill must exist and be
+ * selected via the tester catalog, with a native Sim path and compatible rig.
+ */
+export function highflyCanPreviewContent(
+  mode: HighflyOriginMode, _kind: HighflyPreviewContent,
+): boolean {
+  return mode === 'lab';
 }
