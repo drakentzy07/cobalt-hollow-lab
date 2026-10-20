@@ -23,6 +23,9 @@
 // (tests/architecture.test.ts) stays green.
 
 import type { SimContext } from './sim_context';
+import {lineOfSightClear} from './colliders';
+import {groundHeight} from './world';
+import {highflyF26SegmentSphereHit, type HighflyF26Point} from '../highfly/combat/f26_skillshot_core';
 import { DT, type Entity } from './types';
 
 // Yards per second. Matches the homing projectile speed in src/render/vfx.ts so the
@@ -102,7 +105,65 @@ export function scheduleProjectile(
  *  of cast range when it fires, gated at the launch sites). A bolt fizzles (resolves to
  *  nothing) ONLY when its caster or target has died or despawned mid-flight, so no damage,
  *  threat, or kill credit ever lands on a corpse. */
+/** F2.6 free-flight shots are stored per SimContext, NEVER in the donor's
+ * homing queue. This prevents a target lock or forced impact after timeout. */
+interface HighflyFreeShot {
+  sourceId:number;
+  pos:HighflyF26Point;
+  delta:HighflyF26Point;
+  remaining:number;
+  onHit:(source:Entity,target:Entity)=>void;
+}
+const highflyFreeShots=new WeakMap<SimContext,HighflyFreeShot[]>();
+export function scheduleHighflyFreeProjectile(
+  ctx:SimContext,source:Entity,aim:{x:number;z:number},
+  onHit:(source:Entity,target:Entity)=>void,range=30,
+):void{
+  const dx=aim.x-source.pos.x,dz=aim.z-source.pos.z;
+  const d=Math.hypot(dx,dz);
+  if(!Number.isFinite(d)||d<0.001)return;
+  const len=Math.min(range,d);
+  const endY=groundHeight(source.pos.x+dx/d*len,source.pos.z+dz/d*len,ctx.cfg.seed)+1.15;
+  const shot:HighflyFreeShot={
+    sourceId:source.id,pos:{x:source.pos.x,y:source.pos.y+1.15,z:source.pos.z},
+    delta:{x:dx/d*PROJECTILE_SPEED,y:(endY-(source.pos.y+1.15))/len*PROJECTILE_SPEED,z:dz/d*PROJECTILE_SPEED},
+    remaining:len,onHit,
+  };
+  const queue=highflyFreeShots.get(ctx)??[];
+  queue.push(shot);
+  highflyFreeShots.set(ctx,queue);
+}
+function advanceHighflyFreeProjectiles(ctx:SimContext):void{
+  const queue=highflyFreeShots.get(ctx);
+  if(!queue?.length)return;
+  const survivors:HighflyFreeShot[]=[];
+  for(const shot of queue){
+    const source=ctx.entities.get(shot.sourceId);
+    if(!source||source.dead)continue;
+    const distance=Math.min(PROJECTILE_SPEED*DT,shot.remaining);
+    const ratio=distance/PROJECTILE_SPEED;
+    const next={x:shot.pos.x+shot.delta.x*ratio,
+      y:shot.pos.y+shot.delta.y*ratio,z:shot.pos.z+shot.delta.z*ratio};
+    // Native world sight collision also blocks the shot. No homing, no forced hit.
+    if(!lineOfSightClear(ctx.cfg.seed,shot.pos,next,0.12))continue;
+    let victim:Entity|null=null,first=Infinity;
+    for(const target of ctx.entities.values()){
+      if(target.id===source.id||target.dead||
+         (target.kind!=='mob'&&target.kind!=='player')||
+         !ctx.isHostileTo(source,target))continue;
+      const t=highflyF26SegmentSphereHit(shot.pos,next,
+        {x:target.pos.x,y:target.pos.y+1.12,z:target.pos.z},0.95);
+      if(t!==null&&t<first){first=t;victim=target;}
+    }
+    if(victim){shot.onHit(source,victim);continue;}
+    shot.remaining-=distance;
+    if(shot.remaining>0.0001){shot.pos=next;survivors.push(shot);}
+  }
+  highflyFreeShots.set(ctx,survivors);
+}
+
 export function advancePendingProjectiles(ctx: SimContext): void {
+  advanceHighflyFreeProjectiles(ctx);
   if (ctx.pendingProjectiles.length === 0) return;
   const step = PROJECTILE_SPEED * DT;
   const launchedBeforeTick = ctx.pendingProjectiles;

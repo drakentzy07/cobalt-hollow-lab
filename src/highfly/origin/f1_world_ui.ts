@@ -37,7 +37,8 @@ export function mountOriginF1WorldUi(
   sim: Sim, initial: OriginF1Save, onStarterGranted: () => void,
 ): OriginF1WorldUi {
   document.getElementById('hf-origin-f1-hud')?.remove();
-  const f25=location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/');
+  const f26=location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/');
+  const f25=f26||location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/');
   if(f25) document.body.classList.add('hf-origin-f25');
   const root = node('aside', '', 'hf-origin-f1-hud');
   root.id = 'hf-origin-f1-hud';
@@ -131,6 +132,7 @@ export function mountOriginF1WorldUi(
   const f23Trainer=location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/') ||
     location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') || f25;
   if(f25)sim.player.highflyF25CombatFreedom=true;
+  if(f26)sim.player.highflyF26CombatFreedom=true;
   // One native Sim, one Hunter. Persist knowledge in the existing Origin save,
   // not in the donor Warrior's level-up list, which is intentionally disabled.
   // Hydrate only the explicitly learned spells into its already-authoritative
@@ -154,11 +156,23 @@ export function mountOriginF1WorldUi(
       const row=ORIGIN_F23_MASTER_SKILLS.find(x=>x.id===id);
       const def=row ? ABILITIES[id] : undefined;
       if(!row || !def || def.learnLevel>sim.player.level || def.hiddenFromPlayer)return [];
-      const useDef=f25 && id==='fireball' ? {...def,castWhileMoving:true} : def;
+      const useDef=f26 && id==='fireball'
+        ? {...def,castTime:0,cooldown:3,requiresTarget:false,castWhileMoving:true}
+        : f25 && id==='fireball' ? {...def,castWhileMoving:true} : def;
       return [{def:useDef,rank:1,cost:useDef.cost,castTime:useDef.castTime,cooldown:useDef.cooldown,
         effects:useDef.effects,castWhileMoving:f25 && id==='fireball',
         threatFlat:useDef.threat?.flat??0,threatMult:useDef.threat?.mult??1}];
     });
+    if(f26){
+      // A Hunter movement technique, independent of the four learned attack
+      // slots. Reuses native obstacle-safe blinkForward and cooldown authority.
+      const blink={...ABILITIES.blink,name:'FLASH',learnLevel:1,cost:25,
+        cooldown:20,offGcd:true,usableWhileCasting:true,
+        effects:[{type:'blinkForward' as const,distance:6,breakRoots:false}]};
+      hunter.known.push({def:blink,rank:1,cost:blink.cost,castTime:0,
+        cooldown:blink.cooldown,effects:blink.effects,castWhileMoving:true,
+        threatFlat:0,threatMult:1});
+    }
   };
   if(f23Trainer){
     // ORIGIN uses MP for every acquired school; ST remains the separate
@@ -181,6 +195,18 @@ export function mountOriginF1WorldUi(
     },
   };
   registerOriginResourceController(resourceController);
+  const flashButton=f26?node('button','FLASH','hf-origin-f26-flash'):null;
+  if(flashButton){
+    flashButton.id='hf-origin-f26-flash';
+    flashButton.setAttribute('aria-label','FLASH · desplazamiento instantáneo');
+    flashButton.style.cssText='position:fixed;right:216px;bottom:30px;z-index:285;min-width:54px;height:48px;border-radius:18px;border:2px solid #b4c8f5;background:#273d78e8;color:#fff;font:800 12px system-ui;touch-action:none;user-select:none;box-shadow:0 3px 9px #0008';
+    flashButton.addEventListener('pointerdown',event=>{
+      if(event.button!==0)return;
+      event.preventDefault();event.stopPropagation();
+      if(!sim.player.dead)sim.castAbility('blink');
+    });
+    document.body.append(flashButton);
+  }
   let last=performance.now();
   let open=false;
   const setOpen=(next:boolean)=>{
@@ -290,6 +316,14 @@ export function mountOriginF1WorldUi(
     const liveFrame=document.getElementById('player-frame');
     const host=(f25?liveFrame?.querySelector('.uf-bars'):liveFrame)??liveFrame;
     if(host && meter.parentElement!==host)host.append(meter);
+    if(flashButton){
+      const evade=document.getElementById('mobile-evade')?.getBoundingClientRect();
+      if(evade&&evade.width>4){
+        flashButton.style.left=Math.min(innerWidth-58,evade.right+9)+'px';
+        flashButton.style.top=evade.top+'px';
+        flashButton.style.right='auto';flashButton.style.bottom='auto';
+      }
+    }
     const now=performance.now();
     current={...current,resources:tickF1Resources(current.resources,(now-last)/1000)};
     if(f23Trainer){
@@ -320,6 +354,6 @@ export function mountOriginF1WorldUi(
   },120);
   return {
     save:()=>structuredClone(current),
-    close:()=>{window.clearInterval(timer);registerOriginResourceController(null);if(f25){delete sim.player.highflyF25CombatFreedom;document.body.classList.remove('hf-origin-f25');}backdrop.remove();meter.remove();root.remove();}
+    close:()=>{window.clearInterval(timer);registerOriginResourceController(null);flashButton?.remove();delete sim.player.highflyF26CombatFreedom;if(f25){delete sim.player.highflyF25CombatFreedom;document.body.classList.remove('hf-origin-f25');}backdrop.remove();meter.remove();root.remove();}
   };
 }

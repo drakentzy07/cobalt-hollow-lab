@@ -1975,7 +1975,7 @@ async function startGame(
   hud.onMobileAttackNearest = () => attackNearest();
   hud.onMobileActionIntent = (action) => {
     if((location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') ||
-        location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/')) &&
+        (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/'))) &&
        action.type==='ability' && highflyAimShape(action.id)){
       // Aimed abilities already chose their target on pointer release.
       return;
@@ -1994,10 +1994,10 @@ async function startGame(
   };
   hud.onHighflyAimGesture=(phase,action,dx,dy)=>{
     if(!(location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') ||
-         location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/')) ||
+         (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/'))) ||
        action.type!=='ability' || !highflyAimShape(action.id) ||
        !world.known.some(k=>k.def.id===action.id))return false;
-    if(phase==='cancel'){f24AimPreview=null;delete world.player.highflyF25EmptyFireballAim;return true;}
+    if(phase==='cancel'){f24AimPreview=null;delete world.player.highflyF25EmptyFireballAim;delete world.player.highflyF26FireballAim;return true;}
     const shape=highflyAimShape(action.id)!;
     const p=world.player;
     if(action.id==='fireball' && phase==='start')delete p.highflyF25EmptyFireballAim;
@@ -2011,6 +2011,14 @@ async function startGame(
     if(phase==='start'||phase==='move')return true;
     const opponents=activePvpOpponentIds(world);
     if(shape!=='circle'){
+      if(p.highflyF26CombatFreedom && action.id==='fireball'){
+        // Releasing a manually aimed shot is never a target-selection request.
+        // No magnetism or native homing; the Sim's sweep decides hits.
+        world.targetEntity(null);
+        p.highflyF26FireballAim={x:point.x,z:point.z};
+        f24AimPreview=null;
+        return true;
+      }
       const picked=highflyAimTarget(world.entities.values(),p.pos,aim.facing,maxRange,
         Math.hypot(dx,dy)>12,
         e=>isAttackableEntity(e,world.playerId,opponents));
@@ -2020,7 +2028,7 @@ async function startGame(
       }else if(action.id==='fireball'||action.id==='charge'){
         world.targetEntity(null);
         if(action.id==='fireball'&&
-           location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/')){
+           (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/'))){
           // Real targetless cast: the ONE Sim bills MP/GCD and checks stun,
           // cast windup and cancellation; the visual projectile deals NO damage.
           p.highflyF25EmptyFireballAim={x:point.x,z:point.z};
@@ -2090,7 +2098,7 @@ async function startGame(
     entryDiagnostics.checkpoint(questDialogOpen ? 'quest-dialog-open' : 'quest-dialog-closed');
   };
 
-  const f25Traversal = location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/');
+  const f25Traversal = (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/'));
   const canF25Traverse=(kind:'jump'|'evade'):boolean=>{
     if(!f25Traversal)return true;
     const p=world.player;
@@ -4188,10 +4196,16 @@ async function startGame(
     mi.highflyAirDashEnabled = document.body.classList.contains('hf-origin-f1');
     if(document.body.classList.contains('hf-origin-f25')){
       const stick=input.highflyTouchVector();
+      if(world.player.highflyF26CombatFreedom){
+        mi.highflyFlipDirInput=Math.abs(stick.x)>=0.25
+          ?(stick.x>0?'right':'left')
+          :(stick.y<0?'forward':'back');
+      }else{
       mi.highflyFlipDirInput = Math.hypot(stick.x,stick.y)<=0.05 ? 'back'
         : Math.abs(stick.y)>=Math.abs(stick.x)
           ? (stick.y<0?'forward':'back')
           : (stick.x>0?'right':'left');
+      }
     }
     let facing: number | null = mouselook ? input.camYaw : null;
     // HIGHFLY RUN0.5 analog locomotion. The left stick becomes a continuous
@@ -11630,7 +11644,7 @@ if (HIGHFLY_F11_OFFLINE_FIRST && !import.meta.env.DEV &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') &&
-    !location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') &&
+    !(location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/')) &&
     'serviceWorker' in navigator &&
     (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
   const registerOfflineShell = () => {

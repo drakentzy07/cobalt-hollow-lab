@@ -5309,6 +5309,9 @@ export interface Entity extends ClientMirroredEntityFields {
   highflyAirJumpUsed?: boolean;
   /** F2.5 isolated Hunter-only casting freedoms. No online/donor effect. */
   highflyF25CombatFreedom?: boolean;
+  /** F2.6 only: manual aim and no-homing cast policy. */
+  highflyF26CombatFreedom?: boolean;
+  highflyF26FireballAim?: {x:number;z:number};
   /** Authoritative, transient intentional free-space Fireball endpoint. */
   highflyF25EmptyFireballAim?: {x:number;z:number};
   /** Direction of the second real physical jump, latched at impulse. */

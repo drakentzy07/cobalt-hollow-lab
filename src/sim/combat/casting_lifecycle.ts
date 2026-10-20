@@ -47,7 +47,7 @@ import {
 } from '../professions/corpse_harvest_session';
 import { effectiveFishingBand, fishReelWindowSecFor } from '../professions/fishing';
 import { bestOwnedGatherToolFor } from '../professions/tools';
-import { scheduleProjectile } from '../projectile_travel';
+import { scheduleProjectile, scheduleHighflyFreeProjectile } from '../projectile_travel';
 import { isWorldPvpHostile, WORLD_PVP_AID_REFUSED_LINE } from '../pvp/world_pvp';
 import type { PlayerMeta, ResolvedAbility } from '../sim';
 import type { SimContext } from '../sim_context';
@@ -1832,7 +1832,7 @@ export function castAbility(
   // so gear/Bloodlust/Temporal Acceleration haste speeds the whole rotation, not just
   // cast bars. spellHasteMult is 1 for anyone without spell haste, so their GCD is
   // unchanged.
-  const gcd = Math.max(MIN_GCD, ctx.playerGcdFor(meta.cls) / spellHasteMult(p));
+  const gcd = p.highflyF26CombatFreedom ? 0.8 : Math.max(MIN_GCD, ctx.playerGcdFor(meta.cls) / spellHasteMult(p));
   // A channel keeps its duration, so it must not eat a next_cast_instant charge.
   let consumedInstantAura: Aura | null = null;
   if (
@@ -2761,6 +2761,36 @@ function applyAbility(
   res = consumeOverload(ctx, p, res);
   res = consumeColdsightReadReservation(ctx, p, res);
   const ability = res.def;
+  // Only the F2.6 Hunter uses a free-flight Fireball. Native targeted
+  // projectiles, channels and all other schools keep their original lifecycle.
+  if(p.highflyF26CombatFreedom===true && ability.id==='fireball'){
+    const aimed=p.highflyF26FireballAim;
+    delete p.highflyF26FireballAim;
+    const dx=aimed?aimed.x-p.pos.x:Math.sin(p.facing)*ability.range;
+    const dz=aimed?aimed.z-p.pos.z:Math.cos(p.facing)*ability.range;
+    const d=Math.hypot(dx,dz);
+    if(!Number.isFinite(d)||d<0.001||d>ability.range+0.001){
+      ctx.error(p.id,'Out of range.');return;
+    }
+    // All pre-commit restrictions, MP, GCD and cooldown checks were owned by
+    // castAbility above. Pay once; a real miss never refunds the committed cast.
+    spendAbilityCost(ctx,p,meta,res);
+    armAbilityCooldownWithReflection(ctx,p,meta,res);
+    p.facing=Math.atan2(dx,dz);
+    const endpoint={x:p.pos.x+dx,z:p.pos.z+dz};
+    scheduleHighflyFreeProjectile(ctx,p,endpoint,(src,tgt)=>{
+      if(resolveHostileSpellResist(ctx,src,tgt,ability))return;
+      ctx.runEffects(src,meta,tgt,res,false);
+    },ability.range);
+    // The F2.5 terrain launch FX already draws a free-space bolt. Future curved
+    // trajectories must synchronize this same simulation shot with its FX.
+    ctx.emit({type:'highflyFireballMiss',sourceId:p.id,x:endpoint.x,z:endpoint.z});
+    if(p.kind==='player'){
+      ctx.applySetProcs(p,null,'spellCast');
+      onCastCompleted(ctx,p,ability.id,null);
+    }
+    return;
+  }
   if (ability.devotionCost && !hasDevotion(p, ability.devotionCost)) {
     ctx.error(p.id, 'Not enough Devotion!');
     return;

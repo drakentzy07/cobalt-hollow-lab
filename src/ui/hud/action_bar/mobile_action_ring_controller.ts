@@ -206,6 +206,24 @@ export function buildMobileActionRing(deps: MobileActionRingDeps): MobileActionR
     repaint: () => ringPainter?.paintPetals(),
   });
 
+  // F2.6 only: the cancellation cross shares the active aiming pointer.
+  // It never calls castSlot and cannot bill mana/cooldown on a cancelled aim.
+  const f26Cancel=location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/')
+    ? document.createElement('div'):null;
+  if(f26Cancel){
+    f26Cancel.id='highfly-f26-aim-cancel';
+    f26Cancel.textContent='×';
+    f26Cancel.setAttribute('aria-label','Cancelar habilidad');
+    f26Cancel.style.cssText='position:fixed;right:34px;top:49px;width:64px;height:64px;border-radius:50%;border:2px dashed #f0abab;background:#752c3a99;color:#fff;font:400 55px/56px system-ui;text-align:center;z-index:310;pointer-events:none;display:none;opacity:.68';
+    document.body.append(f26Cancel);
+  }
+  const resetCancel=()=>{if(f26Cancel){f26Cancel.style.display='none';f26Cancel.style.opacity='.68';}};
+  const inCancel=(x:number,y:number)=>{
+    if(!f26Cancel)return false;
+    const b=f26Cancel.getBoundingClientRect();
+    const mx=b.x+b.width/2,my=b.y+b.height/2;
+    return Math.hypot(x-mx,y-my)<=b.width*.58;
+  };
   slotBtns.forEach((btn, i) => {
     deps.bindEmpoweredHold(btn, () => (deps.aimOwnsButton(i) ? -1 : deps.sourceSlot(i, 'center')));
     // Aimed Origin abilities claim the pointer BEFORE the original radial
@@ -217,18 +235,22 @@ export function buildMobileActionRing(deps: MobileActionRingDeps): MobileActionR
       if(!deps.originAimGesture?.('start',slot(),0,0))return;
       pointer=event.pointerId;startX=event.clientX;startY=event.clientY;
       btn.style.touchAction='none';
+      if(f26Cancel)f26Cancel.style.display='block';
       try{btn.setPointerCapture(event.pointerId)}catch{}
       event.preventDefault();event.stopImmediatePropagation();
     },{capture:true});
     btn.addEventListener('pointermove',event=>{
       if(pointer!==event.pointerId)return;
+      if(f26Cancel)f26Cancel.style.opacity=inCancel(event.clientX,event.clientY)?'1':'.68';
       deps.originAimGesture?.('move',slot(),event.clientX-startX,event.clientY-startY);
       event.preventDefault();event.stopImmediatePropagation();
     },{capture:true});
     btn.addEventListener('pointerup',event=>{
       if(pointer!==event.pointerId)return;
       pointer=null;const currentSlot=slot();
-      const commit=deps.originAimGesture?.('end',currentSlot,event.clientX-startX,event.clientY-startY);
+      const cancel=inCancel(event.clientX,event.clientY);
+      const commit=deps.originAimGesture?.(cancel?'cancel':'end',currentSlot,event.clientX-startX,event.clientY-startY);
+      resetCancel();
       suppressClick=true;btn.style.touchAction='';
       try{btn.releasePointerCapture(event.pointerId)}catch{}
       if(commit)deps.castSlot(currentSlot);
@@ -236,7 +258,7 @@ export function buildMobileActionRing(deps: MobileActionRingDeps): MobileActionR
     },{capture:true});
     btn.addEventListener('pointercancel',event=>{
       if(pointer!==event.pointerId)return;
-      pointer=null;btn.style.touchAction='';
+      pointer=null;btn.style.touchAction='';resetCancel();
       deps.originAimGesture?.('cancel',slot(),0,0);
       event.preventDefault();event.stopImmediatePropagation();
     },{capture:true});
