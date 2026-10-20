@@ -34,6 +34,6 @@ describe('F2.6.1 S23 control polish',()=>{
     expect(ui).toContain('hf-f261-flash-cd');
     expect(ui).toContain("sim.player.cooldowns.get('blink')");
     expect(ui).toContain("jumpButton.style.translate='-38px 0'");
-    expect(ui).toContain("f261?node('button'");
+    expect(ui).toContain("f26?node('button'");
   });
 });
