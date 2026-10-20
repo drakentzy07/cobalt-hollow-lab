@@ -1,4 +1,4 @@
-name: HIGHFLY F2.7 P3 — True Blade Rush + 4-Hit Combo + Universal Skills (NO DEPLOY)
+name: HIGHFLY F2.7 P4 — Playable 4-Skill Android Beta Route (NO DEPLOY)
 on:
   push:
     branches: [highfly-origin-f27-combat-moba-20261020]
@@ -16,6 +16,8 @@ on:
       - "tests/highfly_origin_f27_moba.test.ts"
       - "tests/highfly_origin_f27_skills.test.ts"
       - "tests/highfly_origin_f27_blade_rush.test.ts"
+      - "tests/highfly_origin_f27_beta.test.ts"
+      - "scripts/highfly_origin_f27_beta_browser.mjs"
       - "tests/highfly_origin_f25_combat_unleashed.test.ts"
       - "scripts/highfly_origin_f263_beta_browser.mjs"
       - "scripts/highfly_origin_f263_beta_browser.mjs"
@@ -89,6 +91,7 @@ jobs:
             tests/highfly_origin_f27_moba.test.ts \
             tests/highfly_origin_f27_skills.test.ts \
             tests/highfly_origin_f27_blade_rush.test.ts \
+            tests/highfly_origin_f27_beta.test.ts \
             tests/highfly_origin_f21_reuse_audit.test.ts \
             tests/highfly_origin_f23_hunter_unchained.test.ts \
             tests/highfly_origin_f24_free_combat.test.ts \
@@ -164,6 +167,15 @@ jobs:
           cp dist/highfly-origin-icon-512.png dist/lab/f263-combat-beta/
           F263_BETA_URL="http://127.0.0.1:4173/cobalt-hollow-lab/lab/f263-combat-beta/" node scripts/highfly_origin_f263_beta_browser.mjs
           echo "HIGHFLY_F263_S23_BROWSER_GREEN=1"
+          # The first directly-playable F2.7 route must preserve all prior
+          # saves while mounting the four preview skills on native mobile S1-S4.
+          mkdir -p dist/lab/f27-combat-beta
+          cp dist/index.html dist/lab/f27-combat-beta/index.html
+          cp dist/highfly-origin.webmanifest dist/lab/f27-combat-beta/
+          cp dist/highfly-origin-icon-192.png dist/lab/f27-combat-beta/
+          cp dist/highfly-origin-icon-512.png dist/lab/f27-combat-beta/
+          F27_BETA_URL="http://127.0.0.1:4173/cobalt-hollow-lab/lab/f27-combat-beta/" node scripts/highfly_origin_f27_beta_browser.mjs
+          echo "HIGHFLY_F27_S23_FOUR_SKILL_BROWSER_GREEN=1"
 
       - name: No public Pages was touched
         shell: bash
