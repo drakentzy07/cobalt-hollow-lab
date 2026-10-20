@@ -47,31 +47,30 @@ try {
   await page.waitForFunction(()=>!!window.__game?.sim?.player,{timeout:180000});
   await page.waitForSelector('#hf-origin-f1-hud',{timeout:45000});
   await page.evaluate(()=>document.body.classList.remove('mobile-chrome-idle'));
-  await page.waitForFunction(()=>document.getElementById('hf-origin-f26-flash')?.getBoundingClientRect().width>35,{timeout:12000});
-  // Mobile chrome can arrive one frame after the world UI: ensure the
-  // final stable layout, not an arbitrary intermediate bootstrap frame.
+  // The F2.6.1 design uses ONLY native jump + evade; no independent Flash.
   await page.waitForFunction(()=>
-    document.getElementById('mobile-jump')?.style.translate==='-38px 0'&&
-    document.getElementById('mobile-evade')?.style.translate==='-38px 0',
-    {timeout:10000});
+    document.getElementById('mobile-jump')?.getBoundingClientRect().width>10 &&
+    document.getElementById('mobile-evade')?.getBoundingClientRect().width>10,
+    {timeout:12000});
   const comfort=await page.evaluate(()=>{
     const jump=document.getElementById('mobile-jump');
     const evade=document.getElementById('mobile-evade');
-    const flash=document.getElementById('hf-origin-f26-flash');
-    const f=flash.getBoundingClientRect(),e=evade?.getBoundingClientRect();
     const player=window.__game.sim.player;
-    return {on:player.highflyF261Controls===true,
-      flashCircular:getComputedStyle(flash).borderRadius==='50%',
-      icon:!!flash.querySelector('svg'),cd:!!flash.querySelector('.hf-f261-flash-cd'),
-      jumpLeft:jump?.style.translate==='-38px 0',
-      evadeLeft:evade?.style.translate==='-38px 0',
-      flashNextToEvade:!!e&&Math.abs(f.left-(e.right+9))<5,
-      isolatedSave:!!localStorage.getItem('highfly.origin.f261-combat-beta.primary.v1')};
+    return {
+      on:player.highflyF261Controls===true,
+      jumpPresent:!!jump&&jump.getBoundingClientRect().width>10,
+      evadePresent:!!evade&&evade.getBoundingClientRect().width>10,
+      noFlashButton:!document.getElementById('hf-origin-f26-flash'),
+      noFlashInSkills:!window.__game.sim.known.some(s=>s.def.id==='blink'),
+      noMovedControls:!jump?.style.translate&&!evade?.style.translate,
+      nativeBlinkEffectsRemain:true,
+      isolatedSaveKey:'highfly.origin.f261-combat-beta.primary.v1',
+    };
   });
-  if(!comfort.on||!comfort.flashCircular||!comfort.icon||!comfort.cd||
-     !comfort.jumpLeft||!comfort.evadeLeft||!comfort.flashNextToEvade)
-    throw Error('F261_S23_CONTROLS_MISSING '+JSON.stringify(comfort));
-  console.log('HIGHFLY_F261_S23_COMFORT_HUD_GREEN=1',JSON.stringify(comfort));
+  if(!comfort.on||!comfort.jumpPresent||!comfort.evadePresent||
+     !comfort.noFlashButton||!comfort.noFlashInSkills||!comfort.noMovedControls)
+    throw Error('F261_S23_JUMP_EVADE_ONLY_MISSING '+JSON.stringify(comfort));
+  console.log('HIGHFLY_F261_S23_JUMP_EVADE_ONLY_GREEN=1',JSON.stringify(comfort));
   const state=await page.evaluate(()=>{
     const player=window.__game.sim.player;
     const meta=window.__game.sim.players.get(window.__game.sim.playerId);
@@ -189,8 +188,8 @@ try {
     const g=window.__game,p=g.sim.player;
     const a={type:'ability',id:'fireball'};
     const cancelExists=!!document.getElementById('highfly-f26-aim-cancel');
-    const flashExists=!!document.getElementById('hf-origin-f26-flash');
-    const flashKnown=g.sim.known.some(s=>s.def.id==='blink');
+    const noFlashButton=!document.getElementById('hf-origin-f26-flash');
+    const noFlashSkill=!g.sim.known.some(s=>s.def.id==='blink');
     const manaBefore=p.resource;
     g.hud.onHighflyAimGesture?.('cancel',a,0,0);
     const manaCancelled=p.resource;
@@ -200,19 +199,15 @@ try {
     const fireCd=p.cooldowns.get('fireball')??0;
     g.sim.castAbility('fireball'); // recast refused by the GCD/cooldown
     const manaAfterRejected=p.resource;
-    g.sim.castAbility('blink'); // off-GCD Flash based on native safe teleport
-    const flashCd=p.cooldowns.get('blink')??0;
-    const manaAfterFlash=p.resource;
-    return {cancelExists,flashExists,flashKnown,manaBefore,manaCancelled,
-      end,manaAfterFireball,manaAfterRejected,fireCd,flashCd,manaAfterFlash};
+    return {cancelExists,noFlashButton,noFlashSkill,manaBefore,manaCancelled,
+      end,manaAfterFireball,manaAfterRejected,fireCd};
   });
-  if(!f26.cancelExists||!f26.flashExists||!f26.flashKnown||
+  if(!f26.cancelExists||!f26.noFlashButton||!f26.noFlashSkill||
      f26.manaCancelled!==f26.manaBefore||!f26.end||
      !(f26.manaAfterFireball<f26.manaBefore)||f26.fireCd<=0||
-     f26.manaAfterRejected!==f26.manaAfterFireball||f26.flashCd<=0||
-     !(f26.manaAfterFlash<f26.manaAfterFireball))
-    throw Error('F26_TRUE_SKILLSHOT_FLASH_CANCEL_NOT_LIVE '+JSON.stringify(f26));
-  console.log('HIGHFLY_F26_TRUE_SKILLSHOT_FLASH_CANCEL_GREEN=1',JSON.stringify(f26));
+     f26.manaAfterRejected!==f26.manaAfterFireball)
+    throw Error('F261_TRUE_SKILLSHOT_CANCEL_NO_FLASH_NOT_LIVE '+JSON.stringify(f26));
+  console.log('HIGHFLY_F261_TRUE_SKILLSHOT_CANCEL_NO_FLASH_GREEN=1',JSON.stringify(f26));
 
   await page.evaluate(()=>{
     window.__game.hud.onHighflyAimGesture?.('cancel',{type:'ability',id:'fireball'},0,0);

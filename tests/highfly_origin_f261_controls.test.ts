@@ -29,11 +29,17 @@ describe('F2.6.1 S23 control polish',()=>{
     expect(v).toContain("abilityId==='highfly_basic_2'");
     expect(v).toContain("'Warrior_DualWield_Left'");
   });
-  it('flash is independent button with glyph and native cooldown',()=>{
+  it('removes independent Flash HUD and granted Blink ONLY in F2.6.1',()=>{
     const ui=readFileSync('src/highfly/origin/f1_world_ui.ts','utf8');
-    expect(ui).toContain('hf-f261-flash-cd');
-    expect(ui).toContain("sim.player.cooldowns.get('blink')");
-    expect(ui).toContain("jumpButton.style.translate='-38px 0'");
-    expect(ui).toContain("f26?node('button'");
+    expect(ui).toContain('if(f26 && !f261)');
+    expect(ui).toContain("const flashButton=f26 && !f261?node('button'");
+    expect(ui).not.toContain('hf-f261-flash-cd');
+    expect(ui).not.toContain("jumpButton.style.translate='-38px 0'");
+    expect(ui).not.toContain("liveEvade.style.translate='-38px 0'");
+    expect(ui).toContain("effects:[{type:'blinkForward'");
+    // Authoritative physical Evadir and both jumps are unchanged.
+    const mobile=readFileSync('src/game/mobile_controls.ts','utf8');
+    expect(mobile).toContain("this.bindButton('mobile-evade'");
+    expect(mobile).toContain("this.bindButton('mobile-jump'");
   });
 });
