@@ -5,7 +5,7 @@ const code=(p:string)=>readFileSync(p,'utf8');
 describe('HIGHFLY F2.3 purchased and persisted Universal Hunter knowledge',()=>{
   it('no skill is gifted by first spawn or starter weapon selection',()=>{
     const s=f1StartState();expect(s.learnedAbilityIds).toBeUndefined();
-    expect(ORIGIN_F23_MASTER_SKILLS).toHaveLength(4);
+    expect(ORIGIN_F23_MASTER_SKILLS).toHaveLength(6);
     expect(new Set(ORIGIN_F23_MASTER_SKILLS.map(s=>s.school)).size).toBeGreaterThan(1);
     expect(code('src/sim/sim.ts')).toContain('if (this.cfg.originUniversalHunter) return;');
   });
