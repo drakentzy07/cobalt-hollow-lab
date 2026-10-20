@@ -122,8 +122,20 @@ export function mountOriginF1WorldUi(
   // Hydrate only the explicitly learned spells into its already-authoritative
   // native spellbook and cast pipeline, with their native cost/effects.
   const hunter=sim.players.get(sim.playerId);
+  const rebindOriginMana=()=>{
+    if(!f23Trainer)return;
+    // Equipping gear re-applies the hidden donor Warrior's rage resource.
+    // Restore the Universal Hunter's own persisted mana instead, but never
+    // overwrite live mana already spent by a spell when it is still mana.
+    if(sim.player.resourceType!=='mana'){
+      sim.player.resourceType='mana';
+      sim.player.maxResource=current.resources.maxMana;
+      sim.player.resource=current.resources.mana;
+    }
+  };
   const hydrateMasterSkills=()=>{
     if(!f23Trainer || !hunter)return;
+    rebindOriginMana();
     hunter.known=(current.learnedAbilityIds??[]).flatMap(id=>{
       const row=ORIGIN_F23_MASTER_SKILLS.find(x=>x.id===id);
       const def=row ? ABILITIES[id] : undefined;
@@ -264,6 +276,7 @@ export function mountOriginF1WorldUi(
     const now=performance.now();
     current={...current,resources:tickF1Resources(current.resources,(now-last)/1000)};
     if(f23Trainer){
+      rebindOriginMana();
       current.resources.mana=sim.player.resource;
       current.resources.maxMana=sim.player.maxResource;
     }
