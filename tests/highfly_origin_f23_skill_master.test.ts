@@ -27,7 +27,8 @@ describe('HIGHFLY F2.3 purchased and persisted Universal Hunter knowledge',()=>{
   it('trainer uses the native Sim, deducts money and hydrates its native known list',()=>{
     const ui=code('src/highfly/origin/f1_world_ui.ts');
     expect(ui).toContain('hunter.copper-=skill.copper');
-    expect(ui).toContain('hunter.known=(current.learnedAbilityIds??[]).flatMap');
+    expect(ui).toContain('hunter.known=available.flatMap');
+    expect(ui).toContain('const available=[...new Set([...(current.learnedAbilityIds??[]),...trial])]');
     expect(ui).toContain("sim.player.resourceType='mana'");
     expect(ui).toContain('onStarterGranted();');
     expect(code('src/main.ts')).not.toContain('new FreedomWorld(');
