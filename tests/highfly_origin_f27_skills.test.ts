@@ -32,7 +32,7 @@ describe('F2.7 P2: genuine original cross-school skills and native MOBA targetin
     const ui=source('src/highfly/origin/f1_world_ui.ts');
     expect(ui).toContain("id==='sinister_strike'");
     expect(ui).toContain('highflyStaminaCost:10');
-    expect(ui).toContain('castWhileMoving:useDef.castWhileMoving===true');
+    expect(ui).toContain('castWhileMoving:trialDef.castWhileMoving===true');
     expect(ui).toContain("id==='meteor'");
     const main=source('src/main.ts');
     expect(main).toContain("shape==='ground-circle'?8");
