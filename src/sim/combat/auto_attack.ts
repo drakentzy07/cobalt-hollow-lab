@@ -255,7 +255,7 @@ export function highflyBasicAttack(
     // FREEDOM 360: a valid manual ATK press is an actual empty-space swing,
     // not USE and not a silent failed cast. It has no hitbox victim and deals
     // zero damage, while the shared render event plays the real rig clip.
-    if (step === 4 && !highflyElementalFinisherReady(p)) return false;
+    // F2.7: physical four-hit chains exist even before finding a gem.
     if (p.mountKey !== '') forceDismount(ctx, p);
     if (p.sitting) ctx.standUp(p);
     if (p.weaponStowed) drawWeapon(p);
@@ -280,7 +280,7 @@ export function highflyBasicAttack(
   p.facing = angleTo(p.pos, t.pos);
 
   const element = highflyWeaponElement(p);
-  if (step === 4 && !highflyElementalFinisherReady(p)) return false;
+  // Physical step four works without a gem; element is an optional bonus.
   const ranged = rangedAutoProfile(p, r.meta.cls);
   if (ranged && d <= ranged.maxRange && d >= (ranged.wand ? 0 : ranged.minRange)) {
     if (!ctx.hasLineOfSight(p, t)) return false;
