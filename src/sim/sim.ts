@@ -6454,13 +6454,14 @@ export class Sim {
     const target = this.entities.get(p.chargeTargetId);
     p.chargeTimeLeft -= DT;
     const done = (arrived: boolean): boolean => {
+      const manualBladeRush=p.highflyBladeRushPending===true;
       finishChargeArrival(this.ctx, p, target ?? null, arrived);
       p.chargeTargetId = null;
       p.chargePath = [];
       if (target) p.facing = steadyAngleTo(p.pos, target.pos, p.facing);
       // Landing on a FRIENDLY target (Intervene) must not engage auto-attack:
       // startAutoAttack would refuse an ally and toast "Invalid attack target."
-      if (arrived && target && this.isHostileTo(p, target)) this.startAutoAttack(p.id);
+      if (arrived && target && this.isHostileTo(p, target) && !manualBladeRush) this.startAutoAttack(p.id);
       return true;
     };
     if (!target || target.dead || p.chargeTimeLeft <= 0 || isRooted(p)) return done(false);
