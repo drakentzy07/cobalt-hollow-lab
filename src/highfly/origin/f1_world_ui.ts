@@ -37,7 +37,8 @@ export function mountOriginF1WorldUi(
   sim: Sim, initial: OriginF1Save, onStarterGranted: () => void,
 ): OriginF1WorldUi {
   document.getElementById('hf-origin-f1-hud')?.remove();
-  const f261=location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/');
+  const f262=location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/');
+  const f261=f262||location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/');
   const f26=f261||location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/');
   const f25=f26||location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/');
   if(f25) document.body.classList.add('hf-origin-f25');
@@ -137,6 +138,7 @@ export function mountOriginF1WorldUi(
   if(f25)sim.player.highflyF25CombatFreedom=true;
   if(f26)sim.player.highflyF26CombatFreedom=true;
   if(f261)sim.player.highflyF261Controls=true;
+  if(f262)sim.player.highflyF262ContactAssist=true;
   // One native Sim, one Hunter. Persist knowledge in the existing Origin save,
   // not in the donor Warrior's level-up list, which is intentionally disabled.
   // Hydrate only the explicitly learned spells into its already-authoritative
@@ -375,6 +377,6 @@ export function mountOriginF1WorldUi(
   },120);
   return {
     save:()=>structuredClone(current),
-    close:()=>{window.clearInterval(timer);registerOriginResourceController(null);flashButton?.remove();delete sim.player.highflyF261Controls;delete sim.player.highflyF26CombatFreedom;if(f25){delete sim.player.highflyF25CombatFreedom;document.body.classList.remove('hf-origin-f25','hf-origin-f261');}backdrop.remove();meter.remove();root.remove();}
+    close:()=>{window.clearInterval(timer);registerOriginResourceController(null);flashButton?.remove();delete sim.player.highflyF262ContactAssist;delete sim.player.highflyF261Controls;delete sim.player.highflyF26CombatFreedom;if(f25){delete sim.player.highflyF25CombatFreedom;document.body.classList.remove('hf-origin-f25','hf-origin-f261');}backdrop.remove();meter.remove();root.remove();}
   };
 }

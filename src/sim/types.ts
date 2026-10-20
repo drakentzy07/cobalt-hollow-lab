@@ -5315,6 +5315,8 @@ export interface Entity extends ClientMirroredEntityFields {
   highflyF26CombatFreedom?: boolean;
   /** F2.6.1 S23 comfort-only controls: extra air timing and back hop. */
   highflyF261Controls?: boolean;
+  /** F2.6.2: minor ground-contact tolerance for the Hunter ONLY. */
+  highflyF262ContactAssist?: boolean;
   highflyOriginStamina?: number;
   highflyF26FireballAim?: {x:number;z:number};
   /** Authoritative, transient intentional free-space Fireball endpoint. */

@@ -227,6 +227,7 @@ import { padReelItemId } from './game/pad_reel';
 import { dispatchPadSharedEdgeAction } from './game/pad_shared_edge_action';
 import { openTargetSubcommands } from './game/pad_subcommands';
 import {highflyAimShape,highflyWorldAim,highflyAimTarget} from './highfly/combat/f24_aim_core';
+import {highflyF26LateralBend} from './highfly/combat/f26_skillshot_core';
 import {highflyF261Aim,highflyF261FlipDirection} from './highfly/combat/f261_controls';
 import { bestSoftAutoTarget } from './game/auto_target';
 import { createPadTargetPick } from './game/pad_target_pick';
@@ -1976,14 +1977,14 @@ async function startGame(
   hud.onMobileAttackNearest = () => attackNearest();
   hud.onMobileActionIntent = (action) => {
     if((location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') ||
-        (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/')))) &&
+        (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/'))))) &&
        action.type==='ability' && highflyAimShape(action.id)){
       // Aimed abilities already chose their target on pointer release.
       return;
     }
     padTargetPick.autoTarget(action);
   };
-  type F24Preview={x:number;z:number;radius:number;school:string;dimmed:boolean;
+  type F24Preview={x:number;z:number;radius:number;school:string;dimmed:boolean;bend?:number;
     shape:'line'|'cone'|'circle'|'leap';originX:number;originZ:number};
   let f24AimPreview:F24Preview|null=null;
   let f24AimPending:{id:string;point:{x:number;z:number}}|null=null;
@@ -1995,7 +1996,7 @@ async function startGame(
   };
   hud.onHighflyAimGesture=(phase,action,dx,dy)=>{
     if(!(location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') ||
-         (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/')))) ||
+         (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/'))))) ||
        action.type!=='ability' || !highflyAimShape(action.id) ||
        !world.known.some(k=>k.def.id===action.id))return false;
     if(phase==='cancel'){f24AimPreview=null;delete world.player.highflyF25EmptyFireballAim;delete world.player.highflyF26FireballAim;return true;}
@@ -2008,7 +2009,10 @@ async function startGame(
       ? highflyF261Aim(p.pos,input.camYaw,dx,dy,maxRange)
       : highflyWorldAim(p.pos,input.camYaw,dx,dy,maxRange);
     const point=shape==='circle' ? {x:p.pos.x,z:p.pos.z} : {x:aim.x,z:aim.z};
-    f24AimPreview={...point,radius:shape==='circle'?6:shape==='leap'?2:0.7,
+    const bend=p.highflyF262ContactAssist&&shape==='line'
+      ? highflyF26LateralBend(p.onGround,!!p.highflyAirJumpUsed,p.highflyFlipDir,aim.range)
+      :0;
+    f24AimPreview={...point,bend,radius:shape==='circle'?6:shape==='leap'?2:0.7,
       school:def?.school??'physical',dimmed:false,shape,
       originX:p.pos.x,originZ:p.pos.z};
     if(phase==='start'||phase==='move')return true;
@@ -2031,7 +2035,7 @@ async function startGame(
       }else if(action.id==='fireball'||action.id==='charge'){
         world.targetEntity(null);
         if(action.id==='fireball'&&
-           (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/')))){
+           (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/'))))){
           // Real targetless cast: the ONE Sim bills MP/GCD and checks stun,
           // cast windup and cancellation; the visual projectile deals NO damage.
           p.highflyF25EmptyFireballAim={x:point.x,z:point.z};
@@ -2101,7 +2105,7 @@ async function startGame(
     entryDiagnostics.checkpoint(questDialogOpen ? 'quest-dialog-open' : 'quest-dialog-closed');
   };
 
-  const f25Traversal = (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/')));
+  const f25Traversal = (location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/'))));
   const canF25Traverse=(kind:'jump'|'evade'):boolean=>{
     if(!f25Traversal)return true;
     const p=world.player;
@@ -11649,7 +11653,7 @@ if (HIGHFLY_F11_OFFLINE_FIRST && !import.meta.env.DEV &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') &&
-    !(location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/'))) &&
+    !(location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') || (location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/')))) &&
     'serviceWorker' in navigator &&
     (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
   const registerOfflineShell = () => {

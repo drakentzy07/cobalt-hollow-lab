@@ -48,6 +48,7 @@ import {
 import { effectiveFishingBand, fishReelWindowSecFor } from '../professions/fishing';
 import { bestOwnedGatherToolFor } from '../professions/tools';
 import { scheduleProjectile, scheduleHighflyFreeProjectile } from '../projectile_travel';
+import {highflyF26LateralBend} from '../../highfly/combat/f26_skillshot_core';
 import { isWorldPvpHostile, WORLD_PVP_AID_REFUSED_LINE } from '../pvp/world_pvp';
 import type { PlayerMeta, ResolvedAbility } from '../sim';
 import type { SimContext } from '../sim_context';
@@ -2786,10 +2787,8 @@ function applyAbility(
     armAbilityCooldownWithReflection(ctx,p,meta,res);
     p.facing=Math.atan2(dx,dz);
     const endpoint={x:p.pos.x+dx,z:p.pos.z+dz};
-    const bend=!p.onGround&&p.highflyAirJumpUsed
-      ? p.highflyFlipDir==='left'?-Math.min(2.2,d*0.12)
-        : p.highflyFlipDir==='right'?Math.min(2.2,d*0.12):0
-      :0;
+    const bend=highflyF26LateralBend(
+      p.onGround,!!p.highflyAirJumpUsed,p.highflyFlipDir,d);
     scheduleHighflyFreeProjectile(ctx,p,endpoint,(src,tgt)=>{
       if(resolveHostileSpellResist(ctx,src,tgt,ability))return;
       ctx.runEffects(src,meta,tgt,res,false);
