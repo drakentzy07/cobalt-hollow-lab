@@ -1,4 +1,5 @@
 import type { CharacterState } from '../sim/character_state';
+import { highflyOriginModeContract, type HighflyOriginMode } from '../highfly/origin/unified_mode';
 import type { PlayerClass } from '../sim/types';
 import { HIGHFLY_TRAINING_SCHEMA_VERSION, type HighflyHunterProfile } from '../highfly/training/core';
 import { normalizeOriginF1Save, type OriginF1Save } from '../highfly/origin/f1_core';
@@ -72,8 +73,14 @@ const ORIGIN_LOCAL_KEY = F27_PAGES_LAB ? 'highfly.origin.f27-combat-beta.primary
   : F2_PAGES_LAB ? 'highfly.origin.f2-combat-beta.primary.v1' : 'highfly.origin.primary.v1';
 const hasOriginIdentity = (s: HighflyOfflineSave | null): boolean =>
   !!s && normalizeOriginF1Save(s.originF1) !== null;
-const originIdentitySlotKey = (cls: PlayerClass, name: string): string =>
-  'origin-f1:' + identitySlotKey(cls, name);
+const originIdentitySlotKey = (cls: PlayerClass, name: string, mode: HighflyOriginMode = 'world'): string =>
+  (mode === 'lab' ? 'origin-lab:' : 'origin-f1:') + identitySlotKey(cls, name);
+const originDbName = (mode: HighflyOriginMode): string =>
+  mode === 'lab' ? highflyOriginModeContract('lab').saveDb : DB_NAME;
+const originPrimarySlot = (mode: HighflyOriginMode): string =>
+  mode === 'lab' ? highflyOriginModeContract('lab').saveSlot : ORIGIN_PRIMARY_SLOT_KEY;
+const originLocalKey = (mode: HighflyOriginMode): string =>
+  mode === 'lab' ? highflyOriginModeContract('lab').saveLocal : ORIGIN_LOCAL_KEY;
 
 
 function normalizedHunterName(name: string): string {
@@ -149,17 +156,17 @@ function readLocal(key = LOCAL_KEY): HighflyOfflineSave | null {
   }
 }
 
-function writeLocal(save: HighflyOfflineSave): void {
+function writeLocal(save: HighflyOfflineSave, mode: HighflyOriginMode = 'world'): void {
   try {
     globalThis.localStorage?.setItem(
-      hasOriginIdentity(save) ? ORIGIN_LOCAL_KEY : LOCAL_KEY, JSON.stringify(save),
+      hasOriginIdentity(save) ? originLocalKey(mode) : LOCAL_KEY, JSON.stringify(save),
     );
   } catch {
     // IndexedDB below remains the durable path when localStorage is unavailable/full.
   }
 }
 
-function openDb(): Promise<IDBDatabase | null> {
+function openDb(dbName = DB_NAME): Promise<IDBDatabase | null> {
   if (typeof indexedDB === 'undefined') return Promise.resolve(null);
   return new Promise((resolve) => {
     // F1.1 Android: a stalled/blocked IndexedDB open must never strand the
@@ -178,7 +185,7 @@ function openDb(): Promise<IDBDatabase | null> {
     };
     timer = setTimeout(() => finish(null), 7000);
     try {
-      const request = indexedDB.open(DB_NAME, 1);
+      const request = indexedDB.open(dbName, 1);
       request.onupgradeneeded = () => {
         const db = request.result;
         if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
@@ -192,8 +199,8 @@ function openDb(): Promise<IDBDatabase | null> {
   });
 }
 
-async function readIdbKey(key: string): Promise<HighflyOfflineSave | null> {
-  const db = await openDb();
+async function readIdbKey(key: string, dbName = DB_NAME): Promise<HighflyOfflineSave | null> {
+  const db = await openDb(dbName);
   if (!db) return null;
   return await new Promise((resolve) => {
     let settled = false;
@@ -254,8 +261,8 @@ async function readIdbTrainingSlot(key: string): Promise<HighflyTrainingSlot | n
   });
 }
 
-async function writeIdb(save: HighflyOfflineSave): Promise<void> {
-  const db = await openDb();
+async function writeIdb(save: HighflyOfflineSave, mode: HighflyOriginMode = 'world'): Promise<void> {
+  const db = await openDb(originDbName(mode));
   if (!db) return;
   await new Promise<void>((resolve) => {
     try {
@@ -265,9 +272,9 @@ async function writeIdb(save: HighflyOfflineSave): Promise<void> {
       // The identity slot preserves each tested Hunter independently.
       // F1.2.1: new Hunter slots do not overwrite archived legacy identities.
       const origin = hasOriginIdentity(save);
-      store.put(save, origin ? ORIGIN_PRIMARY_SLOT_KEY : PRIMARY_SLOT_KEY);
+      store.put(save, origin ? originPrimarySlot(mode) : PRIMARY_SLOT_KEY);
       store.put(save, origin
-        ? originIdentitySlotKey(save.playerClass, save.name)
+        ? originIdentitySlotKey(save.playerClass, save.name, mode)
         : identitySlotKey(save.playerClass, save.name));
       if (save.trainingProfile && validTrainingProfile(save.trainingProfile) &&
           trainingProfileMatchesClass(save.trainingProfile, save.playerClass)) {
@@ -279,7 +286,7 @@ async function writeIdb(save: HighflyOfflineSave): Promise<void> {
           updatedAt: save.updatedAt,
         };
         const key = origin
-          ? 'origin-f1:' + trainingSlotKey(save.playerClass, save.name)
+          ? (mode === 'lab' ? 'origin-lab:' : 'origin-f1:') + trainingSlotKey(save.playerClass, save.name)
           : trainingSlotKey(save.playerClass, save.name);
         const existingRequest = store.get(key);
         existingRequest.onsuccess = () => {
@@ -343,15 +350,18 @@ function trainingProfileMatchesClass(
 export async function loadHighflyTrainingProfile(
   playerClass: PlayerClass,
   name: string,
+  mode: HighflyOriginMode = 'world',
 ): Promise<HighflyHunterProfile | null> {
   // F1.2.1 restores this Hunter's actual training first, never the donor
   // Warrior's unrelated training merely because the name happens to match.
-  const origin = await loadOriginHunterSave(playerClass, name);
+  const origin = await loadOriginHunterSave(playerClass, name, mode);
   if (origin?.trainingProfile &&
       validTrainingProfile(origin.trainingProfile) &&
       trainingProfileMatchesClass(origin.trainingProfile, playerClass)) {
     return origin.trainingProfile;
   }
+  // LAB never falls through to production or historical training profiles.
+  if (mode === 'lab') return null;
   const originSlot = await readIdbTrainingSlot('origin-f1:' + trainingSlotKey(playerClass, name));
   if (originSlot && trainingProfileMatchesClass(originSlot.profile, playerClass))
     return originSlot.profile;
@@ -421,22 +431,24 @@ export async function loadHighflyOfflineSave(
 export async function loadOriginHunterSave(
   playerClass?: PlayerClass,
   name?: string,
+  mode: HighflyOriginMode = 'world',
 ): Promise<HighflyOfflineSave | null> {
-  const ownPrimary = newest(readLocal(ORIGIN_LOCAL_KEY), await readIdbKey(ORIGIN_PRIMARY_SLOT_KEY));
+  const dbName = originDbName(mode);
+  const ownPrimary = newest(readLocal(originLocalKey(mode)), await readIdbKey(originPrimarySlot(mode), dbName));
   // New beta means new IDB namespace, but the user should not have to repeat
   // the weapon-guide quest. Import a COPY of the last beta's valid local mirror
   // only if this lab does not already have a Hunter. Never mutate predecessor.
-  const predecessor = (F27_PAGES_LAB || F263_PAGES_LAB) && !ownPrimary
+  const predecessor = mode === 'world' && (F27_PAGES_LAB || F263_PAGES_LAB) && !ownPrimary
     ? newest(readLocal(F27_PAGES_LAB?'highfly.origin.f263-combat-beta.primary.v1':'highfly.origin.f262-combat-beta.primary.v1'),
       readLocal('highfly.origin.f261-combat-beta.primary.v1'))
     : null;
   const recovered = hasOriginIdentity(predecessor) ? predecessor : null;
-  if(recovered && !ownPrimary) writeHighflyOfflineSave({...recovered,updatedAt:Date.now()});
-  const oldPrimary = F2_PAGES_LAB ? null : newest(readLocal(), await readIdbKey(PRIMARY_SLOT_KEY));
+  if(recovered && !ownPrimary) writeHighflyOfflineSave({...recovered,updatedAt:Date.now()}, mode);
+  const oldPrimary = mode === 'lab' || F2_PAGES_LAB ? null : newest(readLocal(), await readIdbKey(PRIMARY_SLOT_KEY));
   const primary = ownPrimary ?? recovered ?? (hasOriginIdentity(oldPrimary) ? oldPrimary : null);
   if (!playerClass || !name) return primary;
-  const ownExact = await readIdbKey(originIdentitySlotKey(playerClass, name));
-  const oldExact = F2_PAGES_LAB ? null : await readIdbKey(identitySlotKey(playerClass, name));
+  const ownExact = await readIdbKey(originIdentitySlotKey(playerClass, name, mode), dbName);
+  const oldExact = mode === 'lab' || F2_PAGES_LAB ? null : await readIdbKey(identitySlotKey(playerClass, name));
   const exact = ownExact ?? (hasOriginIdentity(oldExact) ? oldExact : null);
   const matchingPrimary = primary && primary.playerClass === playerClass &&
     normalizedHunterName(primary.name) === normalizedHunterName(name)
@@ -449,8 +461,8 @@ export async function loadOriginHunterSave(
  * Returns false if the active IDB cannot be opened/deleted, so the launcher
  * cannot falsely promise a reset while a dormant save would respawn.
  */
-export async function resetOriginHunterSave(): Promise<boolean> {
-  const db = await openDb();
+export async function resetOriginHunterSave(mode: HighflyOriginMode = 'world'): Promise<boolean> {
+  const db = await openDb(originDbName(mode));
   if (typeof indexedDB !== 'undefined' && !db) return false;
   if (db) {
     const deleted = await new Promise<boolean>(resolve => {
@@ -470,8 +482,9 @@ export async function resetOriginHunterSave(): Promise<boolean> {
           if(!cursor) return;
           const key=String(cursor.key);
           const data=valid(cursor.value) ? cursor.value : null;
-          if(key.startsWith('origin-f1:') ||
-             ((key===PRIMARY_SLOT_KEY || key.startsWith('hunter:')) && hasOriginIdentity(data))) {
+          if(mode === 'lab' ? key.startsWith('origin-lab:') :
+           (key.startsWith('origin-f1:') ||
+             ((key===PRIMARY_SLOT_KEY || key.startsWith('hunter:')) && hasOriginIdentity(data)))) {
             cursor.delete();
           }
           cursor.continue();
@@ -487,30 +500,31 @@ export async function resetOriginHunterSave(): Promise<boolean> {
     if(!deleted) return false;
   }
   try {
-    globalThis.localStorage?.removeItem(ORIGIN_LOCAL_KEY);
+    globalThis.localStorage?.removeItem(originLocalKey(mode));
     // Pre-namespaced F1/F1.1 saves must not resurrect the one deleted Hunter.
-    if(!F2_PAGES_LAB && hasOriginIdentity(readLocal())) globalThis.localStorage?.removeItem(LOCAL_KEY);
+    if(mode === 'world' && !F2_PAGES_LAB && hasOriginIdentity(readLocal())) globalThis.localStorage?.removeItem(LOCAL_KEY);
   } catch {
     return false;
   }
-  return (await loadOriginHunterSave()) === null;
+  return (await loadOriginHunterSave(undefined, undefined, mode)) === null;
 }
 
-export function writeHighflyOfflineSave(save: HighflyOfflineSave): void {
+export function writeHighflyOfflineSave(save: HighflyOfflineSave, mode: HighflyOriginMode = 'world'): void {
   // Keep only the last-played snapshot in localStorage (sync pagehide fallback);
   // all independent Hunter slots live in IndexedDB so they do not exhaust the
   // tiny localStorage quota as inventories grow.
-  writeLocal(save);
-  void writeIdb(save);
+  writeLocal(save, mode);
+  void writeIdb(save, mode);
 }
 
 export function installHighflyOfflineAutosave(
   snapshot: () => HighflyOfflineSave | null,
   intervalMs = 2500,
+  mode: HighflyOriginMode = 'world',
 ): () => void {
   const flush = () => {
     const save = snapshot();
-    if (save) writeHighflyOfflineSave(save);
+    if (save) writeHighflyOfflineSave(save, mode);
   };
   const timer = window.setInterval(flush, intervalMs);
   const onVisibility = () => {
