@@ -21,6 +21,9 @@ export function highflyF26LateralBend(
 /** F2.6.2 semi-assisted ground contact. Only a short side tolerance:
  * NEVER select a target, bend towards a mob or home after launching.
  * Actual 3D collision is preserved for airborne enemies. */
+/** F2.6.3 soft mobile assistance is ONLY 2D flight-corridor tolerance.
+ * It never changes heading, selects a target, homes or creates free damage. */
+export const HIGHFLY_F263_GROUND_HIT_RADIUS=2.05;
 export function highflyF262GroundContact(
   from:HighflyF26Point,to:HighflyF26Point,
   target:{x:number;z:number}, radius=1.35,

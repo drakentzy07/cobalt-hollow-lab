@@ -119,7 +119,7 @@ import { stoneboundShellStyle } from './stonebound_shell_core';
 import { createStowTransition, forceStow, requestStow, tickStow } from './stow_transition';
 import { CharacterSurfaceResponse, SURFACE_RESPONSE_PROGRAM } from './surface_response';
 import { warriorActionBlend } from './warrior_action_blend';
-import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, highflyDirectionalFlip, isHighflyUpperBodyTrack, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
+import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, highflyDirectionalFlip, highflyF263DirectionalFlip, isHighflyUpperBodyTrack, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
 import { WarriorActionProps } from './warrior_action_props';
 import { WarriorBodyEffects } from './warrior_body_effects';
 import { SPIN_ATTACK_VISUAL_DURATION, weaponAttackStyle } from './weapon_attack_style_core';
@@ -1382,8 +1382,12 @@ export class CharacterVisual {
     const swimPitch = s.swimPitch * (1 + (TREAD_PITCH_SCALE - 1) * this.treadBlend);
     const f261BackHop=this.originHunterCombat && typeof document!=='undefined' &&
       document.body.classList.contains('hf-origin-f261') && s.highflyFlipDir==='back';
+    const f263Flip=this.originHunterCombat && typeof document!=='undefined' &&
+      document.body.classList.contains('hf-origin-f263');
     const directionalFlip=flipping && originF25
-      ? (f261BackHop
+      ? (f263Flip
+        ? highflyF263DirectionalFlip(this.originFlipTime,s.highflyFlipDir??'forward')
+        : f261BackHop
         ? {pitch:-0.18*Math.sin(Math.PI*Math.min(1,this.originFlipTime/HIGHFLY_SOMERSAULT_SECONDS)),roll:0}
         : highflyDirectionalFlip(this.originFlipTime,s.highflyFlipDir??'back'))
       : {pitch:flipping?highflySomersaultPitch(this.originFlipTime, false):0,roll:0};

@@ -37,12 +37,14 @@ export function mountOriginF1WorldUi(
   sim: Sim, initial: OriginF1Save, onStarterGranted: () => void,
 ): OriginF1WorldUi {
   document.getElementById('hf-origin-f1-hud')?.remove();
-  const f262=location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/');
+  const f263=location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/');
+  const f262=f263||location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/');
   const f261=f262||location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/');
   const f26=f261||location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/');
   const f25=f26||location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/');
   if(f25) document.body.classList.add('hf-origin-f25');
   if(f261) document.body.classList.add('hf-origin-f261');
+  if(f263) document.body.classList.add('hf-origin-f263');
   const root = node('aside', '', 'hf-origin-f1-hud');
   root.id = 'hf-origin-f1-hud';
   root.setAttribute('aria-label', 'Hunter: recursos y guía de inicio');
@@ -67,7 +69,7 @@ export function mountOriginF1WorldUi(
     : [['mana','MP','#4e98e8'],['stamina','ST','#e5b73a']] as const)) {
     const row = node('div', '', '');
     row.style.cssText = f25
-      ? 'box-sizing:border-box;position:relative;width:100%;height:14px;min-height:14px;margin:2px 0 0;display:flex;align-items:center;padding:0;border:1px solid #b6a17288;border-radius:3px;background:linear-gradient(180deg,#3a372d,#151a1f);overflow:hidden;box-shadow:inset 0 1px 3px #0009'
+      ? 'box-sizing:border-box;position:relative;width:100%;height:14px;min-height:14px;margin:0;display:flex;align-items:center;padding:0;border:1px solid #b6a17288;border-radius:3px;background:linear-gradient(180deg,#3a372d,#151a1f);overflow:hidden;box-shadow:inset 0 1px 3px #0009'
       : 'display:flex;align-items:center;gap:8px;margin:3px 0';
     const lab = node('span', title);
     lab.style.cssText=f25 ? 'position:absolute;left:5px;top:0;z-index:2;line-height:12px;font-size:9px;text-shadow:0 1px 2px black' : 'width:24px';
@@ -139,6 +141,7 @@ export function mountOriginF1WorldUi(
   if(f26)sim.player.highflyF26CombatFreedom=true;
   if(f261)sim.player.highflyF261Controls=true;
   if(f262)sim.player.highflyF262ContactAssist=true;
+  if(f263)sim.player.highflyF263ContactAssist=true;
   // One native Sim, one Hunter. Persist knowledge in the existing Origin save,
   // not in the donor Warrior's level-up list, which is intentionally disabled.
   // Hydrate only the explicitly learned spells into its already-authoritative
@@ -377,6 +380,6 @@ export function mountOriginF1WorldUi(
   },120);
   return {
     save:()=>structuredClone(current),
-    close:()=>{window.clearInterval(timer);registerOriginResourceController(null);flashButton?.remove();delete sim.player.highflyF262ContactAssist;delete sim.player.highflyF261Controls;delete sim.player.highflyF26CombatFreedom;if(f25){delete sim.player.highflyF25CombatFreedom;document.body.classList.remove('hf-origin-f25','hf-origin-f261');}backdrop.remove();meter.remove();root.remove();}
+    close:()=>{window.clearInterval(timer);registerOriginResourceController(null);flashButton?.remove();delete sim.player.highflyF263ContactAssist;delete sim.player.highflyF262ContactAssist;delete sim.player.highflyF261Controls;delete sim.player.highflyF26CombatFreedom;if(f25){delete sim.player.highflyF25CombatFreedom;document.body.classList.remove('hf-origin-f25','hf-origin-f261','hf-origin-f263');}backdrop.remove();meter.remove();root.remove();}
   };
 }

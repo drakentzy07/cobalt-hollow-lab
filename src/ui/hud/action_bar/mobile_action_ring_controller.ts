@@ -210,7 +210,7 @@ export function buildMobileActionRing(deps: MobileActionRingDeps): MobileActionR
   // It never calls castSlot and cannot bill mana/cooldown on a cancelled aim.
   const f26Cancel=(location.pathname.startsWith('/cobalt-hollow-lab/lab/f26-combat-beta/') ||
     location.pathname.startsWith('/cobalt-hollow-lab/lab/f261-combat-beta/') ||
-    location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/'))
+    (location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/') || location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/')))
     ? document.createElement('div'):null;
   if(f26Cancel){
     f26Cancel.id='highfly-f26-aim-cancel';
@@ -255,7 +255,10 @@ export function buildMobileActionRing(deps: MobileActionRingDeps): MobileActionR
       resetCancel();
       suppressClick=true;btn.style.touchAction='';
       try{btn.releasePointerCapture(event.pointerId)}catch{}
-      if(commit)deps.castSlot(currentSlot);
+      // Cancel means acknowledge the gesture but NEVER dispatch its cast.
+      // The old code treated the cancellation acknowledgement as success,
+      // which spent mana even when releasing directly over the X.
+      if(commit && !cancel)deps.castSlot(currentSlot);
       event.preventDefault();event.stopImmediatePropagation();
     },{capture:true});
     btn.addEventListener('pointercancel',event=>{

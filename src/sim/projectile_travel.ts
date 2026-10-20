@@ -25,7 +25,7 @@
 import type { SimContext } from './sim_context';
 import {lineOfSightClear} from './colliders';
 import {groundHeight} from './world';
-import {highflyF26SegmentSphereHit, highflyF262GroundContact, highflyF26TrajectoryPoint, type HighflyF26Point} from '../highfly/combat/f26_skillshot_core';
+import {highflyF26SegmentSphereHit, highflyF262GroundContact, HIGHFLY_F263_GROUND_HIT_RADIUS, highflyF26TrajectoryPoint, type HighflyF26Point} from '../highfly/combat/f26_skillshot_core';
 import { DT, type Entity } from './types';
 
 // Yards per second. Matches the homing projectile speed in src/render/vfx.ts so the
@@ -162,8 +162,9 @@ function advanceHighflyFreeProjectiles(ctx:SimContext):void{
       // This also prevents jumping above a short monster from falsely
       // missing it when the ground preview passes directly over its feet.
       // Airborne mobs still require real 3D contact.
-      const t=source.highflyF262ContactAssist===true && target.onGround
-        ? highflyF262GroundContact(from,next,target.pos)
+      const t=(source.highflyF263ContactAssist===true || source.highflyF262ContactAssist===true) && target.onGround
+        ? highflyF262GroundContact(from,next,target.pos,
+          source.highflyF263ContactAssist===true?HIGHFLY_F263_GROUND_HIT_RADIUS:1.35)
         : highflyF26SegmentSphereHit(from,next,
           {x:target.pos.x,y:target.pos.y+1.12,z:target.pos.z},0.95);
       if(t!==null&&t<first){first=t;victim=target;}

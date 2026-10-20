@@ -1,0 +1,32 @@
+import {describe,it,expect} from 'vitest';
+import {readFileSync} from 'node:fs';
+import {HIGHFLY_F263_GROUND_HIT_RADIUS,highflyF262GroundContact} from '../src/highfly/combat/f26_skillshot_core';
+import {HIGHFLY_SOMERSAULT_SECONDS,highflyF263DirectionalFlip} from '../src/render/characters/highfly_combat_presentation';
+describe('F2.6.3 S23 root-cause stability',()=>{
+  it('forward second-jump visibly pitches forward while lateral remains lateral',()=>{
+    const f=highflyF263DirectionalFlip(HIGHFLY_SOMERSAULT_SECONDS/2,'forward');
+    expect(f.pitch).toBeGreaterThan(3);
+    expect(f.roll).toBe(0);
+    expect(highflyF263DirectionalFlip(.36,'left').roll).toBeLessThan(-3);
+    expect(Math.abs(highflyF263DirectionalFlip(.36,'back').pitch)).toBeLessThan(.4);
+  });
+  it('a near wolf gets forgiving 2D overlap but a distant aim still misses',()=>{
+    const a={x:0,y:6,z:0},b={x:0,y:1,z:10};
+    expect(HIGHFLY_F263_GROUND_HIT_RADIUS).toBeGreaterThan(1.35);
+    expect(highflyF262GroundContact(a,b,{x:1.8,z:6},HIGHFLY_F263_GROUND_HIT_RADIUS)).not.toBeNull();
+    expect(highflyF262GroundContact(a,b,{x:4,z:6},HIGHFLY_F263_GROUND_HIT_RADIUS)).toBeNull();
+  });
+  it('cancel acknowledgement must not cast',()=>{
+    const s=readFileSync('src/ui/hud/action_bar/mobile_action_ring_controller.ts','utf8');
+    expect(s).toContain('if(commit && !cancel)deps.castSlot(currentSlot)');
+    expect(s).toContain("cancel?'cancel':'end'");
+  });
+  it('imports previous lab without overwriting it and shows MP ST under HP',()=>{
+    const save=readFileSync('src/game/highfly_offline_save.ts','utf8');
+    expect(save).toContain('highfly.origin.f263-combat-beta.primary.v1');
+    expect(save).toContain("readLocal('highfly.origin.f262-combat-beta.primary.v1')");
+    const css=readFileSync('src/styles/hud.css','utf8');
+    expect(css).toContain('body.hf-origin-f263 #player-frame #pf-resource');
+    expect(css).toContain('body.hf-origin-f263 #player-frame #hf-origin-f1-resource-meter');
+  });
+});

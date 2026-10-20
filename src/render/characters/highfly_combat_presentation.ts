@@ -49,6 +49,17 @@ export function highflyComboAccent(abilityId:string|undefined,t:number):{roll:nu
 
 // Directional aerial revolutions: true full 360° around the Hunter's local
 // axis, returned to identity by landing. No physics impulse, no teleport.
+/** F2.6.3: KayKit modular forward axis is opposite to the earlier pose
+ * convention: the older -pitch visually looked like a backwards somersault. */
+export function highflyF263DirectionalFlip(t:number,dir:'forward'|'back'|'left'|'right'){
+  if(!Number.isFinite(t)||t<=0||t>=HIGHFLY_SOMERSAULT_SECONDS)return {pitch:0,roll:0};
+  const u=Math.max(0,Math.min(1,t/HIGHFLY_SOMERSAULT_SECONDS));
+  const turn=2*Math.PI*(u*u*(3-2*u));
+  return dir==='forward'?{pitch:turn,roll:0}
+    :dir==='left'?{pitch:0,roll:-turn}
+    :dir==='right'?{pitch:0,roll:turn}
+    :{pitch:-.22*Math.sin(Math.PI*u),roll:0};
+}
 export function highflyDirectionalFlip(t:number,dir:'forward'|'back'|'left'|'right'){
   if(!Number.isFinite(t)||t<=0||t>=HIGHFLY_SOMERSAULT_SECONDS)return {pitch:0,roll:0};
   const u=Math.max(0,Math.min(1,t/HIGHFLY_SOMERSAULT_SECONDS));

@@ -5317,6 +5317,8 @@ export interface Entity extends ClientMirroredEntityFields {
   highflyF261Controls?: boolean;
   /** F2.6.2: minor ground-contact tolerance for the Hunter ONLY. */
   highflyF262ContactAssist?: boolean;
+  /** F2.6.3 mobile forgiving ground hit-volume and stable input review. */
+  highflyF263ContactAssist?: boolean;
   highflyOriginStamina?: number;
   highflyF26FireballAim?: {x:number;z:number};
   /** Authoritative, transient intentional free-space Fireball endpoint. */

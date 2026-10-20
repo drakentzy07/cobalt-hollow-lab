@@ -15323,3 +15323,11 @@
     display: none !important;
   }
 }
+
+/* HIGHFLY F2.6.3: one portrait frame for HP + native MP + Hunter ST. */
+body.hf-origin-f263 #player-frame .uf-bars { gap:2px; overflow:visible; }
+body.hf-origin-f263 #player-frame #pf-resource { height:14px; min-height:14px; flex-shrink:0; }
+body.hf-origin-f263 #player-frame #pf-resource::before { content:'MP';position:absolute;left:5px;top:0;z-index:7;color:#d5e9ff;font:700 9px/14px system-ui;text-shadow:0 1px 2px #000;pointer-events:none; }
+body.hf-origin-f263 #player-frame #pf-res-text { line-height:14px;font-size:10px;text-align:right;padding-right:5px;box-sizing:border-box; }
+body.hf-origin-f263 #player-frame #hf-origin-f1-resource-meter { width:100%;max-width:100%;margin:0;display:block;flex:0 0 auto; }
+body.hf-origin-f263 #player-frame #hf-origin-f1-resource-meter > div {height:14px;min-height:14px;margin:0;border-radius:3px;box-sizing:border-box;}
