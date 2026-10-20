@@ -1985,7 +1985,7 @@ async function startGame(
     padTargetPick.autoTarget(action);
   };
   type F24Preview={x:number;z:number;radius:number;school:string;dimmed:boolean;bend?:number;
-    shape:'line'|'cone'|'circle'|'leap'|'ground-circle';originX:number;originZ:number};
+    shape:'line'|'cone'|'circle'|'leap'|'ground-circle'|'dash';originX:number;originZ:number};
   let f24AimPreview:F24Preview|null=null;
   let f24AimPending:{id:string;point:{x:number;z:number}}|null=null;
   hud.onHighflyGroundAimPoint=(id)=>{
