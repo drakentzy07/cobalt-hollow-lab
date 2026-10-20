@@ -7391,16 +7391,16 @@ export class Hud {
     }
 
     const elemental = this.onHighflyElementalFinisherReady?.() ?? false;
+    // F2.7: the fourth PHYSICAL contact is always reachable. An equipped
+    // elemental gem enriches it; it never gates an entire authored animation.
     const next: 1 | 2 | 3 | 4 =
-      this.highflyComboStep === 3 && elemental
-        ? 4
-        : (((this.highflyComboStep % 3) + 1) as 1 | 2 | 3);
+      this.highflyComboStep === 3 ? 4 : (((this.highflyComboStep % 3) + 1) as 1 | 2 | 3);
 
     if (this.onHighflyBasicAttack?.(next)) {
       const startsChain = this.highflyComboStep === 0;
       if (startsChain) this.highflyComboEvadeGraceUsed = false;
 
-      const finishesChain = next === 4 || (next === 3 && !elemental);
+      const finishesChain = next === 4;
       if (finishesChain) {
         this.highflyComboStep = 0;
         this.highflyComboExpiresAt = 0;
@@ -7412,7 +7412,7 @@ export class Hud {
       }
 
       this.highflyComboReadyAt =
-        now + (next === 1 ? 0.31 : next === 2 ? 0.35 : next === 3 ? (elemental ? 0.40 : 0.55) : 0.68);
+        now + (next === 1 ? 0.31 : next === 2 ? 0.35 : next === 3 ? 0.40 : 0.68);
       this.highflyAcceptedBasicAttacks += 1;
       document.body.dataset.highflyBasicAttackCount = String(this.highflyAcceptedBasicAttacks);
       document.body.dataset.highflyBasicAttackStep = String(next);
