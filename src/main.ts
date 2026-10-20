@@ -7,6 +7,7 @@ import {
 } from './highfly/origin/f1_core';
 import { mountOriginF1WorldUi, type OriginF1WorldUi } from './highfly/origin/f1_world_ui';
 import { ORIGIN_HUNTER_START } from './highfly/origin/f1_start';
+import { setActiveHighflyOriginMode, isUnifiedOriginRuntime, type HighflyOriginMode } from './highfly/origin/unified_mode';
 import { getOriginResourceController } from './highfly/origin/f1_resource_bridge';
 import { writeHighflyOfflineSave } from './game/highfly_offline_save';
 import { applyFrameGeometrySetting } from './game/frame_geometry_settings';
@@ -5474,9 +5475,16 @@ async function startOffline(
   skin = 0,
   world?: WorldContent,
   seedOverride?: number,
+  mode: HighflyOriginMode = 'world',
 ): Promise<void> {
   stopShaderWarmup();
   if (!(await prepareWorldEntry())) return;
+  // The session mode is explicit. Storage callbacks below capture it by value.
+  if (!world) {
+    setActiveHighflyOriginMode(mode);
+    // Legacy F2.x /lab/ routes retain their original isolated QA behavior.
+    if (!location.pathname.includes('/lab/')) document.body.classList.add('hf-origin-unified');
+  }
   resetLoadProfile();
   loadPhaseStart('entry');
   enterLoadingState(t('loading.world'));
@@ -5486,9 +5494,9 @@ async function startOffline(
 
   // RUN0.6: restore through ClaudeCraft's canonical CharacterState loader.
   const storedOfflineSave =
-    world ? null : await loadOriginHunterSave(playerClass, name);
+    world ? null : await loadOriginHunterSave(playerClass, name, mode);
   const storedTrainingProfile =
-    world ? null : await loadHighflyTrainingProfile(playerClass, name);
+    world ? null : await loadHighflyTrainingProfile(playerClass, name, mode);
   const trainingHasRealProgress =
     !!storedTrainingProfile &&
     (
@@ -5687,7 +5695,7 @@ async function startOffline(
         trainingProfile: getActiveHighflyHunterProfile() ?? undefined,
         updatedAt: Date.now(),
       };
-    });
+    }, 2500, mode);
   }
 
   // The only gameplay entry: no duplicated Sim, no mandatory tutorial.
@@ -5712,7 +5720,7 @@ async function startOffline(
           originF1: originState,
           trainingProfile: getActiveHighflyHunterProfile() ?? undefined,
           updatedAt: Date.now(),
-        });
+        }, mode);
       });
     })
     .catch((err:unknown) => console.error('[HIGHFLY F1] start failed',err));
@@ -9676,6 +9684,10 @@ function wireStartScreens(): void {
   const offlineNameInput = $('#char-name') as HTMLInputElement;
   const offlineError = $('#offline-error');
   const resetOriginHunterBtn = document.getElementById('hf-origin-reset-hunter') as HTMLButtonElement | null;
+  let selectedOriginMode: HighflyOriginMode = 'world';
+  const worldModeBtn = document.getElementById('hf-origin-mode-world') as HTMLButtonElement | null;
+  const labModeBtn = document.getElementById('hf-origin-mode-lab') as HTMLButtonElement | null;
+  const modeDescription = document.getElementById('hf-origin-mode-description');
   resetOriginHunterBtn?.addEventListener('click', () => {
     if (originHunterEntering) return;
     const wanted = window.confirm(
@@ -9685,7 +9697,7 @@ function wireStartScreens(): void {
     );
     if (!wanted) return;
     resetOriginHunterBtn.disabled = true;
-    void resetOriginHunterSave().then(ok=>{
+    void resetOriginHunterSave(selectedOriginMode).then(ok=>{
       if (!ok) {
         resetOriginHunterBtn.disabled=false;
         offlineError.textContent='No se pudo reiniciar el Hunter. No se borró la partida.';
@@ -9763,6 +9775,7 @@ function wireStartScreens(): void {
   let originHunterEntering = false;
   const handleOfflineStart = async (_carrier: PlayerClass) => {
     if (originHunterEntering) return;
+    const mode = selectedOriginMode;
     const rawName = offlineNameInput.value.trim();
     if (!rawName) {
       offlineError.textContent = t('errors.characterNameRequired');
@@ -9787,8 +9800,8 @@ function wireStartScreens(): void {
     offlineNameInput.classList.remove('user-invalid-fallback');
     offlineNameInput.removeAttribute('aria-invalid');
     try {
-      const exact = await loadOriginHunterSave(ORIGIN_HUNTER_CARRIER_CLASS, rawName);
-      const primary = await loadOriginHunterSave();
+      const exact = await loadOriginHunterSave(ORIGIN_HUNTER_CARRIER_CLASS, rawName, mode);
+      const primary = await loadOriginHunterSave(undefined, undefined, mode);
       // Exactly one persistent Hunter. If a previously-created Hunter exists,
       // continue them even if the launcher field was changed by accident.
       const restored = exact ?? primary;
@@ -9803,6 +9816,9 @@ function wireStartScreens(): void {
         ORIGIN_HUNTER_CARRIER_CLASS,
         name,
         selectedSkin('#offline-skin-row', offlineSkin),
+        undefined,
+        undefined,
+        mode,
       );
     } catch (error) {
       console.error('[HIGHFLY ORIGIN] Hunter entry failed', error);
@@ -9903,31 +9919,46 @@ function wireStartScreens(): void {
     void recoverHighflyOfflinePreview(cls);
   };
 
-  const handleOfflineSelect = () => {
-    if (!offlineAvailable) return;
-    document.body.classList.add('hf-origin-f1-creator');
-    if(resetOriginHunterBtn)resetOriginHunterBtn.hidden=true;
-    show('#offline-select');
-    // Mount the modular creator immediately; never gate appearance on slow IDB.
-    // The saved appearance is reconciled later by the guarded restore handler.
-    selectHighflyOfflineClass(ORIGIN_HUNTER_CARRIER_CLASS);
-
-    // Restore the primary Hunter's identity before the player presses Enter
-    // World. The actual RPG snapshot is restored by startOffline().
-    const restoreRevision = highflyOfflineSelectionRevision;
-    void loadOriginHunterSave().then((saved) => {
-      // If the player typed a name or picked a class while IndexedDB was
-      // resolving, their explicit choice wins over the stale primary snapshot.
-      if (highflyOfflineSelectionRevision !== restoreRevision) return;
+  const selectOriginMode = (mode: HighflyOriginMode) => {
+    if (originHunterEntering) return;
+    selectedOriginMode = mode;
+    highflyOfflineSelectionRevision += 1;
+    const revision = highflyOfflineSelectionRevision;
+    worldModeBtn?.setAttribute('aria-pressed', String(mode === 'world'));
+    labModeBtn?.setAttribute('aria-pressed', String(mode === 'lab'));
+    if(worldModeBtn) worldModeBtn.className = 'btn ' + (mode === 'world' ? 'btn-primary' : 'btn-secondary');
+    if(labModeBtn) labModeBtn.className = 'btn ' + (mode === 'lab' ? 'btn-primary' : 'btn-secondary');
+    if(modeDescription) modeDescription.textContent = mode === 'lab'
+      ? 'DrakenLAB LV1: acceso temporal a pruebas, sin modificar la partida original.'
+      : 'Draken original: progreso, entrenamiento y equipamiento auténticos.';
+    offlineNameInput.readOnly = mode === 'lab';
+    offlineNameInput.value = mode === 'lab' ? 'DrakenLAB' : '';
+    if(btnStartOffline) btnStartOffline.textContent = mode === 'lab' ? 'ENTRAR AL LABORATORIO' : 'ENTRAR AL MUNDO';
+    if(resetOriginHunterBtn) {
+      resetOriginHunterBtn.hidden = true;
+      resetOriginHunterBtn.textContent = mode === 'lab' ? 'REINICIAR LABORATORIO' : 'REINICIAR HUNTER';
+    }
+    void loadOriginHunterSave(undefined, undefined, mode).then(saved => {
+      if(revision !== highflyOfflineSelectionRevision || mode !== selectedOriginMode) return;
       const originSave = normalizeOriginF1Save(saved?.originF1);
       if(resetOriginHunterBtn) resetOriginHunterBtn.hidden = !originSave;
-      offlineNameInput.value = originSave ? saved?.name ?? '' : '';
-      if (originSave && saved?.appearance) {
+      offlineNameInput.value = originSave ? saved?.name ?? (mode === 'lab' ? 'DrakenLAB' : '') : (mode === 'lab' ? 'DrakenLAB' : '');
+      if(originSave && saved?.appearance) {
         modularAppearance = normalizeAppearance(saved.appearance as Partial<ModularAppearance>);
         appearanceUis.get('offline-class-details')?.set(modularAppearance);
       }
       selectHighflyOfflineClass(ORIGIN_HUNTER_CARRIER_CLASS);
-    });
+    }).catch(err=>console.error('[HIGHFLY ORIGIN] mode restore failed',err));
+  };
+  worldModeBtn?.addEventListener('click', () => selectOriginMode('world'));
+  labModeBtn?.addEventListener('click', () => selectOriginMode('lab'));
+
+  const handleOfflineSelect = () => {
+    if(!offlineAvailable) return;
+    document.body.classList.add('hf-origin-f1-creator');
+    show('#offline-select');
+    selectHighflyOfflineClass(ORIGIN_HUNTER_CARRIER_CLASS);
+    selectOriginMode('world');
   };
 
   onlineBtn.addEventListener('click', handleOnlineSelect);
