@@ -341,7 +341,10 @@ function wireAttackButton(attackBtn: HTMLButtonElement, deps: MobileActionRingDe
     // auto-attack-toggle behavior. Select a camera-forward soft enemy when one
     // is present; otherwise accept an actual zero-damage attack animation.
     if (document.body.classList.contains('hf-origin-f1')) {
-      deps.attackNearest?.();
+      // F2.4's native hit acquisition uses movement facing and reach on
+      // EVERY press. Camera-forward pretargeting belongs to older releases.
+      if(!location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/'))
+        deps.attackNearest?.();
       deps.activateFixedAttackSlot();
       attackBtn.blur();
       return;

@@ -247,10 +247,9 @@ export function highflyBasicAttack(
     !hasEscapeStealth(e) && (!isArenaPos(p.pos.x)||ctx.hasLineOfSight(p,e));
   const inReach = (e:Entity) =>
     dist2d(p.pos,e.pos) <= effectivePlayerAttackRange(e,MELEE_RANGE,meleeReachActor(ctx,p));
-  const t = current && valid(current) && inReach(current)
-    ? current
-    : pickHighflyFreeTarget(ctx.entities.values(),p.pos,p.facing,valid,
-        (e)=>effectivePlayerAttackRange(e,MELEE_RANGE,meleeReachActor(ctx,p)));
+  const t = pickHighflyFreeTarget(ctx.entities.values(),p.pos,p.facing,valid,
+    (e)=>effectivePlayerAttackRange(e,MELEE_RANGE,meleeReachActor(ctx,p))) ??
+    (current && valid(current) && inReach(current) ? current : null);
   if(t && p.targetId!==t.id)p.targetId=t.id;
   if (!t || !valid(t)) {
     // FREEDOM 360: a valid manual ATK press is an actual empty-space swing,
