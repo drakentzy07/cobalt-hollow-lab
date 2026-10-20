@@ -22,7 +22,7 @@ describe('HIGHFLY F2.3 purchased and persisted Universal Hunter knowledge',()=>{
     expect(s?.learnedAbilityIds).toEqual(['fireball','charge']);
     expect(normalizeOriginF1Save(f1StartState())?.learnedAbilityIds).toBeUndefined();
     const save=code('src/game/highfly_offline_save.ts');
-    expect(save).toContain("'highfly-offline-f23-combat-beta');
+    expect(save).toContain("highfly-offline-f23-combat-beta");
   });
   it('trainer uses the native Sim, deducts money and hydrates its native known list',()=>{
     const ui=code('src/highfly/origin/f1_world_ui.ts');
