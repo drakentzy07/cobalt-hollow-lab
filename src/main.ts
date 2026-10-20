@@ -229,6 +229,7 @@ import { openTargetSubcommands } from './game/pad_subcommands';
 import {highflyAimShape,highflyWorldAim,highflyAimTarget} from './highfly/combat/f24_aim_core';
 import {highflyF26LateralBend} from './highfly/combat/f26_skillshot_core';
 import {highflyF261Aim,highflyF261FlipDirection} from './highfly/combat/f261_controls';
+import {highflyF263AssistAim} from './highfly/combat/f263_assisted_aim';
 import { bestSoftAutoTarget } from './game/auto_target';
 import { createPadTargetPick } from './game/pad_target_pick';
 import { createPerfMonitor } from './game/perf';
@@ -2008,7 +2009,13 @@ async function startGame(
     const aim=p.highflyF261Controls
       ? highflyF261Aim(p.pos,input.camYaw,dx,dy,maxRange)
       : highflyWorldAim(p.pos,input.camYaw,dx,dy,maxRange);
-    const point=shape==='circle' ? {x:p.pos.x,z:p.pos.z} : {x:aim.x,z:aim.z};
+    const rawPoint=shape==='circle' ? {x:p.pos.x,z:p.pos.z} : {x:aim.x,z:aim.z};
+    // S23 beta only: acquire a nearby ground monster within a narrow corridor
+    // at AIM TIME. Aiming far away has no target, and the projectile still
+    // travels freely, never tracking an entity id after launch.
+    const point=p.highflyF262ContactAssist&&document.body.classList.contains('hf-origin-f263')&&action.id==='fireball'
+      ? highflyF263AssistAim(p.pos,rawPoint,world.entities.values(),
+          e=>e.kind==='mob'&&!e.dead,maxRange).point : rawPoint;
     const bend=p.highflyF262ContactAssist&&shape==='line'
       ? highflyF26LateralBend(p.onGround,!!p.highflyAirJumpUsed,p.highflyFlipDir,aim.range)
       :0;
