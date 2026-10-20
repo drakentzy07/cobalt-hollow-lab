@@ -38,5 +38,8 @@ describe('HIGHFLY F2.3 HUNTER UNCHAINED first integrated mobility + combo pass',
     expect(visual).toContain('this.playOriginPhysicalGesture(override, authoredTimeScale ?? this.def.attackTimeScale ?? 1.3, originPhysical, abilityId);');
     expect(read('src/ui/hud.ts')).toContain('this.highflyComboExpiresAt = now + 1.35');
     expect(read('src/main.ts')).not.toContain('new FreedomWorld(');
+    expect(read('src/game/highfly_offline_save.ts')).toContain("'highfly-offline-f23-combat-beta'");
+    expect(read('src/game/highfly_offline_save.ts')).toContain("'highfly.origin.f23-combat-beta.primary.v1'");
+    expect(read('src/highfly/game_c1_runtime.ts')).toContain("'highfly:origin:f23:hud:'");
   });
 });

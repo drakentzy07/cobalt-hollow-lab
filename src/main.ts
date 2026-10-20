@@ -11549,6 +11549,7 @@ const diagnosticsAutoOffline =
 if (HIGHFLY_F11_OFFLINE_FIRST && !import.meta.env.DEV &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f2-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/') &&
+    !location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/') &&
     'serviceWorker' in navigator &&
     (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
   const registerOfflineShell = () => {

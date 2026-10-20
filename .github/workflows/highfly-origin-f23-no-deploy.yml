@@ -7,12 +7,14 @@ on:
       - "src/**"
       - "tests/highfly_origin_f21_reuse_audit.test.ts"
       - "tests/highfly_origin_f23_hunter_unchained.test.ts"
-      - "tests/highfly_origin_f23_integrated_combat.test.ts"
+      - "tests/highfly_origin_f22_integrated_combat.test.ts"
       - "tests/highfly_origin_f1_universal_hunter.test.ts"
       - "tests/highfly_origin_f123_reset_hud.test.ts"
       - "tests/highfly_game_c28.test.ts"
       - "scripts/highfly_origin_f2_beta_browser.mjs"
       - "scripts/highfly_origin_f22_beta_browser.mjs"
+      - "scripts/highfly_origin_f23_beta_browser.mjs"
+      - "src/highfly/game_c1_runtime.ts"
       - "scripts/highfly_origin_f22_stage_safe.py"
       - "src/game/highfly_offline_save.ts"
   workflow_dispatch:
@@ -67,7 +69,7 @@ jobs:
           pnpm exec vitest run --exclude 'training/tests/**' \
             tests/highfly_origin_f21_reuse_audit.test.ts \
             tests/highfly_origin_f23_hunter_unchained.test.ts \
-            tests/highfly_origin_f23_integrated_combat.test.ts \
+            tests/highfly_origin_f22_integrated_combat.test.ts \
             tests/highfly_origin_f2_freedom360.test.ts \
             tests/highfly_origin_f1_universal_hunter.test.ts \
             tests/highfly_origin_f122_mobile_ux_save.test.ts \
@@ -134,7 +136,7 @@ jobs:
           cp dist/highfly-origin.webmanifest dist/lab/f23-combat-beta/
           cp dist/highfly-origin-icon-192.png dist/lab/f23-combat-beta/
           cp dist/highfly-origin-icon-512.png dist/lab/f23-combat-beta/
-          F22_BETA_URL="http://127.0.0.1:4173/cobalt-hollow-lab/lab/f23-combat-beta/" node scripts/highfly_origin_f23_beta_browser.mjs
+          F23_BETA_URL="http://127.0.0.1:4173/cobalt-hollow-lab/lab/f23-combat-beta/" node scripts/highfly_origin_f23_beta_browser.mjs
           echo "HIGHFLY_F23_S23_BROWSER_GREEN=1"
 
       - name: No public Pages was touched

@@ -24,12 +24,15 @@ interface HighflyTrainingSlot {
 
 // The F2 Pages laboratory shares GitHub's ORIGIN with public F1, not its saves.
 // Its own IndexedDB and local mirror prevent tester/reset actions touching F1.
+const F23_PAGES_LAB = typeof location !== 'undefined' &&
+  location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/');
 const F22_PAGES_LAB = typeof location !== 'undefined' &&
   location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/');
-const F2_PAGES_LAB = F22_PAGES_LAB || (typeof location !== 'undefined' &&
+const F2_PAGES_LAB = F23_PAGES_LAB || F22_PAGES_LAB || (typeof location !== 'undefined' &&
   location.pathname.startsWith('/cobalt-hollow-lab/lab/f2-combat-beta/'));
-const DB_NAME = F22_PAGES_LAB
-  ? 'highfly-offline-f22-combat-beta'
+const DB_NAME = F23_PAGES_LAB
+  ? 'highfly-offline-f23-combat-beta'
+  : F22_PAGES_LAB ? 'highfly-offline-f22-combat-beta'
   : F2_PAGES_LAB ? 'highfly-offline-f2-combat-beta' : 'highfly-offline';
 const STORE_NAME = 'saves';
 const PRIMARY_SLOT_KEY = 'primary';
@@ -37,8 +40,9 @@ const LOCAL_KEY = 'highfly.offline.primary.v1';
 // Keep the NEW persistent Hunter separate from the old ClaudeCraft/R39 data.
 // Both live under the same Pages origin and must not compete for 'primary'.
 const ORIGIN_PRIMARY_SLOT_KEY = 'origin-f1:primary';
-const ORIGIN_LOCAL_KEY = F22_PAGES_LAB
-  ? 'highfly.origin.f22-combat-beta.primary.v1'
+const ORIGIN_LOCAL_KEY = F23_PAGES_LAB
+  ? 'highfly.origin.f23-combat-beta.primary.v1'
+  : F22_PAGES_LAB ? 'highfly.origin.f22-combat-beta.primary.v1'
   : F2_PAGES_LAB ? 'highfly.origin.f2-combat-beta.primary.v1' : 'highfly.origin.primary.v1';
 const hasOriginIdentity = (s: HighflyOfflineSave | null): boolean =>
   !!s && normalizeOriginF1Save(s.originF1) !== null;
