@@ -10930,6 +10930,37 @@ body.mobile-touch.mobile-left-handed #mobile-stance-anchor {
   body.hf-origin-f1.mobile-touch.game-active #player-frame #hf-origin-f1-resource-meter [data-origin-resource-fill] {
     box-shadow:inset 0 1px 0 #ffffff5e,0 0 5px #0007;
   }
+  /* F2.6.3: MP and ST live under HP INSIDE the original frame.
+     The old absolute positioning detached the stamina bar horizontally. */
+  body.hf-origin-f263.mobile-touch.game-active #player-frame .uf-bars #hf-origin-f1-resource-meter {
+    position:relative !important;
+    left:auto !important;
+    right:auto !important;
+    top:auto !important;
+    bottom:auto !important;
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    flex:0 0 auto !important;
+    margin:1px 0 0 !important;
+    padding:0 !important;
+  }
+  body.hf-origin-f263.mobile-touch.game-active #player-frame .uf-bars #hf-origin-f1-resource-meter > div {
+    height:15px !important;
+    min-height:15px !important;
+    margin:1px 0 0 !important;
+    border-radius:3px !important;
+  }
+  body.hf-origin-f263.mobile-touch.game-active #player-frame #hf-origin-f1-resource-meter [data-origin-resource-track] {
+    height:100% !important;
+    border:0 !important;
+    background:transparent !important;
+  }
+  body.hf-origin-f263.mobile-touch.game-active #player-frame #hf-origin-f1-resource-meter > div > span {
+    color:#fff !important;
+    font-weight:700 !important;
+    text-shadow:0 1px 2px #000,0 0 2px #000 !important;
+  }
   body.hf-origin-f1.mobile-touch.game-active #target-frame {
     top:calc(max(16px,env(safe-area-inset-top)) + 133px) !important;
   }

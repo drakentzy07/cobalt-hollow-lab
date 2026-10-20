@@ -64,7 +64,7 @@ export function mountOriginF1WorldUi(
   if (originalFrame) (f25 ? originalFrame.querySelector('.uf-bars') ?? originalFrame : originalFrame).append(meter);
   const renderBars: Record<'mana'|'stamina', {wrap:HTMLDivElement;fill:HTMLDivElement;label:HTMLSpanElement}> =
     {} as Record<'hp'|'mana'|'stamina', {wrap:HTMLDivElement;fill:HTMLDivElement;label:HTMLSpanElement}>;
-  for (const [key, title, color] of (f25
+  for (const [key, title, color] of (f25 && !f263
     ? [['stamina','ST','#e5b73a']] as const
     : [['mana','MP','#4e98e8'],['stamina','ST','#e5b73a']] as const)) {
     const row = node('div', '', '');
@@ -80,7 +80,7 @@ export function mountOriginF1WorldUi(
     track.dataset.originResourceTrack=key;
     const fill = node('div', '');
     fill.style.cssText = f25
-      ? `height:100%;background:linear-gradient(180deg,#fbe5a1,${color} 55%,#a06d21);width:100%;transition:width 140ms ease-out;box-shadow:inset 0 1px 2px #fff8`
+      ? `height:100%;background:${f263&&key==='mana'?'linear-gradient(180deg,#a4d6ff,#4e98e8 58%,#1c3e80)':`linear-gradient(180deg,#fbe5a1,${color} 55%,#a06d21)`};width:100%;transition:width 140ms ease-out;box-shadow:inset 0 1px 2px #fff8`
       : `height:100%;background:${color};width:100%;border-radius:7px`;
     fill.dataset.originResourceFill=key;
     track.append(fill);
@@ -358,7 +358,7 @@ export function mountOriginF1WorldUi(
     }
     last=now;
     const p=sim.player;
-    for(const [key,cur,max] of (f25
+    for(const [key,cur,max] of (f25 && !f263
       ? [['stamina',current.resources.stamina,current.resources.maxStamina]] as const
       : [['mana',current.resources.mana,current.resources.maxMana],
          ['stamina',current.resources.stamina,current.resources.maxStamina]] as const)){
