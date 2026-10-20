@@ -171,6 +171,10 @@ export function mountOriginF1WorldUi(
           ? {...def,cost:0,highflyStaminaCost:id==='charge'?14:22,
               effects:def.effects.filter(effect=>effect.type!=='gainResource'),
               castWhileMoving:true}
+        : f26 && id==='sinister_strike'
+          ? {...def,cost:0,highflyStaminaCost:10,castWhileMoving:true}
+        : f26 && id==='meteor'
+          ? {...def,castTime:0,castWhileMoving:true}
         : f25 && id==='fireball' ? {...def,castWhileMoving:true} : def;
       return [{def:useDef,rank:1,cost:useDef.cost,castTime:useDef.castTime,cooldown:useDef.cooldown,
         effects:useDef.effects,castWhileMoving:f25 && id==='fireball',
