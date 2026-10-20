@@ -10,6 +10,7 @@ import { type Entity, MELEE_RANGE } from '../types';
 import { finishLunge } from './druid_lunge';
 import { finishBruinRush } from './druid_rush_window';
 import { finishBloodhook } from './hunter_fieldcraft';
+import { finishHighflyBladeRush } from '../../highfly/combat/f27_blade_rush';
 
 /** A charge runs at this multiple of normal run speed. */
 export const CHARGE_SPEED_MULT = 3;
@@ -28,4 +29,5 @@ export function finishChargeArrival(
   finishBloodhook(ctx, runner, target, arrived);
   finishLunge(ctx, runner, target, arrived);
   finishBruinRush(ctx, runner, target);
+  finishHighflyBladeRush(ctx, runner, target, arrived);
 }
