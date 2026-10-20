@@ -32,7 +32,7 @@ describe('F2.6.2 semi-assisted TRUE skillshot',()=>{
     expect(g).toContain('highfly-f262-soft-skillshot-lane');
     expect(g).toContain('highflyF26TrajectoryPoint');
     expect(g).not.toContain('for(let k=1;k<=24;k++)');
-    expect(g).toContain('const halfWidth=1.35');
+    expect(g).toContain('const halfWidth=2.1');
     const main=readFileSync('src/main.ts','utf8');
     expect(main).toContain('highflyF26LateralBend');
   });

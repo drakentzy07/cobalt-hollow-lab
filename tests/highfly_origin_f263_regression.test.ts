@@ -1,14 +1,14 @@
 import {describe,it,expect} from 'vitest';
 import {readFileSync} from 'node:fs';
-import {highflyDirectionalFlip,HIGHFLY_SOMERSAULT_SECONDS} from '../src/render/characters/highfly_combat_presentation';
+import {highflyF263DirectionalFlip,HIGHFLY_SOMERSAULT_SECONDS} from '../src/render/characters/highfly_combat_presentation';
 import {highflyF262GroundContact} from '../src/highfly/combat/f26_skillshot_core';
 describe('F2.6.3 S23 critical input regressions',()=>{
  it('four directions map to the actual chosen axis',()=>{
   const t=HIGHFLY_SOMERSAULT_SECONDS/2;
-  expect(highflyDirectionalFlip(t,'forward').pitch).toBeGreaterThan(0);
-  expect(highflyDirectionalFlip(t,'back').pitch).toBeLessThan(0);
-  expect(highflyDirectionalFlip(t,'left').roll).toBeLessThan(0);
-  expect(highflyDirectionalFlip(t,'right').roll).toBeGreaterThan(0);
+  expect(highflyF263DirectionalFlip(t,'forward').pitch).toBeGreaterThan(0);
+  expect(highflyF263DirectionalFlip(t,'back').pitch).toBeLessThan(0);
+  expect(highflyF263DirectionalFlip(t,'left').roll).toBeLessThan(0);
+  expect(highflyF263DirectionalFlip(t,'right').roll).toBeGreaterThan(0);
  });
  it('widens the soft collision corridor but preserves manual misses',()=>{
   const a={x:0,y:6,z:0},b={x:0,y:2,z:10};

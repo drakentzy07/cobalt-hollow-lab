@@ -24,6 +24,8 @@ interface HighflyTrainingSlot {
 
 // The F2 Pages laboratory shares GitHub's ORIGIN with public F1, not its saves.
 // Its own IndexedDB and local mirror prevent tester/reset actions touching F1.
+const F263_PAGES_LAB = typeof location !== 'undefined' &&
+  location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/');
 const F262_PAGES_LAB = typeof location !== 'undefined' &&
   location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/');
 const F261_PAGES_LAB = typeof location !== 'undefined' &&
@@ -38,9 +40,10 @@ const F23_PAGES_LAB = typeof location !== 'undefined' &&
   location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/');
 const F22_PAGES_LAB = typeof location !== 'undefined' &&
   location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/');
-const F2_PAGES_LAB = F262_PAGES_LAB || F261_PAGES_LAB || F26_PAGES_LAB || F25_PAGES_LAB || F24_PAGES_LAB || F23_PAGES_LAB || F22_PAGES_LAB || (typeof location !== 'undefined' &&
+const F2_PAGES_LAB = F263_PAGES_LAB || F262_PAGES_LAB || F261_PAGES_LAB || F26_PAGES_LAB || F25_PAGES_LAB || F24_PAGES_LAB || F23_PAGES_LAB || F22_PAGES_LAB || (typeof location !== 'undefined' &&
   location.pathname.startsWith('/cobalt-hollow-lab/lab/f2-combat-beta/'));
-const DB_NAME = F262_PAGES_LAB ? 'highfly-offline-f262-combat-beta'
+const DB_NAME = F263_PAGES_LAB ? 'highfly-offline-f263-combat-beta'
+  : F262_PAGES_LAB ? 'highfly-offline-f262-combat-beta'
   : F261_PAGES_LAB ? 'highfly-offline-f261-combat-beta'
   : F26_PAGES_LAB ? 'highfly-offline-f26-combat-beta'
   : F25_PAGES_LAB ? 'highfly-offline-f25-combat-beta'
@@ -54,7 +57,8 @@ const LOCAL_KEY = 'highfly.offline.primary.v1';
 // Keep the NEW persistent Hunter separate from the old ClaudeCraft/R39 data.
 // Both live under the same Pages origin and must not compete for 'primary'.
 const ORIGIN_PRIMARY_SLOT_KEY = 'origin-f1:primary';
-const ORIGIN_LOCAL_KEY = F262_PAGES_LAB ? 'highfly.origin.f262-combat-beta.primary.v1'
+const ORIGIN_LOCAL_KEY = F263_PAGES_LAB ? 'highfly.origin.f263-combat-beta.primary.v1'
+  : F262_PAGES_LAB ? 'highfly.origin.f262-combat-beta.primary.v1'
   : F261_PAGES_LAB ? 'highfly.origin.f261-combat-beta.primary.v1'
   : F26_PAGES_LAB ? 'highfly.origin.f26-combat-beta.primary.v1'
   : F25_PAGES_LAB ? 'highfly.origin.f25-combat-beta.primary.v1'
