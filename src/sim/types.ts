@@ -7094,7 +7094,8 @@ export type SimEvent = { pid?: number } & (
   // rig without inventing a hit, kill, aggro, or a phantom enemy.
   | { type: 'highflyBasicWhiff'; sourceId: number; comboStep: 1 | 2 | 3 | 4 }
   /** Valid resource-paid Fireball cast into open terrain: NEVER grants damage. */
-  | { type: 'highflyFireballMiss'; sourceId:number; x:number; z:number }
+  | { type: 'highflyFireballMiss'; sourceId:number; x:number; z:number; bend?:number; flightSec?:number }
+  | { type: 'highflyF26ProjectileImpact'; sourceId:number; x:number; y:number; z:number }
   | {
       type: 'castStart';
       entityId: number;

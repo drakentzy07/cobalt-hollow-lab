@@ -2778,13 +2778,18 @@ function applyAbility(
     armAbilityCooldownWithReflection(ctx,p,meta,res);
     p.facing=Math.atan2(dx,dz);
     const endpoint={x:p.pos.x+dx,z:p.pos.z+dz};
+    const bend=!p.onGround&&p.highflyAirJumpUsed
+      ? p.highflyFlipDir==='left'?-Math.min(2.2,d*0.12)
+        : p.highflyFlipDir==='right'?Math.min(2.2,d*0.12):0
+      :0;
     scheduleHighflyFreeProjectile(ctx,p,endpoint,(src,tgt)=>{
       if(resolveHostileSpellResist(ctx,src,tgt,ability))return;
       ctx.runEffects(src,meta,tgt,res,false);
-    },ability.range);
-    // The F2.5 terrain launch FX already draws a free-space bolt. Future curved
-    // trajectories must synchronize this same simulation shot with its FX.
-    ctx.emit({type:'highflyFireballMiss',sourceId:p.id,x:endpoint.x,z:endpoint.z});
+    },ability.range,bend);
+    // One trajectory kernel: both the authoritative sweep and 3D effect
+    // interpret the same signed bend and exact travel duration.
+    ctx.emit({type:'highflyFireballMiss',sourceId:p.id,x:endpoint.x,z:endpoint.z,
+      bend,flightSec:d/26});
     if(p.kind==='player'){
       ctx.applySetProcs(p,null,'spellCast');
       onCastCompleted(ctx,p,ability.id,null);

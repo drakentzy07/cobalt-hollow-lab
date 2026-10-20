@@ -1,6 +1,15 @@
 /** F2.6: deterministic swept-sphere hit test. No target lock, no homing,
  * no RNG. The earliest intersection on each simulation step wins. */
 export interface HighflyF26Point {x:number;y:number;z:number}
+/** One quadratic flight path, shared unchanged by sim and renderer.
+ * The bend is a lateral distance, not a steering correction toward a mob. */
+export function highflyF26TrajectoryPoint(
+  from:HighflyF26Point,to:HighflyF26Point,t:number,bend:number,
+):HighflyF26Point{
+  const u=Math.max(0,Math.min(1,t)),dx=to.x-from.x,dz=to.z-from.z;
+  const length=Math.hypot(dx,dz),side=length>0?4*u*(1-u)*bend/length:0;
+  return {x:from.x+dx*u-dz*side,y:from.y+(to.y-from.y)*u,z:from.z+dz*u+dx*side};
+}
 export function highflyF26SegmentSphereHit(
   from:HighflyF26Point,to:HighflyF26Point,
   center:HighflyF26Point,radius:number,

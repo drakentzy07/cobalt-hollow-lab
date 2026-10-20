@@ -1,4 +1,5 @@
 import { paintHighflyElementalBasic, highflyWeaponElementColor } from '../highfly/game_c1_elemental_weapon_vfx';
+import {highflyF26TrajectoryPoint} from '../highfly/combat/f26_skillshot_core';
 import * as THREE from 'three';
 import { NumberSampleRing } from '../game/sample_ring';
 import { coerceFxTier, nameplateIntervalSec, nameplatePixelRatio } from '../game/ui_tier_knobs';
@@ -1376,7 +1377,7 @@ export class Renderer {
   private aoeRingNext = 0;
   private recklessSkulls = new RecklessSkullPainter();
   private groundAimReticle: GroundAimReticleVisual;
-  private readonly highflyMissiles: {mesh:THREE.Mesh;from:THREE.Vector3;to:THREE.Vector3;elapsed:number}[]=[];
+  private readonly highflyMissiles: {mesh:THREE.Mesh;from:THREE.Vector3;to:THREE.Vector3;elapsed:number;sourceId:number;flightSec:number;bend:number}[]=[];
   raycaster = new THREE.Raycaster();
   private readonly raycastNdc = new THREE.Vector2();
   private readonly raycastGroundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -7070,6 +7071,17 @@ export class Renderer {
     this.riftDeathZoneVisuals?.handleEvent(ev);
     if (ev.type === 'damage') paintHighflyElementalBasic(ev, this.sim.entities.get(ev.sourceId), this.vfx);
     switch (ev.type) {
+      case 'highflyF26ProjectileImpact': {
+        const index=this.highflyMissiles.findIndex(ball=>ball.sourceId===ev.sourceId);
+        if(index>=0){
+          const ball=this.highflyMissiles.splice(index,1)[0];
+          this.scene.remove(ball.mesh);
+          ball.mesh.geometry.dispose();
+          (ball.mesh.material as THREE.Material).dispose();
+        }
+        this.vfx.burst(new THREE.Vector3(ev.x,ev.y,ev.z),'fire',12,0.85);
+        break;
+      }
       case 'highflyFireballMiss': {
         // The original mage spell's own timed cast just finished in empty
         // terrain. A visible fire orb flies there; no fake target/damage/loot.
@@ -7079,10 +7091,11 @@ export class Renderer {
             new THREE.SphereGeometry(0.21,12,8),
             new THREE.MeshBasicMaterial({color:0xff6b17,transparent:true,opacity:0.95}));
           mesh.name='highfly-f25-fireball-open-air';
-          const from=new THREE.Vector3(source.pos.x,source.pos.y+1.35,source.pos.z);
-          const to=new THREE.Vector3(ev.x,groundHeight(ev.x,ev.z,this.sim.cfg.seed)+0.45,ev.z);
+          const from=new THREE.Vector3(source.pos.x,source.pos.y+1.15,source.pos.z);
+          const to=new THREE.Vector3(ev.x,groundHeight(ev.x,ev.z,this.sim.cfg.seed)+1.15,ev.z);
           mesh.position.copy(from);this.scene.add(mesh);
-          this.highflyMissiles.push({mesh,from,to,elapsed:0});
+          this.highflyMissiles.push({mesh,from,to,elapsed:0,sourceId:ev.sourceId,
+            bend:ev.bend??0,flightSec:ev.flightSec??0.45});
         }
         break;
       }
@@ -12735,8 +12748,11 @@ export class Renderer {
     for(let i=this.highflyMissiles.length-1;i>=0;i--){
       const ball=this.highflyMissiles[i];
       ball.elapsed+=Math.max(0,dt);
-      const u=Math.min(1,ball.elapsed/0.45);
-      ball.mesh.position.lerpVectors(ball.from,ball.to,u);
+      const u=Math.min(1,ball.elapsed/ball.flightSec);
+      const pt=highflyF26TrajectoryPoint(
+        {x:ball.from.x,y:ball.from.y,z:ball.from.z},
+        {x:ball.to.x,y:ball.to.y,z:ball.to.z},u,ball.bend);
+      ball.mesh.position.set(pt.x,pt.y,pt.z);
       ball.mesh.scale.setScalar(1+0.25*Math.sin(u*Math.PI));
       if(u>=1){
         this.vfx.burst(ball.to,'fire',12,0.85);

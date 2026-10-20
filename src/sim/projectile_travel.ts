@@ -25,7 +25,7 @@
 import type { SimContext } from './sim_context';
 import {lineOfSightClear} from './colliders';
 import {groundHeight} from './world';
-import {highflyF26SegmentSphereHit, type HighflyF26Point} from '../highfly/combat/f26_skillshot_core';
+import {highflyF26SegmentSphereHit, highflyF26TrajectoryPoint, type HighflyF26Point} from '../highfly/combat/f26_skillshot_core';
 import { DT, type Entity } from './types';
 
 // Yards per second. Matches the homing projectile speed in src/render/vfx.ts so the
@@ -110,14 +110,16 @@ export function scheduleProjectile(
 interface HighflyFreeShot {
   sourceId:number;
   pos:HighflyF26Point;
-  delta:HighflyF26Point;
-  remaining:number;
+  endpoint:HighflyF26Point;
+  length:number;
+  traveled:number;
+  bend:number;
   onHit:(source:Entity,target:Entity)=>void;
 }
 const highflyFreeShots=new WeakMap<SimContext,HighflyFreeShot[]>();
 export function scheduleHighflyFreeProjectile(
   ctx:SimContext,source:Entity,aim:{x:number;z:number},
-  onHit:(source:Entity,target:Entity)=>void,range=30,
+  onHit:(source:Entity,target:Entity)=>void,range=30,bend=0,
 ):void{
   const dx=aim.x-source.pos.x,dz=aim.z-source.pos.z;
   const d=Math.hypot(dx,dz);
@@ -126,8 +128,8 @@ export function scheduleHighflyFreeProjectile(
   const endY=groundHeight(source.pos.x+dx/d*len,source.pos.z+dz/d*len,ctx.cfg.seed)+1.15;
   const shot:HighflyFreeShot={
     sourceId:source.id,pos:{x:source.pos.x,y:source.pos.y+1.15,z:source.pos.z},
-    delta:{x:dx/d*PROJECTILE_SPEED,y:(endY-(source.pos.y+1.15))/len*PROJECTILE_SPEED,z:dz/d*PROJECTILE_SPEED},
-    remaining:len,onHit,
+    endpoint:{x:source.pos.x+dx/d*len,y:endY,z:source.pos.z+dz/d*len},
+    length:len,traveled:0,bend,onHit,
   };
   const queue=highflyFreeShots.get(ctx)??[];
   queue.push(shot);
@@ -140,24 +142,34 @@ function advanceHighflyFreeProjectiles(ctx:SimContext):void{
   for(const shot of queue){
     const source=ctx.entities.get(shot.sourceId);
     if(!source||source.dead)continue;
-    const distance=Math.min(PROJECTILE_SPEED*DT,shot.remaining);
-    const ratio=distance/PROJECTILE_SPEED;
-    const next={x:shot.pos.x+shot.delta.x*ratio,
-      y:shot.pos.y+shot.delta.y*ratio,z:shot.pos.z+shot.delta.z*ratio};
+    const distance=Math.min(PROJECTILE_SPEED*DT,shot.length-shot.traveled);
+    const startT=shot.traveled/shot.length;
+    const endT=Math.min(1,(shot.traveled+distance)/shot.length);
+    const from=highflyF26TrajectoryPoint(shot.pos,shot.endpoint,startT,shot.bend);
+    const next=highflyF26TrajectoryPoint(shot.pos,shot.endpoint,endT,shot.bend);
     // Native world sight collision also blocks the shot. No homing, no forced hit.
-    if(!lineOfSightClear(ctx.cfg.seed,shot.pos,next,0.12))continue;
+    if(!lineOfSightClear(ctx.cfg.seed,from,next,0.12)){
+      ctx.emit({type:'highflyF26ProjectileImpact',sourceId:source.id,
+        x:from.x,y:from.y,z:from.z});
+      continue;
+    }
     let victim:Entity|null=null,first=Infinity;
     for(const target of ctx.entities.values()){
       if(target.id===source.id||target.dead||
          (target.kind!=='mob'&&target.kind!=='player')||
          !ctx.isHostileTo(source,target))continue;
-      const t=highflyF26SegmentSphereHit(shot.pos,next,
+      const t=highflyF26SegmentSphereHit(from,next,
         {x:target.pos.x,y:target.pos.y+1.12,z:target.pos.z},0.95);
       if(t!==null&&t<first){first=t;victim=target;}
     }
-    if(victim){shot.onHit(source,victim);continue;}
-    shot.remaining-=distance;
-    if(shot.remaining>0.0001){shot.pos=next;survivors.push(shot);}
+    if(victim){
+      ctx.emit({type:'highflyF26ProjectileImpact',sourceId:source.id,
+        x:from.x+(next.x-from.x)*first,y:from.y+(next.y-from.y)*first,
+        z:from.z+(next.z-from.z)*first});
+      shot.onHit(source,victim);continue;
+    }
+    shot.traveled+=distance;
+    if(shot.traveled<shot.length-0.0001)survivors.push(shot);
   }
   highflyFreeShots.set(ctx,survivors);
 }
