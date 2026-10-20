@@ -24,6 +24,8 @@ interface HighflyTrainingSlot {
 
 // The F2 Pages laboratory shares GitHub's ORIGIN with public F1, not its saves.
 // Its own IndexedDB and local mirror prevent tester/reset actions touching F1.
+const F27_PAGES_LAB = typeof location !== 'undefined' &&
+  location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/');
 const F263_PAGES_LAB = typeof location !== 'undefined' &&
   location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/');
 const F262_PAGES_LAB = typeof location !== 'undefined' &&
@@ -40,9 +42,10 @@ const F23_PAGES_LAB = typeof location !== 'undefined' &&
   location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/');
 const F22_PAGES_LAB = typeof location !== 'undefined' &&
   location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/');
-const F2_PAGES_LAB = F263_PAGES_LAB || F262_PAGES_LAB || F261_PAGES_LAB || F26_PAGES_LAB || F25_PAGES_LAB || F24_PAGES_LAB || F23_PAGES_LAB || F22_PAGES_LAB || (typeof location !== 'undefined' &&
+const F2_PAGES_LAB = F27_PAGES_LAB || F263_PAGES_LAB || F262_PAGES_LAB || F261_PAGES_LAB || F26_PAGES_LAB || F25_PAGES_LAB || F24_PAGES_LAB || F23_PAGES_LAB || F22_PAGES_LAB || (typeof location !== 'undefined' &&
   location.pathname.startsWith('/cobalt-hollow-lab/lab/f2-combat-beta/'));
-const DB_NAME = F263_PAGES_LAB ? 'highfly-offline-f263-combat-beta'
+const DB_NAME = F27_PAGES_LAB ? 'highfly-offline-f27-combat-beta'
+  : F263_PAGES_LAB ? 'highfly-offline-f263-combat-beta'
   : F262_PAGES_LAB ? 'highfly-offline-f262-combat-beta'
   : F261_PAGES_LAB ? 'highfly-offline-f261-combat-beta'
   : F26_PAGES_LAB ? 'highfly-offline-f26-combat-beta'
@@ -57,7 +60,8 @@ const LOCAL_KEY = 'highfly.offline.primary.v1';
 // Keep the NEW persistent Hunter separate from the old ClaudeCraft/R39 data.
 // Both live under the same Pages origin and must not compete for 'primary'.
 const ORIGIN_PRIMARY_SLOT_KEY = 'origin-f1:primary';
-const ORIGIN_LOCAL_KEY = F263_PAGES_LAB ? 'highfly.origin.f263-combat-beta.primary.v1'
+const ORIGIN_LOCAL_KEY = F27_PAGES_LAB ? 'highfly.origin.f27-combat-beta.primary.v1'
+  : F263_PAGES_LAB ? 'highfly.origin.f263-combat-beta.primary.v1'
   : F262_PAGES_LAB ? 'highfly.origin.f262-combat-beta.primary.v1'
   : F261_PAGES_LAB ? 'highfly.origin.f261-combat-beta.primary.v1'
   : F26_PAGES_LAB ? 'highfly.origin.f26-combat-beta.primary.v1'
@@ -422,8 +426,8 @@ export async function loadOriginHunterSave(
   // New beta means new IDB namespace, but the user should not have to repeat
   // the weapon-guide quest. Import a COPY of the last beta's valid local mirror
   // only if this lab does not already have a Hunter. Never mutate predecessor.
-  const predecessor = F263_PAGES_LAB && !ownPrimary
-    ? newest(readLocal('highfly.origin.f262-combat-beta.primary.v1'),
+  const predecessor = (F27_PAGES_LAB || F263_PAGES_LAB) && !ownPrimary
+    ? newest(readLocal(F27_PAGES_LAB?'highfly.origin.f263-combat-beta.primary.v1':'highfly.origin.f262-combat-beta.primary.v1'),
       readLocal('highfly.origin.f261-combat-beta.primary.v1'))
     : null;
   const recovered = hasOriginIdentity(predecessor) ? predecessor : null;
