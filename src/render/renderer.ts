@@ -10820,6 +10820,7 @@ export class Renderer {
       st.highflyAirFlip = document.body.classList.contains('hf-origin-f1') &&
         e.id === this.sim.player.id && st.airborne &&
         e.highflyAirJumpUsed === true;
+      st.highflyFlipDir = e.highflyFlipDir;
       // Long-fall flail: displayed vertical speed past what any hop reaches
       // (the same displayed-motion discipline as swimPitch, so peers flail
       // identically with no wire traffic). Mounted riders never flail:

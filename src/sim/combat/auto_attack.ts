@@ -303,8 +303,11 @@ export function highflyBasicAttack(
   if (isArenaPos(p.pos.x) && !ctx.hasLineOfSight(p, t)) return false;
 
   ctx.breakGhostWolf(p);
+  const useOffhand=p.highflyF25CombatFreedom===true && p.dualWielding &&
+    !!p.offhandWeapon && !!p.offhandItemId && (step===2 || step===4);
   const landed = meleeSwing(ctx, p, t, 0, 'HIGHFLY Basic', {
-    autoAttackHand: 'mainhand',
+    autoAttackHand: useOffhand?'offhand':'mainhand',
+    ...(useOffhand ? {weapon:p.offhandWeapon!,apSwingSpeed:p.offhandWeapon!.speed} : {}),
     abilityId: step === 4 && element !== 'base' ? 'highfly_basic_4_' + element : !p.onGround ? 'highfly_basic_air' : 'highfly_basic_' + step,
     weaponMult: 1,
     autoAttack: false,

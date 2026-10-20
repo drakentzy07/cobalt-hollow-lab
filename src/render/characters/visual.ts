@@ -119,7 +119,7 @@ import { stoneboundShellStyle } from './stonebound_shell_core';
 import { createStowTransition, forceStow, requestStow, tickStow } from './stow_transition';
 import { CharacterSurfaceResponse, SURFACE_RESPONSE_PROGRAM } from './surface_response';
 import { warriorActionBlend } from './warrior_action_blend';
-import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, isHighflyUpperBodyTrack, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
+import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, highflyDirectionalFlip, isHighflyUpperBodyTrack, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
 import { WarriorActionProps } from './warrior_action_props';
 import { WarriorBodyEffects } from './warrior_body_effects';
 import { SPIN_ATTACK_VISUAL_DURATION, weaponAttackStyle } from './weapon_attack_style_core';
@@ -597,6 +597,8 @@ export class CharacterVisual {
   private originFlipTime = HIGHFLY_SOMERSAULT_SECONDS;
   private originAccentAbility:string|undefined;
   private originAccentElapsed=1;
+  private originMoveCastOverlay: THREE.AnimationAction | null = null;
+  private originMoveCastActive = false;
   private model: THREE.Object3D;
   private modelWrap = new THREE.Group();
   private modelWrapGroundY = 0;
@@ -1072,6 +1074,37 @@ export class CharacterVisual {
     this.originWasAirFlip = flipping;
     if (!flipping) this.originFlipTime = HIGHFLY_SOMERSAULT_SECONDS;
     else this.originFlipTime = Math.min(HIGHFLY_SOMERSAULT_SECONDS, this.originFlipTime + dt);
+    const originF25=this.originHunterCombat && typeof document!=='undefined' &&
+      document.body.classList.contains('hf-origin-f25');
+    const movingCast=originF25 && s.casting && s.moving && !s.dead &&
+      !s.swimming && !s.airborne;
+    // A cast NEVER owns root translation or legs while moving: native
+    // locomotion remains on the base clip and masked spine/arms gestures loop.
+    if(movingCast && !this.originMoveCastActive){
+      const src=this.action('Spellcast_Raise') ?? this.action(this.def.clips.cast);
+      if(src){
+        const tracks=src.getClip().tracks.filter(t=>isHighflyUpperBodyTrack(t.name));
+        if(tracks.length>=4){
+          if(!this.originMoveCastOverlay){
+            const clip=new THREE.AnimationClip('hf_f25_upper_cast',src.getClip().duration,tracks);
+            this.originMoveCastOverlay=this.mixer.clipAction(clip);
+            this.actions.set(clip.name,this.originMoveCastOverlay);
+          }
+          this.originMoveCastOverlay.reset().setLoop(THREE.LoopRepeat,Infinity);
+          this.originMoveCastOverlay.clampWhenFinished=false;
+          this.originMoveCastOverlay.setEffectiveWeight(1);
+          this.originMoveCastOverlay.fadeIn(0.085).play();
+        }
+      }
+      this.originMoveCastActive=true;
+    }else if(!movingCast && this.originMoveCastActive){
+      this.originMoveCastOverlay?.fadeOut(0.1);
+      this.originMoveCastActive=false;
+    }
+    if(originF25 && this.originWasAirFlip && !flipping && !s.airborne && !s.dead){
+      // A directional landing slash is PRESENTATION ONLY, no free damage.
+      this.playAttack('highfly_basic_air_'+(s.highflyFlipDir??'back'));
+    }
     this.originAccentElapsed=Math.min(1,this.originAccentElapsed+dt);
     if (this.surfaceResponse.update(dt, this.root, this.height)) this.applyVisualMaterials();
     // A transparent effect whose clones finished linking: swap them in HERE,
@@ -1346,12 +1379,15 @@ export class CharacterVisual {
     // that reads as aiming on a prone stroke reads as a faceplant on an
     // upright body.
     const swimPitch = s.swimPitch * (1 + (TREAD_PITCH_SCALE - 1) * this.treadBlend);
+    const directionalFlip=flipping && originF25
+      ? highflyDirectionalFlip(this.originFlipTime,s.highflyFlipDir??'back')
+      : {pitch:flipping?highflySomersaultPitch(this.originFlipTime,false):0,roll:0};
     this.poseWrap.rotation.x =
       (proneAngle + swimPitch) * this.swimBlend + this.lean + CLIMB_BODY_PITCH * climb * climbLevel +
-      (flipping ? highflySomersaultPitch(this.originFlipTime, false) : 0) +
+      directionalFlip.pitch +
       (this.originHunterCombat ? highflyComboAccent(this.originAccentAbility,this.originAccentElapsed).pitch : 0);
-    this.poseWrap.rotation.z = this.originHunterCombat
-      ? highflyComboAccent(this.originAccentAbility,this.originAccentElapsed).roll : 0;
+    this.poseWrap.rotation.z = directionalFlip.roll +
+      (this.originHunterCombat ? highflyComboAccent(this.originAccentAbility,this.originAccentElapsed).roll : 0);
     this.poseWrap.position.y =
       this.swimBlend * (swimRise + Math.sin(this.swimBobTime * 2 + this.bobPhase) * 0.08) +
       // Compress at the start of the pull, back to neutral as the body rises.
@@ -1866,11 +1902,22 @@ export class CharacterVisual {
     if(this.originHunterCombat && originPhysical){
       this.originAccentAbility=abilityId;
       this.originAccentElapsed=0;
-      if(abilityId==='highfly_basic_air'){
-        const aerial=['2H_Melee_Attack_Chop','Warrior_Brute_Swing','1H_Melee_Attack_Chop']
+      if(abilityId?.startsWith('highfly_basic_air')){
+        const direction=abilityId.split('_').pop();
+        const clips=direction==='left'||direction==='right'
+          ? ['1H_Melee_Attack_Slash','Warrior_Brute_Swing','2H_Melee_Attack_Chop']
+          : ['2H_Melee_Attack_Chop','Warrior_Brute_Swing','1H_Melee_Attack_Chop'];
+        const aerial=clips.find(clip=>this.action(clip)!==null);
+        if(aerial){this.playOriginPhysicalGesture(aerial,1.26,true,abilityId);return;}
+      }
+      // A true equipped second weapon gets a different authored strike on the
+      // second contact. Never invents a hand or an extra combat hit.
+      if(abilityId==='highfly_basic_2'&&this.offhandItemId){
+        const alternate=['Warrior_DualWield_Left','1H_Melee_Attack_Slash_Left',
+          'Warrior_Brute_Swing',...this.def.clips.attack]
           .find(clip=>this.action(clip)!==null);
-        if(aerial){
-          this.playOriginPhysicalGesture(aerial,1.26,true,abilityId);
+        if(alternate){
+          this.playOriginPhysicalGesture(alternate,1.3,true,abilityId);
           return;
         }
       }
@@ -3542,8 +3589,14 @@ export class CharacterVisual {
     //
     // The battle stance is gated the same way and for the walkBack reason: only
     // a rig that ships the loop may enter the state.
+    // Hunter's moving cast keeps the REAL gait on legs. The dedicated upper
+    // mask above supplies its spell gesture, rather than donor's full-body
+    // Spellcast_Raise freezing motion and causing ice-skating.
+    const originMoveCast=this.originHunterCombat &&
+      typeof document!=='undefined' &&
+      document.body.classList.contains('hf-origin-f25') && s.casting && s.moving;
     return desiredBaseState(
-      s,
+      originMoveCast?{...s,casting:false}:s,
       !!this.action(this.def.clips.walkBack),
       !!this.action(this.def.clips.wade),
       !!this.action(this.def.clips.combatIdle),

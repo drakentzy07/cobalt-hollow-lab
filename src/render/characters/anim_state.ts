@@ -13,6 +13,7 @@ export interface AnimState {
   /** F2 Hunter Universal second jump: presentation-only flip, gated by ORIGIN.
    * No locomotion, collision or client/world authority comes from this flag. */
   highflyAirFlip?: boolean;
+  highflyFlipDir?: 'forward'|'back'|'left'|'right';
   /** Airborne AND genuinely falling (past any hop's landing speed, see
    *  isFallingAtSpeed): the base pose flails instead of holding the jump
    *  loop. Renderer-derived from displayed vertical speed, so peers flail
