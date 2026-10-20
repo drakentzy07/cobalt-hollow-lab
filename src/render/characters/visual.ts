@@ -1382,7 +1382,7 @@ export class CharacterVisual {
     const swimPitch = s.swimPitch * (1 + (TREAD_PITCH_SCALE - 1) * this.treadBlend);
     const directionalFlip=flipping && originF25
       ? highflyDirectionalFlip(this.originFlipTime,s.highflyFlipDir??'back')
-      : {pitch:flipping?highflySomersaultPitch(this.originFlipTime,false):0,roll:0};
+      : {pitch:flipping?highflySomersaultPitch(this.originFlipTime, false):0,roll:0};
     this.poseWrap.rotation.x =
       (proneAngle + swimPitch) * this.swimBlend + this.lean + CLIMB_BODY_PITCH * climb * climbLevel +
       directionalFlip.pitch +
