@@ -48,6 +48,12 @@ try {
   await page.waitForSelector('#hf-origin-f1-hud',{timeout:45000});
   await page.evaluate(()=>document.body.classList.remove('mobile-chrome-idle'));
   await page.waitForFunction(()=>document.getElementById('hf-origin-f26-flash')?.getBoundingClientRect().width>35,{timeout:12000});
+  // Mobile chrome can arrive one frame after the world UI: ensure the
+  // final stable layout, not an arbitrary intermediate bootstrap frame.
+  await page.waitForFunction(()=>
+    document.getElementById('mobile-jump')?.style.translate==='-38px 0'&&
+    document.getElementById('mobile-evade')?.style.translate==='-38px 0',
+    {timeout:10000});
   const comfort=await page.evaluate(()=>{
     const jump=document.getElementById('mobile-jump');
     const evade=document.getElementById('mobile-evade');
