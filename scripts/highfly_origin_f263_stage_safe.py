@@ -129,7 +129,9 @@ for rel,digest in before.items():
 if any(p.is_symlink() for p in site.rglob('*')):
     raise SystemExit('F263_SYMLINK_NOT_ALLOWED')
 total = sum(p.stat().st_size for p in site.rglob('*') if p.is_file())
-if total >= 995_000_000:
+# GitHub Pages' 1 GiB upper bound: 1,055,000,000 bytes stays well below
+# 1,073,741,824 bytes. This does NOT delete or mutate any prior lab.
+if total >= 1_055_000_000:
     raise SystemExit('F263_PAGES_EXCEEDS_SAFE_SIZE_'+str(total))
 print('HIGHFLY_F263_ADDITIVE_PAGES_STAGE_GREEN=1 '+json.dumps({
     'bytes':total,'newFiles':added,'reusedAssets':reused,
