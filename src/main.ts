@@ -1974,7 +1974,8 @@ async function startGame(
   // this is wired); the Target button cycles targets via the Tab path below.
   hud.onMobileAttackNearest = () => attackNearest();
   hud.onMobileActionIntent = (action) => {
-    if(location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') &&
+    if((location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') ||
+        location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/')) &&
        action.type==='ability' && highflyAimShape(action.id)){
       // Aimed abilities already chose their target on pointer release.
       return;
@@ -1992,7 +1993,8 @@ async function startGame(
     return point;
   };
   hud.onHighflyAimGesture=(phase,action,dx,dy)=>{
-    if(!location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') ||
+    if(!(location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') ||
+         location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/')) ||
        action.type!=='ability' || !highflyAimShape(action.id) ||
        !world.known.some(k=>k.def.id===action.id))return false;
     if(phase==='cancel'){f24AimPreview=null;return true;}
@@ -2077,10 +2079,23 @@ async function startGame(
     entryDiagnostics.checkpoint(questDialogOpen ? 'quest-dialog-open' : 'quest-dialog-closed');
   };
 
+  const f25Traversal = location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/');
+  const canF25Traverse=(kind:'jump'|'evade'):boolean=>{
+    if(!f25Traversal)return true;
+    const p=world.player;
+    if(p.dead||p.mountKey||p.climb)return false;
+    if(kind==='evade' && ((p.highflyEvadeCooldownRemaining??0)>0 ||
+       (!p.onGround && (!p.jumping||p.highflyAirJumpUsed))))return false;
+    if(kind==='jump' && !p.onGround && (!p.jumping||p.highflyAirJumpUsed))return false;
+    const cost=kind==='evade'?14:p.onGround?4:10;
+    const resource=getOriginResourceController();
+    return resource?.spend('stamina',cost)??false;
+  };
   const mobileControls = new MobileControls(input, {
     onCycleTarget: () => highflyManualCycleTarget(),
-    onJump: () => input.triggerTouchJump(),
+    onJump: () => {if(canF25Traverse('jump'))input.triggerTouchJump();},
     onEvade: () => {
+      if(!canF25Traverse('evade'))return;
       input.triggerHighflyEvade();
       hud.extendHighflyComboForEvade();
     },
@@ -11597,6 +11612,7 @@ if (HIGHFLY_F11_OFFLINE_FIRST && !import.meta.env.DEV &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f24-combat-beta/') &&
+    !location.pathname.startsWith('/cobalt-hollow-lab/lab/f25-combat-beta/') &&
     'serviceWorker' in navigator &&
     (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
   const registerOfflineShell = () => {

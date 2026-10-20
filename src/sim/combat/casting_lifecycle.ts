@@ -1589,6 +1589,11 @@ export function castAbility(
       ctx.error(p.id, 'Line of sight.');
       return;
     }
+    // F2.5 universal Hunter's aimed Fireball turns to its already validated
+    // legal target, instead of denying the cast while movement changes facing.
+    // Reach/LOS/hostility are still checked above. Donor casters unchanged.
+    if(p.highflyF25CombatFreedom===true && ability.id==='fireball')
+      p.facing=angleTo(p.pos,target.pos);
     const facingDiff = Math.abs(normAngle(angleTo(p.pos, target.pos) - p.facing));
     if (facingDiff > MELEE_ARC) {
       ctx.error(p.id, 'You must be facing your target.');

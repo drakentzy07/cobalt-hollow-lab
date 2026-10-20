@@ -5307,6 +5307,10 @@ export interface Entity extends ClientMirroredEntityFields {
   // HIGHFLY traversal state is transient/session-only. Optional keeps every
   // existing wire/save/entity constructor compatible.
   highflyAirJumpUsed?: boolean;
+  /** F2.5 isolated Hunter-only casting freedoms. No online/donor effect. */
+  highflyF25CombatFreedom?: boolean;
+  /** Direction of the second real physical jump, latched at impulse. */
+  highflyFlipDir?: 'forward'|'back'|'left'|'right';
   highflyLastJumpSeq?: number;
   highflyLastEvadeSeq?: number;
   highflyEvadeRemaining?: number;
