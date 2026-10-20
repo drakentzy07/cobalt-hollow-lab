@@ -428,7 +428,9 @@ function activeHighflyHudTargets(): HighflyHudTarget[] {
 const HIGHFLY_HUD_STORE_PREFIX = 'highfly:c282:hud:';
 function highflyHudStorePrefix(): string {
   return document.body.classList.contains('hf-origin-f1')
-    ? (location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/')
+    ? (location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/')
+        ? 'highfly:origin:f27:hud:'
+        : location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/')
         ? 'highfly:origin:f263:hud:'
         : location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/')
         ? 'highfly:origin:f262:hud:'
