@@ -8,6 +8,7 @@ on:
       - "src/**"
       - "index.html"
       - "tests/highfly_origin_unified*.test.ts"
+      - "tests/highfly_origin_f1_universal_hunter.test.ts"
   workflow_dispatch:
 
 permissions:
