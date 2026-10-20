@@ -27,7 +27,9 @@ describe('F2.6.1 S23 control polish',()=>{
     const v=readFileSync('src/render/characters/visual.ts','utf8');
     expect(v).toContain('f261BackHop');
     expect(v).toContain("abilityId==='highfly_basic_2'");
-    expect(v).toContain("'Warrior_DualWield_Left'");
+    // The F2.6.2 revision now uses the real KayKit clip rather than the
+    // previously guessed left-hand animation label.
+    expect(v).toContain('const dualClip=this.def.clips.attackByHand?.dualwield');
   });
   it('removes independent Flash HUD and granted Blink ONLY in F2.6.1',()=>{
     const ui=readFileSync('src/highfly/origin/f1_world_ui.ts','utf8');
