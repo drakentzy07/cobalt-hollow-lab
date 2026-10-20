@@ -9,6 +9,7 @@ on:
       - "index.html"
       - "tests/highfly_origin_unified*.test.ts"
       - "tests/highfly_origin_f1_universal_hunter.test.ts"
+      - "scripts/highfly_origin_unified_browser.mjs"
   workflow_dispatch:
 
 permissions:
@@ -73,3 +74,68 @@ jobs:
           grep -F "origin-lab:primary" src/highfly/origin/unified_mode.ts
           echo "HIGHFLY_ORIGIN_UNIFIED_01_SOURCE_AND_GUARDS_GREEN=1"
           echo "HIGHFLY_ORIGIN_UNIFIED_01_NO_PAGES_OR_APK_DEPLOY=1"
+
+  unified_browser:
+    name: "Actual 3D browser: Draken vs LV1 LAB, no save crosstalk"
+    needs: unified_quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install frozen dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Mount native world media from exact frozen donor
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: donor-media
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /public/
+      - name: Compile original world with unified code (no Pages publication)
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          test "$(git -C donor-media rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          rsync -a donor-media/public/ public/
+          node scripts/build_bundle_pregen.mjs
+          pnpm exec vite build
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          node scripts/highfly_f11_appshell.mjs
+          test -s dist/index.html
+      - name: Touch-browser World then LAB persistence and native skill validation
+        shell: bash
+        env:
+          HIGHFLY_UNIFIED_URL: "http://127.0.0.1:4173/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          command -v google-chrome || command -v chromium || command -v chromium-browser
+          mkdir -p unified-web
+          ln -s ../dist unified-web/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory unified-web >/tmp/highfly-unified-01.log 2>&1 &
+          P=$!
+          trap 'kill "$P" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -fsSI "$HIGHFLY_UNIFIED_URL" >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_origin_unified_browser.mjs
+          echo "HIGHFLY_UNIFIED_01_ANDROID_VIEWPORT_NO_DEPLOY_GREEN=1"
