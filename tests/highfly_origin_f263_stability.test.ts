@@ -30,7 +30,7 @@ describe('F2.6.3 S23 root-cause stability',()=>{
     expect(isHighflyLeftArmTrack('hips.position')).toBe(false);
     const visual=readFileSync('src/render/characters/visual.ts','utf8');
     expect(visual).toContain('highflyWeaponBasicClips(this.weaponItemId,step)');
-    expect(visual).toContain('step===2?1.26:1.1,true,abilityId,step===2');
+    expect(visual).toContain('true,abilityId,step===2,step===1');
   });
   it('imports previous lab without overwriting it and shows MP ST under HP',()=>{
     const save=readFileSync('src/game/highfly_offline_save.ts','utf8');
