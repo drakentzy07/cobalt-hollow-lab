@@ -17,6 +17,19 @@ export function isHighflyLeftArmTrack(path:string):boolean{
   if(!isHighflyUpperBodyTrack(path))return false;
   return /(?:clavicle|shoulder|upperarm|lowerarm|forearm|hand|finger|thumb)[._]l(?:[.\[]|$)|(?:leftarm|arm_l|hand_l)/i.test(path);
 }
+/** F2.7: matching upper-body-only mask for a RIGHT-handed contact. */
+export function isHighflyRightArmTrack(path:string):boolean{
+  if(!isHighflyUpperBodyTrack(path))return false;
+  return /(?:clavicle|shoulder|upperarm|lowerarm|forearm|hand|finger|thumb)[._]r(?:[.\[]|$)|(?:rightarm|arm_r|hand_r)/i.test(path);
+}
+/** Native clip alternatives, tested for live availability by the visual mixer.
+ * 1 right cross, 2 left cross, 3 paired rising slice, 4 paired downstroke. */
+export function highflyDualComboClips(step:number):readonly string[]{
+  if(step===3)return ['Dualwield_Melee_Attack_Slice','Dualwield_Melee_Attack_Stab','Dualwield_Melee_Attack_Chop'];
+  if(step===4)return ['Dualwield_Melee_Attack_Chop','Dualwield_Melee_Attack_Slice'];
+  return ['Dualwield_Melee_Attack_Chop','Dualwield_Melee_Attack_Slice'];
+}
+
 /** F2.6.3: four authored strike choices per actual weapon family.
  * All names belong to the already-shipped KayKit/Warrior library; the
  * renderer tests clip availability before playing. No gameplay rebalancing. */
