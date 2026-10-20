@@ -202,7 +202,7 @@ export class GroundAimReticleVisual {
       const vertex=(px:number,pz:number)=>{
         lane.setXYZ(li++,px,this.heightAt(px,pz)+.096,pz);
       };
-      const halfWidth=.93; // includes the 0.4yd semi-assisted side tolerance
+      const halfWidth=1.35; // exactly matches the F2.6.2 contact corridor
       for(let k=0;k<24;k++){
         const a=at(k/24),b=at((k+1)/24);
         const vx=b.x-a.x,vz=b.z-a.z,vd=Math.hypot(vx,vz)||1;
