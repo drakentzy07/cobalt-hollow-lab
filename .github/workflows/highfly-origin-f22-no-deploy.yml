@@ -11,6 +11,9 @@ on:
       - "tests/highfly_origin_f123_reset_hud.test.ts"
       - "tests/highfly_game_c28.test.ts"
       - "scripts/highfly_origin_f2_beta_browser.mjs"
+      - "scripts/highfly_origin_f22_beta_browser.mjs"
+      - "scripts/highfly_origin_f22_stage_safe.py"
+      - "src/game/highfly_offline_save.ts"
   workflow_dispatch:
 
 permissions:
@@ -122,6 +125,14 @@ jobs:
             sleep 1
           done
           node scripts/highfly_origin_f2_beta_browser.mjs
+          # Verify the release path, not just the predecessor lab path: its
+          # data must NOT load, overwrite or reset either F1 or F2.
+          mkdir -p dist/lab/f22-combat-beta
+          cp dist/index.html dist/lab/f22-combat-beta/index.html
+          cp dist/highfly-origin.webmanifest dist/lab/f22-combat-beta/
+          cp dist/highfly-origin-icon-192.png dist/lab/f22-combat-beta/
+          cp dist/highfly-origin-icon-512.png dist/lab/f22-combat-beta/
+          F22_BETA_URL="http://127.0.0.1:4173/cobalt-hollow-lab/lab/f22-combat-beta/" node scripts/highfly_origin_f22_beta_browser.mjs
           echo "HIGHFLY_F22_S23_BROWSER_GREEN=1"
 
       - name: No public Pages was touched
