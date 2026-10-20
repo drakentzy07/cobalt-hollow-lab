@@ -15331,3 +15331,55 @@ body.hf-origin-f263 #player-frame #pf-resource::before { content:'MP';position:a
 body.hf-origin-f263 #player-frame #pf-res-text { line-height:14px;font-size:10px;text-align:right;padding-right:5px;box-sizing:border-box; }
 body.hf-origin-f263 #player-frame #hf-origin-f1-resource-meter { width:100%;max-width:100%;margin:0;display:block;flex:0 0 auto; }
 body.hf-origin-f263 #player-frame #hf-origin-f1-resource-meter > div {height:14px;min-height:14px;margin:0;border-radius:3px;box-sizing:border-box;}
+
+/* HIGHFLY F2.7 P1: portrait-native HP, bright cyan MP and Hunter ST.
+ * Isolated F2.6.3-compatible lab only. Never add a second floating HP meter. */
+body.hf-origin-f263 #player-frame .uf-bars > .bar.hp,
+body.hf-origin-f263 #player-frame #pf-resource,
+body.hf-origin-f263 #player-frame #hf-origin-f1-resource-meter > div {
+  height: 20px !important;
+  min-height: 20px !important;
+  box-sizing: border-box;
+}
+body.hf-origin-f263 #player-frame .uf-bars {
+  gap: 2px;
+}
+body.hf-origin-f263 #player-frame .uf-bars > .bar.hp,
+body.hf-origin-f263 #player-frame #pf-resource {
+  position: relative;
+  width: 100%;
+}
+body.hf-origin-f263 #player-frame .uf-bars > .bar.hp::before {
+  content: 'HP';
+  position: absolute;
+  left: 5px;
+  top: 0;
+  z-index: 7;
+  font: 750 11px/20px system-ui;
+  color: #fff5e8;
+  text-shadow: 0 1px 3px #000;
+  pointer-events: none;
+}
+body.hf-origin-f263 #player-frame #pf-resource::before {
+  font: 750 11px/20px system-ui;
+  color: #e4f7ff;
+}
+body.hf-origin-f263 #player-frame #pf-res {
+  background: linear-gradient(180deg, #b5f4ff 0%, #36bde9 48%, #117fbe 100%) !important;
+}
+body.hf-origin-f263 #player-frame #pf-hp-text,
+body.hf-origin-f263 #player-frame #pf-res-text,
+body.hf-origin-f263 #player-frame #hf-origin-f1-resource-meter > div > span {
+  font-size: 11px !important;
+  font-weight: 750;
+  line-height: 20px !important;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px #000;
+}
+body.hf-origin-f263 #player-frame #hf-origin-f1-resource-meter > div > span:first-child {
+  text-align: left;
+}
+body.hf-origin-f263 #player-frame #hf-origin-f1-resource-meter > div {
+  border-color: #dbc07b88 !important;
+}
