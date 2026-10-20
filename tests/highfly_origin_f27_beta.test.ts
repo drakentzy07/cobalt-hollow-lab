@@ -38,5 +38,8 @@ describe('F2.7 isolated Samsung playtest route, non-persistent 4 skill kit',()=>
     expect(hud).toContain("highfly.origin.f27.preview.loadout.v1");
     const ui=source('src/highfly/game_c1_runtime.ts');
     expect(ui).toContain("Array.from({length:4}");
+    const ring=source('src/ui/hud/action_bar/mobile_action_ring_controller.ts');
+    expect(ring).toContain("location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/')");
+    expect(ring).toContain("f26Cancel.id='highfly-f26-aim-cancel'");
   });
 });
