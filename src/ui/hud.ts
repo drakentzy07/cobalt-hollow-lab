@@ -1367,6 +1367,8 @@ export class Hud {
   private readonly actionBarController: ActionBarController;
   // One-shot latch for the login-time action-bar layout reconciliation.
   private actionBarLayoutRestored = false;
+  /** Beta-only, once per device. Never overwrite an edited F27 layout later. */
+  private f27PreviewLoadoutApplied = false;
   private get hotbarActions(): HotbarAction[] {
     return this.actionBarController.actions;
   }
@@ -7192,6 +7194,26 @@ export class Hud {
     }
   }
 
+  private applyHighflyF27PreviewLoadout(): void {
+    if(this.f27PreviewLoadoutApplied ||
+       !location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/') ||
+       !this.actionBarLayoutRestored)return;
+    const key='highfly.origin.f27.preview.loadout.v1';
+    if(localStorage.getItem(key)==='1'){
+      this.f27PreviewLoadoutApplied=true;
+      return;
+    }
+    const skills=['fireball','sinister_strike','highfly_blade_rush','meteor'] as const;
+    if(!skills.every(id=>this.sim.known.some(k=>k.def.id===id) &&
+       this.actionBarController.isAssignableAction({type:'ability',id})))return;
+    let layout=[...this.hotbarActions];
+    for(let i=0;i<skills.length;i++)
+      layout=placeAbilityOnSlot(layout,skills[i],i);
+    this.commitHotbarActions(layout);
+    localStorage.setItem(key,'1');
+    this.f27PreviewLoadoutApplied=true;
+  }
+
   private addAbilityToHotbar(abilityId: string): boolean {
     return this.actionBarController.addAbility(abilityId);
   }
@@ -8869,6 +8891,7 @@ export class Hud {
     this.maybeRestoreActionBarLayout();
     this.resolvePendingLoadoutBar();
     this.syncActiveHotbarForm();
+    this.applyHighflyF27PreviewLoadout();
     this.syncSlotMap(); // picks up newly learned abilities mid-session
     this.focusTargets.update(now, targetFrameNonSelfIntervalMs(fxTier));
 
