@@ -66,3 +66,17 @@ export function highflyCanPreviewContent(
 ): boolean {
   return mode === 'lab';
 }
+
+/** UI/combat feature routing only. All save calls receive an explicit mode. */
+let activeHighflyOriginMode: HighflyOriginMode = 'world';
+export function setActiveHighflyOriginMode(mode: HighflyOriginMode): void {
+  activeHighflyOriginMode = normalizeHighflyOriginMode(mode);
+}
+export function getActiveHighflyOriginMode(): HighflyOriginMode {
+  return activeHighflyOriginMode;
+}
+/** Historical /lab/f2... entry paths remain independent for regression. */
+export function isUnifiedOriginRuntime(): boolean {
+  return typeof document !== 'undefined' &&
+    document.body.classList.contains('hf-origin-unified');
+}
