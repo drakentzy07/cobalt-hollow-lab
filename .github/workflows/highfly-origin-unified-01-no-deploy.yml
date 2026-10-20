@@ -1,0 +1,74 @@
+name: HIGHFLY ORIGIN UNIFIED 01 — World + LAB Lv1 (NO DEPLOY)
+on:
+  push:
+    branches:
+      - highfly-origin-unified-app-lab99-20261020
+    paths:
+      - ".github/workflows/highfly-origin-unified-01-no-deploy.yml"
+      - "src/**"
+      - "index.html"
+      - "tests/highfly_origin_unified*.test.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-origin-unified01-no-deploy
+  cancel-in-progress: true
+
+jobs:
+  unified_quality:
+    name: "Validate shared runtime and no-cross-save policy"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install frozen dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: TypeScript typecheck (complete source tree)
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec tsc --noEmit --incremental false
+      - name: LV1 LAB / World guard tests and F2.7 regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run --exclude 'training/tests/**' \
+            tests/highfly_origin_unified_mode_contract.test.ts \
+            tests/highfly_origin_unified_entry.test.ts \
+            tests/highfly_origin_f27_beta.test.ts \
+            tests/highfly_origin_f27_skills.test.ts \
+            tests/highfly_origin_f27_blade_rush.test.ts \
+            tests/highfly_origin_f27_moba.test.ts \
+            tests/highfly_origin_f263_stability.test.ts \
+            tests/highfly_origin_f26_skillshot.test.ts \
+            tests/highfly_origin_f261_controls.test.ts \
+            tests/highfly_origin_f262_skillshot.test.ts \
+            tests/highfly_origin_f23_skill_master.test.ts \
+            tests/highfly_origin_f24_aim.test.ts \
+            tests/highfly_origin_f1_universal_hunter.test.ts
+      - name: Guard single source and publication boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s src/highfly/origin/unified_mode.ts
+          test -s src/game/highfly_offline_save.ts
+          test -s src/highfly/combat/f27_blade_rush.ts
+          test -s src/game/offline_mode_gate.ts
+          grep -F "hf-origin-mode-lab" index.html
+          grep -F "origin-lab:primary" src/highfly/origin/unified_mode.ts
+          echo "HIGHFLY_ORIGIN_UNIFIED_01_SOURCE_AND_GUARDS_GREEN=1"
+          echo "HIGHFLY_ORIGIN_UNIFIED_01_NO_PAGES_OR_APK_DEPLOY=1"
