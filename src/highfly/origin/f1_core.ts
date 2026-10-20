@@ -19,6 +19,9 @@ export const ORIGIN_F23_MASTER_SKILLS = [
   { id:'charge', label:'Onrush · avance físico', school:'warrior', level:3, copper:10 },
   { id:'frost_nova', label:'Frost Nova · área circular', school:'mage', level:3, copper:10 },
   { id:'heroic_leap', label:'Vaulting Charge · salto dirigido', school:'warrior', level:6, copper:20 },
+  // F2.7 P2: explicitly acquired, never silently gifted during migration.
+  { id:'sinister_strike', label:'Wicked Slash · tajo con arma', school:'rogue', level:1, copper:8 },
+  { id:'meteor', label:'Skystone · meteorito de área', school:'mage', level:16, copper:120 },
 ] as const;
 export type OriginMasterSkillId = (typeof ORIGIN_F23_MASTER_SKILLS)[number]['id'];
 export function originCanTrainSkill(skillId:string, hunterLevel:number, copper:number, learned:readonly string[]):boolean {
