@@ -5319,6 +5319,8 @@ export interface Entity extends ClientMirroredEntityFields {
   highflyF262ContactAssist?: boolean;
   /** F2.6.3 mobile forgiving ground hit-volume and stable input review. */
   highflyF263ContactAssist?: boolean;
+  /** F2.7 Blade Rush pending native charge arrival contact; transient, not persisted. */
+  highflyBladeRushPending?: boolean;
   highflyOriginStamina?: number;
   highflyF26FireballAim?: {x:number;z:number};
   /** Authoritative, transient intentional free-space Fireball endpoint. */
