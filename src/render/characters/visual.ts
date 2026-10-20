@@ -1068,6 +1068,7 @@ export class CharacterVisual {
       !s.airborne && !s.swimming && s.speed > 0.6 && !s.dead;
     // The second physical jump is a rising edge. It rotates the existing rig;
     // there is NO teleport and no independent simulation movement authority.
+    const hadFlip=this.originWasAirFlip;
     const flipping = this.originHunterCombat && s.highflyAirFlip === true &&
       s.airborne && !s.dead;
     if (flipping && !this.originWasAirFlip) this.originFlipTime = 0;
@@ -1101,7 +1102,7 @@ export class CharacterVisual {
       this.originMoveCastOverlay?.fadeOut(0.1);
       this.originMoveCastActive=false;
     }
-    if(originF25 && this.originWasAirFlip && !flipping && !s.airborne && !s.dead){
+    if(originF25 && hadFlip && !flipping && !s.airborne && !s.dead){
       // A directional landing slash is PRESENTATION ONLY, no free damage.
       this.playAttack('highfly_basic_air_'+(s.highflyFlipDir??'back'));
     }
