@@ -1,4 +1,4 @@
-name: HIGHFLY UNIFIED 01 — Safe Android Candidate (preserve public Pages)
+name: HIGHFLY UNIFIED 01 — Stage verified candidate (no publish from branch)
 on:
   push:
     branches:
@@ -15,7 +15,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: highfly-unified01-candidate-stage
   cancel-in-progress: false
 
 jobs:
@@ -73,7 +73,8 @@ jobs:
             tests/highfly_origin_f1_universal_hunter.test.ts \
             tests/highfly_origin_f27_beta.test.ts \
             tests/highfly_origin_f27_skills.test.ts \
-            tests/highfly_origin_f263_stability.test.ts
+            tests/highfly_origin_f263_stability.test.ts \
+            tests/highfly_origin_unified_s23_hud_s4.test.ts
           grep -F "UNIFIED_CANDIDATE_PREVIEW" src/game/highfly_offline_save.ts
           grep -F "candidate/unified-01" src/main.ts
           test -s scripts/highfly_origin_candidate_browser.mjs
@@ -148,47 +149,3 @@ jobs:
         with:
           path: site
 
-  publish:
-    needs: stage
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    environment:
-      name: github-pages
-      url: https://drakentzy07.github.io/cobalt-hollow-lab/candidate/unified-01/
-    steps:
-      - name: Deploy additive candidate, preserving old public Draken
-        uses: actions/deploy-pages@v4
-
-      - name: Verify live candidate and immutable public F1/F27 identifiers
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import json,time,urllib.request
-          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
-          for attempt in range(35):
-              try:
-                  def get(path):
-                      req=urllib.request.Request(base+path+'?unified='+str(attempt),
-                         headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-UNIFIED01-CANDIDATE-VERIFY'})
-                      with urllib.request.urlopen(req, timeout=55) as r:
-                          if r.status!=200:raise RuntimeError('HTTP_'+str(r.status))
-                          return r.read()
-                  world=json.loads(get('highfly-origin-f12-qa.json'))
-                  f27=json.loads(get('lab/f27-combat-beta/f27-beta-qa.json'))
-                  candidate=json.loads(get('candidate/unified-01/unified-candidate-qa.json'))
-                  if world.get('sourceCommit')!='7518c22c11ff5ddffe09bb7792f8d67bb9e82038':
-                      raise RuntimeError('WORLD_PUBLIC_CHANGED')
-                  if f27.get('sourceCommit')!='4a601df539eef4af3ec731a0934d02c3efa2c4d3':
-                      raise RuntimeError('F27_PUBLIC_CHANGED')
-                  if candidate.get('sourceCommit')!=''+__import__('os').environ['GITHUB_SHA']:
-                      raise RuntimeError('UNIFIED_WRONG_SOURCE')
-                  html=get('candidate/unified-01/index.html')
-                  if b'/cobalt-hollow-lab/assets/' not in html:
-                      raise RuntimeError('UNIFIED_ASSETS_MISSING')
-                  print('HIGHFLY_UNIFIED01_LIVE_GREEN='+base+'candidate/unified-01/',flush=True)
-                  break
-              except Exception as err:
-                  print('UNIFIED_PUBLIC_PROPAGATION',attempt,str(err)[:190],flush=True)
-                  time.sleep(6)
-          else: raise SystemExit('HIGHFLY_UNIFIED01_CANDIDATE_NOT_PUBLIC')
-          PY
