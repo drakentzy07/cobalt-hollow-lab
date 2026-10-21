@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/highfly-origin-unified-01-candidate-pages.yml"
       - "tests/highfly_origin_unified_entry.test.ts"
+      - "tests/highfly_origin_unified_s23_hud_s4.test.ts"
   workflow_dispatch:
 
 permissions:
