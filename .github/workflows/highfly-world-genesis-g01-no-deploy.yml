@@ -1,0 +1,64 @@
+name: HIGHFLY WORLD GENESIS G01 — Universal Hunter / donor seams (NO DEPLOY)
+on:
+  push:
+    branches:
+      - highfly-world-genesis-g01-integration-20261021
+    paths:
+      - ".github/workflows/highfly-world-genesis-g01-no-deploy.yml"
+      - "src/highfly/world_genesis/**"
+      - "tests/highfly_world_genesis_g01.test.ts"
+      - "docs/highfly-origin/WORLD_GENESIS_G01_FIRST_UNION.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-world-genesis-g01-no-deploy
+  cancel-in-progress: true
+
+jobs:
+  genesis_contract:
+    name: G01 contracts, donor references, isolation and TypeScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install frozen source dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Full TypeScript verification
+        run: pnpm exec tsc --noEmit --incremental false
+      - name: Genesis first-union and donor regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run --exclude 'training/tests/**' \
+            tests/highfly_world_genesis_g01.test.ts \
+            tests/highfly_origin_unified_mode_contract.test.ts \
+            tests/highfly_origin_f7_baseline.test.ts \
+            tests/highfly_origin_f72_progression.test.ts \
+            tests/highfly_origin_f27_blade_rush.test.ts \
+            tests/highfly_origin_f26_skillshot.test.ts
+          echo "HIGHFLY_GENESIS_G01_CONTRACT_AND_SAVE_GUARDS_GREEN=1"
+      - name: Report physical world export as PENDING (not a false GREEN)
+        shell: bash
+        run: |
+          test -s src/highfly/world_genesis/g01_map_loader.ts
+          test -s docs/highfly-origin/WORLD_GENESIS_G01_FIRST_UNION.md
+          if test -s public/highfly/world-genesis/rgpoly-city01.glb; then
+            echo "HIGHFLY_GENESIS_G01_MAP_ASSET_PRESENT=1"
+          else
+            echo "HIGHFLY_GENESIS_G01_MAP_ASSET_PENDING_EXPORT=1"
+          fi
+          echo "HIGHFLY_GENESIS_G01_NO_PAGES_OR_APK_DEPLOY=1"
