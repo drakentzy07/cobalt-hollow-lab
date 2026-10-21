@@ -15383,3 +15383,72 @@ body.hf-origin-f263 #player-frame #hf-origin-f1-resource-meter > div > span:firs
 body.hf-origin-f263 #player-frame #hf-origin-f1-resource-meter > div {
   border-color: #dbc07b88 !important;
 }
+
+/* HIGHFLY UNIFIED 01 S23 correction: ONE 3-row native portrait frame.
+ * HP belongs to ClaudeCraft; MP/ST are native-Hunter-derived fills seated
+ * immediately after HP. The donor resource rail is HIDDEN, never duplicated.
+ * Other F2.x labs and the untouched published F1 remain unchanged. */
+body.hf-origin-unified.hf-origin-f263 #player-frame > .uf-bars {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  overflow: visible;
+}
+body.hf-origin-unified.hf-origin-f263 #player-frame > .uf-bars > #pf-resource {
+  display: none !important;
+}
+body.hf-origin-unified.hf-origin-f263 #player-frame > .uf-bars > .bar.hp,
+body.hf-origin-unified.hf-origin-f263 #player-frame > .uf-bars > #hf-origin-f1-resource-meter {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+body.hf-origin-unified.hf-origin-f263 #player-frame > .uf-bars > #hf-origin-f1-resource-meter {
+  display: flex !important;
+  flex-direction: column;
+  gap: 2px;
+  flex: 0 0 auto;
+  position: static;
+  transform: none;
+  overflow: visible;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+body.hf-origin-unified.hf-origin-f263 #player-frame > .uf-bars > #hf-origin-f1-resource-meter > div {
+  position: relative;
+  display: block;
+  flex: 0 0 20px;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+body.hf-origin-unified.hf-origin-f263 #player-frame > .uf-bars > #hf-origin-f1-resource-meter > div > span {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  line-height: 20px !important;
+  color: #fff9e9;
+  font: 750 11px/20px system-ui;
+  text-shadow: 0 1px 2px #000;
+  pointer-events: none;
+}
+body.hf-origin-unified.hf-origin-f263 #player-frame > .uf-bars > #hf-origin-f1-resource-meter > div > span:first-child {
+  left: 5px;
+  right: auto;
+  text-align: left;
+}
+body.hf-origin-unified.hf-origin-f263 #player-frame > .uf-bars > #hf-origin-f1-resource-meter > div > span:last-child {
+  left: auto;
+  right: 5px;
+  text-align: right;
+}
