@@ -1,4 +1,4 @@
-name: HIGHFLY UNIFIED 01 — Stage verified candidate (no publish from branch)
+name: HIGHFLY F7.2 — Publish verified isolated UNIFIED candidate
 on:
   push:
     branches:
@@ -31,6 +31,7 @@ jobs:
             for (const x of [
               {id:39508620808, sha:'b355b75027ad281cec0b1f4a4d74bc61e10468a7'},
               {id:39517223542, sha:'7c4562ba9cdd3db7dad98c398277168edd44000c'},
+              {id:39610549170, sha:'17705ff26cab04b6983888cef58dc25e7a9fd4ee'},
             ]) {
               const r = (await github.rest.actions.getWorkflowRun({
                 owner:context.repo.owner, repo:context.repo.repo, run_id:x.id,
@@ -75,7 +76,8 @@ jobs:
             tests/highfly_origin_f27_beta.test.ts \
             tests/highfly_origin_f27_skills.test.ts \
             tests/highfly_origin_f263_stability.test.ts \
-            tests/highfly_origin_unified_s23_hud_s4.test.ts
+            tests/highfly_origin_unified_s23_hud_s4.test.ts \
+            tests/highfly_origin_f72_progression.test.ts
           grep -F "UNIFIED_CANDIDATE_PREVIEW" src/game/highfly_offline_save.ts
           grep -F "candidate/unified-01" src/main.ts
           test -s scripts/highfly_origin_candidate_browser.mjs
@@ -150,3 +152,45 @@ jobs:
         with:
           path: site
 
+
+  publish:
+    needs: stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/candidate/unified-01/
+    steps:
+      - name: Deploy isolated candidate and unchanged original Pages snapshot
+        uses: actions/deploy-pages@v4
+
+      - name: Verify live F7.2 candidate identity and original Draken root
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json,os,time,urllib.request
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for attempt in range(35):
+              try:
+                  def get(path):
+                      req=urllib.request.Request(base+path+'?f72='+os.environ['EXPECTED_SHA'][:12]+'&try='+str(attempt),
+                          headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-F72-LIVE-VERIFY'})
+                      with urllib.request.urlopen(req,timeout=25) as resp:
+                          if resp.status!=200: raise AssertionError('HTTP_'+str(resp.status))
+                          return json.loads(resp.read().decode('utf-8'))
+                  candidate=get('candidate/unified-01/unified-candidate-qa.json')
+                  root=get('highfly-origin-f12-qa.json')
+                  if candidate.get('sourceCommit')!=os.environ['EXPECTED_SHA']:
+                      raise AssertionError('F72_CANDIDATE_SHA_MISMATCH')
+                  if candidate.get('noRootChange') is not True:
+                      raise AssertionError('F72_CANDIDATE_ROOT_GUARD_MISSING')
+                  if root.get('sourceCommit')!='7518c22c11ff5ddffe09bb7792f8d67bb9e82038':
+                      raise AssertionError('F72_ORIGINAL_DRAKEN_ROOT_CHANGED')
+                  print('HIGHFLY_F72_LIVE_CANDIDATE_AND_ORIGINAL_DRAKEN_GREEN=1',candidate.get('url'),flush=True)
+                  break
+              except Exception:
+                  if attempt==34: raise
+                  time.sleep(4)
+          PY

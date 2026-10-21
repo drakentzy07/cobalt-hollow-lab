@@ -107,7 +107,7 @@ html = html.replace('<meta name="robots" content="index, follow, max-image-previ
 html = html.replace('<title>HIGHFLY —', '<title>HIGHFLY UNIFIED 01 TEST —')
 (target/'index.html').write_text(html)
 (target/'unified-candidate-qa.json').write_text(json.dumps({
-    'edition':'HIGHFLY UNIFIED 01 LV1 LAB + WORLD (isolated candidate)',
+    'edition':'HIGHFLY UNIFIED 01 LV99 adjustable LAB + WORLD (isolated candidate)',
     'sourceCommit':source_sha,
     'baseF27Commit':'4a601df539eef4af3ec731a0934d02c3efa2c4d3',
     'noRootChange':True,
