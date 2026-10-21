@@ -5,6 +5,7 @@ on:
       - highfly-origin-unified-app-lab99-20261020
     paths:
       - ".github/workflows/highfly-origin-unified-01-candidate-pages.yml"
+      - "tests/highfly_origin_unified_entry.test.ts"
   workflow_dispatch:
 
 permissions:
