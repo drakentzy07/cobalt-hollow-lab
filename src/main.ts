@@ -1,3 +1,4 @@
+import { HIGHFLY_F72_HUNT_CAMPS } from './highfly/origin/f72_hunt';
 import { mountHighflyLabLevelPanel } from './highfly/origin/lab_level_panel';
 import { HIGHFLY_LAB_START_LEVEL } from './highfly/origin/unified_mode';
 import './highfly/game_c1_runtime';
@@ -5559,14 +5560,16 @@ async function startOffline(
     name,
     // A cloned content descriptor changes ONLY this solo Hunter's arrival.
     // The donor map, port, boat, NPC quests and world generation stay intact.
-    world: world ?? { ...BUILTIN_WORLD, playerStart: ORIGIN_HUNTER_START },
+    world: world ?? { ...BUILTIN_WORLD, playerStart: ORIGIN_HUNTER_START,
+      camps:[...BUILTIN_WORLD.camps,...HIGHFLY_F72_HUNT_CAMPS] },
     seedOverride,
     devCommands: import.meta.env.DEV,
   });
+  const originCfg={...offlineCfg,originLabHunter: !world && mode === 'lab'};
   const sim = loadSpan('sim-build', () => {
-    if (!matchingOfflineSave) return new Sim(offlineCfg);
+    if (!matchingOfflineSave) return new Sim(originCfg);
     const restored = new Sim({
-      ...offlineCfg,
+      ...originCfg,
       noPlayer: true,
       compulsoryTutorial: false,
     });

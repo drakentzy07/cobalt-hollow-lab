@@ -199,6 +199,13 @@ export class UnitPortraitPainter {
       this.drawHeadshot(canvas, url);
       return;
     }
+    // HIGHFLY's single Hunter MUST NOT display the donor Warrior face while
+    // the composed portrait is loading. Show a neutral classless crest instead.
+    if (canvas.id === 'pf-portrait' && typeof document !== 'undefined' &&
+        document.body.classList.contains('hf-origin-unified')) {
+      this.drawCrest(canvas, 'class_hunter');
+      return;
+    }
     const stock = cachedPortraitDataUrl(`player_${cls}`, skin);
     if (stock) this.drawHeadshot(canvas, stock);
     else this.drawCrest(canvas, `class_${cls}`);

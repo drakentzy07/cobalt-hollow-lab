@@ -5159,6 +5159,8 @@ export class Hud {
     hideTooltip: () => this.hideTooltip(),
     ...this.windowFocus('#talents-window'),
     playerClass: () => this.sim.cfg.playerClass,
+    isOriginHunter: () => document.body.classList.contains('hf-origin-unified'),
+    learnedOriginSkills: () => this.sim.known.map(k=>k.def.id),
     playerLevel: () => this.sim.player.level,
     currentAllocation: () => this.sim.talents,
     activeLoadout: () => this.sim.activeLoadout,

@@ -1,3 +1,4 @@
+import { ORIGIN_F1_SCHOOLS, ORIGIN_F23_MASTER_SKILLS } from '../highfly/origin/f1_core';
 // Thin DOM painter for the canonical Talents V2 choice-row window.
 //
 // Talent state comes only from currentAllocation(), the IWorld snapshot. Spec
@@ -47,6 +48,9 @@ export interface TalentsWindowDeps extends PainterHostPresentation {
   captureFocus(): HTMLElement | null;
   restoreFocus(target: HTMLElement | null): void;
   playerClass(): PlayerClass;
+  /** Real classless Origin Hunter; carrier class is never shown as a spec. */
+  isOriginHunter?(): boolean;
+  learnedOriginSkills?(): readonly string[];
   playerLevel(): number;
   currentAllocation(): TalentAllocation;
   activeLoadout(): number;
@@ -153,6 +157,7 @@ export class TalentsWindow {
     this.closeLoadoutMenu(root);
     markDialogRoot(root, { label: t('game.talents.title') });
     const cls = this.deps.playerClass();
+    if (this.deps.isOriginHunter?.()) { this.renderUniversalHunter(root); return; }
     const close =
       `<button type="button" class="x-btn ui-x-btn" data-close aria-label="${esc(t('game.talents.close'))}">` +
       `${svgIcon('close')}</button>`;
@@ -211,6 +216,32 @@ export class TalentsWindow {
     else this.paintRowsTab(body, view);
     this.wireFooter(root, view);
     this.fitBodyToWindow(root, body);
+  }
+
+  /** The nine schools are libraries, not donor Warrior talent spec trees.
+   * School acquisitions are handled by the world trainer, never by UI grants.
+   */
+  private renderUniversalHunter(root: HTMLElement): void {
+    const known=new Set(this.deps.learnedOriginSkills?.() ?? []);
+    const names:Record<string,string>={warrior:'Guerrero',paladin:'Paladín',hunter:'Cazador',rogue:'Pícaro',priest:'Sacerdote',shaman:'Chamán',mage:'Mago',warlock:'Brujo',druid:'Druida'};
+    const cards=ORIGIN_F1_SCHOOLS.map(id=>{
+      const rows=ORIGIN_F23_MASTER_SKILLS.filter(s=>s.school===id);
+      const details=rows.length?rows.map(row=>
+        '<div style="font:12px system-ui;color:#e9dfc9;margin:5px 0">'+esc(row.label)+
+        ' <span style="color:'+(known.has(row.id)?'#72d8a2':'#d7bd80')+'">'+
+        (known.has(row.id)?'✓ Aprendida':'🔒 Nivel '+row.level+' · '+row.copper+' cobre')+'</span></div>'
+      ).join(''):'<div style="font:12px system-ui;color:#c6b8aa">Escuela identificada; repertorio aún en integración.</div>';
+      return '<article style="padding:10px;border:1px solid #675436;background:#1b2436;border-radius:9px">'+
+        '<strong style="color:#ffe1a0">'+esc(names[id] ?? id)+'</strong>'+details+'</article>';
+    }).join('');
+    root.innerHTML='<div class="panel-title ui-win-head"><span class="ui-win-title">HUNTER UNIVERSAL'+
+      '<span class="tal-class-name ui-win-sub">Nueve escuelas · sin clase obligatoria</span></span>'+
+      '<button type="button" class="x-btn ui-x-btn" data-close aria-label="Cerrar">'+svgIcon('close')+'</button></div>'+
+      '<div style="padding:14px;max-height:65vh;overflow-y:auto">'+
+      '<p style="font:13px system-ui;color:#efdec1">Las escuelas NO son especializaciones forzadas de Guerrero. '+
+      'Las técnicas se aprenden con requisitos reales mediante el Veterano. El catálogo completo de nueve escuelas se incorpora por etapas.</p>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:9px">'+cards+'</div></div>';
+    root.querySelector('[data-close]')?.addEventListener('click',()=>this.close());
   }
 
   private paintSpecTab(body: HTMLElement, view: TalentsView): void {

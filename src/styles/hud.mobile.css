@@ -10998,3 +10998,11 @@ body.mobile-touch.mobile-left-handed #mobile-stance-anchor {
     height: 100% !important;
   }
 }
+
+/* HIGHFLY F7.2 RUN2: align mobile XP ring to smaller portrait, not over HP/MP/ST. */
+body.mobile-touch.hf-origin-unified #player-frame::before {
+  width:64px;height:64px;left:-2px;top:-3px;
+}
+body.mobile-touch.hf-origin-unified #player-frame::after {
+  left:-2px;top:60px;width:64px;
+}

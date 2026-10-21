@@ -1,3 +1,4 @@
+import { HIGHFLY_F72_HUNT_MOBS } from '../highfly/origin/f72_hunt';
 import { INVESTIGATION_MOB, INVESTIGATION_NPCS } from './content/world_quest_investigation';
 import { SHADOW_GUARDS, SHADOW_NPC_DEF } from './content/world_quest_shadow';
 // Content merge layer. Actual game content lives in sim/content/* — one
@@ -463,6 +464,7 @@ export const MOBS: Record<string, MobTemplate> = {
   ...FARSHORE_MOBS,
   ...PROVING_SHORE_MOBS,
   ...WORLD_QUEST_MOBS,
+  ...HIGHFLY_F72_HUNT_MOBS, // native Sim catalog; camps are HIGHFLY-only
 };
 
 // Heroic upgraded drop variants: generated from the base item + mob loot tables and

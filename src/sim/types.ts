@@ -9057,6 +9057,8 @@ export interface SimConfig {
   /** Offline HIGHFLY-only classless Hunter. All original class-coded Sim paths
    * remain unchanged unless this explicit flag is true. */
   originUniversalHunter?: boolean;
+  /** Dedicated offline-only LAB privileges. WORLD and donor servers default off. */
+  originLabHunter?: boolean;
   seed: number;
   playerClass: PlayerClass;
   // Global base mob respawn delay (seconds). LEAVE IT UNSET for a normal world:

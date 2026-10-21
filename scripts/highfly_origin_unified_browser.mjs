@@ -78,6 +78,13 @@ try {
   await page.waitForSelector('#hf-lab-level-controls:not([hidden])',{timeout:20000});
   await page.evaluate(()=>document.querySelector('[data-lab-level="30"]')?.click());
   await page.waitForFunction(()=>window.__game?.sim?.player?.level===30,{timeout:20000});
+  await page.waitForFunction(()=>document.getElementById('pf-level')?.textContent?.trim()==='30',{timeout:20000});
+  await page.evaluate(()=>document.getElementById('hf-lab-hunt-travel')?.click());
+  const arrived=await page.evaluate(()=>({x:window.__game?.sim?.player?.pos?.x,z:window.__game?.sim?.player?.pos?.z,
+    mobs:[...window.__game.sim.entities.values()].filter(e=>e.kind==='mob'&&e.templateId.startsWith('hf_f72_')).map(e=>({id:e.templateId,level:e.level}))}));
+  if(arrived.x<80||arrived.z<780||arrived.mobs.length<10||!arrived.mobs.some(m=>m.level===30))
+    throw Error('HIGHFLY_F72_PHYSICAL_HUNT_NOT_INSTALLED '+JSON.stringify(arrived));
+  console.log('HIGHFLY_F72_HUNT_WORLD_LV21_30_GREEN=1',JSON.stringify({mobs:arrived.mobs.length,at:{x:arrived.x,z:arrived.z}}));
   console.log('HIGHFLY_F72_LAB_REAL_LEVEL_99_TO_30_GREEN=1');
 
   // Reload same installed app URL. Normal Draken starts from WORLD ONLY.

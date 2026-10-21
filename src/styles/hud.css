@@ -15452,3 +15452,14 @@ body.hf-origin-unified.hf-origin-f263 #player-frame > .uf-bars > #hf-origin-f1-r
   right: 5px;
   text-align: right;
 }
+
+/* HIGHFLY F7.2 RUN2: actual Hunter portrait + three bars in ONE non-overlapping seat. */
+body.hf-origin-unified.hf-origin-f1 #player-frame > .portrait-wrap {
+  flex:0 0 60px; width:60px; height:60px; margin-right:8px; z-index:2;
+}
+body.hf-origin-unified.hf-origin-f1 #player-frame > .portrait-wrap .portrait {
+  width:58px;height:58px;
+}
+body.hf-origin-unified.hf-origin-f1 #player-frame > .uf-bars {
+  margin-left:0 !important; padding-top:0; min-width:0;
+}

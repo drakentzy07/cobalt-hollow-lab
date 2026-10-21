@@ -1,3 +1,4 @@
+import { HIGHFLY_F72_HUNT_ARRIVAL } from '../highfly/origin/f72_hunt';
 import { highflyOriginClampLevel } from '../highfly/origin/progression99';
 import type {
   AccountCosmetics,
@@ -2215,6 +2216,7 @@ export class Sim {
     this.hillProbe = hillProbeFor(cfg.seed);
     this.cfg = {
       originUniversalHunter: cfg.originUniversalHunter === true,
+      originLabHunter: cfg.originUniversalHunter === true && cfg.originLabHunter === true,
       seed: cfg.seed,
       playerClass: cfg.playerClass,
       // Deliberately NOT defaulted: the respawn policy (respawn_policy.ts) has to
@@ -5787,6 +5789,19 @@ export class Sim {
     r.e.cheaterMark = undefined;
   }
 
+  /** LAB-only native movement to the next real LV21–30 hunting prototype.
+   * Emits no XP or loot, and keeps the native spatial roster exact. */
+  highflyLabTravelToHunt(): boolean {
+    if (!this.cfg.originLabHunter) return false;
+    const p=this.player;
+    if (p.dead) return false;
+    const safe=this.findSafePos(HIGHFLY_F72_HUNT_ARRIVAL.x,HIGHFLY_F72_HUNT_ARRIVAL.z,-Infinity);
+    p.pos=this.groundPos(safe.x,safe.z);
+    p.prevPos={...p.pos};
+    this.rebucket(p);
+    return true;
+  }
+
   // Dev/test convenience: jump a player to a level (learns abilities, recalcs stats).
   setPlayerLevel(level: number, pid?: number): void {
     const r = this.resolve(pid);
@@ -5847,27 +5862,32 @@ export class Sim {
   // Commit a whole staged allocation in one shot (the UI's "Apply"). Rejects any
   // allocation that fails server-side validation with a reason event (FR-4.5).
   applyTalents(alloc: TalentAllocation, pid?: number): boolean {
+    if (this.cfg.originUniversalHunter) return false;
     return this.markTalentDeeds(applyTalentAllocation(this.ctx, alloc, pid), pid);
   }
 
   // Spend a single point into a node (incremental API; the UI mostly stages then
   // applies). Validated identically by building + checking a candidate alloc.
   spendTalent(nodeId: string, pid?: number): boolean {
+    if (this.cfg.originUniversalHunter) return false;
     return this.markTalentDeeds(spendTalentPoint(this.ctx, nodeId, pid), pid);
   }
 
   // Choose / change specialization. Switching specs drops the previous spec
   // tree's points (they belonged to that tree); the class tree is untouched.
   setSpec(specId: string | null, pid?: number): boolean {
+    if (this.cfg.originUniversalHunter) return false;
     return this.markTalentDeeds(setTalentSpec(this.ctx, specId, pid), pid);
   }
 
   selectTalentRow(level: TalentRowLevel, optionId: string | null, pid?: number): boolean {
+    if (this.cfg.originUniversalHunter) return false;
     return this.markTalentDeeds(selectTalentRowImpl(this.ctx, level, optionId, pid), pid);
   }
 
   // Free respec (out of combat): wipe all talent points. Spec is retained.
   respec(pid?: number): boolean {
+    if (this.cfg.originUniversalHunter) return false;
     return this.markTalentDeeds(respecTalents(this.ctx, pid), pid);
   }
 
