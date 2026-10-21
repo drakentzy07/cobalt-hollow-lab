@@ -60,5 +60,10 @@ describe('HIGHFLY UNIFIED S23 correction — native HP/MP/ST and unrestricted S4
     expect(css).toContain('display: none !important;');
     expect(css).toContain('body.hf-origin-unified.hf-origin-f263 #player-frame > .uf-bars > #hf-origin-f1-resource-meter');
     expect(css).toContain('width: 100% !important;');
+    const mobile=src('src/styles/hud.mobile.css');
+    expect(mobile).toContain('UNIFIED S23: override the historical F1 absolute resource placement.');
+    expect(mobile).toContain('position: static !important;');
+    expect(mobile).toContain('left: auto !important;');
+    expect(mobile).toContain('top: auto !important;');
   });
 });
