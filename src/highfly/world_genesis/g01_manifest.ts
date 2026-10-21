@@ -88,7 +88,7 @@ export function unityG01Position(v: G01UnityVector): Vector3 {
 }
 /** Basis reflection across X: glTF(x,-y,-z,w). */
 export function unityG01Rotation(q: G01UnityQuaternion): Quaternion {
-  return new Quaternion(q.x, -q.y, -q.z, q.w).normalize();
+  return new Quaternion(q.x, q.y === 0 ? 0 : -q.y, q.z === 0 ? 0 : -q.z, q.w).normalize();
 }
 export function g01Anchor(manifest: G01WorldManifest, id: string) {
   const a = manifest.anchors.find(x => x.id === id);
