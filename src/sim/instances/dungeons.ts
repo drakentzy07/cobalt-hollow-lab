@@ -174,7 +174,7 @@ export function spawnBossExitPortal(ctx: SimContext, mob: Entity): void {
   const dungeon = DUNGEONS[inst.dungeonId];
   const portal = dungeon?.bossExitPortal;
   if (!portal) return;
-  if (mob.templateId !== HEROIC_DUNGEON_TUNING[inst.dungeonId]?.finalBossId) return;
+  if (mob.templateId !== (dungeon.finalBossId ?? HEROIC_DUNGEON_TUNING[inst.dungeonId]?.finalBossId)) return;
   const origin = instanceOrigin(dungeon.index, inst.slot);
   const exit = createGroundObject(
     ctx.nextId++,

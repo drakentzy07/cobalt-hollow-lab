@@ -1,4 +1,5 @@
 import { HIGHFLY_F72_HUNT_MOBS, HIGHFLY_F72_ITEMS, HIGHFLY_F72_RECIPES } from '../highfly/origin/f72_hunt';
+import { HIGHFLY_GATE_DUNGEONS } from '../highfly/origin/f73_gate';
 import { INVESTIGATION_MOB, INVESTIGATION_NPCS } from './content/world_quest_investigation';
 import { SHADOW_GUARDS, SHADOW_NPC_DEF } from './content/world_quest_shadow';
 // Content merge layer. Actual game content lives in sim/content/* — one
@@ -1145,6 +1146,8 @@ export const DUNGEONS: Record<string, DungeonDef> = {
   ...DUNGEON_DEFS,
   ...TEMPLE_DUNGEON_DEFS,
   ...WILDHEART_DUNGEON_DEFS,
+  // HIGHFLY content shares the exact same native instance registry and lifecycle.
+  ...HIGHFLY_GATE_DUNGEONS,
 };
 
 export const DUNGEON_LIST: DungeonDef[] = Object.values(DUNGEONS).sort((a, b) => a.index - b.index);

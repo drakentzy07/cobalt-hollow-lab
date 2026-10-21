@@ -1,4 +1,3 @@
-import { HIGHFLY_F72_HUNT_CAMPS } from './highfly/origin/f72_hunt';
 import { mountHighflyLabLevelPanel } from './highfly/origin/lab_level_panel';
 import { HIGHFLY_LAB_START_LEVEL } from './highfly/origin/unified_mode';
 import './highfly/game_c1_runtime';
@@ -5560,8 +5559,9 @@ async function startOffline(
     name,
     // A cloned content descriptor changes ONLY this solo Hunter's arrival.
     // The donor map, port, boat, NPC quests and world generation stay intact.
-    world: world ?? { ...BUILTIN_WORLD, playerStart: ORIGIN_HUNTER_START,
-      camps:[...BUILTIN_WORLD.camps,...HIGHFLY_F72_HUNT_CAMPS] },
+    // Never inject high-level camps into ClaudeCraft's LV13–20 Thornpeak zone.
+    // HIGHFLY encounters live inside a registered native Gate instance.
+    world: world ?? { ...BUILTIN_WORLD, playerStart: ORIGIN_HUNTER_START },
     seedOverride,
     devCommands: import.meta.env.DEV,
   });

@@ -4161,6 +4161,9 @@ export interface DungeonDef {
   // For open-field dungeons whose boss stands far from the entrance with no
   // corridor back; absent = no boss portal (every corridor dungeon).
   bossExitPortal?: { x: number; z: number };
+  /** Optional native-template id that earns the boss exit when slain.
+   * Without this, existing heroic tuning supplies the finale as before. */
+  finalBossId?: string;
   spawns: DungeonSpawn[];
   /** Optional dungeon id whose mob difficulty tuning applies to this room's
    * static spawn list. Rewards and lockouts still use this dungeon's own id. */

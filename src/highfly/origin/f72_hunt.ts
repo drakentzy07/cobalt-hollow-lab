@@ -1,17 +1,11 @@
-/** F7.2 RUN2 — first accessible level 21–30 physical hunting strip.
- * Original world content, movement/AI, loot and XP stay single-authority.
- * Mobs are descendants of established Claude beast/burrower/ogre templates,
- * with unique native IDs and familiar authored materials. NOT the full
- * historical 80-monster donor import or a new dungeon.
+/** HIGHFLY LV21–30 native enemies, materials, gear and profession recipes.
+ * F7.3 migrates their encounters from the overlapping Thornpeak camps
+ * into the Gate in f73_gate.ts. There are NO HIGHFLY overworld spawn camps.
+ * Native Sim, loot, experience, and crafting stay the single authority.
  */
-import type { CampDef, MobTemplate, ItemDef } from '../../sim/types';
+import type { MobTemplate, ItemDef } from '../../sim/types';
 import type { ProfessionRecipeRecord } from '../../sim/professions/types';
 import { ZONE3_MOBS } from '../../sim/content/zone3';
-export const HIGHFLY_F72_HUNT_CAMPS: CampDef[] = [
-  {mobId:'hf_f72_ridge_hound',center:{x:134,z:820},radius:11,count:5,offStream:true},
-  {mobId:'hf_f72_crag_burrower',center:{x:138,z:854},radius:12,count:5,offStream:true},
-  {mobId:'hf_f72_ridge_captain',center:{x:141,z:883},radius:5,count:1,offStream:true},
-];
 export const HIGHFLY_F72_HUNT_MOBS: Record<string,MobTemplate> = {
   hf_f72_ridge_hound: {
     ...ZONE3_MOBS.ridge_stalker,id:'hf_f72_ridge_hound',
@@ -32,8 +26,6 @@ export const HIGHFLY_F72_HUNT_MOBS: Record<string,MobTemplate> = {
     aggroRadius:12,hardLeashRadius:38,respawnMult:1,offStreamIdle:true,
   },
 };
-export const HIGHFLY_F72_HUNT_ARRIVAL = {x:111,z:830} as const;
-export const HIGHFLY_F72_HUNT_LABEL = 'Risco de Cacería LV21–30';
 
 /** Earnable first-tier LV21-30 weapons/armor and native profession recipes.
  * Materials come from physical monsters; no content is granted to World.

@@ -21,10 +21,10 @@ export function mountHighflyLabLevelPanel(sim: Sim, repairSkills: () => boolean 
   range.addEventListener('input',()=>set(Number(range.value)));
   toggle.addEventListener('click',()=>{box.hidden=!box.hidden;update();});
   const hunt=document.createElement('button');hunt.type='button';hunt.id='hf-lab-hunt-travel';
-  hunt.textContent='⚔ IR A CACERÍA LV21–30';
+  hunt.textContent='⚔ ENTRAR AL GATE LV21–30';
   hunt.style.cssText='display:block;width:100%;min-height:44px;margin-top:11px;border:2px solid #7fba8c;border-radius:9px;background:#234937;color:#fff;touch-action:manipulation';
   const feedback=document.createElement('div');feedback.id='hf-lab-hunt-status';feedback.style.cssText='font:12px system-ui;color:#d6eedb;margin-top:5px';
-  hunt.addEventListener('click',()=>{feedback.textContent=sim.highflyLabTravelToHunt()?'Llegaste al Risco. ¡Cazá, saqueá y ganá XP!':'No se pudo viajar. Debés estar vivo en LAB.';box.hidden=true;});
+  hunt.addEventListener('click',()=>{feedback.textContent=sim.highflyLabTravelToHunt()?'Gate abierto: superá los encuentros y derrotá al capitán.':'No se pudo entrar. Debés estar vivo en LAB.';box.hidden=true;});
   const town=document.createElement('button');town.id='hf-lab-return-town';town.type='button';
   town.textContent='⌂ VOLVER / RESCATE A EASTBROOK';
   town.style.cssText='display:block;width:100%;min-height:44px;margin-top:9px;border:2px solid #7dafe0;border-radius:9px;background:#263e60;color:#fff;touch-action:manipulation';

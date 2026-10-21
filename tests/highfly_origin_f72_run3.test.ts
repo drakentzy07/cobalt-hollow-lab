@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import { Sim } from '../src/sim/sim';
 import { BUILTIN_WORLD, ITEMS, MOBS, ALL_RECIPES } from '../src/sim/data';
 import { requiredLevelFor } from '../src/sim/item_level_req';
-import { HIGHFLY_F72_ITEMS,HIGHFLY_F72_HUNT_CAMPS,HIGHFLY_F72_RECIPES } from '../src/highfly/origin/f72_hunt';
+import { HIGHFLY_F72_ITEMS,HIGHFLY_F72_RECIPES } from '../src/highfly/origin/f72_hunt';
+import { HIGHFLY_GATE_SPAWNS } from '../src/highfly/origin/f73_gate';
 import { highflyLabKitCandidates } from '../src/highfly/origin/lab_test_kit';
 const cfg=(lab:boolean)=>({seed:911,playerClass:'warrior' as const,playerName:lab?'DrakenLAB':'Draken',
   originUniversalHunter:true,originLabHunter:lab,compulsoryTutorial:false,
@@ -22,7 +23,7 @@ describe('F7.2 RUN3: S4, rescue, real LAB equipment and earned LV21–30 gear',(
   expect(world.highflyLabTravelToHunt()).toBe(false);
   expect(world.highflyLabReturnToEastbrook()).toBe(false);
   expect(lab.highflyLabTravelToHunt()).toBe(true);
-  expect(lab.player.pos.z).toBeGreaterThan(780);
+  expect(lab.player.pos.x).toBeGreaterThan(100_000);
   expect(lab.highflyLabReturnToEastbrook()).toBe(true);
   expect(lab.player.pos.z).toBeLessThan(-60);
  });
@@ -36,8 +37,8 @@ describe('F7.2 RUN3: S4, rescue, real LAB equipment and earned LV21–30 gear',(
   for(const item of Object.values(HIGHFLY_F72_ITEMS))expect(ITEMS[item.id]).toBeDefined();
  });
  it('actual hunt awards registered gear/materials; profession recipes have acquisition gates',()=>{
-  expect(HIGHFLY_F72_HUNT_CAMPS.reduce((a,x)=>a+x.count,0)).toBe(11);
-  const drops=HIGHFLY_F72_HUNT_CAMPS.flatMap(c=>MOBS[c.mobId].loot.map(l=>l.itemId).filter(Boolean));
+  expect(HIGHFLY_GATE_SPAWNS).toHaveLength(11);
+  const drops=HIGHFLY_GATE_SPAWNS.flatMap(c=>MOBS[c.mobId].loot.map(l=>l.itemId).filter(Boolean));
   expect(drops).toContain('hf_f72_ridge_fang');
   expect(drops).toContain('hf_f72_crag_core');
   expect(drops).toContain('hf_f72_captain_cleaver');

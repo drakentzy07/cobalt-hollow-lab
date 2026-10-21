@@ -1,4 +1,4 @@
-import { HIGHFLY_F72_HUNT_ARRIVAL } from '../highfly/origin/f72_hunt';
+import { HIGHFLY_GATE_ID } from '../highfly/origin/f73_gate';
 import { ORIGIN_HUNTER_START } from '../highfly/origin/f1_start';
 import { highflyLabKitCandidates } from '../highfly/origin/lab_test_kit';
 import { highflyOriginClampLevel } from '../highfly/origin/progression99';
@@ -5791,17 +5791,12 @@ export class Sim {
     r.e.cheaterMark = undefined;
   }
 
-  /** LAB-only native movement to the next real LV21–30 hunting prototype.
-   * Emits no XP or loot, and keeps the native spatial roster exact. */
+  /** LAB-only shortcut to the REAL native Gate instance.
+   * World players must find the walk-in gate near Highwatch.
+   * No free XP, loot, stat grants, or separate test-world scene. */
   highflyLabTravelToHunt(): boolean {
-    if (!this.cfg.originLabHunter) return false;
-    const p=this.player;
-    if (p.dead) return false;
-    const safe=this.findSafePos(HIGHFLY_F72_HUNT_ARRIVAL.x,HIGHFLY_F72_HUNT_ARRIVAL.z,-Infinity);
-    p.pos=this.groundPos(safe.x,safe.z);
-    p.prevPos={...p.pos};
-    this.rebucket(p);
-    return true;
+    if (!this.cfg.originLabHunter || this.player.dead) return false;
+    return this.enterDungeon(HIGHFLY_GATE_ID, this.playerId);
   }
 
   /** LAB-only return or emergency rescue. Uses native revival and roster movement. */
