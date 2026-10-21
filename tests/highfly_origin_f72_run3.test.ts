@@ -50,7 +50,7 @@ describe('F7.2 RUN3: S4, rescue, real LAB equipment and earned LV21–30 gear',(
  });
  it('player sheet no longer displays the forced Warrior specialty',()=>{
   const sheet=readFileSync('src/ui/character_progression_view.ts','utf8');
-  expect(sheet).toContain('if(sim.cfg.originUniversalHunter)');
+  expect(sheet).toContain('if((sim.cfg as {originUniversalHunter?:boolean}).originUniversalHunter)');
   expect(sheet).toContain('Sin especialización obligatoria');
   const hud=readFileSync('src/ui/hud.ts','utf8');
   expect(hud).toContain('highflyRestoreLabSkillSlots(): boolean');

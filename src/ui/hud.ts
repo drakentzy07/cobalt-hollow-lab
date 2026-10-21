@@ -7199,7 +7199,7 @@ export class Hud {
   /** Explicit LAB repair for missing S4 / inherited mobile hotbar layouts.
    * Never modifies World or secretly overwrites a user's chosen layout. */
   highflyRestoreLabSkillSlots(): boolean {
-    if (!this.sim.cfg.originLabHunter) return false;
+    if (!(this.sim.cfg as {originLabHunter?:boolean}).originLabHunter) return false;
     const skills=['fireball','sinister_strike','highfly_blade_rush','meteor'] as const;
     if(!skills.every(id=>this.sim.known.some(k=>k.def.id===id) &&
        this.actionBarController.isAssignableAction({type:'ability',id})))return false;
@@ -8917,7 +8917,7 @@ export class Hud {
 
     // talent buttons glow while the player has unspent points (and a tree exists)
     const tp = sim.talentPoints();
-    const talGlow = !sim.cfg.originUniversalHunter && talentsFor(sim.cfg.playerClass) !== null && tp.spent < tp.total;
+    const talGlow = !(sim.cfg as {originUniversalHunter?:boolean}).originUniversalHunter && talentsFor(sim.cfg.playerClass) !== null && tp.spent < tp.total;
     document.getElementById('mm-talents')?.classList.toggle('has-points', talGlow);
     document.getElementById('mobile-talents')?.classList.toggle('has-points', talGlow);
     // The rail's own state: the gold ring on whichever launcher's window is open,

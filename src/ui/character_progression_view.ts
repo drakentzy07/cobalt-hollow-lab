@@ -45,7 +45,7 @@ function milestoneName(id: string): string {
 // Character-sheet summary of the current specialization, role, and Mastery
 // (FR-8.6). Reuses the progression-block styling.
 export function talentSummaryHtml(sim: IWorld): string {
-  if(sim.cfg.originUniversalHunter)return '<div class="char-progression ui-card"><div class="cp-title">Hunter Universal</div><div class="char-stats cp-stats">Nueve escuelas · aprendizaje por exploración y mérito</div></div>';
+  if((sim.cfg as {originUniversalHunter?:boolean}).originUniversalHunter)return '<div class="char-progression ui-card"><div class="cp-title">Hunter Universal</div><div class="char-stats cp-stats">Nueve escuelas · aprendizaje por exploración y mérito</div></div>';
   const ct = talentsFor(sim.cfg.playerClass);
   if (!ct) return '';
   const sp = ct.specs.find((s) => s.id === sim.talentSpec);
@@ -67,7 +67,7 @@ export function talentSummaryHtml(sim: IWorld): string {
 // sp-title, stat-cell rows) so the rail reads as one column. The talents
 // window owns the picker; this is the readout.
 export function specializationPanelHtml(sim: IWorld): string {
-  if(sim.cfg.originUniversalHunter)return '<div class="stat-panel ui-card char-spec-panel"><div class="sp-title">Hunter Universal</div><div class="char-spec-copy">Sin especialización obligatoria · nueve escuelas</div></div>';
+  if((sim.cfg as {originUniversalHunter?:boolean}).originUniversalHunter)return '<div class="stat-panel ui-card char-spec-panel"><div class="sp-title">Hunter Universal</div><div class="char-spec-copy">Sin especialización obligatoria · nueve escuelas</div></div>';
   const ct = talentsFor(sim.cfg.playerClass);
   if (!ct) return '';
   const sp = ct.specs.find((s) => s.id === sim.talentSpec);
