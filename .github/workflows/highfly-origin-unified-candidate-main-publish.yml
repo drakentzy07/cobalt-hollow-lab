@@ -1,0 +1,155 @@
+name: HIGHFLY UNIFIED 01 — Publish certified candidate from MAIN (preserve Draken)
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/highfly-origin-unified-candidate-main-publish.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Require exact certified unified candidate stage and published F27 baseline
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const source=(await github.rest.actions.getWorkflowRun({
+              owner:context.repo.owner,repo:context.repo.repo,run_id:39521682500,
+            })).data;
+            if(source.head_sha!=='01753484d3b35cbb299ff2c7f31d1df7b0755d70')
+              throw Error('UNIFIED_CANDIDATE_SOURCE_DRIFT');
+            const jobs=(await github.rest.actions.listJobsForWorkflowRun({
+              owner:context.repo.owner,repo:context.repo.repo,run_id:39521682500,
+              per_page:100,
+            })).data.jobs;
+            const stage=jobs.find(x=>x.name==='stage');
+            if(stage?.status!=='completed'||stage.conclusion!=='success')
+              throw Error('UNIFIED_CANDIDATE_STAGE_NOT_GREEN');
+            const baseline=(await github.rest.actions.getWorkflowRun({
+              owner:context.repo.owner,repo:context.repo.repo,run_id:39508620808,
+            })).data;
+            if(baseline.head_sha!=='b355b75027ad281cec0b1f4a4d74bc61e10468a7'||
+               baseline.status!=='completed'||baseline.conclusion!=='success')
+              throw Error('F27_BASELINE_NOT_GREEN');
+            console.log('HIGHFLY_UNIFIED01_EXACT_CANDIDATE_STAGE_AND_PAGES_GREEN=1');
+
+      - name: Download EXACT certified composite Pages artifact (already staged and browser tested)
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 39521682500
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: certified
+
+      - name: Inspect immutable site snapshot before deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,tarfile,urllib.request
+          from pathlib import Path,PurePosixPath
+          archive=Path('certified/artifact.tar')
+          if not archive.is_file():raise SystemExit('UNIFIED_ARCHIVE_MISSING')
+          out=Path('site')
+          out.mkdir()
+          with tarfile.open(archive,'r:') as tar:
+              for m in tar.getmembers():
+                  p=PurePosixPath(m.name)
+                  if p.is_absolute() or '..' in p.parts or m.issym() or m.islnk() or not (m.isfile() or m.isdir()):
+                      raise SystemExit('UNIFIED_ARCHIVE_UNSAFE_'+str(m.name))
+              tar.extractall(out,filter='data')
+          expected={
+              'highfly-origin-f12-qa.json':'7518c22c11ff5ddffe09bb7792f8d67bb9e82038',
+              'lab/f263-combat-beta/f263-beta-qa.json':'3c972dd3dc794a386b4c412f811345a21cc51d6d',
+              'lab/f27-combat-beta/f27-beta-qa.json':'4a601df539eef4af3ec731a0934d02c3efa2c4d3',
+              'candidate/unified-01/unified-candidate-qa.json':'01753484d3b35cbb299ff2c7f31d1df7b0755d70',
+          }
+          for rel,sha in expected.items():
+              f=out/rel
+              if not f.is_file() or json.loads(f.read_text()).get('sourceCommit')!=sha:
+                  raise SystemExit('UNIFIED_ARCHIVE_WRONG_SOURCE_'+rel)
+          if not (out/'candidate/unified-01/index.html').is_file():
+              raise SystemExit('UNIFIED_ARCHIVE_NO_CANDIDATE_HTML')
+          if b'/cobalt-hollow-lab/assets/' not in (out/'candidate/unified-01/index.html').read_bytes():
+              raise SystemExit('UNIFIED_ARCHIVE_BROKEN_ASSET_REFS')
+          live='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for rel in ('index.html','highfly-origin-f12-qa.json',
+                      'lab/f263-combat-beta/index.html','lab/f263-combat-beta/f263-beta-qa.json',
+                      'lab/f27-combat-beta/index.html','lab/f27-combat-beta/f27-beta-qa.json'):
+              req=urllib.request.Request(live+rel+'?unified_lastcheck=1',
+                  headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-UNIFIED-RELEASE-GUARD'})
+              with urllib.request.urlopen(req,timeout=60) as res:
+                  if res.status!=200: raise SystemExit('UNIFIED_PUBLIC_PROTECTED_HTTP_'+rel)
+                  if hashlib.sha256(res.read()).digest()!=hashlib.sha256((out/rel).read_bytes()).digest():
+                      raise SystemExit('UNIFIED_PUBLIC_PROTECTED_DRIFT_'+rel)
+          if any(p.is_symlink() for p in out.rglob('*')):
+              raise SystemExit('UNIFIED_SITE_SYMLINK')
+          size=sum(p.stat().st_size for p in out.rglob('*') if p.is_file())
+          if size >= 1_055_000_000:
+              raise SystemExit('UNIFIED_SITE_TOO_LARGE_'+str(size))
+          print('HIGHFLY_UNIFIED01_CERTIFIED_ARCHIVE_AND_OLD_ROOT_PROTECTED_GREEN=1 size='+str(size),flush=True)
+          PY
+
+      - uses: actions/configure-pages@v5
+
+      - name: Upload certified Pages composition without source merge
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publish:
+    needs: stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/candidate/unified-01/
+    steps:
+      - name: Deploy candidate alongside unchanged world and F27
+        uses: actions/deploy-pages@v4
+      - name: Public live verification — root F1 and F27 unchanged
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,time,urllib.request
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for attempt in range(35):
+              try:
+                  def get(p):
+                      req=urllib.request.Request(base+p+'?unified_candidate='+str(attempt),
+                          headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-UNIFIED-CANDIDATE-PUBLIC'})
+                      with urllib.request.urlopen(req,timeout=45) as r:
+                          if r.status!=200:raise RuntimeError('HTTP_'+str(r.status))
+                          return r.read()
+                  root=json.loads(get('highfly-origin-f12-qa.json'))
+                  legacy=json.loads(get('lab/f27-combat-beta/f27-beta-qa.json'))
+                  candidate=json.loads(get('candidate/unified-01/unified-candidate-qa.json'))
+                  if root.get('sourceCommit')!='7518c22c11ff5ddffe09bb7792f8d67bb9e82038':
+                      raise RuntimeError('UNIFIED_ROOT_CHANGED')
+                  if legacy.get('sourceCommit')!='4a601df539eef4af3ec731a0934d02c3efa2c4d3':
+                      raise RuntimeError('UNIFIED_F27_CHANGED')
+                  if candidate.get('sourceCommit')!='01753484d3b35cbb299ff2c7f31d1df7b0755d70':
+                      raise RuntimeError('UNIFIED_CANDIDATE_NOT_CURRENT')
+                  if b'/cobalt-hollow-lab/assets/' not in get('candidate/unified-01/index.html'):
+                      raise RuntimeError('UNIFIED_INDEX_MISSING_ASSETS')
+                  print('HIGHFLY_UNIFIED01_PUBLIC_S23_TEST_URL_GREEN='+base+'candidate/unified-01/',flush=True)
+                  break
+              except Exception as err:
+                  print('UNIFIED_RELEASE_PROPAGATION',attempt,str(err)[:180],flush=True)
+                  time.sleep(6)
+          else:raise SystemExit('UNIFIED_PAGES_CANDIDATE_NOT_VERIFIED')
+          PY
