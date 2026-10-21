@@ -10,6 +10,7 @@
 // lives in unit_portrait.ts (and is unit-tested there).
 // ---------------------------------------------------------------------------
 
+import { highflyPortraitCrop } from '../highfly/origin/f7_portrait_crop';
 import type { ModularLook } from '../render/characters/modular';
 import {
   cachedPortraitDataUrl,
@@ -92,7 +93,12 @@ export class UnitPortraitPainter {
    *  tag the canvas with the desired URL and only draw if it still matches on
    *  load (the framed unit may have changed mid-decode). */
   drawHeadshot(canvas: HTMLCanvasElement, url: string, onError?: () => void): void {
-    this.drawDecodedImage(canvas, url, 1, onError);
+    // The Draken disc only: lift the rendered FACE inside its existing circular
+    // canvas; never move the unit frame, portrait ring, level chip or resource bars.
+    const unified = typeof document !== 'undefined' &&
+      document.body.classList.contains('hf-origin-unified');
+    const crop = highflyPortraitCrop(canvas.id, unified);
+    this.drawDecodedImage(canvas, url, crop.overscan, onError, crop.verticalOffsetFrac);
   }
 
   /** Decode and paint one portrait image at its subject-specific scale. Static
@@ -103,13 +109,14 @@ export class UnitPortraitPainter {
     url: string,
     overscan: number,
     onError?: () => void,
+    verticalOffsetFrac = 0,
   ): void {
     canvas.dataset.portrait = url;
     const draw = (img: HTMLImageElement) => {
       if (canvas.dataset.portrait !== url) return; // unit changed mid-decode
       const { ctx, size } = this.begin(canvas);
       const { dx, dy, dw, dh } = overscanRect(size, overscan);
-      ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.drawImage(img, dx, dy + verticalOffsetFrac * size, dw, dh);
     };
     const fail = () => {
       if (canvas.dataset.portrait !== url) return; // unit changed mid-decode

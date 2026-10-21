@@ -10,6 +10,8 @@ on:
       - "tests/highfly_origin_unified*.test.ts"
       - "tests/highfly_origin_f1_universal_hunter.test.ts"
       - "scripts/highfly_origin_unified_browser.mjs"
+      - "scripts/highfly_origin_content_census.mjs"
+      - "tests/highfly_origin_f7_baseline.test.ts"
   workflow_dispatch:
 
 permissions:
@@ -61,7 +63,22 @@ jobs:
             tests/highfly_origin_f262_skillshot.test.ts \
             tests/highfly_origin_f23_skill_master.test.ts \
             tests/highfly_origin_f24_aim.test.ts \
-            tests/highfly_origin_f1_universal_hunter.test.ts
+            tests/highfly_origin_f1_universal_hunter.test.ts \
+            tests/highfly_origin_f7_baseline.test.ts
+      - name: F7 read-only native-content census
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/highfly_origin_content_census.mjs --check --out=tmp/highfly-origin-f7-census.json
+          test -s tmp/highfly-origin-f7-census.json
+          echo "HIGHFLY_F7_1A_CONTENT_CENSUS_GREEN=1"
+      - name: Upload F7 diagnostic census (not a Pages artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-origin-f7-native-content-census
+          path: tmp/highfly-origin-f7-census.json
+          retention-days: 30
+
       - name: Guard single source and publication boundary
         shell: bash
         run: |
