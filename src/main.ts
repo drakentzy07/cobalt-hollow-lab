@@ -229,7 +229,7 @@ import { dispatchPadSharedEdgeAction } from './game/pad_shared_edge_action';
 import { openTargetSubcommands } from './game/pad_subcommands';
 import {highflyAimShape,highflyWorldAim,highflyAimTarget} from './highfly/combat/f24_aim_core';
 import {highflyF26LateralBend} from './highfly/combat/f26_skillshot_core';
-import {highflyF261Aim,highflyF261FlipDirection} from './highfly/combat/f261_controls';
+import {highflyF261Aim,highflyF261FlipDirection,highflyGroundCircleAim} from './highfly/combat/f261_controls';
 import { bestSoftAutoTarget } from './game/auto_target';
 import { createPadTargetPick } from './game/pad_target_pick';
 import { createPerfMonitor } from './game/perf';
@@ -2006,9 +2006,14 @@ async function startGame(
     if(action.id==='fireball' && phase==='start')delete p.highflyF25EmptyFireballAim;
     const def=world.known.find(k=>k.def.id===action.id)?.def;
     const maxRange=Math.max(5,def?.range??12);
-    const aim=p.highflyF261Controls
-      ? highflyF261Aim(p.pos,input.camYaw,dx,dy,maxRange)
-      : highflyWorldAim(p.pos,input.camYaw,dx,dy,maxRange);
+    // Ground-area S4 must rotate 360 degrees and land anywhere within reach,
+    // including behind and beside the Hunter. Keep the original F2.6.1
+    // softened directional gesture for projectile/cone/dash skills.
+    const aim=shape==='ground-circle'
+      ? highflyGroundCircleAim(p.pos,input.camYaw,dx,dy,maxRange)
+      : p.highflyF261Controls
+        ? highflyF261Aim(p.pos,input.camYaw,dx,dy,maxRange)
+        : highflyWorldAim(p.pos,input.camYaw,dx,dy,maxRange);
     const point=shape==='circle' ? {x:p.pos.x,z:p.pos.z} : {x:aim.x,z:aim.z};
     const bend=p.highflyF262ContactAssist&&shape==='line'
       ? highflyF26LateralBend(p.onGround,!!p.highflyAirJumpUsed,p.highflyFlipDir,aim.range)
