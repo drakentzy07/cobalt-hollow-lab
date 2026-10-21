@@ -46,11 +46,6 @@ export class GroundAimReticleVisual {
   });
   private readonly tickMaterial = lineMaterial();
   private readonly directionalMaterial = lineMaterial();
-  // Meteor is a ground-area impact: the cross marks the TRUE center,
-  // rather than leaving only a large outer circle to interpret.
-  private readonly impactCenterGeometry = new THREE.BufferGeometry();
-  private readonly impactCenterMaterial = lineMaterial();
-  private readonly impactCenter = new THREE.LineSegments(this.impactCenterGeometry, this.impactCenterMaterial);
   private readonly directionalGeometry = new THREE.BufferGeometry();
   private readonly directionalLine = new THREE.LineSegments(this.directionalGeometry,this.directionalMaterial);
   // A soft continuous 3D lane instead of the previous 24 railroad sleepers.
@@ -80,13 +75,6 @@ export class GroundAimReticleVisual {
   ) {
     this.group.name = 'ground-aim-reticle';
     this.group.visible = false;
-    this.impactCenterGeometry.setAttribute('position',
-      new THREE.BufferAttribute(new Float32Array(4*3),3));
-    this.impactCenterGeometry.setDrawRange(0,4);
-    this.impactCenter.visible=false;
-    this.impactCenter.name='highfly-origin-ground-impact-center';
-    this.impactCenter.frustumCulled=false;
-    this.impactCenter.renderOrder=floorVfxRenderOrder('reticle',0);
     this.directionalGeometry.setAttribute('position',
       new THREE.BufferAttribute(new Float32Array(256*3),3));
     this.directionalGeometry.setDrawRange(0,0);
@@ -114,7 +102,7 @@ export class GroundAimReticleVisual {
       object.renderOrder = floorVfxRenderOrder('reticle', 0);
       this.group.add(object);
     }
-    this.group.add(this.softLane,this.directionalLine,this.impactCenter);
+    this.group.add(this.softLane,this.directionalLine);
     this.scene.add(this.group);
   }
 
@@ -138,15 +126,6 @@ export class GroundAimReticleVisual {
       this.geometryState.radius = radius;
     }
     this.rebuildDirectional(aim);
-    this.impactCenter.visible=aim.shape==='ground-circle';
-    if(this.impactCenter.visible){
-      const points=this.impactCenterGeometry.getAttribute('position') as THREE.BufferAttribute;
-      const size=.7;
-      const y=this.heightAt(aim.x,aim.z)+.12;
-      points.setXYZ(0,aim.x-size,y,aim.z); points.setXYZ(1,aim.x+size,y,aim.z);
-      points.setXYZ(2,aim.x,y,aim.z-size); points.setXYZ(3,aim.x,y,aim.z+size);
-      points.needsUpdate=true;
-    }
     this.dimmed = aim.dimmed || aim.blocked === true;
     // A blocked aim (inside the ability's minimum range) will be REFUSED at
     // commit, so it drops the school identity for a refusal red; a merely
@@ -158,7 +137,6 @@ export class GroundAimReticleVisual {
       this.bandMaterial,
       this.tickMaterial,
       this.directionalMaterial,
-      this.impactCenterMaterial,
       this.softLaneMaterial,
     ]) {
       material.color.setHex(color);
@@ -188,8 +166,6 @@ export class GroundAimReticleVisual {
     this.tickMaterial.dispose();
     this.directionalMaterial.dispose();
     this.directionalGeometry.dispose();
-    this.impactCenterGeometry.dispose();
-    this.impactCenterMaterial.dispose();
     this.softLaneGeometry.dispose();
     this.softLaneMaterial.dispose();
   }
@@ -283,7 +259,6 @@ export class GroundAimReticleVisual {
     this.bandMaterial.opacity = pulse * 0.15 * dim;
     this.tickMaterial.opacity = pulse * 0.82 * dim;
     this.directionalMaterial.opacity=pulse*0.85*dim;
-    this.impactCenterMaterial.opacity=pulse*0.92*dim;
     this.softLaneMaterial.opacity=pulse*0.18*dim;
   }
 }
