@@ -55,6 +55,10 @@ const DB_NAME = F27_PAGES_LAB ? 'highfly-offline-f27-combat-beta'
   : F23_PAGES_LAB ? 'highfly-offline-f23-combat-beta'
   : F22_PAGES_LAB ? 'highfly-offline-f22-combat-beta'
   : F2_PAGES_LAB ? 'highfly-offline-f2-combat-beta' : 'highfly-offline';
+// PUBLIC PREVIEW ONLY: same app/engine, disposable saves. NEVER open production
+// Draken IndexedDB, local mirror or historical F2 lab data from this path.
+const UNIFIED_CANDIDATE_PREVIEW = typeof location !== 'undefined' &&
+  location.pathname.startsWith('/cobalt-hollow-lab/candidate/unified-01/');
 const STORE_NAME = 'saves';
 const PRIMARY_SLOT_KEY = 'primary';
 const LOCAL_KEY = 'highfly.offline.primary.v1';
@@ -76,11 +80,17 @@ const hasOriginIdentity = (s: HighflyOfflineSave | null): boolean =>
 const originIdentitySlotKey = (cls: PlayerClass, name: string, mode: HighflyOriginMode = 'world'): string =>
   (mode === 'lab' ? 'origin-lab:' : 'origin-f1:') + identitySlotKey(cls, name);
 const originDbName = (mode: HighflyOriginMode): string =>
-  mode === 'lab' ? highflyOriginModeContract('lab').saveDb : DB_NAME;
+  UNIFIED_CANDIDATE_PREVIEW
+    ? (mode === 'lab' ? 'highfly-unified01-candidate-lab-v1' : 'highfly-unified01-candidate-world-v1')
+    : mode === 'lab' ? highflyOriginModeContract('lab').saveDb : DB_NAME;
 const originPrimarySlot = (mode: HighflyOriginMode): string =>
-  mode === 'lab' ? highflyOriginModeContract('lab').saveSlot : ORIGIN_PRIMARY_SLOT_KEY;
+  UNIFIED_CANDIDATE_PREVIEW
+    ? (mode === 'lab' ? 'candidate-lab:primary' : 'candidate-world:primary')
+    : mode === 'lab' ? highflyOriginModeContract('lab').saveSlot : ORIGIN_PRIMARY_SLOT_KEY;
 const originLocalKey = (mode: HighflyOriginMode): string =>
-  mode === 'lab' ? highflyOriginModeContract('lab').saveLocal : ORIGIN_LOCAL_KEY;
+  UNIFIED_CANDIDATE_PREVIEW
+    ? (mode === 'lab' ? 'highfly.origin.unified01.candidate.lab.v1' : 'highfly.origin.unified01.candidate.world.v1')
+    : mode === 'lab' ? highflyOriginModeContract('lab').saveLocal : ORIGIN_LOCAL_KEY;
 
 
 function normalizedHunterName(name: string): string {
@@ -159,7 +169,7 @@ function readLocal(key = LOCAL_KEY): HighflyOfflineSave | null {
 function writeLocal(save: HighflyOfflineSave, mode: HighflyOriginMode = 'world'): void {
   try {
     globalThis.localStorage?.setItem(
-      hasOriginIdentity(save) ? originLocalKey(mode) : LOCAL_KEY, JSON.stringify(save),
+      UNIFIED_CANDIDATE_PREVIEW ? originLocalKey(mode) : hasOriginIdentity(save) ? originLocalKey(mode) : LOCAL_KEY, JSON.stringify(save),
     );
   } catch {
     // IndexedDB below remains the durable path when localStorage is unavailable/full.
@@ -361,7 +371,7 @@ export async function loadHighflyTrainingProfile(
     return origin.trainingProfile;
   }
   // LAB never falls through to production or historical training profiles.
-  if (mode === 'lab') return null;
+  if (mode === 'lab' || UNIFIED_CANDIDATE_PREVIEW) return null;
   const originSlot = await readIdbTrainingSlot('origin-f1:' + trainingSlotKey(playerClass, name));
   if (originSlot && trainingProfileMatchesClass(originSlot.profile, playerClass))
     return originSlot.profile;
@@ -438,17 +448,17 @@ export async function loadOriginHunterSave(
   // New beta means new IDB namespace, but the user should not have to repeat
   // the weapon-guide quest. Import a COPY of the last beta's valid local mirror
   // only if this lab does not already have a Hunter. Never mutate predecessor.
-  const predecessor = mode === 'world' && (F27_PAGES_LAB || F263_PAGES_LAB) && !ownPrimary
+  const predecessor = !UNIFIED_CANDIDATE_PREVIEW && mode === 'world' && (F27_PAGES_LAB || F263_PAGES_LAB) && !ownPrimary
     ? newest(readLocal(F27_PAGES_LAB?'highfly.origin.f263-combat-beta.primary.v1':'highfly.origin.f262-combat-beta.primary.v1'),
       readLocal('highfly.origin.f261-combat-beta.primary.v1'))
     : null;
   const recovered = hasOriginIdentity(predecessor) ? predecessor : null;
   if(recovered && !ownPrimary) writeHighflyOfflineSave({...recovered,updatedAt:Date.now()}, mode);
-  const oldPrimary = mode === 'lab' || F2_PAGES_LAB ? null : newest(readLocal(), await readIdbKey(PRIMARY_SLOT_KEY));
+  const oldPrimary = UNIFIED_CANDIDATE_PREVIEW || mode === 'lab' || F2_PAGES_LAB ? null : newest(readLocal(), await readIdbKey(PRIMARY_SLOT_KEY));
   const primary = ownPrimary ?? recovered ?? (hasOriginIdentity(oldPrimary) ? oldPrimary : null);
   if (!playerClass || !name) return primary;
   const ownExact = await readIdbKey(originIdentitySlotKey(playerClass, name, mode), dbName);
-  const oldExact = mode === 'lab' || F2_PAGES_LAB ? null : await readIdbKey(identitySlotKey(playerClass, name));
+  const oldExact = UNIFIED_CANDIDATE_PREVIEW || mode === 'lab' || F2_PAGES_LAB ? null : await readIdbKey(identitySlotKey(playerClass, name));
   const exact = ownExact ?? (hasOriginIdentity(oldExact) ? oldExact : null);
   const matchingPrimary = primary && primary.playerClass === playerClass &&
     normalizedHunterName(primary.name) === normalizedHunterName(name)
@@ -502,7 +512,7 @@ export async function resetOriginHunterSave(mode: HighflyOriginMode = 'world'): 
   try {
     globalThis.localStorage?.removeItem(originLocalKey(mode));
     // Pre-namespaced F1/F1.1 saves must not resurrect the one deleted Hunter.
-    if(mode === 'world' && !F2_PAGES_LAB && hasOriginIdentity(readLocal())) globalThis.localStorage?.removeItem(LOCAL_KEY);
+    if(!UNIFIED_CANDIDATE_PREVIEW && mode === 'world' && !F2_PAGES_LAB && hasOriginIdentity(readLocal())) globalThis.localStorage?.removeItem(LOCAL_KEY);
   } catch {
     return false;
   }
