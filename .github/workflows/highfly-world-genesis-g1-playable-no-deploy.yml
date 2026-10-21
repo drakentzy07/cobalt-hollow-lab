@@ -1,0 +1,58 @@
+name: HIGHFLY WORLD GENESIS G1 - Playable Touch Calibration (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-world-genesis-g01-integration-20261021]
+    paths:
+      - "genesis/**"
+      - "src/highfly/world_genesis/g1_preview.ts"
+      - "scripts/highfly_genesis_g1_browser.mjs"
+      - ".github/workflows/highfly-world-genesis-g1-playable-no-deploy.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-genesis-g1-touch-qa-no-deploy
+  cancel-in-progress: true
+jobs:
+  playable_exploration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false, filter: blob:none}
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - name: Install unchanged dependencies
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Typecheck original plus Genesis 3D input
+        run: pnpm exec tsc --noEmit --incremental false
+      - name: Build isolated G1 Vite site; no original app scripts
+        env: {GENESIS_BASE: '/cobalt-hollow-lab/'}
+        run: |
+          pnpm exec vite build --config genesis/vite.config.ts
+          test -s dist-genesis/genesis/index.html
+          ! grep -F 'src/main.ts' dist-genesis/genesis/index.html
+          echo "HIGHFLY_GENESIS_G1_STANDALONE_WEBGL_BUILD_GREEN=1"
+      - name: Headless Android landscape camera, movement, collision, save isolation
+        run: |
+          set -euo pipefail
+          mkdir -p g1-web/cobalt-hollow-lab
+          cp -a dist-genesis/. g1-web/cobalt-hollow-lab/
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory g1-web > /tmp/highfly-g1-preview.log 2>&1 &
+          P=$!
+          trap 'kill "$P" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsSI http://127.0.0.1:4173/cobalt-hollow-lab/genesis/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_genesis_g1_browser.mjs
+          echo "HIGHFLY_GENESIS_G1_ISOLATED_NO_DEPLOY_GREEN=1"
+      - name: Upload test-only preview, not GitHub Pages
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-G1-CALIBRATION-WEBGL-NO-RGPOLY
+          path: dist-genesis/
+          retention-days: 14

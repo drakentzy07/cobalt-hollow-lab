@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es"><head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#101821" />
+  <title>HIGHFLY WORLD GENESIS — G1 Exploración</title>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101821;color:#f5f4e9;font-family:system-ui,Arial,sans-serif;touch-action:none}
+    #viewport{position:fixed;inset:0;width:100%;height:100%;display:block}
+    #hud{position:fixed;inset:0;pointer-events:none}
+    .top{position:absolute;top:max(10px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));right:12px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    #heading{border-radius:13px;background:#0b1723cc;padding:9px 13px;border:1px solid #ffffff30;max-width:440px;font-size:13px;line-height:1.35}
+    #heading strong{font-size:15px;color:#ffdb8a}#stats{font-size:11px;color:#d4f5fc}
+    #status{position:absolute;left:50%;top:15%;transform:translateX(-50%);max-width:610px;width:max-content;min-width:280px;padding:12px;background:#0b1723db;border:1px solid #cfc8b97b;border-radius:13px;text-align:center;font-size:14px;pointer-events:auto}
+    #diag-btn{display:none;background:#234d63;border:1px solid #74c9e8;color:#fff;font-size:13px;font-weight:700;border-radius:10px;margin-top:11px;padding:10px 14px}
+    #pad{position:absolute;bottom:max(35px,env(safe-area-inset-bottom));left:max(24px,env(safe-area-inset-left));width:138px;height:138px;border:2px solid #cbddf26b;border-radius:50%;background:#15283a88;pointer-events:auto;touch-action:none;user-select:none}
+    #stick{position:absolute;width:56px;height:56px;left:39px;top:39px;border-radius:50%;background:#d2eef8aa;border:2px solid #fff9;pointer-events:none}
+    #actions{position:absolute;bottom:max(37px,env(safe-area-inset-bottom));right:max(23px,env(safe-area-inset-right));display:flex;gap:12px;align-items:end;pointer-events:auto}
+    #actions button{border-radius:50%;height:67px;width:67px;color:#fff;background:#203a59cb;border:2px solid #a2d9fc8c;font-size:13px;font-weight:750;touch-action:none;user-select:none}
+    #actions #jump{background:#28727bc4}#actions #dash{background:#79592bcd}
+    #look{position:absolute;right:0;top:23%;width:63%;height:51%;pointer-events:auto;touch-action:none}
+    #help{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:11px;color:#ced9e4;background:#06111ba8;border-radius:9px;padding:5px 11px;white-space:nowrap}
+    body:not(.playing) #pad,body:not(.playing) #actions,body:not(.playing) #look{display:none}
+    @media (max-width:660px){#heading{max-width:280px}#status{font-size:12px;min-width:260px}#help{font-size:9px}}
+  </style>
+</head><body>
+  <canvas id="viewport" aria-label="HIGHFLY exploración 3D"></canvas>
+  <div id="hud">
+    <div class="top"><div id="heading"><strong>HIGHFLY · WORLD GENESIS G1</strong><div id="mode">Preparando escenario…</div><div id="stats">STR 10 · AGI 10 · VIT 10 · PER 10 · INT 10</div></div></div>
+    <div id="status" role="status">Comprobando exportación auténtica RG Poly…<div><button id="diag-btn" type="button">Probar controles en plaza técnica (NO es RG Poly)</button></div></div>
+    <div id="look" aria-label="Arrastrar para girar la cámara"></div>
+    <div id="pad" aria-label="Joystick de movimiento"><div id="stick"></div></div>
+    <div id="actions"><button id="dash" type="button">DASH</button><button id="jump" type="button">SALTO</button></div>
+    <div id="help">Joystick/WASD · Cámara derecha/ratón · Espacio salto · Shift dash</div>
+  </div>
+  <script type="module" src="../src/highfly/world_genesis/g1_preview.ts"></script>
+</body></html>
