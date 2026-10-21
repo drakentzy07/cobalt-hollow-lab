@@ -46,7 +46,8 @@ describe('HIGHFLY F1 integral — one Hunter, safe birth, first weapon and resou
       ORIGIN_HUNTER_START.z-BUILTIN_WORLD.playerStart.z,
     )).toBeGreaterThan(40);
     const src=readFileSync('src/main.ts','utf8');
-    expect(src).toContain('world: world ?? { ...BUILTIN_WORLD, playerStart: ORIGIN_HUNTER_START }');
+    expect(src).toContain('world: world ?? { ...BUILTIN_WORLD, playerStart: ORIGIN_HUNTER_START,');
+    expect(src).toContain('camps:[...BUILTIN_WORLD.camps,...HIGHFLY_F72_HUNT_CAMPS]');
   });
 
   it('can actually unequip the native default weapon, offhand and chest',()=>{
