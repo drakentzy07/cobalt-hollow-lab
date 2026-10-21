@@ -35,7 +35,7 @@ describe('F2.7 P2: genuine original cross-school skills and native MOBA targetin
     expect(ui).toContain('castWhileMoving:trialDef.castWhileMoving===true');
     expect(ui).toContain("id==='meteor'");
     const main=source('src/main.ts');
-    expect(main).toContain("shape==='ground-circle'?8");
+    expect(main).toContain("def?.effects.find(e=>e.type==='groundAoE')?.radius??8");
     expect(main).toContain("shape==='leap'||shape==='ground-circle'");
     expect(main).toContain("shape!=='circle'&&shape!=='ground-circle'");
     const visual=source('src/render/ground_aim_reticle_visual.ts');
