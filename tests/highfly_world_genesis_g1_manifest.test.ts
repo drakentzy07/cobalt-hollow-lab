@@ -15,7 +15,7 @@ function fixture(): G01WorldManifest {
     coordinateSystem:'Unity LH to glTF RH',
     collisionRepresentation:'Unity collider audit only',
     unityHunterSpawn:v(0,13.35,-42),
-    rootCount:42,renderMeshCount:650,terrainCount:0,colliderCount:1,
+    rootCount:42,renderMeshCount:650,terrainCount:1,convertedTerrainCount:1,terrainMeshResolution:257,colliderCount:1,
     glbBytes:521122,
     anchors:G01_REQUIRED_ANCHORS.map((id,i)=>({
       id,sourceObject:'Structure '+i,unityPosition:v(i+1,13,20),
@@ -31,7 +31,8 @@ describe('G1 — actual NEXUS export manifest + Three.js placement, NO DEPLOY', 
   it('demands actual geometry evidence and original four audited anchors', () => {
     expect(parseG01Manifest(fixture()).renderMeshCount).toBe(650);
     expect(() => parseG01Manifest({...fixture(),renderMeshCount:0})).toThrow();
-    expect(() => parseG01Manifest({...fixture(),terrainCount:1})).toThrow();
+    expect(() => parseG01Manifest({...fixture(),terrainCount:1,convertedTerrainCount:0})).toThrow();
+    expect(() => parseG01Manifest({...fixture(),terrainMeshResolution:0})).toThrow();
     expect(() => parseG01Manifest({...fixture(),anchors:[]})).toThrow();
     expect(() => parseG01Manifest({...fixture(),glbBytes:0})).toThrow();
   });
