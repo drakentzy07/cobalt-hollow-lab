@@ -23,8 +23,9 @@ describe('HIGHFLY ORIGIN UNIFIED 01 — native World/LAB wiring',()=>{
     expect(main).toContain('resetOriginHunterSave(selectedOriginMode)');
     expect(save).toContain("const db = await openDb(originDbName(mode));");
     expect(save).toContain("const ownPrimary = newest(readLocal(originLocalKey(mode)), await readIdbKey(originPrimarySlot(mode), dbName))");
-    expect(save).toContain("if (mode === 'lab') return null");
+    expect(save).toContain("if (mode === 'lab' || UNIFIED_CANDIDATE_PREVIEW) return null");
     expect(save).toContain("mode === 'lab' || F2_PAGES_LAB ? null");
+    expect(save).toContain("UNIFIED_CANDIDATE_PREVIEW || mode === 'lab'");
   });
   it('enables one common four-skill runtime but only LAB receives free trials',()=>{
     const world=source('src/highfly/origin/f1_world_ui.ts');
