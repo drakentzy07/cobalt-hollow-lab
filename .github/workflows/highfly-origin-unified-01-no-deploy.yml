@@ -1,4 +1,4 @@
-name: HIGHFLY ORIGIN UNIFIED 01 — World + LAB Lv1 (NO DEPLOY)
+name: HIGHFLY ORIGIN UNIFIED 01 — World LV99 + LAB LV99 configurable (NO DEPLOY)
 on:
   push:
     branches:
@@ -12,6 +12,7 @@ on:
       - "scripts/highfly_origin_unified_browser.mjs"
       - "scripts/highfly_origin_content_census.mjs"
       - "tests/highfly_origin_f7_baseline.test.ts"
+      - "tests/highfly_origin_f72_progression.test.ts"
   workflow_dispatch:
 
 permissions:
@@ -64,7 +65,8 @@ jobs:
             tests/highfly_origin_f23_skill_master.test.ts \
             tests/highfly_origin_f24_aim.test.ts \
             tests/highfly_origin_f1_universal_hunter.test.ts \
-            tests/highfly_origin_f7_baseline.test.ts
+            tests/highfly_origin_f7_baseline.test.ts \
+            tests/highfly_origin_f72_progression.test.ts
       - name: F7 read-only native-content census
         shell: bash
         run: |
@@ -93,7 +95,7 @@ jobs:
           echo "HIGHFLY_ORIGIN_UNIFIED_01_NO_PAGES_OR_APK_DEPLOY=1"
 
   unified_browser:
-    name: "Actual 3D browser: Draken vs LV1 LAB, no save crosstalk"
+    name: "Actual 3D browser: Draken vs LV99/30 LAB, no save crosstalk"
     needs: unified_quality
     runs-on: ubuntu-latest
     timeout-minutes: 50

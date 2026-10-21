@@ -8,7 +8,7 @@ import {
   highflyMeetsContentLevelGate,
 } from '../src/highfly/origin/unified_mode';
 
-describe('HIGHFLY ORIGIN — unified LV1 lab access contract (not yet wired)', () => {
+describe('HIGHFLY ORIGIN — unified LV99-adjustable lab access contract', () => {
   it('defaults to WORLD if mode is absent/invalid', () => {
     expect(normalizeHighflyOriginMode(undefined)).toBe('world');
     expect(normalizeHighflyOriginMode('')).toBe('world');
@@ -26,7 +26,7 @@ describe('HIGHFLY ORIGIN — unified LV1 lab access contract (not yet wired)', (
   it('uses an independent lab namespace without a level-99/stat override', () => {
     const world = HIGHFLY_ORIGIN_MODE_CONTRACT.world;
     const lab = HIGHFLY_ORIGIN_MODE_CONTRACT.lab;
-    expect(HIGHFLY_LAB_START_LEVEL).toBe(1);
+    expect(HIGHFLY_LAB_START_LEVEL).toBe(99);
     expect(lab.saveDb).not.toBe(world.saveDb);
     expect(lab.saveSlot).not.toBe(world.saveSlot);
     expect(lab.saveLocal).not.toBe(world.saveLocal);

@@ -9473,6 +9473,7 @@ export class Hud {
         lifetimeXp: sim.lifetimeXp,
         restedXp: sim.restedXp,
         showOverflow,
+        originUniversalHunter: document.body.classList.contains('hf-origin-unified'),
       });
       this.xpBarViewCache = bar;
     }

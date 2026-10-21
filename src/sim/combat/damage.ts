@@ -1,3 +1,4 @@
+import { highflyOriginLevelCap, highflyOriginXpCost } from '../../highfly/origin/progression99';
 // Post-mitigation damage core, extracted from the Sim monolith (C1).
 //
 // This module owns the post-mitigation damage pipeline: dealDamage's amp/absorb/
@@ -1914,11 +1915,13 @@ export function grantXp(
 ): void {
   const p = ctx.entities.get(meta.entityId);
   if (!p || amount <= 0) return;
+  const originProgression = ctx.cfg.originUniversalHunter;
+  const levelCap = highflyOriginLevelCap(originProgression);
   // Rested XP bonus: the classic-era rule only doubles KILL xp (not quests), and
   // never past the cap (no level bar to advance). The bonus equals the rested
   // amount drawn down, so the effective award is up to 2x while the pool lasts.
   let restedBonus = 0;
-  if (opts?.fromKill && p.level < MAX_LEVEL && meta.restedXp > 0) {
+  if (opts?.fromKill && p.level < levelCap && meta.restedXp > 0) {
     restedBonus = Math.min(Math.floor(meta.restedXp), amount);
     meta.restedXp -= restedBonus;
     amount += restedBonus;
@@ -1937,11 +1940,11 @@ export function grantXp(
     ...(restedBonus > 0 ? { rested: restedBonus } : {}),
   });
 
-  if (p.level >= MAX_LEVEL) return; // bar frozen at cap; lifetimeXp already credited
+  if (p.level >= levelCap) return; // bar frozen at cap; lifetimeXp already credited
 
   meta.xp += amount;
-  while (p.level < MAX_LEVEL && meta.xp >= xpForLevel(p.level)) {
-    meta.xp -= xpForLevel(p.level);
+  while (p.level < levelCap && meta.xp >= highflyOriginXpCost(p.level, originProgression)) {
+    meta.xp -= highflyOriginXpCost(p.level, originProgression);
     p.level++;
     meta.counters.levelUps++;
     // Re-bake the flat talent mods at the new level BEFORE the stat pass: spec mastery
@@ -1957,7 +1960,7 @@ export function grantXp(
   }
   // Dinged to cap mid-grant: clear the leftover from the BAR. It is not lost —
   // the full award was already added to lifetimeXp above (FR-1.4).
-  if (p.level >= MAX_LEVEL) meta.xp = 0;
+  if (p.level >= levelCap) meta.xp = 0;
 }
 
 // Add to the monotonic lifetime counter, emitting cosmetic virtual-level-up
@@ -1967,7 +1970,7 @@ export function grantXp(
 // level) predicates to the tick-tail evaluator, whose grant path dual-writes
 // unlockedMilestones and emits deedUnlocked as the single grant event.
 function accrueLifetimeXp(ctx: SimContext, amount: number, meta: PlayerMeta, p: Entity): void {
-  const atCap = p.level >= MAX_LEVEL;
+  const atCap = p.level >= highflyOriginLevelCap(ctx.cfg.originUniversalHunter);
   const beforeVL = atCap ? virtualLevel(meta.lifetimeXp) : 0;
   meta.lifetimeXp += amount;
   // 64-bit-safe invariant: JS numbers are exact to 2^53. A single character

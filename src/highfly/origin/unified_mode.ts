@@ -1,7 +1,7 @@
 /** HIGHFLY ORIGIN — one game, two safe save identities.
  *
- * Decision 20 Oct 2026: DrakenLAB is a LEVEL-1 test Hunter with temporary
- * access to content, NOT a level-99/stat-99 Hunter. The production definition
+ * Decision 21 Oct 2026: DrakenLAB defaults to genuine LV99 (adjustable LV1–99) with temporary
+ * access to content, NOT a free-level real WORLD Hunter. The production definition
  * and progression requirements remain untouched.
  *
  * This is only a pure contract. Wiring mode-specific save instances, content
@@ -10,7 +10,7 @@
  */
 export type HighflyOriginMode = 'world' | 'lab';
 export type HighflyPreviewContent = 'skill' | 'equipment' | 'loot' | 'recipe' | 'monster' | 'scenario';
-export const HIGHFLY_LAB_START_LEVEL = 1 as const;
+export const HIGHFLY_LAB_START_LEVEL = 99 as const;
 
 /** Existing Draken storage keys must remain byte-identical to F1. */
 export const HIGHFLY_ORIGIN_MODE_CONTRACT = {

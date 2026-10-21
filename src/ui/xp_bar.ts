@@ -2,7 +2,8 @@
 // system. Kept UI-framework-free (no DOM) so the label states can be snapshot
 // tested directly. All display strings route through i18n's t().
 
-import { MAX_LEVEL, virtualLevelProgress, xpForLevel } from '../sim/types';
+import { MAX_LEVEL, virtualLevelProgress } from '../sim/types';
+import { highflyOriginLevelCap, highflyOriginXpCost } from '../highfly/origin/progression99';
 import { clamp01 } from './clamp';
 import { formatNumber, t } from './i18n';
 
@@ -12,6 +13,7 @@ export interface XpBarInput {
   lifetimeXp: number; // monotonic lifetime total (server-authoritative)
   showOverflow: boolean; // settings toggle; false → classic "MAX LEVEL"
   restedXp?: number; // classic inn-rested pool; doubles kill XP until spent
+  originUniversalHunter?: boolean;
 }
 
 export interface XpBarView {
@@ -42,10 +44,11 @@ function formatPercent(frac: number): string {
 
 export function xpBarView(input: XpBarInput): XpBarView {
   const { level, xp, lifetimeXp, showOverflow } = input;
-  const atCap = level >= MAX_LEVEL;
+  const cap = highflyOriginLevelCap(input.originUniversalHunter === true);
+  const atCap = level >= cap;
 
   if (!atCap) {
-    const need = xpForLevel(level);
+    const need = highflyOriginXpCost(level, input.originUniversalHunter === true);
     const frac = need > 0 ? xp / need : 0;
     const rested = Math.max(0, input.restedXp ?? 0);
     // Rested overlay spans from the current fill up to where the rested pool
@@ -77,11 +80,11 @@ export function xpBarView(input: XpBarInput): XpBarView {
 
   // At/after the cap with overflow on: fill toward the next virtual level.
   const prog = virtualLevelProgress(lifetimeXp);
-  const extra = prog.level - MAX_LEVEL;
+  const extra = prog.level - cap;
   const percentText = formatPercent(prog.into / prog.span);
   // FR-3.3 format: "Lv 20 (+7)  ·  1,284,500 total XP  ·  62% to next"
   const label =
-    `${t('game.xp.lv')} ${MAX_LEVEL} (+${extra})  ·  ` +
+    `${t('game.xp.lv')} ${cap} (+${extra})  ·  ` +
     `${formatXp(lifetimeXp)} ${t('game.xp.totalXp')}  ·  ` +
     `${percentText} ${t('game.xp.toNext')}`;
   return {

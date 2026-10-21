@@ -1,3 +1,4 @@
+import { highflyOriginClampLevel } from '../highfly/origin/progression99';
 import type {
   AccountCosmetics,
   ActionBarLayout,
@@ -2946,7 +2947,7 @@ export class Sim {
 
     if (savedState) {
       const s = savedState;
-      player.level = Math.max(1, Math.min(MAX_LEVEL, s.level));
+      player.level = highflyOriginClampLevel(s.level, this.cfg.originUniversalHunter);
       player.facing = s.facing;
       player.prevFacing = s.facing;
       meta.xp = s.xp;
@@ -5790,7 +5791,8 @@ export class Sim {
   setPlayerLevel(level: number, pid?: number): void {
     const r = this.resolve(pid);
     if (!r) return;
-    r.e.level = Math.max(1, Math.min(MAX_LEVEL, level));
+    r.e.level = highflyOriginClampLevel(level, this.cfg.originUniversalHunter);
+    if (this.cfg.originUniversalHunter) r.meta.xp = 0; // no stale bar XP after LAB level change
     // Keep lifetimeXp consistent with the level so post-cap progression starts
     // from a sane baseline (virtualLevel never falls below the real level). Only
     // ever raises it — lifetimeXp is monotonic.
@@ -6002,7 +6004,7 @@ export class Sim {
         // positive transition needs a dirty mark (a resting player must not
         // stay perpetually dirty for the tick-tail evaluator).
         const wasUnrested = meta.restedXp === 0;
-        updateRested(p, meta, this.worldContent.props.buildings);
+        updateRested(p, meta, this.worldContent.props.buildings, this.cfg.originUniversalHunter);
         if (wasUnrested && meta.restedXp > 0) deedsMod.markDeedsDirty(this.ctx, p.id);
         if (meta.pendingGatherGrants.length > 0) {
           drainGatheringGrants(meta);

@@ -1,3 +1,4 @@
+import { highflyOriginLevelCap, highflyOriginXpCost } from '../../highfly/origin/progression99';
 // XP / progression slice (G1b): the residual XP-shaping surface C1 deliberately
 // left on Sim. C1 owns the grantXp core (src/sim/combat/damage.ts); this module
 // holds the cosmetic `prestige` command and the rested-XP accrual
@@ -57,16 +58,17 @@ export function updateRested(
   p: Entity,
   meta: PlayerMeta,
   buildings: readonly BuildingDef[] = getActiveWorldContent().props.buildings,
+  originProgression = false,
 ): void {
-  if (p.level >= MAX_LEVEL) return;
-  const cap = RESTED_CAP_LEVELS * xpForLevel(p.level);
+  if (p.level >= highflyOriginLevelCap(originProgression)) return;
+  const cap = RESTED_CAP_LEVELS * highflyOriginXpCost(p.level, originProgression);
   if (meta.restedXp >= cap) {
     meta.restedXp = cap;
     return;
   }
   if (!isResting(p, buildings)) return;
   const fillSeconds = RESTED_FILL_HOURS * RESTED_SECONDS_PER_GAME_HOUR;
-  const perSecond = (RESTED_FILL_FRACTION * xpForLevel(p.level)) / fillSeconds;
+  const perSecond = (RESTED_FILL_FRACTION * highflyOriginXpCost(p.level, originProgression)) / fillSeconds;
   meta.restedXp = Math.min(cap, meta.restedXp + perSecond * DT);
 }
 
@@ -81,6 +83,7 @@ export function prestige(ctx: SimContext, pid?: number): boolean {
   // prestige bar of post-cap XP since the last rank. This caps prestigeRank at
   // what lifetimeXp supports, so spamming the `prestige` command (e.g. from a
   // hacked client) can never inflate the rank beyond XP actually earned.
+  if (ctx.cfg.originUniversalHunter) return false; // legacy LV20 prestige disabled in HIGHFLY
   if (!canPrestige(r.e.level, r.meta.lifetimeXp, r.meta.prestigeRank)) return false;
   r.meta.xp = 0;
   r.meta.prestigeRank += 1;

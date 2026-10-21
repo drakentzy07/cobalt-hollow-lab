@@ -69,10 +69,16 @@ try {
     worldSentinel:localStorage.getItem('highfly.origin.primary.v1'),
     oldF27:localStorage.getItem('highfly.origin.f27-combat-beta.primary.v1')
   }));
-  if(lab.level!==1||lab.name!=='DrakenLAB'||lab.worldSentinel!=='WORLD_SENTINEL_MUST_SURVIVE_LAB'||lab.oldF27!==null||
+  if(lab.level!==99||lab.name!=='DrakenLAB'||lab.worldSentinel!=='WORLD_SENTINEL_MUST_SURVIVE_LAB'||lab.oldF27!==null||
      lab.lab?.name!=='DrakenLAB'||!lab.f27)
     throw Error('UNIFIED_LAB_NATIVE_OR_SAVE_REGRESSION '+JSON.stringify(lab));
-  console.log('UNIFIED_LAB_LV1_FOUR_NATIVE_SKILLS_GREEN=1',JSON.stringify({level:lab.level,name:lab.name,skills:lab.hotbar}));
+  console.log('UNIFIED_LAB_LV99_FOUR_NATIVE_SKILLS_GREEN=1',JSON.stringify({level:lab.level,name:lab.name,skills:lab.hotbar}));
+  await page.waitForSelector('#hf-lab-level-toggle',{timeout:20000});
+  await page.evaluate(()=>document.getElementById('hf-lab-level-toggle')?.click());
+  await page.waitForSelector('#hf-lab-level-controls:not([hidden])',{timeout:20000});
+  await page.evaluate(()=>document.querySelector('[data-lab-level="30"]')?.click());
+  await page.waitForFunction(()=>window.__game?.sim?.player?.level===30,{timeout:20000});
+  console.log('HIGHFLY_F72_LAB_REAL_LEVEL_99_TO_30_GREEN=1');
   // Physical reported regression: HP/MP/ST must be visually ONE stacked
   // portrait component, not native MP plus an orphaned ST rail elsewhere.
   await page.waitForFunction(()=>{

@@ -1,3 +1,5 @@
+import { mountHighflyLabLevelPanel } from './highfly/origin/lab_level_panel';
+import { HIGHFLY_LAB_START_LEVEL } from './highfly/origin/unified_mode';
 import './highfly/game_c1_runtime';
 import { resolveFreedom360 } from './highfly/combat/freedom_360';
 import {
@@ -5575,6 +5577,8 @@ async function startOffline(
     });
     return restored;
   });
+  // New LAB is genuine LV99; existing LAB saves keep their chosen level.
+  if (!world && mode === 'lab' && !matchingOfflineSave) sim.setPlayerLevel(HIGHFLY_LAB_START_LEVEL, sim.playerId);
   if (!matchingOfflineSave) {
     sim.setPlayerSkin(sim.playerId, skin);
     if (!world) {
@@ -5719,6 +5723,7 @@ async function startOffline(
   void startGame(sim, sim, null, `offline:${playerClass}:${name}`, true)
     .then(() => {
       if (world) return;
+      if (mode === 'lab') mountHighflyLabLevelPanel(sim);
       originWorldUi?.close();
       originWorldUi = mountOriginF1WorldUi(sim, originState, () => {
         // Persist on a real NPC grant; do not rely on a delayed autosave if
@@ -9942,7 +9947,7 @@ function wireStartScreens(): void {
     if(worldModeBtn) worldModeBtn.className = 'btn ' + (mode === 'world' ? 'btn-primary' : 'btn-secondary');
     if(labModeBtn) labModeBtn.className = 'btn ' + (mode === 'lab' ? 'btn-primary' : 'btn-secondary');
     if(modeDescription) modeDescription.textContent = mode === 'lab'
-      ? 'DrakenLAB LV1: acceso temporal a pruebas, sin modificar la partida original.'
+      ? 'DrakenLAB LV99 ajustable (LV1–99), con guardado independiente del Hunter original.'
       : 'Draken original: progreso, entrenamiento y equipamiento auténticos.';
     offlineNameInput.readOnly = mode === 'lab';
     offlineNameInput.value = mode === 'lab' ? 'DrakenLAB' : '';
