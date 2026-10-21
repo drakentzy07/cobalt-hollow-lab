@@ -2013,7 +2013,12 @@ async function startGame(
     const bend=p.highflyF262ContactAssist&&shape==='line'
       ? highflyF26LateralBend(p.onGround,!!p.highflyAirJumpUsed,p.highflyFlipDir,aim.range)
       :0;
-    f24AimPreview={...point,bend,radius:shape==='ground-circle'?8:shape==='circle'?6:shape==='leap'?2:0.7,
+    // The preview always matches the native authored damage radius. Don't
+    // independently tune Meteor's circle size or its actual AoE will disagree.
+    const impactRadius=shape==='ground-circle'
+      ? (def?.effects.find(e=>e.type==='groundAoE')?.radius??8)
+      : shape==='circle'?6:shape==='leap'?2:0.7;
+    f24AimPreview={...point,bend,radius:impactRadius,
       school:def?.school??'physical',dimmed:false,shape,
       originX:p.pos.x,originZ:p.pos.z};
     if(phase==='start'||phase==='move')return true;
