@@ -28,6 +28,6 @@ describe('HIGHFLY F7.2 RUN1 — authoritative LV99 without altering classic LV20
   expect(HIGHFLY_LAB_START_LEVEL).toBe(99);
   const w=HIGHFLY_ORIGIN_MODE_CONTRACT.world,l=HIGHFLY_ORIGIN_MODE_CONTRACT.lab;
   expect(w.levelOverride).toBeNull();expect(w.progressAffectsHunter).toBe(true);expect(l.progressAffectsHunter).toBe(false);expect(w.saveLocal).not.toBe(l.saveLocal);
-  const main=readFileSync('src/main.ts','utf8');expect(main).toContain("mode === 'lab' && !matchingOfflineSave");expect(main).toContain('mountHighflyLabLevelPanel(sim)');
+  const main=readFileSync('src/main.ts','utf8');expect(main).toContain("mode === 'lab' && !matchingOfflineSave");expect(main).toContain('mountHighflyLabLevelPanel(sim,');
  });
 });
