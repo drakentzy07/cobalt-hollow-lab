@@ -10950,4 +10950,51 @@ body.mobile-touch.mobile-left-handed #mobile-stance-anchor {
   body.hf-origin-f1.mobile-touch.game-active #gpu-notice .gpu-notice-dismiss {
     pointer-events: auto;
   }
+
+  /* UNIFIED S23: override the historical F1 absolute resource placement.
+   * The old left:76px / top:57px shifts MP/ST out of the native HP column.
+   * World and LAB share the same truly stacked portrait; older labs retain
+   * their untouched original HUD behavior. */
+  body.hf-origin-unified.hf-origin-f1.mobile-touch.game-active #player-frame > .uf-bars > #hf-origin-f1-resource-meter {
+    position: static !important;
+    inset: auto !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 0 0 auto !important;
+    align-self: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 2px !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+  body.hf-origin-unified.hf-origin-f1.mobile-touch.game-active #player-frame > .uf-bars > #hf-origin-f1-resource-meter > div {
+    position: relative !important;
+    display: block !important;
+    flex: 0 0 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 20px !important;
+    height: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  body.hf-origin-unified.hf-origin-f1.mobile-touch.game-active #player-frame #hf-origin-f1-resource-meter [data-origin-resource-track] {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+  body.hf-origin-unified.hf-origin-f1.mobile-touch.game-active #player-frame #hf-origin-f1-resource-meter [data-origin-resource-fill] {
+    width: 100%;
+    height: 100% !important;
+  }
 }
