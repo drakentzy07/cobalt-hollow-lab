@@ -54,7 +54,7 @@ function vector(v: unknown): v is G01UnityVector {
   return record(v) && numeric(v.x) && numeric(v.y) && numeric(v.z);
 }
 function quaternion(v: unknown): v is G01UnityQuaternion {
-  return vector(v) && numeric(v.w);
+  return vector(v) && numeric((v as unknown as { w?: unknown }).w);
 }
 /** Reject partial/stale manifests so an empty city cannot be called G1 GREEN. */
 export function parseG01Manifest(value: unknown): G01WorldManifest {
