@@ -39,6 +39,7 @@ export function mountOriginF1WorldUi(
 ): OriginF1WorldUi {
   document.getElementById('hf-origin-f1-hud')?.remove();
   const f27Preview=(isUnifiedOriginRuntime() || location.pathname.startsWith('/cobalt-hollow-lab/lab/f27-combat-beta/'));
+  const unifiedFrame=isUnifiedOriginRuntime();
   const f263=f27Preview||location.pathname.startsWith('/cobalt-hollow-lab/lab/f263-combat-beta/');
   if(f27Preview)document.body.classList.add('hf-origin-f27');
   const f262=f263||location.pathname.startsWith('/cobalt-hollow-lab/lab/f262-combat-beta/');
@@ -64,10 +65,19 @@ export function mountOriginF1WorldUi(
   // lifecycle. Attach to its stable #player-frame shell instead.
   root.append(meter);
   const originalFrame=document.getElementById('player-frame');
-  if (originalFrame) (f25 ? originalFrame.querySelector('.uf-bars') ?? originalFrame : originalFrame).append(meter);
+  if (originalFrame) {
+    const bars=originalFrame.querySelector(':scope > .uf-bars');
+    const hp=bars?.querySelector(':scope > .bar.hp');
+    // Never attach the meter as a flex sibling of the portrait: it would paint
+    // an independent rail shifted to the right on the S23 landscape viewport.
+    if (unifiedFrame && hp) hp.after(meter);
+    else if (!unifiedFrame) (f25 ? bars ?? originalFrame : originalFrame).append(meter);
+  }
   const renderBars: Record<'mana'|'stamina', {wrap:HTMLDivElement;fill:HTMLDivElement;label:HTMLSpanElement}> =
     {} as Record<'hp'|'mana'|'stamina', {wrap:HTMLDivElement;fill:HTMLDivElement;label:HTMLSpanElement}>;
-  for (const [key, title, color] of (f25
+  // UNIFIED always shows both MP and ST beneath native HP; older labs keep
+  // their existing native MP row and only one custom stamina row.
+  for (const [key, title, color] of (f25 && !unifiedFrame
     ? [['stamina','ST','#e5b73a']] as const
     : [['mana','MP','#4e98e8'],['stamina','ST','#e5b73a']] as const)) {
     const row = node('div', '', '');
@@ -83,7 +93,7 @@ export function mountOriginF1WorldUi(
     track.dataset.originResourceTrack=key;
     const fill = node('div', '');
     fill.style.cssText = f25
-      ? `height:100%;background:linear-gradient(180deg,#fbe5a1,${color} 55%,#a06d21);width:100%;transition:width 140ms ease-out;box-shadow:inset 0 1px 2px #fff8`
+      ? `height:100%;background:${key==='mana'?'linear-gradient(180deg,#b9f2ff,#37b9e8 55%,#126fba)':'linear-gradient(180deg,#fbe5a1,#e5b73a 55%,#a06d21)'};width:100%;transition:width 140ms ease-out;box-shadow:inset 0 1px 2px #fff8`
       : `height:100%;background:${color};width:100%;border-radius:7px`;
     fill.dataset.originResourceFill=key;
     track.append(fill);
@@ -358,8 +368,16 @@ export function mountOriginF1WorldUi(
     // HUD frames may remount/move AFTER the game-ready callback. Always seat
     // this one shared MP/ST meter alongside the LIVE native portrait/HP bars.
     const liveFrame=document.getElementById('player-frame');
-    const host=(f25?liveFrame?.querySelector('.uf-bars'):liveFrame)??liveFrame;
-    if(host && meter.parentElement!==host)host.append(meter);
+    const bars=liveFrame?.querySelector(':scope > .uf-bars');
+    const hp=bars?.querySelector(':scope > .bar.hp');
+    if(unifiedFrame){
+      // The native HUD can remount its bar stack. Re-seat as an actual HP
+      // sibling, not as another player-frame flex column or floating overlay.
+      if(hp && (meter.parentElement!==bars || meter.previousElementSibling!==hp)) hp.after(meter);
+    } else {
+      const host=(f25?bars:liveFrame)??liveFrame;
+      if(host && meter.parentElement!==host)host.append(meter);
+    }
     // Native jump + evade remain in their original responsive HUD seats.
     if(flashButton){
       const evade=document.getElementById('mobile-evade')?.getBoundingClientRect();
@@ -380,7 +398,7 @@ export function mountOriginF1WorldUi(
     }
     last=now;
     const p=sim.player;
-    for(const [key,cur,max] of (f25
+    for(const [key,cur,max] of (f25 && !unifiedFrame
       ? [['stamina',current.resources.stamina,current.resources.maxStamina]] as const
       : [['mana',current.resources.mana,current.resources.maxMana],
          ['stamina',current.resources.stamina,current.resources.maxStamina]] as const)){
