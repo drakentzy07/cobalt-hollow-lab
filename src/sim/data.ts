@@ -1,4 +1,4 @@
-import { HIGHFLY_F72_HUNT_MOBS } from '../highfly/origin/f72_hunt';
+import { HIGHFLY_F72_HUNT_MOBS, HIGHFLY_F72_ITEMS, HIGHFLY_F72_RECIPES } from '../highfly/origin/f72_hunt';
 import { INVESTIGATION_MOB, INVESTIGATION_NPCS } from './content/world_quest_investigation';
 import { SHADOW_GUARDS, SHADOW_NPC_DEF } from './content/world_quest_shadow';
 // Content merge layer. Actual game content lives in sim/content/* — one
@@ -428,6 +428,7 @@ export const ITEMS: Record<string, ItemDef> = mergeItems(
   WORLD_QUEST_ITEMS,
   FACTION_VENDOR_ITEMS,
   HOARD_ITEMS,
+  HIGHFLY_F72_ITEMS,
 );
 
 export type { AggregatedSetEffect } from './content/item_sets';
@@ -688,7 +689,7 @@ export const COMMON_RECIPES = [...COMMON_RECIPES_CONTENT, ...TOOL_RECIPES_CONTEN
 // Every recipe, common and combo alike (#1132 review): the recipeList read
 // surface below lists this, not just COMMON_RECIPES, so a combo recipe is
 // reachable in normal play.
-export const ALL_RECIPES = [...ALL_RECIPES_CONTENT];
+export const ALL_RECIPES = [...ALL_RECIPES_CONTENT,...HIGHFLY_F72_RECIPES];
 
 export const ROADS: { x: number; z: number }[][] = [
   ...ZONE1_ROADS,

@@ -1,7 +1,7 @@
 /** Mobile DrakenLAB-only actual level control. No world/production access. */
 import type { Sim } from '../../sim/sim';
 import { highflyOriginClampLevel } from './progression99';
-export function mountHighflyLabLevelPanel(sim: Sim): void {
+export function mountHighflyLabLevelPanel(sim: Sim, repairSkills: () => boolean = () => false): void {
   document.getElementById('hf-lab-level-panel')?.remove();
   const root=document.createElement('section'); root.id='hf-lab-level-panel';
   root.setAttribute('aria-label','Nivel de pruebas DrakenLAB');
@@ -25,5 +25,17 @@ export function mountHighflyLabLevelPanel(sim: Sim): void {
   hunt.style.cssText='display:block;width:100%;min-height:44px;margin-top:11px;border:2px solid #7fba8c;border-radius:9px;background:#234937;color:#fff;touch-action:manipulation';
   const feedback=document.createElement('div');feedback.id='hf-lab-hunt-status';feedback.style.cssText='font:12px system-ui;color:#d6eedb;margin-top:5px';
   hunt.addEventListener('click',()=>{feedback.textContent=sim.highflyLabTravelToHunt()?'Llegaste al Risco. ¡Cazá, saqueá y ganá XP!':'No se pudo viajar. Debés estar vivo en LAB.';box.hidden=true;});
-  box.append(title,value,range,presets,hunt,feedback,note);root.append(toggle,box);document.body.append(root);update();
+  const town=document.createElement('button');town.id='hf-lab-return-town';town.type='button';
+  town.textContent='⌂ VOLVER / RESCATE A EASTBROOK';
+  town.style.cssText='display:block;width:100%;min-height:44px;margin-top:9px;border:2px solid #7dafe0;border-radius:9px;background:#263e60;color:#fff;touch-action:manipulation';
+  town.addEventListener('click',()=>{const ok=sim.highflyLabReturnToEastbrook();feedback.textContent=ok?'Volviste a Eastbrook.':'Viaje solo disponible en LAB.';if(ok)box.hidden=true;});
+  const kit=document.createElement('button');kit.id='hf-lab-prepare-kit';kit.type='button';
+  kit.textContent='⚒ EQUIPAR KIT DE COMBATE';
+  kit.style.cssText='display:block;width:100%;min-height:44px;margin-top:9px;border:2px solid #d8b975;border-radius:9px;background:#534121;color:#fff;touch-action:manipulation';
+  kit.addEventListener('click',()=>{const got=sim.highflyLabPrepareKit();feedback.textContent=got.length?'Equipo real preparado ('+got.length+' piezas). Probá tus estadísticas.':'Kit sin cambios; comprobá tu inventario y nivel.';update();});
+  const restore=document.createElement('button');restore.id='hf-lab-restore-skills';restore.type='button';
+  restore.textContent='✦ REPARAR S1–S4 (FIREBALL · SLASH · RUSH · METEOR)';
+  restore.style.cssText='display:block;width:100%;min-height:44px;margin-top:9px;border:1px solid #d9c7f3;border-radius:9px;background:#423159;color:#fff;touch-action:manipulation';
+  restore.addEventListener('click',()=>{feedback.textContent=repairSkills()?'S1–S4 equipadas de nuevo.':'No están disponibles las cuatro habilidades de prueba.';});
+  box.append(title,value,range,presets,hunt,town,kit,restore,feedback,note);root.append(toggle,box);document.body.append(root);update();
 }

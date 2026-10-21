@@ -11006,3 +11006,19 @@ body.mobile-touch.hf-origin-unified #player-frame::before {
 body.mobile-touch.hf-origin-unified #player-frame::after {
   left:-2px;top:60px;width:64px;
 }
+
+/* F7.2 RUN3 S23: visible fourth native action, on top of decorative chrome.
+ * No fifth skill; this is data-mobile-index=3 (source slot 4). Do not
+ * force it visible when the parent ring is intentionally hidden. */
+body.mobile-touch.hf-origin-unified.game-active #mobile-action-ring {
+  z-index: 360;
+  overflow: visible !important;
+}
+body.mobile-touch.hf-origin-unified.game-active #mobile-action-ring > .mobile-action-slot[data-mobile-index="3"] {
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 12 !important;
+  min-width: 46px;
+  min-height: 46px;
+  touch-action: none;
+}

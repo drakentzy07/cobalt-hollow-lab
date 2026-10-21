@@ -67,7 +67,8 @@ jobs:
             tests/highfly_origin_f1_universal_hunter.test.ts \
             tests/highfly_origin_f7_baseline.test.ts \
             tests/highfly_origin_f72_progression.test.ts \
-            tests/highfly_origin_f72_hunt_and_hunter.test.ts
+            tests/highfly_origin_f72_hunt_and_hunter.test.ts \
+            tests/highfly_origin_f72_run3.test.ts
       - name: F7 read-only native-content census
         shell: bash
         run: |

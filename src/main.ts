@@ -5726,7 +5726,7 @@ async function startOffline(
   void startGame(sim, sim, null, `offline:${playerClass}:${name}`, true)
     .then(() => {
       if (world) return;
-      if (mode === 'lab') mountHighflyLabLevelPanel(sim);
+      if (mode === 'lab') mountHighflyLabLevelPanel(sim, () => hud?.highflyRestoreLabSkillSlots() ?? false);
       originWorldUi?.close();
       originWorldUi = mountOriginF1WorldUi(sim, originState, () => {
         // Persist on a real NPC grant; do not rely on a delayed autosave if

@@ -53,6 +53,9 @@ const GATED_QUALITIES = new Set<Quality>(['rare', 'epic', 'legendary']);
 // no derivable source. Always clamped to [1, MAX_LEVEL].
 export function requiredLevelFor(item: ItemDef): number {
   if (Number.isFinite(item.requiredLevel)) {
+    // Explicit HIGHFLY extended-tier items may genuinely gate at LV21-99.
+    // Donor items retain the exact original LV20 cap and source-level derivation.
+    if (item.id.startsWith('hf_f72_')) return Math.max(1,Math.min(99,Math.floor(item.requiredLevel as number)));
     return clampLevel(item.requiredLevel as number);
   }
   const quality = item.quality ?? 'common';

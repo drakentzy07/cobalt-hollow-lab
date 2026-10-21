@@ -1,4 +1,6 @@
 import { HIGHFLY_F72_HUNT_ARRIVAL } from '../highfly/origin/f72_hunt';
+import { ORIGIN_HUNTER_START } from '../highfly/origin/f1_start';
+import { highflyLabKitCandidates } from '../highfly/origin/lab_test_kit';
 import { highflyOriginClampLevel } from '../highfly/origin/progression99';
 import type {
   AccountCosmetics,
@@ -5800,6 +5802,31 @@ export class Sim {
     p.prevPos={...p.pos};
     this.rebucket(p);
     return true;
+  }
+
+  /** LAB-only return or emergency rescue. Uses native revival and roster movement. */
+  highflyLabReturnToEastbrook(): boolean {
+    if (!this.cfg.originLabHunter) return false;
+    const p=this.player;
+    const safe=this.findSafePos(ORIGIN_HUNTER_START.x,ORIGIN_HUNTER_START.z,-Infinity);
+    const pos=this.groundPos(safe.x,safe.z);
+    if (p.dead) this.revivePlayerAt(p.id,pos,1);
+    else { p.pos=pos; p.prevPos={...pos}; this.rebucket(p); }
+    return true;
+  }
+
+  /** LAB-only real gear: equip via authoritative inventory/equipment system.
+   * Does not grant permanent Training points or alter WORLD character state. */
+  highflyLabPrepareKit(): string[] {
+    if (!this.cfg.originLabHunter || this.player.dead) return [];
+    const granted:string[]=[];
+    for(const pick of highflyLabKitCandidates(this.player.level)){
+      if(this.equipment[pick.slot]===pick.itemId)continue;
+      this.addItem(pick.itemId,1,this.playerId);
+      this.equipItem(pick.itemId,this.playerId,pick.slot);
+      if(this.equipment[pick.slot]===pick.itemId)granted.push(pick.itemId);
+    }
+    return granted;
   }
 
   // Dev/test convenience: jump a player to a level (learns abilities, recalcs stats).
