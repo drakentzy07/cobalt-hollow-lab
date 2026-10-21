@@ -104,9 +104,11 @@ try {
   await page.evaluate(()=>document.getElementById('hf-lab-hunt-travel')?.click());
   const arrived=await page.evaluate(()=>({x:window.__game?.sim?.player?.pos?.x,z:window.__game?.sim?.player?.pos?.z,
     mobs:[...window.__game.sim.entities.values()].filter(e=>e.kind==='mob'&&e.templateId.startsWith('hf_f72_')).map(e=>({id:e.templateId,level:e.level}))}));
-  if(arrived.x<80||arrived.z<780||arrived.mobs.length<10||!arrived.mobs.some(m=>m.level===30))
-    throw Error('HIGHFLY_F72_PHYSICAL_HUNT_NOT_INSTALLED '+JSON.stringify(arrived));
-  console.log('HIGHFLY_F72_HUNT_WORLD_LV21_30_GREEN=1',JSON.stringify({mobs:arrived.mobs.length,at:{x:arrived.x,z:arrived.z}}));
+  // F7.3 migrates the hunt out of the native LV13-20 overworld and into
+  // a real instanced Gate. The old x/z>=80/780 world assertion is invalid.
+  if(arrived.x<100_000||arrived.mobs.length!==11||!arrived.mobs.some(m=>m.level===30))
+    throw Error('HIGHFLY_F73_GATE_LV21_30_NOT_ENTERED '+JSON.stringify(arrived));
+  console.log('HIGHFLY_F73_GATE_WORLD_LV21_30_GREEN=1',JSON.stringify({mobs:arrived.mobs.length,at:{x:arrived.x,z:arrived.z}}));
   await page.evaluate(()=>{
     document.getElementById('hf-lab-level-toggle')?.click();
     document.getElementById('hf-lab-return-town')?.click();
