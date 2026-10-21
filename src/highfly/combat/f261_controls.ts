@@ -12,6 +12,23 @@ export function highflyF261Aim(from:{x:number;z:number},camYaw:number,dx:number,
   return {x:from.x+Math.sin(facing)*distance,
     z:from.z+Math.cos(facing)*distance,facing,range:distance};
 }
+/** Universal Hunter ground-target aim on mobile.
+ * Direction: complete 360-degree sweep around the Hunter (including behind).
+ * Distance: any point from feet to the native spell's maximum range.
+ * F2.6.1's softened cone remains unchanged for directional line/cone skills.
+ * Math only; no new physics, spell damage or camera movement.
+ */
+export function highflyGroundCircleAim(
+  from:{x:number;z:number},camYaw:number,dx:number,dy:number,range:number,
+){
+  const drag=Math.hypot(dx,dy);
+  const reach=Math.max(0,Number.isFinite(range)?range:0);
+  const facing=camYaw+(drag>=0.001?Math.atan2(-dx,-dy):0);
+  const distance=reach*Math.min(1,Math.max(0,drag)/HIGHFLY_F261_AIM_DRAG_PX);
+  return {x:from.x+Math.sin(facing)*distance,
+    z:from.z+Math.cos(facing)*distance,facing,range:distance};
+}
+
 export function highflyF261FlipDirection(stick:{x:number;y:number}):'forward'|'back'|'left'|'right'{
   const ax=Math.abs(stick.x),ay=Math.abs(stick.y);
   if(Math.hypot(ax,ay)<0.15)return 'forward';
