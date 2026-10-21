@@ -12,7 +12,7 @@ describe('HIGHFLY ORIGIN UNIFIED 01 — native World/LAB wiring',()=>{
     expect(main).toContain("selectOriginMode('world')");
     expect(main).toContain("setActiveHighflyOriginMode(mode)");
     expect(main).toContain("document.body.classList.toggle('hf-origin-lab', mode === 'lab')");
-    expect(main).toContain("world: world ?? { ...BUILTIN_WORLD, playerStart: ORIGIN_HUNTER_START,");
+    expect(main).toContain("world: world ?? { ...BUILTIN_WORLD, playerStart: ORIGIN_HUNTER_START },");
     expect(main).toContain('playerStart: ORIGIN_HUNTER_START },');
     expect(main).not.toContain('...HIGHFLY_F72_HUNT_CAMPS');
   });

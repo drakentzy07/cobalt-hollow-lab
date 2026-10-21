@@ -77,7 +77,8 @@ jobs:
             tests/highfly_origin_f27_skills.test.ts \
             tests/highfly_origin_f263_stability.test.ts \
             tests/highfly_origin_unified_s23_hud_s4.test.ts \
-            tests/highfly_origin_f72_progression.test.ts
+            tests/highfly_origin_f72_progression.test.ts \
+            tests/highfly_origin_f73_gate.test.ts
           grep -F "UNIFIED_CANDIDATE_PREVIEW" src/game/highfly_offline_save.ts
           grep -F "candidate/unified-01" src/main.ts
           test -s scripts/highfly_origin_candidate_browser.mjs
