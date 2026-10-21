@@ -36,6 +36,8 @@ export interface G01WorldManifest {
   readonly rootCount: number;
   readonly renderMeshCount: number;
   readonly terrainCount: number;
+  readonly convertedTerrainCount: number;
+  readonly terrainMeshResolution: number;
   readonly colliderCount: number;
   readonly glbBytes: number;
   readonly anchors: readonly G01Anchor[];
@@ -63,7 +65,10 @@ export function parseG01Manifest(value: unknown): G01WorldManifest {
       !numeric(value.rootCount) || value.rootCount < 10 ||
       !numeric(value.renderMeshCount) || value.renderMeshCount < 100 ||
       !numeric(value.glbBytes) || value.glbBytes < 10240 ||
-      value.terrainCount !== 0 || !vector(value.unityHunterSpawn) ||
+      !numeric(value.terrainCount) || value.terrainCount < 1 ||
+      !numeric(value.convertedTerrainCount) || value.convertedTerrainCount !== value.terrainCount ||
+      !numeric(value.terrainMeshResolution) || value.terrainMeshResolution < 33 ||
+      !vector(value.unityHunterSpawn) ||
       !Array.isArray(value.anchors) || !Array.isArray(value.colliders) ||
       !numeric(value.colliderCount) || value.colliderCount !== value.colliders.length) {
     throw new Error('G1: real RG Poly export manifest absent, stale or incomplete');
