@@ -73,6 +73,32 @@ try {
      lab.lab?.name!=='DrakenLAB'||!lab.f27)
     throw Error('UNIFIED_LAB_NATIVE_OR_SAVE_REGRESSION '+JSON.stringify(lab));
   console.log('UNIFIED_LAB_LV1_FOUR_NATIVE_SKILLS_GREEN=1',JSON.stringify({level:lab.level,name:lab.name,skills:lab.hotbar}));
+  // Physical reported regression: HP/MP/ST must be visually ONE stacked
+  // portrait component, not native MP plus an orphaned ST rail elsewhere.
+  await page.waitForFunction(()=>{
+    const bars=document.querySelector('#player-frame > .uf-bars');
+    const hp=bars?.querySelector(':scope > .bar.hp');
+    const meter=bars?.querySelector(':scope > #hf-origin-f1-resource-meter');
+    return hp && meter && meter.previousElementSibling===hp &&
+      meter.children.length===2 &&
+      getComputedStyle(document.querySelector('#pf-resource')).display==='none';
+  },{timeout:20000});
+  const portrait=await page.evaluate(()=>{
+    const bars=document.querySelector('#player-frame > .uf-bars');
+    const hp=bars.querySelector(':scope > .bar.hp');
+    const meter=bars.querySelector(':scope > #hf-origin-f1-resource-meter');
+    const bounds=node=>{const b=node.getBoundingClientRect();return {x:b.x,y:b.y,width:b.width,height:b.height,bottom:b.bottom}};
+    return {hp:bounds(hp),meter:bounds(meter),
+      names:[...meter.children].map(x=>x.firstElementChild?.textContent),
+      donor:getComputedStyle(document.querySelector('#pf-resource')).display};
+  });
+  if(portrait.names.join(',')!=='MP,ST' ||
+    Math.abs(portrait.hp.x-portrait.meter.x)>2||
+    Math.abs(portrait.hp.width-portrait.meter.width)>2||
+    portrait.meter.y<portrait.hp.bottom-3||
+    portrait.donor!=='none')
+    throw Error('UNIFIED_HUD_MP_ST_FRAME_MISALIGNED '+JSON.stringify(portrait));
+  console.log('HIGHFLY_UNIFIED_S23_ONE_FRAME_HP_MP_ST_GREEN=1',JSON.stringify(portrait));
 
   // Reload same installed app URL. Normal Draken starts from WORLD ONLY.
   await page.reload({waitUntil:'domcontentloaded',timeout:120000});
