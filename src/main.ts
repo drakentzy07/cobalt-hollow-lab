@@ -11683,6 +11683,8 @@ const diagnosticsAutoOffline =
 // localhost). Co-op networking will be explicitly opted into in a later phase.
 // Beta cannot register (or update) the public F1 root-scoped service worker.
 if (HIGHFLY_F11_OFFLINE_FIRST && !import.meta.env.DEV &&
+    // Candidate may share the domain with Draken: NEVER install root-scope SW.
+    !location.pathname.startsWith('/cobalt-hollow-lab/candidate/unified-01/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f2-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/') &&
