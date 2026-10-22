@@ -122,6 +122,9 @@ jobs:
           grep -q "bootGenesisOfflineTraining(sim, playerClass, name)" candidate/src/main.ts
           grep -q "genesisApplyTrainingAfterNativeRecalc(e, cls)" candidate/src/sim/entity.ts
           grep -q "setGenesisTouchVector(x, y)" candidate/src/game/mobile_controls.ts
+          grep -q 'VITE_HIGHFLY_GENESIS_OFFLINE' candidate/src/main.ts
+          grep -q "document.getElementById('btn-offline')" candidate/src/main.ts
+          echo "GENESIS_G2_OFFLINE_CREATOR_ROUTING_WIRED=1"
           echo "GENESIS_G2_NATIVE_GAMEPLAY_WIRED_IN_CANDIDATE=1"
 
       - name: Node and pnpm
@@ -162,6 +165,7 @@ jobs:
         shell: bash
         env:
           VITE_COBALT_OFFLINE: "1"
+          VITE_HIGHFLY_GENESIS_OFFLINE: "1"
           VITE_COBALT_BASE: "/cobalt-hollow-lab/"
         run: |
           set -euo pipefail
