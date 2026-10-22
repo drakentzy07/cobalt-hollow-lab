@@ -29,12 +29,16 @@ try {
   await page.click('#enter-world');
   await page.waitForFunction(()=>window.__highflyGenesisG1?.mode==='exploring',{timeout:10000});
   await page.keyboard.down('w');
-  await new Promise(resolve=>setTimeout(resolve,850));
+  // The standalone visual updates its QA state every 25 WebGL frames.
+  // Software-rendered GitHub Chromium can take several seconds for 1981 meshes.
+  await page.waitForFunction(()=>window.__highflyGenesisG1?.collisionChecks>0,{
+      timeout:45000,polling:500,
+    }).catch(()=>undefined);
   await page.keyboard.up('w');
   const after=await page.evaluate(()=>window.__highflyGenesisG1);
+  if(errors.length)throw Error('G11_PAGE_ERRORS '+errors.join(' | '));
   if(after.mode!=='exploring'||after.collisionChecks<1)
     throw Error('G11_INPUT_OR_COLLISION_MISSING '+JSON.stringify(after));
-  if(errors.length)throw Error('G11_PAGE_ERRORS '+errors.join(' | '));
   console.log('HIGHFLY_G11_ORIGINAL_PREFAB_CITY_AND_ENTRY_BROWSER_GREEN=1');
   console.log('G11_QA '+JSON.stringify({prefabs:after.realScenePrefabs,collisions:after.collisions,
       movementChecks:after.collisionChecks,position:after.player,mode:after.mode}));
