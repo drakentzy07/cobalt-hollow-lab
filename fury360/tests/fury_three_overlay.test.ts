@@ -6,7 +6,9 @@ import {makeFurySkillPreview} from '../src/skill_preview.ts';
 class FakeBufferAttribute {
   needsUpdate=false;
   usage=0;
-  constructor(readonly array:Float32Array,readonly itemSize:number){}
+  readonly array:Float32Array;
+  readonly itemSize:number;
+  constructor(array:Float32Array,itemSize:number){this.array=array;this.itemSize=itemSize;}
   setUsage(x:number){this.usage=x;return this;}
 }
 class FakeGeometry {
@@ -20,10 +22,14 @@ class FakeMaterial {
   disposed=false;
   tint=0;
   color={setHex:(v:number)=>{this.tint=v;}};
-  constructor(readonly opts:Record<string,unknown>){}
+  readonly opts:Record<string,unknown>;
+  constructor(opts:Record<string,unknown>){this.opts=opts;}
   dispose(){this.disposed=true;}
 }
-class FakeObject { visible=true;constructor(readonly geometry:FakeGeometry,readonly material:FakeMaterial){}}
+class FakeObject { visible=true;
+  readonly geometry:FakeGeometry;
+  readonly material:FakeMaterial;
+  constructor(geometry:FakeGeometry,material:FakeMaterial){this.geometry=geometry;this.material=material;}}
 const THREE={
   BufferGeometry:FakeGeometry,BufferAttribute:FakeBufferAttribute,
   MeshBasicMaterial:FakeMaterial,LineBasicMaterial:FakeMaterial,
