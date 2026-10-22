@@ -21,14 +21,14 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            for(const [id,sha] of [[39769562745,'ebc94b8b3cc23586f99a04f7e214cd5e9457d5ed'],[39783796997,'51b16b9d1056a4dc520e8ccbe061dfa21d5df01b']]){
+            for(const [id,sha] of [[39769562745,'ebc94b8b3cc23586f99a04f7e214cd5e9457d5ed'],[39785232909,'cb166cc23d4177260602b0b768d671e133b9313b']]){
               const r=(await github.rest.actions.getWorkflowRun({owner:context.repo.owner,repo:context.repo.repo,run_id:id})).data;
               if(r.status!=='completed'||r.conclusion!=='success'||r.head_sha!==sha)throw Error('WORLD0_UNCERTIFIED_'+id);
             }
       - name: Checkout frozen actual ClaudeCraft HIGHFLY source
         uses: actions/checkout@v4
         with:
-          ref: 51b16b9d1056a4dc520e8ccbe061dfa21d5df01b
+          ref: cb166cc23d4177260602b0b768d671e133b9313b
           persist-credentials: false
           filter: blob:none
       - name: Download frozen public Pages including original 3D models
@@ -66,9 +66,15 @@ jobs:
             with urllib.request.urlopen(r,timeout=55) as z:
               if z.status!=200 or hashlib.sha256(z.read()).hexdigest()!=sha(f):
                 raise SystemExit('WORLD0_SITE_CHANGED_'+p)
-          for p in ('models/biome/hex_ship_blue.glb','models/biome/hex_ship_green.glb',
-                    'models/biome/hex_ship_red.glb','models/biome/hex_tower.glb',
-                    'models/biome/hex_wall.glb','models/props/inn.glb'):
+          # The real model catalogue uses hashed /media/models paths.
+          for p in ('media/models/biome/hex_ship_blue.bb547efdc865.glb',
+                    'media/models/biome/hex_ship_green.8628b72013e1.glb',
+                    'media/models/biome/hex_ship_red.2d4ea3477fe0.glb',
+                    'media/models/biome/hex_tower.7fe85c0f9ab5.glb',
+                    'media/models/biome/hex_wall.9591ad1772c1.glb',
+                    'media/models/props/inn.a1386fe4db50.glb',
+                    'media/models/biome/beach_dock.f638d6f160b4.glb',
+                    'media/models/props/fenbridge_gate_arch.76298e5e968d.glb'):
             if not (site/p).is_file():raise SystemExit('WORLD0_MODEL_MISSING_'+p)
           if (site/'world0').exists():raise SystemExit('WORLD0_ROUTE_ALREADY_PRESENT')
           print('WORLD0_CERTIFIED_SHARED_ASSETS_AND_PAGES_GREEN=1')
@@ -117,7 +123,7 @@ jobs:
               raise SystemExit('WORLD0_WRONG_BASE_'+f)
           (out/'world0-qa.json').write_text(json.dumps({
             'edition':'HIGHFLY WORLD0 source-native prealpha',
-            'sourceCommit':'51b16b9d1056a4dc520e8ccbe061dfa21d5df01b',
+            'sourceCommit':'cb166cc23d4177260602b0b768d671e133b9313b',
             'hunter':'warrior compatibility carrier with universal permission flag',
             'map':'full native ClaudeCraft zones; one NPC, one wolf, three ships, four-tower city',
             'assets':'reused unchanged from certified original Pages',
@@ -160,7 +166,7 @@ jobs:
               html=get('world0/index.html')
               editor=get('world0/editor.html')
               root=json.loads(get('highfly-origin-f12-qa.json'))
-              assert qa['sourceCommit']=='51b16b9d1056a4dc520e8ccbe061dfa21d5df01b'
+              assert qa['sourceCommit']=='cb166cc23d4177260602b0b768d671e133b9313b'
               assert b'/cobalt-hollow-lab/assets/' in html and b'/cobalt-hollow-lab/assets/' in editor
               assert root.get('sourceCommit')=='7518c22c11ff5ddffe09bb7792f8d67bb9e82038'
               print('HIGHFLY_WORLD0_PUBLIC_PAGES_GREEN='+base+'world0/')
