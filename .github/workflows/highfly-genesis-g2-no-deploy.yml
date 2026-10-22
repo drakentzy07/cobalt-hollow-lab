@@ -1,0 +1,208 @@
+name: "HIGHFLY GENESIS G2 — Native Training + Mobile 360 Playable (NO DEPLOY)"
+
+on:
+  push:
+    branches:
+      - highfly-genesis-g2-playable-20261022
+    paths:
+      - ".github/workflows/highfly-genesis-g2-no-deploy.yml"
+      - "genesis/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-genesis-g2-safe
+  cancel-in-progress: true
+
+jobs:
+  g2_native:
+    name: "G2 offline player, nine classes, training UI + camera-relative combat, WebGL/Studio"
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    steps:
+      - name: Isolated HIGHFLY G2 branch
+        uses: actions/checkout@v4
+        with:
+          path: overlay
+          persist-credentials: false
+          filter: blob:none
+
+      - name: Pinned ClaudeCraft 0.45 Studio source (unchanged donor)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 91e9c7753f2a132e55647455dd4fccfd5edbe6de
+          path: candidate
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /tests/
+            /electron/
+            /android/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /.gitignore
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+            /capacitor.config.ts
+
+      - name: HIGHFLY saved legacy algorithms (source-only)
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: cb166cc23d4177260602b0b768d671e133b9313b
+          path: legacy
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/highfly/training/
+            /src/highfly/combat/
+            /tests/
+
+      - name: Verify pins, no old R20-R40 overlays and no public branch writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate rev-parse HEAD)" = "91e9c7753f2a132e55647455dd4fccfd5edbe6de"
+          test "$(git -C legacy rev-parse HEAD)" = "cb166cc23d4177260602b0b768d671e133b9313b"
+          test "$(git -C overlay branch --show-current)" = "highfly-genesis-g2-playable-20261022"
+          test -s overlay/genesis/g2/training_runtime.ts
+          test -s overlay/genesis/g2/offline_training.ts
+          test -s overlay/genesis/g2/apply_candidate.mjs
+          echo "GENESIS_G2_SAFE_PINNED_DONORS=1"
+
+      - name: Install HIGHFLY selected algorithms + G1 compatibility + G2 gameplay
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p candidate/src/highfly/training candidate/src/highfly/combat candidate/src/highfly/genesis
+          for part in core reference_routine engine adaptation periodization bridge session_core pipeline; do
+            cp "legacy/src/highfly/training/$part.ts" "candidate/src/highfly/training/$part.ts"
+          done
+          cp legacy/src/highfly/combat/freedom_360.ts candidate/src/highfly/combat/freedom_360.ts
+          cp overlay/genesis/g1/class_training.ts candidate/src/highfly/genesis/class_training.ts
+          cp overlay/genesis/g2/training_runtime.ts candidate/src/highfly/genesis/training_runtime.ts
+          cp overlay/genesis/g2/offline_training.ts candidate/src/highfly/genesis/offline_training.ts
+          cp overlay/genesis/g1/class_training.test.ts candidate/tests/highfly_genesis_g1.test.ts
+          cp overlay/genesis/g2/native_training.test.ts candidate/tests/highfly_genesis_g2.test.ts
+          for t in core engine adaptation periodization bridge; do
+            cp "legacy/tests/highfly_training_$t.test.ts" "candidate/tests/highfly_training_$t.test.ts"
+          done
+          git -C candidate diff --exit-code -- src/main.ts src/sim src/game
+          (cd candidate && node ../overlay/genesis/g2/apply_candidate.mjs)
+          test -s candidate/src/highfly/genesis/offline_training.ts
+          grep -q "bootGenesisOfflineTraining(sim, playerClass, name)" candidate/src/main.ts
+          grep -q "genesisApplyTrainingAfterNativeRecalc(e, cls)" candidate/src/sim/entity.ts
+          grep -q "setGenesisTouchVector(x, y)" candidate/src/game/mobile_controls.ts
+          echo "GENESIS_G2_NATIVE_GAMEPLAY_WIRED_IN_CANDIDATE=1"
+
+      - name: Node and pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install ClaudeCraft pinned deps
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Full source TypeScript check
+        working-directory: candidate
+        run: pnpm exec tsc --noEmit --incremental false
+
+      - name: Native nine-class, real entity, offline training and movement tests
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run \
+            tests/highfly_genesis_g1.test.ts \
+            tests/highfly_genesis_g2.test.ts \
+            tests/highfly_training_core.test.ts \
+            tests/highfly_training_engine.test.ts \
+            tests/highfly_training_adaptation.test.ts \
+            tests/highfly_training_periodization.test.ts \
+            tests/highfly_training_bridge.test.ts \
+            tests/class_spec_kits.test.ts
+          echo "GENESIS_G2_NATIVE_NINE_CLASSES_TRAINING_GREEN=1"
+
+      - name: Build actual WebGL client and Studio, no Pages
+        working-directory: candidate
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/highfly-genesis-g2/"
+        run: |
+          set -euo pipefail
+          pnpm exec vite build
+          test -s dist/index.html
+          test -s dist/editor.html
+          echo "GENESIS_G2_OFFLINE_PLAYER_AND_STUDIO_BUNDLE_GREEN=1"
+
+      - name: Write evidence and user test instructions
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p g2-report
+          {
+            echo "HIGHFLY_GENESIS_G2"
+            echo "claudecraft=91e9c7753f2a132e55647455dd4fccfd5edbe6de"
+            echo "highfly_algorithms=cb166cc23d4177260602b0b768d671e133b9313b"
+            echo "training=offline opt-in ?hfGenesis=1"
+            echo "online_training=NOT_ACTIVE"
+            echo "public_pages_deployed=NO"
+            echo "original_saves_changed=NO"
+            echo "s23_real_device_qa=NOT_YET_VERIFIED"
+            echo "dash_double_jump=NOT_YET_PORTED"
+            echo "user_test=download G2 artifact, serve dist under /highfly-genesis-g2/, open /highfly-genesis-g2/?hfGenesis=1, choose Offline, create character"
+          } > g2-report/status.txt
+
+      - name: Preserve G2 report even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-GENESIS-G2-AUDIT
+          path: g2-report/
+          retention-days: 14
+
+      - name: Preserve actual G2 game for isolated Android/desktop preview
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-GENESIS-G2-PLAYABLE-NO-DEPLOY
+          path: candidate/dist/
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Explicit no deploy
+        if: success()
+        run: echo "GENESIS_G2_GREEN_NO_MAIN_NO_PAGES_NO_SAVES=1"
