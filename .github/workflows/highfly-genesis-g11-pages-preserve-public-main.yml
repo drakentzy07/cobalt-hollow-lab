@@ -1,0 +1,199 @@
+name: HIGHFLY GENESIS G1.1 — SAFE Pages Publish from MAIN workflow only
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/highfly-genesis-g11-pages-preserve-public-main.yml'
+      - 'scripts/highfly_genesis_g11_pages_browser.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-genesis-g11-pages-root-preserved
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    steps:
+      - name: Require immutable latest public composite baseline (no old Pages overwrite)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const id=39668354112;
+            const sha='c65159f11e91c88255d10b36b2fe1507f67b9047';
+            const run=(await github.rest.actions.getWorkflowRun({
+              owner:context.repo.owner,repo:context.repo.repo,run_id:id})).data;
+            if(run.status!=='completed'||run.conclusion!=='success'||run.head_sha!==sha)
+              throw Error('G11_BASELINE_NOT_CERTIFIED');
+            console.log('HIGHFLY_G11_IMMUTABLE_LATEST_BASELINE_VERIFIED=1');
+
+      - name: Checkout exact immutable G11 city source — never modify main game source
+        uses: actions/checkout@v4
+        with:
+          ref: 5869fe8ea4914902fa37a5e1de96db57344062bd
+          persist-credentials: false
+          filter: blob:none
+      - name: Recover exact existing published Pages composite — NOT a new root build
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 39668354112
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: baseline
+
+      - name: Reassemble source-authentic city HTML and preserve existing root byte-for-byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,tarfile,urllib.request
+          from pathlib import Path,PurePosixPath
+          pieces=sorted(Path('genesis/g11_payload').glob('part??.txt'))
+          if len(pieces)!=11:raise SystemExit('G11_SOURCE_CHUNKS_MISSING')
+          html=b''.join(p.read_bytes() for p in pieces)
+          expected='a475f66cfa8e1277b0d84ead7109282ccbc9459a8e0fabb91b5dea28cbbc93ef'
+          if hashlib.sha256(html).hexdigest()!=expected or len(html)!=5163887:
+              raise SystemExit('G11_REASSEMBLED_ORIGINAL_HTML_DIGEST_MISMATCH')
+          for marker in (b'ENTRAR A LA CIUDAD',b'id="city-binary"',b'__highflyGenesisG1',
+                         b'G1.1 t',b'Suelo y tintes aproximados'):
+              if marker not in html:raise SystemExit('G11_NOT_REAL_PREVIEW_'+str(marker))
+          if b'https://' in html or b'http://' in html:
+              raise SystemExit('G11_EXTERNAL_RUNTIME_RESOURCE_NOT_ISOLATED')
+          archive=Path('baseline/artifact.tar')
+          if not archive.is_file():raise SystemExit('G11_BASELINE_PAGES_ARTIFACT_NOT_FOUND')
+          site=Path('site');site.mkdir()
+          with tarfile.open(archive,'r:') as tar:
+              members=tar.getmembers()
+              for m in members:
+                  p=PurePosixPath(m.name)
+                  if p.is_absolute() or '..' in p.parts or m.issym() or m.islnk() or not (m.isfile() or m.isdir()):
+                      raise SystemExit('G11_UNSAFE_BASELINE_TAR')
+              tar.extractall(site,filter='data')
+          protected=['index.html','play.html','highfly-origin-f12-qa.json',
+              'lab/f27-combat-beta/index.html','lab/f27-combat-beta/f27-beta-qa.json',
+              'candidate/unified-01/index.html','candidate/unified-01/unified-candidate-qa.json']
+          def sha(p):
+              h=hashlib.sha256()
+              with p.open('rb') as f:
+                  for block in iter(lambda:f.read(1024*1024),b''):h.update(block)
+              return h.hexdigest()
+          before={}
+          for item in protected:
+              file=site/item
+              if not file.is_file():raise SystemExit('G11_CERTIFIED_BASELINE_MISSING_'+item)
+              before[item]=sha(file)
+          # Never replace a newer LIVE deployment with a stale artifact.
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for item in protected:
+              url=base+item+'?genesis_precheck='+str(len(html))
+              request=urllib.request.Request(url,headers={
+                  'Cache-Control':'no-cache','User-Agent':'HIGHFLY-G11-CONSERVATIVE-DEPLOY'})
+              with urllib.request.urlopen(request,timeout=55) as response:
+                  if response.status!=200:raise SystemExit('G11_LIVE_PROTECTED_HTTP_'+item)
+                  if hashlib.sha256(response.read()).hexdigest()!=before[item]:
+                      raise SystemExit('G11_LIVE_BASELINE_HAS_CHANGED_ABORT_'+item)
+          destination=site/'genesis'
+          if destination.exists():raise SystemExit('G11_GENESIS_DESTINATION_ALREADY_EXISTS')
+          destination.mkdir()
+          (destination/'index.html').write_bytes(html)
+          qa={
+              'edition':'HIGHFLY WORLD GENESIS G1.1 RG Poly prefabs offline reconstruction, experimental',
+              'sourceCommit':'5869fe8ea4914902fa37a5e1de96db57344062bd',
+              'cityPartial':True,'terrainUnityNative':False,'materialsFull':False,
+              'hunterKayKit':False,'physicalS23':'PENDING_USER_TEST',
+              'sourceSHA256':expected,'preserveOriginalRoot':True,
+              'expectedEntry':'ENTRAR A LA CIUDAD','publicPath':'/cobalt-hollow-lab/genesis/'
+          }
+          (destination/'genesis-qa.json').write_text(json.dumps(qa,indent=2)+'\n')
+          for item,digest in before.items():
+              if sha(site/item)!=digest:raise SystemExit('G11_ORIGINAL_PROTECTED_FILE_MUTATED_'+item)
+          if sha(destination/'index.html')!=expected:raise SystemExit('G11_STAGE_DIGEST_CHANGED')
+          size=sum(p.stat().st_size for p in site.rglob('*') if p.is_file())
+          if size>=1055000000:raise SystemExit('G11_PAGES_EXCEEDS_SAFE_QUOTA_'+str(size))
+          (site/'.nojekyll').touch()
+          print('HIGHFLY_G11_ADDITIVE_PAGES_BYTE_IDENTICAL_ROOT_GREEN=1 size='+str(size))
+          PY
+
+      - name: Install Node and frozen browser dependencies for 844x390 touch smoke
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install dependency lock
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Browser QA checks actual original RG Poly reconstruction and entry
+        shell: bash
+        env:
+          G11_URL: http://127.0.0.1:4180/cobalt-hollow-lab/genesis/
+        run: |
+          set -euo pipefail
+          mkdir -p browser-root
+          ln -s ../site browser-root/cobalt-hollow-lab
+          python3 -m http.server 4180 --bind 127.0.0.1 --directory browser-root >/tmp/hf-genesis-g11-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 40);do
+            if curl -fsSI "$G11_URL" >/dev/null 2>&1;then break;fi
+            sleep 1
+          done
+          node scripts/highfly_genesis_g11_pages_browser.mjs
+          echo "HIGHFLY_G11_PUBLIC_CANDIDATE_BROWSER_GREEN=1"
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload exact additive archive of unchanged public HIGHFLY + Genesis only
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publish:
+    needs: stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/genesis/
+    steps:
+      - name: Publish new /genesis/ beside byte-identical WORLD and LAB
+        uses: actions/deploy-pages@v4
+      - name: Verify live public G1.1 content and unchanged original root
+        shell: bash
+        env:
+          G11_SHA: 5869fe8ea4914902fa37a5e1de96db57344062bd
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,time,urllib.request
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          expected='a475f66cfa8e1277b0d84ead7109282ccbc9459a8e0fabb91b5dea28cbbc93ef'
+          for attempt in range(30):
+              try:
+                  def get(p):
+                      req=urllib.request.Request(base+p+'?g11='+str(attempt),headers={
+                          'Cache-Control':'no-cache','User-Agent':'HIGHFLY-G11-LIVE-CHECK'})
+                      with urllib.request.urlopen(req,timeout=45) as r:
+                          if r.status!=200:raise AssertionError('HTTP_'+str(r.status))
+                          return r.read()
+                  html=get('genesis/index.html')
+                  qa=json.loads(get('genesis/genesis-qa.json'))
+                  root=json.loads(get('highfly-origin-f12-qa.json'))
+                  if hashlib.sha256(html).hexdigest()!=expected:raise AssertionError('G11_WRONG_CITY_HTML')
+                  if qa.get('sourceCommit')!=os.environ['G11_SHA'] or qa.get('cityPartial') is not True:
+                      raise AssertionError('G11_WRONG_QA')
+                  if root.get('sourceCommit')!='7518c22c11ff5ddffe09bb7792f8d67bb9e82038':
+                      raise AssertionError('G11_ORIGINAL_DRAKEN_ROOT_CHANGED')
+                  print('HIGHFLY_GENESIS_G11_PUBLIC_PAGES_REAL_PARTIAL_CITY_GREEN='+base+'genesis/',flush=True)
+                  break
+              except Exception as exc:
+                  print('HIGHFLY_G11_PAGES_PROPAGATION',attempt,str(exc)[:180],flush=True)
+                  if attempt==29:raise
+                  time.sleep(5)
+          PY
