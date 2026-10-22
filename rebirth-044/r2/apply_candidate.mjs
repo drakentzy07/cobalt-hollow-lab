@@ -57,7 +57,7 @@ for(const f of ['freedom_360.ts','f261_controls.ts','f24_aim_core.ts']){
 // 0.44 action ring, More menu, talent/spec slots and touch-router ownership.
 const historicControls=read(legacy+'src/game/mobile_controls.ts');
 const start=historicControls.indexOf('export function mapHighflyJoystickVector(');
-const end=historicControls.indexOf('\nexport class MobileControls',start);
+const end=historicControls.indexOf('\nexport function isMoveAutorunPush',start);
 if(start<0||end<start)throw Error('R2_MISSING_HISTORIC_RADIAL_KERNEL');
 const joystickKernel=historicControls.slice(start,end);
 patch('src/game/mobile_controls.ts',[
