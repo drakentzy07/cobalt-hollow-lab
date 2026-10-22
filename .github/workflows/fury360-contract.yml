@@ -19,4 +19,4 @@ jobs:
         with:
           node-version: '22'
       - name: Verify portable intent contracts
-        run: node --experimental-strip-types --test fury360/tests/fury_core.test.ts
+        run: node --experimental-strip-types --test fury360/tests/*.test.ts
