@@ -55,12 +55,12 @@ import './highfly/rebirth/training_style.css';`
 ]);
 edit('src/game/mobile_controls.ts',[
   [
-    "    this.bindButton('mobile-chat', () => this.callbacks.onChat());",
+    "    this.bindButton('mobile-bar-editor', () => this.callbacks.onBarEditor());",
     `    this.bindButton('mobile-training', () => {
       this.closeMoreModal();
       window.dispatchEvent(new CustomEvent('highfly:open-training'));
     });
-    this.bindButton('mobile-chat', () => this.callbacks.onChat());`
+    this.bindButton('mobile-bar-editor', () => this.callbacks.onBarEditor());`
   ]
 ]);
 edit('index.html',[
@@ -83,8 +83,8 @@ edit('index.html',[
 ]);
 edit('src/sim/entity.ts',[
   [
-    "import { CLASSES",
-    "import { applyActiveTrainingBridgeToEntity } from '../highfly/training/combat_runtime';\nimport { CLASSES"
+    "import { aggregateSetBonuses, CLASSES",
+    "import { applyActiveTrainingBridgeToEntity } from '../highfly/training/combat_runtime';\nimport { aggregateSetBonuses, CLASSES"
   ],
   [
     "    e.resource = Math.min(e.resource, 100);\n  }\n}\n\n// Derived stats + max vitals",
