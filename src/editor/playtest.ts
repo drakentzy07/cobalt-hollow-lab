@@ -35,6 +35,7 @@ export function launchPlaytest(world: WorldContent, opts: PlaytestOptions): bool
   } catch {
     stored = false;
   }
-  if (stored) window.location.href = `${import.meta.env.BASE_URL}index.html`;
+  // Resolve beside the CURRENT editor (root or /world0/) so the lab never boots the production entry.
+  if (stored) window.location.href = new URL('index.html', location.href).href;
   return stored;
 }
