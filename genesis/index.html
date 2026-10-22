@@ -12,6 +12,12 @@
     #heading{border-radius:13px;background:#0b1723cc;padding:9px 13px;border:1px solid #ffffff30;max-width:440px;font-size:13px;line-height:1.35}
     #heading strong{font-size:15px;color:#ffdb8a}#stats{font-size:11px;color:#d4f5fc}
     #status{position:absolute;left:50%;top:15%;transform:translateX(-50%);max-width:610px;width:max-content;min-width:280px;padding:12px;background:#0b1723db;border:1px solid #cfc8b97b;border-radius:13px;text-align:center;font-size:14px;pointer-events:auto}
+    #entry{position:absolute;inset:0;z-index:7;display:none;align-items:center;justify-content:center;background:#061421d9;pointer-events:auto}
+    #entry.ready{display:flex}
+    #entry-panel{width:min(440px,90vw);padding:23px 25px;border:1px solid #ad9576;border-radius:18px;background:#182a3e;text-align:center}
+    #entry-panel h1{font-size:23px;color:#ffe4a2;margin:4px 0 10px}
+    #entry-panel p{font-size:13px;line-height:1.45;color:#d3e5ef}
+    #enter-world{border:1px solid #92ead7;color:#fff;background:#2f716a;border-radius:12px;font-size:17px;font-weight:750;padding:15px 26px;touch-action:manipulation}
     #diag-btn{display:none;background:#234d63;border:1px solid #74c9e8;color:#fff;font-size:13px;font-weight:700;border-radius:10px;margin-top:11px;padding:10px 14px}
     #pad{position:absolute;bottom:max(35px,env(safe-area-inset-bottom));left:max(24px,env(safe-area-inset-left));width:138px;height:138px;border:2px solid #cbddf26b;border-radius:50%;background:#15283a88;pointer-events:auto;touch-action:none;user-select:none}
     #stick{position:absolute;width:56px;height:56px;left:39px;top:39px;border-radius:50%;background:#d2eef8aa;border:2px solid #fff9;pointer-events:none}
@@ -28,6 +34,7 @@
   <div id="hud">
     <div class="top"><div id="heading"><strong>HIGHFLY · WORLD GENESIS G1</strong><div id="mode">Preparando escenario…</div><div id="stats">STR 10 · AGI 10 · VIT 10 · PER 10 · INT 10</div></div></div>
     <div id="status" role="status">Comprobando exportación auténtica RG Poly…<div><button id="diag-btn" type="button">Probar controles en plaza técnica (NO es RG Poly)</button></div></div>
+    <div id="entry"><div id="entry-panel"><h1>ENTRAR A HIGHFLY</h1><p>Ciudad RG Poly cargada desde su exportación verificada. Hunter universal de pruebas, cámara 360°, salto y dash. Sin modificar Draken.</p><button type="button" id="enter-world">ENTRAR A LA CIUDAD</button></div></div>
     <div id="look" aria-label="Arrastrar para girar la cámara"></div>
     <div id="pad" aria-label="Joystick de movimiento"><div id="stick"></div></div>
     <div id="actions"><button id="dash" type="button">DASH</button><button id="jump" type="button">SALTO</button></div>
