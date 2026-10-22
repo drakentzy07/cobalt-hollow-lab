@@ -60,7 +60,7 @@ jobs:
           if hashlib.sha256(html).hexdigest()!=expected or len(html)!=5163887:
               raise SystemExit('G11_REASSEMBLED_ORIGINAL_HTML_DIGEST_MISMATCH')
           for marker in (b'ENTRAR A LA CIUDAD',b'id="city-binary"',b'__highflyGenesisG1',
-                         b'G1.1 t',b'no es todav'):
+                         b'G1.1 t',b'Suelo y tintes aproximados'):
               if marker not in html:raise SystemExit('G11_NOT_REAL_PREVIEW_'+str(marker))
           if b'https://' in html or b'http://' in html:
               raise SystemExit('G11_EXTERNAL_RUNTIME_RESOURCE_NOT_ISOLATED')
