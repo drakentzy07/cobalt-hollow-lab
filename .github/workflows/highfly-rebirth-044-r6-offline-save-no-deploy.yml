@@ -92,7 +92,7 @@ jobs:
           cp rebirth/rebirth-044/r1/nine_classes.test.ts candidate/tests/highfly_rebirth_nine_classes.test.ts
           cp rebirth/rebirth-044/r2/r2_movement.test.ts candidate/tests/highfly_rebirth_r2_movement.test.ts
           cp rebirth/rebirth-044/r3/r3_vitals.test.ts candidate/tests/highfly_rebirth_r3_vitals.test.ts
-          cp rebirth/rebirth-044/r4/r4_real_skill_resources.test.ts candidate/tests/highfly_rebirth_r4_real_skill_resources.test.ts tests/highfly_rebirth_r6_offline_resume.test.ts
+          cp rebirth/rebirth-044/r4/r4_real_skill_resources.test.ts candidate/tests/highfly_rebirth_r4_real_skill_resources.test.ts
           cp rebirth/rebirth-044/r6/r6_offline_resume.test.ts candidate/tests/highfly_rebirth_r6_offline_resume.test.ts
           for part in core engine adaptation periodization bridge; do
             cp "legacy/tests/highfly_training_$part.test.ts" "candidate/tests/highfly_training_$part.test.ts"
