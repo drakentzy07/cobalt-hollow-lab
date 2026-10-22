@@ -10,6 +10,7 @@ on:
       - "src/editor/playtest.ts"
       - "src/game/editor_playtest.ts"
       - "src/main.ts"
+      - "src/render/renderer.ts"
       - "tests/highfly_world0_editor_trial.test.ts"
   workflow_dispatch:
 permissions:

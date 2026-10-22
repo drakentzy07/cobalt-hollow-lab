@@ -1,4 +1,5 @@
 import {describe,expect,it} from 'vitest';
+import {readFileSync} from 'node:fs';
 import {BUILTIN_WORLD, MOBS} from '../src/sim/data';
 import {sanitizeMapDoc} from '../src/sim/map_doc';
 import {customMapToWorldContent} from '../src/editor/custom_map';
@@ -6,6 +7,11 @@ import {makeWorld0Map,makeWorld0Content,WORLD0_GREETER_ID,WORLD0_HUNTER_SPAWN,WO
 import {ORIGIN_HUNTER_CARRIER_CLASS} from '../src/highfly/origin/f1_core';
 import {offlineWorldConfig} from '../src/game/offline_world_config';
 describe('HIGHFLY World0: native content and universal Warrior compatibility',()=>{
+  it('does not render the original Eastbrook or Fenbridge town in our clean map',()=>{
+    const renderer=readFileSync('src/render/renderer.ts','utf8');
+    expect(renderer).toContain("if(this.sim.cfg.world?.npcs?.hf_world0_greeter) this.eastbrookTownView.group.visible=false;");
+    expect(renderer).toContain("if(this.sim.cfg.world?.npcs?.hf_world0_greeter) this.fenbridgeTownView.group.visible=false;");
+  });
   it('keeps every builtin terrain zone without its inherited actors',()=>{
     const m=makeWorld0Map(),world=makeWorld0Content();
     expect(m.content.zones.map(z=>z.id)).toEqual(BUILTIN_WORLD.zones.map(z=>z.id));

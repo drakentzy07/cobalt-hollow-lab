@@ -2586,6 +2586,9 @@ export class Renderer {
     // six opaque building volumes stay individual for camera roof ghosting;
     // civic, market, fence, and wall geometry is initialization-batched.
     this.eastbrookTownView = buildEastbrookTownView(this.sim.cfg.seed);
+    // A clean HIGHFLY World0 keeps ClaudeCraft's original terrain, not its
+    // separately generated Eastbrook urban scene. Never hide it for donor play.
+    if(this.sim.cfg.world?.npcs?.hf_world0_greeter) this.eastbrookTownView.group.visible=false;
     setRenderCategory(this.eastbrookTownView.group, 'props');
     this.scene.add(this.eastbrookTownView.group);
     freezeStaticSubtreeMatrices(this.eastbrookTownView.group);
@@ -2595,6 +2598,7 @@ export class Renderer {
     // seven buildings remain independent camera-fade targets; civic and
     // repeated palisade/gate/boardwalk geometry is initialization-batched.
     this.fenbridgeTownView = buildFenbridgeTownView(this.sim.cfg.seed);
+    if(this.sim.cfg.world?.npcs?.hf_world0_greeter) this.fenbridgeTownView.group.visible=false;
     setRenderCategory(this.fenbridgeTownView.group, 'props');
     this.scene.add(this.fenbridgeTownView.group);
     freezeStaticSubtreeMatrices(this.fenbridgeTownView.group);
