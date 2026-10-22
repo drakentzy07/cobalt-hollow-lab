@@ -49,6 +49,7 @@ jobs:
             /private/
             /public/
             /tests/
+            /electron/
             /android/
             /package.json
             /pnpm-lock.yaml
