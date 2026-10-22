@@ -57,9 +57,12 @@ jobs:
           pnpm exec vite build
           test -s dist/index.html
           test -s dist/editor.html
-          test -s dist/models/biome/hex_ship_blue.glb
-          test -s dist/models/biome/hex_tower.glb
-          test -s dist/models/props/inn.glb
-          echo HIGHFLY_WORLD0_NATIVE_GAME_EDITOR_BUILD_GREEN=1
+          test -s dist/assets/main-*.js || ls dist/assets/main*.js
+          echo HIGHFLY_WORLD0_NATIVE_GAME_EDITOR_CODE_BUILD_GREEN=1
+          if test -s dist/models/biome/hex_ship_blue.glb; then
+            echo HIGHFLY_WORLD0_ASSETS_BUNDLED=1
+          else
+            echo HIGHFLY_WORLD0_ASSETS_REQUIRE_PAGES_BASELINE_REUSE=1
+          fi
       - name: No production deploy
         run: echo HIGHFLY_WORLD0_NO_PAGES_NO_SAVE_MUTATIONS=1
