@@ -195,7 +195,7 @@ jobs:
           shutil.copytree(src,site)
           # Level 1-20 trial only: no music/voices, Tidehold large scenery,
           # or mount gallery. Nonessential for testing the training/joystick.
-          omit=['audio/music','audio/voice','models/tidehold','models/mounts']
+          omit=['audio/music','audio/voice','models/tidehold','models/mounts','map_art','models/dungeon']
           for name in omit:
             p=site/name
             if p.exists():shutil.rmtree(p)
