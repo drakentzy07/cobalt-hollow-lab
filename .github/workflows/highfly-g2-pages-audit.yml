@@ -1,0 +1,92 @@
+name: HIGHFLY G2 Pages Compatibility Audit - NO DEPLOY
+on:
+  workflow_dispatch:
+  push:
+    branches: [highfly-genesis-g2-playable-20261022]
+    paths:
+      - .github/workflows/highfly-g2-pages-audit.yml
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download published Pages site snapshot
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 39785774710
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: baseline
+      - name: Download proven G2 WebGL build
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 39817425264
+          github-token: ${{ github.token }}
+          name: HIGHFLY-GENESIS-G2-PLAYABLE-NO-DEPLOY
+          path: g2
+      - name: Audit only, preserve original
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path, PurePosixPath
+          import hashlib,tarfile,json,re
+          site=Path('site'); site.mkdir()
+          with tarfile.open('baseline/artifact.tar','r:') as tar:
+            for m in tar:
+              p=PurePosixPath(m.name)
+              if p.is_absolute() or '..' in p.parts or m.issym() or m.islnk() or not (m.isfile() or m.isdir()):
+                raise SystemExit('UNSAFE_PAGES_TAR')
+            tar.extractall(site,filter='data')
+          files={str(p.relative_to(site)):p for p in site.rglob('*') if p.is_file()}
+          modern={str(p.relative_to(Path('g2'))):p for p in Path('g2').rglob('*') if p.is_file()}
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          before=sum(p.stat().st_size for p in files.values())
+          g2size=sum(p.stat().st_size for p in modern.values())
+          copies=[]
+          conflicts=[]
+          for name,p in modern.items():
+            if name not in files:copies.append((p.stat().st_size,name))
+            elif files[name].stat().st_size!=p.stat().st_size or sha(files[name])!=sha(p):
+              conflicts.append((p.stat().st_size,name))
+          allnew=sum(n for n,k in copies)
+          newassets=sum(n for n,k in copies if k.startswith('assets/'))
+          nonassets=sorted((n,k) for n,k in copies if not k.startswith('assets/'))
+          hdr={}
+          for name in ('index.html','editor.html','play.html'):
+            if name in modern:
+              doc=modern[name].read_text(errors='replace')
+              hdr[name]={'length':len(doc),'mentions_old_base':doc.count('/highfly-genesis-g2/'),'mentions_project_base':doc.count('/cobalt-hollow-lab/'),
+                'assetpaths':re.findall(r'(?:src|href)="([^"]+)"',doc)[:30]}
+          rpt={'baseline_bytes':before,'g2_bytes':g2size,'g2_files':len(modern),
+            'new_files':len(copies),'new_bytes':allnew,'new_assets_bytes':newassets,
+            'new_non_assets_bytes':sum(n for n,k in nonassets),
+            'conflicts_count':len(conflicts),'conflicts_largest':sorted(conflicts,reverse=True)[:25],
+            'new_assets_largest':sorted((n,k) for n,k in copies if k.startswith('assets/'))[-35:],
+            'new_nonassets_largest':nonassets[-40:],
+            'projected_full_merge_bytes':before+allnew,
+            'space_under_1GiB':1073741824-before,
+            'html':hdr,
+            'note':'Read-only inventory; no pages changes'}
+          Path('g2-pages-audit.json').write_text(json.dumps(rpt,indent=2))
+          for key in ('baseline_bytes','g2_bytes','g2_files','new_files','new_bytes','new_assets_bytes','new_non_assets_bytes','conflicts_count','projected_full_merge_bytes','space_under_1GiB'):
+            print('G2_PAGES_AUDIT_'+key.upper()+'='+str(rpt[key]))
+          print('G2_PAGES_AUDIT_NEW_BIGGEST='+json.dumps(sorted(copies,reverse=True)[:35]))
+          print('G2_PAGES_AUDIT_CONFLICTS='+json.dumps(sorted(conflicts,reverse=True)[:25]))
+          print('G2_PAGES_AUDIT_HTML='+json.dumps(hdr))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: G2-PAGES-AUDIT
+          path: g2-pages-audit.json
+          retention-days: 7
