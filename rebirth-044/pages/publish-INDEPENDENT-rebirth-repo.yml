@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: drakentzy07/cobalt-hollow-lab
-          ref: d9727083c7570868973b15eabaf2fc8b82f4a765
+          ref: 900d5f1732b15eab957a4daafc339f98a1817d5b
           path: rebirth
           filter: blob:none
           persist-credentials: false
@@ -126,6 +126,23 @@ jobs:
           VITE_HIGHFLY_REBIRTH_PREVIEW: "1"
         run: |
           set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          base='/HIGHFLY-REBIRTH'
+          prefix=('ui','audio','basis','fonts','claudium','guide-stills','highfly','map_art','map_bg')
+          roots=[*Path('src').rglob('*'),*(Path(x) for x in ('index.html','play.html','editor.html','admin.html','guide.html'))]
+          count=0
+          for p in roots:
+            if not p.is_file() or p.suffix.lower() not in ('.ts','.tsx','.js','.mjs','.css','.html'):continue
+            try:s=p.read_text()
+            except UnicodeDecodeError:continue
+            before=s
+            for k in prefix:
+              for marker in ('"', "'", '`','url(','url("',"url('"):
+                s=s.replace(marker+'/'+k+'/',marker+base+'/'+k+'/')
+            if s!=before:p.write_text(s);count+=1
+          print('REBIRTH_PUBLIC_RELATIVE_ASSETS_REWRITTEN',count)
+          PY
           pnpm exec vite build --base=/HIGHFLY-REBIRTH/
           test -s dist/index.html
           test -s dist/play.html
@@ -142,6 +159,24 @@ jobs:
           data.update({'id':'/HIGHFLY-REBIRTH/','scope':'/HIGHFLY-REBIRTH/',
                        'start_url':'/HIGHFLY-REBIRTH/?hfRebirth=1'})
           manifest.write_text(json.dumps(data,indent=2)+'\n')
+          base='/HIGHFLY-REBIRTH'
+          static_roots=('ui','audio','basis','fonts','claudium','guide-stills','highfly','map_art','map_bg')
+          root_files=[p.name for p in Path('candidate/public').iterdir() if p.is_file()]
+          rewritten=0
+          for file in root.rglob('*'):
+            if not file.is_file() or file.suffix.lower() not in ('.html','.js','.css','.json','.webmanifest','.xml','.txt'):continue
+            try:contents=file.read_text()
+            except (UnicodeDecodeError,OSError):continue
+            orig=contents
+            for k in static_roots:
+              for pre in ('"', "'", '`','url(','url("',"url('"):
+                contents=contents.replace(pre+'/'+k+'/',pre+base+'/'+k+'/')
+            for k in root_files:
+              for pre in ('"', "'", '`','url(','url("',"url('"):
+                contents=contents.replace(pre+'/'+k,pre+base+'/'+k)
+            if contents!=orig:file.write_text(contents);rewritten+=1
+          print('REBIRTH_PAGES_STATIC_BASE_PATCH_FILES',rewritten)
+
           index=(root/'index.html').read_text()
           assert '/HIGHFLY-REBIRTH/assets/' in index,'INCORRECT_GITHUB_PAGES_ASSET_BASE'
           (root/'rebirth-version.json').write_text(json.dumps({
