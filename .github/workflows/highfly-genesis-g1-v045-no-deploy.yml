@@ -1,0 +1,209 @@
+name: "HIGHFLY GENESIS G1 — ClaudeCraft 0.45 + 9 classes + Training + 360 (NO DEPLOY)"
+
+on:
+  push:
+    branches:
+      - highfly-genesis-g1-v045-rebirth-20261022
+    paths:
+      - ".github/workflows/highfly-genesis-g1-v045-no-deploy.yml"
+      - "genesis/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-genesis-g1-v045-safe
+  cancel-in-progress: true
+
+jobs:
+  genesis_g1:
+    name: "Modern source + training/360 bridge + nine-class tests + WebGL"
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: "HIGHFLY G1 overlay only — no public deployment"
+        uses: actions/checkout@v4
+        with:
+          path: overlay
+          persist-credentials: false
+          filter: blob:none
+
+      - name: "Exact ClaudeCraft 0.45-integration donor, no old HIGHFLY patches"
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 91e9c7753f2a132e55647455dd4fccfd5edbe6de
+          path: candidate
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /tests/
+            /android/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /.gitignore
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+            /capacitor.config.ts
+
+      - name: "Read-only HIGHFLY historical algorithms, not entire old game"
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: cb166cc23d4177260602b0b768d671e133b9313b
+          path: legacy
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/highfly/training/
+            /src/highfly/combat/
+            /tests/
+
+      - name: "Verify immutable donor provenance and G1-only paths"
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate rev-parse HEAD)" = "91e9c7753f2a132e55647455dd4fccfd5edbe6de"
+          test "$(git -C legacy rev-parse HEAD)" = "cb166cc23d4177260602b0b768d671e133b9313b"
+          test -s candidate/src/sim/content/classes.ts
+          test -s candidate/src/editor/custom_map.ts
+          test -s candidate/editor.html
+          test -s overlay/genesis/g1/class_training.ts
+          test -s overlay/genesis/g1/class_training.test.ts
+          test ! -e overlay/src/main.ts
+          echo "GENESIS_G1_PINNED_UNMODIFIED_DONORS=1"
+
+      - name: "Mount selected HIGHFLY Training Core and 360 algorithms into the clean candidate"
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p candidate/src/highfly/training candidate/src/highfly/combat candidate/src/highfly/genesis
+          for part in core reference_routine engine adaptation periodization bridge; do
+            cp "legacy/src/highfly/training/$part.ts" "candidate/src/highfly/training/$part.ts"
+          done
+          cp legacy/src/highfly/combat/freedom_360.ts candidate/src/highfly/combat/freedom_360.ts
+          cp overlay/genesis/g1/class_training.ts candidate/src/highfly/genesis/class_training.ts
+          cp overlay/genesis/g1/class_training.test.ts candidate/tests/highfly_genesis_g1.test.ts
+          for test in core engine adaptation periodization bridge; do
+            cp "legacy/tests/highfly_training_$test.test.ts" "candidate/tests/highfly_training_$test.test.ts"
+          done
+          test -s candidate/src/highfly/genesis/class_training.ts
+          test -s candidate/tests/highfly_genesis_g1.test.ts
+          git -C candidate diff --exit-code -- src/sim src/main.ts src/editor src/game
+          echo "GENESIS_G1_NATIVE_CLASSES_AND_WORLD_UNTOUCHED=1"
+
+      - name: "Node 24 and pnpm"
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: "Install candidate dependencies, lockfile immutable"
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: "G1 full contract tests: nine classes, level 20, training scoring, camera-relative movement"
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run \
+            tests/highfly_genesis_g1.test.ts \
+            tests/highfly_training_core.test.ts \
+            tests/highfly_training_engine.test.ts \
+            tests/highfly_training_adaptation.test.ts \
+            tests/highfly_training_periodization.test.ts \
+            tests/highfly_training_bridge.test.ts \
+            tests/class_spec_kits.test.ts
+          echo "GENESIS_G1_TRAINING_NINE_CLASSES_CONTRACT_GREEN=1"
+
+      - name: "Modern ClaudeCraft + isolated HIGHFLY TypeScript check"
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec tsc --noEmit --incremental false
+          echo "GENESIS_G1_MODERN_TYPES_GREEN=1"
+
+      - name: "Build actual ClaudeCraft 0.45 candidate and Studio editor (not publish)"
+        working-directory: candidate
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/highfly-genesis-g1/"
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vite build
+          test -s dist/index.html
+          test -s dist/editor.html
+          echo "GENESIS_G1_WEBGL_AND_STUDIO_BUNDLE_GREEN=1"
+
+      - name: "Write auditable result with immutable provenance"
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p g1-report
+          {
+            echo "HIGHFLY_GENESIS_G1"
+            echo "source=levy-street/world-of-claudecraft@91e9c7753f2a132e55647455dd4fccfd5edbe6de"
+            echo "legacy=drakentzy07/cobalt-hollow-lab@cb166cc23d4177260602b0b768d671e133b9313b"
+            echo "public_pages_modified=0"
+            echo "main_branch_modified=0"
+            echo "saved_games_modified=0"
+            echo "training_runtime_hook=NOT_YET_CONNECTED"
+            echo "mobile_device_test=REQUIRES_S23_ULTRA"
+            echo "server_parity=REQUIRES_LATER_VALIDATION"
+          } > g1-report/status.txt
+          if test -d candidate/dist; then
+            find candidate/dist -maxdepth 1 -type f -printf '%f\n' > g1-report/build-entrypoints.txt
+          fi
+
+      - name: "Preserve run report whether green or red"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-GENESIS-G1-AUDIT
+          path: g1-report/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: "Preserve playable candidate build for independent QA; not Pages"
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-GENESIS-G1-WEBGL-STUDIO-NO-DEPLOY
+          path: candidate/dist/
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: "No publishing, no remote push, no saves"
+        if: success()
+        run: echo "GENESIS_G1_NO_DEPLOY_NO_MAIN_MUTATION_NO_SAVES=1"
