@@ -1,0 +1,162 @@
+name: "HIGHFLY — RESTORE PRE-G2 SITE + RETIRE FAILED GENESIS ARTIFACTS"
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/highfly-restore-pre-g2-and-cleanup.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: highfly-pages-restore-certified-pre-g2
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    name: Restore the exact certified pre-G2 public Pages contents
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify certified pre-G2 snapshot and its irreplaceable backup
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner,repo=context.repo.repo;
+            const run=(await github.rest.actions.getWorkflowRun({owner,repo,run_id:39785774710})).data;
+            if(run.status!=='completed'||run.conclusion!=='success'||
+               run.head_sha!=='bb244d83130f08391124ea1efc2c0073f75a5e7f')
+              throw Error('HIGHFLY_PRE_G2_BACKUP_NOT_CERTIFIED');
+            const arts=await github.paginate(github.rest.actions.listWorkflowRunArtifacts,{owner,repo,run_id:39785774710,per_page:100});
+            const a=arts.find(a=>a.name==='github-pages'&&!a.expired);
+            if(!a)throw Error('HIGHFLY_ORIGINAL_PAGES_ARTIFACT_UNAVAILABLE');
+            console.log('RESTORE_SOURCE_BACKUP='+a.id+' size='+a.size_in_bytes);
+
+      - name: Download exact old Pages snapshot (no v0.45 /g2)
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 39785774710
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: old-snapshot
+
+      - name: Restore exact files with explicit G2 exclusion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path,PurePosixPath
+          import tarfile,json,hashlib
+          snapshot=Path('old-snapshot/artifact.tar')
+          assert snapshot.is_file(), 'PRE_G2_BACKUP_TARBALL_MISSING'
+          out=Path('site');out.mkdir()
+          with tarfile.open(snapshot,'r:') as t:
+            for m in t:
+              path=PurePosixPath(m.name)
+              if path.is_absolute() or '..' in path.parts or m.issym() or m.islnk() or not (m.isfile() or m.isdir()):
+                raise SystemExit('UNSAFE_BACKUP_CONTENTS')
+            t.extractall(out,filter='data')
+          for name in ['index.html','play.html','world0/world0-qa.json','highfly-origin-f12-qa.json']:
+            if not (out/name).is_file():
+              raise SystemExit('BACKUP_CONTENT_MISSING_'+name)
+          if (out/'g2').exists() or (out/'g2/g2-qa.json').exists():
+            raise SystemExit('FAILED_G2_ROUTE_PRESENT_IN_OLD_BACKUP')
+          size=sum(p.stat().st_size for p in out.rglob('*') if p.is_file())
+          if not 400000000<size<1073741824:raise SystemExit('BACKUP_FOOTPRINT_UNEXPECTED_'+str(size))
+          marker=json.loads((out/'world0/world0-qa.json').read_text())
+          if marker.get('sourceCommit')!='cb166cc23d4177260602b0b768d671e133b9313b':
+            raise SystemExit('ORIGINAL_WORLD0_MARKER_MISMATCH')
+          (out/'.nojekyll').touch(exist_ok=True)
+          print('HIGHFLY_ROLLBACK_ORIGINAL_SITE_STAGED size='+str(size))
+          PY
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publish:
+    name: Redeploy old HIGHFLY and verify old routes, not G2
+    needs: restore
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/
+    steps:
+      - uses: actions/deploy-pages@v4
+      - name: Confirm certified old World0 and F1 marker from live site
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,urllib.request,time
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for i in range(40):
+            try:
+              def fetch(p):
+                req=urllib.request.Request(base+p+'?rollbackCheck='+str(i),
+                  headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-ROLLBACK-VERIFY'})
+                with urllib.request.urlopen(req,timeout=45) as r:
+                  if r.status!=200:raise ValueError('HTTP '+str(r.status))
+                  return r.read()
+              old=json.loads(fetch('world0/world0-qa.json'))
+              f1=json.loads(fetch('highfly-origin-f12-qa.json'))
+              assert old.get('sourceCommit')=='cb166cc23d4177260602b0b768d671e133b9313b'
+              assert f1.get('sourceCommit')=='7518c22c11ff5ddffe09bb7792f8d67bb9e82038'
+              assert len(fetch('index.html'))>1000
+              print('HIGHFLY_PRE_G2_RESTORED_CONFIRMED='+base)
+              break
+            except Exception as e:
+              print('ROLLBACK_PROPAGATING',i,str(e)[:180])
+              if i==39:raise
+              time.sleep(5)
+          PY
+
+  retire_artifacts:
+    name: Remove only rejected Genesis G1/G2 CI artifacts
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Delete whitelisted obsolete artifacts; preserve old rollback source
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner,repo=context.repo.repo;
+            const oldSourceRun=39785774710;
+            const targets=[
+              39810722288,39811317790,39817190243,39817425264,
+              39819297367,39819835145,39821031041,
+              39821646981,39823284116,39823363032,
+              39823431534
+            ];
+            const allow=/^(HIGHFLY-GENESIS-G[12]-(AUDIT|WEBGL-STUDIO-NO-DEPLOY|PLAYABLE-NO-DEPLOY)|G2-PAGES-AUDIT|github-pages)$/;
+            let deleted=0,bytes=0,failures=[];
+            for(const run_id of targets){
+              if(run_id===oldSourceRun)throw Error('RESTORE_ARTIFACT_SOURCE_PROTECTED');
+              let artifacts;
+              try{artifacts=await github.paginate(
+                github.rest.actions.listWorkflowRunArtifacts,
+                {owner,repo,run_id,per_page:100}
+              );}catch(e){failures.push('list '+run_id+' '+e.message);continue;}
+              for(const art of artifacts){
+                if(!allow.test(art.name)){console.log('SKIP_UNKNOWN_ARTIFACT '+run_id+' '+art.name);continue;}
+                try{
+                  await github.rest.actions.deleteArtifact({owner,repo,artifact_id:art.id});
+                  deleted++; bytes+=(art.size_in_bytes||0);
+                  console.log('RETIRED '+run_id+' '+art.id+' '+art.name+' '+art.size_in_bytes);
+                }catch(e){failures.push('delete '+art.id+' '+e.message);}
+              }
+            }
+            console.log('HIGHFLY_FAILED_GENESIS_RETIRED_ARTIFACTS='+deleted+
+              ' COMPRESSED_BYTES='+bytes);
+            if(failures.length)throw Error('PARTIAL_CLEANUP '+failures.join('; '));
