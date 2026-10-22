@@ -1,0 +1,280 @@
+name: "HIGHFLY GENESIS G2 — Android Preview on Pages (SLIM)"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/highfly-genesis-g2-pages-mobile-main.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: highfly-genesis-g2-mobile-pages
+  cancel-in-progress: false
+
+jobs:
+  g2_native:
+    name: "Build authenticated G2 preview + full training tests, trim for mobile"
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    steps:
+      - name: Isolated HIGHFLY G2 branch
+        uses: actions/checkout@v4
+        with:
+          ref: highfly-genesis-g2-playable-20261022
+          path: overlay
+          persist-credentials: false
+          filter: blob:none
+
+      - name: Pinned ClaudeCraft 0.45 Studio source (unchanged donor)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 91e9c7753f2a132e55647455dd4fccfd5edbe6de
+          path: candidate
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /tests/
+            /electron/
+            /android/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /.gitignore
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+            /capacitor.config.ts
+
+      - name: HIGHFLY saved legacy algorithms (source-only)
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: cb166cc23d4177260602b0b768d671e133b9313b
+          path: legacy
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/highfly/training/
+            /src/highfly/combat/
+            /tests/
+
+      - name: Verify pins, no old R20-R40 overlays and no public branch writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate rev-parse HEAD)" = "91e9c7753f2a132e55647455dd4fccfd5edbe6de"
+          test "$(git -C legacy rev-parse HEAD)" = "cb166cc23d4177260602b0b768d671e133b9313b"
+          test "$(git -C overlay branch --show-current)" = "highfly-genesis-g2-playable-20261022"
+          test -s overlay/genesis/g2/training_runtime.ts
+          test -s overlay/genesis/g2/offline_training.ts
+          test -s overlay/genesis/g2/apply_candidate.mjs
+          echo "GENESIS_G2_SAFE_PINNED_DONORS=1"
+
+      - name: Install HIGHFLY selected algorithms + G1 compatibility + G2 gameplay
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p candidate/src/highfly/training candidate/src/highfly/combat candidate/src/highfly/genesis
+          for part in core reference_routine engine adaptation periodization bridge session_core pipeline; do
+            cp "legacy/src/highfly/training/$part.ts" "candidate/src/highfly/training/$part.ts"
+          done
+          cp legacy/src/highfly/combat/freedom_360.ts candidate/src/highfly/combat/freedom_360.ts
+          cp overlay/genesis/g1/class_training.ts candidate/src/highfly/genesis/class_training.ts
+          cp overlay/genesis/g2/training_runtime.ts candidate/src/highfly/genesis/training_runtime.ts
+          cp overlay/genesis/g2/offline_training.ts candidate/src/highfly/genesis/offline_training.ts
+          cp overlay/genesis/g1/class_training.test.ts candidate/tests/highfly_genesis_g1.test.ts
+          cp overlay/genesis/g2/native_training.test.ts candidate/tests/highfly_genesis_g2.test.ts
+          for t in core engine adaptation periodization bridge; do
+            cp "legacy/tests/highfly_training_$t.test.ts" "candidate/tests/highfly_training_$t.test.ts"
+          done
+          git -C candidate diff --exit-code -- src/main.ts src/sim src/game
+          (cd candidate && node ../overlay/genesis/g2/apply_candidate.mjs)
+          test -s candidate/src/highfly/genesis/offline_training.ts
+          grep -q "bootGenesisOfflineTraining(sim, playerClass, name)" candidate/src/main.ts
+          grep -q "genesisApplyTrainingAfterNativeRecalc(e, cls)" candidate/src/sim/entity.ts
+          grep -q "setGenesisTouchVector(x, y)" candidate/src/game/mobile_controls.ts
+          echo "GENESIS_G2_NATIVE_GAMEPLAY_WIRED_IN_CANDIDATE=1"
+
+      - name: Node and pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install ClaudeCraft pinned deps
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Full source TypeScript check
+        working-directory: candidate
+        run: pnpm exec tsc --noEmit --incremental false
+
+      - name: Native nine-class, real entity, offline training and movement tests
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run \
+            tests/highfly_genesis_g1.test.ts \
+            tests/highfly_genesis_g2.test.ts \
+            tests/highfly_training_core.test.ts \
+            tests/highfly_training_engine.test.ts \
+            tests/highfly_training_adaptation.test.ts \
+            tests/highfly_training_periodization.test.ts \
+            tests/highfly_training_bridge.test.ts \
+            tests/class_spec_kits.test.ts
+          echo "GENESIS_G2_NATIVE_NINE_CLASSES_TRAINING_GREEN=1"
+
+      - name: Build actual WebGL client and Studio, no Pages
+        working-directory: candidate
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          pnpm exec vite build --base=/cobalt-hollow-lab/
+          test -s dist/index.html
+          test -s dist/editor.html
+          echo "GENESIS_G2_OFFLINE_PLAYER_AND_STUDIO_BUNDLE_GREEN=1"
+
+      - name: Ensure immutable rollback source exists BEFORE altering Pages
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const run=await github.rest.actions.getWorkflowRun({owner,repo,run_id:39785774710});
+            if(run.data.conclusion!=='success' || run.data.head_sha!=='bb244d83130f08391124ea1efc2c0073f75a5e7f')
+              throw new Error('G2_PAGES_BACKUP_NOT_CERTIFIED');
+            const arts=await github.rest.actions.listWorkflowRunArtifacts({owner,repo,run_id:39785774710});
+            if(!arts.data.artifacts.some(a=>a.name==='github-pages'&&!a.expired))
+              throw new Error('G2_PAGES_BACKUP_ARTIFACT_EXPIRED');
+            console.log('GENESIS_G2_ORIGINAL_PUBLIC_BACKUP_PRESERVED=1');
+
+      - name: Slim G2 mobile Pages site; omit heavyweight optional preview media
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil,json,hashlib,re
+          src=Path('candidate/dist')
+          site=Path('site')
+          shutil.copytree(src,site)
+          # Level 1-20 trial only: no music/voices, Tidehold large scenery,
+          # or mount gallery. Nonessential for testing the training/joystick.
+          omit=['audio/music','audio/voice','models/tidehold','models/mounts']
+          for name in omit:
+            p=site/name
+            if p.exists():shutil.rmtree(p)
+          env=site/'env'
+          keep={'vale_day_2k.hdr','fen_day_2k.hdr','night_2k.hdr'}
+          if env.exists():
+            for p in env.rglob('*'):
+              if p.is_file() and p.suffix.lower()=='.hdr' and p.name not in keep:p.unlink()
+          route=site/'g2'
+          route.mkdir()
+          for page in ('index.html','editor.html','play.html'):
+            if not (site/page).is_file():raise SystemExit('G2_MISSING_ENTRY_'+page)
+            shutil.copy2(site/page,route/page)
+          html=(route/'index.html').read_text(encoding='utf8')
+          editor=(route/'editor.html').read_text(encoding='utf8')
+          for p,data in [('game',html),('studio',editor)]:
+            if '/cobalt-hollow-lab/assets/' not in data:
+              raise SystemExit('G2_WRONG_VITE_BASE_'+p)
+          required=['assets','models/chars','models/creatures','models/props',
+                    'textures/terrain','textures/structures','audio/sfx','env']
+          for name in required:
+            if not (site/name).is_dir():raise SystemExit('G2_REQUIRED_ASSET_MISSING_'+name)
+          audit={
+            'version':'HIGHFLY GENESIS G2 offline mobile preview',
+            'source':'91e9c7753f2a132e55647455dd4fccfd5edbe6de',
+            'g2Run':39817425264,
+            'training':'opt-in ?hfGenesis=1',
+            'classes':9,'levelCap':20,'studio':True,
+            'removedMedia':omit,'restrictedEnvHdr':sorted(keep),
+            'physicalS23':'NOT_YET_TESTED',
+            'sourceType':'verified G2 CI source, rebundled with project base',
+            'rollback':'GitHub Actions Pages artifact from run 39785774710'
+          }
+          (route/'g2-qa.json').write_text(json.dumps(audit,indent=2)+'\n')
+          size=sum(p.stat().st_size for p in site.rglob('*') if p.is_file())
+          print('G2_PAGES_PREVIEW_SIZE_BYTES='+str(size))
+          if size>990000000:raise SystemExit('G2_PAGES_PREVIEW_QUOTA_EXCEEDED_'+str(size))
+          (site/'.nojekyll').touch()
+          print('HIGHFLY_G2_ANDROID_SLIM_STAGED_GREEN=1')
+          PY
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publish:
+    needs: g2_native
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/g2/?hfGenesis=1
+    steps:
+      - uses: actions/deploy-pages@v4
+      - name: Verify G2 mobile route and its real JS/Studio entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import urllib.request,json,time
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for i in range(45):
+            try:
+              def get(path):
+                req=urllib.request.Request(base+path+'?hfGenesis=1&qa='+str(i),headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-G2-QA'})
+                with urllib.request.urlopen(req,timeout=45) as r:
+                  if r.status!=200:raise ValueError('HTTP '+str(r.status))
+                  return r.read()
+              qa=json.loads(get('g2/g2-qa.json'))
+              doc=get('g2/index.html')
+              studio=get('g2/editor.html')
+              assert qa['classes']==9 and qa['levelCap']==20
+              assert b'/cobalt-hollow-lab/assets/' in doc
+              assert b'/cobalt-hollow-lab/assets/' in studio
+              print('HIGHFLY_GENESIS_G2_PAGES_MOBILE_READY='+base+'g2/?hfGenesis=1')
+              break
+            except Exception as e:
+              print('G2_PAGES_PROPAGATION',i,str(e)[:220])
+              if i==44:raise
+              time.sleep(5)
+          PY
