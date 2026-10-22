@@ -35,6 +35,18 @@ edit('src/main.ts',[
     "  sim.setPlayerSkin(sim.playerId, skin);\n  // G2 training is an explicit local-only opt-in; NEVER on online/realms.\n  if (new URLSearchParams(location.search).get('hfGenesis') === '1') {\n    bootGenesisOfflineTraining(sim, playerClass, name);\n  }\n  // Offline has no account"
   ],
   [
+    "  const offlineAvailable = isOfflineModeAvailable(import.meta.env.DEV);",
+    "  // G2 standalone preview: opt-in only for the published /g2/ link.\\n  // Do not enable unauthenticated offline Sim globally on donor production.\\n  const offlineAvailable = isOfflineModeAvailable(import.meta.env.DEV) ||\\n    (import.meta.env.VITE_HIGHFLY_GENESIS_OFFLINE === '1' &&\\n      new URLSearchParams(location.search).get('hfGenesis') === '1' &&\\n      location.pathname.startsWith('/cobalt-hollow-lab/g2/'));"
+  ],
+  [
+    "    applyServerMode('online');",
+    "    applyServerMode(offlineAvailable && new URLSearchParams(location.search).get('hfGenesis') === '1' ? 'offline' : 'online');"
+  ],
+  [
+    "  wireStartScreens();\\n  initHomepageMusic();",
+    "  wireStartScreens();\\n  initHomepageMusic();\\n  // Enter HIGHFLY's nine-class offline creator directly; no donor login.\\n  if (import.meta.env.VITE_HIGHFLY_GENESIS_OFFLINE === '1' &&\\n      startupParams.get('hfGenesis') === '1' &&\\n      location.pathname.startsWith('/cobalt-hollow-lab/g2/')) {\\n    document.getElementById('btn-offline')?.click();\\n  }"
+  ],
+  [
     "    return { mi, facing };\n  }\n\n  const updateHoverCursor",
     "    // G2 touch locomotion: project the thumb into the independent camera\n    // basis while retaining the native Sim collision, movement and stamina.\n    const g2Stick = input.genesisTouchVector();\n    if (new URLSearchParams(location.search).get('hfGenesis') === '1' &&\n        g2Stick !== null && !movementFrozen() && !input.suspendMovement) {\n      const intent=resolveGenesisMove360(g2Stick, input.camYaw);\n      if (intent) {\n        mi.forward = true;\n        mi.back = false;\n        mi.strafeLeft = false;\n        mi.strafeRight = false;\n        facing = intent.facing;\n      }\n    }\n    return { mi, facing };\n  }\n\n  const updateHoverCursor"
   ],
