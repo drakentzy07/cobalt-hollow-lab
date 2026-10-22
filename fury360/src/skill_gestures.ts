@@ -49,7 +49,8 @@ export class FurySkillTouchController {
     spec: FurySkillVisualSpec; tone: FuryPreviewTone;
     cancelZone: FuryCancelZone | null;
   } | null = null;
-  constructor(private readonly hooks: FurySkillHooks) {}
+  private readonly hooks: FurySkillHooks;
+  constructor(hooks: FurySkillHooks) { this.hooks = hooks; }
 
   get aiming(): boolean { return this.active !== null; }
   get activeAbilityId(): string | null { return this.active?.spec.abilityId ?? null; }
