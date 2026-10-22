@@ -1,0 +1,22 @@
+name: FURY 360 contract tests (isolated; never deploy)
+on:
+  push:
+    branches:
+      - highfly-rebirth-fury360-engine-20261022
+    paths:
+      - 'fury360/**'
+      - '.github/workflows/fury360-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify portable intent contracts
+        run: node --experimental-strip-types --test fury360/tests/fury_core.test.ts
