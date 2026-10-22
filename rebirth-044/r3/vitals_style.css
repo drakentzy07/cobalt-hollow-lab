@@ -1,0 +1,22 @@
+/* REBIRTH R3 — original HP above the true MP+EN pools in native player frame. */
+body.hf-rebirth-r2 #player-frame #pf-resource {display:none!important;}
+body.hf-rebirth-r2 #hf-r3-vitals {width:100%;display:flex;flex-direction:column;gap:2px;}
+body.hf-rebirth-r2 .hf-vital-line {
+  width:100%;height:14px;display:flex;align-items:center;gap:3px;
+  font-size:9px;line-height:1;color:#f3f8ff;
+}
+body.hf-rebirth-r2 .hf-vital-line>span {width:18px;text-align:center;font-weight:700;}
+body.hf-rebirth-r2 .hf-vital-line>b {
+  min-width:53px;text-align:right;font-size:9px;font-weight:600;
+}
+body.hf-rebirth-r2 .hf-vital-track {
+  height:10px;flex:1;overflow:hidden;background:rgba(8,15,24,.82);
+  border:1px solid rgba(191,214,230,.45);border-radius:3px;
+}
+body.hf-rebirth-r2 .hf-vital-track>div {height:100%;transition:width .1s linear;}
+body.hf-rebirth-r2 .hf-mana .hf-vital-track>div {background:linear-gradient(90deg,#12549b,#3c9de6);}
+body.hf-rebirth-r2 .hf-energy .hf-vital-track>div {background:linear-gradient(90deg,#168a51,#31ca86);}
+@media (max-height:420px) {
+ body.hf-rebirth-r2 .hf-vital-line {height:11px;}
+ body.hf-rebirth-r2 .hf-vital-track {height:8px;}
+}

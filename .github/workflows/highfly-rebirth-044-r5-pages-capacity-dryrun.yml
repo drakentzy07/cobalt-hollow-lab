@@ -1,0 +1,121 @@
+name: "HIGHFLY REBIRTH 0.44 — R5 SAFE Pages Capacity Audit (NO DEPLOY)"
+on:
+  push:
+    branches: [highfly-rebirth-044-nine-native-classes-20261022]
+    paths:
+      - ".github/workflows/highfly-rebirth-044-r5-pages-capacity-dryrun.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: highfly-rebirth-pages-capacity
+  cancel-in-progress: false
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - name: Verify both artifacts are immutable GREEN runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            for (const cfg of [
+              {id:39829882419,sha:'64dd15fa13047733600760ef6d5d3895120b0c66'},
+              {id:39845513823,sha:'111a073c6ef735875458a1dcf16d5f90b40ef6d0'},
+            ]) {
+              const run=(await github.rest.actions.getWorkflowRun({
+                owner:context.repo.owner,repo:context.repo.repo,run_id:cfg.id
+              })).data;
+              if(run.status!=='completed'||run.conclusion!=='success'||run.head_sha!==cfg.sha)
+                throw Error('REBIRTH_R5_UNVERIFIED_ARTIFACT_'+cfg.id);
+            }
+      - name: Get exact currently restored original Pages source
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 39829882419
+          name: github-pages
+          github-token: ${{ github.token }}
+          path: baseline
+      - name: Get REBIRTH R4 WebGL candidate, without publishing
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 39845513823
+          name: HIGHFLY-REBIRTH-R4-WEBGL-NO-DEPLOY
+          github-token: ${{ github.token }}
+          path: candidate
+      - name: Calculate actual additive size, duplicate shares, collisions and isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p report
+          python3 - <<'PY'
+          import tarfile,hashlib,json
+          from pathlib import Path,PurePosixPath
+          root=Path('candidate')
+          assert (root/'index.html').is_file(), 'R5_MISSING_REBIRTH_INDEX'
+          assert (root/'manifest.webmanifest').is_file(), 'R5_MISSING_MANIFEST'
+          tarpath=Path('baseline/artifact.tar')
+          assert tarpath.is_file(), 'R5_MISSING_IMMUTABLE_PAGES_TAR'
+          cfiles={p.relative_to(root).as_posix():p for p in root.rglob('*') if p.is_file()}
+          current={}
+          with tarfile.open(tarpath,'r:') as tar:
+            for m in tar.getmembers():
+              pos=PurePosixPath(m.name)
+              if pos.is_absolute() or '..' in pos.parts or m.issym() or m.islnk():
+                raise SystemExit('R5_UNSAFE_BASELINE_ARCHIVE')
+              if m.isfile():
+                current[pos.as_posix().lstrip('./')]=(m.size,m)
+            baselineBytes=sum(v[0] for v in current.values())
+            candidateBytes=sum(p.stat().st_size for p in cfiles.values())
+            identicalSize=0; shared=[]; different=[];missing=[]
+            for path,f in cfiles.items():
+              if path in ('index.html','manifest.webmanifest','sw.js','service-worker.js'):
+                continue
+              match=current.get(path)
+              if not match:
+                missing.append((path,f.stat().st_size))
+                continue
+              if match[0]!=f.stat().st_size:
+                different.append((path,match[0],f.stat().st_size))
+                continue
+              with tar.extractfile(match[1]) as src:
+                before=hashlib.sha256(src.read()).digest()
+              if before==hashlib.sha256(f.read_bytes()).digest():
+                identicalSize+=f.stat().st_size
+                shared.append((path,f.stat().st_size))
+              else:
+                different.append((path,match[0],f.stat().st_size))
+          html=(root/'index.html').read_text(errors='replace')
+          policy={
+            'publishedBaseline':'GREEN action #39829882419',
+            'candidate':'GREEN action #39845513823',
+            'baseViteCorrect':'/cobalt-hollow-lab/rebirth/' in html,
+            'isolatedEntry':'/cobalt-hollow-lab/rebirth/?hfRebirth=1',
+            'baselineBytes':baselineBytes,'candidateBytes':candidateBytes,
+            'naiveCombinedBytes':baselineBytes+candidateBytes,
+            'shareableUnchangedBytes':identicalSize,
+            'bestCaseAfterSamePathDedupBytes':baselineBytes+candidateBytes-identicalSize,
+            'existingFiles':len(current),'candidateFiles':len(cfiles),
+            'sharedFiles':len(shared),'sharedLargest':sorted(shared,key=lambda z:-z[1])[:12],
+            'missingNewFiles':len(missing),'missingLargest':sorted(missing,key=lambda z:-z[1])[:18],
+            'collidingPaths':len(different),'collisionsLargest':sorted(different,key=lambda z:-z[2])[:12],
+            'directIsolatedCopyWithinOneGB':baselineBytes+candidateBytes<1000000000,
+            'isolationRequirements':['unique manifest id/scope','independent origin storage or safely scoped keys','do not change root files','no deploy until S23 verification'],
+            'deployPerformed':False,
+          }
+          Path('report/rebirth-r5-pages-capacity.json').write_text(json.dumps(policy,indent=2)+'\n')
+          print('REBIRTH_R5_ACTUAL_SIZE_REPORT='+json.dumps({
+            k:policy[k] for k in ('baselineBytes','candidateBytes','naiveCombinedBytes','shareableUnchangedBytes','bestCaseAfterSamePathDedupBytes','directIsolatedCopyWithinOneGB','collidingPaths','missingNewFiles')
+          }))
+          assert policy['baseViteCorrect'], 'R5_BAD_REBIRTH_ASSET_BASE'
+          PY
+      - name: Preserve real capacity data, no deploy and no Pages write permission
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-REBIRTH-R5-PAGES-CAPACITY-AUDIT-ONLY
+          path: report/
+          retention-days: 7

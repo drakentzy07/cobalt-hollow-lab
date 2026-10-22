@@ -1,0 +1,71 @@
+/* HIGHFLY REBIRTH 0.44 — native More-menu Training window.
+ * This belongs to the existing HUD, never a floating entry button.
+ * Does not change the appearance creator or the nine original class panels.
+ */
+#highfly-training-window[hidden] { display:none !important; }
+#highfly-training-window:not([hidden]) {
+  display:flex !important; flex-direction:column;
+  position:fixed !important; inset:5vh 5vw !important;
+  width:90vw !important; height:90dvh !important;
+  max-height:90dvh; max-width:960px;
+  margin:auto; background:#10191eee; color:#f4f3ee;
+  border:2px solid #b79458; border-radius:12px;
+  z-index:12000 !important; overflow:hidden;
+  box-shadow:0 10px 36px #000c;
+  font-size:14px; font-family:system-ui,sans-serif;
+}
+#highfly-training-window .panel-title {
+  display:flex; flex:0 0 auto; justify-content:space-between;
+  align-items:center; padding:12px 16px; color:#f0dfb8;
+  background:#1b2a2d; border-bottom:1px solid #8e734b;
+  min-height:52px; font-weight:800;
+}
+#highfly-training-close { min-width:40px;min-height:40px;font-size:24px;color:#fff; }
+#highfly-training-window .highfly-training-shell {
+  flex:1; min-height:0; overflow-y:auto;
+  overscroll-behavior:contain; touch-action:pan-y;
+  padding:clamp(10px,2.3vw,20px);
+}
+#highfly-training-window button, #highfly-training-window select,
+#highfly-training-window input {font-family:inherit;font-size:clamp(14px,1.6vw,18px);}
+#highfly-training-window button {min-height:40px;cursor:pointer;}
+#highfly-training-window .hf-training-header,
+#highfly-training-window .hf-training-controls,
+#highfly-training-window .hf-training-result,
+#highfly-training-window .hf-training-day,
+#highfly-training-window .hf-training-action {
+  margin:6px 0 12px;padding:10px;border-radius:8px;
+  background:#24343b;border:1px solid #50666a;
+}
+#highfly-training-window .hf-training-days,
+#highfly-training-window .hf-training-controls,
+#highfly-training-window .hf-training-actions {
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+}
+#highfly-training-window .hf-training-day {
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;color:#f4f3ee;cursor:pointer;
+}
+#highfly-training-window .hf-training-day.is-active,
+#highfly-training-window .hf-training-day.is-complete {
+  background:#2e664f;border-color:#b2dc9b;
+}
+#highfly-training-window input,
+#highfly-training-window select {
+  color:#faf9f3;background:#17272c; border:1px solid #65787e;
+  min-height:38px; padding:6px; max-width:100%;
+}
+#highfly-training-window p,#highfly-training-window small {
+  color:#d3d9d8;line-height:1.45;
+}
+#highfly-training-window .hf-training-result,
+#highfly-training-window .hf-training-outcomes {white-space:normal;overflow-wrap:anywhere;}
+body.mobile-touch #highfly-training-window:not([hidden]) {
+  top:0 !important;right:0 !important;bottom:0 !important;left:0 !important;
+  width:100vw !important;height:100dvh !important;
+  max-width:none !important;max-height:none !important;
+  border-radius:0;margin:0;transform:none !important;
+}
+body.mobile-touch #highfly-training-window .highfly-training-shell {
+  padding:12px 12px max(20px,env(safe-area-inset-bottom));
+}
