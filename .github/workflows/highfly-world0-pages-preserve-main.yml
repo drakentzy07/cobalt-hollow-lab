@@ -132,7 +132,8 @@ jobs:
           for p in original:
             if sha(site/p)!=baseline[p]:raise SystemExit('WORLD0_MUTATED_LIVE_FILE_'+p)
           size=sum(x.stat().st_size for x in site.rglob('*') if x.is_file())
-          if size>=1055000000:raise SystemExit('WORLD0_SITE_QUOTA_'+str(size))
+          # Hard stop below 1 GiB GitHub Pages published-site limit; leave >8 MB margin.
+          if size>=1065000000:raise SystemExit('WORLD0_SITE_QUOTA_'+str(size))
           (site/'.nojekyll').touch()
           print('HIGHFLY_WORLD0_ADDITIVE_PAGES_GREEN=1 newAssets='+str(n)+' size='+str(size))
           PY
