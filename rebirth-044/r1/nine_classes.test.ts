@@ -31,7 +31,7 @@ describe('HIGHFLY REBIRTH 0.44.7 — native nine-class freeze',()=>{
       const sim=new Sim({seed:23000+ALL_CLASSES.indexOf(cls),playerClass:cls,autoEquip:false});
       expect(sim.player.level).toBe(1);
       expect(sim.player.resourceType).toBe(CLASSES[cls].resourceType);
-      const native=abilitiesKnownAt(cls,1).map(x=>x.id).sort();
+      const native=abilitiesKnownAt(cls,1).map(x=>x.def.id).sort();
       const inGame=sim.players.get(sim.playerId)?.known.map(x=>x.def.id).sort()??[];
       for (const spellId of native) expect(inGame,spellId+' in native spellbook').toContain(spellId);
       expect(rebirthTrainingKey(cls,'Draken')).toContain(encodeURIComponent(cls));
