@@ -11,7 +11,7 @@ import { mountG01World } from './g01_world_mount';
 import { unityG01Position, type G01WorldManifest } from './g01_manifest';
 
 type QAState = {
-  mode: 'loading' | 'rgpoly' | 'calibration' | 'blocked';
+  mode: 'loading' | 'ready' | 'rgpoly' | 'calibration' | 'blocked';
   position: { x: number; y: number; z: number };
   frame: number;
   collisionChecks: number;
@@ -23,6 +23,8 @@ const cvs = document.querySelector<HTMLCanvasElement>('#viewport')!;
 const modeElement = document.querySelector<HTMLElement>('#mode')!;
 const status = document.querySelector<HTMLElement>('#status')!;
 const diagButton = document.querySelector<HTMLButtonElement>('#diag-btn')!;
+const entry = document.querySelector<HTMLElement>('#entry')!;
+const enterWorld = document.querySelector<HTMLButtonElement>('#enter-world')!;
 const pad = document.querySelector<HTMLElement>('#pad')!;
 const stickThumb = document.querySelector<HTMLElement>('#stick')!;
 const look = document.querySelector<HTMLElement>('#look')!;
@@ -115,10 +117,10 @@ function beginWorld(root:THREE.Group,manifest:G01WorldManifest,spawn:THREE.Vecto
   activeWorld=root;sourceManifest=manifest;
   computeSourceBounds(manifest);
   player.x=spawn.x;player.z=spawn.z;player.y=spawn.y;player.groundY=spawn.y;
-  state.mode='rgpoly';state.realMapLoaded=true;
-  modeElement.textContent='RG Poly CIUDAD REAL · G1 exploración experimental';
+  state.mode='ready';state.realMapLoaded=true;
+  modeElement.textContent='RG Poly cargado · Presioná ENTRAR A LA CIUDAD';
   status.style.display='none';
-  document.body.classList.add('playing');
+  entry.classList.add('ready');
 }
 function mapGroundHeight(x:number,z:number,fromY:number){
   if(!activeWorld)return 0;
@@ -208,6 +210,14 @@ dash.addEventListener('pointerdown',e=>{e.preventDefault();dashNow();});
 window.addEventListener('keydown',e=>{pressed.add(e.code);if(e.code==='Space'&&!e.repeat){e.preventDefault();jumpNow();}if(e.code.startsWith('Shift'))dashNow();});
 window.addEventListener('keyup',e=>pressed.delete(e.code));
 diagButton.addEventListener('click',diagnosticPlaza);
+enterWorld.addEventListener('click', () => {
+  if (state.mode !== 'ready' || !activeWorld || !sourceManifest) return;
+  entry.classList.remove('ready');
+  state.mode='rgpoly';
+  modeElement.textContent='RG Poly CIUDAD REAL · G1 exploración experimental';
+  document.body.classList.add('playing');
+  void screen.orientation?.lock?.('landscape').catch(() => undefined);
+});
 state.inputReady=true;
 const base=import.meta.env.BASE_URL;
 void mountG01World(scene,base).then(world=>{
