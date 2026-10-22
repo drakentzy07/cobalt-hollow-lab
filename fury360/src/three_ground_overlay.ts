@@ -107,7 +107,8 @@ function triangulate(points:readonly FuryPoint3[]):FuryPoint3[] {
  */
 export class FuryThreeGroundOverlay {
   private buffers: {fill:OverlayBuffer;outline:OverlayBuffer;trajectory:OverlayBuffer}|null=null;
-  constructor(private readonly opts:FuryThreeOverlayOptions) {}
+  private readonly opts:FuryThreeOverlayOptions;
+  constructor(opts:FuryThreeOverlayOptions) { this.opts=opts; }
   private ensureBuffers(){
     if(this.buffers)return this.buffers;
     this.buffers={
