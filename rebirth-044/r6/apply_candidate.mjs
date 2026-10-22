@@ -16,6 +16,8 @@ patch('src/sim/types.ts',[
   "export interface SimConfig {\n  highflyRebirthOfflineSavedState?: import('./character_state').CharacterState;\n  seed: number;"]
 ]);
 patch('src/sim/sim.ts',[
+ ['      compulsoryTutorial: cfg.compulsoryTutorial ?? false,',
+  '      compulsoryTutorial: cfg.compulsoryTutorial ?? false,\n      highflyRebirthOfflineSavedState: cfg.highflyRebirthOfflineSavedState,'],
  ['        autoEquip: this.cfg.autoEquip,\n        // Carried through, never derived:',
   '        autoEquip: this.cfg.autoEquip,\n        state: this.cfg.highflyRebirthOfflineSavedState,\n        // Carried through, never derived:'],
  ['      const ownPlayer = this.cfg.compulsoryTutorial',
