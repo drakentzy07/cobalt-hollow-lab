@@ -36,15 +36,15 @@ edit('src/main.ts',[
   ],
   [
     "  const offlineAvailable = isOfflineModeAvailable(import.meta.env.DEV);",
-    "  // G2 standalone preview: opt-in only for the published /g2/ link.\\n  // Do not enable unauthenticated offline Sim globally on donor production.\\n  const offlineAvailable = isOfflineModeAvailable(import.meta.env.DEV) ||\\n    (import.meta.env.VITE_HIGHFLY_GENESIS_OFFLINE === '1' &&\\n      new URLSearchParams(location.search).get('hfGenesis') === '1' &&\\n      location.pathname.startsWith('/cobalt-hollow-lab/g2/'));"
+    "  // G2 standalone preview: opt-in only for the published /g2/ link.\n  // Do not enable unauthenticated offline Sim globally on donor production.\n  const offlineAvailable = isOfflineModeAvailable(import.meta.env.DEV) ||\n    (import.meta.env.VITE_HIGHFLY_GENESIS_OFFLINE === '1' &&\n      new URLSearchParams(location.search).get('hfGenesis') === '1' &&\n      location.pathname.startsWith('/cobalt-hollow-lab/g2/'));"
   ],
   [
     "    applyServerMode('online');",
     "    applyServerMode(offlineAvailable && new URLSearchParams(location.search).get('hfGenesis') === '1' ? 'offline' : 'online');"
   ],
   [
-    "  wireStartScreens();\\n  initHomepageMusic();",
-    "  wireStartScreens();\\n  initHomepageMusic();\\n  // Enter HIGHFLY's nine-class offline creator directly; no donor login.\\n  if (import.meta.env.VITE_HIGHFLY_GENESIS_OFFLINE === '1' &&\\n      startupParams.get('hfGenesis') === '1' &&\\n      location.pathname.startsWith('/cobalt-hollow-lab/g2/')) {\\n    document.getElementById('btn-offline')?.click();\\n  }"
+    "  wireStartScreens();\n  initHomepageMusic();",
+    "  wireStartScreens();\n  initHomepageMusic();\n  // Enter HIGHFLY's nine-class offline creator directly; no donor login.\n  if (import.meta.env.VITE_HIGHFLY_GENESIS_OFFLINE === '1' &&\n      startupParams.get('hfGenesis') === '1' &&\n      location.pathname.startsWith('/cobalt-hollow-lab/g2/')) {\n    document.getElementById('btn-offline')?.click();\n  }"
   ],
   [
     "    return { mi, facing };\n  }\n\n  const updateHoverCursor",
