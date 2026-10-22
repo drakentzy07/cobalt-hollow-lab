@@ -253,6 +253,19 @@ jobs:
             if curl -fsSI "$G11_URL" >/dev/null 2>&1;then break;fi
             sleep 1
           done
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('site/genesis/index.html').read_text()
+          script="'use strict';"+src.split("<script>\n'use strict';",1)[1].split("</script>",1)[0]
+          Path('/tmp/highfly_g12_runtime_check.js').write_text(script)
+          test=Path('scripts/highfly_genesis_g11_pages_browser.mjs')
+          b=test.read_text()
+          b=b.replace("const errors=[];", "const errors=[];page.on('console',e=>console.log('G12_BROWSER_CONSOLE',e.type(),e.text()));")
+          b=b.replace("{timeout:90000}", "{timeout:25000}")
+          test.write_text(b)
+          print('HIGHFLY_G12_DIAGNOSTIC_RUNTIME_AND_BROWSER_LOG_ENABLED=1')
+          PY
+          node --check /tmp/highfly_g12_runtime_check.js
           node scripts/highfly_genesis_g11_pages_browser.mjs
           echo "HIGHFLY_G11_PUBLIC_CANDIDATE_BROWSER_GREEN=1"
 
