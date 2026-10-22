@@ -8,6 +8,7 @@ on:
       - "src/highfly/world_genesis/**"
       - "tests/highfly_world_genesis_g01.test.ts"
       - "tests/highfly_world_genesis_g1_manifest.test.ts"
+      - "tests/highfly_world_genesis_g2_isekai_trial.test.ts"
       - "docs/highfly-origin/WORLD_GENESIS_G01_FIRST_UNION.md"
   workflow_dispatch:
 
@@ -47,6 +48,7 @@ jobs:
           pnpm exec vitest run --exclude 'training/tests/**' \
             tests/highfly_world_genesis_g01.test.ts \
             tests/highfly_world_genesis_g1_manifest.test.ts \
+            tests/highfly_world_genesis_g2_isekai_trial.test.ts \
             tests/highfly_origin_unified_mode_contract.test.ts \
             tests/highfly_origin_f7_baseline.test.ts \
             tests/highfly_origin_f72_progression.test.ts \
