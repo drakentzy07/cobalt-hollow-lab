@@ -24,7 +24,7 @@ describe('HIGHFLY World0: native content and universal Warrior compatibility',()
     expect(m.placements.filter(x=>x.assetId==='biome/hex_tower')).toHaveLength(4);
     expect(m.placements.filter(x=>x.assetId==='props/inn'||x.assetId==='biome/hex_tavern')).toHaveLength(2);
     expect(m.blockers).toHaveLength(5);
-    expect(m.content.roads[0].length).toBeGreaterThan(4);
+    expect(m.content.roads?.[0]?.length).toBeGreaterThan(4);
   });
   it('survives the original editor map sanitizer without needing server or old map',()=>{
     const original=makeWorld0Map();
