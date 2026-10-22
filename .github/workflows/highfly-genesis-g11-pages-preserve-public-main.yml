@@ -1,4 +1,4 @@
-name: HIGHFLY GENESIS G1.1 — SAFE Pages Publish from MAIN workflow only
+name: HIGHFLY GENESIS G1.2 — SAFE Pages Cleanup from MAIN workflow only
 on:
   push:
     branches: [main]
@@ -120,6 +120,114 @@ jobs:
           print('HIGHFLY_G11_ADDITIVE_PAGES_BYTE_IDENTICAL_ROOT_GREEN=1 size='+str(size))
           PY
 
+      - name: Apply G12 floor, humanoid, geometry collision, camera and load-cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os,urllib.request
+          p=Path('site/genesis/index.html')
+          old=p.read_bytes()
+          cert='a475f66cfa8e1277b0d84ead7109282ccbc9459a8e0fabb91b5dea28cbbc93ef'
+          if hashlib.sha256(old).hexdigest()!=cert:raise SystemExit('G12_ORIGINAL_RG_POLY_NOT_CERTIFIED')
+          with urllib.request.urlopen('https://drakentzy07.github.io/cobalt-hollow-lab/genesis/index.html?g12-preflight=1',timeout=50) as u:
+            if hashlib.sha256(u.read()).hexdigest()!=cert:raise SystemExit('G12_LIVE_NEWER_PAGES_ABORT')
+          s=old.decode('utf8')
+          def r(a,b):
+           global s
+           if s.count(a)!=1:raise SystemExit('G12_UNEXPECTED_SOURCE_'+str(s.count(a))+'_'+a[:44])
+           s=s.replace(a,b)
+          r('G1.1 — Entrar en la Ciudad','G1.2 — Limpieza Jugable')
+          r('CIUDAD G1.1 · Edificios RG Poly reales','CIUDAD G1.2 · Edificios RG Poly reales')
+          r('G1.1 técnica: edificios y ubicaciones','G1.2 limpieza: edificios y ubicaciones')
+          r('modo G1.1 exploración','modo G1.2 limpio')
+          r('Suelo y tintes aproximados; Hunter visual provisional.','Suelo técnico con pasto; Hunter humanoide provisional.')
+          r('<button id="enter-world" type="button">ENTRAR A LA CIUDAD</button>',
+            '<button id="enter-world" type="button" disabled>PREPARANDO LA CIUDAD…</button><div id="load-hint" style="font-size:11px;color:#9ce2cb">Iniciando ciudad WebGL2…</div><button id="retry" type="button" style="display:none;width:auto;height:auto" onclick="location.reload()">REINTENTAR</button>')
+          r("'use strict';\nconst cvs=", """'use strict';
+          setTimeout(()=>{try{startPreview()}catch(e){
+            console.error('HIGHFLY_G12_INIT',e);
+            const msg=document.getElementById('load-hint'),retry=document.getElementById('retry');
+            if(msg)msg.textContent='Error de carga: '+String(e.message||e).slice(0,160);
+            if(retry)retry.style.display='inline-block';
+          }},65);
+          function startPreview(){
+          const cvs=""")
+          r('outColor=vec4(pow(rgba.rgb*l,vec3(.83)),1.);',"""vec3 base=pow(rgba.rgb*l,vec3(.83));
+          if(rgba.a<.85){
+            float patch=fract(sin(dot(floor(wc.xz*.55),vec2(12.9898,78.233)))*43758.5453);
+            base=mix(vec3(.24,.34,.18),vec3(.34,.47,.24),patch);
+            base=mix(base,vec3(.39,.34,.23),(1.-smoothstep(3.0,4.9,abs(wc.x)))*.82);
+          }
+          outColor=vec4(base,1.);""")
+          r('gpu.push({vao,count:indices.count,type:components[indices.componentType],min:pos.min,max:pos.max});',
+            'gpu.push({vao,count:indices.count,type:components[indices.componentType],min:pos.min,max:pos.max,posAcc:pos,indexAcc:indices});')
+          r('const item={lo,hi};solid.push(item);','const item={lo,hi,ent};solid.push(item);')
+          r("""function isBlocked(x,y,z){
+           collisionChecks++;
+           const cx=Math.floor(x/GRID_SIZE),cz=Math.floor(z/GRID_SIZE);
+           const candidates=solidCells.get(gridKey(cx,cz))||[];
+           return candidates.some(b=>y+1.45>b.lo[1]&&y+.25<b.hi[1]&&x>b.lo[0]-.36&&x<b.hi[0]+.36&&z>b.lo[2]-.36&&z<b.hi[2]+.36);
+          }""","""// Geometry-aware prototype narrow phase: actual source wall triangles, not solid buildings.
+          const PR=.42;
+          function indexAt(a,i){let v=json.bufferViews[a.bufferView],o=binStart+(v.byteOffset||0)+(a.byteOffset||0)+i*(v.byteStride||componentSize[a.componentType]);return a.componentType===5125?dv.getUint32(o,true):a.componentType===5123?dv.getUint16(o,true):dv.getUint8(o);}
+          function pointAt(a,i){let v=json.bufferViews[a.bufferView],o=binStart+(v.byteOffset||0)+(a.byteOffset||0)+i*(v.byteStride||12);return[dv.getFloat32(o,true),dv.getFloat32(o+4,true),dv.getFloat32(o+8,true)];}
+          function transformAt(v,m){return[m[0]*v[0]+m[4]*v[1]+m[8]*v[2]+m[12],m[1]*v[0]+m[5]*v[1]+m[9]*v[2]+m[13],m[2]*v[0]+m[6]*v[1]+m[10]*v[2]+m[14]];}
+          function nearEdge(x,z,a,b){let dx=b[0]-a[0],dz=b[2]-a[2],u=Math.max(0,Math.min(1,((x-a[0])*dx+(z-a[2])*dz)/(dx*dx+dz*dz||1))),xx=x-a[0]-u*dx,zz=z-a[2]-u*dz;return xx*xx+zz*zz<PR*PR;}
+          function triangleWall(b,x,y,z){
+           const m=b.ent.world,g=b.ent.geom,v=g.posAcc,i=g.indexAcc;if(v.componentType!==5126)return false;
+           for(let t=0;t<i.count;t+=3){
+           const A=transformAt(pointAt(v,indexAt(i,t)),m),B=transformAt(pointAt(v,indexAt(i,t+1)),m),C=transformAt(pointAt(v,indexAt(i,t+2)),m);
+           if(Math.max(A[1],B[1],C[1])<y+.1||Math.min(A[1],B[1],C[1])>y+1.6)continue;
+           if(x<Math.min(A[0],B[0],C[0])-PR||x>Math.max(A[0],B[0],C[0])+PR||z<Math.min(A[2],B[2],C[2])-PR||z>Math.max(A[2],B[2],C[2])+PR)continue;
+           const ux=B[0]-A[0],uy=B[1]-A[1],uz=B[2]-A[2],vx=C[0]-A[0],vy=C[1]-A[1],vz=C[2]-A[2],nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;
+           if(Math.abs(ny)>.67*Math.hypot(nx,ny,nz))continue;
+           if(nearEdge(x,z,A,B)||nearEdge(x,z,B,C)||nearEdge(x,z,C,A))return true;
+           }
+           return false;
+          }
+          function isBlocked(x,y,z){
+           collisionChecks++;
+           const candidates=solidCells.get(gridKey(Math.floor(x/GRID_SIZE),Math.floor(z/GRID_SIZE)))||[];
+           return candidates.some(b=>y+1.6>b.lo[1]&&y+.1<b.hi[1]&&x>b.lo[0]-PR&&x<b.hi[0]+PR&&z>b.lo[2]-PR&&z<b.hi[2]+PR&&triangleWall(b,x,y,z));
+          }
+          function safeEye(focus,desired){
+           let r=[desired[0]-focus[0],desired[1]-focus[1],desired[2]-focus[2]],hit=1;
+           for(const b of solid){
+           if(Math.abs(b.ent.x-focus[0])>13||Math.abs(b.ent.z-focus[2])>13)continue;
+           let lo=0,hi=1,ok=true;
+           for(let k=0;k<3;k++){
+           if(Math.abs(r[k])<1e-8){if(focus[k]<b.lo[k]-.1||focus[k]>b.hi[k]+.1)ok=false;continue;}
+           let a=(b.lo[k]-.1-focus[k])/r[k],c=(b.hi[k]+.1-focus[k])/r[k];if(a>c){let swap=a;a=c;c=swap;}
+           lo=Math.max(lo,a);hi=Math.min(hi,c);if(lo>hi){ok=false;break;}
+           }
+           if(ok&&hi>=0&&lo>.08&&lo<hit)hit=lo;
+           }
+           const f=Math.min(1,Math.max(.19,hit-.045));return[focus[0]+r[0]*f,focus[1]+r[1]*f,focus[2]+r[2]*f];
+          }""")
+          r("const startBtn=document.getElementById('enter-world');startBtn.onclick=()=>{",
+            "const startBtn=document.getElementById('enter-world');startBtn.disabled=false;startBtn.textContent='ENTRAR A LA CIUDAD';document.getElementById('load-hint').textContent='Ciudad lista · G1.2';startBtn.onclick=()=>{")
+          r("const floor=boxMesh([-420,0,-400,220,0,-400,220,0,300,-420,0,300],[0,1,2,0,2,3],[.31,.48,.3,1]);",
+            "const floor=boxMesh([-420,0,-400,220,0,-400,220,0,300,-420,0,300],[0,2,1,0,3,2],[.31,.48,.3,.7]);")
+          r("const radius=7.4,focus=[player.x,player.y+1.5,player.z],eye=[player.x-Math.sin(yaw)*Math.cos(pitch)*radius,player.y+3.5+Math.sin(pitch)*radius,player.z-Math.cos(yaw)*Math.cos(pitch)*radius];const vp=matMul(perspective(1.13,W/H,.1,250),lookAt(eye,focus));",
+            "const radius=6.4,focus=[player.x,player.y+1.4,player.z],desired=[player.x-Math.sin(yaw)*Math.cos(pitch)*radius,player.y+2.8+Math.sin(pitch)*radius,player.z-Math.cos(yaw)*Math.cos(pitch)*radius];const eye=safeEye(focus,desired);const vp=matMul(perspective(1.13,W/H,.1,250),lookAt(eye,focus));")
+          r("const unitbox=boxMesh([-.45,0,-.35,.45,0,-.35,.45,1.65,-.35,-.45,1.65,-.35,-.45,0,.35,.45,0,.35,.45,1.65,.35,-.45,1.65,.35],[0,2,1,0,3,2,4,5,6,4,6,7,0,1,5,0,5,4,1,2,6,1,6,5,2,3,7,2,7,6,3,0,4,3,4,7],[.22,.56,.75,1]);",
+           """const unitbox=boxMesh([-.5,0,-.5,.5,0,-.5,.5,1,-.5,-.5,1,-.5,-.5,0,.5,.5,0,.5,.5,1,.5,-.5,1,.5],[0,2,1,0,3,2,4,5,6,4,6,7,0,1,5,0,5,4,1,2,6,1,6,5,2,3,7,2,7,6,3,0,4,3,4,7],[.25,.42,.50,1]);const hunterParts=[[[0,.85,0],[.64,.85,.38]],[[0,1.53,0],[.48,.46,.43]],[[-.47,.85,0],[.23,.78,.30]],[[.47,.85,0],[.23,.78,.30]],[[-.19,.08,0],[.27,.71,.32]],[[.19,.08,0],[.27,.71,.32]]];""")
+          r("gl.uniformMatrix4fv(locW,false,trs([player.x,player.y,player.z],[1,1,1]));gl.bindVertexArray(unitbox.vao);gl.drawElements(gl.TRIANGLES,unitbox.count,unitbox.type,0);",
+           """for(let n=0;n<hunterParts.length;n++){let p=hunterParts[n],swing=(n>=2?Math.sin(t*.008+(n%2)*Math.PI)*.07*Math.min(1,Math.hypot(mx,my)):0);gl.uniformMatrix4fv(locW,false,trs([player.x+p[0][0],player.y+p[0][1]+swing,player.z+p[0][2]],p[1]));gl.bindVertexArray(unitbox.vao);gl.drawElements(gl.TRIANGLES,unitbox.count,unitbox.type,0);}""")
+          r("}requestAnimationFrame(animate);\n</script></body></html>",
+            "}requestAnimationFrame(animate);window.__highflyGenesisG1.build='G1.2';window.__highflyGenesisG1.groundFacesUp=true;window.__highflyGenesisG1.collisionMode='source-triangle-walls';} // G12 boot\n</script></body></html>")
+          p.write_bytes(s.encode('utf8'))
+          qa=Path('site/genesis/genesis-qa.json')
+          d=json.loads(qa.read_text())
+          d.update({'edition':'HIGHFLY WORLD GENESIS G1.2 mobile cleanup pre-alpha','sourceCommit':os.environ['GITHUB_SHA'],
+          'sourceSHA256':hashlib.sha256(p.read_bytes()).hexdigest(),'collisionMode':'source-triangle-walls',
+          'terrainUnityNative':False,'hunterKayKit':False,'physicalS23':'PENDING_PLAYER_TEST'})
+          qa.write_text(json.dumps(d,indent=2)+'\n')
+          print('HIGHFLY_GENESIS_G12_CLEANUP_STAGE_GREEN=1 sha256='+d['sourceSHA256'])
+          PY
+
       - name: Install Node and frozen browser dependencies for 844x390 touch smoke
         uses: actions/setup-node@v4
         with:
@@ -165,15 +273,14 @@ jobs:
     steps:
       - name: Publish new /genesis/ beside byte-identical WORLD and LAB
         uses: actions/deploy-pages@v4
-      - name: Verify live public G1.1 content and unchanged original root
+      - name: Verify live public G1.2 cleanup and unchanged original root
         shell: bash
         env:
-          G11_SHA: 5869fe8ea4914902fa37a5e1de96db57344062bd
+          G11_SHA: ${{ github.sha }}
         run: |
           python3 - <<'PY'
           import hashlib,json,os,time,urllib.request
           base='https://drakentzy07.github.io/cobalt-hollow-lab/'
-          expected='a475f66cfa8e1277b0d84ead7109282ccbc9459a8e0fabb91b5dea28cbbc93ef'
           for attempt in range(30):
               try:
                   def get(p):
@@ -185,12 +292,12 @@ jobs:
                   html=get('genesis/index.html')
                   qa=json.loads(get('genesis/genesis-qa.json'))
                   root=json.loads(get('highfly-origin-f12-qa.json'))
-                  if hashlib.sha256(html).hexdigest()!=expected:raise AssertionError('G11_WRONG_CITY_HTML')
-                  if qa.get('sourceCommit')!=os.environ['G11_SHA'] or qa.get('cityPartial') is not True:
+                  if hashlib.sha256(html).hexdigest()!=qa.get('sourceSHA256'):raise AssertionError('G12_WRONG_CITY_HTML')
+                  if qa.get('sourceCommit')!=os.environ['G11_SHA'] or qa.get('collisionMode')!='source-triangle-walls':
                       raise AssertionError('G11_WRONG_QA')
                   if root.get('sourceCommit')!='7518c22c11ff5ddffe09bb7792f8d67bb9e82038':
                       raise AssertionError('G11_ORIGINAL_DRAKEN_ROOT_CHANGED')
-                  print('HIGHFLY_GENESIS_G11_PUBLIC_PAGES_REAL_PARTIAL_CITY_GREEN='+base+'genesis/',flush=True)
+                  print('HIGHFLY_GENESIS_G12_CLEANUP_PAGES_GREEN='+base+'genesis/',flush=True)
                   break
               except Exception as exc:
                   print('HIGHFLY_G11_PAGES_PROPAGATION',attempt,str(exc)[:180],flush=True)
