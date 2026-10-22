@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { createPlayer, recalcPlayerStats } from '../../src/sim/entity';
-import type { PlayerEquipment, PlayerEquipmentInstances } from '../../src/sim/entity';
-import { ALL_CLASSES } from '../../src/sim/types';
+import { createPlayer, recalcPlayerStats } from '../src/sim/entity';
+import type { PlayerEquipment, PlayerEquipmentInstances } from '../src/sim/entity';
+import { ALL_CLASSES } from '../src/sim/types';
 import {
   createHighflyHunterProfile,
   commitTrainingCoreStat,
   HIGHFLY_TRAINING_SCORING_VERSION,
-} from '../../src/highfly/training/core';
+} from '../src/highfly/training/core';
 import {
   genesisAttachTraining,
   genesisApplyTrainingAfterNativeRecalc,
   genesisDetachTraining,
-} from '../../src/highfly/genesis/training_runtime';
+} from '../src/highfly/genesis/training_runtime';
 
 const gear = {} as PlayerEquipment;
 const instances = {} as PlayerEquipmentInstances;
