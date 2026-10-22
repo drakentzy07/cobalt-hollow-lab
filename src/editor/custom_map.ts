@@ -14,7 +14,7 @@ import {
   type MapDocMeta,
   type MapPlacement,
 } from '../sim/map_doc';
-import type { PlacedAsset, WorldContent } from '../sim/types';
+import { emptyZoneProps, type PlacedAsset, type WorldContent } from '../sim/types';
 import { WATER_LEVEL } from '../sim/world';
 import { assetById } from './asset_catalog.generated';
 import type { ZoneContent } from './model';
@@ -123,7 +123,8 @@ export function customMapToWorldContent(map: CustomMap): WorldContent {
     npcs: deepClone(map.content.npcs as WorldContent['npcs']),
     groundObjects: deepClone(map.content.objects as WorldContent['groundObjects']),
     roads: deepClone((map.content.roads ?? BUILTIN_WORLD.roads) as WorldContent['roads']),
-    props: clonePropsWithoutEastbrookLayout(BUILTIN_WORLD.props),
+    // World0 must not bring donor town props back just because the editor re-projects.
+    props: map.meta.id === 'highfly-world0-coast-v1' ? emptyZoneProps() : clonePropsWithoutEastbrookLayout(BUILTIN_WORLD.props),
     playerStart: { x: start.x, z: start.z },
     terrainEdits: deepClone(map.terrainEdits),
     placements: placementsToPlayAssets(map.placements),

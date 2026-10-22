@@ -1,6 +1,7 @@
 import {describe,expect,it} from 'vitest';
 import {BUILTIN_WORLD, MOBS} from '../src/sim/data';
 import {sanitizeMapDoc} from '../src/sim/map_doc';
+import {customMapToWorldContent} from '../src/editor/custom_map';
 import {makeWorld0Map,makeWorld0Content,WORLD0_GREETER_ID,WORLD0_HUNTER_SPAWN,WORLD0_ID} from '../src/highfly/world_zero/world0_map';
 import {ORIGIN_HUNTER_CARRIER_CLASS} from '../src/highfly/origin/f1_core';
 import {offlineWorldConfig} from '../src/game/offline_world_config';
@@ -13,6 +14,7 @@ describe('HIGHFLY World0: native content and universal Warrior compatibility',()
     expect(Object.keys(world.npcs)).toEqual([WORLD0_GREETER_ID]);
     expect(world.groundObjects).toEqual([]);
     expect(world.props.buildings).toEqual([]);
+    expect(customMapToWorldContent(m).props.buildings).toEqual([]);
     expect(world.props.docks).toEqual([]);
     expect(world.services).toBeUndefined();
     expect(world.playerStart).toEqual(WORLD0_HUNTER_SPAWN);
