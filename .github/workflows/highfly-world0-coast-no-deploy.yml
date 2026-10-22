@@ -1,0 +1,65 @@
+name: HIGHFLY WORLD0 - Native ClaudeCraft Map Universal Hunter (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-world0-coast-desembarco-v01-20261022]
+    paths:
+      - ".github/workflows/highfly-world0-coast-no-deploy.yml"
+      - "src/highfly/world_zero/**"
+      - "src/editor/app.ts"
+      - "src/editor/main.ts"
+      - "src/editor/playtest.ts"
+      - "src/game/editor_playtest.ts"
+      - "src/main.ts"
+      - "tests/highfly_world0_editor_trial.test.ts"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-world0-coast-no-deploy
+  cancel-in-progress: true
+jobs:
+  world0:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    name: Native Sim Editor World0 and Real Web Build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install source deps
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Full TypeScript check
+        run: pnpm exec tsc --noEmit --incremental false
+      - name: World0, save guards, universal equipment
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run --exclude 'training/tests/**' \
+            tests/highfly_world0_editor_trial.test.ts \
+            tests/highfly_origin_f1_universal_hunter.test.ts \
+            tests/highfly_origin_unified_mode_contract.test.ts
+          echo HIGHFLY_WORLD0_NATIVE_MAP_WARRIOR_CARRIER_GREEN=1
+      - name: Real Vite build for game and editor
+        shell: bash
+        env:
+          VITE_COBALT_BASE: /cobalt-hollow-lab/world0/
+        run: |
+          set -euo pipefail
+          pnpm exec vite build
+          test -s dist/index.html
+          test -s dist/editor.html
+          test -s dist/models/biome/hex_ship_blue.glb
+          test -s dist/models/biome/hex_tower.glb
+          test -s dist/models/props/inn.glb
+          echo HIGHFLY_WORLD0_NATIVE_GAME_EDITOR_BUILD_GREEN=1
+      - name: No production deploy
+        run: echo HIGHFLY_WORLD0_NO_PAGES_NO_SAVE_MUTATIONS=1
