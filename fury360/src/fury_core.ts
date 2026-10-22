@@ -63,6 +63,14 @@ export class FuryAimGesture {
     return true;
   }
   get busy(): boolean { return this.active !== null; }
+  /** Follow the player's REAL current location while aiming on the move.
+   * Never locks or modifies camera/physics; input yaw comes from native camera. */
+  updateContext(pointer: number, origin: FuryGroundPoint, yaw: number): boolean {
+    if (!this.active || this.active.pointer !== pointer ||
+        !finite(origin.x, origin.z, yaw)) return false;
+    this.active = { ...this.active, origin, yaw };
+    return true;
+  }
   preview(pointer: number, dx: number, dy: number): FuryAimResult | null {
     const a = this.active;
     if (!a || a.pointer !== pointer || !finite(dx, dy)) return null;
