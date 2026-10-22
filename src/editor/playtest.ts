@@ -15,6 +15,7 @@ export interface PlaytestOptions {
   seed: number;
   playerClass: string;
   playerName: string;
+  highflyUniversal?: boolean;
 }
 
 // Stash the world and navigate to the game. Returns false if storage is blocked
@@ -25,6 +26,7 @@ export function launchPlaytest(world: WorldContent, opts: PlaytestOptions): bool
     seed: opts.seed,
     playerClass: opts.playerClass,
     playerName: opts.playerName,
+    highflyUniversal: opts.highflyUniversal===true,
   });
   let stored = false;
   try {
@@ -33,6 +35,6 @@ export function launchPlaytest(world: WorldContent, opts: PlaytestOptions): bool
   } catch {
     stored = false;
   }
-  if (stored) window.location.href = '/index.html';
+  if (stored) window.location.href = `${import.meta.env.BASE_URL}index.html`;
   return stored;
 }

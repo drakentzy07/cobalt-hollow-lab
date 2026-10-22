@@ -7,6 +7,7 @@ import { CAMPS, GROUND_OBJECTS, NPCS, ROADS, ZONES } from '../sim/data';
 import './styles.css';
 import { ensureLocaleLoaded, getLanguage, languageTag, t } from '../ui/i18n';
 import { EditorApp } from './app';
+import { makeWorld0Map } from '../highfly/world_zero/world0_map';
 
 // Deep clone so editing never mutates the imported module globals (BUILTIN_WORLD
 // shares those arrays); the editor works on its own document.
@@ -37,6 +38,8 @@ async function boot(): Promise<void> {
     objects: clone(GROUND_OBJECTS),
     roads: clone(ROADS),
   });
+  // The query is intentionally isolated to this test branch, not production.
+  if(new URLSearchParams(location.search).get('world0')==='1') app.openHighflyWorld0Preset(makeWorld0Map());
   // Dev-only handle for debugging and E2E inspection.
   (window as unknown as { __editor?: EditorApp }).__editor = app;
 }

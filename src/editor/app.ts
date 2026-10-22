@@ -11,6 +11,7 @@
 
 import { invalidateStaticColliders } from '../sim/colliders';
 import { clonePropsWithoutEastbrookLayout } from '../sim/custom_world_props';
+import { WORLD0_ID } from '../highfly/world_zero/world0_map';
 import { BUILTIN_WORLD, MOBS, PLAYER_START, setActiveWorldContent } from '../sim/data';
 import {
   clampBlockerSegment,
@@ -1938,6 +1939,7 @@ export class EditorApp {
       seed: this.map.meta.seed,
       playerClass: 'warrior',
       playerName: t('editor.playtestPlayerName'),
+      highflyUniversal: this.map.meta.id === WORLD0_ID,
     });
     if (!ok) this.toasts.error(t('editor.status.playtestFailed'));
   }
@@ -2022,6 +2024,9 @@ export class EditorApp {
       void this.save(true);
     }
   }
+
+  /** Open the isolated World0 prefab as a real, editable native map. */
+  openHighflyWorld0Preset(map:CustomMap):void { this.loadMap(map); }
 
   // Replace the whole working document and rebuild the editor over its content.
   private loadMap(map: CustomMap): void {

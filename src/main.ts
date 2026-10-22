@@ -5488,10 +5488,16 @@ async function startOffline(
   world?: WorldContent,
   seedOverride?: number,
   mode: HighflyOriginMode = 'world',
+  world0UniversalPreview = false,
 ): Promise<void> {
   stopShaderWarmup();
   if (!(await prepareWorldEntry())) return;
   // The session mode is explicit. Storage callbacks below capture it by value.
+  // World0's private preset uses the same universal Warrior carrier. No saves.
+  if(world && world0UniversalPreview){
+    setActiveHighflyOriginMode('world');
+    document.body.classList.add('hf-origin-unified','hf-origin-f1');
+  }
   if (!world) {
     setActiveHighflyOriginMode(mode);
     // Legacy F2.x /lab/ routes retain their original isolated QA behavior.
@@ -5554,7 +5560,7 @@ async function startOffline(
 
   const offlineCfg = offlineWorldConfig({
     // One classless Hunter. The warrior ID is a hidden compatibility carrier.
-    originUniversalHunter: !world,
+    originUniversalHunter: !world || world0UniversalPreview,
     playerClass,
     name,
     // A cloned content descriptor changes ONLY this solo Hunter's arrival.
@@ -5584,7 +5590,7 @@ async function startOffline(
   if (!world && mode === 'lab' && !matchingOfflineSave) sim.setPlayerLevel(HIGHFLY_LAB_START_LEVEL, sim.playerId);
   if (!matchingOfflineSave) {
     sim.setPlayerSkin(sim.playerId, skin);
-    if (!world) {
+    if (!world || world0UniversalPreview) {
       // Native Sim-verified removal recalculates equipment stats. Unlike simply
       // hiding models, the Hunter actually begins with empty equipment slots.
       for (const slot of ['mainhand', 'offhand', 'chest'] as const) {
@@ -11692,6 +11698,7 @@ function fadeOutHomepageMusic(durationMs = 1600): void {
 // malformed/absent request falls through to the normal home flow.
 const editorPlaytest = takeEditorPlaytestRequest();
 const startupParams = new URLSearchParams(location.search);
+const highflyWorld0Direct = startupParams.get('world0') === '1';
 const diagnosticsAutoOffline =
   import.meta.env.DEV &&
   startupParams.get('diagnostics') === '1' &&
@@ -11727,7 +11734,14 @@ if (editorPlaytest) {
     0,
     editorPlaytest.content,
     editorPlaytest.seed,
+    'world',
+    editorPlaytest.highflyUniversal === true,
   );
+} else if(highflyWorld0Direct) {
+  // Direct native-Sim pre-alpha entry. Never load or autosave Draken WORLD/LAB.
+  void import('./highfly/world_zero/world0_map').then(({makeWorld0Content})=>
+    startOffline(ORIGIN_HUNTER_CARRIER_CLASS,'WorldZero',0,makeWorld0Content(),undefined,'world',true)
+  ).catch(e=>console.error('[HIGHFLY WORLD0] isolated boot failed',e));
 } else if (diagnosticsAutoOffline) {
   if (!HIGHFLY_F11_OFFLINE_FIRST) startSitePresence('home');
   void startOffline('warrior', 'Diagnostics', 0);

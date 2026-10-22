@@ -19,6 +19,7 @@ export interface EditorPlaytestRequest {
   seed: number;
   playerClass: PlayerClass;
   playerName: string;
+  highflyUniversal?: boolean;
 }
 
 const VALID_CLASSES: ReadonlySet<string> = new Set([
@@ -80,7 +81,11 @@ export function takeEditorPlaytestRequest(): EditorPlaytestRequest | null {
       typeof obj.playerName === 'string' && obj.playerName.trim()
         ? obj.playerName.slice(0, 24)
         : 'Mapmaker';
-    return { content: obj.content as WorldContent, seed, playerClass: pc, playerName: name };
+    // An untrusted session blob cannot opt into universal permissions without
+    // the exact isolated native WORLD0 content anchor.
+    const highflyUniversal=obj.highflyUniversal === true && pc === 'warrior' &&
+      !!(obj.content as WorldContent).npcs?.hf_world0_greeter;
+    return {content:obj.content as WorldContent,seed,playerClass:pc,playerName:name,highflyUniversal};
   } catch {
     return null;
   }
