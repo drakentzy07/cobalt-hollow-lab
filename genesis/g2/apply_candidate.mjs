@@ -27,8 +27,8 @@ edit('src/sim/entity.ts',[
 
 edit('src/main.ts',[
   [
-    "import ",
-    "import { bootGenesisOfflineTraining } from './highfly/genesis/offline_training';\nimport { resolveFreedom360 as resolveGenesisMove360 } from './highfly/combat/freedom_360';\nimport "
+    "import { applyFrameGeometrySetting } from './game/frame_geometry_settings';",
+    "import { bootGenesisOfflineTraining } from './highfly/genesis/offline_training';\nimport { resolveFreedom360 as resolveGenesisMove360 } from './highfly/combat/freedom_360';\nimport { applyFrameGeometrySetting } from './game/frame_geometry_settings';"
   ],
   [
     "  sim.setPlayerSkin(sim.playerId, skin);\n  // Offline has no account",
