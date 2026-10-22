@@ -58,6 +58,16 @@ jobs:
             if name not in files:copies.append((p.stat().st_size,name))
             elif files[name].stat().st_size!=p.stat().st_size or sha(files[name])!=sha(p):
               conflicts.append((p.stat().st_size,name))
+          from collections import Counter
+          dtop=Counter(); dext=Counter(); d2=Counter()
+          for k,p in modern.items():
+            sz=p.stat().st_size
+            dtop[k.split('/')[0]]+=sz
+            dext[p.suffix.lower()]+=sz
+            d2['/'.join(k.split('/')[:2])]+=sz
+          print('G2_DIR_TOP='+json.dumps(dtop.most_common(35)))
+          print('G2_DIR_2LEVEL='+json.dumps(d2.most_common(55)))
+          print('G2_EXT_TOP='+json.dumps(dext.most_common(25)))
           allnew=sum(n for n,k in copies)
           newassets=sum(n for n,k in copies if k.startswith('assets/'))
           nonassets=sorted((n,k) for n,k in copies if not k.startswith('assets/'))
