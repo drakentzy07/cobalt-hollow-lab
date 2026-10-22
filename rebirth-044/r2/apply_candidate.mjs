@@ -62,10 +62,10 @@ if(start<0||end<start)throw Error('R2_MISSING_HISTORIC_RADIAL_KERNEL');
 const joystickKernel=historicControls.slice(start,end);
 patch('src/game/mobile_controls.ts',[
   ['  onJump(): void;\n  onInteract(): void;',
-   '  onJump(): void;\n  onEvade(): void;\n  onInteract(): void;'],
+   '  onJump(): void;\n  onEvade?(): void;\n  onInteract(): void;'],
   ['export class MobileControls {',joystickKernel+'\nexport class MobileControls {'],
   ["    this.bindButton('mobile-jump', () => this.callbacks.onJump(), { pressFirst: true });",
-   "    this.bindButton('mobile-jump', () => this.callbacks.onJump(), { pressFirst: true });\n    this.bindButton('mobile-evade', () => this.callbacks.onEvade(), { pressFirst: true });"],
+   "    this.bindButton('mobile-jump', () => this.callbacks.onJump(), { pressFirst: true });\n    this.bindButton('mobile-evade', () => this.callbacks.onEvade?.(), { pressFirst: true });"],
   ['    const move = mapJoystickVector(x, y, this.moveDeadzone);\n    const inAutorunTarget = isMoveAutorunPush(rawY);',
    '    const move = mapJoystickVector(x, y, this.moveDeadzone);\n    if (document.body.classList.contains("hf-rebirth-r2")) {\n      // Do not turn an upward thumb drag into an unexpected autorun latch.\n      const radial = mapHighflyJoystickVector(x,y,this.moveDeadzone);\n      this.moveAutorunLocked = false;\n      if (this.input.autorun) this.input.setAutorun(false);\n      this.input.setHighflyTouchVector(radial);\n      this.input.setTouchMove(move);\n      this.syncMoveAutorunTarget("hidden");\n      return;\n    }\n    const inAutorunTarget = isMoveAutorunPush(rawY);'],
   ['    this.input.clearTouchMove();\n    if (this.moveStick)',
