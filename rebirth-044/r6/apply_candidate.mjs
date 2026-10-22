@@ -15,6 +15,9 @@ patch('src/sim/types.ts',[
  ['export interface SimConfig {\n  seed: number;',
   "export interface SimConfig {\n  highflyRebirthOfflineSavedState?: import('./character_state').CharacterState;\n  seed: number;"]
 ]);
+patch('src/sim/sim_context.ts',[
+ ["    | 'gathererIdentity'\n", "    | 'gathererIdentity'\n    | 'highflyRebirthOfflineSavedState'\n"]
+]);
 patch('src/sim/sim.ts',[
  ['        autoEquip: this.cfg.autoEquip,\n        // Carried through, never derived:',
   '        autoEquip: this.cfg.autoEquip,\n        state: cfg.highflyRebirthOfflineSavedState,\n        // Carried through, never derived:'],
