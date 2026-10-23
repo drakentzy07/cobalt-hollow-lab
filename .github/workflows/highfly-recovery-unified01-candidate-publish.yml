@@ -92,6 +92,24 @@ jobs:
           name: highfly-unified01-recovery-webgl-playtest
           path: dist/
           retention-days: 30
+      - name: Android-size Chromium WebGL: WORLD LV1 buys Meteor; LAB stays separate
+        shell: bash
+        env:
+          HIGHFLY_UNIFIED_URL: "http://127.0.0.1:4173/cobalt-hollow-lab/candidate/unified-01/"
+        run: |
+          set -euo pipefail
+          mkdir -p recovery-web dist/candidate
+          ln -s .. dist/candidate/unified-01
+          ln -s ../dist recovery-web/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory recovery-web >/tmp/highfly-recovery-standalone.log 2>&1 &
+          P=$!
+          trap 'kill "$P" 2>/dev/null || true; rm -f dist/candidate/unified-01' EXIT
+          for i in $(seq 1 45);do
+            if curl -fsSI "$HIGHFLY_UNIFIED_URL" >/dev/null;then break;fi
+            sleep 1
+          done
+          node scripts/highfly_origin_candidate_browser.mjs
+          echo "RECOVERY_PAID_LV1_METEOR_REAL_WEBGL_GREEN=1"
       - name: Restore previous Pages snapshot only if GitHub still retains it
         id: baseline
         uses: actions/download-artifact@v4
