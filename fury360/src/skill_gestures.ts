@@ -23,13 +23,13 @@ export interface FuryPreviewFrame {
   readonly geometry: FuryGroundPreview | null;
 }
 export interface FurySkillHooks {
-  /** Existing native spell execution: check class, cooldown, costs, status and hit rules. */
+  /** Host validates known ability and submits a native cast command. True = submitted, NOT proof of hit/consumption. */
   readonly attemptNativeCast: (intent: FuryAimResult) => boolean;
   /** Optional scene renderer update; null removes all aiming telegraphs. */
   readonly showPreview?: (frame: FuryPreviewFrame | null) => void;
 }
 export type FurySkillReleaseStatus =
-  'ignored' | 'cancelled' | 'native-accepted' | 'native-rejected';
+  'ignored' | 'cancelled' | 'native-submitted' | 'native-rejected';
 const finite = (...v: number[]) => v.every(Number.isFinite);
 const inCancelZone = (pos:FuryScreenPoint,zone:FuryCancelZone|null) =>
   !!zone && finite(pos.x,pos.y,zone.center.x,zone.center.y,zone.radiusPx) &&
@@ -100,7 +100,7 @@ export class FurySkillTouchController {
     this.active=null;
     this.hooks.showPreview?.(null);
     if (!intent) return 'cancelled';
-    return this.hooks.attemptNativeCast(intent) ? 'native-accepted' : 'native-rejected';
+    return this.hooks.attemptNativeCast(intent) ? 'native-submitted' : 'native-rejected';
   }
 
   cancel(pointerId:number):boolean {
