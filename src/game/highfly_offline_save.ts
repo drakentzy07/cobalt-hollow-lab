@@ -57,8 +57,15 @@ const DB_NAME = F27_PAGES_LAB ? 'highfly-offline-f27-combat-beta'
   : F2_PAGES_LAB ? 'highfly-offline-f2-combat-beta' : 'highfly-offline';
 // PUBLIC PREVIEW ONLY: same app/engine, disposable saves. NEVER open production
 // Draken IndexedDB, local mirror or historical F2 lab data from this path.
+/** Separate Pages repository shares drakentzy07.github.io origin with Draken.
+ * It MUST have its own database and mirror keys, including its Training data.
+ * Never import production, historical beta or existing UNIFIED 01 saves.
+ */
+const UNIFIED_STANDALONE_PLAYTEST = typeof location !== 'undefined' &&
+  location.pathname.startsWith('/HIGHFLY-UNIFIED-PLAYTEST/');
 const UNIFIED_CANDIDATE_PREVIEW = typeof location !== 'undefined' &&
-  location.pathname.startsWith('/cobalt-hollow-lab/candidate/unified-01/');
+  (location.pathname.startsWith('/cobalt-hollow-lab/candidate/unified-01/') ||
+   UNIFIED_STANDALONE_PLAYTEST);
 const STORE_NAME = 'saves';
 const PRIMARY_SLOT_KEY = 'primary';
 const LOCAL_KEY = 'highfly.offline.primary.v1';
@@ -80,17 +87,23 @@ const hasOriginIdentity = (s: HighflyOfflineSave | null): boolean =>
 const originIdentitySlotKey = (cls: PlayerClass, name: string, mode: HighflyOriginMode = 'world'): string =>
   (mode === 'lab' ? 'origin-lab:' : 'origin-f1:') + identitySlotKey(cls, name);
 const originDbName = (mode: HighflyOriginMode): string =>
-  UNIFIED_CANDIDATE_PREVIEW
-    ? (mode === 'lab' ? 'highfly-unified01-candidate-lab-v1' : 'highfly-unified01-candidate-world-v1')
-    : mode === 'lab' ? highflyOriginModeContract('lab').saveDb : DB_NAME;
+  UNIFIED_STANDALONE_PLAYTEST
+    ? (mode === 'lab' ? 'highfly-unified-playtest-lab-v1' : 'highfly-unified-playtest-world-v1')
+    : UNIFIED_CANDIDATE_PREVIEW
+      ? (mode === 'lab' ? 'highfly-unified01-candidate-lab-v1' : 'highfly-unified01-candidate-world-v1')
+      : mode === 'lab' ? highflyOriginModeContract('lab').saveDb : DB_NAME;
 const originPrimarySlot = (mode: HighflyOriginMode): string =>
-  UNIFIED_CANDIDATE_PREVIEW
-    ? (mode === 'lab' ? 'candidate-lab:primary' : 'candidate-world:primary')
-    : mode === 'lab' ? highflyOriginModeContract('lab').saveSlot : ORIGIN_PRIMARY_SLOT_KEY;
+  UNIFIED_STANDALONE_PLAYTEST
+    ? (mode === 'lab' ? 'playtest-lab:primary' : 'playtest-world:primary')
+    : UNIFIED_CANDIDATE_PREVIEW
+      ? (mode === 'lab' ? 'candidate-lab:primary' : 'candidate-world:primary')
+      : mode === 'lab' ? highflyOriginModeContract('lab').saveSlot : ORIGIN_PRIMARY_SLOT_KEY;
 const originLocalKey = (mode: HighflyOriginMode): string =>
-  UNIFIED_CANDIDATE_PREVIEW
-    ? (mode === 'lab' ? 'highfly.origin.unified01.candidate.lab.v1' : 'highfly.origin.unified01.candidate.world.v1')
-    : mode === 'lab' ? highflyOriginModeContract('lab').saveLocal : ORIGIN_LOCAL_KEY;
+  UNIFIED_STANDALONE_PLAYTEST
+    ? (mode === 'lab' ? 'highfly.origin.unified.playtest.lab.v1' : 'highfly.origin.unified.playtest.world.v1')
+    : UNIFIED_CANDIDATE_PREVIEW
+      ? (mode === 'lab' ? 'highfly.origin.unified01.candidate.lab.v1' : 'highfly.origin.unified01.candidate.world.v1')
+      : mode === 'lab' ? highflyOriginModeContract('lab').saveLocal : ORIGIN_LOCAL_KEY;
 
 
 function normalizedHunterName(name: string): string {

@@ -153,6 +153,17 @@ describe('HIGHFLY F1 integral — one Hunter, safe birth, first weapon and resou
       .toEqual({mana:0,maxMana:200,stamina:100,maxStamina:100});
   });
 
+  it('isolates separate GitHub Pages playtest saves from Draken and the former candidate',()=>{
+    const source=readFileSync('src/game/highfly_offline_save.ts','utf8');
+    expect(source).toContain("location.pathname.startsWith('/HIGHFLY-UNIFIED-PLAYTEST/')");
+    expect(source).toContain("'highfly-unified-playtest-world-v1'");
+    expect(source).toContain("'highfly-unified-playtest-lab-v1'");
+    expect(source).toContain("'highfly.origin.unified.playtest.world.v1'");
+    expect(source).toContain("'highfly.origin.unified.playtest.lab.v1'");
+    expect(source).toContain("if (mode === 'lab' || UNIFIED_CANDIDATE_PREVIEW) return null;");
+    expect(readFileSync('src/main.ts','utf8')).toContain("!location.pathname.startsWith('/HIGHFLY-UNIFIED-PLAYTEST/') &&");
+  });
+
   it('resumes the same Hunter while isolating old same-name saves',()=>{
     const main=readFileSync('src/main.ts','utf8');
     const store=readFileSync('src/game/highfly_offline_save.ts','utf8');

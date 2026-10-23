@@ -11703,6 +11703,9 @@ const diagnosticsAutoOffline =
 if (HIGHFLY_F11_OFFLINE_FIRST && !import.meta.env.DEV &&
     // Candidate may share the domain with Draken: NEVER install root-scope SW.
     !location.pathname.startsWith('/cobalt-hollow-lab/candidate/unified-01/') &&
+    // Independent playtest shares the GitHub Pages origin; never register
+    // donor SW (its cache cleanup is not isolated from production).
+    !location.pathname.startsWith('/HIGHFLY-UNIFIED-PLAYTEST/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f2-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f22-combat-beta/') &&
     !location.pathname.startsWith('/cobalt-hollow-lab/lab/f23-combat-beta/') &&
