@@ -55,7 +55,7 @@ test('adapter updates skill indicator with player moving and emits native cast o
   s.movePlayer(20,30);
   bridge.moveNativeSkill(9,{x:600,y:400});
   assert.equal(s.previews.at(-1)?.center.x,20);
-  assert.equal(bridge.releaseNativeSkill(9,{x:600,y:400}),'native-accepted');
+  assert.equal(bridge.releaseNativeSkill(9,{x:600,y:400}),'native-submitted');
   assert.equal(s.sent.length,1);
   assert.equal(s.sent[0].world.x,20);
   assert.equal(bridge.releaseNativeSkill(9,{x:600,y:400}),'ignored');
