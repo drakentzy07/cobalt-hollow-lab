@@ -1,0 +1,39 @@
+# AUDITORÍA CONFIRMADA — Upper/Lower Body FURY (2026-10-23)
+## Hallazgo decisivo
+El usuario recordaba una implementación real, no una propuesta. Se recuperó de
+`highfly-origin-f263-collision-gesture-save-polish-20261020` (código donante).
+No se ha integrado ni publicado en REBIRTH con este documento.
+
+### Código exacto recuperado
+1. [`src/render/characters/highfly_combat_presentation.ts`](https://github.com/drakentzy07/cobalt-hollow-lab/blob/highfly-origin-f263-collision-gesture-save-polish-20261020/src/render/characters/highfly_combat_presentation.ts#L8-L11): `isHighflyUpperBodyTrack(track.name)` acepta SOLO rotaciones/quaternions de spine, chest, clavícula, shoulders, arms, hands, head; no traslación de root/hips ni piernas.
+2. [`src/render/characters/visual.ts` L1066–1103](https://github.com/drakentzy07/cobalt-hollow-lab/blob/highfly-origin-f263-collision-gesture-save-polish-20261020/src/render/characters/visual.ts#L1066-L1103): `movingCast`, corta `Spellcast_Raise` a `hf_f25_upper_cast`, crea `AnimationClip` solo con tracks superiores, lo ejecuta en **el mismo AnimationMixer** y lo desvanece al dejar de castear/moverse.
+3. [`src/render/characters/visual.ts` L3615–3644](https://github.com/drakentzy07/cobalt-hollow-lab/blob/highfly-origin-f263-collision-gesture-save-polish-20261020/src/render/characters/visual.ts#L3615-L3644): con moving cast marca `casting:false` SOLO para seleccionar la animación base; elige WALK/RUN para las piernas. ¡Esto es tan importante como el clip recortado! Si la máquina deja base CAST, las piernas pueden congelarse incluso con overlay.
+4. [`visual.ts` L1861–1906](https://github.com/drakentzy07/cobalt-hollow-lab/blob/highfly-origin-f263-collision-gesture-save-polish-20261020/src/render/characters/visual.ts#L1861-L1906): ataques físicos `playOriginPhysicalGesture` hacen clip de ataque SOLO torso/brazos con blending sobre locomoción; incluye recuperación desde full-body one-shot.
+5. [`visual.ts` L2166–2184](https://github.com/drakentzy07/cobalt-hollow-lab/blob/highfly-origin-f263-collision-gesture-save-polish-20261020/src/render/characters/visual.ts#L2166-L2184): `playHighflyF26InstantCast()` reproduce casting torso como one-shot rápido; **en la ruta donante identificada se invoca para el evento `highflyFireballMiss`, no prueba cobertura general de todas las skills**.
+6. [`tests/highfly_origin_f25_combat_unleashed.test.ts`](https://github.com/drakentzy07/cobalt-hollow-lab/blob/highfly-origin-f263-collision-gesture-save-polish-20261020/tests/highfly_origin_f25_combat_unleashed.test.ts) verifica presencia del masking y el bypass visual; [`tests/highfly_origin_f263_dualwield.test.ts`](https://github.com/drakentzy07/cobalt-hollow-lab/blob/highfly-origin-f263-collision-gesture-save-polish-20261020/tests/highfly_origin_f263_dualwield.test.ts) comprueba exclusion de hips y brazo no seleccionado.
+7. [`src/render/characters/visual.ts` L845–850](https://github.com/drakentzy07/cobalt-hollow-lab/blob/highfly-origin-f263-collision-gesture-save-polish-20261020/src/render/characters/visual.ts#L845-L850): **limitación crucial** `originHunterCombat = true` ÚNICAMENTE cuando `hf-origin-f1*` y `key.startsWith('player_warrior_modular')` sin weaponOverride. Esto NO está habilitado automáticamente para las 9 clases clásicas REBIRTH.
+8. [`src/render/characters/manifest.ts`](https://github.com/drakentzy07/cobalt-hollow-lab/blob/highfly-origin-f263-collision-gesture-save-polish-20261020/src/render/characters/manifest.ts): Las nueve clases usan modelos/clips distintos; por ejemplo Warrior knight; Paladin paladin.glb; Hunter ranger.glb; Rogue rogue.glb; Priest/Mage/Warlock usan mage.glb en variantes; Shaman barbarian.glb; Druid druid.glb. Existen `attackByAbility` y `animUrls` por clase, **no asumir pistas idénticas ni cobertura de todos los IDs**.
+
+### Separación fundamental: animación NO implica autorización del Sim
+[`src/sim/combat/cast_move_gate.ts`](https://github.com/drakentzy07/cobalt-hollow-lab/blob/highfly-origin-f263-collision-gesture-save-polish-20261020/src/sim/combat/cast_move_gate.ts) tiene `abilityCastSurvivesMovement`. Dos sitios leen la misma puerta: `casting_lifecycle.ts` rechaza antes de iniciar; `player_motion.ts` cancela casteo vivo al moverse. Hay que conceder `castWhileMoving` o perfil resuelto específico SOLO a las skills piloto que deban permitirlo, usando UNA regla en ambos sitios. La máscara de torso **no** elimina GCD, castTime, target rules, ni cooldowns.
+
+## Recomendación: FURY BODY-LAYERS 1.0 — Fase intermedia ANTES de skills masivas
+Plan de primera prueba (en rama de integración nueva desde commit jugable confirmado):
+- **Paso A, cero cambio de skills:** auditar pistas reales de animación para nueve clases en el artefacto v0.44.7 actual. Clasificar upper/lower en runtime; si no hay pistas válidas, fallback nativo, sin poses falsas.
+- **Paso B, física sin cambio:** introducir wrapper fino en `CharacterVisual`, usando AnimationMixer ya presente: locomoción BASE (piernas) + cast/attack MASKED (espalda/hombros/brazos/manos). NO segundo mixer ni mover posición de actor.
+- **Paso C, máquina de estados:** al cast mobile autorizado, base state permanece run/walk; upper track muestra el gesto. En standing, el clip normal se puede conservar. Acciones de muerte/stun/montura/salto canalizado incompatible cancelan el overlay sin dejar pistas activas.
+- **Paso D, autorización de ejecución:** 1 skill instantánea y 1 timed-cast seleccionado, siempre resolución de `abilityCastSurvivesMovement` compartida; si el backend niega, no inventar efecto visual. No cambiar todas las habilidades por defecto.
+- **Paso E, combate cuerpo a cuerpo:** migrar el upper-body mask de `playOriginPhysicalGesture` para ATK single swing (candidato original `highflyBasicAttack` sin autoattack), con whiff sin objetivo, mientras las piernas mantienen locomoción.
+- **Paso F, pruebas:** comprobar stand/run/diagonal/backwards/stop/camera yaw/targeting, un salto aprobado, mano de arma, dual wield, GI rig variants, 2-3 dedos S23. Test de cero traslación de hips/root, cero cambios a sim position, no "skating", no dobles gastos, sin clips fantasma.
+- **Paso G:** cuando dos skills y un ATK funcionen fluidos, recién ahí adaptar de 4 a 5 por clase y diseñar nuevos IDs `hf_*`.
+
+## Riesgos concretos, y mitigación
+- El selector `originHunterCombat` es EXCLUSIVO al hunter modular, no copiar flag ciegamente a `player_warrior` y amigos. Usar capabilities de clips por rig y perfil visual.
+- El upper-mask sobre el mismo mixer no garantiza blending bonito. Validar crossfade, peso, fin de acción, cambio de arma, clips no reconocidos y rig names; si no están probados, fallback.
+- Si `desiredBaseState` sigue priorizando casting sobre moving, el torso overlay solo será cosmético y la pose base seguirá sin mover piernas. Adaptar `desiredBase` de manera controlada con flag de mobile cast, sin modificar simulación de movimiento.
+- Instant cast puede no sostener `s.casting` ningún frame: disparar one-shot **por evento nativo confirmado**; no sustituir por temporizador arbitrario.
+- Cast de larga duración requiere autorización de Sim, no solo animación. Mantener canales/costes/raids intactos fuera de perfiles autorizados.
+- Branch R13 REBIRTH `highfly-rebirth-r13-combat-recovery-20261023` en `e4bdbe53...` tiene RUN #39940479613 ROJO por comprobación `R12_DASH_BUTTON_NOT_BOUND_TO_NATIVE_EVADE`; arreglar ese gate y preservar R11 jugable antes de incorporar layers.
+- Guardado/creador/GLB/pub no se editan para este módulo. Ningún deploy implícito.
+
+**Dictamen:** SÍ, ésta es la primera modificación de combate que recomendaríamos antes de rehacer skills: animación desacoplada y permiso de movimiento solo para técnicas elegidas. Es una solución intermedia capaz de mejorar mucho la sensación táctica sin reescribir cientos de definiciones originales; requiere integración y playtest real Android.
