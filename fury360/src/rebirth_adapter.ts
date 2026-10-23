@@ -19,9 +19,9 @@ export interface FuryRebirthNativeHost {
   readonly readContext:()=>FuryTouchContext;
   /** Resolve from current native known/active skills, never global unlocked catalog. */
   readonly findKnownAbility:(abilityId:string)=>FuryNativeAbility|null;
-  /** Existing spell dispatch and native rules decide successful cast acceptance. */
+  /** Submit through native cast API. True = command forwarded, NOT confirmation of cast/hit. */
   readonly tryNativeSkill:(intent:FuryAimResult)=>boolean;
-  /** Existing basic ATK handler. Return true ONLY if native accepted request. */
+  /** Existing basic ATK handler. True MUST mean a confirmed native acceptance. If the native API returns void, do not simulate an acceptance. */
   readonly tryNativeBasicAttack:()=>boolean;
   /** Revalidate native attack authorization when buffered request becomes ready. */
   readonly nativeBasicAttackAllowed:()=>boolean;
