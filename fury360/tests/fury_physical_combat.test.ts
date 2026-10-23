@@ -44,8 +44,8 @@ test('no buffered action fires twice or survives after expiry',()=>{
   if(s.status!=='ready')throw Error('missing proposal');
   ctl.confirmNative(s.proposal.ticket,true,0);
   assert.equal(ctl.request(a(),145).status,'buffered');
-  assert.equal(ctl.pollBuffered(260),null);
-  assert.equal(ctl.pollBuffered(310),null);
+  assert.equal(ctl.pollBuffered(220),null);
+  assert.equal(ctl.pollBuffered(330),null);
   assert.equal(ctl.bufferedInput,false);
 });
 test('native rejection, stun and air restrictions stay authoritative',()=>{
