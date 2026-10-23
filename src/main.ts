@@ -9703,6 +9703,11 @@ function wireStartScreens(): void {
   const offlineBtn = $('#btn-offline');
   const btnStartOffline = $('#btn-start-offline') as HTMLButtonElement;
   const offlineNameInput = $('#char-name') as HTMLInputElement;
+  // Android/Samsung IME: make the actual input direction authoritative.
+  // The game may mirror the 3D preview, but must NEVER mirror typed letters.
+  offlineNameInput.dir = 'ltr';
+  offlineNameInput.style.direction = 'ltr';
+  offlineNameInput.style.textAlign = 'left';
   const offlineError = $('#offline-error');
   const resetOriginHunterBtn = document.getElementById('hf-origin-reset-hunter') as HTMLButtonElement | null;
   let selectedOriginMode: HighflyOriginMode = 'world';

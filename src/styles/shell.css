@@ -7493,8 +7493,10 @@
 
     body.mobile-touch #offline-select #char-name {
       direction: ltr !important;
-      unicode-bidi: plaintext;
+      unicode-bidi: normal !important;
+      writing-mode: horizontal-tb !important;
       text-align: left !important;
+      transform: none !important;
     }
 
     /* The creator columns intentionally scroll vertically on short landscape

@@ -39,9 +39,9 @@ export function highflyWeaponBasicClips(id:string|null,step:number):readonly str
   const blunt=/mace|hammer|maul|club/.test(weapon);
   const dagger=/dagger|dirk|knife|stiletto/.test(weapon);
   const clips=axe
-    ? ['1H_Melee_Attack_Chop','Warrior_Brute_Swing','1H_Melee_Attack_Slice_Diagonal','Warrior_Reaping_Arc']
+    ? ['1H_Melee_Attack_Chop','1H_Melee_Attack_Slice_Diagonal','1H_Melee_Attack_Chop','Warrior_Reaping_Arc']
     :blunt
-    ? ['Warrior_Brute_Swing','2H_Melee_Attack_Chop','1H_Melee_Attack_Chop','Warrior_Reaping_Arc']
+    ? ['1H_Melee_Attack_Chop','1H_Melee_Attack_Slice_Diagonal','2H_Melee_Attack_Chop','Warrior_Brute_Swing']
     :dagger
     ? ['1H_Melee_Attack_Slice_Diagonal','Dualwield_Melee_Attack_Chop','1H_Melee_Attack_Chop','Dualwield_Melee_Attack_Chop']
     : ['1H_Melee_Attack_Chop','1H_Melee_Attack_Slice_Diagonal','Warrior_Reaping_Arc','1H_Melee_Attack_Slice_Diagonal'];
@@ -69,7 +69,9 @@ export function highflySomersaultPitch(t: number, reducedMotion = false): number
  * The third contact has heavier follow-through without becoming slow motion. */
 export function highflyComboAnimationRate(abilityId: string | undefined, nativeRate: number): number {
   const step = abilityId?.match(/^highfly_basic_([1-4])(?:_|$)/)?.[1];
-  const factor = step === '1' ? 1.08 : step === '2' ? 1.02 : step === '3' ? 0.92 : step === '4' ? 1.04 : abilityId === 'highfly_basic_air' ? 0.94 : 1;
+  // Fluidity 1.0: remove the slow-motion third strike and shorten finisher
+  // follow-through without changing the native Sim hit, weapon DPS or energy.
+  const factor = step === '1' ? 1.16 : step === '2' ? 1.18 : step === '3' ? 1.22 : step === '4' ? 1.25 : abilityId === 'highfly_basic_air' ? 1.13 : 1;
   return Math.max(0.5, Math.min(2.5, nativeRate * factor));
 }
 

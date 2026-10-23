@@ -1891,13 +1891,13 @@ export class CharacterVisual {
             this.fadeTo(this.baseAction(),0.045,false);
           }
           if (this.originLastUpperAttack && this.originLastUpperAttack!==layer)
-            this.originLastUpperAttack.fadeOut(0.06);
+            this.originLastUpperAttack.fadeOut(0.04);
           layer.reset();
           layer.setLoop(THREE.LoopOnce,1);
           layer.clampWhenFinished=false;
           layer.timeScale=presentationScale;
           layer.setEffectiveWeight(1);
-          layer.fadeIn(0.045).play();
+          layer.fadeIn(0.035).play();
           this.originLastUpperAttack=layer;
           this.currentOneShotIsAttack=false;
           return;
@@ -1935,7 +1935,7 @@ export class CharacterVisual {
           const clip=choices.find(name=>this.action(name)!==null);
           if(clip){
             this.playOriginPhysicalGesture(clip,
-              step===1?1.26:step===2?1.3:step===3?1.15:1.1,
+              step===1?1.24:step===2?1.28:step===3?1.24:1.25,
               true,abilityId,step===2,step===1);
             return;
           }
@@ -1945,7 +1945,7 @@ export class CharacterVisual {
         const clip=highflyWeaponBasicClips(this.weaponItemId,step)
           .find(name=>this.action(name)!==null);
         if(clip){
-          this.playOriginPhysicalGesture(clip,step===4?.98:1.18,true,abilityId);
+          this.playOriginPhysicalGesture(clip,step===4?1.19:1.22,true,abilityId);
           return;
         }
       }else if(dual&&(abilityId==='highfly_basic_2'||abilityId?.startsWith('highfly_basic_4'))){

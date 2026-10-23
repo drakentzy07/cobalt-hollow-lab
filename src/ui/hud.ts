@@ -1,4 +1,5 @@
 import { audio } from '../game/audio';
+import { HIGHFLY_FLUID_BUFFER_SECONDS, HIGHFLY_FLUID_CHAIN_SECONDS, highflyCanBufferAttack, highflyFluidNextStep, highflyFluidRecovery } from '../highfly/combat/combo_fluidity';
 import { corpseLootAvailabilityInWorld } from '../game/corpse_loot_availability';
 import { CROSS_HOTBAR_ATTACK_ID } from '../game/cross_hotbar';
 import { syncDeathControllerHints } from '../game/death_controller_hint';
@@ -1353,6 +1354,8 @@ export class Hud {
   private highflyComboStep: 0 | 1 | 2 | 3 | 4 = 0;
   private highflyComboExpiresAt = 0;
   private highflyComboReadyAt = 0;
+  /** One early tap, no autofire: consumed by the next live HUD frame only. */
+  private highflyBufferedAttackUntil = 0;
   private highflyAcceptedBasicAttacks = 0;
   private highflyComboEvadeGraceUsed = false;
   onQuestDialogStateChange: ((open: boolean) => void) | null = null;
@@ -7426,7 +7429,16 @@ export class Hud {
 
   private activateFixedAttackSlot(): void {
     const now = performance.now() / 1000;
-    if (now < this.highflyComboReadyAt) return;
+    if (now < this.highflyComboReadyAt) {
+      // A real tap in the final 180ms is accepted as ONE pending intent; no
+      // interval spam, duplicate strike, invented hit or hidden auto-attack.
+      if (this.onHighflyBasicAttack && this.highflyComboStep > 0 &&
+          highflyCanBufferAttack(now, this.highflyComboReadyAt)) {
+        this.highflyBufferedAttackUntil = this.highflyComboReadyAt + HIGHFLY_FLUID_BUFFER_SECONDS;
+      }
+      return;
+    }
+    this.highflyBufferedAttackUntil = 0;
     if (now > this.highflyComboExpiresAt) {
       this.highflyComboStep = 0;
       this.highflyComboEvadeGraceUsed = false;
@@ -7434,8 +7446,7 @@ export class Hud {
 
     // F2.7: the fourth PHYSICAL contact is always reachable. An equipped
     // elemental gem enriches it; it never gates an entire authored animation.
-    const next: 1 | 2 | 3 | 4 =
-      this.highflyComboStep === 3 ? 4 : (((this.highflyComboStep % 3) + 1) as 1 | 2 | 3);
+    const next: 1 | 2 | 3 | 4 = highflyFluidNextStep(this.highflyComboStep);
 
     if (this.onHighflyBasicAttack?.(next)) {
       const startsChain = this.highflyComboStep === 0;
@@ -7449,11 +7460,10 @@ export class Hud {
       } else {
         this.highflyComboStep = next;
         // Bounded human timing window: enough for aim/reposition, not mash spam.
-        this.highflyComboExpiresAt = now + 1.35;
+        this.highflyComboExpiresAt = now + HIGHFLY_FLUID_CHAIN_SECONDS;
       }
 
-      this.highflyComboReadyAt =
-        now + (next === 1 ? 0.31 : next === 2 ? 0.35 : next === 3 ? 0.40 : 0.68);
+      this.highflyComboReadyAt = now + highflyFluidRecovery(next);
       this.highflyAcceptedBasicAttacks += 1;
       document.body.dataset.highflyBasicAttackCount = String(this.highflyAcceptedBasicAttacks);
       document.body.dataset.highflyBasicAttackStep = String(next);
@@ -8839,6 +8849,17 @@ export class Hud {
     const sim = this.sim;
     const p = sim.player;
     const now = performance.now();
+    // HIGHFLY: keep one intentionally buffered tap through animation recovery.
+    // Drain even on non-paint frames, but never after death or after 180ms grace.
+    if (this.highflyBufferedAttackUntil > 0) {
+      const seconds = now / 1000;
+      if (p.dead || seconds > this.highflyBufferedAttackUntil || !this.onHighflyBasicAttack) {
+        this.highflyBufferedAttackUntil = 0;
+      } else if (seconds >= this.highflyComboReadyAt) {
+        this.highflyBufferedAttackUntil = 0;
+        this.activateFixedAttackSlot();
+      }
+    }
     const fxTier = this.fxTier();
     const fastHud = now - this.lastHudFastAt >= 100;
     if (fastHud) {

@@ -568,11 +568,16 @@ export function equipItem(
     ctx.error(meta.entityId, "You don't have that item.");
     return;
   }
-  if (targetSlot && !slotAcceptsItem(def, targetSlot)) {
+  const originUniversal = ctx.cfg.originUniversalHunter === true;
+  // Mainhand-labelled ONE-HAND weapons can fill Hunter Universal offhand.
+  // The donor generic slotAcceptsItem checks its declaration only; it must
+  // not veto a valid manually aimed second sword before Universal rules run.
+  if (targetSlot && !(originUniversal && def.kind === 'weapon' &&
+      targetSlot === 'offhand' && weaponHand(def) === 'onehand') &&
+      !slotAcceptsItem(def, targetSlot)) {
     ctx.error(meta.entityId, 'That does not go in that slot.');
     return;
   }
-  const originUniversal = ctx.cfg.originUniversalHunter === true;
   if (!(originUniversal ? universalHunterCanEquip(def) : canEquipItem(meta.cls, def))) {
     ctx.error(meta.entityId, 'You cannot equip that.');
     return;
