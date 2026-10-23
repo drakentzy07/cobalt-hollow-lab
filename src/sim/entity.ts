@@ -592,7 +592,7 @@ export function recalcPlayerStats(
   e.weapon = weapon;
   const offhand = equipment.offhand ? ITEMS[equipment.offhand] : undefined;
   const offhandWeapon =
-    canDualWield(cls, mods?.spec) &&
+    (e.highflyUniversalHunter === true || canDualWield(cls, mods?.spec)) &&
     offhand?.kind === 'weapon' &&
     meetsLevelRequirement(lvl, offhand)
       ? lootQualityWeapon(offhand, equipmentInstance?.offhand)!

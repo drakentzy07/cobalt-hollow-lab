@@ -70,6 +70,47 @@ describe('HIGHFLY F1 integral — one Hunter, safe birth, first weapon and resou
     expect(sim.serializeCharacter(sim.playerId)?.equipment.mainhand).toBeUndefined();
   });
 
+  it('activates two genuine one-hand weapons for Universal Hunter only, without Fury spec or grants',()=>{
+    const make = (universal: boolean) => new Sim({
+      seed: 141, playerClass: 'warrior', playerName: 'Hunter Dual',
+      compulsoryTutorial: false, originUniversalHunter: universal,
+      world: {...BUILTIN_WORLD, camps: [], groundObjects: [], npcs: {}},
+    });
+    const prep = (sim: Sim) => {
+      const pid=sim.playerId;
+      // Starting Warrior's shield and sword are NOT duplicated or silently reused.
+      for(const slot of ['mainhand','offhand'] as const) sim.unequipItem(slot,pid);
+      sim.addItem('worn_sword',2,pid);
+      sim.equipItem('worn_sword',pid);
+      sim.equipItem('worn_sword',pid);
+      return sim.players.get(pid)!;
+    };
+    const hunter=make(true);
+    const hm=prep(hunter);
+    expect(hm.equipment.mainhand).toBe('worn_sword');
+    expect(hm.equipment.offhand).toBe('worn_sword');
+    expect(hunter.player.highflyUniversalHunter).toBe(true);
+    expect(hunter.player.dualWielding).toBe(true);
+    expect(hunter.player.offhandWeapon).not.toBeNull();
+    expect(hunter.serializeCharacter(hunter.playerId)?.equipment.offhand).toBe('worn_sword');
+
+    // A mixed pair still uses the same real equipment/Sim path.
+    hunter.unequipItem('offhand',hunter.playerId);
+    hunter.addItem('rusty_hatchet',1,hunter.playerId);
+    hunter.equipItem('rusty_hatchet',hunter.playerId);
+    expect(hm.equipment.mainhand).toBe('worn_sword');
+    expect(hm.equipment.offhand).toBe('rusty_hatchet');
+    expect(hunter.player.dualWielding).toBe(true);
+
+    // Original ClaudeCraft Warrior has NOT gained a free Fury specialization.
+    const original=make(false);
+    const om=prep(original);
+    expect(original.player.highflyUniversalHunter).toBe(false);
+    expect(original.player.dualWielding).toBe(false);
+    expect(original.player.offhandWeapon).toBeNull();
+    expect(om.equipment.offhand).not.toBe('worn_sword');
+  });
+
   it('grants no duplicate starter, accepts only existing basic choices',()=>{
     expect(ORIGIN_STARTER_WEAPONS.length).toBe(3);
     const state=f1StartState();

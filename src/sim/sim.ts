@@ -2763,6 +2763,9 @@ export class Sim {
       draws: savedState?.arena2v2Draws ?? 0,
     };
     const player = createPlayer(this.nextId++, cls, startPos, name);
+    // The native Warrior class remains a save-compatible carrier, not an
+    // offhand proficiency gate for the universal Hunter. Session-only flag.
+    player.highflyUniversalHunter = this.cfg.originUniversalHunter === true;
     if (opts?.appearance) player.modularAppearance = opts.appearance;
     this.addEntity(player);
     const classDef = CLASSES[cls];

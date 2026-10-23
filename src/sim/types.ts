@@ -5188,6 +5188,8 @@ export interface ClientMirroredEntityFields {
 }
 
 export interface Entity extends ClientMirroredEntityFields {
+  /** HIGHFLY offline-only runtime capability; not persisted in CharacterState. */
+  highflyUniversalHunter?: boolean;
   guardianState?: GuardianState;
   // Transient talent-proc counters and internal cooldowns (combat/talent_procs.ts).
   // Never serialized; reset on death.
