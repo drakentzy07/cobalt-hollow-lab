@@ -47,6 +47,32 @@ export function highflyWeaponBasicClips(id:string|null,step:number):readonly str
     : ['1H_Melee_Attack_Chop','1H_Melee_Attack_Slice_Diagonal','Warrior_Reaping_Arc','1H_Melee_Attack_Slice_Diagonal'];
   return [clips[(Math.max(1,Math.min(4,step))-1)],...clips];
 }
+
+/** FURY 360° Combat 2.0: authored clips respond to whether the Hunter is
+ * moving, not to an equipped skill or an automated multi-hit ability.
+ * Every choice below is a clip already present in the donor rig library.
+ * Native Sim still resolves exactly ONE hit per manual ATK press.
+ */
+export function highflyContextualWeaponClips(
+  itemId: string|null, step:number, moving:boolean,
+):readonly string[] {
+  const baseline=highflyWeaponBasicClips(itemId,step);
+  if(!moving)return [...new Set(baseline)];
+  // Alternating cross-body slashes integrate with running locomotion better
+  // than four equally heavy overhand swings. Fall back to weapon-family clips.
+  const leading=step===1||step===3
+    ? '1H_Melee_Attack_Slice_Diagonal' : '1H_Melee_Attack_Chop';
+  return [...new Set([leading,...baseline])];
+}
+
+/** Avoid restarting the same upper-body clip when an alternative exists.
+ * The visual mixer checks the LIVE rig; never synthesize unsupported clips. */
+export function highflyPickVariedClip(
+  candidates:readonly string[], prior:string|null, available:(name:string)=>boolean,
+):string|null {
+  const live=[...new Set(candidates)].filter(available);
+  return live.find(name=>name!==prior)??live[0]??null;
+}
 export function highflyPhysicalBasic(abilityId: string | undefined): boolean {
   return !abilityId || /^highfly_basic_(?:[1-4]|whiff|air)(?:_|$)/.test(abilityId);
 }
@@ -79,11 +105,15 @@ export function highflyComboAnimationRate(abilityId: string | undefined, nativeR
  * A strong third slash is read as the FINISHER rather than another tap. */
 export function highflyComboAccent(abilityId:string|undefined,t:number):{roll:number;pitch:number}{
   const n=abilityId==='highfly_basic_air'?5:Number(abilityId?.match(/^highfly_basic_([1-4])(?:_|$)/)?.[1]??0);
-  if(n===0||t<0||t>0.52)return {roll:0,pitch:0};
-  const u=t/0.52;
+  // The previous 0.26-radian root lean (15 degrees) looked drunk when the
+  // upper-body animations rapidly restarted. Keep a tiny expressive accent,
+  // but let authored spine/arm rotations tell the story of the strike.
+  // The true directional somersault uses another rotation and is untouched.
+  if(n===0||t<0||t>0.34)return {roll:0,pitch:0};
+  const u=t/0.34;
   const pulse=Math.sin(Math.PI*u)**2;
-  const roll=n===1?-0.11:n===2?0.17:n===3?-0.26:n===4?0.22:0.09;
-  return {roll:roll*pulse,pitch:(n===5?0.36:n===3?0.16:0.06)*pulse};
+  const roll=n===1?-0.04:n===2?0.05:n===3?-0.075:n===4?0.085:0.035;
+  return {roll:roll*pulse,pitch:(n===5?0.12:n===3?0.045:0.018)*pulse};
 }
 
 // Directional aerial revolutions: true full 360° around the Hunter's local

@@ -119,7 +119,7 @@ import { stoneboundShellStyle } from './stonebound_shell_core';
 import { createStowTransition, forceStow, requestStow, tickStow } from './stow_transition';
 import { CharacterSurfaceResponse, SURFACE_RESPONSE_PROGRAM } from './surface_response';
 import { warriorActionBlend } from './warrior_action_blend';
-import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, highflyDirectionalFlip, highflyF263DirectionalFlip, isHighflyUpperBodyTrack, isHighflyLeftArmTrack, isHighflyRightArmTrack, highflyDualComboClips, highflyWeaponBasicClips, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
+import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, highflyDirectionalFlip, highflyF263DirectionalFlip, isHighflyUpperBodyTrack, isHighflyLeftArmTrack, isHighflyRightArmTrack, highflyDualComboClips, highflyWeaponBasicClips, highflyContextualWeaponClips, highflyPickVariedClip, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
 import { WarriorActionProps } from './warrior_action_props';
 import { WarriorBodyEffects } from './warrior_body_effects';
 import { SPIN_ATTACK_VISUAL_DURATION, weaponAttackStyle } from './weapon_attack_style_core';
@@ -593,6 +593,8 @@ export class CharacterVisual {
   private originGroundMoving = false;
   private originUpperAttack = new Map<string, THREE.AnimationAction>();
   private originLastUpperAttack: THREE.AnimationAction | null = null;
+  /** Motion-aware variation is visual only; a single ATK = a single Sim event. */
+  private originLastPhysicalClip: string | null = null;
   private originWasAirFlip = false;
   private originFlipTime = HIGHFLY_SOMERSAULT_SECONDS;
   private originAccentAbility:string|undefined;
@@ -1875,9 +1877,13 @@ export class CharacterVisual {
         let layer=this.originUpperAttack.get(maskKey);
         if (!layer) {
           const upper=source.tracks.filter(track=>isHighflyUpperBodyTrack(track.name));
-          const tracks=leftArmOnly?upper.filter(track=>isHighflyLeftArmTrack(track.name)):
+          const handTracks=leftArmOnly?upper.filter(track=>isHighflyLeftArmTrack(track.name)):
             rightArmOnly?upper.filter(track=>isHighflyRightArmTrack(track.name)):upper;
-          if (tracks.length >= (leftArmOnly||rightArmOnly?2:4)) {
+          // A donor clip with few named arm tracks still prefers the UPPER
+          // mask instead of falling back to a full-body animation that freezes
+          // running legs. The original full-body fallback remains last resort.
+          const tracks=(leftArmOnly||rightArmOnly)&&handTracks.length<2?upper:handTracks;
+          if (tracks.length >= ((leftArmOnly||rightArmOnly)&&handTracks.length>=2?2:4)) {
             const masked=new THREE.AnimationClip('hf_origin_upper_'+maskKey,source.duration,tracks);
             layer=this.mixer.clipAction(masked);
             this.originUpperAttack.set(maskKey,layer);
@@ -1891,13 +1897,13 @@ export class CharacterVisual {
             this.fadeTo(this.baseAction(),0.045,false);
           }
           if (this.originLastUpperAttack && this.originLastUpperAttack!==layer)
-            this.originLastUpperAttack.fadeOut(0.04);
+            this.originLastUpperAttack.fadeOut(0.065);
           layer.reset();
           layer.setLoop(THREE.LoopOnce,1);
           layer.clampWhenFinished=false;
           layer.timeScale=presentationScale;
           layer.setEffectiveWeight(1);
-          layer.fadeIn(0.035).play();
+          layer.fadeIn(0.055).play();
           this.originLastUpperAttack=layer;
           this.currentOneShotIsAttack=false;
           return;
@@ -1919,8 +1925,9 @@ export class CharacterVisual {
         const clips=direction==='left'||direction==='right'
           ? ['1H_Melee_Attack_Slash','Warrior_Brute_Swing','2H_Melee_Attack_Chop']
           : ['2H_Melee_Attack_Chop','Warrior_Brute_Swing','1H_Melee_Attack_Chop'];
-        const aerial=clips.find(clip=>this.action(clip)!==null);
-        if(aerial){this.playOriginPhysicalGesture(aerial,1.26,true,abilityId);return;}
+        const aerial=highflyPickVariedClip(clips,this.originLastPhysicalClip,
+          name=>this.action(name)!==null);
+        if(aerial){this.originLastPhysicalClip=aerial;this.playOriginPhysicalGesture(aerial,1.26,true,abilityId);return;}
       }
       const dual=weaponAttackStyle(this.weaponItemId,this.offhandItemId)==='dualwield';
       const step=Number(abilityId?.match(/^highfly_basic_([1-4])(?:_|$)/)?.[1]??0);
@@ -1932,8 +1939,10 @@ export class CharacterVisual {
         if(dual){
           const fallback=this.def.clips.attackByHand?.dualwield;
           const choices=[...highflyDualComboClips(step),...(fallback?[fallback]:[])];
-          const clip=choices.find(name=>this.action(name)!==null);
+          const clip=highflyPickVariedClip(choices,this.originLastPhysicalClip,
+            name=>this.action(name)!==null);
           if(clip){
+            this.originLastPhysicalClip=clip;
             this.playOriginPhysicalGesture(clip,
               step===1?1.24:step===2?1.28:step===3?1.24:1.25,
               true,abilityId,step===2,step===1);
@@ -1942,9 +1951,11 @@ export class CharacterVisual {
         }
         // Distinct native strike rhythm by equipped weapon family; a single
         // sword never falsely claims an offhand contact.
-        const clip=highflyWeaponBasicClips(this.weaponItemId,step)
-          .find(name=>this.action(name)!==null);
+        const candidates=highflyContextualWeaponClips(this.weaponItemId,step,this.originGroundMoving);
+        const clip=highflyPickVariedClip(candidates,this.originLastPhysicalClip,
+          name=>this.action(name)!==null);
         if(clip){
+          this.originLastPhysicalClip=clip;
           this.playOriginPhysicalGesture(clip,step===4?1.19:1.22,true,abilityId);
           return;
         }
