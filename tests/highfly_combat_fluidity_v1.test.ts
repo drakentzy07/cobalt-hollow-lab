@@ -42,7 +42,7 @@ describe('HIGHFLY Combat Fluidity 1.0 — S23 manual attacks',()=>{
     expect(highflyWeaponBasicClips('rusty_hatchet',2)[0]).toBe('1H_Melee_Attack_Slice_Diagonal');
     const visual=readFileSync('src/render/characters/visual.ts','utf8');
     expect(visual).toContain('const upper=source.tracks.filter(track=>isHighflyUpperBodyTrack(track.name));');
-    expect(visual).toContain('layer.fadeIn(0.035).play();');
+    expect(visual).toContain('layer.fadeIn(0.055).play();');
   });
   it('forces physical Hunter name input to LTR on Samsung and accepts explicitly aimed offhand swords',()=>{
     const html=readFileSync('index.html','utf8');

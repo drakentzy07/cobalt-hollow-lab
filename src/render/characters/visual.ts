@@ -119,7 +119,7 @@ import { stoneboundShellStyle } from './stonebound_shell_core';
 import { createStowTransition, forceStow, requestStow, tickStow } from './stow_transition';
 import { CharacterSurfaceResponse, SURFACE_RESPONSE_PROGRAM } from './surface_response';
 import { warriorActionBlend } from './warrior_action_blend';
-import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, highflyDirectionalFlip, highflyF263DirectionalFlip, isHighflyUpperBodyTrack, isHighflyLeftArmTrack, isHighflyRightArmTrack, highflyDualComboClips, highflyWeaponBasicClips, highflyContextualWeaponClips, highflyPickVariedClip, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
+import { highflyPhysicalBasic, highflySomersaultPitch, highflyComboAnimationRate, highflyComboAccent, highflyDirectionalFlip, highflyF263DirectionalFlip, isHighflyUpperBodyTrack, isHighflyLeftArmTrack, isHighflyRightArmTrack, highflyDualComboClips, highflyContextualWeaponClips, highflyPickVariedClip, HIGHFLY_SOMERSAULT_SECONDS } from './highfly_combat_presentation';
 import { WarriorActionProps } from './warrior_action_props';
 import { WarriorBodyEffects } from './warrior_body_effects';
 import { SPIN_ATTACK_VISUAL_DURATION, weaponAttackStyle } from './weapon_attack_style_core';
