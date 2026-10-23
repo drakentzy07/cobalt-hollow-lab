@@ -92,7 +92,7 @@ jobs:
           name: highfly-unified01-recovery-webgl-playtest
           path: dist/
           retention-days: 30
-      - name: Android-size Chromium WebGL: WORLD LV1 buys Meteor; LAB stays separate
+      - name: "Android-size Chromium WebGL: WORLD LV1 buys Meteor; LAB stays separate"
         shell: bash
         env:
           HIGHFLY_UNIFIED_URL: "http://127.0.0.1:4173/cobalt-hollow-lab/candidate/unified-01/"
