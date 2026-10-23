@@ -124,7 +124,7 @@ describe('HIGHFLY F1 integral — one Hunter, safe birth, first weapon and resou
     expect(originCanTrainSkill('meteor',1,99999,[])).toBe(false);
     const ui=readFileSync('src/highfly/origin/f1_world_ui.ts','utf8');
     expect(ui).toContain('originCanTrainSkill(skill.id,sim.player.level,hunter?.copper??0,learned,unifiedFrame)');
-    expect(ui).toContain('const trialDef=(unifiedFrame || f27Preview&&trial.includes(id))?{...useDef,learnLevel:1}:useDef;');
+    expect(ui).toContain('const hunterDef=unifiedFrame?{...trialDef,learnLevel:1}:trialDef;');
     expect(ui).toContain('hunter.copper-=skill.copper');
     expect(ui).toContain("current={...current,learnedAbilityIds:[...earned,skill.id]}");
   });
