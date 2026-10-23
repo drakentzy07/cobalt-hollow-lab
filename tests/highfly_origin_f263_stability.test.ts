@@ -27,8 +27,8 @@ describe('F2.6.3 S23 root-cause stability',()=>{
     expect(s).toContain("cancel?'cancel':'end'");
   });
   it('weapon attacks differ by family and dual-wield second strike uses LEFT tracks',()=>{
-    expect(highflyWeaponBasicClips('rusty_hatchet',2)[0]).toBe('Warrior_Brute_Swing');
-    expect(highflyWeaponBasicClips('bronzework_mace',1)[0]).toBe('Warrior_Brute_Swing');
+    expect(highflyWeaponBasicClips('rusty_hatchet',2)[0]).toBe('1H_Melee_Attack_Slice_Diagonal');
+    expect(highflyWeaponBasicClips('bronzework_mace',1)[0]).toBe('1H_Melee_Attack_Chop');
     expect(highflyWeaponBasicClips('worn_sword',1)[0]).toBe('1H_Melee_Attack_Chop');
     expect(isHighflyLeftArmTrack('upperarm.l.quaternion')).toBe(true);
     expect(isHighflyLeftArmTrack('upperarm.r.quaternion')).toBe(false);

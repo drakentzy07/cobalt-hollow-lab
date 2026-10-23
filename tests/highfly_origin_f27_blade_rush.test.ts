@@ -4,6 +4,7 @@ import type {Entity} from '../src/sim/types';
 import type {SimContext} from '../src/sim/sim_context';
 import {finishHighflyBladeRush,HIGHFLY_BLADE_RUSH_ID} from '../src/highfly/combat/f27_blade_rush';
 import {highflyAimShape} from '../src/highfly/combat/f24_aim_core';
+import { highflyFluidNextStep } from '../src/highfly/combat/combo_fluidity';
 import {f1StartState,normalizeOriginF1Save,originCanTrainSkill} from '../src/highfly/origin/f1_core';
 
 const read=(p:string)=>readFileSync(p,'utf8');
@@ -42,7 +43,8 @@ describe('F2.7 P3 — physically traveling Blade Rush and real four-contact comb
   });
   it('offers fourth PHYSICAL strike even without a gem, while gem bonus remains conditional',()=>{
     const hud=read('src/ui/hud.ts');
-    expect(hud).toContain('this.highflyComboStep === 3 ? 4');
+    expect(hud).toContain('highflyFluidNextStep(this.highflyComboStep)');
+    expect(highflyFluidNextStep(3)).toBe(4);
     expect(hud).toContain('const finishesChain = next === 4;');
     const attack=read('src/sim/combat/auto_attack.ts');
     expect(attack).not.toContain("if (step === 4 && !highflyElementalFinisherReady(p)) return false;");
