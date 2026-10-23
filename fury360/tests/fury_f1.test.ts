@@ -57,7 +57,7 @@ test('pointer-release skill cast is emitted once, and tracks player current posi
   const f=ctl.update(11,{x:500,y:150},moved)!;
   assert.equal(f.geometry!.trajectory[0].x,8);
   assert.ok(f.geometry!.center.z>9);
-  assert.equal(ctl.release(11,{x:500,y:150},moved),'native-accepted');
+  assert.equal(ctl.release(11,{x:500,y:150},moved),'native-submitted');
   assert.equal(calls.length,1);
   assert.equal(calls[0].abilityId,'native-action');
   assert.equal(calls[0].world.x,8);
@@ -95,6 +95,6 @@ test('right-hand skill pointer leaves free simultaneous camera/movement thumbs u
   assert.equal(c.update(100,{x:80,y:700},context),null);
   assert.equal(c.cancel(100),false);
   assert.equal(c.update(202,{x:1100,y:540},context),null);
-  assert.equal(c.release(201,{x:960,y:450},context),'native-accepted');
+  assert.equal(c.release(201,{x:960,y:450},context),'native-submitted');
   assert.equal(calls,1);
 });
