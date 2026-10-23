@@ -6,6 +6,8 @@ import {
   ORIGIN_F1_SCHOOLS,
   ORIGIN_HUNTER_CARRIER_CLASS,
   ORIGIN_STARTER_WEAPONS,
+  ORIGIN_F23_MASTER_SKILLS,
+  originCanTrainSkill,
   claimOriginStarter,
   consumeF1Resource,
   f1StartState,
@@ -109,6 +111,22 @@ describe('HIGHFLY F1 integral — one Hunter, safe birth, first weapon and resou
     expect(original.player.dualWielding).toBe(false);
     expect(original.player.offhandWeapon).toBeNull();
     expect(om.equipment.offhand).not.toBe('worn_sword');
+  });
+
+  it('lets the level-1 Universal Hunter purchase any existing trainer skill using real copper only',()=>{
+    for(const skill of ORIGIN_F23_MASTER_SKILLS){
+      expect(originCanTrainSkill(skill.id,1,skill.copper,[],true),skill.id).toBe(true);
+      expect(originCanTrainSkill(skill.id,1,skill.copper-1,[],true),skill.id).toBe(false);
+      expect(originCanTrainSkill(skill.id,1,skill.copper,[skill.id],true),skill.id).toBe(false);
+    }
+    expect(originCanTrainSkill('invented_skill',1,99999,[],true)).toBe(false);
+    // Historical F2.3 lab behavior is isolated from the new universal rule.
+    expect(originCanTrainSkill('meteor',1,99999,[])).toBe(false);
+    const ui=readFileSync('src/highfly/origin/f1_world_ui.ts','utf8');
+    expect(ui).toContain('originCanTrainSkill(skill.id,sim.player.level,hunter?.copper??0,learned,unifiedFrame)');
+    expect(ui).toContain('const trialDef=(unifiedFrame || f27Preview&&trial.includes(id))?{...useDef,learnLevel:1}:useDef;');
+    expect(ui).toContain('hunter.copper-=skill.copper');
+    expect(ui).toContain("current={...current,learnedAbilityIds:[...earned,skill.id]}");
   });
 
   it('grants no duplicate starter, accepts only existing basic choices',()=>{

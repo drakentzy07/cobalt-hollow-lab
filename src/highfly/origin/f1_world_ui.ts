@@ -190,7 +190,7 @@ export function mountOriginF1WorldUi(
             cost:0,cooldown:12,range:16,minRange:3,highflyStaminaCost:18,
             effects:[{type:'charge' as const}],castWhileMoving:true}
         : ABILITIES[id] : undefined;
-      if(!row || !def || (!previewBypass && def.learnLevel>sim.player.level) || def.hiddenFromPlayer)return [];
+      if(!row || !def || (!unifiedFrame && !previewBypass && def.learnLevel>sim.player.level) || def.hiddenFromPlayer)return [];
       const useDef=f26 && id==='fireball'
         ? {...def,castTime:0,cooldown:3,requiresTarget:false,castWhileMoving:true}
         : f26 && (id==='charge'||id==='heroic_leap')
@@ -202,7 +202,7 @@ export function mountOriginF1WorldUi(
         : f26 && id==='meteor'
           ? {...def,castTime:0,castWhileMoving:true}
         : f25 && id==='fireball' ? {...def,castWhileMoving:true} : def;
-      const trialDef=f27Preview&&trial.includes(id)?{...useDef,learnLevel:1}:useDef;
+      const trialDef=(unifiedFrame || f27Preview&&trial.includes(id))?{...useDef,learnLevel:1}:useDef;
       return [{def:trialDef,rank:1,cost:trialDef.cost,castTime:trialDef.castTime,cooldown:trialDef.cooldown,
         effects:trialDef.effects,castWhileMoving:trialDef.castWhileMoving===true,
         threatFlat:useDef.threat?.flat??0,threatMult:useDef.threat?.mult??1}];
@@ -325,7 +325,7 @@ export function mountOriginF1WorldUi(
   if(f23Trainer){
     const title=node('h3','MAESTRO · APRENDER HABILIDADES');
     title.style.cssText='margin:16px 0 6px;font-size:15px;color:#f1d29b';
-    const info=node('p','Aprendé habilidades de las nueve escuelas con nivel y cobre. El laboratorio F2.7 ofrece cuatro técnicas temporales para prueba, sin alterar tu progreso.');
+    const info=node('p',unifiedFrame?'Comprá técnicas de cualquier escuela con cobre. Tu nivel NO limita qué habilidad podés aprender. También llegarán libros de botín y recompensas de misiones; todavía no están conectados.':'Aprendé habilidades con nivel y cobre. El laboratorio F2.7 ofrece cuatro técnicas temporales para prueba, sin alterar tu progreso.');
     info.style.cssText='font-size:12px;line-height:1.45;margin:0 0 8px';
     const list=node('div','','hf-origin-f23-trainer');
     list.id='hf-origin-f23-trainer';
@@ -335,15 +335,15 @@ export function mountOriginF1WorldUi(
       const learned=current.learnedAbilityIds??[];
       for(const skill of ORIGIN_F23_MASTER_SKILLS){
         const known=learned.includes(skill.id);
-        const eligible=originCanTrainSkill(skill.id,sim.player.level,hunter?.copper??0,learned);
-        const button=node('button',skill.label+' · '+(known?'APRENDIDA':skill.copper+' cobre · NV '+skill.level));
+        const eligible=originCanTrainSkill(skill.id,sim.player.level,hunter?.copper??0,learned,unifiedFrame);
+        const button=node('button',skill.label+' · '+(known?'APRENDIDA':skill.copper+' cobre'+(unifiedFrame?'':' · NV '+skill.level)));
         button.type='button';button.dataset.learnSkill=skill.id;
         button.disabled=known;
         button.style.cssText='width:100%;min-height:44px;padding:9px 10px;border:1px solid #a7a27b;border-radius:8px;background:#33465d;color:white;text-align:left;font:650 12px system-ui;touch-action:manipulation;opacity:'+(known?'.64':'1');
         button.addEventListener('click',()=>{
           const earned=current.learnedAbilityIds??[];
-          if(!hunter || !originCanTrainSkill(skill.id,sim.player.level,hunter.copper,earned)){
-            status.textContent='Necesitás el nivel indicado y monedas suficientes para aprender esta técnica.';return;
+          if(!hunter || !originCanTrainSkill(skill.id,sim.player.level,hunter.copper,earned,unifiedFrame)){
+            status.textContent=unifiedFrame?'Necesitás monedas suficientes para comprar esta técnica.':'Necesitás el nivel indicado y monedas suficientes para aprender esta técnica.';return;
           }
           hunter.copper-=skill.copper;
           current={...current,learnedAbilityIds:[...earned,skill.id]};
@@ -352,7 +352,7 @@ export function mountOriginF1WorldUi(
           status.textContent='¡Técnica aprendida! Abrí tu libro para asignarla al HUD.';
           refresh();
         });
-        if(!eligible && !known)button.title='Falta nivel o cobre';
+        if(!eligible && !known)button.title=unifiedFrame?'Falta cobre':'Falta nivel o cobre';
         list.append(button);
       }
     };

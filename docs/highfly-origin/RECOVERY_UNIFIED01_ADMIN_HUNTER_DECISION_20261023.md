@@ -50,3 +50,13 @@ The `highflyF263DirectionalFlip` renderer applied a tiny backward tilt `-.22*sin
 - Native one Sim, no second combat/damage or UI resource owner.
 
 **Status:** source baseline restored, backwards flip patch and unit tests committed; awaiting new CI, creator/admin implementation and real S23 visual validation. **Do not claim fully playable new version yet.**
+
+
+## 2026-10-23 — Definitive Universal Hunter decision (user-approved)
+
+- UNIFIED 01 remains the shipped candidate and one underlying Sim/world; RECOVERY alone receives code changes until all gates pass. No class-selection NPC. One universal Hunter, birth at level 1 in WORLD; LAB 99 is separate and ephemeral.
+- Classic class/specialization UI is not part of the target Hunter experience. Preserve ClaudeCraft class internals solely for compatibility until mechanics have been safely extracted.
+- **Leveling by playing awards natural STR/AGI/VIT/PER/INT gains**, through existing naturalLevelGrowthFor and stat authority. **Validated physical training yields additional permanent Core gains** and is intended as the strongest long-term source. Do not delete natural level growth or established Training allocations. Exact balance/curves require independent calibration and tests.
+- Acquired skills do not require player levels or donor class/specialization. WORLD purchases spend copper via the in-world Veteran (existing seven skills only in this small recovery step). Future acquisition from rare scroll drops, loot, quests, and discovery must be authoritative, consumptive and persistent. Skill fusion is a later explicitly designed mechanic, not an implicit perk.
+- Magic consumes MP; physical abilities consume EN/stamina. Original native costs/animations/skills must be adapted incrementally. All weapons and armor permitted to Universal Hunter subject to actual inventory, physical hand/slot and compatible skeleton rules.
+- This increment removes level gating from the UNIFIED Veteran and normalized native knowledge entries only. It does **not** claim that monster loot scrolls, custom skill fusion or the future balancing curve have already been implemented. No Pages publication in the Recovery test workflow.

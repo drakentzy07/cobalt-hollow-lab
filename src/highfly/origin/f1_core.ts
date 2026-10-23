@@ -25,9 +25,17 @@ export const ORIGIN_F23_MASTER_SKILLS = [
   { id:'highfly_blade_rush', label:'Blade Rush · carrera de cuchillas', school:'warrior', level:3, copper:12 },
 ] as const;
 export type OriginMasterSkillId = (typeof ORIGIN_F23_MASTER_SKILLS)[number]['id'];
-export function originCanTrainSkill(skillId:string, hunterLevel:number, copper:number, learned:readonly string[]):boolean {
+/** The original F2.3 lab retains its historical level gate for regression.
+ * UNIFIED Hunter never gates skill acquisition by character level.
+ * A technique still requires a legitimate purchase and is never auto-granted.
+ * The existing `level` catalog metadata is historical only for UNIFIED.
+ */
+export function originCanTrainSkill(
+  skillId:string, hunterLevel:number, copper:number, learned:readonly string[],
+  universalHunter=false,
+):boolean {
   const row=ORIGIN_F23_MASTER_SKILLS.find(s=>s.id===skillId);
-  return !!row && Number.isFinite(hunterLevel) && hunterLevel>=row.level &&
+  return !!row && (universalHunter || Number.isFinite(hunterLevel) && hunterLevel>=row.level) &&
     Number.isFinite(copper) && copper>=row.copper && !learned.includes(skillId);
 }
 
