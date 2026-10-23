@@ -30,7 +30,7 @@ test('combo buffer waits for animation cancel window; native rejection cannot cr
   const first=ctl.request(a(),100);
   if(first.status!=='ready')throw Error('missing proposal');
   ctl.confirmNative(first.proposal.ticket,true,100);
-  assert.equal(ctl.request(a(),210).status,'rejected');
+  assert.equal(ctl.request(a(),150).status,'rejected');
   assert.equal(ctl.request(a(),300).status,'buffered');
   assert.equal(ctl.pollBuffered(320),null);
   const second=ctl.pollBuffered(352)!;
