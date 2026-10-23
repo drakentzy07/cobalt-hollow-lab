@@ -3,12 +3,17 @@ import {readFileSync} from 'node:fs';
 import {HIGHFLY_F263_GROUND_HIT_RADIUS,highflyF262GroundContact} from '../src/highfly/combat/f26_skillshot_core';
 import {HIGHFLY_SOMERSAULT_SECONDS,highflyF263DirectionalFlip,highflyWeaponBasicClips,isHighflyLeftArmTrack} from '../src/render/characters/highfly_combat_presentation';
 describe('F2.6.3 S23 root-cause stability',()=>{
-  it('forward second-jump visibly pitches forward while lateral remains lateral',()=>{
+  it('all four directional second jumps: forward and backward full flips, lateral rolls',()=>{
     const f=highflyF263DirectionalFlip(HIGHFLY_SOMERSAULT_SECONDS/2,'forward');
     expect(f.pitch).toBeGreaterThan(3);
     expect(f.roll).toBe(0);
     expect(highflyF263DirectionalFlip(.36,'left').roll).toBeLessThan(-3);
-    expect(Math.abs(highflyF263DirectionalFlip(.36,'back').pitch)).toBeLessThan(.4);
+    const back=highflyF263DirectionalFlip(HIGHFLY_SOMERSAULT_SECONDS/2,'back');
+    expect(back.pitch).toBeLessThan(-3);
+    expect(back.roll).toBe(0);
+    expect(back.pitch).toBeCloseTo(-f.pitch,5);
+    expect(highflyF263DirectionalFlip(0,'back')).toEqual({pitch:0,roll:0});
+    expect(highflyF263DirectionalFlip(HIGHFLY_SOMERSAULT_SECONDS,'back')).toEqual({pitch:0,roll:0});
   });
   it('a near wolf gets forgiving 2D overlap but a distant aim still misses',()=>{
     const a={x:0,y:6,z:0},b={x:0,y:1,z:10};
