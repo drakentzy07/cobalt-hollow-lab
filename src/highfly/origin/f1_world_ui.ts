@@ -205,8 +205,8 @@ export function mountOriginF1WorldUi(
       const trialDef=f27Preview&&trial.includes(id)?{...useDef,learnLevel:1}:useDef;
       // WORLD/LAB Universal knowledge is learned from purchases, not class levels.
       const hunterDef=unifiedFrame?{...trialDef,learnLevel:1}:trialDef;
-      return [{def:hunterDef,rank:1,cost:hunterDef.cost,castTime:hunterDef.castTime,cooldown:hunterDef.cooldown,
-        effects:hunterDef.effects,castWhileMoving:hunterDef.castWhileMoving===true,
+      return [{def:hunterDef,rank:1,cost:trialDef.cost,castTime:trialDef.castTime,cooldown:trialDef.cooldown,
+        effects:trialDef.effects,castWhileMoving:trialDef.castWhileMoving===true,
         threatFlat:useDef.threat?.flat??0,threatMult:useDef.threat?.mult??1}];
     });
     if(f26 && !f261){
