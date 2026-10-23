@@ -12,6 +12,7 @@
 // DOM/Three-free (registered in tests/architecture.test.ts UI_PURE_CORES).
 
 import { ITEMS } from '../sim/data';
+import { universalHunterCanEquip, universalHunterCanEquipSlot } from '../highfly/origin/universal_equipment';
 import {
   canEquipItem,
   canEquipItemInSlot,
@@ -147,6 +148,7 @@ export function paperdollDropAction(
   instances?: Partial<Record<EquipSlot, ItemInstancePayload>>,
   inventory?: readonly InvSlot[],
   slotIndex?: number,
+  originUniversalHunter = false,
 ): PaperdollDropAction {
   // Only real gear equips; a consumable or material declares no slot at all, and
   // a bag equips into its own bar socket, never the paperdoll.
@@ -165,10 +167,16 @@ export function paperdollDropAction(
   ) {
     return 'blockedSelection';
   }
-  if (!slotAcceptsItem(item, slot)) return 'blockedSlot';
-  if (!canEquipItem(cls, item)) return 'blockedClass';
+  // The Universal Hunter's equipment UI mirrors the REAL Sim authority;
+  // donor Warrior cannot require a Fury specialization for second sword.
+  const universalOffhand = originUniversalHunter && item.kind === 'weapon' &&
+    slot === 'offhand' && (item.hand ?? 'onehand') === 'onehand';
+  if (!universalOffhand && !slotAcceptsItem(item, slot)) return 'blockedSlot';
+  if (!(originUniversalHunter ? universalHunterCanEquip(item) : canEquipItem(cls, item)))
+    return 'blockedClass';
   if (!meetsLevelRequirement(level, item)) return 'blockedLevel';
-  if (!canEquipItemInSlot(cls, item, slot, spec)) return 'blockedClass';
+  if (!(originUniversalHunter ? universalHunterCanEquipSlot(item, slot)
+    : canEquipItemInSlot(cls, item, slot, spec))) return 'blockedClass';
   if (equipment) {
     // The same exemptions the sim applies: the target slot and the slot this
     // equip displaces are both emptied by the swap, so a copy worn there never

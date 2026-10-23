@@ -1402,10 +1402,13 @@
         </div>
 
         <div id="offline-select" class="panel auth-panel auth-panel-premium cs-wow" hidden>
-          <h2 class="auth-title">HIGHFLY ORIGIN · ELEGIR MODO</h2>
-          <div class="hf-origin-mode-select" role="group" aria-label="Modo de juego" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:8px 12px 14px">
-            <button type="button" id="hf-origin-mode-world" class="btn btn-primary" aria-pressed="true" style="white-space:normal;min-height:55px;touch-action:manipulation">ENTRAR AL MUNDO · DRAKEN</button>
-            <button type="button" id="hf-origin-mode-lab" class="btn btn-secondary" aria-pressed="false" style="white-space:normal;min-height:55px;touch-action:manipulation">LABORATORIO · LV99 AJUSTABLE</button>
+          <div class="hf-origin-creator-heading">
+            <h2 class="auth-title">HIGHFLY · TU HUNTER</h2>
+            <button type="button" id="hf-origin-creator-fullscreen" class="btn btn-secondary" style="font-size:11px;min-height:32px;touch-action:manipulation">⛶ PANTALLA COMPLETA</button>
+          </div>
+          <div class="hf-origin-mode-select" role="group" aria-label="Modo de juego" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:4px 12px 7px">
+            <button type="button" id="hf-origin-mode-world" class="btn btn-primary" aria-pressed="true" style="white-space:normal;min-height:38px;touch-action:manipulation">MUNDO NORMAL · LV1–99</button>
+            <button type="button" id="hf-origin-mode-lab" class="btn btn-secondary" aria-pressed="false" style="white-space:normal;min-height:38px;touch-action:manipulation">LABORATORIO · LV99 AJUSTABLE</button>
           </div>
           <p id="hf-origin-mode-description" style="margin:0 12px 10px;color:#decfaf;font:600 12px system-ui">Tu Hunter real: aventura, entrenamiento, equipo y progreso permanente.</p>
           <div class="charselect-layout">
@@ -1414,7 +1417,7 @@
               <div class="char-create">
                 <label for="char-name" class="auth-label" data-i18n="auth.characterName">Character Name</label>
                 <div class="char-input-group">
-                  <input id="char-name" type="text" dir="ltr" inputmode="text" spellcheck="false" maxlength="16" data-i18n-placeholder="auth.characterNamePlaceholder" placeholder="Character name" value="" aria-describedby="offline-error" autocomplete="off" />
+                  <input id="char-name" type="text" dir="ltr" inputmode="text" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="16" data-i18n-placeholder="auth.characterNamePlaceholder" placeholder="Character name" value="" aria-describedby="offline-error" autocomplete="off" />
                   <div id="offline-error" class="auth-error" aria-live="polite"></div>
                 </div>
                 <div class="mini-class-row hf-origin-f1-carrier" hidden aria-hidden="true">

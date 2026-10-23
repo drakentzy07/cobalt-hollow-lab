@@ -11860,3 +11860,20 @@ body.mobile-touch #highfly-training-window .hf-rm-card {
     grid-template-columns: minmax(84px, 1fr) 76px auto !important;
   }
 }
+
+/* HIGHFLY ORIGIN UI FIX: compact creator independent of donor class menu. */
+#offline-select .hf-origin-creator-heading {
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+#offline-select .hf-origin-creator-heading .auth-title { margin:0; }
+#offline-select #hf-origin-creator-fullscreen[hidden] {display:none !important;}
+body.mobile-touch.hf-origin-f1-creator #offline-select {
+  position:fixed !important;inset:0 !important;width:100vw !important;
+  height:100dvh !important;max-width:none !important;max-height:none !important;
+  border-radius:0 !important;z-index:1100 !important;overflow:hidden !important;
+}
+body.mobile-touch #offline-select #char-name {
+  direction:ltr !important;unicode-bidi:normal !important;
+  writing-mode:horizontal-tb !important;text-align:left !important;
+  transform:none !important;-webkit-text-security:none !important;
+}

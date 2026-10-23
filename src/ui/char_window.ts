@@ -753,6 +753,7 @@ export class CharWindow {
         world.equipmentInstances,
         world.inventory,
         target?.slotIndex,
+        world.player.highflyUniversalHunter === true,
       )
     ) {
       case 'blockedSelection':
@@ -815,6 +816,7 @@ export class CharWindow {
           world.equipmentInstances,
           world.inventory,
           slotIndex,
+          world.player.highflyUniversalHunter === true,
         ) === 'equip';
       row.classList.toggle('drop-target', accepts);
     }
@@ -850,6 +852,7 @@ export class CharWindow {
           world.equipmentInstances,
           world.inventory,
           named,
+          world.player.highflyUniversalHunter === true,
         ) !== 'equip'
       )
         return;

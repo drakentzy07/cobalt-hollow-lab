@@ -9708,6 +9708,29 @@ function wireStartScreens(): void {
   offlineNameInput.dir = 'ltr';
   offlineNameInput.style.direction = 'ltr';
   offlineNameInput.style.textAlign = 'left';
+  // Gboard/WebView sometimes leaves the insertion caret at index ZERO after
+  // typing. Repair ONLY untouched prefix caret; never reverse a saved name.
+  let creatorNameManualCaret = false;
+  offlineNameInput.addEventListener('pointerup', () => {
+    if (offlineNameInput.value.length > 0) creatorNameManualCaret = true;
+  });
+  offlineNameInput.addEventListener('beforeinput', (event: InputEvent) => {
+    if (creatorNameManualCaret || event.isComposing ||
+        !event.inputType.startsWith('insert') || offlineNameInput.readOnly) return;
+    const value = offlineNameInput.value;
+    if (value.length > 0 && offlineNameInput.selectionStart === 0 &&
+        offlineNameInput.selectionEnd === 0) {
+      offlineNameInput.setSelectionRange(value.length, value.length);
+    }
+  });
+  offlineNameInput.addEventListener('input', (event: Event) => {
+    if (creatorNameManualCaret || (event instanceof InputEvent && event.isComposing)) return;
+    if (offlineNameInput.value.length > 0 &&
+        offlineNameInput.selectionStart === 0 && offlineNameInput.selectionEnd === 0) {
+      const end = offlineNameInput.value.length;
+      offlineNameInput.setSelectionRange(end, end);
+    }
+  });
   const offlineError = $('#offline-error');
   const resetOriginHunterBtn = document.getElementById('hf-origin-reset-hunter') as HTMLButtonElement | null;
   let selectedOriginMode: HighflyOriginMode = 'world';
@@ -9979,12 +10002,29 @@ function wireStartScreens(): void {
   worldModeBtn?.addEventListener('click', () => selectOriginMode('world'));
   labModeBtn?.addEventListener('click', () => selectOriginMode('lab'));
 
+  const creatorFullscreenButton = document.getElementById('hf-origin-creator-fullscreen') as HTMLButtonElement | null;
+  const syncCreatorFullscreen = () => {
+    if (!creatorFullscreenButton) return;
+    creatorFullscreenButton.hidden = !!currentFullscreenElement() ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.matchMedia('(display-mode: standalone)').matches;
+  };
+  creatorFullscreenButton?.addEventListener('click', () => {
+    // Direct second tap for WebViews that decline the first request.
+    if (isPhoneTouchDevice()) requestMobileFullscreenLandscape();
+    else requestBrowserFullscreen();
+    syncAppViewport();
+  });
+  document.addEventListener('fullscreenchange', syncCreatorFullscreen);
   const handleOfflineSelect = () => {
     if(!offlineAvailable) return;
+    // Real Android fullscreen request MUST precede any async work or view layout.
+    if (isPhoneTouchDevice()) requestMobileFullscreenLandscape();
     document.body.classList.add('hf-origin-f1-creator');
     show('#offline-select');
     selectHighflyOfflineClass(ORIGIN_HUNTER_CARRIER_CLASS);
     selectOriginMode('world');
+    syncCreatorFullscreen();
   };
 
   onlineBtn.addEventListener('click', handleOnlineSelect);
@@ -10272,6 +10312,7 @@ function wireStartScreens(): void {
 
   const offlineBackBtn = $('#btn-offline-back');
   const handleOfflineBack = () => {
+    creatorNameManualCaret = false;
     document.body.classList.remove('hf-origin-f1-creator');
     show('#mode-select');
     offlineError.textContent = '';

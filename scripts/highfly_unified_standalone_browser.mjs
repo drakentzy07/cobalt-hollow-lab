@@ -115,12 +115,17 @@ try {
   await page.reload({waitUntil:'domcontentloaded',timeout:120000});
   await openCreator();
   await page.waitForFunction(()=>document.getElementById('hf-origin-mode-world')?.getAttribute('aria-pressed')==='true');
-  await page.evaluate(()=>{
-    const input=document.getElementById('char-name');
-    input.value='Draken';
-    input.dispatchEvent(new Event('input',{bubbles:true}));
-    document.getElementById('btn-start-offline').click();
-  });
+  // Actual keyboard input, never fake .value assignment.
+  await page.focus('#char-name');
+  await page.type('#char-name','Draken',{delay:35});
+  const typed=await page.$eval('#char-name',input=>({
+    value:input.value,caret:input.selectionStart,dir:input.dir,
+    layout:getComputedStyle(input).direction
+  }));
+  if(typed.value!=='Draken'||typed.dir!=='ltr'||typed.layout!=='ltr')
+    throw Error('HIGHFLY_S23_CREATOR_REVERSED_TYPED_NAME '+JSON.stringify(typed));
+  console.log('HIGHFLY_S23_CREATOR_NATURAL_TYPING_GREEN=1',JSON.stringify(typed));
+  await page.evaluate(()=>document.getElementById('btn-start-offline').click());
   await awaitHunter();
   await page.waitForFunction(()=>document.body.classList.contains('hf-origin-unified') &&
     !document.body.classList.contains('hf-origin-lab'));
