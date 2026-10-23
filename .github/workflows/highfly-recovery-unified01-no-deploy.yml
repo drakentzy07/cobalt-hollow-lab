@@ -6,6 +6,9 @@ on:
     paths:
       - ".github/workflows/highfly-recovery-unified01-no-deploy.yml"
       - "tests/highfly_origin_f263_stability.test.ts"
+      - "tests/highfly_fury_combat_2_contextual.test.ts"
+      - "tests/highfly_combat_fluidity_v1.test.ts"
+      - "tests/highfly_origin_ui_fix_s23.test.ts"
       - "docs/highfly-origin/RECOVERY_UNIFIED01_ADMIN_HUNTER_DECISION_20261023.md"
       - "src/**"
       - "index.html"
@@ -61,6 +64,9 @@ jobs:
             tests/highfly_origin_f27_blade_rush.test.ts \
             tests/highfly_origin_f27_moba.test.ts \
             tests/highfly_origin_f263_stability.test.ts \
+            tests/highfly_fury_combat_2_contextual.test.ts \
+            tests/highfly_combat_fluidity_v1.test.ts \
+            tests/highfly_origin_ui_fix_s23.test.ts \
             tests/highfly_origin_f26_skillshot.test.ts \
             tests/highfly_origin_f261_controls.test.ts \
             tests/highfly_origin_f262_skillshot.test.ts \
