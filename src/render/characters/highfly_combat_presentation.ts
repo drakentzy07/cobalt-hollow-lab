@@ -95,7 +95,7 @@ export function highflyF263DirectionalFlip(t:number,dir:'forward'|'back'|'left'|
   return dir==='forward'?{pitch:turn,roll:0}
     :dir==='left'?{pitch:0,roll:-turn}
     :dir==='right'?{pitch:0,roll:turn}
-    :{pitch:-.22*Math.sin(Math.PI*u),roll:0};
+    :{pitch:-turn,roll:0}; // back stick = complete backward 360°, not a small hop
 }
 export function highflyDirectionalFlip(t:number,dir:'forward'|'back'|'left'|'right'){
   if(!Number.isFinite(t)||t<=0||t>=HIGHFLY_SOMERSAULT_SECONDS)return {pitch:0,roll:0};
