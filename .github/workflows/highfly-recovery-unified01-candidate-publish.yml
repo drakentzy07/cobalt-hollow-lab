@@ -1,0 +1,162 @@
+name: HIGHFLY Recovery — publish UNIFIED 01 candidate ONLY after browser GREEN
+on:
+  push:
+    branches:
+      - highfly-recovery-unified01-admin-s23-20261023
+    paths:
+      - ".github/workflows/highfly-recovery-unified01-candidate-publish.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: highfly-recovery-unified01-candidate-release
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Verify previously published baseline is certified
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const last=(await github.rest.actions.getWorkflowRun({
+              owner:context.repo.owner,repo:context.repo.repo,run_id:39668354112,
+            })).data;
+            if(last.head_sha!=='c65159f11e91c88255d10b36b2fe1507f67b9047' ||
+                last.status!=='completed'||last.conclusion!=='success')
+              throw Error('UNIFIED_RECOVERY_PUBLISHED_BASELINE_NOT_GREEN');
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+      - uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 39668354112
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: baseline
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Build and test acquired skills, old labs and saves
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm exec tsc --noEmit --incremental false
+          pnpm exec vitest run --exclude 'training/tests/**' \
+            tests/highfly_origin_f23_skill_master.test.ts \
+            tests/highfly_origin_f27_beta.test.ts \
+            tests/highfly_origin_f27_skills.test.ts \
+            tests/highfly_origin_f1_universal_hunter.test.ts \
+            tests/highfly_origin_unified_mode_contract.test.ts \
+            tests/highfly_origin_unified_entry.test.ts \
+            tests/highfly_origin_f72_progression.test.ts \
+            tests/highfly_origin_f73_gate.test.ts
+          grep -F 'UNIFIED_CANDIDATE_PREVIEW' src/game/highfly_offline_save.ts
+          echo "UNIFIED_RECOVERY_TESTS_GREEN=1"
+      - name: Mount exactly frozen ClaudeCraft world media
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: donor-media
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /public/
+      - name: Build real 3D WebGL game at original base path
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          test "$(git -C donor-media rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          rsync -a donor-media/public/ public/
+          node scripts/build_bundle_pregen.mjs
+          pnpm exec vite build
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          node scripts/highfly_f11_appshell.mjs
+          test -s dist/index.html
+      - name: Safely overlay candidate, hash-preserve ALL other Pages content
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/highfly_origin_unified_candidate_update_stage.py \
+            baseline/artifact.tar dist site "$GITHUB_SHA"
+          test -s site/candidate/unified-01/unified-candidate-qa.json
+          test -s site/highfly-origin-f12-qa.json
+      - name: Test real browser World/LAB saves and purchased LV1 Meteor
+        shell: bash
+        env:
+          HIGHFLY_UNIFIED_URL: "http://127.0.0.1:4173/cobalt-hollow-lab/candidate/unified-01/"
+        run: |
+          set -euo pipefail
+          command -v google-chrome || command -v chromium || command -v chromium-browser
+          mkdir -p candidate-web
+          ln -s ../site candidate-web/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory candidate-web >/tmp/highfly-recovery-candidate.log 2>&1 &
+          P=$!
+          trap 'kill "$P" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45);do
+            if curl -fsSI "$HIGHFLY_UNIFIED_URL" >/dev/null;then break;fi
+            sleep 1
+          done
+          node scripts/highfly_origin_candidate_browser.mjs
+          echo "UNIFIED_RECOVERY_WEBGL_HUNTER_LV1_REAL_PURCHASE_GREEN=1"
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publish:
+    needs: stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/candidate/unified-01/
+    steps:
+      - uses: actions/deploy-pages@v4
+      - name: Verify live candidate SHA and unchanged Draken
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json,os,time,urllib.request
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for attempt in range(25):
+              try:
+                  def get(path):
+                      req=urllib.request.Request(base+path+'?run='+os.environ['EXPECTED_SHA'][:12]+'&try='+str(attempt),
+                          headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-RECOVERY-LIVE-CHECK'})
+                      with urllib.request.urlopen(req,timeout=25) as r:
+                          return json.loads(r.read().decode('utf-8'))
+                  candidate=get('candidate/unified-01/unified-candidate-qa.json')
+                  root=get('highfly-origin-f12-qa.json')
+                  if candidate.get('sourceCommit')!=os.environ['EXPECTED_SHA']:
+                      raise ValueError('CANDIDATE_SHA_NOT_YET_LIVE')
+                  if candidate.get('noRootChange') is not True:
+                      raise AssertionError('NO_ROOT_CHANGE_GUARD_MISSING')
+                  if root.get('sourceCommit')!='7518c22c11ff5ddffe09bb7792f8d67bb9e82038':
+                      raise AssertionError('PRODUCTION_DRAKEN_CHANGED')
+                  print('UNIFIED_RECOVERY_PUBLIC_CANDIDATE_GREEN=1',candidate['url'],flush=True)
+                  break
+              except Exception:
+                  if attempt==24:raise
+                  time.sleep(4)
+          PY

@@ -138,6 +138,30 @@ try {
   console.log('UNIFIED_WORLD_NO_TRIAL_GRANTS_AND_BOTH_SAVES_GREEN=1',JSON.stringify({
     level:world.level,known:world.known,world:world.original?.name,lab:world.lab?.name
   }));
+  // Explicit test fixture: give copper without XP to a fresh disposable
+  // candidate Hunter. The merchant's REAL click handler must spend it,
+  // hydrate the native spell and keep the player level at ONE.
+  await page.waitForSelector('#hf-origin-f1-open',{visible:true,timeout:15000});
+  await page.evaluate(()=>{
+    const g=window.__game;
+    g.sim.players.get(g.sim.playerId).copper=200;
+    document.getElementById('hf-origin-f1-open').click();
+  });
+  await page.waitForSelector('[data-learn-skill="meteor"]',{visible:true,timeout:15000});
+  const labelBefore=await page.$eval('[data-learn-skill="meteor"]',b=>b.textContent);
+  if(!labelBefore?.includes('120 cobre')||labelBefore.includes('NV '))
+    throw Error('UNIVERSAL_LV1_SKILL_STILL_LEVEL_GATED '+labelBefore);
+  await page.evaluate(()=>document.querySelector('[data-learn-skill="meteor"]').click());
+  await page.waitForFunction(()=>window.__game.sim.known.some(k=>k.def.id==='meteor'),{timeout:12000});
+  const bought=await page.evaluate(()=>{
+    const g=window.__game;
+    return {level:g.sim.player.level,copper:g.sim.players.get(g.sim.playerId).copper,
+      learned:g.sim.known.find(k=>k.def.id==='meteor')?.def.learnLevel,
+      button:document.querySelector('[data-learn-skill="meteor"]')?.textContent};
+  });
+  if(bought.level!==1||bought.copper!==80||bought.learned!==1||!bought.button?.includes('APRENDIDA'))
+    throw Error('UNIVERSAL_REAL_LV1_PURCHASE_FAILED '+JSON.stringify(bought));
+  console.log('HIGHFLY_UNIVERSAL_WORLD_LV1_REAL_METEOR_PURCHASE_GREEN=1',JSON.stringify(bought));
   console.log('HIGHFLY_UNIFIED_01_BROWSER_GREEN=1',JSON.stringify({
     base:BASE,modeChoices:true,labLevel1:true,fourTrialSkills:true,realWorldLevel1:true,
     separateSaves:true,productionSavesUntouched:true,device:'844x390 touch-emulated Chromium; NOT physical S23',
