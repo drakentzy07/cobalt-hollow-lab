@@ -19,6 +19,8 @@ concurrency:
 
 jobs:
   stage:
+    outputs:
+      can_publish: ${{ steps.baseline.outcome == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -36,13 +38,6 @@ jobs:
         with:
           persist-credentials: false
           filter: blob:none
-      - uses: actions/download-artifact@v4
-        with:
-          repository: drakentzy07/cobalt-hollow-lab
-          run-id: 39668354112
-          github-token: ${{ github.token }}
-          name: github-pages
-          path: baseline
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -91,7 +86,24 @@ jobs:
           node scripts/build_media_manifest.mjs prune
           node scripts/highfly_f11_appshell.mjs
           test -s dist/index.html
+      - name: Upload FULL compiled WebGL game for local S23 testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-unified01-recovery-webgl-playtest
+          path: dist/
+          retention-days: 30
+      - name: Restore previous Pages snapshot only if GitHub still retains it
+        id: baseline
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 39668354112
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: baseline
       - name: Safely overlay candidate, hash-preserve ALL other Pages content
+        if: steps.baseline.outcome == 'success'
         shell: bash
         run: |
           set -euo pipefail
@@ -100,6 +112,7 @@ jobs:
           test -s site/candidate/unified-01/unified-candidate-qa.json
           test -s site/highfly-origin-f12-qa.json
       - name: Test real browser World/LAB saves and purchased LV1 Meteor
+        if: steps.baseline.outcome == 'success'
         shell: bash
         env:
           HIGHFLY_UNIFIED_URL: "http://127.0.0.1:4173/cobalt-hollow-lab/candidate/unified-01/"
@@ -118,12 +131,20 @@ jobs:
           node scripts/highfly_origin_candidate_browser.mjs
           echo "UNIFIED_RECOVERY_WEBGL_HUNTER_LV1_REAL_PURCHASE_GREEN=1"
       - uses: actions/configure-pages@v5
+        if: steps.baseline.outcome == 'success'
       - uses: actions/upload-pages-artifact@v3
+        if: steps.baseline.outcome == 'success'
         with:
           path: site
+      - name: Confirm isolated candidate could NOT be published without certified baseline
+        if: steps.baseline.outcome != 'success'
+        run: |
+          echo "RECOVERY_WEBGL_ARTIFACT_READY_BUT_PUBLIC_PAGES_NOT_MODIFIED=1"
+          echo "GitHub no longer retains required immutable deployed Pages baseline."
 
   publish:
     needs: stage
+    if: needs.stage.outputs.can_publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
