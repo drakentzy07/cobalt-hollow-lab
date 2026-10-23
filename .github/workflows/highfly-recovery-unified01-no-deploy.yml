@@ -1,0 +1,165 @@
+name: HIGHFLY UNIFIED RECOVERY — S23 real flip + creator audit (NO DEPLOY)
+on:
+  push:
+    branches:
+      - highfly-recovery-unified01-admin-s23-20261023
+    paths:
+      - ".github/workflows/highfly-recovery-unified01-no-deploy.yml"
+      - "tests/highfly_origin_f263_stability.test.ts"
+      - "docs/highfly-origin/RECOVERY_UNIFIED01_ADMIN_HUNTER_DECISION_20261023.md"
+      - "src/**"
+      - "index.html"
+      - "tests/highfly_origin_unified*.test.ts"
+      - "tests/highfly_origin_f1_universal_hunter.test.ts"
+      - "scripts/highfly_origin_unified_browser.mjs"
+      - "scripts/highfly_origin_content_census.mjs"
+      - "tests/highfly_origin_f7_baseline.test.ts"
+      - "tests/highfly_origin_f72_progression.test.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-unified-recovery-s23-no-deploy
+  cancel-in-progress: true
+
+jobs:
+  unified_quality:
+    name: "Validate shared runtime and no-cross-save policy"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install frozen dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: TypeScript typecheck (complete source tree)
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec tsc --noEmit --incremental false
+      - name: LV1 LAB / World guard tests and F2.7 regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vitest run --exclude 'training/tests/**' \
+            tests/highfly_origin_unified_mode_contract.test.ts \
+            tests/highfly_origin_unified_entry.test.ts \
+            tests/highfly_origin_f27_beta.test.ts \
+            tests/highfly_origin_f27_skills.test.ts \
+            tests/highfly_origin_f27_blade_rush.test.ts \
+            tests/highfly_origin_f27_moba.test.ts \
+            tests/highfly_origin_f263_stability.test.ts \
+            tests/highfly_origin_f26_skillshot.test.ts \
+            tests/highfly_origin_f261_controls.test.ts \
+            tests/highfly_origin_f262_skillshot.test.ts \
+            tests/highfly_origin_f23_skill_master.test.ts \
+            tests/highfly_origin_f24_aim.test.ts \
+            tests/highfly_origin_f1_universal_hunter.test.ts \
+            tests/highfly_origin_f7_baseline.test.ts \
+            tests/highfly_origin_f72_progression.test.ts \
+            tests/highfly_origin_f72_hunt_and_hunter.test.ts \
+            tests/highfly_origin_f72_run3.test.ts \
+            tests/highfly_origin_f73_gate.test.ts
+      - name: F7 read-only native-content census
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/highfly_origin_content_census.mjs --check --out=tmp/highfly-origin-f7-census.json
+          test -s tmp/highfly-origin-f7-census.json
+          echo "HIGHFLY_F7_1A_CONTENT_CENSUS_GREEN=1"
+      - name: Upload F7 diagnostic census (not a Pages artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-origin-f7-native-content-census
+          path: tmp/highfly-origin-f7-census.json
+          retention-days: 30
+
+      - name: Guard single source and publication boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s src/highfly/origin/unified_mode.ts
+          test -s src/game/highfly_offline_save.ts
+          test -s src/highfly/combat/f27_blade_rush.ts
+          test -s src/game/offline_mode_gate.ts
+          grep -F "hf-origin-mode-lab" index.html
+          grep -F "origin-lab:primary" src/highfly/origin/unified_mode.ts
+          echo "HIGHFLY_ORIGIN_UNIFIED_01_SOURCE_AND_GUARDS_GREEN=1"
+          echo "HIGHFLY_ORIGIN_UNIFIED_01_NO_PAGES_OR_APK_DEPLOY=1"
+
+  unified_browser:
+    name: "Actual 3D browser: Draken vs LV99/30 LAB, no save crosstalk"
+    needs: unified_quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          filter: blob:none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install frozen dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Mount native world media from exact frozen donor
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 9b57e49c9676d75962700f828cc00a50a9a988b5
+          path: donor-media
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /public/
+      - name: Compile original world with unified code (no Pages publication)
+        shell: bash
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_COBALT_BASE: "/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          test "$(git -C donor-media rev-parse HEAD)" = "9b57e49c9676d75962700f828cc00a50a9a988b5"
+          rsync -a donor-media/public/ public/
+          node scripts/build_bundle_pregen.mjs
+          pnpm exec vite build
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          node scripts/highfly_f11_appshell.mjs
+          test -s dist/index.html
+      - name: Touch-browser World then LAB persistence and native skill validation
+        shell: bash
+        env:
+          HIGHFLY_UNIFIED_URL: "http://127.0.0.1:4173/cobalt-hollow-lab/"
+        run: |
+          set -euo pipefail
+          command -v google-chrome || command -v chromium || command -v chromium-browser
+          mkdir -p unified-web
+          ln -s ../dist unified-web/cobalt-hollow-lab
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory unified-web >/tmp/highfly-unified-01.log 2>&1 &
+          P=$!
+          trap 'kill "$P" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -fsSI "$HIGHFLY_UNIFIED_URL" >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/highfly_origin_unified_browser.mjs
+          echo "HIGHFLY_UNIFIED_01_ANDROID_VIEWPORT_NO_DEPLOY_GREEN=1"
