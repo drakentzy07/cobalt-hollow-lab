@@ -4,7 +4,7 @@
  * The native mechanics are positional leap + landing AoE.
  * Airborne knock-up is NOT implemented in this pass.
  */
-import {readFileSync,writeFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,copyFileSync} from 'node:fs';
 function one(path,before,after){
   const source=readFileSync(path,'utf8'), n=source.split(before).length-1;
   if(n!==1)throw Error('HIGHFLY_G2_UPSTREAM_DRIFT '+path+' match='+n+' '+before.slice(0,75));
@@ -44,4 +44,6 @@ one('src/sim/combat/heroic_leap.ts',
   "  if (abilityId !== 'heroic_leap') return point;",
   "  if (abilityId !== 'heroic_leap' && abilityId !== 'hf_impacto_astral') return point;");
 
+// Candidate-only test: the source repository still holds overlays, not a donor copy.
+copyFileSync('../overlays/highfly-world/g2/impacto_astral.test.ts','tests/highfly_impacto_astral.test.ts');
 console.log('HIGHFLY_WORLD_G2_01_IMPACTO_ASTRAL_ALPHA_APPLIED=PASS');
