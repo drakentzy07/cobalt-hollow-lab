@@ -1,5 +1,5 @@
 # Explicitly authorized clean replacement of the OLD GitHub Pages website; repository history and user browser saves remain untouched.
-name: HIGHFLY WORLD — Genesis G3 Assets Repair Build
+name: HIGHFLY WORLD — Genesis G4 NPC Preload Repair Build
 on:
   push:
     branches:
@@ -105,6 +105,7 @@ jobs:
           node ../overlays/highfly-world/pages/sanitize_candidate.mjs
           # Critical: regen after replacing assets, BEFORE Vite captures MEDIA_ASSETS.
           node scripts/build_media_manifest.mjs generate
+          node ../overlays/highfly-world/g3/test_neutral_accessories.mjs
           test -s public/models/weapons/sword_1handed.glb
           echo "HIGHFLY_GENESIS_RESTRICTED_DONOR_ART_REPLACED=1"
       - name: Compile G2 skill candidate with isolated Genesis flag
