@@ -9,7 +9,6 @@ assert.ok(i>0&&j>i,'MEDIA_ASSETS not generated');
 const assets=JSON.parse(s.slice(i+1,j+1));
 const keys=Object.keys(assets);
 assert.ok(keys.length>1500,'Expected the pinned complete 0.44.7 world media catalogue');
-const sample=['models/props/column.glb','models/props/mushroom_red.glb','models/props/mushroom_tan.glb','models/props/dock_platform.glb','models/props/reeds.glb','models/weapons/sword_1handed.glb'];
 const sample=[
  'models/props/column.glb','models/props/mushroom_red.glb',
  'models/props/mushroom_tan.glb','models/props/dock_platform.glb',
