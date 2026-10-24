@@ -1,0 +1,170 @@
+# User-authorized C2-04 PLAYTEST, one composite Pages artifact:
+# previous G6 root is byte-identical, new C2-04 is isolated at /c204/.
+name: HIGHFLY CLEAN C2-04 — Android Playtest Publisher
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/highfly-clean-c204-playtest-publish-main.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-world-genesis-main-pages-release
+  cancel-in-progress: false
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Pin both green sources and required build artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sources=[
+              {id:40125050134,sha:'865f9c523001f53f975ab96e617a921a4d2bd6e1',job:'world-contract',artifact:'github-pages'},
+              {id:40136229451,sha:'4462657a5ed1c8497242c880f07b33c0fe02cbd0',job:'golden-engine',artifact:'highfly-clean-c204-isolated-pages-app'}
+            ];
+            for (const src of sources) {
+              const run=(await github.rest.actions.getWorkflowRun({owner:context.repo.owner,repo:context.repo.repo,run_id:src.id})).data;
+              if(run.head_sha!==src.sha||run.status!=='completed')throw Error('HIGHFLY_BAD_BUILD_SHA_'+src.id);
+              const jobs=(await github.rest.actions.listJobsForWorkflowRun({owner:context.repo.owner,repo:context.repo.repo,run_id:src.id,per_page:100})).data.jobs;
+              if(!jobs.some(j=>j.name===src.job&&j.conclusion==='success'))throw Error('HIGHFLY_NOT_GREEN_'+src.job);
+              const artifacts=(await github.rest.actions.listWorkflowRunArtifacts({owner:context.repo.owner,repo:context.repo.repo,run_id:src.id,per_page:100})).data.artifacts;
+              if(!artifacts.some(a=>a.name===src.artifact&&!a.expired))throw Error('HIGHFLY_ARTIFACT_NOT_AVAILABLE_'+src.artifact);
+            }
+            console.log('HIGHFLY_C204_GREEN_SOURCE_ARTIFACTS_LOCKED=PASS');
+      - name: Download existing verified G6 site, unchanged
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 40125050134
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: existing
+      - name: Download independent C2-04 preview subsite
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 40136229451
+          github-token: ${{ github.token }}
+          name: highfly-clean-c204-isolated-pages-app
+          path: preview
+      - name: Assemble ONLY C2-04 subpath, verifying every original G6 media hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path, PurePosixPath
+          import json,tarfile,hashlib,re,shutil
+          original=Path('existing/artifact.tar')
+          if not original.is_file():raise SystemExit('C204_G6_ORIGINAL_ARTIFACT_MISSING')
+          site=Path('site');site.mkdir()
+          with tarfile.open(original,'r:') as t:
+            total=0
+            for m in t.getmembers():
+              rel=PurePosixPath(m.name)
+              if (rel.is_absolute() or '..' in rel.parts or m.issym() or m.islnk() or not (m.isfile() or m.isdir())):
+                raise SystemExit('C204_PAGES_UNSAFE_ARCHIVE_ENTRY')
+              total+=m.size
+            if total>950_000_000:raise SystemExit('C204_G6_BASE_TOO_LARGE')
+            t.extractall(site,filter='data')
+          original_root=(site/'index.html').read_bytes()
+          old_qa=json.loads((site/'genesis-g2-qa.json').read_text())
+          if old_qa['sourceSha']!='865f9c523001f53f975ab96e617a921a4d2bd6e1':
+            raise SystemExit('C204_OLD_G6_SOURCE_MISMATCH')
+          root_license=json.loads((site/'highfly-license-audit.json').read_text())
+          src=Path('preview/c204')
+          if not (src/'index.html').is_file():raise SystemExit('C204_SUBSITE_HTML_MISSING')
+          if any(p.is_symlink() for p in src.rglob('*')):raise SystemExit('C204_SYMLINK')
+          preview_qa=json.loads((src/'highfly-c204-preview-qa.json').read_text())
+          if preview_qa['ciRunnerSource']!='4462657a5ed1c8497242c880f07b33c0fe02cbd0':
+            raise SystemExit('C204_WRONG_TESTED_SOURCE')
+          if preview_qa['nativeS23Verified'] is not False:
+            raise SystemExit('C204_FALSE_PHYSICAL_DEVICE_CLAIM')
+          paths=preview_qa['mediaPaths']
+          if len(paths)!=1838 or len(set(paths))!=1838:raise SystemExit('C204_MEDIA_MANIFEST_BAD_LENGTH')
+          source_size=0
+          for rel in paths:
+            if not rel.startswith('/media/') or '..' in PurePosixPath(rel).parts:
+              raise SystemExit('C204_UNSAFE_ASSET_ROUTE')
+            f=site/rel.lstrip('/')
+            if not f.is_file():raise SystemExit('C204_MEDIA_URL_MISSING_'+rel)
+            m=re.search(r'\.([0-9a-f]{12})\.[^.]+$',f.name)
+            if not m:raise SystemExit('C204_MEDIA_SHA_FORMAT_BAD_'+rel)
+            if hashlib.sha256(f.read_bytes()).hexdigest()[:12]!=m.group(1):
+              raise SystemExit('C204_MEDIA_HASH_CHANGED_'+rel)
+            source_size+=f.stat().st_size
+          preview_license=json.loads((src/'highfly-license-audit.json').read_text())
+          if root_license['replacedPaths']!=preview_license['replacedPaths']:
+            raise SystemExit('C204_RESTRICTED_MEDIA_AUDIT_CHANGED')
+          if root_license['stats']['removed']!=0 or preview_license['stats']['removed']!=0:
+            raise SystemExit('C204_MEDIA_DELETED')
+          if not (src/'index.html').read_text().find('/cobalt-hollow-lab/c204/assets/')>=0:
+            raise SystemExit('C204_VITE_PREFIX_MISSING')
+          if (site/'c204').exists():raise SystemExit('C204_NOT_ISOLATED')
+          shutil.copytree(src,site/'c204')
+          if original_root!=(site/'index.html').read_bytes():
+            raise SystemExit('C204_CHANGED_G6_ROOT')
+          if not list((site/'c204/assets').glob('*.js')):
+            raise SystemExit('C204_APP_JS_MISSING')
+          total=sum(p.stat().st_size for p in site.rglob('*') if p.is_file())
+          print('HIGHFLY_G6_SITE_ROOT_BYTE_IDENTICAL=PASS')
+          print('HIGHFLY_C204_SHARED_MEDIA_HASHES=PASS count='+str(len(paths))+' size='+str(source_size))
+          print('HIGHFLY_C204_RIGHTS_REPLACEMENT_LEDGER_IDENTICAL=PASS count='+str(len(root_license['replacedPaths'])))
+          print('HIGHFLY_C204_TOTAL_PAGES_BYTES='+str(total))
+          if total>1_060_000_000:raise SystemExit('C204_PAGES_EXCEEDS_LIMIT')
+          PY
+      - uses: actions/configure-pages@v5
+      - name: Upload G6 root plus independent /c204 preview
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  publish:
+    needs: stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/c204/
+    steps:
+      - uses: actions/deploy-pages@v4
+      - name: Verify G6 unchanged and C2-04 entry, JS, and GLB publicly accessible
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json,urllib.request,time,re
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for attempt in range(36):
+            try:
+              def get(path):
+                req=urllib.request.Request(base+path+'?test='+str(attempt),headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-C204-PLAYTEST-QA'})
+                with urllib.request.urlopen(req,timeout=35) as f:
+                  if f.status!=200:raise RuntimeError('HTTP_'+path)
+                  return f.read()
+              old=json.loads(get('genesis-g2-qa.json'))
+              if old['sourceSha']!='865f9c523001f53f975ab96e617a921a4d2bd6e1':
+                raise RuntimeError('G6_QA_CHANGED')
+              root=get('index.html')
+              if b'hf-hunter-name' not in root:raise RuntimeError('G6_HTML_BROKEN')
+              page=get('c204/index.html')
+              if b'/cobalt-hollow-lab/c204/assets/' not in page:raise RuntimeError('C204_HTML_BASE_BROKEN')
+              qa=json.loads(get('c204/highfly-c204-preview-qa.json'))
+              if qa['ciRunnerSource']!='4462657a5ed1c8497242c880f07b33c0fe02cbd0':
+                raise RuntimeError('C204_WRONG_BUILD')
+              js=re.findall(rb'/cobalt-hollow-lab/c204/assets/[^"\s<>]+\.js',page)
+              if not js:raise RuntimeError('C204_JS_CHUNK_NOT_LISTED')
+              if not get(js[0].decode().split('/cobalt-hollow-lab/',1)[1]):
+                raise RuntimeError('C204_JS_404')
+              glb=next(p for p in qa['mediaPaths'] if '/models/chars/modular/warrior_modular.' in p)
+              if get(glb.lstrip('/'))[:4]!=b'glTF':raise RuntimeError('C204_HUNTER_MODEL_BAD')
+              print('HIGHFLY_C204_PUBLIC_PLAYTEST_READY='+base+'c204/')
+              print('HIGHFLY_G6_PREVIOUS_ROOT_PRESERVED=PASS')
+              break
+            except Exception as e:
+              print('C204_PUBLIC_PAGES_PROPAGATION',attempt,str(e)[:180])
+              if attempt==35:raise
+              time.sleep(5)
+          PY
