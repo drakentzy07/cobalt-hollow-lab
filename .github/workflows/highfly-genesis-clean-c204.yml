@@ -124,7 +124,7 @@ jobs:
           pnpm exec vite build --base=/cobalt-hollow-lab/
           node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune
-          python3 ../tools/highfly-genesis-clean/c202_audit.py golden
+          python3 ../tools/highfly-genesis-clean/c204_audit.py
           test -s dist/index.html
           echo "HIGHFLY_C204_FULL_NATIVE_BUILDPASS=PASS"
       - name: Record runtime QA limitation
