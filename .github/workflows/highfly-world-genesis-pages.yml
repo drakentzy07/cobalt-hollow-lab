@@ -1,11 +1,12 @@
 # Explicitly authorized clean replacement of the OLD GitHub Pages website; repository history and user browser saves remain untouched.
-name: HIGHFLY WORLD — Genesis G2 Clean Pages Release
+name: HIGHFLY WORLD — Genesis G3 Assets Repair Build
 on:
   push:
     branches:
       - highfly-world-genesis-g0-0447-20261024
     paths:
       - "highfly-world/g2/**"
+      - "highfly-world/g3/**"
       - "highfly-world/pages/**"
       - "highfly-world/g1/**"
       - "highfly-world/g0/**"
@@ -82,6 +83,7 @@ jobs:
           (cd candidate && node ../overlays/highfly-world/g1/verify_candidate.mjs)
           (cd candidate && node ../overlays/highfly-world/g2/apply_candidate.mjs)
           (cd candidate && node ../overlays/highfly-world/g2/verify_candidate.mjs)
+          (cd candidate && node ../overlays/highfly-world/g3/apply_candidate.mjs)
       - name: Install pinned Node and pnpm
         uses: actions/setup-node@v4
         with:
@@ -101,6 +103,8 @@ jobs:
         working-directory: candidate
         run: |
           node ../overlays/highfly-world/pages/sanitize_candidate.mjs
+          # Critical: regen after replacing assets, BEFORE Vite captures MEDIA_ASSETS.
+          node scripts/build_media_manifest.mjs generate
           test -s public/models/weapons/sword_1handed.glb
           echo "HIGHFLY_GENESIS_RESTRICTED_DONOR_ART_REPLACED=1"
       - name: Compile G2 skill candidate with isolated Genesis flag
@@ -113,6 +117,7 @@ jobs:
           pnpm exec vite build --base=/cobalt-hollow-lab/
           node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune
+          node ../overlays/highfly-world/g3/verify_candidate.mjs
           test -s dist/index.html
           find dist/assets -maxdepth 1 -name '*.js' -type f -print -quit | grep -q .
           test -s dist/manifest.webmanifest
