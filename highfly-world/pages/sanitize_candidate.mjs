@@ -9,7 +9,9 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import sharp from 'sharp';
+import {createRequire} from 'node:module';
+// Resolve pinned candidate dependencies, not the independent overlays workspace.
+const sharp=createRequire(path.resolve('package.json'))('sharp');
 
 const root='public';
 const stats={webp:0,png:0,jpg:0,svg:0,removed:0,props:0,weapons:0,mounts:0};
