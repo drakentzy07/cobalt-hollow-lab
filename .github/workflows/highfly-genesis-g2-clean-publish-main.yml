@@ -2,7 +2,7 @@
 # This one MAIN workflow publishes the certified build as the NEW Pages root,
 # replacing failed historic browser labs at the user's explicit request.
 # NEVER merge donor game source into main, and never alter localStorage.
-name: HIGHFLY WORLD — Genesis G3 Asset Repair Publisher
+name: HIGHFLY WORLD — Genesis G5 Licensed Assets Restore Publisher
 on:
   push:
     branches: [main]
@@ -27,8 +27,8 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const id=40119997537;
-            const sha='b0112d46492a5e05e81052dcf26aee8b3d69d907';
+            const id=40123068957;
+            const sha='3e89010fa8250a0f21c5bcfa790d80116b91859e';
             const run=(await github.rest.actions.getWorkflowRun({
               owner:context.repo.owner,repo:context.repo.repo,run_id:id,
             })).data;
@@ -42,13 +42,13 @@ jobs:
               owner:context.repo.owner,repo:context.repo.repo,run_id:id,per_page:100,
             })).data.artifacts;
             const pages=artifacts.find(a=>a.name==='github-pages'&&!a.expired);
-            if(!pages||pages.id!==12570771219)throw Error('GENESIS_CERTIFIED_PAGES_ARTIFACT_MISSING');
+            if(!pages||pages.id!==12572441602)throw Error('GENESIS_CERTIFIED_PAGES_ARTIFACT_MISSING');
             console.log('HIGHFLY_GENESIS_SOURCE_GREEN_BUILD_PROVEN=1 '+sha);
-      - name: Recover verified G2 Pages bundle; do NOT reuse old Pages
+      - name: Recover verified G5 Pages bundle; do NOT reuse old Pages
         uses: actions/download-artifact@v4
         with:
           repository: drakentzy07/cobalt-hollow-lab
-          run-id: 40119997537
+          run-id: 40123068957
           github-token: ${{ github.token }}
           name: github-pages
           path: certified
@@ -86,10 +86,30 @@ jobs:
             for candidate in found:
               if candidate.read_bytes()[:4]!=b'glTF':raise SystemExit('GENESIS_G3_BAD_GLTF_HEADER_'+candidate.name)
               sample.append(str(candidate.relative_to(site)))
-          print('HIGHFLY_GENESIS_G3_GLTF_HEADER_AUDIT=PASS',sample)
+          # G4 must not delete the two Harbormaster GLBs again; both are
+          # legal empty scenes and are still mandatory native preload keys.
+          for path,patterns in [
+            ('media/models/chars/npc_gear',['harbormaster_tricorne.*.glb','harbormaster_spyglass.*.glb']),
+            ('media/models/weapons',['axe_1handed.*.glb','sword_1handed.*.glb','dagger.*.glb']),
+            ('media/models/chars/modular',['warrior_modular.*.glb'])
+          ]:
+            for pattern in patterns:
+              found=sorted((site/path).glob(pattern))
+              if len(found)!=1:raise SystemExit('GENESIS_G5_REQUIRED_FREE_OR_NPC_MODEL_MISSING_'+pattern)
+              for model in found:
+                if model.read_bytes()[:4]!=b'glTF':raise SystemExit('GENESIS_G5_BAD_GLTF_'+model.name)
+                sample.append(str(model.relative_to(site)))
+          audit=json.loads((site/'highfly-license-audit.json').read_text())
+          assert audit['stats']['removed']==0
+          assert 0<audit['stats']['weapons']<65
+          assert 'models/weapons/axe_1handed.glb' not in audit['replacedPaths']
+          assert 'ui/mobs/bogtoad.webp' not in audit['replacedPaths']
+          assert 'models/chars/npc_gear/harbormaster_spyglass.glb' in audit['replacedPaths']
+          print('HIGHFLY_GENESIS_G5_LICENSE_PRESERVATION_RECEIPT=PASS',audit['stats'])
+          print('HIGHFLY_GENESIS_G5_GLTF_HEADER_AUDIT=PASS',sample)
           qa={
-            'edition':'HIGHFLY WORLD Genesis G3 asset repair alpha',
-            'sourceSha':'b0112d46492a5e05e81052dcf26aee8b3d69d907',
+            'edition':'HIGHFLY WORLD Genesis G5 selective original assets alpha',
+            'sourceSha':'3e89010fa8250a0f21c5bcfa790d80116b91859e',
             'pagesMode':'replaces retired old Pages without modifying repo source',
             'rightsRestrictedIcons':'replaced by generic neutral placeholders',
             'physicalS23':'NOT_MANUALLY_VERIFIED',
@@ -97,6 +117,7 @@ jobs:
             'entry':'?hfWorld=1',
             'sampleGlbPaths':sample,
             'assetUrls':'project-relative hashed media manifest regenerated before Vite',
+            'selectiveLicenseAudit':True,
           }
           (site/'genesis-g2-qa.json').write_text(json.dumps(qa,indent=2)+'\n')
           size=sum(x.stat().st_size for x in site.rglob('*') if x.is_file())
@@ -118,7 +139,7 @@ jobs:
       url: https://drakentzy07.github.io/cobalt-hollow-lab/?hfWorld=1
     steps:
       - uses: actions/deploy-pages@v4
-      - name: Verify live HIGHFLY WORLD and G2 release stamp
+      - name: Verify live HIGHFLY WORLD G5 and free KayKit/NPC 3D assets
         shell: bash
         run: |
           python3 - <<'PY'
@@ -134,15 +155,18 @@ jobs:
                   return r.read()
               html=get('index.html')
               qa=json.loads(get('genesis-g2-qa.json'))
-              assert qa['sourceSha']=='b0112d46492a5e05e81052dcf26aee8b3d69d907'
+              assert qa['sourceSha']=='3e89010fa8250a0f21c5bcfa790d80116b91859e'
               assert b'hf-world-lab' in html and b'hf-hunter-name' in html
               assert b'/cobalt-hollow-lab/assets/' in html
               for rel in qa['sampleGlbPaths']:
                 data=get(rel)
                 assert data[:4]==b'glTF', 'BAD_GLB_BINARY_'+rel
-                print('HIGHFLY_G3_PUBLIC_GLB_200='+rel)
+                print('HIGHFLY_G5_PUBLIC_GLB_200='+rel)
+              audit=json.loads(get('highfly-license-audit.json'))
+              assert audit['stats']['removed']==0
+              assert audit['stats']['weapons']<65
               assert get('LICENSE.txt')
-              print('HIGHFLY_GENESIS_G3_PUBLIC_PLAY_URL_GREEN='+base+'?hfWorld=1')
+              print('HIGHFLY_GENESIS_G5_PUBLIC_PLAY_URL_GREEN='+base+'?hfWorld=1')
               break
             except Exception as e:
               print('GENESIS_RELEASE_PROPAGATION',attempt,str(e)[:150])
