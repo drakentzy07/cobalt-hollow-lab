@@ -14,7 +14,9 @@ const kept=[
  'models/weapons/shield_round.glb','models/weapons/skeleton_blade.glb',
  'models/props/column.glb','models/props/mushroom_red.glb',
  'models/props/dock_platform.glb','ui/items/backpack.webp',
- 'ui/mobs/bogtoad.webp','textures/loading/eastbrook-square.webp'
+ 'ui/mobs/bogtoad.webp','textures/loading/eastbrook-square.webp',
+ 'map_art/eastbrook_vale.png','map_art/mirefen_marsh.png',
+ 'ui/weapons/axe_a.jpg'
 ];
 for(const f of kept){
  assert.ok(existsSync('public/'+f),'G5_KNOWN_GOOD_MISSING_'+f);
@@ -26,7 +28,9 @@ const replaced=[
  'models/weapons/emberfang_sword.glb',
  'models/weapons/purple_sword.glb',
  'models/weapons/guildmark_arming_sword.glb',
- 'ui/chrome/character.webp','ui/skills/mage/fireball.webp'
+ 'ui/chrome/character.webp','ui/skills/mage/fireball.webp',
+ 'map_art/world_overview.webp','ui/store/season-01-armory-promo.webp',
+ 'ui/weapons/emberfang_sword.jpg'
 ];
 for(const f of replaced){
  assert.ok(existsSync('public/'+f),'G5_REQUIRED_RESTRICTED_PATH_MISSING_'+f);
@@ -39,6 +43,16 @@ assert.ok(!a.replacedPaths.includes('models/weapons/sword_1handed.glb'));
 assert.ok(!a.replacedPaths.includes('ui/mobs/bogtoad.webp'));
 assert.ok(!a.replacedPaths.includes('ui/items/backpack.webp'));
 assert.equal(new Set(a.replacedPaths).size,a.replacedPaths.length,'G5_DUPLICATED_ASSET_AUDIT_ENTRIES');
+// Every upstream media file changed MUST be in the license ledger.
+const diff=execFileSync('git',['diff','--name-only','--','public'],{maxBuffer:32*1024*1024}).toString('utf8').trim();
+const changed=diff?diff.split('\n').map(x=>x.replace(/^public\//,'')):[];
+assert.deepEqual(changed.sort(),a.replacedPaths.slice().sort(),'G6_UNDECLARED_SOURCE_ASSET_MUTATION');
+for(const p of ['map_art/eastbrook_vale.png','ui/weapons/axe_a.jpg']){
+ assert.ok(!a.replacedPaths.includes(p),'G6_ALLOWED_ART_WRONGLY_SCRUBBED_'+p);
+}
+for(const p of ['map_art/world_overview.webp','ui/weapons/emberfang_sword.jpg']){
+ assert.ok(a.replacedPaths.includes(p),'G6_RIGHTS_RESERVED_ART_NOT_REPLACED_'+p);
+}
 assert.equal(a.stats.removed,0,'G5_DELETED_MEDIA_FORBIDDEN');
 assert.ok(a.stats.weapons>0&&a.stats.weapons<65,'G5_LICENSE_WEAPON_WHITELIST_SCOPE_BROKEN');
 console.log('HIGHFLY_G5_CC0_AND_FORK_ASSET_PRESERVATION=PASS count='+kept.length+' selective_replacements='+a.replacedPaths.length+' oldG2Weapons=110 now='+a.stats.weapons);
