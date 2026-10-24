@@ -25,7 +25,7 @@ jobs:
           script: |
             const sources=[
               {id:40125050134,sha:'865f9c523001f53f975ab96e617a921a4d2bd6e1',job:'world-contract',artifact:'github-pages'},
-              {id:40136229451,sha:'4462657a5ed1c8497242c880f07b33c0fe02cbd0',job:'golden-engine',artifact:'highfly-clean-c204-isolated-pages-app'}
+              {id:40139010373,sha:'e8a0cb54b7d3117e3919971da5c17f99267d6c67',job:'golden-engine',artifact:'highfly-clean-c204-isolated-pages-app'}
             ];
             for (const src of sources) {
               const run=(await github.rest.actions.getWorkflowRun({owner:context.repo.owner,repo:context.repo.repo,run_id:src.id})).data;
@@ -48,7 +48,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           repository: drakentzy07/cobalt-hollow-lab
-          run-id: 40136229451
+          run-id: 40139010373
           github-token: ${{ github.token }}
           name: highfly-clean-c204-isolated-pages-app
           path: preview
@@ -95,7 +95,12 @@ jobs:
           if not (src/'index.html').is_file():raise SystemExit('C204_SUBSITE_HTML_MISSING')
           if any(p.is_symlink() for p in src.rglob('*')):raise SystemExit('C204_SYMLINK')
           preview_qa=json.loads((src/'highfly-c204-preview-qa.json').read_text())
-          if preview_qa['ciRunnerSource']!='4462657a5ed1c8497242c880f07b33c0fe02cbd0':
+          preview_index=(src/'index.html').read_text()
+          for token in ('hf-c204-play-gate','hf-c204-world','hf-c204-lab','/cobalt-hollow-lab/c204/assets/'):
+            if token not in preview_index:raise SystemExit('C204_OFFLINE_LAUNCH_GATE_MISSING_'+token)
+          print('HIGHFLY_C204_ISOLATED_OFFLINE_WORLD_AND_LAB_GATE=PASS')
+
+          if preview_qa['ciRunnerSource']!='e8a0cb54b7d3117e3919971da5c17f99267d6c67':
             raise SystemExit('C204_WRONG_TESTED_SOURCE')
           if preview_qa['nativeS23Verified'] is not False:
             raise SystemExit('C204_FALSE_PHYSICAL_DEVICE_CLAIM')
@@ -203,8 +208,11 @@ jobs:
               if b'hf-hunter-name' not in root:raise RuntimeError('G6_HTML_BROKEN')
               page=get('c204/index.html')
               if b'/cobalt-hollow-lab/c204/assets/' not in page:raise RuntimeError('C204_HTML_BASE_BROKEN')
+              for marker in (b'hf-c204-play-gate',b'hf-c204-world',b'hf-c204-lab'):
+                if marker not in page:raise RuntimeError('C204_PUBLIC_OFFLINE_GATE_MISSING_'+marker.decode())
+
               qa=json.loads(get('c204/highfly-c204-preview-qa.json'))
-              if qa['ciRunnerSource']!='4462657a5ed1c8497242c880f07b33c0fe02cbd0':
+              if qa['ciRunnerSource']!='e8a0cb54b7d3117e3919971da5c17f99267d6c67':
                 raise RuntimeError('C204_WRONG_BUILD')
               js=re.findall(rb'/cobalt-hollow-lab/c204/assets/[^"\s<>]+\.js',page)
               if not js:raise RuntimeError('C204_JS_CHUNK_NOT_LISTED')
