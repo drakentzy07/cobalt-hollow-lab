@@ -38,4 +38,10 @@ one(classes,'  heroic_leap: {',[
 one('src/render/characters/manifest.ts',
  "        heroic_leap: 'Warrior_Heroic_Leap',",
  "        heroic_leap: 'Warrior_Heroic_Leap',\n        // Temporary G2 alpha uses existing positional-leap animation; no borrowed hero art.\n        hf_impacto_astral: 'Warrior_Heroic_Leap',");
+// Native placement preview is ID-gated upstream; include our new positional skill
+// so the circle indicates the same collision-safe landing as the actual cast.
+one('src/sim/combat/heroic_leap.ts',
+  "  if (abilityId !== 'heroic_leap') return point;",
+  "  if (abilityId !== 'heroic_leap' && abilityId !== 'hf_impacto_astral') return point;");
+
 console.log('HIGHFLY_WORLD_G2_01_IMPACTO_ASTRAL_ALPHA_APPLIED=PASS');
