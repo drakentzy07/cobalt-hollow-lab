@@ -145,7 +145,7 @@ jobs:
           # chunks are compiled with absolute /c204/assets paths, unaffected.
           entry=site/'c204/index.html'
           html=entry.read_text()
-          html,count=re.subn(r'(<head[^>]*>)',r'\\1<base href="/cobalt-hollow-lab/">',html,count=1,flags=re.I)
+          html,count=re.subn(r'(<head[^>]*>)',lambda m:m.group(1)+'<base href="/cobalt-hollow-lab/">',html,count=1,flags=re.I)
           if count!=1:raise SystemExit('C204_NO_HTML_HEAD_FOR_ROOT_ASSETS')
           entry.write_text(html)
           print('HIGHFLY_C204_SHARED_AUDIO_SHA256_IDENTICAL=PASS files='+str(audio_files)+' bytes='+str(audio_bytes))
