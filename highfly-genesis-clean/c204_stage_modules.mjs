@@ -2,7 +2,7 @@ import {existsSync,mkdirSync,readFileSync,writeFileSync} from 'node:fs';
 import {resolve,join} from 'node:path';
 const candidate=resolve(process.argv[2]||'candidate');
 const dir=join(candidate,'src/highfly/training');
-const src=resolve('tools/highfly-genesis-clean');
+const src=resolve('../tools/highfly-genesis-clean');
 const patterns=[
  ['c2_universal_stats.ts','universal_stats.ts'],
  ['c204_training_journal.ts','training_journal.ts'],
