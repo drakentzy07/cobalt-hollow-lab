@@ -1,0 +1,114 @@
+# C2-03: restore proven HIGHFLY GOLDEN locomotion, camera freedom and
+# continuous analog player motion ON the pinned 0.44.7 donor, with guarded seams.
+# C2-03 additionally validates double jump via native physics and press edges.
+# Do not publish or touch source art.
+name: HIGHFLY CLEAN — C2-03 GOLDEN + Double Jump Native
+on:
+  push:
+    branches: [highfly-genesis-clean-0447]
+    paths:
+      - ".github/workflows/highfly-genesis-clean-c203.yml"
+      - "highfly-genesis-clean/c202_audit.py"
+      - "highfly-genesis-clean/c203_*"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-clean-c203-native
+  cancel-in-progress: false
+jobs:
+  golden-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: {path: tools, persist-credentials: false}
+      - name: Checkout archived GOLDEN overlay recipes only
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: highfly-main-clean-v1
+          path: donor-golden
+          sparse-checkout: |
+            overlays
+          persist-credentials: false
+      - name: Checkout immutable ClaudeCraft v0.44.7
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 493c35a108cef6c8aa290e8793107b1cd117886e
+          path: candidate
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /tests/
+            /electron/
+            /android/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /.gitignore
+            /index.html
+            /LICENSE
+            /CREDITS.md
+            /THIRD_PARTY_NOTICES.md
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+            /capacitor.config.ts
+      - name: Guarded GOLDEN joystick and continuous analog movement native seams
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 493c35a108cef6c8aa290e8793107b1cd117886e
+          python3 ../donor-golden/overlays/highfly_mobile_360.py
+          python3 ../donor-golden/overlays/highfly_mobile_analog.py
+          python3 ../donor-golden/overlays/highfly_advanced_mobility.py
+          python3 ../donor-golden/overlays/verify_highfly_8way.py
+          python3 ../tools/highfly-genesis-clean/c202_audit.py jump
+          echo "HIGHFLY_C203_DOUBLE_JUMP_NATIVE_SEAMS=PASS"
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - name: Typecheck original donor plus native GOLDEN movement
+        working-directory: candidate
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm exec tsc --noEmit --incremental false
+          echo "HIGHFLY_C203_JUMP_TYPESCRIPT=PASS"
+      - name: Build web game with movement integrated WITHOUT publishing
+        working-directory: candidate
+        env: {VITE_COBALT_OFFLINE: '1'}
+        run: |
+          set -euo pipefail
+          pnpm exec vite build --base=/cobalt-hollow-lab/
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          python3 ../tools/highfly-genesis-clean/c202_audit.py golden
+          test -s dist/index.html
+          echo "HIGHFLY_C203_JUMP_WORLDBUILD=PASS"
+      - name: Record runtime QA limitation
+        run: |
+          echo "C2-03 adds one genuine physics-driven second jump to native Sim, with physical tap edge (no held-latch exploit). Dash and visible directional somersault require separate work and actual animation QA." >> "$GITHUB_STEP_SUMMARY"
+          echo "Typecheck+build validate wiring but S23 gesture/camera freedom requires real-device QA." >> "$GITHUB_STEP_SUMMARY"
+          echo "No Pages published. No media removed." >> "$GITHUB_STEP_SUMMARY"
