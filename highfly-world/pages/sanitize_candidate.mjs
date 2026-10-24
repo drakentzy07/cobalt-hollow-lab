@@ -78,9 +78,19 @@ const armoryPromo=path.join(root,'ui/store/season-01-armory-promo.webp');
 if(fs.existsSync(armoryPromo))replaceTracked(armoryPromo);
 // The legacy Claudium sets and Season 1 renders are restricted; KayKit
 // inventory weapon previews are not a reason to erase all weapon art.
+// Explicit IDs from the Season 1 Armory store thumbnails in v0.44.7.
+// The restricted group is larger than just Guildmark/Fallen Star: leaving
+// these named non-CC0 paid collection weapons untouched was a G5 audit gap.
+const rightsReservedSeason1Ids=new Set([
+ 'ashspark_shiv','brasscap_hatchet','brasscrown_walking_staff',
+ 'cinderbrand','cinderlatch','emberbite','fletcher_s_guild_bow',
+ 'forgeheart_stave','frostbite','glaciersplit','ice_fang',
+ 'lacquered_rod','rimecrusher','shard_of_everwinter',
+ 'smoulderfall','tempered_flanged_mace','winterbite'
+]);
 const reservedHeldArt=(name)=>{
   const stem=name.toLowerCase().replace(/\.(jpg|jpeg|png|webp|glb)$/,'');
-  return /^(purple_|redskull_|emberfang_sword$|guildmark_|emberwrought_|hoarfrost_|astravyr_|cosmarch_|encore_|starfall_|skyrender_|meteorlatch_|solheim_|emberwish_|tome_)/.test(stem);
+  return rightsReservedSeason1Ids.has(stem) || /^(purple_|redskull_|emberfang_sword$|guildmark_|emberwrought_|hoarfrost_|astravyr_|cosmarch_|encore_|starfall_|skyrender_|meteorlatch_|solheim_|emberwish_|tome_)/.test(stem);
 };
 replaceDir('ui/weapons',file=>!reservedHeldArt(path.basename(file)));
 // Item paintings are mixed: explicitly fork-licensed bag icons MUST survive.
