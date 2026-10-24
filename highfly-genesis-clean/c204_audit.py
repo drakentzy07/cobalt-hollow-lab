@@ -8,6 +8,14 @@ expected={
  "src/sim/types.ts","src/sim/player_motion.ts","src/sim/entity.ts",
  "src/sim/sim.ts"
 }
+if 'index.html' in changed:
+    html=Path('index.html').read_text()
+    source=Path('src/main.ts').read_text()
+    if not all(x in html for x in ('hf-c204-play-gate','hf-c204-world','hf-c204-lab')):
+        raise SystemExit('C204_UNAPPROVED_INDEX_CHANGE')
+    if "VITE_HIGHFLY_C204_PLAYTEST" not in source or "startOffline('warrior',name,0)" not in source:
+        raise SystemExit('C204_NO_OFFLINE_BOOT_HANDLER')
+    expected.add('index.html')
 if changed != expected:raise SystemExit("C204_NONWHITELIST_GAME_SOURCE_CHANGE "+str(sorted(changed^expected)))
 if subprocess.check_output(["git","status","--porcelain","--untracked-files=no","--","public"],text=True).strip():
     raise SystemExit("C204_MEDIA_MUTATED")
