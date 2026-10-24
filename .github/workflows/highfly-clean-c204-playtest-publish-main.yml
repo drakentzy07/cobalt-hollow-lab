@@ -121,6 +121,34 @@ jobs:
             raise SystemExit('C204_VITE_PREFIX_MISSING')
           if (site/'c204').exists():raise SystemExit('C204_NOT_ISOLATED')
           shutil.copytree(src,site/'c204')
+          # The original v0.44.7 static audio is ~236 MB and byte-identical
+          # between G6 and C2-04. Keep the original full sound library at
+          # /cobalt-hollow-lab/audio; only de-duplicate the Pages deploy
+          # artifact after checking EVERY byte by SHA256.
+          shared=site/'c204/audio'
+          if not shared.is_dir() or not (site/'audio').is_dir():
+            raise SystemExit('C204_SHARED_AUDIO_DIR_ABSENT')
+          audio_files=0
+          audio_bytes=0
+          for f in shared.rglob('*'):
+            if not f.is_file():continue
+            relative=f.relative_to(shared)
+            root_f=site/'audio'/relative
+            if not root_f.is_file():raise SystemExit('C204_G6_AUDIO_MISSING_'+str(relative))
+            if hashlib.sha256(f.read_bytes()).digest()!=hashlib.sha256(root_f.read_bytes()).digest():
+              raise SystemExit('C204_AUDIO_NOT_BYTE_IDENTICAL_'+str(relative))
+            audio_files+=1
+            audio_bytes+=f.stat().st_size
+          if audio_bytes<200_000_000:raise SystemExit('C204_SHARED_AUDIO_VOLUME_TOO_SMALL')
+          shutil.rmtree(shared)
+          # Relative audio URLs resolve to the shared root library; JS/CSS
+          # chunks are compiled with absolute /c204/assets paths, unaffected.
+          entry=site/'c204/index.html'
+          html=entry.read_text()
+          html,count=re.subn(r'(<head[^>]*>)',r'\\1<base href="/cobalt-hollow-lab/">',html,count=1,flags=re.I)
+          if count!=1:raise SystemExit('C204_NO_HTML_HEAD_FOR_ROOT_ASSETS')
+          entry.write_text(html)
+          print('HIGHFLY_C204_SHARED_AUDIO_SHA256_IDENTICAL=PASS files='+str(audio_files)+' bytes='+str(audio_bytes))
           if original_root!=(site/'index.html').read_bytes():
             raise SystemExit('C204_CHANGED_G6_ROOT')
           if not list((site/'c204/assets').glob('*.js')):
