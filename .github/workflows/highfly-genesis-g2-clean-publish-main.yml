@@ -1,0 +1,137 @@
+# HIGHFLY Genesis is built solely on the dedicated Genesis branch.
+# This one MAIN workflow publishes the certified build as the NEW Pages root,
+# replacing failed historic browser labs at the user's explicit request.
+# NEVER merge donor game source into main, and never alter localStorage.
+name: HIGHFLY WORLD — Genesis G2 Pages Publisher (MAIN)
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/highfly-genesis-g2-clean-publish-main.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-world-genesis-main-pages-release
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Certify EXACT candidate: tests, license scrub, Pages package
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const id=40117257128;
+            const sha='f45f1b6ab80f0b003bba06327ba8a85dde2c6ef8';
+            const run=(await github.rest.actions.getWorkflowRun({
+              owner:context.repo.owner,repo:context.repo.repo,run_id:id,
+            })).data;
+            if(run.head_sha!==sha || run.status!=='completed') throw Error('GENESIS_WRONG_SOURCE');
+            const jobs=(await github.rest.actions.listJobsForWorkflowRun({
+              owner:context.repo.owner,repo:context.repo.repo,run_id:id,per_page:100,
+            })).data.jobs;
+            const build=jobs.find(j=>j.name==='world-contract');
+            if(!build||build.conclusion!=='success')throw Error('GENESIS_SOURCE_BUILD_NOT_GREEN');
+            const artifacts=(await github.rest.actions.listWorkflowRunArtifacts({
+              owner:context.repo.owner,repo:context.repo.repo,run_id:id,per_page:100,
+            })).data.artifacts;
+            const pages=artifacts.find(a=>a.name==='github-pages'&&!a.expired);
+            if(!pages||pages.id!==12569531332)throw Error('GENESIS_CERTIFIED_PAGES_ARTIFACT_MISSING');
+            console.log('HIGHFLY_GENESIS_SOURCE_GREEN_BUILD_PROVEN=1 '+sha);
+      - name: Recover verified G2 Pages bundle; do NOT reuse old Pages
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 40117257128
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: certified
+      - name: Recover clean root and verify license-safe app entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import tarfile,os,json,hashlib
+          from pathlib import Path,PurePosixPath
+          a=Path('certified/artifact.tar')
+          if not a.is_file():raise SystemExit('GENESIS_SOURCE_TAR_NOT_FOUND')
+          site=Path('site');site.mkdir()
+          with tarfile.open(a,'r:') as tar:
+            total=0
+            for m in tar.getmembers():
+              p=PurePosixPath(m.name)
+              if p.is_absolute() or '..' in p.parts or m.issym() or m.islnk() or not(m.isfile() or m.isdir()):
+                raise SystemExit('GENESIS_PAGES_ARCHIVE_UNSAFE_'+str(m.name))
+              total+=m.size
+            if total>=1_060_000_000:raise SystemExit('GENESIS_PAGES_SITE_TOO_LARGE_'+str(total))
+            tar.extractall(site,filter='data')
+          index=(site/'index.html').read_bytes()
+          for key in (b'hf-world-gate',b'hf-hunter-name',b'hf-world-lab',b'/cobalt-hollow-lab/assets/'):
+            if key not in index:raise SystemExit('GENESIS_APP_ENTRY_INCORRECT_'+repr(key))
+          for p in ('LICENSE.txt','ASSET_CREDITS.txt','THIRD_PARTY_NOTICES.txt'):
+            if not (site/p).is_file():raise SystemExit('GENESIS_ATTRIBUTION_MISSING_'+p)
+          if not list((site/'media/models').rglob('*.glb')):raise SystemExit('GENESIS_3D_ASSETS_MISSING')
+          if (site/'world0').exists() or (site/'candidate').exists():
+            raise SystemExit('GENESIS_OLD_PAGES_STILL_PRESENT')
+          qa={
+            'edition':'HIGHFLY WORLD Genesis G2-01 clean Pages alpha',
+            'sourceSha':'f45f1b6ab80f0b003bba06327ba8a85dde2c6ef8',
+            'pagesMode':'replaces retired old Pages without modifying repo source',
+            'rightsRestrictedIcons':'replaced by generic neutral placeholders',
+            'physicalS23':'NOT_MANUALLY_VERIFIED',
+            'skill':'hf_impacto_astral',
+            'entry':'?hfWorld=1',
+          }
+          (site/'genesis-g2-qa.json').write_text(json.dumps(qa,indent=2)+'\n')
+          size=sum(x.stat().st_size for x in site.rglob('*') if x.is_file())
+          if size>=1_060_000_000:raise SystemExit('GENESIS_PAGES_LIMIT_'+str(size))
+          print('HIGHFLY_GENESIS_REPLACE_OLD_PUBLIC_PAGES_READY=1 bytes='+str(size))
+          PY
+      - uses: actions/configure-pages@v5
+      - name: Upload complete sole HIGHFLY Genesis Pages site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  publish:
+    needs: stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/?hfWorld=1
+    steps:
+      - uses: actions/deploy-pages@v4
+      - name: Verify live HIGHFLY WORLD and G2 release stamp
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import time,urllib.request,json
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for attempt in range(40):
+            try:
+              def get(path):
+                req=urllib.request.Request(base+path+'?highfly_genesis_release='+str(attempt),
+                    headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-GENESIS-ALPHA-RELEASE-QA'})
+                with urllib.request.urlopen(req,timeout=35) as r:
+                  if r.status!=200:raise RuntimeError('HTTP_'+path)
+                  return r.read()
+              html=get('index.html')
+              qa=json.loads(get('genesis-g2-qa.json'))
+              assert qa['sourceSha']=='f45f1b6ab80f0b003bba06327ba8a85dde2c6ef8'
+              assert b'hf-world-lab' in html and b'hf-hunter-name' in html
+              assert b'/cobalt-hollow-lab/assets/' in html
+              assert get('LICENSE.txt')
+              print('HIGHFLY_GENESIS_G2_PUBLIC_PLAY_URL_GREEN='+base+'?hfWorld=1')
+              break
+            except Exception as e:
+              print('GENESIS_RELEASE_PROPAGATION',attempt,str(e)[:150])
+              if attempt==39:raise
+              time.sleep(5)
+          PY
