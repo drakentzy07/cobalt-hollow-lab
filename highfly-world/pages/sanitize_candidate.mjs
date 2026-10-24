@@ -4,8 +4,8 @@
  * Replace (not redistribute) donor-specific paid/rights-reserved UI assets with
  * generic neutral images, and exclude known restricted media.
  *
- * This is a broad alpha safeguard. Later replace these placeholders with original
- * HIGHFLY art and per-asset provenance.
+ * This is a narrow source-led safeguard. Unlisted asset provenance is still
+ * subject to review; never infer public redistribution rights from the MIT code.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -57,12 +57,32 @@ function replaceArt(file){
 // The original G2 mistakenly wiped ALL ~3,000 UI paintings, including
 // reproducible mob portraits and resources allowed "With the project only".
 // Leave all unlisted/allowed UI paths intact; target documented restricted art.
+// Only these complete art families have an explicit restricted classification.
 const restrictedUiDirs=[
  'skills','deeds','chrome','professions','auras',
- 'currency','delve-affixes','fiesta','weapons','store',
- 'specs','crests','map-markers'
+ 'currency','delve-affixes','fiesta','crests','map-markers'
 ];
 for(const dir of restrictedUiDirs)replaceDir('ui/'+dir);
+// v0.44.7 CREDITS.md restricts only seven classes' specialization images.
+// Do NOT blanket-replace the warrior/mage family when the credits don't say so.
+// Those two families remain pending separate provenance review.
+const restrictedSpecClasses=new Set(['paladin','hunter','rogue','priest','shaman','warlock','druid']);
+replaceDir('ui/specs',file=>{
+  const cls=path.relative(path.join(root,'ui/specs'),file).split(path.sep)[0];
+  return !restrictedSpecClasses.has(cls);
+});
+// Armory is a restricted commercial art catalog, not the whole Store folder.
+// Keep unrelated fork/project UI and assets untouched.
+replaceDir('ui/store/armory');
+const armoryPromo=path.join(root,'ui/store/season-01-armory-promo.webp');
+if(fs.existsSync(armoryPromo))replaceTracked(armoryPromo);
+// The legacy Claudium sets and Season 1 renders are restricted; KayKit
+// inventory weapon previews are not a reason to erase all weapon art.
+const reservedHeldArt=(name)=>{
+  const stem=name.toLowerCase().replace(/\.(jpg|jpeg|png|webp|glb)$/,'');
+  return /^(purple_|redskull_|emberfang_sword$|guildmark_|emberwrought_|hoarfrost_|astravyr_|cosmarch_|encore_|starfall_|skyrender_|meteorlatch_|solheim_|emberwish_|tome_)/.test(stem);
+};
+replaceDir('ui/weapons',file=>!reservedHeldArt(path.basename(file)));
 // Item paintings are mixed: explicitly fork-licensed bag icons MUST survive.
 const freeForkBagIcons=new Set([
  'backpack.webp','linen_pouch.webp','travelers_knapsack.webp',
@@ -87,7 +107,10 @@ walk(path.join(root,'ui/mobs'),keep);
 walk(path.join(root,'ui/dungeons'),keep);
 walk(path.join(root,'ui/classes'),keep);
 walk(path.join(root,'textures/loading'),keep);
-walk(path.join(root,'map_art'),replaceTracked);
+// Only the world_overview.webp map is rights-reserved; the 7 painted
+// zone PNG overlays are licensed "With the project only" in CREDITS.md.
+const restrictedMap=path.join(root,'map_art/world_overview.webp');
+if(fs.existsSync(restrictedMap))replaceTracked(restrictedMap);
 walk(root,(file)=>{
  if(path.dirname(file)!==root)return;
  const name=path.basename(file);
@@ -124,10 +147,7 @@ const weaponDir=path.join(root,'models/weapons');
 const sword=path.join(weaponDir,'sword_1handed.glb');
 if(!fs.existsSync(sword))throw Error('HIGHFLY_KAYKIT_SWORD_NOT_FOUND');
 const swordBytes=fs.readFileSync(sword);
-const blockedWeapon=(name)=>{
- const stem=name.toLowerCase().replace(/\.glb$/,'');
- return /^(purple_|redskull_|emberfang_sword$|guildmark_|emberwrought_|hoarfrost_|astravyr_|cosmarch_|encore_|starfall_|skyrender_|meteorlatch_|solheim_|emberwish_|tome_)/.test(stem);
-};
+const blockedWeapon=(name)=>reservedHeldArt(name);
 walk(weaponDir,file=>{
  if(!file.endsWith('.glb'))return;
  if(blockedWeapon(path.basename(file))) {
