@@ -1,5 +1,5 @@
-# Pages-safe G2 staging: deploy ONLY with certified complete original composite.
-name: HIGHFLY WORLD — G2 GitHub Pages safety gate
+# Explicitly authorized clean replacement of the OLD GitHub Pages website; repository history and user browser saves remain untouched.
+name: HIGHFLY WORLD — Genesis G2 Clean Pages Release
 on:
   push:
     branches:
@@ -21,8 +21,6 @@ concurrency:
   cancel-in-progress: false
 jobs:
   world-contract:
-    outputs:
-      can_publish: ${{ steps.stage_site.outcome == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -65,6 +63,9 @@ jobs:
             /biome.json
             /.gitignore
             /index.html
+            /LICENSE
+            /CREDITS.md
+            /THIRD_PARTY_NOTICES.md
             /admin.html
             /guide.html
             /editor.html
@@ -96,6 +97,12 @@ jobs:
         working-directory: candidate
         run: |
           pnpm exec vitest run tests/highfly_impacto_astral.test.ts --reporter=dot
+      - name: Replace restricted donor art with neutral HIGHFLY alpha placeholders
+        working-directory: candidate
+        run: |
+          node ../overlays/highfly-world/pages/sanitize_candidate.mjs
+          test -s public/models/weapons/sword_1handed.glb
+          echo "HIGHFLY_GENESIS_RESTRICTED_DONOR_ART_REPLACED=1"
       - name: Compile G2 skill candidate with isolated Genesis flag
         working-directory: candidate
         env:
@@ -112,106 +119,86 @@ jobs:
           test -d dist/media/models
           find dist/media/models -name '*.glb' -type f -print -quit | grep -q .
           echo HIGHFLY_G2_01_NATIVE_SKILL_BUILD_PASS
-      - name: Record G2-01 limits without public deployment
-        run: |
-          echo "G2-01 build only; NOT deployed; NOT Android-certified" >> "$GITHUB_STEP_SUMMARY"
-          echo "Base: v0.44.7 + G0/G1/G2 isolated overlays, bare modular body and Impacto Astral native first-level skill." >> "$GITHUB_STEP_SUMMARY"
-          echo "G2-01 leap and landing AoE compiled, but enemy knock-up, original FX, dedicated four-slot MOBA HUD, persistent saves, independent lab progression and classless sim internals remain outstanding." >> "$GITHUB_STEP_SUMMARY"
-          echo "Next: Android runtime validation, aim/cancel, original FX and lift; source/media license review before any public deployment." >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Retain G2 standalone compiled WebGL candidate
-        uses: actions/upload-artifact@v4
-        with:
-          name: highfly-world-genesis-g2-pages-staged-build
-          path: candidate/dist/
-          retention-days: 7
-          if-no-files-found: error
-          compression-level: 6
-      - name: Certify previous REAL public composite Pages deployment
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const r=(await github.rest.actions.getWorkflowRun({
-              owner:context.repo.owner,repo:context.repo.repo,run_id:39785774710,
-            })).data;
-            if(r.status!=='completed'||r.conclusion!=='success'||
-               r.head_sha!=='bb244d83130f08391124ea1efc2c0073f75a5e7f')
-              throw Error('GENESIS_BASELINE_NOT_CERTIFIED');
-            const jobs=(await github.rest.actions.listJobsForWorkflowRun({
-              owner:context.repo.owner,repo:context.repo.repo,run_id:39785774710,
-              per_page:100
-            })).data.jobs;
-            if(!jobs.some(j=>j.name==='publish'&&j.conclusion==='success'))
-              throw Error('GENESIS_OLD_SITE_WAS_NOT_PUBLISHED');
-            console.log('GENESIS_LAST_PUBLIC_SITE_VERIFIED=1');
-      - name: Restore complete previous Pages site if artifact exists
-        id: baseline
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          repository: drakentzy07/cobalt-hollow-lab
-          run-id: 39785774710
-          github-token: ${{ github.token }}
-          name: github-pages
-          path: baseline
-      - name: Byte-preserving additive Genesis Pages composition
-        id: stage_site
-        if: steps.baseline.outcome == 'success'
-        env:
-          EXPECTED_SHA: ${{ github.sha }}
+      - name: Verify complete self-hosted Pages package and size
+        working-directory: candidate
         shell: bash
         run: |
           set -euo pipefail
-          python3 overlays/highfly-world/pages/stage_safe_pages.py \
-            baseline/artifact.tar candidate/dist site "$EXPECTED_SHA"
-      - uses: actions/configure-pages@v5
-        if: steps.stage_site.outcome == 'success'
-      - uses: actions/upload-pages-artifact@v3
-        if: steps.stage_site.outcome == 'success'
+          test -s dist/index.html
+          grep -q 'hf-world-gate' dist/index.html
+          grep -q 'hfWorld' dist/index.html
+          grep -q '/cobalt-hollow-lab/assets/' dist/index.html
+          test -s dist/manifest.webmanifest
+          test -d dist/media/models
+          cp LICENSE dist/LICENSE.txt
+          cp CREDITS.md dist/ASSET_CREDITS.txt
+          cp THIRD_PARTY_NOTICES.md dist/THIRD_PARTY_NOTICES.txt
+          python3 - <<'PY'
+          import os
+          total=0;count=0
+          for r,dirs,files in os.walk('dist'):
+            for f in files:
+              count+=1
+              total+=os.stat(os.path.join(r,f)).st_size
+          print('HIGHFLY_GENESIS_PAGES_PAYLOAD_BYTES',total,'FILES',count)
+          if total>=1_060_000_000:
+            raise SystemExit('HIGHFLY_GENESIS_PAGES_TOO_LARGE')
+          PY
+      - name: Retain validated WebGL build separately
+        uses: actions/upload-artifact@v4
         with:
-          path: site
-      - name: Certify NO publication if old Draken archive expired
-        if: steps.stage_site.outcome != 'success'
+          name: highfly-genesis-g2-clean-pages-build
+          path: candidate/dist/
+          retention-days: 7
+          compression-level: 6
+          if-no-files-found: error
+      - uses: actions/configure-pages@v5
+      - name: Upload Genesis as sole Pages site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: candidate/dist/
+      - name: State the intended scope of Pages replacement
         run: |
-          echo "G2_BUILD_READY_BUT_DRAKEN_PAGES_PRESERVATION_BLOCKED_PUBLIC_DEPLOY" >> "$GITHUB_STEP_SUMMARY"
-          echo "No live Pages site files were modified. Download the staged WebGL artifact for archival testing." >> "$GITHUB_STEP_SUMMARY"
+          echo "Clean Genesis G2 Pages bundle uploaded. Old Pages website routes will be replaced, by explicit user request." >> "$GITHUB_STEP_SUMMARY"
+          echo "GitHub source history, branches and personal browser localStorage are not deleted." >> "$GITHUB_STEP_SUMMARY"
+          echo "No manual Samsung S23 real-device QA claimed." >> "$GITHUB_STEP_SUMMARY"
 
   publish:
     needs: world-contract
-    if: needs.world-contract.outputs.can_publish == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 25
     environment:
       name: github-pages
-      url: https://drakentzy07.github.io/cobalt-hollow-lab/highfly-world/?hfWorld=1
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/?hfWorld=1
     steps:
       - uses: actions/deploy-pages@v4
-      - name: Prove public Genesis and original Draken survival
+      - name: Verify public Genesis root and app assets
+        shell: bash
         env:
           EXPECTED_SHA: ${{ github.sha }}
         run: |
           python3 - <<'PY'
-          import os,json,time,urllib.request
+          import time,urllib.request,os
           base='https://drakentzy07.github.io/cobalt-hollow-lab/'
-          for attempt in range(30):
+          def get(rel,attempt):
+            req=urllib.request.Request(base+rel+('?hfWorld=1&qa='+os.environ['EXPECTED_SHA'][:8]+'&try='+str(attempt) if rel=='index.html' else '?qa='+str(attempt)),
+                    headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-GENESIS-PUBLIC-QA'})
+            with urllib.request.urlopen(req,timeout=30) as r:
+              if r.status!=200:raise ValueError('HTTP '+rel)
+              return r.read()
+          for attempt in range(35):
             try:
-              def get(rel):
-                req=urllib.request.Request(base+rel+'?g2='+os.environ['EXPECTED_SHA'][:12]+'&try='+str(attempt),
-                    headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-GENESIS-G2-PAGES-QA'})
-                with urllib.request.urlopen(req,timeout=35) as r:
-                  if r.status!=200:raise ValueError('HTTP')
-                  return r.read()
-              qa=json.loads(get('highfly-world/genesis-g2-qa.json'))
-              draken=json.loads(get('highfly-origin-f12-qa.json'))
-              index=get('highfly-world/index.html')
-              assert qa['sourceCommit']==os.environ['EXPECTED_SHA']
-              assert qa['preserveRoot'] is True
-              assert draken['sourceCommit']=='7518c22c11ff5ddffe09bb7792f8d67bb9e82038'
-              assert b'/cobalt-hollow-lab/assets/' in index
-              print('HIGHFLY_GENESIS_G2_VERIFIED_PUBLIC_URL='+base+'highfly-world/?hfWorld=1')
+              page=get('index.html',attempt)
+              assert b'hf-world-gate' in page
+              assert b'hf-hunter-name' in page
+              assert b'hf-world-lab' in page
+              assert b'/cobalt-hollow-lab/assets/' in page
+              assert get('ASSET_CREDITS.txt',attempt).startswith(b'# Asset Credits')
+              assert get('LICENSE.txt',attempt)
+              print('HIGHFLY_GENESIS_G2_PUBLIC_PAGES_GREEN='+base+'?hfWorld=1',flush=True)
               break
-            except Exception as error:
-              if attempt==29:raise
-              print('PAGES_PROPAGATION_CHECK',attempt,str(error)[:150])
+            except Exception as exc:
+              print('PAGES_PUBLIC_PROPAGATION',attempt,str(exc)[:125])
+              if attempt==34:raise
               time.sleep(5)
           PY
