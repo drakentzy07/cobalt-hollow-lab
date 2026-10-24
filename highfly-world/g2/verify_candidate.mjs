@@ -16,4 +16,6 @@ assert.ok(visuals.includes("hf_impacto_astral: 'Warrior_Heroic_Leap'"),'shared o
 assert.ok(main.includes('highflyWornSlots'),'G1 bare body lost');
 assert.ok(leap.includes("abilityId !== 'hf_impacto_astral'"),'G2 landing preview mismatch');
 assert.ok(main.includes('hf-world-lab'),'G1 laboratory entry lost');
+assert.ok(main.includes("button.id='hf-g2-impacto'"),'G2 touch skill control missing');
+assert.ok(main.includes("sim.castAbility('hf_impacto_astral'"),'G2 lab control does not call real sim');
 console.log('HIGHFLY_G2_01_NATIVE_LEAP_AOE_AND_ANIMATION_CONTRACT=PASS');
