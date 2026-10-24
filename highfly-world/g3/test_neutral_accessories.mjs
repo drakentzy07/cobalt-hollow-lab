@@ -1,7 +1,12 @@
 // Verify GLTFLoader (the actual THREE parser used by ClaudeCraft) accepts
 // both legal neutral replacement GLBs. Run after sanitization in candidate.
 import {readFileSync} from 'node:fs';
-import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createRequire} from 'node:module';
+import {resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
+const candidateRequire=createRequire(resolve('package.json'));
+const loaderFile=candidateRequire.resolve('three/addons/loaders/GLTFLoader.js');
+const {GLTFLoader}=await import(pathToFileURL(loaderFile).href);
 for(const name of ['harbormaster_tricorne.glb','harbormaster_spyglass.glb']){
  const bytes=readFileSync('public/models/chars/npc_gear/'+name);
  const input=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);
