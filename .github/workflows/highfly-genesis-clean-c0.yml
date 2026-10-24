@@ -1,0 +1,120 @@
+# C0: prove the ORIGINAL upstream runs cleanly, without overlays or replacements.
+# Never upload any donor media or deploy GitHub Pages at this stage.
+name: HIGHFLY CLEAN — C0 Original v0.44.7 Baseline
+on:
+  push:
+    branches:
+      - highfly-genesis-clean-0447
+    paths:
+      - "highfly-genesis-clean/**"
+      - ".github/workflows/highfly-genesis-clean-c0.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-clean-c0-baseline
+  cancel-in-progress: false
+
+jobs:
+  original-native-world:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout independent audit scripts (not historical HIGHFLY patches)
+        uses: actions/checkout@v4
+        with:
+          path: tools
+          persist-credentials: false
+      - name: Materialize EXACT unmodified original v0.44.7 world
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 493c35a108cef6c8aa290e8793107b1cd117886e
+          path: candidate
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /tests/
+            /electron/
+            /android/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /.gitignore
+            /index.html
+            /LICENSE
+            /CREDITS.md
+            /THIRD_PARTY_NOTICES.md
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+            /capacitor.config.ts
+      - name: Verify clean SHA, 70 licensing entries, KayKit gear, 3D media hashes
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          python3 ../tools/highfly-genesis-clean/audit_original.py
+          test -s ../audit-output/highfly-clean-c0-baseline.json
+          echo "Original donor stays byte-identical. Nothing published." >> "$GITHUB_STEP_SUMMARY"
+      - name: Enable upstream pinned package manager
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install exact upstream dependencies
+        working-directory: candidate
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Original world TypeScript check (no HIGHFLY edits)
+        working-directory: candidate
+        run: pnpm exec tsc --noEmit --incremental false
+      - name: Compile raw upstream world to temporary non-published WebGL output
+        working-directory: candidate
+        env:
+          VITE_COBALT_OFFLINE: '1'
+        run: |
+          set -euo pipefail
+          pnpm exec vite build --base=/cobalt-hollow-lab/
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          test -s dist/index.html
+          test -s dist/manifest.webmanifest
+          test -d dist/media/models
+          test -s dist/media/models/props/column.*.glb
+          echo "HIGHFLY_C0_UNMODIFIED_CLAUDECRAFT_WEBGL_GREEN=PASS"
+      - name: Verify original public source still unmodified after build
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain --untracked-files=no -- public)"
+          echo "HIGHFLY_C0_SOURCE_MEDIA_NOT_MUTATED=PASS"
+          echo "C0 does not authorize Pages deployment; next step is controlled source-led media licensing." >> "$GITHUB_STEP_SUMMARY"
+      - name: Attach audit JSON only (never copyright-protected media)
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-clean-c0-license-and-original-sha-audit
+          path: audit-output/highfly-clean-c0-baseline.json
+          retention-days: 30
+          if-no-files-found: error
