@@ -1,0 +1,60 @@
+# C1 is inventory only: no patching and NEVER publish donor media here.
+name: HIGHFLY CLEAN — C1 Rights Inventory
+on:
+  push:
+    branches:
+      - highfly-genesis-clean-0447
+    paths:
+      - "highfly-genesis-clean/c1_license_inventory.py"
+      - ".github/workflows/highfly-genesis-clean-c1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-clean-c1-license-audit
+  cancel-in-progress: false
+
+jobs:
+  media-rights:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout ONLY independent inventory scripts
+        uses: actions/checkout@v4
+        with:
+          path: tools
+          persist-credentials: false
+      - name: Checkout EXACT original ClaudeCraft — nothing patched
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 493c35a108cef6c8aa290e8793107b1cd117886e
+          path: candidate
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /public/
+            /CREDITS.md
+      - name: Count registered license restrictions and classify every media file
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 493c35a108cef6c8aa290e8793107b1cd117886e
+          python3 ../tools/highfly-genesis-clean/c1_license_inventory.py
+          test -s ../audit-output/highfly-c1-asset-license-inventory.json
+          test -s ../audit-output/highfly-c1-audit-summary.md
+          test -z "$(git status --porcelain --untracked-files=no -- public)"
+          echo "C1 was read-only. No model, image, animation, map, skill or save has been altered." >> "$GITHUB_STEP_SUMMARY"
+          cat ../audit-output/highfly-c1-audit-summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload JSON and human-readable rights report only — NOT game assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-clean-c1-file-by-file-rights-audit
+          path: |
+            audit-output/highfly-c1-asset-license-inventory.json
+            audit-output/highfly-c1-audit-summary.md
+          retention-days: 30
+          if-no-files-found: error
