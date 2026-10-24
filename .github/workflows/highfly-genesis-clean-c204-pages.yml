@@ -11,6 +11,8 @@ on:
       - "highfly-genesis-clean/c202_audit.py"
       - "highfly-genesis-clean/c203_*"
       - "highfly-genesis-clean/c204_pages_media_root.mjs"
+      - "highfly-genesis-clean/c204_playtest_entry.mjs"
+      - "highfly-genesis-clean/c204_audit.py"
   workflow_dispatch:
 permissions:
   contents: read
