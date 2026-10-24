@@ -87,7 +87,7 @@ def run():
     credits=(root/"CREDITS.md").read_text()
     lines=credits.splitlines()
     restricted_rows=[line.split("|")[1].strip() for line in lines
-                     if line.startswith("|") and "**No, permission required**" in line]
+                     if line.startswith("|") and "No, permission required" in line]
     if len(restricted_rows)!=70:
         raise SystemExit("HIGHFLY_C0_RESTRICTED_CREDITS_RECORD_DRIFT:"+str(len(restricted_rows)))
     all_public=list((root/"public").rglob("*"))
