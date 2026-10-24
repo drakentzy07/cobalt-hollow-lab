@@ -1,0 +1,102 @@
+# G0 never deploys production Pages. This workflow only verifies the clean map candidate.
+name: HIGHFLY WORLD — G0 clean v0.44.7 world
+on:
+  push:
+    branches:
+      - highfly-world-genesis-g0-0447-20261024
+    paths:
+      - "highfly-world/**"
+      - ".github/workflows/highfly-world-genesis-g0.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-world-g0
+  cancel-in-progress: false
+jobs:
+  world-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout independent HIGHFLY overlays
+        uses: actions/checkout@v4
+        with:
+          path: overlays
+          persist-credentials: false
+      - name: Materialize immutable native world v0.44.7
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: v0.44.7
+          path: candidate
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /tests/
+            /electron/
+            /android/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /.gitignore
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+            /capacitor.config.ts
+      - name: Check frozen upstream and apply ONLY G0 world entry
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate describe --tags --exact-match)" = "v0.44.7"
+          (cd candidate && node ../overlays/highfly-world/g0/apply_candidate.mjs)
+          (cd candidate && node ../overlays/highfly-world/g0/verify_candidate.mjs)
+      - name: Install pinned Node and pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Type-check without changing original classes or simulation
+        working-directory: candidate
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm exec tsc --noEmit --incremental false
+      - name: Compile world candidate with isolated G0 flag
+        working-directory: candidate
+        env:
+          VITE_HIGHFLY_WORLD_GENESIS: '1'
+          VITE_COBALT_OFFLINE: '1'
+        run: |
+          set -euo pipefail
+          pnpm exec vite build --base=/HIGHFLY-WORLD/
+          node scripts/build_media_manifest.mjs emit
+          test -s dist/index.html
+          test -s dist/assets/*.js
+          test -s dist/manifest.webmanifest
+          test -d dist/media/models
+          find dist/media/models -name '*.glb' -type f -print -quit | grep -q .
+          echo HIGHFLY_G0_NATIVE_WORLD_ASSETS_AND_BUILD_PASS
+      - name: Record G0 QA limitations without publishing copyrighted media
+        run: |
+          echo "G0 build only; NOT deployed; NOT Android-certified" >> "$GITHUB_STEP_SUMMARY"
+          echo "Base: native ClaudeCraft v0.44.7, isolated HIGHFLY intro and offline world." >> "$GITHUB_STEP_SUMMARY"
+          echo "Next: replace internal Warrior fixture with classless Hunter, validate media licenses, and S23 runtime." >> "$GITHUB_STEP_SUMMARY"
