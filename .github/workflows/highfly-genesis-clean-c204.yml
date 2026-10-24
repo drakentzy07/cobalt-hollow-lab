@@ -108,13 +108,6 @@ jobs:
           echo "HIGHFLY_C204_GOLDEN_JUMP_TRAINING_NATIVE_SEAMS=PASS"
       - uses: actions/setup-node@v4
         with: {node-version: '24'}
-      - name: Exercise REAL ClaudeCraft entity stat pipeline with Training Core
-        working-directory: candidate
-        run: |
-          set -euo pipefail
-          cp ../tools/highfly-genesis-clean/c204_native_recalc.test.ts tests/highfly_c204_training_recalc.test.ts
-          pnpm exec vitest run tests/highfly_c204_training_recalc.test.ts --reporter=dot
-          echo "HIGHFLY_C204_ACTUAL_ENTITY_PRIMARY_STATS_AND_DERIVED_HP=PASS"
       - name: Typecheck original donor plus native GOLDEN movement
         working-directory: candidate
         run: |
@@ -123,6 +116,13 @@ jobs:
           pnpm install --frozen-lockfile --ignore-scripts
           pnpm exec tsc --noEmit --incremental false
           echo "HIGHFLY_C204_NATIVE_TRAINING_TYPESCRIPT=PASS"
+      - name: Exercise REAL ClaudeCraft entity stat pipeline with Training Core
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          cp ../tools/highfly-genesis-clean/c204_native_recalc.test.ts tests/highfly_c204_training_recalc.test.ts
+          pnpm exec vitest run tests/highfly_c204_training_recalc.test.ts --reporter=dot
+          echo "HIGHFLY_C204_ACTUAL_ENTITY_PRIMARY_STATS_AND_DERIVED_HP=PASS"
       - name: Build web game with movement integrated WITHOUT publishing
         working-directory: candidate
         env: {VITE_COBALT_OFFLINE: '1'}
