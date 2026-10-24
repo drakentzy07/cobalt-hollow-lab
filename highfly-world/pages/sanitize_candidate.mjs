@@ -17,6 +17,7 @@ const root='public';
 const stats={webp:0,png:0,jpg:0,svg:0,removed:0,props:0,weapons:0,mounts:0,preserved:0,audio:0};
 const replacedPaths=[];
 function replaceTracked(file) {
+  if(!/\.(webp|png|jpg|jpeg|svg)$/i.test(file))return;
   replacedPaths.push(file.replaceAll('\\','/').replace(/^public\//,''));
   replaceArt(file);
 }
@@ -75,8 +76,6 @@ const specialPaintings=[
  'ui/leaderboard/medal_silver.webp',
  'ui/leaderboard/medal_bronze.webp',
  'ui/reliquary/perfect_specimen.webp',
- 'ui/map-markers/farm_patch.webp',
- 'ui/auras/well_fed.webp'
 ];
 for(const item of specialPaintings){
  const file=path.join(root,item);
@@ -200,5 +199,5 @@ fs.writeFileSync(path.join(root,'highfly-license-audit.json'),JSON.stringify({
   source:'World of ClaudeCraft v0.44.7 CREDITS.md',
   policy:'retain CC0 and fork-licensed project art; replace restricted only',
   stats, replacedPaths:replacedPaths.sort()
-},null,2)+'\\n');
+},null,2)+'\n');
 console.log('HIGHFLY_GENESIS_LICENSE_SELECTIVE_AUDIT='+JSON.stringify(stats));
