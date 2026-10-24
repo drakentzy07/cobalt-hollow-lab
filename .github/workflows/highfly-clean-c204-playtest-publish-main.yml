@@ -72,6 +72,21 @@ jobs:
             if total>950_000_000:raise SystemExit('C204_G6_BASE_TOO_LARGE')
             t.extractall(site,filter='data')
           original_root=(site/'index.html').read_bytes()
+          # The historic G6 MAIN publisher adds this receipt AFTER its
+          # branch build artifact. Read the exact currently-live receipt,
+          # validate its immutable source SHA, and keep it verbatim.
+          if not (site/'genesis-g2-qa.json').is_file():
+            import urllib.request
+            request=urllib.request.Request(
+              'https://drakentzy07.github.io/cobalt-hollow-lab/genesis-g2-qa.json',
+              headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-C204-PRESERVE-G6-QA'}
+            )
+            with urllib.request.urlopen(request,timeout=30) as response:
+              receipt=response.read()
+            candidate=json.loads(receipt)
+            if candidate['sourceSha']!='865f9c523001f53f975ab96e617a921a4d2bd6e1':
+              raise SystemExit('C204_EXISTING_PUBLIC_G6_RECEIPT_INVALID')
+            (site/'genesis-g2-qa.json').write_bytes(receipt)
           old_qa=json.loads((site/'genesis-g2-qa.json').read_text())
           if old_qa['sourceSha']!='865f9c523001f53f975ab96e617a921a4d2bd6e1':
             raise SystemExit('C204_OLD_G6_SOURCE_MISMATCH')
