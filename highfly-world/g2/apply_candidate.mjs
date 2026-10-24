@@ -46,4 +46,34 @@ one('src/sim/combat/heroic_leap.ts',
 
 // Candidate-only test: the source repository still holds overlays, not a donor copy.
 copyFileSync('../overlays/highfly-world/g2/impacto_astral.test.ts','tests/highfly_impacto_astral.test.ts');
+// Temporary Android lab control: users must be able to fire the first new
+// skill without navigating the upstream warrior's long spellbook. This is
+// NOT the final four-button drag-to-aim MOBA HUD.
+const main='src/main.ts';
+const tick=String.fromCharCode(96), dollar=String.fromCharCode(36);
+const oldCall="  void startGame(sim, sim, null, HF_GENESIS_G1 ? 'highfly:genesis:g1:' + (highflyGenesisLab ? 'lab:' : 'world:') + name : "+tick+"offline:"+dollar+"{playerClass}:"+dollar+"{name}"+tick+", true);";
+const newCall=[
+  "  const genesisStart = startGame(sim, sim, null, HF_GENESIS_G1 ? 'highfly:genesis:g1:' + (highflyGenesisLab ? 'lab:' : 'world:') + name : "+tick+"offline:"+dollar+"{playerClass}:"+dollar+"{name}"+tick+", true);",
+  "  if (HF_GENESIS_G1 && highflyGenesisLab) {",
+  "    void genesisStart.then(() => {",
+  "      if(document.getElementById('hf-g2-impacto')) return;",
+  "      const button=document.createElement('button');",
+  "      button.id='hf-g2-impacto';",
+  "      button.type='button';",
+  "      button.textContent='✦ IMPACTO ASTRAL';",
+  "      button.setAttribute('aria-label','Lanzar Impacto Astral hacia adelante');",
+  "      button.style.cssText='position:fixed;right:clamp(10px,3vw,35px);top:clamp(84px,20vh,155px);z-index:2147483300;min-width:136px;min-height:49px;background:#294b65;color:#fff7e6;border:2px solid #e4bd67;border-radius:12px;font:800 13px system-ui;box-shadow:0 3px 16px #0008;touch-action:manipulation;';",
+  "      button.addEventListener('click', () => {",
+  "        const hero = sim.entities.get(sim.playerId);",
+  "        if(!hero || hero.dead) return;",
+  "        // First smoke caster: land ten native world units in facing direction.",
+  "        const aim={x:hero.pos.x + Math.sin(hero.facing)*10, z:hero.pos.z + Math.cos(hero.facing)*10};",
+  "        sim.castAbility('hf_impacto_astral', hero.id, aim);",
+  "      });",
+  "      document.body.appendChild(button);",
+  "    }).catch(error => console.error('HIGHFLY_G2_LAB_HUD_FAILED', error));",
+  "  } else { void genesisStart; }",
+].join('\n');
+one(main,oldCall,newCall);
+
 console.log('HIGHFLY_WORLD_G2_01_IMPACTO_ASTRAL_ALPHA_APPLIED=PASS');
