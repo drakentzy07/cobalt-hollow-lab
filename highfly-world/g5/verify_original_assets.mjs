@@ -28,9 +28,13 @@ const replaced=[
  'models/weapons/emberfang_sword.glb',
  'models/weapons/purple_sword.glb',
  'models/weapons/guildmark_arming_sword.glb',
+ 'models/weapons/ashspark_shiv.glb',
+ 'models/weapons/cinderbrand.glb',
+ 'models/weapons/forgeheart_stave.glb',
  'ui/chrome/character.webp','ui/skills/mage/fireball.webp',
  'map_art/world_overview.webp','ui/store/season-01-armory-promo.webp',
- 'ui/weapons/emberfang_sword.jpg'
+ 'ui/weapons/emberfang_sword.jpg',
+ 'ui/weapons/ashspark_shiv.jpg'
 ];
 for(const f of replaced){
  assert.ok(existsSync('public/'+f),'G5_REQUIRED_RESTRICTED_PATH_MISSING_'+f);
