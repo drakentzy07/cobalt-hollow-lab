@@ -130,6 +130,15 @@ jobs:
           print('HIGHFLY_C204_SHARED_MEDIA_HASHES=PASS count='+str(len(paths))+' size='+str(source_size))
           print('HIGHFLY_C204_RIGHTS_REPLACEMENT_LEDGER_IDENTICAL=PASS count='+str(len(root_license['replacedPaths'])))
           print('HIGHFLY_C204_TOTAL_PAGES_BYTES='+str(total))
+          for label,folder in [('G6_ROOT',site),('C204',site/'c204')]:
+            sizes=[]
+            for sub in folder.iterdir():
+              if sub.is_dir():
+                b=sum(x.stat().st_size for x in sub.rglob('*') if x.is_file())
+              elif sub.is_file():b=sub.stat().st_size
+              else:continue
+              sizes.append((b,sub.name))
+            print('HIGHFLY_SIZE_BREAKDOWN_'+label+' '+str(sorted(sizes,reverse=True)[:25]))
           if total>1_060_000_000:raise SystemExit('C204_PAGES_EXCEEDS_LIMIT')
           PY
       - uses: actions/configure-pages@v5
