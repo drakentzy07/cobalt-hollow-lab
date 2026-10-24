@@ -1,5 +1,5 @@
 # Explicitly authorized clean replacement of the OLD GitHub Pages website; repository history and user browser saves remain untouched.
-name: HIGHFLY WORLD — Genesis G4 NPC Preload Repair Build
+name: HIGHFLY WORLD — Genesis G5 Selective Asset Restoration
 on:
   push:
     branches:
@@ -7,6 +7,7 @@ on:
     paths:
       - "highfly-world/g2/**"
       - "highfly-world/g3/**"
+      - "highfly-world/g5/**"
       - "highfly-world/pages/**"
       - "highfly-world/g1/**"
       - "highfly-world/g0/**"
@@ -103,6 +104,7 @@ jobs:
         working-directory: candidate
         run: |
           node ../overlays/highfly-world/pages/sanitize_candidate.mjs
+          node ../overlays/highfly-world/g5/verify_original_assets.mjs
           # Critical: regen after replacing assets, BEFORE Vite captures MEDIA_ASSETS.
           node scripts/build_media_manifest.mjs generate
           node ../overlays/highfly-world/g3/test_neutral_accessories.mjs
@@ -119,6 +121,8 @@ jobs:
           node scripts/build_media_manifest.mjs emit
           node scripts/build_media_manifest.mjs prune
           node ../overlays/highfly-world/g3/verify_candidate.mjs
+          test -s dist/highfly-license-audit.json
+          echo HIGHFLY_G5_KAYKIT_CC0_AND_FORK_ART_PRESERVED_PASS
           test -s dist/index.html
           find dist/assets -maxdepth 1 -name '*.js' -type f -print -quit | grep -q .
           test -s dist/manifest.webmanifest
