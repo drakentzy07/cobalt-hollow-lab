@@ -14,7 +14,18 @@ import {createRequire} from 'node:module';
 const sharp=createRequire(path.resolve('package.json'))('sharp');
 
 const root='public';
-const stats={webp:0,png:0,jpg:0,svg:0,removed:0,props:0,weapons:0,mounts:0};
+const stats={webp:0,png:0,jpg:0,svg:0,removed:0,props:0,weapons:0,mounts:0,preserved:0,audio:0};
+const replacedPaths=[];
+function replaceTracked(file) {
+  replacedPaths.push(file.replaceAll('\\','/').replace(/^public\//,''));
+  replaceArt(file);
+}
+function keep(file){stats.preserved++;}
+function replaceDir(relativePath, allowed=()=>false){
+  walk(path.join(root,relativePath),file => {
+    if (allowed(file)) keep(file); else replaceTracked(file);
+  });
+}
 function walk(directory, callback) {
   if(!fs.existsSync(directory)) return;
   for(const item of fs.readdirSync(directory,{withFileTypes:true})) {
@@ -41,39 +52,90 @@ function replaceArt(file){
   else if(ext==='.svg'){fs.writeFileSync(file,bareSvg);stats.svg++;}
 }
 
-// The entire donor UI paint library includes premium icons & commissioned art.
-// For the HIGHFLY alpha, every raster/icon under UI is a neutral placeholder.
-walk(path.join(root,'ui'),replaceArt);
-walk(path.join(root,'map_art'),replaceArt);
-walk(path.join(root,'website'),replaceArt);
+// License-ledger surgical scrub: CREDITS.md v0.44.7, lines 154-192.
+// The original G2 mistakenly wiped ALL ~3,000 UI paintings, including
+// reproducible mob portraits and resources allowed "With the project only".
+// Leave all unlisted/allowed UI paths intact; target documented restricted art.
+const restrictedUiDirs=[
+ 'skills','deeds','chrome','professions','auras',
+ 'currency','delve-affixes','fiesta','weapons','store',
+ 'specs','crests','map-markers'
+];
+for(const dir of restrictedUiDirs)replaceDir('ui/'+dir);
+// Item paintings are mixed: explicitly fork-licensed bag icons MUST survive.
+const freeForkBagIcons=new Set([
+ 'backpack.webp','linen_pouch.webp','travelers_knapsack.webp',
+ 'wolfhide_satchel.webp','gravewoven_bag.webp','mistcallers_duffel.webp'
+]);
+replaceDir('ui/items',file=>freeForkBagIcons.has(path.basename(file)));
+// These are only the restricted pieces within otherwise mixed UI directories.
+const specialPaintings=[
+ 'ui/ranks/elite-dragon-frame.webp',
+ 'ui/leaderboard/medal_gold.webp',
+ 'ui/leaderboard/medal_silver.webp',
+ 'ui/leaderboard/medal_bronze.webp',
+ 'ui/reliquary/perfect_specimen.webp',
+ 'ui/map-markers/farm_patch.webp',
+ 'ui/auras/well_fed.webp'
+];
+for(const item of specialPaintings){
+ const file=path.join(root,item);
+ if(fs.existsSync(file))replaceTracked(file);
+}
+// Game render portraits, dungeons, environment/materials, loading backgrounds,
+// and CC0 KayKit / Kenney / Quaternius artwork are PRESERVED unchanged.
+walk(path.join(root,'ui/mobs'),keep);
+walk(path.join(root,'ui/dungeons'),keep);
+walk(path.join(root,'ui/classes'),keep);
+walk(path.join(root,'textures/loading'),keep);
+walk(path.join(root,'map_art'),replaceTracked);
 walk(root,(file)=>{
-  if(path.dirname(file)!==root)return;
-  const name=path.basename(file);
-  if(/^website[-_]/i.test(name)||/worldofclaudecraft[-_]?logo/i.test(name)){
-    replaceArt(file);
-  }
+ if(path.dirname(file)!==root)return;
+ const name=path.basename(file);
+ if(/^website[-_]/i.test(name)||/worldofclaudecraft[-_]?logo/i.test(name)){
+   replaceTracked(file);
+ }
 });
 
-// An external paid asset must not be included in the staged web distribution.
-for(const p of ['claudium','audio/voice/ignivar','audio/voice/varkhul']) {
-  const dir=path.join(root,p);
-  if(fs.existsSync(dir)){fs.rmSync(dir,{recursive:true,force:true});stats.removed++;}
+// Never DELETE runtime assets. Two missing NPC meshes blocked G3 already;
+// deleted voice/audio can do the same in later zones. Replace restricted voice
+// bytes with a licensed fork-owned generic SFX clip, keeping their exact paths.
+const emptyVoice=path.join(root,'audio/sfx/amb_birds.mp3');
+if(!fs.existsSync(emptyVoice))throw Error('HIGHFLY_LICENSED_SFX_FALLBACK_MISSING');
+const voiceBytes=fs.readFileSync(emptyVoice);
+for(const rel of ['audio/voice/ignivar','audio/voice/varkhul']){
+ walk(path.join(root,rel),file=>{
+   if(path.extname(file).toLowerCase()==='.mp3'){
+     fs.writeFileSync(file,voiceBytes);
+     stats.audio++;replacedPaths.push(file.replaceAll('\\','/').replace(/^public\//,''));
+   }
+ });
 }
 const clock=path.join(root,'audio/sfx/temporal_clock.mp3');
-if(fs.existsSync(clock)){fs.rmSync(clock);stats.removed++;}
+if(fs.existsSync(clock)){fs.writeFileSync(clock,voiceBytes);stats.audio++;replacedPaths.push('audio/sfx/temporal_clock.mp3');}
+// Claudium paid paintings are not redistributable. Replace the artwork, not
+// its folder, metadata, or any load-bearing file.
+walk(path.join(root,'claudium'),file=>{
+ if(/\.(webp|png|jpg|jpeg|svg)$/i.test(file))replaceTracked(file);
+});
 
-// Preserve KayKit/Quaternius bodies, terrain and rigs. Weapon art mixes licensed
-// sources, so the alpha uses one known CC0 KayKit sword as a visual placeholder
-// for all old donor weapon variants. Rig_Medium sockets continue to function.
+// KayKit original weapons, skeleton weapons, shields and gear are CC0.
+// Only known rights-reserved sets are replaced; preserve every other weapon.
 const weaponDir=path.join(root,'models/weapons');
 const sword=path.join(weaponDir,'sword_1handed.glb');
-if(!fs.existsSync(sword))throw Error('HIGHFLY_SANITIZE_KAYKIT_SWORD_NOT_FOUND');
+if(!fs.existsSync(sword))throw Error('HIGHFLY_KAYKIT_SWORD_NOT_FOUND');
 const swordBytes=fs.readFileSync(sword);
+const blockedWeapon=(name)=>{
+ const stem=name.toLowerCase().replace(/\.glb$/,'');
+ return /^(purple_|redskull_|emberfang_sword$|guildmark_|emberwrought_|hoarfrost_|astravyr_|cosmarch_|encore_|starfall_|skyrender_|meteorlatch_|solheim_|emberwish_|tome_)/.test(stem);
+};
 walk(weaponDir,file=>{
-  if(file.endsWith('.glb')){
-    fs.writeFileSync(file,swordBytes);
-    stats.weapons++;
-  }
+ if(!file.endsWith('.glb'))return;
+ if(blockedWeapon(path.basename(file))) {
+   fs.writeFileSync(file,swordBytes);
+   stats.weapons++;
+   replacedPaths.push(file.replaceAll('\\','/').replace(/^public\//,''));
+ } else keep(file);
 });
 
 // Remove or replace exact restricted media. Project-only fork-redistributable
@@ -87,7 +149,7 @@ const noReuseProps=[
 ];
 for(const name of noReuseProps){
   const file=path.join(root,'models/props',name);
-  if(fs.existsSync(file)){fs.writeFileSync(file,crateBytes);stats.props++;}
+  if(fs.existsSync(file)){fs.writeFileSync(file,crateBytes);stats.props++;replacedPaths.push('models/props/'+name);}
 }
 const mountDir=path.join(root,'models/mounts');
 const safeMount=path.join(mountDir,'avian_strider.glb');
@@ -95,7 +157,7 @@ if(!fs.existsSync(safeMount))throw Error('HIGHFLY_SANITIZE_MOUNT_MISSING');
 const safeMountBytes=fs.readFileSync(safeMount);
 for(const name of ['terrorspark_groundshaker.glb','goblin_rocket_sled.glb','lanternback_troll.glb','chimeglass_tortoise.glb']){
   const f=path.join(mountDir,name);
-  if(fs.existsSync(f)){fs.writeFileSync(f,safeMountBytes);stats.mounts++;}
+  if(fs.existsSync(f)){fs.writeFileSync(f,safeMountBytes);stats.mounts++;replacedPaths.push('models/mounts/'+name);}
 }
 // Restricted Harbormaster accessories ARE referenced by the native character
 // preload. Deleting them made startup fail. Ship a legal invisible glTF2 scene
@@ -122,6 +184,7 @@ for(const name of ['harbormaster_tricorne.glb','harbormaster_spyglass.glb']){
   if(!fs.existsSync(p))throw Error('HIGHFLY_G4_REQUIRED_NPC_GEAR_PATH_MISSING_'+name);
   fs.writeFileSync(p,blankAccessory);
   stats.props++;
+  replacedPaths.push('models/chars/npc_gear/'+name);
 }
 
 // Preserve only the user's project's original name/URL. The native index
@@ -131,4 +194,11 @@ const marker='<script type="module" src="/src/main.ts"></script>';
 const redirect="<script>(function(){var u=new URL(location.href);if(!u.searchParams.has('hfWorld')){u.searchParams.set('hfWorld','1');location.replace(u.href)}})();</script>";
 if(html.split(marker).length!==2)throw Error('HIGHFLY_SANITIZE_INDEX_ANCHOR_DRIFT');
 fs.writeFileSync(index,html.replace(marker,redirect+'\n  '+marker));
-console.log('HIGHFLY_GENESIS_PUBLIC_ASSET_SANITIZATION='+JSON.stringify(stats));
+// Audit receipt survives Vite build in public/ (and therefore in dist/).
+// Keep a file-level trail so fixes never silently destroy allowed content.
+fs.writeFileSync(path.join(root,'highfly-license-audit.json'),JSON.stringify({
+  source:'World of ClaudeCraft v0.44.7 CREDITS.md',
+  policy:'retain CC0 and fork-licensed project art; replace restricted only',
+  stats, replacedPaths:replacedPaths.sort()
+},null,2)+'\\n');
+console.log('HIGHFLY_GENESIS_LICENSE_SELECTIVE_AUDIT='+JSON.stringify(stats));
