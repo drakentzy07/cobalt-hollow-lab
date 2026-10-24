@@ -90,7 +90,7 @@ jobs:
           pnpm exec vite build --base=/HIGHFLY-WORLD/
           node scripts/build_media_manifest.mjs emit
           test -s dist/index.html
-          test -s dist/assets/*.js
+          find dist/assets -maxdepth 1 -name '*.js' -type f -print -quit | grep -q .
           test -s dist/manifest.webmanifest
           test -d dist/media/models
           find dist/media/models -name '*.glb' -type f -print -quit | grep -q .
