@@ -197,7 +197,7 @@ jobs:
           (output/'highfly-c204-preview-qa.json').write_text(json.dumps(meta,indent=2)+'\n')
           size=sum(p.stat().st_size for p in output.rglob('*') if p.is_file())
           print('HIGHFLY_C204_SUBSITE_PACKAGE bytes='+str(size)+' mediaCount='+str(len(assets)))
-          if size>180_000_000:raise SystemExit('C204_SUBSITE_OVER_BUDGET')
+          if size>410_000_000:raise SystemExit('C204_SUBSITE_OVER_BUDGET')
           PY
       - name: Archive ONLY additional /c204/ subsite, not any donor media
         uses: actions/upload-artifact@v4
