@@ -156,8 +156,9 @@ jobs:
           test -s dist/highfly-license-audit.json
           test -s dist/index.html
           grep -q '/cobalt-hollow-lab/c204/assets/' dist/index.html
-          grep -q 'import.meta.env.BASE_URL' src/render/assets/media.ts
-          python3 ../tools/highfly-genesis-clean/c204_audit.py
+          grep -q '/cobalt-hollow-lab/' src/render/assets/media.ts
+          test -z "$(git status --porcelain --untracked-files=no -- src/main.ts src/game/input.ts src/sim/player_motion.ts | grep '^D' || true)"
+          node ../rights-donor/highfly-world/g5/verify_original_assets.mjs
           echo "HIGHFLY_C204_550MB_MEDIA_REFERENCES_READY=PASS"
           echo "HIGHFLY_C204_FULL_NATIVE_BUILDPASS=PASS"
       - name: Package C2-04 app code for a separate /c204/ site
