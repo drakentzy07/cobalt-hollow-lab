@@ -113,6 +113,7 @@ jobs:
           node ../donor-fury/fury360/tools/stage_in_candidate.mjs --candidate . --apply
           node ../tools/highfly-genesis-clean/c204_stage_modules.mjs .
           python3 ../tools/highfly-genesis-clean/c204_patch_native.py
+          node ../tools/highfly-genesis-clean/c204_playtest_entry.mjs
           python3 ../tools/highfly-genesis-clean/c204_audit.py
           python3 ../donor-golden/overlays/verify_highfly_8way.py
           python3 ../tools/highfly-genesis-clean/c204_audit.py
@@ -147,7 +148,9 @@ jobs:
           echo "HIGHFLY_C204_TEMP_PREVIEW_LICENSE_PLACEHOLDERS_WITH_SOURCE_LOG=PASS"
       - name: Build web game with movement integrated WITHOUT publishing
         working-directory: candidate
-        env: {VITE_COBALT_OFFLINE: '1'}
+        env:
+          VITE_COBALT_OFFLINE: '1'
+          VITE_HIGHFLY_C204_PLAYTEST: '1'
         run: |
           set -euo pipefail
           pnpm exec vite build --base=/cobalt-hollow-lab/c204/
@@ -155,11 +158,18 @@ jobs:
           node scripts/build_media_manifest.mjs prune
           test -s dist/highfly-license-audit.json
           test -s dist/index.html
+          grep -q 'hf-c204-play-gate' dist/index.html
+          grep -q 'hf-c204-world' dist/index.html
+          grep -q 'hf-c204-lab' dist/index.html
           grep -q '/cobalt-hollow-lab/c204/assets/' dist/index.html
           grep -q '/cobalt-hollow-lab/' src/render/assets/media.ts
           test -z "$(git status --porcelain --untracked-files=no -- src/main.ts src/game/input.ts src/sim/player_motion.ts | grep '^D' || true)"
           node ../rights-donor/highfly-world/g5/verify_original_assets.mjs
           echo "HIGHFLY_C204_550MB_MEDIA_REFERENCES_READY=PASS"
+          grep -q 'hf-c204-play-gate' index.html
+          grep -q 'VITE_HIGHFLY_C204_PLAYTEST' src/main.ts
+          grep -q "startOffline('warrior',name,0)" src/main.ts
+          echo "HIGHFLY_C204_REAL_OFFLINE_ENTRY_BOOT_WIRED=PASS"
           echo "HIGHFLY_C204_FULL_NATIVE_BUILDPASS=PASS"
       - name: Package C2-04 app code for a separate /c204/ site
         working-directory: candidate
