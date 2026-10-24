@@ -6,7 +6,8 @@ on:
     branches:
       - highfly-genesis-clean-0447
     paths:
-      - "highfly-genesis-clean/**"
+      - "highfly-genesis-clean/audit_original.py"
+      - "highfly-genesis-clean/README.md"
       - ".github/workflows/highfly-genesis-clean-c0.yml"
   workflow_dispatch:
 
