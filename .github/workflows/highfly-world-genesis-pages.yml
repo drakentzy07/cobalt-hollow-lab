@@ -1,5 +1,5 @@
 # Explicitly authorized clean replacement of the OLD GitHub Pages website; repository history and user browser saves remain untouched.
-name: HIGHFLY WORLD — Genesis G5 Selective Asset Restoration
+name: HIGHFLY WORLD — Genesis G6 Original Asset Preservation Audit
 on:
   push:
     branches:
@@ -8,6 +8,7 @@ on:
       - "highfly-world/g2/**"
       - "highfly-world/g3/**"
       - "highfly-world/g5/**"
+      - "highfly-world/licenses/**"
       - "highfly-world/pages/**"
       - "highfly-world/g1/**"
       - "highfly-world/g0/**"
@@ -122,7 +123,7 @@ jobs:
           node scripts/build_media_manifest.mjs prune
           node ../overlays/highfly-world/g3/verify_candidate.mjs
           test -s dist/highfly-license-audit.json
-          echo HIGHFLY_G5_KAYKIT_CC0_AND_FORK_ART_PRESERVED_PASS
+          echo HIGHFLY_G6_LICENSED_KAYKIT_WORLD_MAPS_PRESERVED_PASS
           test -s dist/index.html
           find dist/assets -maxdepth 1 -name '*.js' -type f -print -quit | grep -q .
           test -s dist/manifest.webmanifest
