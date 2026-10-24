@@ -86,6 +86,10 @@ jobs:
           corepack prepare pnpm@10.34.5 --activate
           pnpm install --frozen-lockfile --ignore-scripts
           pnpm exec tsc --noEmit --incremental false
+      - name: Deterministic G2 leap and landing damage tests
+        working-directory: candidate
+        run: |
+          pnpm exec vitest run tests/highfly_impacto_astral.test.ts --reporter=dot
       - name: Compile G2 skill candidate with isolated Genesis flag
         working-directory: candidate
         env:
