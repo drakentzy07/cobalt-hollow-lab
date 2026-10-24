@@ -10,7 +10,30 @@ const assets=JSON.parse(s.slice(i+1,j+1));
 const keys=Object.keys(assets);
 assert.ok(keys.length>1500,'Expected the pinned complete 0.44.7 world media catalogue');
 const sample=['models/props/column.glb','models/props/mushroom_red.glb','models/props/mushroom_tan.glb','models/props/dock_platform.glb','models/props/reeds.glb','models/weapons/sword_1handed.glb'];
+const sample=[
+ 'models/props/column.glb','models/props/mushroom_red.glb',
+ 'models/props/mushroom_tan.glb','models/props/dock_platform.glb',
+ 'models/props/reeds.glb','models/weapons/sword_1handed.glb',
+ 'models/chars/npc_gear/harbormaster_tricorne.glb',
+ 'models/chars/npc_gear/harbormaster_spyglass.glb'
+];
 for(const logical of sample) assert.ok(assets[logical],'Missing G3 visual-test model '+logical);
+// Validate BOTH restricted accessories as loadable empty scenes rather than missing files.
+for(const logical of ['models/chars/npc_gear/harbormaster_tricorne.glb',
+                      'models/chars/npc_gear/harbormaster_spyglass.glb']){
+ const src=readFileSync(path.join('public',logical));
+ const dist=readFileSync(path.join('dist',assets[logical].slice(1)));
+ for(const v of [src,dist]){
+  assert.equal(v.toString('ascii',0,4),'glTF','G4 accessory is not binary GLB');
+  assert.equal(v.readUInt32LE(4),2,'G4 GLB version wrong');
+  assert.equal(v.readUInt32LE(8),v.length,'G4 GLB length wrong');
+  assert.equal(v.toString('ascii',16,20),'JSON','G4 GLB JSON chunk absent');
+  const gltf=JSON.parse(v.subarray(20,20+v.readUInt32LE(12)).toString('utf8'));
+  assert.equal(gltf.asset.version,'2.0');
+  assert.deepEqual(gltf.scenes,[{nodes:[]}]);
+  assert.deepEqual(gltf.nodes,[]);
+ }
+}
 const mediaSource=readFileSync('src/render/assets/media.ts','utf8');
 assert.ok(mediaSource.includes('import.meta.env.BASE_URL'),'Pages base prefix missing from resolver');
 let checked=0;let total=0;
