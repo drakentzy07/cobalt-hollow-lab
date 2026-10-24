@@ -97,9 +97,31 @@ for(const name of ['terrorspark_groundshaker.glb','goblin_rocket_sled.glb','lant
   const f=path.join(mountDir,name);
   if(fs.existsSync(f)){fs.writeFileSync(f,safeMountBytes);stats.mounts++;}
 }
+// Restricted Harbormaster accessories ARE referenced by the native character
+// preload. Deleting them made startup fail. Ship a legal invisible glTF2 scene
+// at the SAME logical paths: valid parse, no third-party geometry/materials.
+function emptyGlb() {
+  const json=Buffer.from(JSON.stringify({
+    asset:{version:'2.0',generator:'HIGHFLY Genesis neutral empty accessory'},
+    scene:0,scenes:[{nodes:[]}],nodes:[]
+  }), 'utf8');
+  const padded=Buffer.alloc(Math.ceil(json.length/4)*4,0x20);
+  json.copy(padded);
+  const out=Buffer.alloc(12+8+padded.length);
+  out.write('glTF',0,'ascii');
+  out.writeUInt32LE(2,4);
+  out.writeUInt32LE(out.length,8);
+  out.writeUInt32LE(padded.length,12);
+  out.write('JSON',16,'ascii');
+  padded.copy(out,20);
+  return out;
+}
+const blankAccessory=emptyGlb();
 for(const name of ['harbormaster_tricorne.glb','harbormaster_spyglass.glb']){
   const p=path.join(root,'models/chars/npc_gear',name);
-  if(fs.existsSync(p)){fs.rmSync(p);stats.removed++;}
+  if(!fs.existsSync(p))throw Error('HIGHFLY_G4_REQUIRED_NPC_GEAR_PATH_MISSING_'+name);
+  fs.writeFileSync(p,blankAccessory);
+  stats.props++;
 }
 
 // Preserve only the user's project's original name/URL. The native index
