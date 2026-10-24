@@ -1,0 +1,214 @@
+# C2-04 public QA preview (isolated app route, do not modify main landing game).
+# continuous analog player motion ON the pinned 0.44.7 donor, with guarded seams.
+# C2-03 additionally validates double jump via native physics and press edges.
+# Do not publish or touch source art.
+name: HIGHFLY CLEAN — C2-04 Isolated Pages Preview Build
+on:
+  push:
+    branches: [highfly-genesis-clean-0447]
+    paths:
+      - ".github/workflows/highfly-genesis-clean-c204-pages.yml"
+      - "highfly-genesis-clean/c202_audit.py"
+      - "highfly-genesis-clean/c203_*"
+      - "highfly-genesis-clean/c204_pages_media_root.mjs"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-clean-c204-pages
+  cancel-in-progress: false
+jobs:
+  golden-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: {path: tools, persist-credentials: false}
+      - name: Checkout archived GOLDEN overlay recipes only
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: highfly-main-clean-v1
+          path: donor-golden
+          sparse-checkout: |
+            overlays
+          persist-credentials: false
+      - name: Checkout portable FURY source independently
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: highfly-rebirth-fury360-engine-20261022
+          path: donor-fury
+          sparse-checkout: |
+            fury360
+          persist-credentials: false
+      - name: Checkout G6 licensed-alpha sanitizer and Pages media adapter ONLY
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: 865f9c523001f53f975ab96e617a921a4d2bd6e1
+          path: rights-donor
+          sparse-checkout: |
+            highfly-world/pages
+            highfly-world/g3
+            highfly-world/g5
+          persist-credentials: false
+      - name: Checkout immutable ClaudeCraft v0.44.7
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 493c35a108cef6c8aa290e8793107b1cd117886e
+          path: candidate
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /tests/
+            /electron/
+            /android/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /.gitignore
+            /index.html
+            /LICENSE
+            /CREDITS.md
+            /THIRD_PARTY_NOTICES.md
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+            /capacitor.config.ts
+      - name: Test Fury, core and persistent Workout Training contracts
+        run: |
+          set -euo pipefail
+          node --experimental-strip-types --test donor-fury/fury360/tests/*.test.ts
+          node --experimental-strip-types --test tools/highfly-genesis-clean/c2_universal_stats.test.ts tools/highfly-genesis-clean/c204_training_journal.test.ts
+          echo HIGHFLY_C204_FURY_TRAINING_SESSION_STORE_TESTS=PASS
+      - name: Guarded GOLDEN joystick and continuous analog movement native seams
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 493c35a108cef6c8aa290e8793107b1cd117886e
+          python3 ../donor-golden/overlays/highfly_mobile_360.py
+          python3 ../donor-golden/overlays/highfly_mobile_analog.py
+          python3 ../donor-golden/overlays/highfly_advanced_mobility.py
+          node ../donor-fury/fury360/tools/stage_in_candidate.mjs --candidate . --apply
+          node ../tools/highfly-genesis-clean/c204_stage_modules.mjs .
+          python3 ../tools/highfly-genesis-clean/c204_patch_native.py
+          python3 ../tools/highfly-genesis-clean/c204_audit.py
+          python3 ../donor-golden/overlays/verify_highfly_8way.py
+          python3 ../tools/highfly-genesis-clean/c204_audit.py
+          echo "HIGHFLY_C204_GOLDEN_JUMP_TRAINING_NATIVE_SEAMS=PASS"
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - name: Typecheck original donor plus native GOLDEN movement
+        working-directory: candidate
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm exec tsc --noEmit --incremental false
+          echo "HIGHFLY_C204_NATIVE_TRAINING_TYPESCRIPT=PASS"
+      - name: Exercise REAL ClaudeCraft entity stat pipeline with Training Core
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          cp ../tools/highfly-genesis-clean/c204_native_recalc.test.ts tests/highfly_c204_training_recalc.test.ts
+          pnpm exec vitest run tests/highfly_c204_training_recalc.test.ts --reporter=dot
+          echo "HIGHFLY_C204_ACTUAL_ENTITY_PRIMARY_STATS_AND_DERIVED_HP=PASS"
+      - name: Build temporary rights-sanitized preview (never edit CLEAN donor repository)
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          node ../rights-donor/highfly-world/pages/sanitize_candidate.mjs
+          node ../rights-donor/highfly-world/g3/apply_candidate.mjs
+          node ../tools/highfly-genesis-clean/c204_pages_media_root.mjs
+          node scripts/build_media_manifest.mjs generate
+          node ../rights-donor/highfly-world/g5/verify_original_assets.mjs
+          test -s public/highfly-license-audit.json
+          echo "HIGHFLY_C204_TEMP_PREVIEW_LICENSE_PLACEHOLDERS_WITH_SOURCE_LOG=PASS"
+      - name: Build web game with movement integrated WITHOUT publishing
+        working-directory: candidate
+        env: {VITE_COBALT_OFFLINE: '1'}
+        run: |
+          set -euo pipefail
+          pnpm exec vite build --base=/cobalt-hollow-lab/c204/
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          test -s dist/highfly-license-audit.json
+          test -s dist/index.html
+          grep -q '/cobalt-hollow-lab/c204/assets/' dist/index.html
+          grep -q 'import.meta.env.BASE_URL' src/render/assets/media.ts
+          python3 ../tools/highfly-genesis-clean/c204_audit.py
+          echo "HIGHFLY_C204_550MB_MEDIA_REFERENCES_READY=PASS"
+          echo "HIGHFLY_C204_FULL_NATIVE_BUILDPASS=PASS"
+      - name: Package C2-04 app code for a separate /c204/ site
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import shutil,os,re,json,hashlib
+          from pathlib import Path
+          dist=Path('dist')
+          output=Path('../preview-package/c204')
+          shutil.copytree(dist,output)
+          # Shared G6 root already contains the same hashed MEDIA_ASSETS files.
+          # Never publish a second 550 MB copy. The MAIN publisher verifies ALL
+          # 1,838 expected paths against the existing rights-sanitized media.
+          shutil.rmtree(output/'media')
+          text=Path('src/render/assets/manifest.generated.ts').read_text()
+          m=re.search(r'^(\{.*\}) as const;',text,re.M|re.S)
+          if not m:raise SystemExit('C204_ORIGINAL_MEDIA_MANIFEST_UNREADABLE')
+          assets=json.loads(m.group(1))
+          assert len(assets)>1500
+          audit=json.loads((output/'highfly-license-audit.json').read_text())
+          if audit['stats']['removed']!=0:raise SystemExit('C204_RUNTIME_ASSET_DELETED')
+          meta={
+            'name':'HIGHFLY CLEAN C2-04 /c204/ isolated preview',
+            'ciRunnerSource':os.environ.get('GITHUB_SHA',''),
+            'assetMode':'G6 sanitized; shared media by exact hashes',
+            'licenseClearance':'PROVISIONAL; unknown-provenance audit still open',
+            'allOriginalSourceAssetsPreserved':True,
+            'nativeS23Verified':False,
+            'fury360AndTraining':True,
+            'url':'https://drakentzy07.github.io/cobalt-hollow-lab/c204/',
+            'mediaPaths':sorted(assets.values()),
+            'restrictedReplacements':len(audit['replacedPaths']),
+          }
+          (output/'highfly-c204-preview-qa.json').write_text(json.dumps(meta,indent=2)+'\n')
+          size=sum(p.stat().st_size for p in output.rglob('*') if p.is_file())
+          print('HIGHFLY_C204_SUBSITE_PACKAGE bytes='+str(size)+' mediaCount='+str(len(assets)))
+          if size>180_000_000:raise SystemExit('C204_SUBSITE_OVER_BUDGET')
+          PY
+      - name: Archive ONLY additional /c204/ subsite, not any donor media
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-clean-c204-isolated-pages-app
+          path: preview-package/
+          retention-days: 7
+          if-no-files-found: error
+      - name: Record runtime QA limitation
+        run: |
+          echo "C2-04: joystick + double jump + eight FURY portable intent modules + offline Hunter Training diary with native primary-stat recalc." >> "$GITHUB_STEP_SUMMARY"
+          echo "Mundo/LAB localStorage separated by name+world; no cloud/sensor evidence claimed. User-reported sessions." >> "$GITHUB_STEP_SUMMARY"
+          echo "Dash/animated flips not yet implemented; S23 touch QA pending. NO Pages published." >> "$GITHUB_STEP_SUMMARY"
+          echo "Typecheck+build validate wiring but S23 gesture/camera freedom requires real-device QA." >> "$GITHUB_STEP_SUMMARY"
+          echo "No Pages published. No media removed." >> "$GITHUB_STEP_SUMMARY"
