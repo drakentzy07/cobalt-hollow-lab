@@ -1,0 +1,109 @@
+# G2-01 tests first native HIGHFLY skill, plus G0 and G1; never deploy production Pages.
+name: HIGHFLY WORLD — G2 Impacto Astral mechanics alpha
+on:
+  push:
+    branches:
+      - highfly-world-genesis-g0-0447-20261024
+    paths:
+      - "highfly-world/g2/**"
+      - "highfly-world/g1/**"
+      - "highfly-world/g0/**"
+      - ".github/workflows/highfly-world-genesis-g2.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-world-g2
+  cancel-in-progress: false
+jobs:
+  world-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout independent HIGHFLY overlays
+        uses: actions/checkout@v4
+        with:
+          path: overlays
+          persist-credentials: false
+      - name: Materialize immutable native world v0.44.7
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: v0.44.7
+          path: candidate
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /tests/
+            /electron/
+            /android/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /.gitignore
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+            /capacitor.config.ts
+      - name: Pin upstream and apply G0 + G1 + G2 overlays
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate describe --tags --exact-match)" = "v0.44.7"
+          (cd candidate && node ../overlays/highfly-world/g0/apply_candidate.mjs)
+          (cd candidate && node ../overlays/highfly-world/g0/verify_candidate.mjs)
+          (cd candidate && node ../overlays/highfly-world/g1/apply_candidate.mjs)
+          (cd candidate && node ../overlays/highfly-world/g1/verify_candidate.mjs)
+          (cd candidate && node ../overlays/highfly-world/g2/apply_candidate.mjs)
+          (cd candidate && node ../overlays/highfly-world/g2/verify_candidate.mjs)
+      - name: Install pinned Node and pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Type-check G2 in the pinned native engine
+        working-directory: candidate
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm exec tsc --noEmit --incremental false
+      - name: Compile G2 skill candidate with isolated Genesis flag
+        working-directory: candidate
+        env:
+          VITE_HIGHFLY_WORLD_GENESIS: '1'
+          VITE_COBALT_OFFLINE: '1'
+        run: |
+          set -euo pipefail
+          pnpm exec vite build --base=/HIGHFLY-WORLD/
+          node scripts/build_media_manifest.mjs emit
+          test -s dist/index.html
+          find dist/assets -maxdepth 1 -name '*.js' -type f -print -quit | grep -q .
+          test -s dist/manifest.webmanifest
+          test -d dist/media/models
+          find dist/media/models -name '*.glb' -type f -print -quit | grep -q .
+          echo HIGHFLY_G2_01_NATIVE_SKILL_BUILD_PASS
+      - name: Record G2-01 limits without public deployment
+        run: |
+          echo "G2-01 build only; NOT deployed; NOT Android-certified" >> "$GITHUB_STEP_SUMMARY"
+          echo "Base: v0.44.7 + G0/G1/G2 isolated overlays, bare modular body and Impacto Astral native first-level skill." >> "$GITHUB_STEP_SUMMARY"
+          echo "G2-01 leap and landing AoE compiled, but enemy knock-up, original FX, dedicated four-slot MOBA HUD, persistent saves, independent lab progression and classless sim internals remain outstanding." >> "$GITHUB_STEP_SUMMARY"
+          echo "Next: Android runtime validation, aim/cancel, original FX and lift; source/media license review before any public deployment." >> "$GITHUB_STEP_SUMMARY"
