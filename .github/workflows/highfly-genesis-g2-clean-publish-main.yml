@@ -2,7 +2,7 @@
 # This one MAIN workflow publishes the certified build as the NEW Pages root,
 # replacing failed historic browser labs at the user's explicit request.
 # NEVER merge donor game source into main, and never alter localStorage.
-name: HIGHFLY WORLD — Genesis G2 Pages Publisher (MAIN)
+name: HIGHFLY WORLD — Genesis G3 Asset Repair Publisher
 on:
   push:
     branches: [main]
@@ -27,8 +27,8 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const id=40117257128;
-            const sha='f45f1b6ab80f0b003bba06327ba8a85dde2c6ef8';
+            const id=40119997537;
+            const sha='b0112d46492a5e05e81052dcf26aee8b3d69d907';
             const run=(await github.rest.actions.getWorkflowRun({
               owner:context.repo.owner,repo:context.repo.repo,run_id:id,
             })).data;
@@ -42,13 +42,13 @@ jobs:
               owner:context.repo.owner,repo:context.repo.repo,run_id:id,per_page:100,
             })).data.artifacts;
             const pages=artifacts.find(a=>a.name==='github-pages'&&!a.expired);
-            if(!pages||pages.id!==12569531332)throw Error('GENESIS_CERTIFIED_PAGES_ARTIFACT_MISSING');
+            if(!pages||pages.id!==12570771219)throw Error('GENESIS_CERTIFIED_PAGES_ARTIFACT_MISSING');
             console.log('HIGHFLY_GENESIS_SOURCE_GREEN_BUILD_PROVEN=1 '+sha);
       - name: Recover verified G2 Pages bundle; do NOT reuse old Pages
         uses: actions/download-artifact@v4
         with:
           repository: drakentzy07/cobalt-hollow-lab
-          run-id: 40117257128
+          run-id: 40119997537
           github-token: ${{ github.token }}
           name: github-pages
           path: certified
@@ -79,14 +79,24 @@ jobs:
           if not list((site/'media/models').rglob('*.glb')):raise SystemExit('GENESIS_3D_ASSETS_MISSING')
           if (site/'world0').exists() or (site/'candidate').exists():
             raise SystemExit('GENESIS_OLD_PAGES_STILL_PRESENT')
+          sample=[]
+          for pattern in ['column.*.glb','mushroom_red.*.glb','dock_platform.*.glb']:
+            found=sorted((site/'media/models/props').glob(pattern))
+            if len(found)!=1:raise SystemExit('GENESIS_G3_SAMPLE_GLBS_NOT_UNIQUE_'+pattern)
+            for candidate in found:
+              if candidate.read_bytes()[:4]!=b'glTF':raise SystemExit('GENESIS_G3_BAD_GLTF_HEADER_'+candidate.name)
+              sample.append(str(candidate.relative_to(site)))
+          print('HIGHFLY_GENESIS_G3_GLTF_HEADER_AUDIT=PASS',sample)
           qa={
-            'edition':'HIGHFLY WORLD Genesis G2-01 clean Pages alpha',
-            'sourceSha':'f45f1b6ab80f0b003bba06327ba8a85dde2c6ef8',
+            'edition':'HIGHFLY WORLD Genesis G3 asset repair alpha',
+            'sourceSha':'b0112d46492a5e05e81052dcf26aee8b3d69d907',
             'pagesMode':'replaces retired old Pages without modifying repo source',
             'rightsRestrictedIcons':'replaced by generic neutral placeholders',
             'physicalS23':'NOT_MANUALLY_VERIFIED',
             'skill':'hf_impacto_astral',
             'entry':'?hfWorld=1',
+            'sampleGlbPaths':sample,
+            'assetUrls':'project-relative hashed media manifest regenerated before Vite',
           }
           (site/'genesis-g2-qa.json').write_text(json.dumps(qa,indent=2)+'\n')
           size=sum(x.stat().st_size for x in site.rglob('*') if x.is_file())
@@ -124,11 +134,15 @@ jobs:
                   return r.read()
               html=get('index.html')
               qa=json.loads(get('genesis-g2-qa.json'))
-              assert qa['sourceSha']=='f45f1b6ab80f0b003bba06327ba8a85dde2c6ef8'
+              assert qa['sourceSha']=='b0112d46492a5e05e81052dcf26aee8b3d69d907'
               assert b'hf-world-lab' in html and b'hf-hunter-name' in html
               assert b'/cobalt-hollow-lab/assets/' in html
+              for rel in qa['sampleGlbPaths']:
+                data=get(rel)
+                assert data[:4]==b'glTF', 'BAD_GLB_BINARY_'+rel
+                print('HIGHFLY_G3_PUBLIC_GLB_200='+rel)
               assert get('LICENSE.txt')
-              print('HIGHFLY_GENESIS_G2_PUBLIC_PLAY_URL_GREEN='+base+'?hfWorld=1')
+              print('HIGHFLY_GENESIS_G3_PUBLIC_PLAY_URL_GREEN='+base+'?hfWorld=1')
               break
             except Exception as e:
               print('GENESIS_RELEASE_PROPAGATION',attempt,str(e)[:150])
