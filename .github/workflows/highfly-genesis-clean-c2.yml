@@ -1,0 +1,138 @@
+# C2-01 is a non-deploy compatibility experiment: portable FURY + classless
+# Training stats are staged ONLY as new additive modules in pinned upstream.
+name: HIGHFLY CLEAN — C2 Fury + Training Portable Gate
+on:
+  push:
+    branches:
+      - highfly-genesis-clean-0447
+    paths:
+      - "highfly-genesis-clean/c2_*"
+      - ".github/workflows/highfly-genesis-clean-c2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-clean-c2-portable
+  cancel-in-progress: false
+
+jobs:
+  portable-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout clean local adapters
+        uses: actions/checkout@v4
+        with:
+          path: tools
+          persist-credentials: false
+      - name: Fetch archived proven Fury module independently
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: highfly-rebirth-fury360-engine-20261022
+          path: donor-fury
+          persist-credentials: false
+          sparse-checkout: |
+            fury360
+      - name: Materialize pristine ClaudeCraft v0.44.7 by immutable SHA
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 493c35a108cef6c8aa290e8793107b1cd117886e
+          path: candidate
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /tests/
+            /electron/
+            /android/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /.gitignore
+            /index.html
+            /LICENSE
+            /CREDITS.md
+            /THIRD_PARTY_NOTICES.md
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+            /capacitor.config.ts
+      - name: Configure Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test archived Fury 360 contracts in isolation
+        run: |
+          set -euo pipefail
+          node --experimental-strip-types --test donor-fury/fury360/tests/*.test.ts
+          echo HIGHFLY_C2_FURY_PORTABLE_CONTRACTS=PASS
+      - name: Verify Hunter training stat semantics independently
+        run: |
+          set -euo pipefail
+          node --experimental-strip-types --test tools/highfly-genesis-clean/c2_universal_stats.test.ts
+          echo HIGHFLY_C2_HUNTER_CORE_STR_AGI_VIT_PER_INT_LV20=PASS
+      - name: Stage only new namespaced modules with guarded dry runs
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate rev-parse HEAD)" = 493c35a108cef6c8aa290e8793107b1cd117886e
+          node donor-fury/fury360/tools/stage_in_candidate.mjs --candidate candidate
+          node tools/highfly-genesis-clean/c2_stage_universal.mjs candidate
+          node donor-fury/fury360/tools/stage_in_candidate.mjs --candidate candidate --apply
+          node tools/highfly-genesis-clean/c2_stage_universal.mjs candidate --apply
+          test "$(find candidate/src/highfly/fury -maxdepth 1 -type f -name '*.ts' | wc -l)" -eq 8
+          test -s candidate/src/highfly/training/universal_stats.ts
+          test -z "$(git -C candidate diff --name-only HEAD -- src)"
+          test -z "$(git -C candidate status --porcelain --untracked-files=no -- public)"
+          test -z "$(git -C candidate status --porcelain --untracked-files=no -- src/main.ts src/game/input.ts src/game/mobile_controls.ts src/sim/player_motion.ts src/sim/types.ts)"
+          find candidate/src/highfly/ -maxdepth 3 -type f | sort
+          echo HIGHFLY_C2_NATIVE_ENGINE_ASSETS_AND_SAVES_UNTOUCHED=PASS
+      - name: Install upstream dependencies exactly
+        working-directory: candidate
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Typecheck portable Fury + Training modules in donor v0.44.7
+        working-directory: candidate
+        run: |
+          pnpm exec tsc --noEmit --incremental false
+          echo HIGHFLY_C2_V0447_TYPESCRIPT_FURY_TRAINING=PASS
+      - name: Build donor v0.44.7 with additive modules only (not published)
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          VITE_COBALT_OFFLINE=1 pnpm exec vite build --base=/cobalt-hollow-lab/
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          test -s dist/index.html
+          test -d dist/media/models
+          test -z "$(git status --porcelain --untracked-files=no -- public)"
+          echo HIGHFLY_C2_ORIGINAL_WORLD_COMPAT_BUILD_GREEN=PASS
+      - name: Record explicit NON-JUGABLE integration limits
+        run: |
+          echo "C2-01 compiled additive Fury + universal-training modules only." >> "$GITHUB_STEP_SUMMARY"
+          echo "Original v0.44.7 main.ts, input.ts, Sim/player_motion, saves, maps, items, GLBs and public/ are unchanged." >> "$GITHUB_STEP_SUMMARY"
+          echo "Fury is staged but not wired to touch router. Training profile/stat contract is staged but not wired to Sim, real workouts or persistence." >> "$GITHUB_STEP_SUMMARY"
+          echo "This is NOT Android / Pages certified. No assets were removed. No Pages deployment occurred." >> "$GITHUB_STEP_SUMMARY"
