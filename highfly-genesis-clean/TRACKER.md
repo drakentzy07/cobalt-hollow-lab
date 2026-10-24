@@ -8,7 +8,7 @@
 | C2-02 · Fury joystick y cámara GOLDEN en el juego | ✅ CI verde | [40133644036](https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/40133644036) | GOLDEN analógico (no WASD 8 vías), movimiento relativo a cámara, touch router y simulación; pendiente sensación de control en S23 |
 | C2-03 · Doble salto, dash, flip | 🟠 Parcial CI | [40133887897](https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/40133887897) | **Segundo salto físico** con flanco de pulsación, cooldown de salto aéreo y reset al aterrizar: verde; **dash y mortal animado todavía pendientes** |
 | C2-04 · Training + stats persistentes en motor | ✅ GREEN **CI + prueba nativa** / S23 pendiente | [40135134646](https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/40135134646) | **41/41 Fury + 9/9 Training + 3/3 integración Sim** (STR real, VIT→HP y aislamiento de identidades). Diario local Mundo/LAB, cinco atributos, panel de Entrenamiento, recálculo nativo, TypeScript y WebGL verdes; sesiones autodeclaradas |
-| C3 · Build con licencia pública y QA Samsung | Pendiente | — | Solo recursos autorizados; no cambiar Pages sin terminar pruebas |
+| C3 · Pages de prueba C2-04 / Android | 🟠 Pages público GREEN; QA Samsung pendiente | [40136838429](https://github.com/drakentzy07/cobalt-hollow-lab/actions/runs/40136838429) | [Jugar C2-04](https://drakentzy07.github.io/cobalt-hollow-lab/c204/) — URL pública, JS y GLB HTTP 200; G6 raíz anterior preservada; verificación final legal de recursos sin procedencia y jugabilidad S23 pendientes |
 
 ## Control de cambios
 
@@ -26,3 +26,12 @@
 - **C2-01 RUN:** 41/41 tests FURY + 4/4 tests stats, typecheck y WebGL pass; único stage en candidato temporal, sin conexión al control táctil ni guardados.
 
 **Advertencia:** contrato portable compilado ≠ joystick ni Training funcionando en S23. Solo habrá «Android GREEN» tras vídeo/prueba real de gameplay.
+
+## C2-04 S23 playtest (Pages publicado)
+
+- URL: https://drakentzy07.github.io/cobalt-hollow-lab/c204/
+- Comprobación de Pages: RUN 40136838429, etapa `stage` y `publish` **SUCCESS**; 1.838 medios compartidos verificados por hash.
+- URL G6 histórica intacta: https://drakentzy07.github.io/cobalt-hollow-lab/?hfWorld=1
+- El paquete Pages usa el audio existente de G6 en la raíz, después de comparar SHA-256 de **cada fichero** de ambas copias. No se eliminó ni alteró ningún archivo del repositorio o del proyecto original. Otras imágenes del subsite no fueron recortadas.
+- Verificar físicamente: carga de mundo y assets; joystick 8 direcciones/cámara; segundo salto, tercer salto rechazado; panel Entrenamiento, STR/VIT y recarga; iconos, equipamiento y guardados.
+- Sigue pendiente: dash físico, cuatro mortales animados, HUD MOBA final, validación de todas las procedencias de licencias y verificación real en Samsung. **Nunca confundir Pages GREEN con Android GREEN.**
