@@ -2,7 +2,7 @@
 # This one MAIN workflow publishes the certified build as the NEW Pages root,
 # replacing failed historic browser labs at the user's explicit request.
 # NEVER merge donor game source into main, and never alter localStorage.
-name: HIGHFLY WORLD — Genesis G5 Licensed Assets Restore Publisher
+name: HIGHFLY WORLD — Genesis G6 Strict License Restore Publisher
 on:
   push:
     branches: [main]
@@ -27,8 +27,8 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const id=40123068957;
-            const sha='3e89010fa8250a0f21c5bcfa790d80116b91859e';
+            const id=40125050134;
+            const sha='865f9c523001f53f975ab96e617a921a4d2bd6e1';
             const run=(await github.rest.actions.getWorkflowRun({
               owner:context.repo.owner,repo:context.repo.repo,run_id:id,
             })).data;
@@ -42,13 +42,13 @@ jobs:
               owner:context.repo.owner,repo:context.repo.repo,run_id:id,per_page:100,
             })).data.artifacts;
             const pages=artifacts.find(a=>a.name==='github-pages'&&!a.expired);
-            if(!pages||pages.id!==12572441602)throw Error('GENESIS_CERTIFIED_PAGES_ARTIFACT_MISSING');
+            if(!pages||pages.id!==12573360402)throw Error('GENESIS_CERTIFIED_PAGES_ARTIFACT_MISSING');
             console.log('HIGHFLY_GENESIS_SOURCE_GREEN_BUILD_PROVEN=1 '+sha);
       - name: Recover verified G5 Pages bundle; do NOT reuse old Pages
         uses: actions/download-artifact@v4
         with:
           repository: drakentzy07/cobalt-hollow-lab
-          run-id: 40123068957
+          run-id: 40125050134
           github-token: ${{ github.token }}
           name: github-pages
           path: certified
@@ -104,12 +104,19 @@ jobs:
           assert 0<audit['stats']['weapons']<65
           assert 'models/weapons/axe_1handed.glb' not in audit['replacedPaths']
           assert 'ui/mobs/bogtoad.webp' not in audit['replacedPaths']
+          assert 'map_art/eastbrook_vale.png' not in audit['replacedPaths']
+          assert 'map_art/world_overview.webp' in audit['replacedPaths']
+          assert 'models/weapons/ashspark_shiv.glb' in audit['replacedPaths']
+          assert 'models/weapons/sword_1handed.glb' not in audit['replacedPaths']
+          assert (site/'map_art/eastbrook_vale.png').is_file()
+          assert (site/'ui/weapons/axe_a.jpg').is_file()
+          assert (site/'ui/weapons/ashspark_shiv.jpg').is_file()
           assert 'models/chars/npc_gear/harbormaster_spyglass.glb' in audit['replacedPaths']
           print('HIGHFLY_GENESIS_G5_LICENSE_PRESERVATION_RECEIPT=PASS',audit['stats'])
           print('HIGHFLY_GENESIS_G5_GLTF_HEADER_AUDIT=PASS',sample)
           qa={
-            'edition':'HIGHFLY WORLD Genesis G5 selective original assets alpha',
-            'sourceSha':'3e89010fa8250a0f21c5bcfa790d80116b91859e',
+            'edition':'HIGHFLY WORLD Genesis G6 strict licensing alpha',
+            'sourceSha':'865f9c523001f53f975ab96e617a921a4d2bd6e1',
             'pagesMode':'replaces retired old Pages without modifying repo source',
             'rightsRestrictedIcons':'replaced by generic neutral placeholders',
             'physicalS23':'NOT_MANUALLY_VERIFIED',
@@ -139,7 +146,7 @@ jobs:
       url: https://drakentzy07.github.io/cobalt-hollow-lab/?hfWorld=1
     steps:
       - uses: actions/deploy-pages@v4
-      - name: Verify live HIGHFLY WORLD G5 and free KayKit/NPC 3D assets
+      - name: Verify live HIGHFLY WORLD G6 strict license and mobile prereqs
         shell: bash
         run: |
           python3 - <<'PY'
@@ -155,18 +162,22 @@ jobs:
                   return r.read()
               html=get('index.html')
               qa=json.loads(get('genesis-g2-qa.json'))
-              assert qa['sourceSha']=='3e89010fa8250a0f21c5bcfa790d80116b91859e'
+              assert qa['sourceSha']=='865f9c523001f53f975ab96e617a921a4d2bd6e1'
               assert b'hf-world-lab' in html and b'hf-hunter-name' in html
               assert b'/cobalt-hollow-lab/assets/' in html
               for rel in qa['sampleGlbPaths']:
                 data=get(rel)
                 assert data[:4]==b'glTF', 'BAD_GLB_BINARY_'+rel
-                print('HIGHFLY_G5_PUBLIC_GLB_200='+rel)
+                print('HIGHFLY_G6_PUBLIC_GLB_200='+rel)
               audit=json.loads(get('highfly-license-audit.json'))
               assert audit['stats']['removed']==0
               assert audit['stats']['weapons']<65
+              assert 'map_art/eastbrook_vale.png' not in audit['replacedPaths']
+              assert 'models/weapons/ashspark_shiv.glb' in audit['replacedPaths']
+              assert get('map_art/eastbrook_vale.png')
+              assert get('ui/weapons/axe_a.jpg')
               assert get('LICENSE.txt')
-              print('HIGHFLY_GENESIS_G5_PUBLIC_PLAY_URL_GREEN='+base+'?hfWorld=1')
+              print('HIGHFLY_GENESIS_G6_PUBLIC_PLAY_URL_GREEN='+base+'?hfWorld=1')
               break
             except Exception as e:
               print('GENESIS_RELEASE_PROPAGATION',attempt,str(e)[:150])
