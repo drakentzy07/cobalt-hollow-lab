@@ -161,7 +161,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          node ../tools/reborn/c7_media_base_patch.mjs
+          node scripts/build_media_manifest.mjs generate
           pnpm exec vite build --base=/cobalt-hollow-lab/reborn/
+          node scripts/build_media_manifest.mjs emit
+          node scripts/build_media_manifest.mjs prune
+          test -s dist/media/models/chars/players/knight.*.glb
           test -s dist/index.html
           test -s public/reborn-c6-icon-provenance.json
           test -s public/reborn-c6-model-provenance.json
