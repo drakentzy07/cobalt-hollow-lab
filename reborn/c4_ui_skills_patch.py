@@ -129,7 +129,7 @@ add="""<style id="hf-reborn-style">
  bottom:max(7px,env(safe-area-inset-bottom));width:min(370px,53vw);height:245px;
  z-index:500000;display:none;pointer-events:none;color:#fff;font:700 13px system-ui;
  -webkit-user-select:none;user-select:none;touch-action:none}
-body.game-active.mobile-touch #hf-reborn-hud{display:block}
+body.game-active.hf-reborn-world-running #hf-reborn-hud{display:block}
 #hf-reborn-hud .hf-native,#hf-reborn-hud .hf-action{position:absolute;pointer-events:auto}
 #hf-reborn-hud button{box-sizing:border-box;touch-action:none;-webkit-tap-highlight-color:transparent}
 #hf-reborn-hud .hf-native>button,#hf-reborn-hud .hf-action{
