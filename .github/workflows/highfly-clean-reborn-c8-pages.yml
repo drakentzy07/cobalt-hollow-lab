@@ -274,7 +274,7 @@ jobs:
             if not load('https://drakentzy07.github.io'+js[0].decode()):raise Exception('EMPTY_JAVASCRIPT')
             qa=json.loads(load(base+'highfly-reborn-playtest-qa.json'))
             if qa.get('rebornIcons',0)<2500:raise Exception('RIGHTS_AUDIT_BAD')
-            if load(base+'models/chars/modular/warrior_modular.glb')[:4]!=b'glTF':
+            if load(base+qa['hunterModelMediaPath'])[:4]!=b'glTF':
              raise Exception('HUNTER_GLB_UNAVAILABLE')
             print('HIGHFLY_REBORN_C8_REAL_PUBLIC_URL='+base)
             print('HIGHFLY_REBORN_C8_JS_AND_MODEL_HTTP_200=PASS')
