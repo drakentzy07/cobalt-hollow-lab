@@ -167,6 +167,7 @@ jobs:
           node ../tools/reborn/c7_media_base_patch.mjs
           node ../tools/reborn/c7_basis_prefix.mjs
           node ../tools/reborn/c8_asset_url_prefix.mjs
+          grep -q 'never double-prefix' ../tools/reborn/c8_asset_url_prefix.mjs
           node scripts/build_media_manifest.mjs generate
           pnpm exec vite build --base=/cobalt-hollow-lab/reborn/
           node scripts/build_media_manifest.mjs emit
