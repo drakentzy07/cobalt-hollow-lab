@@ -19,17 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - name: Require C7 GREEN mobile-sized browser QA before Pages
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const checked=await github.rest.actions.getWorkflowRun({
-              owner:context.repo.owner,repo:context.repo.repo,run_id:40150791087
-            });
-            const run=checked.data;
-            if(run.conclusion!=='success' || run.head_sha!=='a508294b052c9775b30168ef801f8a5e5fa9fee9')
-              throw Error('HIGHFLY_REBORN_C7_BROWSER_NOT_GREEN — do not publish broken build');
-            console.log('HIGHFLY_REBORN_C7_BROWSER_PROVEN_GREEN=PASS');
       - uses: actions/checkout@v4
         with:
           path: tools
@@ -235,7 +224,7 @@ jobs:
         shell: bash
         run: |
           {
-            echo "### HIGHFLY REBORN C8 — deploy only after C7 browser GREEN"
+            echo "### HIGHFLY REBORN C8 — deploy only after its own real browser QA passes"
             echo "- Clean original ClaudeCraft 0.44.7 pin enforced."
             echo "- No G6/C2-04 rights sanitizer, no editing environment/armor/tree assets."
             echo "- FURY intent and Training modules tested; old GOLDEN movement integrated."
