@@ -1,0 +1,174 @@
+# HIGHFLY REBORN C0: build ONLY from immutable original 0.44.7.
+# NO G6/C2-04 sanitizer, no Pages, no release of unlicensed media.
+name: HIGHFLY REBORN — C5 FURY Native Skills Donors
+on:
+  push:
+    branches: [highfly-clean-reborn-0447]
+    paths:
+      - "reborn/c5_*"
+      - ".github/workflows/highfly-clean-reborn-c5.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-clean-reborn-c5-native-donors
+  cancel-in-progress: false
+jobs:
+  native-reborn-donors-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: tools
+          persist-credentials: false
+      - name: Checkout approved immutable upstream (source + original licensed assets)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 493c35a108cef6c8aa290e8793107b1cd117886e
+          path: candidate
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /tests/
+            /electron/
+            /android/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /.gitignore
+            /index.html
+            /LICENSE
+            /CREDITS.md
+            /THIRD_PARTY_NOTICES.md
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+            /capacitor.config.ts
+      - name: Pin source sha and inventory original assets BEFORE integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate rev-parse HEAD)" = "493c35a108cef6c8aa290e8793107b1cd117886e"
+          test -z "$(git -C candidate status --porcelain --untracked-files=no)"
+          node tools/reborn/c0_asset_inventory.mjs candidate "$RUNNER_TEMP/highfly-reborn-license"
+          test -s "$RUNNER_TEMP/highfly-reborn-license/asset-inventory.json"
+          echo HIGHFLY_REBORN_C0_CLEAN_UPSTREAM=PASS
+      - name: Checkout OLD GOLDEN movement recipes as donor ONLY
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: highfly-main-clean-v1
+          path: donor-golden
+          sparse-checkout: |
+            overlays
+          persist-credentials: false
+      - name: Checkout FURY independent intent modules as donor ONLY
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: highfly-rebirth-fury360-engine-20261022
+          path: donor-fury
+          sparse-checkout: |
+            fury360
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: GOLDEN/FURY and Training module tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --experimental-strip-types --test donor-fury/fury360/tests/*.test.ts
+          node --experimental-strip-types --test tools/highfly-genesis-clean/c2_universal_stats.test.ts tools/highfly-genesis-clean/c204_training_journal.test.ts
+          node --experimental-strip-types --test tools/reborn/c3_flip_pose.test.ts tools/reborn/c5_aim_line.test.ts tools/reborn/c5_mechanics.test.ts
+          echo HIGHFLY_REBORN_FURY_TRAINING_AND_FLIP_MATH_TESTS=PASS
+      - name: Recover tested GOLDEN 360, native double jump, FURY and Training without any graphics rewrite
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../donor-golden/overlays/highfly_mobile_360.py
+          python3 ../donor-golden/overlays/highfly_mobile_analog.py
+          python3 ../donor-golden/overlays/highfly_advanced_mobility.py
+          node ../donor-fury/fury360/tools/stage_in_candidate.mjs --candidate . --apply
+          node ../tools/highfly-genesis-clean/c204_stage_modules.mjs .
+          python3 ../tools/highfly-genesis-clean/c204_patch_native.py
+          python3 ../tools/highfly-genesis-clean/c204_audit.py
+          python3 ../donor-golden/overlays/verify_highfly_8way.py
+          python3 ../tools/reborn/c2_f263_dash_patch.py
+          python3 ../tools/reborn/c3_flip_presentation.py
+          python3 ../tools/reborn/c4_ui_skills_patch.py
+          python3 ../tools/reborn/c5_native_patch.py
+          grep -q 'id="mobile-evade"' index.html
+          grep -q 'id="hf-reborn-enter-world"' index.html
+          grep -q 'highfly_arc_shot' src/sim/content/classes.ts
+          grep -q 'mountRebornHud' src/main.ts
+          grep -q "highflyEvadeSeq" src/game/input.ts
+          grep -q "highflyFlipDir" src/sim/player_motion.ts
+          grep -q "directionalSomersault" src/render/characters/visual.ts
+          test -z "$(git status --porcelain --untracked-files=no -- public)"
+          echo HIGHFLY_REBORN_C2_DASH_AND_FLIP_CUE_CODE_INSERTED=PASS
+      - name: Typecheck and verify native Hunter stat integration
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm exec tsc --noEmit --incremental false
+          cp ../tools/highfly-genesis-clean/c204_native_recalc.test.ts tests/highfly_reborn_c0_training_recalc.test.ts
+          cp ../tools/reborn/c5_native_skills.test.ts tests/highfly_reborn_c5_native_skills.test.ts
+          pnpm exec vitest run tests/highfly_reborn_c0_training_recalc.test.ts tests/highfly_reborn_c5_native_skills.test.ts --reporter=dot
+          echo HIGHFLY_REBORN_C0_NATIVE_TRAINING_CONTRACT=PASS
+      - name: Build WEB runtime locally only (do NOT upload or distribute game)
+        working-directory: candidate
+        env:
+          VITE_COBALT_OFFLINE: '1'
+          VITE_HIGHFLY_REBORN: '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec vite build --base=/cobalt-hollow-lab/
+          test -s dist/index.html
+          test -z "$(git status --porcelain --untracked-files=no -- public)"
+          echo HIGHFLY_REBORN_C5_BUILD_ONLY_NO_PAGES=PASS
+      - name: Archive only rights report, NEVER the restricted assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-reborn-c5-license-inventory
+          path: ${{ runner.temp }}/highfly-reborn-license/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Record mandatory stop gates
+        shell: bash
+        run: |
+          {
+            echo "### HIGHFLY REBORN C5 — FURY native donor-skill bridge (not device QA)"
+            echo "- Clean original ClaudeCraft 0.44.7 pin enforced."
+            echo "- No G6/C2-04 rights sanitizer, no editing environment/armor/tree assets."
+            echo "- FURY intent and Training modules tested; old GOLDEN movement integrated."
+            echo "- **Release license audit still open. No game assets uploaded/published.**"
+            echo "- **FURY F1 gesture wired to 0.44.7 renderer and real S1 projectile plus S4 delayed meteor. Still must verify Android, real hit events, universal Hunter, and license clearance. No Pages.**"
+          } >> "$GITHUB_STEP_SUMMARY"
