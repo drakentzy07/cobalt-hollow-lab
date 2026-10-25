@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 const root=path.resolve('.');
 const targetPrefix='/cobalt-hollow-lab/reborn/';
-const starts=['ui','map_bg','audio','fonts','textures','env','vfx','models','claudium'];
+const starts=['ui','map_bg','audio','fonts','claudium']; // textures/models/vfx/env are owned by assetUrl() + hashed MEDIA_ASSETS: never double-prefix
 let touched=0,files=0;
 function walk(dir){
  if(!fs.existsSync(dir))return;
