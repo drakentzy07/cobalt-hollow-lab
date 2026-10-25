@@ -161,7 +161,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          pnpm exec vite build --base=/cobalt-hollow-lab/
+          pnpm exec vite build --base=/cobalt-hollow-lab/reborn/
           test -s dist/index.html
           test -s public/reborn-c6-icon-provenance.json
           test -s public/reborn-c6-model-provenance.json
@@ -172,9 +172,11 @@ jobs:
         run: |
           set -euo pipefail
           pnpm exec playwright install chromium --with-deps
-          pnpm exec vite preview --host 127.0.0.1 --port 4173 --strictPort >/tmp/highfly-c7-vite-preview.log 2>&1 &
+          mkdir -p /tmp/highfly-c7site/cobalt-hollow-lab/reborn
+          cp -a dist/. /tmp/highfly-c7site/cobalt-hollow-lab/reborn/
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory /tmp/highfly-c7site >/tmp/highfly-c7-preview.log 2>&1 &
           for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:4173/cobalt-hollow-lab/ >/dev/null; then break; fi
+            if curl -sf http://127.0.0.1:4173/cobalt-hollow-lab/reborn/ >/dev/null; then break; fi
             sleep 1
           done
           node ../tools/reborn/c7_browser_smoke.mjs . ../reborn-visual-qa
