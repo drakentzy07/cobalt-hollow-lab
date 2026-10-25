@@ -18,7 +18,7 @@ p.on('pageerror',e=>errors.push(e.message));
 p.on('response',r=>{if(r.status()>=400 && /\.(glb|webp|png|jpg|js|css)$/i.test(r.url()))badPaths.push({status:r.status(),url:r.url()})});
 let entryVisible=false,worldLoaded=false,hudVisible=false,canvasCount=0,buttonIds=[];
 try{
- await p.goto('http://127.0.0.1:4173/cobalt-hollow-lab/',{waitUntil:'domcontentloaded',timeout:30000});
+ await p.goto('http://127.0.0.1:4173/cobalt-hollow-lab/reborn/',{waitUntil:'domcontentloaded',timeout:30000});
  await p.waitForSelector('#hf-reborn-entry',{state:'visible',timeout:20000});
  entryVisible=true;
  await p.screenshot({path:path.join(out,'01-hf-reborn-intro-915x412.png')});
