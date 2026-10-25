@@ -69,11 +69,11 @@ text=text.replace(needle,needle+', highflyEvadeSeq: this.highflyEvadeSeq')
 Path(inp).write_text(text)
 
 change(mobile,'  onJump(): void;',
- '  onJump(): void;\n  onEvade(): void;', 'mobile callback dash')
+ '  onJump(): void;\n  onEvade?(): void;', 'mobile callback dash optional for original tests')
 change(mobile,
  "    this.bindButton('mobile-jump', () => this.callbacks.onJump(), { pressFirst: true });",
  """    this.bindButton('mobile-jump', () => this.callbacks.onJump(), { pressFirst: true });
-    this.bindButton('mobile-evade', () => this.callbacks.onEvade(), { pressFirst: true });""", 'mobile dash event')
+    this.bindButton('mobile-evade', () => this.callbacks.onEvade?.(), { pressFirst: true });""", 'mobile dash event')
 change(main,
  '    onJump: () => input.triggerTouchJump(),',
  '    onJump: () => input.triggerTouchJump(),\n    onEvade: () => input.triggerHighflyEvade(),',
