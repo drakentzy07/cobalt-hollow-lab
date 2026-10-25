@@ -120,6 +120,7 @@ jobs:
           python3 ../tools/reborn/c3_flip_presentation.py
           python3 ../tools/reborn/c4_ui_skills_patch.py
           python3 ../tools/reborn/c5_native_patch.py
+          python3 ../tools/reborn/c7_mobile_preflight.py
           grep -q 'id="mobile-evade"' index.html
           grep -q 'id="hf-reborn-enter-world"' index.html
           grep -q 'highfly_arc_shot' src/sim/content/classes.ts
