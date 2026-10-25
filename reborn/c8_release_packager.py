@@ -44,6 +44,7 @@ receipt={'name':'HIGHFLY RPG Fitness World','stage':'REBORN C8 mobile playtest',
  'upstream':'levy-street/world-of-claudecraft@493c35a108cef6c8aa290e8793107b1cd117886e',
  'assetsReviewedAtBuild':len(icon['paths'])+len(model['models']),
  'rebornIcons':len(icon['paths']),'rebornModels':len(model['models']),
+ 'hunterModelMediaPath':'media/models/chars/players/'+next((site/'reborn'/'media/models/chars/players').glob('knight.*.glb')).name,
  'license':'noncommercial testing only; further audit pending',
  'androidPhysicalApproved':False,'replacedOldPages':True,
  'oldRepositorySourceUntouched':True}
