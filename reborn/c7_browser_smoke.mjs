@@ -8,7 +8,7 @@ import {createRequire} from 'node:module';
 const root=path.resolve(process.argv[2]||'.');
 const out=path.resolve(process.argv[3]||'../hf-c7-screens');
 fs.mkdirSync(out,{recursive:true});
-const {chromium}=createRequire(path.join(root,'package.json'))('@playwright/test');
+const {chromium}=createRequire(path.join(root,'package.json'))('playwright');
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl','--no-sandbox']});
 const ctx=await browser.newContext({viewport:{width:915,height:412},isMobile:true,hasTouch:true,
  deviceScaleFactor:1,userAgent:'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 Chrome/129.0.0.0 Mobile Safari/537.36'});
