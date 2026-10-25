@@ -26,7 +26,10 @@ try{
  await p.locator('#hf-reborn-enter-world').tap();
  await p.waitForFunction(()=>document.body.classList.contains('game-active'),null,{timeout:40000});
  worldLoaded=true;
- await p.waitForTimeout(2500);
+ // game-active is set BEFORE native asset preload finishes. The actual HUD is
+ // mounted only AFTER the Renderer and Controls become available.
+ await p.waitForSelector('#hf-reborn-hud',{state:'visible',timeout:90000});
+ await p.waitForTimeout(1400);
  canvasCount=await p.locator('canvas').count();
  hudVisible=await p.locator('#hf-reborn-hud').isVisible().catch(()=>false);
  for(const button of ['mobile-action-attack','mobile-evade','mobile-jump','mobile-interact']){
@@ -42,6 +45,7 @@ try{
  }
 }catch(e){
  errors.push('QA_SMOKE: '+String(e));
+ errors.push('QA_CONTEXT: '+JSON.stringify(await p.evaluate(()=>({bodyClass:document.body.className,gateHidden:document.getElementById('hf-reborn-entry')?.hidden,entryError:document.getElementById('hf-reborn-entry-error')?.textContent,loading:document.getElementById('ls-status')?.textContent,hudMounted:!!document.getElementById('hf-reborn-hud')})).catch(()=>({unavailable:true}))));
  await p.screenshot({path:path.join(out,'99-failed-state.png')}).catch(()=>{});
 }finally{
  const report={entryVisible,worldLoaded,hudVisible,canvasCount,buttonIds,errors,badPaths:badPaths.slice(0,50),
