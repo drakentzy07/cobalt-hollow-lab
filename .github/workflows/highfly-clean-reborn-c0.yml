@@ -5,7 +5,7 @@ on:
   push:
     branches: [highfly-clean-reborn-0447]
     paths:
-      - "reborn/**"
+      - "reborn/c0_asset_inventory.mjs"
       - ".github/workflows/highfly-clean-reborn-c0.yml"
   workflow_dispatch:
 permissions:
