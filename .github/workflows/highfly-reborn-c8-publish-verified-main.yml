@@ -1,0 +1,135 @@
+# HIGHFLY REBORN C8: only VERIFIED finished C8 artifact published from main.
+# Replaces OLD G6 and /c204 live routes; does not delete repository branches or local saves.
+name: HIGHFLY REBORN — Publish Verified Playtest from Main
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/highfly-reborn-c8-publish-verified-main.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-world-genesis-main-pages-release
+  cancel-in-progress: false
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Require tested immutable REBORN C8 source and successful browser/rights stages
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sourceRunId=40153341244;
+            const sha='20a492ef7ecda01aedd44b95f8d8d28d15c70fba';
+            const run=(await github.rest.actions.getWorkflowRun({
+              owner:context.repo.owner,repo:context.repo.repo,run_id:sourceRunId
+            })).data;
+            if(run.head_sha!==sha || run.status!=='completed')
+              throw Error('HIGHFLY_REBORN_WRONG_SOURCE_SHA');
+            const jobs=(await github.rest.actions.listJobsForWorkflowRun({
+              owner:context.repo.owner,repo:context.repo.repo,run_id:sourceRunId,per_page:100
+            })).data.jobs;
+            if(!jobs.some(j=>j.name==='reborn-public-alpha-candidate'&&j.conclusion==='success'))
+              throw Error('HIGHFLY_C8_BROWSER_OR_LICENSE_STAGE_NOT_GREEN');
+            const artifacts=(await github.rest.actions.listWorkflowRunArtifacts({
+              owner:context.repo.owner,repo:context.repo.repo,run_id:sourceRunId,per_page:100
+            })).data.artifacts;
+            if(!artifacts.some(a=>a.name==='github-pages'&&!a.expired))
+              throw Error('HIGHFLY_C8_VERIFIED_PAGES_ARTIFACT_MISSING');
+            console.log('HIGHFLY_REBORN_C8_APPROVED_BUILD_SHA='+sha);
+      - name: Download immutable rights-scrubbed Pages artifact (no source rebuild)
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 40153341244
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: approved-artifact
+      - name: Extract only isolated REBORN, verify path+hash receipts and no old G6
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path,PurePosixPath
+          import tarfile,hashlib,json
+          f=Path('approved-artifact/artifact.tar')
+          if not f.is_file():raise SystemExit('HIGHFLY_C8_MISSING_PAGES_TAR')
+          site=Path('site');site.mkdir()
+          with tarfile.open(f,'r:') as t:
+            members=t.getmembers()
+            total=0
+            for m in members:
+              p=PurePosixPath(m.name)
+              if p.is_absolute() or '..' in p.parts or m.issym() or m.islnk() or not (m.isdir() or m.isfile()):
+                raise SystemExit('HIGHFLY_C8_UNSAFE_ARCHIVE_ENTRY')
+              total+=m.size
+            if total>950_000_000:raise SystemExit('HIGHFLY_C8_PAGES_TOO_LARGE')
+            t.extractall(site,filter='data')
+          root=(site/'index.html')
+          game=(site/'reborn/index.html')
+          if not root.is_file() or not game.is_file():raise SystemExit('HIGHFLY_C8_PAGE_LAYOUT_MISSING')
+          if (site/'c204').exists() or (site/'genesis-g2-qa.json').exists():
+            raise SystemExit('HIGHFLY_C8_OLD_BUILD_CONTAMINATION')
+          html=game.read_text()
+          for expected in ('hf-reborn-entry','hf-reborn-enter-world','hf-reborn-enter-lab','/cobalt-hollow-lab/reborn/assets/'):
+            if expected not in html:raise SystemExit('HIGHFLY_C8_ENTRY_MISSING_'+expected)
+          qa=json.loads((site/'reborn/highfly-reborn-playtest-qa.json').read_text())
+          if qa['upstream']!='levy-street/world-of-claudecraft@493c35a108cef6c8aa290e8793107b1cd117886e':
+            raise SystemExit('HIGHFLY_C8_UNPINNED_UPSTREAM')
+          if qa.get('androidPhysicalApproved') is not False or qa.get('rebornIcons',0)<2500:
+            raise SystemExit('HIGHFLY_C8_FALSE_APPROVAL_OR_ART_AUDIT_MISSING')
+          model=site/'reborn'/qa['hunterModelMediaPath']
+          if not model.is_file() or model.open('rb').read(4)!=b'glTF':
+            raise SystemExit('HIGHFLY_C8_HUNTER_GLB_MISSING')
+          n=sum(1 for p in site.rglob('*') if p.is_file())
+          print('HIGHFLY_C8_VERIFIED_REBORN_ONLY_PAGES_READY=PASS files=',n,' bytes=',total)
+          PY
+      - uses: actions/configure-pages@v5
+      - name: Upload verified C8 REBORN site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  publish:
+    needs: stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/reborn/
+    steps:
+      - uses: actions/deploy-pages@v4
+      - name: Confirm live HIGHFLY entry, JS and GLB paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,re,urllib.request,time
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/reborn/'
+          for i in range(36):
+            try:
+              def read(url):
+                req=urllib.request.Request(url+'?qa='+str(i),
+                  headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-REBORN-C8-PLAYTEST'})
+                with urllib.request.urlopen(req,timeout=30) as rsp:
+                  if rsp.status!=200:raise Exception('NOT_200:'+url)
+                  return rsp.read()
+              html=read(base+'index.html')
+              for key in (b'hf-reborn-entry',b'hf-reborn-enter-world',b'hf-reborn-enter-lab'):
+                if key not in html:raise Exception('NO_HIGHFLY_ENTRY')
+              js=re.findall(rb'/cobalt-hollow-lab/reborn/assets/[^"\s<>]+\.js',html)
+              if not js:raise Exception('NO_REBORN_JS')
+              read('https://drakentzy07.github.io'+js[0].decode())
+              qa=json.loads(read(base+'highfly-reborn-playtest-qa.json'))
+              if read(base+qa['hunterModelMediaPath'])[:4]!=b'glTF':raise Exception('BAD_GLB')
+              print('HIGHFLY_REBORN_C8_PUBLIC_PLAYTEST='+base)
+              print('HIGHFLY_REBORN_C8_ENTRY_JS_GLB_HTTP_200=PASS')
+              break
+            except Exception as e:
+              print('HIGHFLY_REBORN_C8_PAGES_PROPAGATION',i,str(e)[:170])
+              if i==35:raise
+              time.sleep(5)
+          PY
