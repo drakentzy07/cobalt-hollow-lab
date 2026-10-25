@@ -138,7 +138,8 @@ jobs:
           pnpm install --frozen-lockfile --ignore-scripts
           pnpm exec tsc --noEmit --incremental false
           cp ../tools/highfly-genesis-clean/c204_native_recalc.test.ts tests/highfly_reborn_c0_training_recalc.test.ts
-          pnpm exec vitest run tests/highfly_reborn_c0_training_recalc.test.ts --reporter=dot
+          cp ../tools/reborn/c4_native_skills.test.ts tests/highfly_reborn_c4_native_skills.test.ts
+          pnpm exec vitest run tests/highfly_reborn_c0_training_recalc.test.ts tests/highfly_reborn_c4_native_skills.test.ts --reporter=dot
           echo HIGHFLY_REBORN_C0_NATIVE_TRAINING_CONTRACT=PASS
       - name: Build WEB runtime locally only (do NOT upload or distribute game)
         working-directory: candidate
