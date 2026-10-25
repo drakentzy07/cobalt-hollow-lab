@@ -52,8 +52,8 @@ files=[p for p in site.rglob('*') if p.is_file()]
 size=sum(p.stat().st_size for p in files)
 print('HIGHFLY_C8_SITE_FILES=',len(files),' BYTES=',size)
 if size>=950_000_000:raise SystemExit('HIGHFLY_C8_PAGES_SIZE_EXCEEDS_GUARDRAIL')
-required=['reborn/models/chars/modular/warrior_modular.glb','reborn/reborn-c6-icon-provenance.json',
+required=['reborn/media/models/chars/players/knight.*.glb','reborn/reborn-c6-icon-provenance.json',
  'reborn/reborn-c6-model-provenance.json','reborn/CREDITS.txt']
 for q in required:
- if not (site/q).is_file():raise SystemExit('HIGHFLY_C8_REQUIRED_FILE_MISSING '+q)
+ if not (list(site.glob(q)) if '*' in q else (site/q).is_file()):raise SystemExit('HIGHFLY_C8_REQUIRED_FILE_MISSING '+q)
 print('HIGHFLY_REBORN_C8_PATH_ISOLATED_BUILD_READY=PASS')
