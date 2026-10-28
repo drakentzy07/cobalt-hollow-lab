@@ -1,3 +1,13 @@
+/* HIGHFLY P6 CSS GATE RECOVERY: the original @layer base has an !important
+   :has(#start-screen) selector which can leave #ui display:none despite
+   successful offline boot. Within the SAME named layer, a strictly
+   game-active mobile rule restores UI without un-hiding the start screen. */
+@layer base {
+  body.mobile-touch.game-active:has(#start-screen) #ui {
+    display: block !important;
+  }
+}
+
 /* HIGHFLY ORIGIN P6: non-destructive S23 landscape HUD skin.
    Keeps the ORIGINAL actionbar buttons/listeners, spell bindings and cooldowns.
    Normal desktop, source data and runtime remain untouched. */
