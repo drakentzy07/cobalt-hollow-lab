@@ -22,6 +22,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
       - name: Verify original unified GREEN commit is ancestor (not a different version)
         shell: bash
         run: |
@@ -64,9 +65,20 @@ jobs:
           node --experimental-strip-types --test origins/v020/mobility/fury_mobility.test.mjs
           cd upstream
           npm run check:ts
+      - name: Pin correct GitHub Pages asset base BEFORE Vite
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('upstream/vite.config.ts')
+          s=p.read_text()
+          old="  base: '/',"
+          assert s.count(old)==1, 'unexpected Vite config base anchor'
+          p.write_text(s.replace(old,"  base: '/cobalt-hollow-lab/',",1))
+          PY
       - name: Produce full RPG with real 3D world for /cobalt-hollow-lab/
         working-directory: upstream
-        run: npm run build -- --base=/cobalt-hollow-lab/
+        run: npm run build
       - name: Assert 253 owned icons built and no original CraftPix bytes anywhere
         shell: bash
         run: |
