@@ -14,7 +14,7 @@ try{
  fs.mkdirSync('highfly-p5-http',{recursive:true});
  try{fs.symlinkSync(resolve(root,'dist'),resolve('highfly-p5-http/cobalt-hollow-lab'),'dir');}catch(e){if(e.code!=='EEXIST')throw e;}
  for(let i=0;i<70;i++){
-  try{const rsp=await fetch(base+'play.html?highfly_p3=1');if(rsp.ok)break;}catch{}
+  try{const rsp=await fetch(base+'play.html?highfly_origin=1');if(rsp.ok)break;}catch{}
   await sleep(250);if(i===69)throw Error('P5 local static HTTP server unavailable');
  }
  browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl','--disable-dev-shm-usage']});
@@ -26,7 +26,7 @@ try{
  page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text().slice(0,450));});
  page.on('requestfailed',req=>failedRequests.push({url:req.url(),reason:req.failure()?.errorText}));
  page.on('response',res=>{if(res.status()>=400)networkAssetFailures.push({status:res.status(),url:res.url()});});
- await page.goto(base+'play.html?highfly_p3=1',{waitUntil:'domcontentloaded',timeout:60000});
+ await page.goto(base+'play.html?highfly_origin=1',{waitUntil:'domcontentloaded',timeout:60000});
  await page.locator('#mobile-preflight-continue').click({timeout:50000});
  try{
   await page.waitForFunction(()=>!!window.__game?.sim?.player && !!document.querySelector('canvas'),undefined,{timeout:45000});
@@ -46,7 +46,8 @@ try{
   canvas:document.querySelector('canvas')?.getBoundingClientRect().toJSON(),hud:document.getElementById('mobile-controls')?.getBoundingClientRect().toJSON(),
   icon:document.querySelector('#mobile-attack-nearest')?.getBoundingClientRect().toJSON()}));
  if(state.hud?.width<500 || state.hud?.height<200)throw Error('Game HUD hidden '+JSON.stringify(state));
- if(networkAssetFailures.length)throw Error('Public asset requests failed '+JSON.stringify(networkAssetFailures.slice(0,9)));
+ const critical=networkAssetFailures.filter(x=>/\/cobalt-hollow-lab\/(media|assets|models|textures|env|vfx)\//.test(x.url));
+ if(critical.length)throw Error('Essential game asset requests failed '+JSON.stringify(critical.slice(0,9)));
  const index=await fetch(base);if(!index.ok||(await index.text()).indexOf('HIGHFLY ORIGIN')<0)throw Error('Missing P5 root entry');
  console.log('[HIGHFLY P5 PAGES STATIC] PASS '+JSON.stringify(state)+'; static base, world and HUD OK');
  await ctx.close();

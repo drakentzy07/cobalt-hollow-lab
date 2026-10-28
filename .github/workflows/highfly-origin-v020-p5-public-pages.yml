@@ -59,6 +59,8 @@ jobs:
           node origins/v020/art/apply_validate.mjs --apply upstream
       - name: Replace all identified non-transferable art before publishing
         run: node origins/v020/pages/p5_sanitize.mjs upstream "$RUNNER_TEMP/p5-rights.json" --sanitize
+      - name: Convert private P3 boot gate to explicit playable P5 Pages route and repair runtime 3D media prefix
+        run: node origins/v020/pages/p5_public_routes.mjs upstream
       - name: TS compile and independent FURY P4B test
         shell: bash
         run: |

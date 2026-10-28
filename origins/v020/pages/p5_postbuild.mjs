@@ -21,7 +21,7 @@ for(const f of files){
  const next=original.replace(rg,(_,pre,name)=>{fixes++;return pre+base+'/'+name;});
  if(next!==original){fs.writeFileSync(f,next);rewritten++;}
 }
-const page='<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HIGHFLY ORIGIN 0.20</title><meta http-equiv="refresh" content="0;url=./play.html?highfly_p3=1"></head><body style="margin:0;background:#050b1b;color:#cff7ff;font-family:sans-serif;text-align:center;padding-top:25vh"><h1>HIGHFLY ORIGIN</h1><p>Entrando al mundo 3D...</p><a href="./play.html?highfly_p3=1" style="color:#7ce9ff">ENTRAR AL MUNDO</a><script>location.replace("./play.html?highfly_p3=1"+location.hash)</script></body></html>';
+const page='<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HIGHFLY ORIGIN 0.20</title><meta http-equiv="refresh" content="0;url=./play.html?highfly_origin=1"></head><body style="margin:0;background:#050b1b;color:#cff7ff;font-family:sans-serif;text-align:center;padding-top:25vh"><h1>HIGHFLY ORIGIN</h1><p>Entrando al mundo 3D...</p><a href="./play.html?highfly_origin=1" style="color:#7ce9ff">ENTRAR AL MUNDO</a><script>location.replace("./play.html?highfly_origin=1"+location.hash)</script></body></html>';
 fs.writeFileSync(path.join(root,'index.html'),page);
 const hits=[];
 for(const f of walk(root).filter(f=>fs.statSync(f).isFile())){
