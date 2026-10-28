@@ -1,0 +1,52 @@
+name: HIGHFLY Art 253 - verified replacement catalog (no original images)
+
+on:
+  push:
+    branches:
+      - highfly-origin-v020-art-catalog-253-20261028
+    paths:
+      - 'origins/v020/art/generate_catalog.mjs'
+      - '.github/workflows/highfly-origin-v020-art-catalog.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          path: upstream
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: upstream/package-lock.json
+      - name: Install Sharp image metadata support
+        working-directory: upstream
+        run: npm ci --no-audit --no-fund
+      - name: Create 253-row catalog from original mapping and image dimensions
+        run: node origins/v020/art/generate_catalog.mjs upstream
+      - name: Commit ONLY derived text metadata and original HIGHFLY art briefs
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add origins/v020/art/CATALOGO_253.md origins/v020/art/ICONOS_253.csv origins/v020/art/ICONOS_253.json
+          if git diff --cached --quiet; then
+            echo 'Catalog already current'
+          else
+            git commit -m 'docs: verified 253-icon HIGHFLY replacement catalog'
+            git push origin HEAD:highfly-origin-v020-art-catalog-253-20261028
+          fi
+      - name: State that source art is not redistributed
+        run: echo 'Only metadata and independent new-art briefs were committed; original CraftPix binaries remain excluded.' >> "$GITHUB_STEP_SUMMARY"
