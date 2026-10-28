@@ -1,0 +1,60 @@
+name: HIGHFLY ORIGIN v0.20 - P2 offline persistent player
+on:
+  push:
+    branches:
+      - highfly-origin-v020-p2-offline-persistence-20261028
+    paths:
+      - 'origins/v020/offline/**'
+      - '.github/workflows/highfly-origin-v020-p2-offline.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-original-world-and-save:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Original ClaudeCraft v0.20.0 exact commit
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          path: upstream
+          persist-credentials: false
+      - name: Confirm MIT source origin and media rights documents
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream rev-parse HEAD)" = 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          test -s upstream/LICENSE
+          test -s upstream/CREDITS.md
+      - name: Overlay only source save/restore feature and tests
+        run: |
+          node origins/v020/offline/patch_offline.mjs upstream
+          cp origins/v020/offline/highfly_offline_save.test.ts upstream/tests/highfly_offline_save.test.ts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: upstream/package-lock.json
+      - name: Install original dependencies
+        working-directory: upstream
+        run: npm ci --no-audit --no-fund
+      - name: TypeScript compile check
+        working-directory: upstream
+        run: npm run check:ts
+      - name: Real original world save/restore and RPG regression tests
+        working-directory: upstream
+        run: npx vitest run tests/highfly_offline_save.test.ts tests/sim.test.ts tests/dungeons.test.ts tests/map_dungeon_portals.test.ts tests/quest_progress_persist.test.ts tests/mobile_controls.test.ts
+      - name: Internal build - no release
+        working-directory: upstream
+        run: npm run build
+      - name: Never publish proprietary media, Pages or artifacts
+        if: always()
+        shell: bash
+        run: |
+          echo '### HIGHFLY ORIGIN P2' >> "$GITHUB_STEP_SUMMARY"
+          echo 'INTERNAL BUILD ONLY. Original dist includes assets not licensed to HIGHFLY. No Pages, APK or build artifacts are released. GREEN means technical tests, not physical Android verification.' >> "$GITHUB_STEP_SUMMARY"
