@@ -16,9 +16,15 @@ try{
  const context=await browser.newContext({viewport:{width:915,height:412},isMobile:true,hasTouch:true,deviceScaleFactor:3,
  userAgent:'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36'});
  const page=await context.newPage();
+ // Actual game first-spawn cinematic blocks movement by design. This is a
+ // movement/combat regression, not a tutorial timing test: mark intro seen.
+ await page.addInitScript(()=>{
+   try{localStorage.setItem('woc_spawn_intro_seen:offline:warrior:Draken','1');}catch{}
+ });
  await page.goto(url,{waitUntil:'domcontentloaded',timeout:40000});
  await page.locator('#mobile-preflight-continue').click({timeout:50000});
  await page.waitForFunction(()=>!!window.__game?.input?.highflyFuryStickVector&&!!window.__game?.sim?.player,undefined,{timeout:120000});
+ await page.waitForFunction(()=>!window.__game.input.suspendMovement,undefined,{timeout:25000});
  // Start with a diagonal left-hand stick and keep it held while tapping attack.
  const start=await page.evaluate(()=>{
   const g=window.__game;
@@ -34,7 +40,7 @@ try{
   send('pointerdown',el,11,x,y);
   send('pointermove',el,11,x+22,y-38);
   const actual=g.input.highflyFuryStickVector();
-  if(!actual||actual.x<0.15||actual.y>-0.15)throw Error('Continuous stick never engaged '+JSON.stringify(actual));
+  if(!actual||actual.x<0.15||actual.y>-0.15)throw Error('Continuous stick never engaged '+JSON.stringify({actual,suspended:g.input.suspendMovement,raw:g.input.highflyFuryStick,body:document.body.className,zone:{x:box.x,y:box.y,width:box.width,height:box.height}}));
   return {initial,box:{x:box.x,y:box.y,width:box.width,height:box.height},x,y,actual};
  });
  await sleep(750);
