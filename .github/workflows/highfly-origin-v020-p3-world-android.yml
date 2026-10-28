@@ -40,6 +40,7 @@ jobs:
           set -euo pipefail
           node origins/v020/offline/patch_offline.mjs upstream
           node origins/v020/p3/patch_lab_boot.mjs upstream
+          node origins/v020/p3/patch_touch_hud.mjs upstream
           cp origins/v020/offline/highfly_offline_save.test.ts upstream/tests/highfly_offline_save.test.ts
           cp origins/v020/p3/highfly_world_content.test.ts upstream/tests/highfly_world_content.test.ts
       - uses: actions/setup-node@v4
