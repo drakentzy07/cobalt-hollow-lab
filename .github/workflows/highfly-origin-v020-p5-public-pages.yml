@@ -1,0 +1,132 @@
+name: HIGHFLY ORIGIN v0.20 — P5 PUBLIC PAGES (REPLACE OLD SITE)
+on:
+  push:
+    branches: [highfly-origin-v020-p5-local-s23-play-20261028]
+    paths:
+      - 'origins/v020/pages/**'
+      - '.github/workflows/highfly-origin-v020-p5-public-pages.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-world-genesis-main-pages-release
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Pin HIGHFLY P5 derivative of verified v0.20 unified green
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify original unified GREEN commit is ancestor (not a different version)
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor ffd1b8dc56492335c171195adcb338162ecff94d HEAD
+          test -s origins/v020/art/MANIFIESTO_253.json
+      - name: Checkout exact original ClaudeCraft v0.20.0
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          path: upstream
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: upstream/package-lock.json
+      - name: Install full real RPG dependencies
+        working-directory: upstream
+        run: npm ci --no-audit --no-fund
+      - name: Record restricted icons BEFORE any overlays
+        run: node origins/v020/art/detect_originals.mjs --record upstream "$RUNNER_TEMP/old_253_icons.json"
+      - name: Apply actual world P2/P3 + FURY P4A/P4B and all 253 owned HIGHFLY icons
+        shell: bash
+        run: |
+          set -euo pipefail
+          node origins/v020/offline/patch_offline.mjs upstream
+          node origins/v020/p3/patch_lab_boot.mjs upstream
+          node origins/v020/p3/patch_touch_hud.mjs upstream
+          node origins/v020/fury/patch_fury.mjs upstream
+          node origins/v020/mobility/patch_mobility.mjs upstream
+          node origins/v020/art/apply_validate.mjs --apply upstream
+      - name: Replace all identified non-transferable art before publishing
+        run: node origins/v020/pages/p5_sanitize.mjs upstream "$RUNNER_TEMP/p5-rights.json" --sanitize
+      - name: TS compile and independent FURY P4B test
+        shell: bash
+        run: |
+          node --experimental-strip-types --test origins/v020/mobility/fury_mobility.test.mjs
+          cd upstream
+          npm run check:ts
+      - name: Produce full RPG with real 3D world for /cobalt-hollow-lab/
+        working-directory: upstream
+        run: npm run build -- --base=/cobalt-hollow-lab/
+      - name: Assert 253 owned icons built and no original CraftPix bytes anywhere
+        shell: bash
+        run: |
+          node origins/v020/art/apply_validate.mjs --verify-dist upstream/dist
+          node origins/v020/art/detect_originals.mjs --check upstream/dist "$RUNNER_TEMP/old_253_icons.json"
+      - name: Rewrite other public media root paths, replace old homepage, audit all media
+        shell: bash
+        env:
+          HIGHFLY_SOURCE_SHA: ffd1b8dc56492335c171195adcb338162ecff94d
+        run: |
+          node origins/v020/pages/p5_postbuild.mjs upstream/dist "$RUNNER_TEMP/p5-rights.json"
+          test -s upstream/dist/play.html
+          test -s upstream/dist/index.html
+          test -s upstream/dist/highfly-origin-v020-p5-rights.json
+      - name: Chromium — compiled actual v0.20 game in S23 landscape under GitHub Pages subpath
+        shell: bash
+        run: |
+          cd upstream
+          npx playwright install --with-deps chromium
+          cd ..
+          node origins/v020/pages/p5_static_smoke.mjs upstream
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload ONLY the rights-scrubbed v0.20 Pages site (REPLACES OLD PAGES)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: upstream/dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy HIGHFLY ORIGIN v0.20 over previous obsolete Pages content
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify live root, v0.20 entry, 253 icon QA receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,urllib.request,time
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for i in range(35):
+            try:
+              def grab(p):
+                req=urllib.request.Request(base+p+('?t='+str(i)),headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-P5-QA'})
+                with urllib.request.urlopen(req,timeout=50) as res:
+                  if res.status!=200:raise RuntimeError('HTTP_'+str(res.status))
+                  return res.read()
+              qa=json.loads(grab('highfly-origin-v020-p5-rights.json'))
+              if qa['version']!='P5' or qa['iconCount']!=253:raise RuntimeError('P5_RIGHTS_RECEIPT_BAD')
+              if b'HIGHFLY ORIGIN' not in grab('index.html'):raise RuntimeError('ENTRY_BAD')
+              if b'/cobalt-hollow-lab/assets/' not in grab('play.html'):raise RuntimeError('ASSET_BASE_BAD')
+              print('HIGHFLY_P5_LIVE_GREEN '+base+'play.html?highfly_p3=1')
+              break
+            except Exception as e:
+              print('P5_PROPAGATION',i,str(e)[:130])
+              if i==34:raise
+              time.sleep(5)
+          PY
