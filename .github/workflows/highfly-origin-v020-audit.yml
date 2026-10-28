@@ -1,0 +1,72 @@
+name: HIGHFLY ORIGIN 0.20 - source smoke and license audit
+
+on:
+  push:
+    branches:
+      - highfly-origin-v020-phase0-20261028
+    paths:
+      - 'origins/v020/**'
+      - '.github/workflows/highfly-origin-v020-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-origin-v020-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Fetch isolated HIGHFLY overlay
+        uses: actions/checkout@v4
+
+      - name: Fetch EXACT upstream v0.20.0
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          path: upstream
+          persist-credentials: false
+
+      - name: Enforce source pin and license-preserving files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream rev-parse HEAD)" = "4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25"
+          test -s upstream/LICENSE
+          test -s upstream/CREDITS.md
+          test -s upstream/THIRD_PARTY_NOTICES.md
+          echo "Upstream pin exacto y avisos originales presentes"
+
+      - name: Preliminary asset license and RPG source audit (NO RELEASE)
+        run: node origins/v020/audit.mjs upstream
+
+      - name: Configure Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: upstream/package-lock.json
+
+      - name: Install original dependencies
+        working-directory: upstream
+        run: npm ci --no-audit --no-fund
+
+      - name: TypeScript smoke check
+        working-directory: upstream
+        run: npm run check:ts
+
+      - name: Build ORIGINAL upstream for technical diagnosis only
+        working-directory: upstream
+        run: npm run build
+
+      - name: State limitations (NO Pages, APK or artifact)
+        if: always()
+        shell: bash
+        run: |
+          echo "### Restricción de publicación" >> "$GITHUB_STEP_SUMMARY"
+          echo "**NO APROBADO PARA PUBLICACIÓN.** Este workflow no despliega ni sube artefactos. Se requieren reemplazos legales, pruebas de juego completo, offline y Android." >> "$GITHUB_STEP_SUMMARY"
