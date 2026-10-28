@@ -35,7 +35,7 @@ try{
  const page=await context.newPage();
  const pageErrors=[],badAssetResponses=[];
  page.on('pageerror',e=>pageErrors.push(String(e)));
- page.on('response',res=>{if(res.status()>=400&&/\\/cobalt-hollow-lab\\/(media|assets|models|textures|env|vfx|ui)\\//.test(res.url()))badAssetResponses.push({status:res.status(),url:res.url()})});
+ page.on('response',res=>{const path=new URL(res.url()).pathname;if(res.status()>=400&&['media','assets','models','textures','env','vfx','ui'].some(part=>path.includes('/cobalt-hollow-lab/'+part+'/')))badAssetResponses.push({status:res.status(),url:res.url()})});
  await page.goto(base+'play.html?highfly_origin=1',{waitUntil:'domcontentloaded',timeout:60000});
  await page.locator('#mobile-preflight-continue').click({timeout:50000});
  await page.waitForFunction(()=>Boolean(window.__game?.sim?.player)&&document.body.classList.contains('game-active'),undefined,{timeout:60000});
