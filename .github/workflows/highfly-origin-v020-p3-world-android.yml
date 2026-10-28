@@ -1,0 +1,72 @@
+name: HIGHFLY ORIGIN v0.20 P3 - real world and Android landscape smoke
+
+on:
+  push:
+    branches:
+      - highfly-origin-v020-p3-world-android-smoke-20261028
+    paths:
+      - 'origins/v020/p3/**'
+      - '.github/workflows/highfly-origin-v020-p3-world-android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  actual-world-browser-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: HIGHFLY isolated branch
+        uses: actions/checkout@v4
+      - name: Original ClaudeCraft 0.20 full source and media (private CI diagnosis only)
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          path: upstream
+          persist-credentials: false
+      - name: Enforce source lock and license context
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream rev-parse HEAD)" = 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          test -s upstream/LICENSE
+          test -s upstream/CREDITS.md
+          test -s upstream/THIRD_PARTY_NOTICES.md
+      - name: Patch P2 save/restore onto original game and register P3 test code
+        shell: bash
+        run: |
+          set -euo pipefail
+          node origins/v020/offline/patch_offline.mjs upstream
+          node origins/v020/p3/patch_lab_boot.mjs upstream
+          cp origins/v020/offline/highfly_offline_save.test.ts upstream/tests/highfly_offline_save.test.ts
+          cp origins/v020/p3/highfly_world_content.test.ts upstream/tests/highfly_world_content.test.ts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: upstream/package-lock.json
+      - name: Install upstream dependencies
+        working-directory: upstream
+        run: npm ci --no-audit --no-fund
+      - name: Run TypeScript gate and actual 0.20 world content tests
+        working-directory: upstream
+        shell: bash
+        run: |
+          npm run check:ts
+          npx vitest run tests/highfly_world_content.test.ts tests/highfly_offline_save.test.ts tests/sim.test.ts tests/dungeons.test.ts tests/map_dungeon_portals.test.ts tests/quest_progress_persist.test.ts tests/mobile_controls.test.ts
+      - name: Install headless Chromium for Android-like smoke
+        working-directory: upstream
+        run: npx playwright install --with-deps chromium
+      - name: Actually boot 3D game in Android landscape, touch HUD and restore inventory
+        run: node origins/v020/p3/smoke_android.mjs upstream
+      - name: Original 0.20 full technical build
+        working-directory: upstream
+        run: npm run build
+      - name: Commercial and physical-test status
+        if: always()
+        shell: bash
+        run: |
+          echo '### P3 scope' >> "$GITHUB_STEP_SUMMARY"
+          echo '**CI-only:** 915x412 touch-emulated Chromium, world boot and original Sim regression. Not physical S23 Ultra FPS or a general commercial release. Original CraftPix/other restricted assets were NOT uploaded as artifacts or distributed through Pages.' >> "$GITHUB_STEP_SUMMARY"
