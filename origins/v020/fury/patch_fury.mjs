@@ -45,9 +45,9 @@ apply('src/game/input.ts',[
 ]);
 apply('src/game/mobile_controls.ts',[
  ['stick forward','    this.input.setTouchMove(move);\n    // setTouchMove cancels autorun',
-  '    this.input.setTouchMove(move);\n    this.input.setHighflyFuryStick(x,y);\n    // setTouchMove cancels autorun'],
+  '    this.input.setTouchMove(move);\n    this.input.setHighflyFuryStick?.(x,y);\n    // setTouchMove cancels autorun'],
  ['release','    this.joyPointer = null;\n    this.input.clearTouchMove();',
-  '    this.joyPointer = null;\n    this.input.clearHighflyFuryStick();\n    this.input.clearTouchMove();']
+  '    this.joyPointer = null;\n    this.input.clearHighflyFuryStick?.();\n    this.input.clearTouchMove();']
 ]);
 apply('src/sim/sim.ts',[
  ['activity flag','      mv.jump\n    ) {\n      meta.lastActiveTick',
