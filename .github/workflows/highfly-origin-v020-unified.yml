@@ -1,0 +1,96 @@
+name: HIGHFLY ORIGIN — ART253 + FURY P4B unified (internal only)
+
+on:
+  push:
+    branches:
+      - highfly-origin-v020-art253-fury-p4b-unified-20261028
+    paths:
+      - 'origins/v020/art/**'
+      - 'origins/v020/mobility/**'
+      - '.github/workflows/highfly-origin-v020-unified.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-v020-unified-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  art-fury-full-world:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: HIGHFLY unified branch
+        uses: actions/checkout@v4
+      - name: Verify all 253 artwork files before retrieving original game
+        run: |
+          node origins/v020/art/apply_validate.mjs --check-overlay
+      - name: Checkout exact upstream v0.20 source for private tests
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          path: upstream
+          persist-credentials: false
+      - name: Check source pin and notices
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream rev-parse HEAD)" = 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          test -s upstream/LICENSE
+          test -s upstream/CREDITS.md
+          test -s upstream/THIRD_PARTY_NOTICES.md
+      - name: Record original CraftPix hashes privately before replacement
+        run: node origins/v020/art/detect_originals.mjs --record upstream "$RUNNER_TEMP/old_art.json"
+      - name: Restore P2 P3 FURY P4A, install P4B and replace 253 original icons
+        shell: bash
+        run: |
+          set -euo pipefail
+          node origins/v020/offline/patch_offline.mjs upstream
+          node origins/v020/p3/patch_lab_boot.mjs upstream
+          node origins/v020/p3/patch_touch_hud.mjs upstream
+          node origins/v020/fury/patch_fury.mjs upstream
+          node origins/v020/mobility/patch_mobility.mjs upstream
+          node origins/v020/art/apply_validate.mjs --apply upstream
+          cp origins/v020/offline/highfly_offline_save.test.ts upstream/tests/highfly_offline_save.test.ts
+          cp origins/v020/p3/highfly_world_content.test.ts upstream/tests/highfly_world_content.test.ts
+          cp origins/v020/fury/fury_analog.test.ts upstream/tests/fury_analog.test.ts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: upstream/package-lock.json
+      - name: Validate pure FURY P4B dash/double jump state machine
+        run: node --experimental-strip-types --test origins/v020/mobility/fury_mobility.test.mjs
+      - name: Install original dependencies
+        working-directory: upstream
+        run: npm ci --no-audit --no-fund
+      - name: Check types and FURY/world/portal/mobile/save regressions
+        working-directory: upstream
+        shell: bash
+        run: |
+          npm run check:ts
+          npx vitest run tests/fury_analog.test.ts tests/highfly_offline_save.test.ts tests/highfly_world_content.test.ts tests/mobile_controls.test.ts tests/sim.test.ts tests/dungeons.test.ts tests/map_dungeon_portals.test.ts tests/quest_progress_persist.test.ts
+      - name: Install headless Chromium for real-game Android-like landscape
+        working-directory: upstream
+        run: npx playwright install --with-deps chromium
+      - name: Test original 3D world, touch HUD, persistence in 915x412
+        run: node origins/v020/p3/smoke_android.mjs upstream
+      - name: Test FURY P4A two-thumb analog movement, camera and ATK
+        run: node origins/v020/fury/smoke_fury.mjs upstream
+      - name: Compile full original RPG with FURY P4B and HIGHFLY 253 icons
+        working-directory: upstream
+        run: npm run build
+      - name: Verify all 253 replacements in actual dist
+        run: node origins/v020/art/apply_validate.mjs --verify-dist upstream/dist
+      - name: Block original CraftPix bytes even under renamed compiled filenames
+        run: node origins/v020/art/detect_originals.mjs --check upstream/dist "$RUNNER_TEMP/old_art.json"
+      - name: Rights and physical testing declaration
+        if: always()
+        shell: bash
+        run: |
+          echo '## HIGHFLY ORIGIN UNIFIED ART253 + FURY P4B' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Green means full private code, original-world browser tests, and 253-file substitution integrity. It does NOT certify dash feel or somersault animations on a physical Samsung S23 Ultra.' >> "$GITHUB_STEP_SUMMARY"
+          echo '**NO PAGES, APK OR ARTIFACT RELEASE**. Non-icon media (models, panoramas, audio and branding) still require rights clearance.' >> "$GITHUB_STEP_SUMMARY"
