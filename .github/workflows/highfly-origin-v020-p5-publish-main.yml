@@ -1,0 +1,120 @@
+# Delivers already certified P5 output from the main branch, avoiding restricted
+# github-pages environment publishing from the protected non-main feature branch.
+name: HIGHFLY ORIGIN v0.20 — Publish P5 verified game from main
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/highfly-origin-v020-p5-publish-main.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-world-genesis-main-pages-release
+  cancel-in-progress: false
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Require immutable tested P5 build, including rights and S23 browser checks
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sourceRun=40781367689;
+            const sourceSha='fed1c92b798b24beeae4dfe03b40a554dd3e31df';
+            const x=(await github.rest.actions.getWorkflowRun({owner:context.repo.owner,repo:context.repo.repo,run_id:sourceRun})).data;
+            if(x.head_sha!==sourceSha || x.status!=='completed')throw Error('P5_SOURCE_RUN_SHA_MISMATCH');
+            const jobs=(await github.rest.actions.listJobsForWorkflowRun({owner:context.repo.owner,repo:context.repo.repo,run_id:sourceRun,per_page:100})).data.jobs;
+            const build=jobs.find(j=>j.name==='build');
+            if(!build || build.conclusion!=='success')throw Error('P5_BUILD_QA_NOT_GREEN');
+            const arts=(await github.rest.actions.listWorkflowRunArtifacts({owner:context.repo.owner,repo:context.repo.repo,run_id:sourceRun,per_page:100})).data.artifacts;
+            if(!arts.some(a=>a.name==='github-pages' && !a.expired))throw Error('P5_PAGES_ARTIFACT_MISSING');
+            console.log('HIGHFLY_P5_IMMUTABLE_WEBGL_BUILD_GREEN='+sourceSha);
+      - name: Download exact certified GitHub Pages build, no rebuild
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 40781367689
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: validated
+      - name: Unpack only rights-cleared HIGHFLY ORIGIN P5 and verify game
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path,PurePosixPath
+          import tarfile,json
+          f=Path('validated/artifact.tar')
+          if not f.is_file():raise SystemExit('P5_NO_GITHUB_PAGES_TAR')
+          dest=Path('site');dest.mkdir()
+          with tarfile.open(f,'r:') as t:
+            total=0
+            for m in t.getmembers():
+              p=PurePosixPath(m.name)
+              if p.is_absolute() or '..' in p.parts or m.issym() or m.islnk() or not (m.isfile() or m.isdir()):
+                raise SystemExit('P5_INVALID_TAR_ENTRY')
+              total+=m.size
+            if total<40_000_000 or total>950_000_000:raise SystemExit('P5_BAD_SIZE_'+str(total))
+            t.extractall(dest,filter='data')
+          index=(dest/'index.html')
+          play=(dest/'play.html')
+          receipt=(dest/'highfly-origin-v020-p5-rights.json')
+          if not all(p.is_file() for p in (index,play,receipt)):raise SystemExit('P5_SITE_MISSING_ENTRY')
+          data=json.loads(receipt.read_text())
+          if data.get('version')!='P5' or data.get('iconCount')!=253:raise SystemExit('P5_WRONG_GAME_VERSION')
+          if data.get('sourceSha')!='ffd1b8dc56492335c171195adcb338162ecff94d':raise SystemExit('P5_WRONG_UNIFIED_CHECKPOINT')
+          if data.get('upstream')!='4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25':raise SystemExit('P5_WRONG_CLAUDECRAFT')
+          if b'HIGHFLY ORIGIN' not in index.read_bytes():raise SystemExit('P5_BAD_ENTRY')
+          if '/cobalt-hollow-lab/assets/' not in play.read_text():raise SystemExit('P5_BROKEN_ASSET_PATHS')
+          if (dest/'reborn').exists() or (dest/'c204').exists():raise SystemExit('P5_OLD_SITE_CONTAMINATION')
+          if (dest/'audio').exists():raise SystemExit('P5_UNREVIEWED_AUDIO_PRESENT')
+          glbs=list((dest/'media/models').rglob('*.glb'))
+          if len(glbs)<70:raise SystemExit('P5_LOST_REAL_3D_WORLD')
+          if len(list((dest/'ui/skills').rglob('*.webp')))!=152:raise SystemExit('P5_SKILLS_ICON_COUNT')
+          if len(list((dest/'ui/items').rglob('*.webp')))!=101:raise SystemExit('P5_ITEMS_ICON_COUNT')
+          print('HIGHFLY_P5_REAL_WORLD_SITE_READY=PASS models='+str(len(glbs))+' bytes='+str(total))
+          PY
+      - uses: actions/configure-pages@v5
+      - name: Upload full P5 site instead of earlier obsolete Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  publish:
+    needs: stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/
+    steps:
+      - uses: actions/deploy-pages@v4
+      - name: Verify v0.20 play entry publicly accessible on Pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,time,urllib.request
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for i in range(24):
+            try:
+              def get(p):
+                req=urllib.request.Request(base+p,headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-P5-PUBLISH-QA'})
+                with urllib.request.urlopen(req,timeout=35) as res:
+                  if res.status!=200:raise RuntimeError('HTTP_'+str(res.status))
+                  return res.read()
+              qa=json.loads(get('highfly-origin-v020-p5-rights.json?t='+str(i)))
+              if qa.get('version')!='P5' or qa.get('iconCount')!=253:raise RuntimeError('P5_NOT_LIVE_YET')
+              if b'HIGHFLY ORIGIN' not in get('index.html?t='+str(i)):raise RuntimeError('P5_ROOT_MISSING')
+              if b'/cobalt-hollow-lab/assets/' not in get('play.html?t='+str(i)):raise RuntimeError('P5_PLAY_ASSETS_NOT_READY')
+              print('HIGHFLY_ORIGIN_V020_PLAY_LINK='+base+'play.html?highfly_origin=1')
+              break
+            except Exception as e:
+              print('P5_PAGES_PROPAGATION',i,str(e)[:180])
+              if i==23:raise
+              time.sleep(5)
+          PY
