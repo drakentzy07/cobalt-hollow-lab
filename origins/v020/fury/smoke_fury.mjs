@@ -69,13 +69,13 @@ try{
  const afterCam=await page.evaluate(()=>({yaw:window.__game.input.camYaw,stick:window.__game.input.highflyFuryStickVector()}));
  if(!afterCam.stick)throw Error('Right camera stick stole left stick pointer');
  if(Math.abs(afterCam.yaw-cam.yaw)<0.015)throw Error('Right camera stick failed independent yaw '+JSON.stringify({cam,afterCam}));
- const release=await page.evaluate(({x,y})=>{
+ const release=await page.evaluate(({x,y,cam})=>{
   const m=document.getElementById('mobile-move-zone');
   m.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,cancelable:true,pointerId:11,pointerType:'touch',clientX:x+22,clientY:y-38}));
   const el=document.getElementById('mobile-camera-joystick');
-  el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,cancelable:true,pointerId:12,pointerType:'touch',clientX:camX,clientY:camY}));
+  el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,cancelable:true,pointerId:12,pointerType:'touch',clientX:cam.x+31,clientY:cam.y-15}));
   return window.__game.input.highflyFuryStickVector();
- },{x:start.x,y:start.y}).catch(async()=>{
+ },{x:start.x,y:start.y,cam}).catch(async()=>{
    // The release checks the left stick even if the diagnostic right pointer cleanup was unavailable.
    return await page.evaluate(()=>window.__game.input.highflyFuryStickVector());
  });
