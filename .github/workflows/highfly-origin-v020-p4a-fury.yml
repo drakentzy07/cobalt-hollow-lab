@@ -1,0 +1,76 @@
+name: HIGHFLY ORIGIN P4A - FURY 360 analog real-world test
+on:
+  push:
+    branches:
+      - highfly-origin-v020-p4-fury360-analog-20261028
+    paths:
+      - 'origins/v020/fury/**'
+      - '.github/workflows/highfly-origin-v020-p4a-fury.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-fury-p4a-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  real-world-fury-analog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch EXACT original full RPG v0.20.0 for PRIVATE runtime CI
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          path: upstream
+          persist-credentials: false
+      - name: Verify locked MIT source and original media license notices
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream rev-parse HEAD)" = 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          test -s upstream/LICENSE
+          test -s upstream/CREDITS.md
+          test -s upstream/THIRD_PARTY_NOTICES.md
+      - name: Restore P2 and P3, then apply real FURY 360 continuous input
+        shell: bash
+        run: |
+          set -euo pipefail
+          node origins/v020/offline/patch_offline.mjs upstream
+          node origins/v020/p3/patch_lab_boot.mjs upstream
+          node origins/v020/p3/patch_touch_hud.mjs upstream
+          node origins/v020/fury/patch_fury.mjs upstream
+          cp origins/v020/offline/highfly_offline_save.test.ts upstream/tests/highfly_offline_save.test.ts
+          cp origins/v020/p3/highfly_world_content.test.ts upstream/tests/highfly_world_content.test.ts
+          cp origins/v020/fury/fury_analog.test.ts upstream/tests/fury_analog.test.ts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: upstream/package-lock.json
+      - name: Install original dependencies
+        working-directory: upstream
+        run: npm ci --no-audit --no-fund
+      - name: TypeScript and FURY regression in original simulation
+        working-directory: upstream
+        run: |
+          npm run check:ts
+          npx vitest run tests/fury_analog.test.ts tests/highfly_offline_save.test.ts tests/highfly_world_content.test.ts tests/mobile_controls.test.ts tests/sim.test.ts tests/dungeons.test.ts tests/map_dungeon_portals.test.ts
+      - name: Install Chromium for touch-emulated Android runtime tests
+        working-directory: upstream
+        run: npx playwright install --with-deps chromium
+      - name: Recheck original 3D world, HUD and local save/reload
+        run: node origins/v020/p3/smoke_android.mjs upstream
+      - name: FURY 360 finger movement, live attack concurrency, independent camera
+        run: node origins/v020/fury/smoke_fury.mjs upstream
+      - name: Internal original RPG build with FURY P4A
+        working-directory: upstream
+        run: npm run build
+      - name: Release protections - no public content
+        if: always()
+        run: |
+          echo '### HIGHFLY FURY P4A status' >> "$GITHUB_STEP_SUMMARY"
+          echo '**NO PUBLIC RELEASE**: original CraftPix and other restricted media remain in upstream. Zero artifacts uploaded; zero Pages deployments. Physical Galaxy S23 Ultra gameplay still required.' >> "$GITHUB_STEP_SUMMARY"
