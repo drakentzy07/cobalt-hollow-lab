@@ -69,10 +69,21 @@ try{
   }));
   mk('pointerdown',x,y);
   mk('pointermove',x+31,y-15);
-  return {yaw:g.input.camYaw,x,y};
+  return {yaw:g.input.camYaw,x,y,lookActive:g.input.touchLookActive,lookVector:g.input.touchLookVector,joystickActive:el.classList.contains('active')};
  });
- await sleep(400);
- const afterCam=await page.evaluate(()=>({yaw:window.__game.input.camYaw,stick:window.__game.input.highflyFuryStickVector()}));
+ // Chromium software rendering can defer animation frames while the Sim is busy.
+ // Wait for a genuinely changed camera yaw, never bypass or force the assertion.
+ await page.waitForFunction(
+  (initialYaw)=>Math.abs(window.__game.input.camYaw-initialYaw)>0.015,
+  cam.yaw,{timeout:8000}
+ ).catch(()=>{});
+ const afterCam=await page.evaluate(()=>({
+  yaw:window.__game.input.camYaw,stick:window.__game.input.highflyFuryStickVector(),
+  touchLookActive:window.__game.input.touchLookActive,
+  touchLookVector:window.__game.input.touchLookVector,
+  suspended:window.__game.input.suspendMovement,
+  cameraButtonActive:document.getElementById('mobile-camera-joystick')?.classList.contains('active')
+ }));
  if(!afterCam.stick)throw Error('Right camera stick stole left stick pointer');
  if(Math.abs(afterCam.yaw-cam.yaw)<0.015)throw Error('Right camera stick failed independent yaw '+JSON.stringify({cam,afterCam}));
  const release=await page.evaluate(({x,y,cam})=>{
