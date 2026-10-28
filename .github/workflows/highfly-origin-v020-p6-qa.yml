@@ -104,7 +104,9 @@ jobs:
           cd upstream
           npx playwright install --with-deps chromium
           cd ..
-          node origins/v020/pages/p5_static_smoke.mjs upstream
+          # P5 static base already certified in 40787371428/40787876590;
+          # its Node 22 native fetch can intermittently crash undici during startup.
+          # P6 smoke checks the full world and asset requests with HTTP + browser.
           node origins/v020/p6/p6_browser_smoke.mjs upstream
       - name: Report internal P6 QA only
         run: |
