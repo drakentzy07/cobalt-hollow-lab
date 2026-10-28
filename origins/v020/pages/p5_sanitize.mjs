@@ -6,7 +6,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import sharp from 'sharp';
+import { createRequire } from 'node:module';
+const require=createRequire(path.join(path.resolve(process.argv[2]||'upstream'),'package.json'));
+const sharp=require('sharp');
 const root=path.resolve(process.argv[2]||'upstream');
 const state=path.resolve(process.argv[3]||'p5-removed-hashes.json');
 const dir=path.join(root,'public');
