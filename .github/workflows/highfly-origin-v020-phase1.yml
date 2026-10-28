@@ -1,0 +1,64 @@
+name: HIGHFLY ORIGIN 0.20 - phase 1 media and RPG regression
+
+on:
+  push:
+    branches:
+      - highfly-origin-v020-phase1-license-gates-20261028
+    paths:
+      - 'origins/v020/**'
+      - '.github/workflows/highfly-origin-v020-phase1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: highfly-v020-p1-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  internal-diagnostic-no-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use exact clean upstream commit
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          path: upstream
+          persist-credentials: false
+      - name: Reject wrong upstream or missing license docs
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream rev-parse HEAD)" = 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          test -s upstream/LICENSE
+          test -s upstream/CREDITS.md
+          test -s upstream/THIRD_PARTY_NOTICES.md
+      - name: Validate our conservative license classifier
+        run: node --test origins/v020/license_inventory.test.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: upstream/package-lock.json
+      - name: Install original dependencies
+        working-directory: upstream
+        run: npm ci --no-audit --no-fund
+      - name: Check TypeScript
+        working-directory: upstream
+        run: npm run check:ts
+      - name: Regression suite - real RPG systems and Android touch
+        working-directory: upstream
+        run: npx vitest run tests/sim.test.ts tests/progression.test.ts tests/dungeons.test.ts tests/map_dungeon_portals.test.ts tests/quest_progress_persist.test.ts tests/editor_map_store.test.ts tests/mobile_controls.test.ts
+      - name: Compile original game for internal comparison only
+        working-directory: upstream
+        run: npm run build
+      - name: SHA256 manifest and full distribution-leak inventory
+        run: node origins/v020/license_inventory.mjs upstream "$RUNNER_TEMP"
+      - name: Enforcement declaration
+        if: always()
+        run: |
+          echo '### Release status: NOT AUTHORIZED' >> "$GITHUB_STEP_SUMMARY"
+          echo 'This job is source-only internal diagnosis. It NEVER publishes media, artifacts, Pages or an APK. Original CraftPix remains in dist; a public release requires an independently verified clean replacement package.' >> "$GITHUB_STEP_SUMMARY"
