@@ -1,0 +1,124 @@
+/* HIGHFLY ORIGIN P6: non-destructive S23 landscape HUD skin.
+   Keeps the ORIGINAL actionbar buttons/listeners, spell bindings and cooldowns.
+   Normal desktop, source data and runtime remain untouched. */
+@media (orientation: landscape) {
+body.mobile-touch.game-active #mobile-combat-controls {
+  position:absolute !important; inset:0 !important; width:100% !important;
+  height:100% !important; transform:none !important; display:block !important;
+  pointer-events:none !important; z-index:30 !important;
+}
+body.mobile-touch.game-active #mobile-combat-controls > .mobile-btn {
+  position:absolute !important; pointer-events:auto !important; box-sizing:border-box;
+  display:flex; align-items:center; justify-content:center;
+  border:2px solid rgba(85,207,255,.65); border-radius:50%;
+  background:radial-gradient(circle at 30% 20%,#203c68ed,#0b1129ed 72%);
+  box-shadow:inset 0 1px 1px #ffffff36,0 3px 14px #01030cc9,0 0 9px #30d9ff43;
+  color:#edfaff; touch-action:none; text-shadow:0 1px 3px #000;
+}
+body.mobile-touch.game-active #mobile-combat-controls > .mobile-btn .mobile-label {
+  color:#defaff; font-size:clamp(9px,1.25vw,12px); letter-spacing:.3px;
+}
+body.mobile-touch.game-active #mobile-attack-nearest {
+  right:calc(20px + env(safe-area-inset-right)) !important;
+  bottom:calc(20px + env(safe-area-inset-bottom)) !important;
+  left:auto !important; top:auto !important; width:82px !important; height:82px !important;
+  border:3px solid #8edfff !important;
+  background:radial-gradient(circle at 35% 23%,#5599d7,#224c90 52%,#07112d 100%) !important;
+  box-shadow:0 0 18px #39b8ff65,inset 0 0 12px #ffffff24 !important;
+}
+body.mobile-touch.game-active #mobile-jump {
+  left:calc(50% - 77px) !important; bottom:calc(16px + env(safe-area-inset-bottom)) !important;
+  right:auto !important; top:auto !important; width:57px !important; height:57px !important;
+}
+body.mobile-touch.game-active #mobile-dash {
+  left:calc(50% - 10px) !important; bottom:calc(16px + env(safe-area-inset-bottom)) !important;
+  right:auto !important; top:auto !important; width:57px !important; height:57px !important;
+}
+body.mobile-touch.game-active #mobile-interact {
+  right:calc(28px + env(safe-area-inset-right)) !important;
+  bottom:calc(110px + env(safe-area-inset-bottom)) !important;
+  left:auto !important; top:auto !important; width:54px !important; height:54px !important;
+}
+body.mobile-touch.game-active #mobile-more {
+  right:calc(12px + env(safe-area-inset-right)) !important;
+  top:calc(12px + env(safe-area-inset-top)) !important;
+  left:auto !important; bottom:auto !important; width:47px !important; height:47px !important;
+  border-radius:12px !important; z-index:50 !important;
+}
+body.mobile-touch.game-active #mobile-autorun,
+body.mobile-touch.game-active #mobile-chat,
+body.mobile-touch.game-active #mobile-target { display:none !important; }
+/* Camera swipe is already implemented on #game-canvas in MobileControls.
+   Remove its obstructive visual joystick without disabling free camera. */
+body.mobile-touch.game-active #mobile-camera-joystick { display:none !important; }
+body.mobile-touch.game-active #mobile-move-joystick {
+  width:114px; height:114px; left:max(16px,env(safe-area-inset-left));
+  bottom:calc(19px + env(safe-area-inset-bottom));
+  border-color:#62cfff; opacity:.76;
+  background:radial-gradient(circle,#1a426183,#0a1336bb 78%);
+  box-shadow:0 0 14px #27b9f953,inset 0 0 22px #0009;
+}
+body.mobile-touch.game-active #mobile-move-joystick.active { opacity:1; border-color:#8af6ff; }
+body.mobile-touch.game-active #mobile-move-zone { width:142px; height:166px; max-width:142px; }
+body.mobile-touch.game-active #mobile-move-joystick .mobile-joy-label { color:#b6f6ff; }
+/* The original actionbar slots 1..4 are the real skills (slot 0 is legacy ATK).
+   Reposition, do not clone. All native cast handlers, icons and cooldowns survive. */
+body.mobile-touch.game-active #bottom-bar {
+  position:fixed !important; left:0 !important; right:0 !important; bottom:0 !important;
+  top:auto !important; width:100% !important; height:0 !important;
+  transform:none !important; overflow:visible !important;
+}
+body.mobile-touch.game-active #actionbar-row,
+body.mobile-touch.game-active #actionbar-stack { overflow:visible !important; }
+body.mobile-touch.game-active #actionbar {
+  position:absolute !important; right:calc(112px + env(safe-area-inset-right)) !important;
+  bottom:calc(28px + env(safe-area-inset-bottom)) !important; left:auto !important;
+  width:211px !important; height:165px !important; min-height:0 !important;
+  display:block !important; padding:0 !important; margin:0 !important;
+  overflow:visible !important; border:0 !important; background:transparent !important;
+  box-shadow:none !important; pointer-events:none !important; transform:none !important;
+}
+body.mobile-touch.game-active #actionbar > .action-btn { display:none !important; }
+body.mobile-touch.game-active #actionbar > .action-btn:nth-child(n+2):nth-child(-n+5) {
+  position:absolute !important; display:flex !important;
+  width:50px !important; height:50px !important; flex:0 0 50px !important;
+  border:2px solid #42bde8 !important; border-radius:50% !important;
+  background:radial-gradient(circle at 32% 15%,#283f75,#091329) !important;
+  box-shadow:0 2px 11px #000c,0 0 9px #20b9e54c !important;
+  pointer-events:auto !important; touch-action:manipulation !important;
+}
+body.mobile-touch.game-active #actionbar > .action-btn:nth-child(2) { left:7px !important; bottom:0 !important; }
+body.mobile-touch.game-active #actionbar > .action-btn:nth-child(3) { left:28px !important; bottom:59px !important; }
+body.mobile-touch.game-active #actionbar > .action-btn:nth-child(4) { left:89px !important; bottom:99px !important; }
+body.mobile-touch.game-active #actionbar > .action-btn:nth-child(5) { left:156px !important; bottom:105px !important; }
+body.mobile-touch.game-active #actionbar > .action-btn.empty { opacity:.62; }
+body.mobile-touch.game-active #actionbar > .action-btn .icon-label { border-radius:50% !important; }
+body.mobile-touch.game-active #player-frame {
+  top:max(8px,env(safe-area-inset-top)); left:max(10px,env(safe-area-inset-left));
+  transform:scale(.78); transform-origin:top left; filter:drop-shadow(0 2px 8px #071330);
+}
+body.mobile-touch.game-active #mobile-extra-controls {
+  width:min(560px,calc(100vw - 56px)) !important;
+  border:1px solid #58c7ed !important; border-radius:18px !important;
+  background:linear-gradient(155deg,#14274af5,#080d22f9) !important;
+  box-shadow:0 20px 60px #000f,0 0 22px #31abf044 !important;
+}
+body.mobile-touch.game-active #mobile-extra-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+body.mobile-touch.game-active #mobile-extra-controls .mobile-btn {
+  border:1px solid #4f91b9 !important; border-radius:12px !important;
+  background:linear-gradient(150deg,#203c65,#101b38) !important;
+}
+body.mobile-touch.game-active .window.panel:not(#mobile-extra-controls) {
+  border-color:#3b8ab4 !important; border-radius:14px !important;
+  background:linear-gradient(160deg,#121d35f7,#080e20f7) !important;
+  box-shadow:0 20px 60px #000c,0 0 14px #1e85b532 !important;
+}
+body.mobile-touch.game-active .np-name { max-width:120px; overflow:hidden; text-overflow:ellipsis; font-size:11px; color:#f2fbff; }
+body.mobile-touch.game-active .nameplate { filter:drop-shadow(0 2px 2px #000); }
+body.mobile-touch.game-active #actionbar2 { display:none !important; }
+}
+@media (orientation: landscape) and (max-height:420px) {
+ body.mobile-touch.game-active #actionbar { transform:scale(.88) !important; transform-origin:right bottom !important; }
+ body.mobile-touch.game-active #mobile-attack-nearest { width:76px !important; height:76px !important; }
+ body.mobile-touch.game-active #mobile-interact { bottom:99px !important; }
+}
