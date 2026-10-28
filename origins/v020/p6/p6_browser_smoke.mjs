@@ -43,6 +43,15 @@ try{
    originalSlots:slots.slice(1,5).map((s)=>({id:s.dataset.hotbarSlot,shown:!!shown(s),rect:rect(s)})),
    legacyVisible:slots.slice(5).filter(shown).length,
    settingsAvailable:!!el('mobile-extra-controls'),
+   barChain:(()=>{
+     let out=[],node=el('actionbar').querySelectorAll('.action-btn')[1];let step=0;
+     while(node&&step++<10){
+       const st=getComputedStyle(node),r=node.getBoundingClientRect();
+       out.push({id:node.id||node.className,display:st.display,visibility:st.visibility,opacity:st.opacity,position:st.position,overflow:st.overflow,rect:[r.x,r.y,r.width,r.height]});
+       node=node.parentElement;
+     }
+     return out;
+   })(),
   };
  });
  if(!result.title.includes('HIGHFLY ORIGIN'))throw Error('P6 branding missing '+JSON.stringify(result));
