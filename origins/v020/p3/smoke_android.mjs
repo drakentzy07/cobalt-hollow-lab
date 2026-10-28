@@ -67,9 +67,25 @@ async function loadGame(page,label){
    jump:rect('mobile-jump'),
    use:rect('mobile-interact'),
    more:rect('mobile-more'),
-   saveState:g.sim.serializeCharacter(g.sim.playerId)?.inventory?.length??-1
+   saveState:g.sim.serializeCharacter(g.sim.playerId)?.inventory?.length??-1,
+   containerDiagnostics:(()=>{
+     const el=document.getElementById('mobile-controls');
+     const css=getComputedStyle(el);
+     const chain=[];
+     let a=el;while(a&&chain.length<8){const style=getComputedStyle(a);chain.push({tag:a.tagName,id:a.id,className:typeof a.className==='string'?a.className.slice(0,180):'',
+       display:style.display,visibility:style.visibility,position:style.position,
+       width:a.getBoundingClientRect().width,height:a.getBoundingClientRect().height});
+       a=a.parentElement;}
+     return {display:css.display,width:css.width,height:css.height,
+       appVW:getComputedStyle(document.documentElement).getPropertyValue('--app-vw'),
+       appVH:getComputedStyle(document.documentElement).getPropertyValue('--app-vh'),
+       coarse:matchMedia('(pointer: coarse)').matches,
+       noHover:matchMedia('(hover:none)').matches,
+       chain};
+   })()
   };
  });
+ console.log('[HIGHFLY P3 '+label+'] '+JSON.stringify(data));
  if(data.playerId<1||data.mobCount<15||data.npcCount<10||!data.active||!data.touch||
     !data.canvas||!data.move?.visible||!data.camera?.visible||!data.attack?.visible||!data.jump?.visible||
     !data.use?.visible||!data.more?.visible)
@@ -80,7 +96,7 @@ async function loadGame(page,label){
    throw Error(label+' offscreen touch control: '+key+' '+JSON.stringify(r));
   }
  }
- console.log('[HIGHFLY P3 '+label+'] '+JSON.stringify(data));
+
  if(errors.length)console.log('[HIGHFLY P3 nonfatal page exceptions] '+JSON.stringify(errors.slice(0,4)));
  return data;
 }
