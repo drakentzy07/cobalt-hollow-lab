@@ -63,7 +63,7 @@ edit('play.html', [[
 ]]);
 // CSS is conditional; no UI leak into desktop/home.
 const css=path.join(root,'src/styles/hud.mobile.css');
-fs.appendFileSync(css, '\n/* HIGHFLY P4B mobile dash — controls stay inside the landscape HUD */\nbody.mobile-touch.game-active #mobile-dash { touch-action: none; min-width: 48px; min-height: 46px; border-color: rgba(68,216,244,.55); }\n');
+fs.appendFileSync(css, '\n/* HIGHFLY P4B touch control layering: original #ui actionbar has z-index:80 and can intercept mobile ATK, which lives in the z-index:60 root. Raise touch root only during normal gameplay, leaving overlays/modal windows above or unaffected; pointer-events:none on root still lets unrelated UI through. */\nbody.mobile-touch.game-active:not(.mobile-window-open):not(.mobile-more-open) #mobile-controls { z-index: 89; }\n/* HIGHFLY P4B mobile dash — controls stay inside the landscape HUD */\nbody.mobile-touch.game-active #mobile-dash { touch-action: none; min-width: 48px; min-height: 46px; border-color: rgba(68,216,244,.55); }\n');
 const sim=path.join(root,'src/sim/sim.ts');
 let source=fs.readFileSync(sim,'utf8');
 source=`import { FuryMobility } from '../game/highfly_fury_mobility';\nconst highflyMobility = new FuryMobility();\n`+source;
