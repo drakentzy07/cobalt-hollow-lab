@@ -21,11 +21,27 @@ try{
  const ctx=await browser.newContext({viewport:{width:915,height:412},deviceScaleFactor:3,isMobile:true,hasTouch:true,
   userAgent:'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 Chrome/128.0.0.0 Mobile Safari/537.36'});
  const page=await ctx.newPage();
- let networkAssetFailures=[];
- page.on('response',res=>{if(res.status()>=400&&/\/cobalt-hollow-lab\/(models|media|ui|textures|env|vfx|assets)\//.test(res.url()))networkAssetFailures.push({status:res.status(),url:res.url()});});
+ let networkAssetFailures=[],pageErrors=[],consoleErrors=[],failedRequests=[];
+ page.on('pageerror',e=>pageErrors.push(String(e).slice(0,500)));
+ page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text().slice(0,450));});
+ page.on('requestfailed',req=>failedRequests.push({url:req.url(),reason:req.failure()?.errorText}));
+ page.on('response',res=>{if(res.status()>=400)networkAssetFailures.push({status:res.status(),url:res.url()});});
  await page.goto(base+'play.html?highfly_p3=1',{waitUntil:'domcontentloaded',timeout:60000});
  await page.locator('#mobile-preflight-continue').click({timeout:50000});
- await page.waitForFunction(()=>!!window.__game?.sim?.player && !!document.querySelector('canvas'),undefined,{timeout:120000});
+ try{
+  await page.waitForFunction(()=>!!window.__game?.sim?.player && !!document.querySelector('canvas'),undefined,{timeout:45000});
+ }catch(e){
+  const diagnostic=await page.evaluate(()=>({
+    url:location.href,title:document.title,body:document.body.className,
+    gameActive:document.body.classList.contains('game-active'),
+    preflight:document.getElementById('mobile-preflight')?.getAttribute('class'),
+    loading:document.getElementById('ls-status')?.textContent,
+    canvas:!!document.getElementById('game-canvas'),
+    game:!!window.__game,gameSim:!!window.__game?.sim,gamePlayer:!!window.__game?.sim?.player,
+    scriptUrls:[...document.scripts].map(x=>x.src).filter(Boolean).slice(0,12)
+  }));
+  throw Error('Production Pages offline boot failed: '+JSON.stringify(diagnostic)+' network='+JSON.stringify(networkAssetFailures.slice(0,15))+' pageErrors='+JSON.stringify(pageErrors.slice(0,8))+' consoleErrors='+JSON.stringify(consoleErrors.slice(0,8))+' failedRequests='+JSON.stringify(failedRequests.slice(0,8))+' timeout='+String(e).slice(0,160));
+ }
  const state=await page.evaluate(()=>({player:window.__game.sim.player.name,level:window.__game.sim.player.level,
   canvas:document.querySelector('canvas')?.getBoundingClientRect().toJSON(),hud:document.getElementById('mobile-controls')?.getBoundingClientRect().toJSON(),
   icon:document.querySelector('#mobile-attack-nearest')?.getBoundingClientRect().toJSON()}));
