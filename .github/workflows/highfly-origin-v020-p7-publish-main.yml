@@ -1,0 +1,152 @@
+name: HIGHFLY ORIGIN v0.20 - Publish P7 alongside P5/P6 (main only)
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/highfly-origin-v020-p7-publish-main.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-world-genesis-main-pages-release
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Require immutable certified P5+P6 and P7 builds
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const list=[
+              {key:'P5P6',id:40801070047,sha:'47d821c221c4de820945ad0f2afc90383a661878',name:'github-pages'},
+              {key:'P7',id:40806216972,sha:'6bef27a99fe86cd247bbf9e44f46728efc1c4715',name:'highfly-origin-v020-p7-isolated'}
+            ];
+            for(const k of list){
+              let done=false;
+              for(let n=0;n<75;n++){
+                const x=(await github.rest.actions.getWorkflowRun({owner:context.repo.owner,repo:context.repo.repo,run_id:k.id})).data;
+                if(x.head_sha!==k.sha)throw Error(k.key+'_SOURCE_SHA_CHANGED');
+                if(x.status==='completed'){
+                  if(x.conclusion!=='success')throw Error(k.key+'_QA_NOT_GREEN_'+x.conclusion);
+                  done=true;break;
+                }
+                core.info(k.key+' source pending '+x.status);
+                await new Promise(resolve=>setTimeout(resolve,12000));
+              }
+              if(!done)throw Error(k.key+'_QA_CHECK_TIMEOUT');
+              const artifacts=(await github.rest.actions.listWorkflowRunArtifacts({owner:context.repo.owner,repo:context.repo.repo,run_id:k.id,per_page:100})).data.artifacts;
+              if(!artifacts.some(a=>a.name===k.name&&!a.expired))throw Error(k.key+'_ARTIFACT_MISSING');
+              core.info(k.key+'_SOURCE_GREEN='+k.id);
+            }
+      - name: Download last publicly certified P5 and P6 Pages site intact
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 40801070047
+          github-token: \${{ github.token }}
+          name: github-pages
+          path: previous
+      - name: Download fully compiled P7 Android gameplay from checked QA
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 40806216972
+          github-token: \${{ github.token }}
+          name: highfly-origin-v020-p7-isolated
+          path: p7
+      - name: Verify both previous versions remain unchanged and append P7
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path,PurePosixPath
+          import json,tarfile,hashlib,shutil
+          root=Path('site');root.mkdir()
+          src=Path('previous/artifact.tar')
+          if not src.is_file():raise SystemExit('PREVIOUS_PAGES_TAR_MISSING')
+          with tarfile.open(src,'r:') as f:
+              entries=f.getmembers()
+              total=sum(e.size for e in entries)
+              for e in entries:
+                  p=PurePosixPath(e.name)
+                  if p.is_absolute() or '..' in p.parts or e.issym() or e.islnk() or not(e.isfile() or e.isdir()):
+                      raise SystemExit('UNSAFE_PAGES_ARCHIVE')
+              if total<150_000_000 or total>650_000_000:raise SystemExit('UNEXPECTED_PREVIOUS_SIZE')
+              f.extractall(root,filter='data')
+          old=[
+              'index.html','play.html','highfly-origin-v020-p5-rights.json',
+              'lab/origin-p6/play.html','lab/origin-p6/highfly-origin-v020-p6-stage.json'
+          ]
+          if not all((root/p).is_file() for p in old):raise SystemExit('P5_P6_NOT_BOTH_PRESENT')
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          unchanged={p:sha(root/p) for p in old}
+          p5=json.loads((root/old[2]).read_text())
+          p6=json.loads((root/old[4]).read_text())
+          if p5.get('version')!='P5' or p5.get('iconCount')!=253:raise SystemExit('P5_RIGHTS_REGRESSION')
+          if p6.get('version')!='P6' or p6.get('sourceSha')!='1a406fc811b7f43c8338512ef932c88ab2e7c91a':raise SystemExit('P6_SOURCE_REGRESSION')
+          p7=Path('p7')
+          right=p7/'highfly-origin-v020-p7-rights.json'
+          stage=p7/'highfly-origin-v020-p7-stage.json'
+          if not all((p7/f).is_file() for f in ['play.html','index.html',right.name,stage.name]):raise SystemExit('P7_MISSING_ENTRY')
+          a=json.loads(right.read_text());b=json.loads(stage.read_text())
+          base='/cobalt-hollow-lab/lab/origin-p7/'
+          if a.get('version')!='P7' or a.get('iconCount')!=253 or a.get('basePath')!=base:raise SystemExit('P7_RIGHTS_INVALID')
+          if b.get('version')!='P7' or b.get('sourceSha')!='6bef27a99fe86cd247bbf9e44f46728efc1c4715':raise SystemExit('P7_SOURCE_NOT_QA_TESTED')
+          if base+'assets/' not in (p7/'play.html').read_text():raise SystemExit('P7_ASSET_PATHS_BROKEN')
+          if len(list((p7/'media/models').rglob('*.glb')))<70:raise SystemExit('P7_WORLD_NOT_FULL')
+          if len(list((p7/'ui/skills').rglob('*.webp')))!=152 or len(list((p7/'ui/items').rglob('*.webp')))!=101:raise SystemExit('P7_OWNED_ICON_COUNT')
+          if (p7/'audio').exists():raise SystemExit('P7_UNREVIEWED_AUDIO')
+          if not (p7/'ui/daily-rewards/treasure_chest.webp').is_file():raise SystemExit('P7_REPLACEMENT_ART_MISSING')
+          dest=root/'lab/origin-p7'
+          if dest.exists():raise SystemExit('P7_DIR_COLLISION')
+          shutil.copytree(p7,dest)
+          for path,digest in unchanged.items():
+              if sha(root/path)!=digest:raise SystemExit('P5_P6_MODIFIED_'+path)
+          size=sum(f.stat().st_size for f in root.rglob('*') if f.is_file())
+          if size<250_000_000 or size>900_000_000:raise SystemExit('FINAL_SITE_SIZE_UNSAFE_'+str(size))
+          print('HIGHFLY_P7_STAGE_GREEN '+json.dumps({'siteBytes':size,'sourceRun':40806216972,'path':base,'unchangedVersions':['P5','P6']}))
+          PY
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  publish:
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/lab/origin-p7/play.html?highfly_origin=1
+    steps:
+      - uses: actions/deploy-pages@v4
+      - name: Verify P5 P6 and P7 live with images and hashed JS
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import urllib.request,json,time
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for n in range(35):
+              try:
+                  def load(p):
+                      req=urllib.request.Request(base+p+('?v='+str(n) if '?' not in p else '&v='+str(n)),headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-P7-PUBLISH'})
+                      with urllib.request.urlopen(req,timeout=40) as r:
+                          if r.status!=200:raise RuntimeError('HTTP_'+str(r.status)+' '+p)
+                          return r.read()
+                  p5=json.loads(load('highfly-origin-v020-p5-rights.json'))
+                  p6=json.loads(load('lab/origin-p6/highfly-origin-v020-p6-stage.json'))
+                  p7=json.loads(load('lab/origin-p7/highfly-origin-v020-p7-stage.json'))
+                  if (p5.get('version'),p6.get('version'),p7.get('version'))!=('P5','P6','P7'):raise RuntimeError('VERSIONS_MISMATCH')
+                  if p7.get('sourceSha')!='6bef27a99fe86cd247bbf9e44f46728efc1c4715':raise RuntimeError('P7_NOT_LIVE_YET')
+                  for p,prefix in [('play.html','/cobalt-hollow-lab/assets/'),('lab/origin-p6/play.html','/cobalt-hollow-lab/lab/origin-p6/assets/'),('lab/origin-p7/play.html','/cobalt-hollow-lab/lab/origin-p7/assets/')]:
+                      if prefix.encode() not in load(p):raise RuntimeError('BROKEN_ASSET_PREFIX_'+p)
+                  if len(load('lab/origin-p7/ui/cursors/arrow.png'))<100:raise RuntimeError('MISSING_P7_CURSOR')
+                  print('HIGHFLY_P5_P6_P7_LIVE_GREEN '+base+'lab/origin-p7/play.html?highfly_origin=1')
+                  break
+              except Exception as e:
+                  print('P7_PUBLIC_PROPAGATION',n,str(e)[:170])
+                  if n==34:raise
+                  time.sleep(5)
+          PY
