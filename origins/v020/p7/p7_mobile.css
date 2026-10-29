@@ -2,7 +2,6 @@
 @media (orientation: landscape) {
 body.highfly-p7 {font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
 body.highfly-p7 #mobile-combat-controls>.mobile-btn {
- backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
  background:linear-gradient(155deg,rgba(35,67,108,.95),rgba(4,12,31,.95));
  border-color:rgba(114,217,255,.65);box-shadow:0 3px 15px #010610d0,0 0 12px #28b7ea49;
 }
