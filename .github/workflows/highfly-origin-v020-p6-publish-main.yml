@@ -106,7 +106,7 @@ jobs:
               raise SystemExit('P6_RIGHTS_GATE_MISSING')
           if expected+'assets/' not in (p6/'play.html').read_text():raise SystemExit('P6_SUBPATH_ASSETS_BROKEN')
           if len(list((p6/'media/models').rglob('*.glb')))<70:raise SystemExit('P6_FULL_WORLD_LOST')
-          if len(list((p6/'ui/skills').glob('*.webp')))!=152 or len(list((p6/'ui/items').glob('*.webp')))!=101:
+          if len(list((p6/'ui/skills').rglob('*.webp')))!=152 or len(list((p6/'ui/items').rglob('*.webp')))!=101:
               raise SystemExit('P6_253_OWNED_ICONS_MISSING')
           if not (p6/'ui/cursors/arrow.png').is_file() or not (p6/'ui/daily-rewards/treasure_chest.webp').is_file():
               raise SystemExit('P6_REPLACEMENT_ART_MISSING')
