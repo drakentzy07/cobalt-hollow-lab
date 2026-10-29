@@ -111,8 +111,23 @@ jobs:
           # its Node 22 native fetch can intermittently crash undici during startup.
           # P6 smoke checks the full world and asset requests with HTTP + browser.
           node origins/v020/p7/p7_browser_smoke.mjs upstream
-      - name: Report P7 A-E integration QA (no release or site mutation)
+      - name: Stage only P7 rights-cleared world in independent Github Pages subtree
+        run: |
+          node origins/v020/p7/relocate_p7.mjs upstream/dist
+          test -s upstream/dist/highfly-origin-v020-p7-rights.json
+          test -s upstream/dist/highfly-origin-v020-p7-stage.json
+          test ! -e upstream/dist/highfly-origin-v020-p5-rights.json
+      - name: Upload verified standalone P7 for future safe main publish
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-origin-v020-p7-isolated
+          path: upstream/dist/
+          retention-days: 3
+          compression-level: 0
+          if-no-files-found: error
+      - name: Report P7 A-E source green and independent stage
         run: |
           echo 'HIGHFLY_P7_COMPILE_BROWSER_GREEN=YES'
+          echo 'P7_ISOLATED_SUBDIR_READY=lab/origin-p7'
           echo 'P7_CONTENT_MIGRATION_FROM_V044_NOT_YET_VERIFIED'
           echo 'NO_DEPLOY_NO_P5_P6_MUTATION'
