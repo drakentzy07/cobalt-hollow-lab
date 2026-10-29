@@ -1,0 +1,170 @@
+# MAIN ONLY: preserve every P5 published byte, add approved P6 in an isolated
+# subtree, then deploy one combined Pages site. No source-game assets are copied
+# from the original project except the rights-cleared CI builds.
+name: HIGHFLY ORIGIN v0.20 - Publish P6 alongside P5 (main only)
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/highfly-origin-v020-p6-publish-main.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+concurrency:
+  group: highfly-world-genesis-main-pages-release
+  cancel-in-progress: false
+jobs:
+  preserve-and-stage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Require fixed P5 and independent P6 GREEN runs and exact SHAs
+        id: pins
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner, repo=context.repo.repo;
+            const known=[
+              {key:'P5',id:40782266658,sha:'d83c5738034c338b8951b059ba335a4ecf9c83d0',artifact:'github-pages'},
+              {key:'P6',id:40800698612,sha:'1a406fc811b7f43c8338512ef932c88ab2e7c91a',artifact:'highfly-origin-v020-p6-isolated'}
+            ];
+            for(const k of known){
+              let finished=false;
+              for(let i=0;i<55;i++){
+                const x=(await github.rest.actions.getWorkflowRun({owner,repo,run_id:k.id})).data;
+                if(x.head_sha!==k.sha)throw Error(k.key+'_PIN_SHA_MISMATCH');
+                if(x.status==='completed'){
+                  if(x.conclusion!=='success')throw Error(k.key+'_NOT_GREEN_'+x.conclusion);
+                  finished=true;break;
+                }
+                core.info('Waiting for '+k.key+' fixed source QA run '+k.id+' ('+x.status+')');
+                await new Promise(ok=>setTimeout(ok,15000));
+              }
+              if(!finished)throw Error(k.key+'_SOURCE_QA_TIMEOUT');
+              const artifacts=(await github.rest.actions.listWorkflowRunArtifacts({owner,repo,run_id:k.id,per_page:100})).data.artifacts;
+              if(!artifacts.some(a=>a.name===k.artifact&&!a.expired))
+                throw Error(k.key+'_PINNED_ARTIFACT_MISSING');
+              core.info(k.key+'_IMMUTABLE_QA_GREEN_RUN='+k.id+'_SHA='+k.sha);
+            }
+      - name: Download original published P5 Pages artifact byte-for-byte
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 40782266658
+          github-token: ${{ github.token }}
+          name: github-pages
+          path: immutable-p5
+      - name: Download isolated tested P6 content from GREEN browser QA
+        uses: actions/download-artifact@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          run-id: 40800698612
+          github-token: ${{ github.token }}
+          name: highfly-origin-v020-p6-isolated
+          path: isolated-p6
+      - name: Verify P5 and P6 complete RPG distributions, combine without changing P5
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path,PurePosixPath
+          import tarfile,hashlib,json,shutil
+          source=Path('immutable-p5/artifact.tar')
+          if not source.is_file():raise SystemExit('P5_IMMUTABLE_TAR_MISSING')
+          root=Path('site');root.mkdir()
+          with tarfile.open(source,'r:') as tf:
+              entries=tf.getmembers()
+              total=sum(m.size for m in entries)
+              for m in entries:
+                  p=PurePosixPath(m.name)
+                  if p.is_absolute() or '..' in p.parts or m.issym() or m.islnk() or not (m.isfile() or m.isdir()):
+                      raise SystemExit('P5_UNSAFE_TAR_ENTRY_'+m.name)
+              if total<40_000_000 or total>480_000_000:raise SystemExit('P5_UNEXPECTED_SITE_SIZE_'+str(total))
+              tf.extractall(root,filter='data')
+          important=['index.html','play.html','highfly-origin-v020-p5-rights.json']
+          if not all((root/p).is_file() for p in important):raise SystemExit('P5_PUBLISHED_ENTRY_MISSING')
+          p5=json.loads((root/'highfly-origin-v020-p5-rights.json').read_text())
+          if p5.get('version')!='P5' or p5.get('iconCount')!=253 or p5.get('upstream')!='4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25':
+              raise SystemExit('P5_RIGHTS_PIN_MISMATCH')
+          if '/cobalt-hollow-lab/assets/' not in (root/'play.html').read_text():raise SystemExit('P5_ROOT_ASSET_PATH_CHANGED')
+          if len(list((root/'media/models').rglob('*.glb')))<70:raise SystemExit('P5_ORIGINAL_WORLD_MISSING')
+          def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          before={p:sha(root/p) for p in important}
+          p6=Path('isolated-p6')
+          stage=p6/'highfly-origin-v020-p6-stage.json'
+          rights=p6/'highfly-origin-v020-p6-rights.json'
+          if not all((p6/f).is_file() for f in ['index.html','play.html','highfly-origin-v020-p6-stage.json','highfly-origin-v020-p6-rights.json']):
+              raise SystemExit('P6_STAGED_SITE_MISSING')
+          x=json.loads(stage.read_text());r=json.loads(rights.read_text())
+          expected='/cobalt-hollow-lab/lab/origin-p6/'
+          if x.get('version')!='P6' or x.get('sourceSha')!='1a406fc811b7f43c8338512ef932c88ab2e7c91a' or x.get('basePath')!=expected:
+              raise SystemExit('P6_IMMUTABLE_PIN_MISMATCH')
+          if r.get('version')!='P6' or r.get('iconCount')!=253 or r.get('basePath')!=expected:
+              raise SystemExit('P6_RIGHTS_GATE_MISSING')
+          if expected+'assets/' not in (p6/'play.html').read_text():raise SystemExit('P6_SUBPATH_ASSETS_BROKEN')
+          if len(list((p6/'media/models').rglob('*.glb')))<70:raise SystemExit('P6_FULL_WORLD_LOST')
+          if len(list((p6/'ui/skills').glob('*.webp')))!=152 or len(list((p6/'ui/items').glob('*.webp')))!=101:
+              raise SystemExit('P6_253_OWNED_ICONS_MISSING')
+          if not (p6/'ui/cursors/arrow.png').is_file() or not (p6/'ui/daily-rewards/treasure_chest.webp').is_file():
+              raise SystemExit('P6_REPLACEMENT_ART_MISSING')
+          if (p6/'audio').exists():raise SystemExit('P6_RESTRICTED_AUDIO_REAPPEARED')
+          destination=root/'lab/origin-p6'
+          if destination.exists():raise SystemExit('P6_COLLISION_WITH_OLD_ROOT')
+          destination.parent.mkdir(parents=True,exist_ok=True)
+          shutil.copytree(p6,destination,symlinks=False)
+          for p,want in before.items():
+              if sha(root/p)!=want:raise SystemExit('P5_PRESERVATION_FAILED_'+p)
+          size=sum(f.stat().st_size for f in root.rglob('*') if f.is_file())
+          if size>900_000_000 or size<80_000_000:raise SystemExit('COMBINED_SITE_SIZE_UNSAFE_'+str(size))
+          print('HIGHFLY_P5_PRESERVED_AND_P6_READY_GREEN '+json.dumps({'siteBytes':size,'p5Version':p5['version'],'p6Version':x['version'],'p6Url':expected+'play.html?highfly_origin=1','p5EntryHashes':before}))
+          PY
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload combined site P5 root plus isolated P6 preview
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  publish:
+    needs: preserve-and-stage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: https://drakentzy07.github.io/cobalt-hollow-lab/lab/origin-p6/play.html?highfly_origin=1
+    steps:
+      - name: Deploy unchanged P5 plus safe P6 preview in subdirectory
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify BOTH public versions and isolated assets on GitHub Pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,urllib.request,time
+          base='https://drakentzy07.github.io/cobalt-hollow-lab/'
+          for trial in range(28):
+              try:
+                  def get(p):
+                      req=urllib.request.Request(base+p+('?v='+str(trial) if '?' not in p else '&v='+str(trial)),headers={'Cache-Control':'no-cache','User-Agent':'HIGHFLY-P6-PAGES-CHECK'})
+                      with urllib.request.urlopen(req,timeout=45) as res:
+                          if res.status!=200:raise RuntimeError('HTTP_'+str(res.status)+' '+p)
+                          return res.read()
+                  p5=json.loads(get('highfly-origin-v020-p5-rights.json'))
+                  p6=json.loads(get('lab/origin-p6/highfly-origin-v020-p6-stage.json'))
+                  p6r=json.loads(get('lab/origin-p6/highfly-origin-v020-p6-rights.json'))
+                  if p5.get('version')!='P5' or p5.get('iconCount')!=253:raise RuntimeError('P5_BAD_LIVE')
+                  if p6.get('sourceSha')!='1a406fc811b7f43c8338512ef932c88ab2e7c91a' or p6r.get('version')!='P6':raise RuntimeError('P6_NOT_LIVE_YET')
+                  if b'/cobalt-hollow-lab/assets/' not in get('play.html'):raise RuntimeError('P5_ASSETS_BROKEN')
+                  if b'/cobalt-hollow-lab/lab/origin-p6/assets/' not in get('lab/origin-p6/play.html'):raise RuntimeError('P6_ASSETS_BROKEN')
+                  if len(get('lab/origin-p6/ui/cursors/arrow.png'))<100:raise RuntimeError('P6_CURSOR_NOT_PUBLISHED')
+                  if len(get('lab/origin-p6/ui/daily-rewards/treasure_chest.webp'))<100:raise RuntimeError('P6_CHEST_NOT_PUBLISHED')
+                  print('HIGHFLY_P5_AND_P6_LIVE_GREEN P5='+base+'play.html?highfly_origin=1 P6='+base+'lab/origin-p6/play.html?highfly_origin=1')
+                  break
+              except Exception as e:
+                  print('HIGHFLY_P6_PROPAGATION_CHECK',trial,str(e)[:170])
+                  if trial==27:raise
+                  time.sleep(5)
+          PY
