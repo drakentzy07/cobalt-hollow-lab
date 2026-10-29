@@ -67,7 +67,7 @@ jobs:
           node origins/v020/pages/p5_public_routes.mjs upstream
       - name: Apply isolated P6 HUD Spanish and branding patch
         run: node origins/v020/p6/patch_p6.mjs upstream
-      - name: P7 A-B-C-D core: touch stop, Hunter intro, native skills, 4-hit combo, premium HUD
+      - name: "P7 A-B-C-D core: touch stop, Hunter intro, native skills, 4-hit combo, premium HUD"
         run: node origins/v020/p7/patch_p7.mjs upstream
       - name: P7 E world exploration without breaking actual NPC/monster/loot content
         run: node origins/v020/p7/patch_world_p7e.mjs upstream
