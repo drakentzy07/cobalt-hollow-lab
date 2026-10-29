@@ -108,7 +108,24 @@ jobs:
           # its Node 22 native fetch can intermittently crash undici during startup.
           # P6 smoke checks the full world and asset requests with HTTP + browser.
           node origins/v020/p6/p6_browser_smoke.mjs upstream
-      - name: Report internal P6 QA only
+      - name: Stage separate P6 Pages subtree, after all actual world and Samsung QA tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node origins/v020/p6/relocate_p6.mjs upstream/dist
+          test -s upstream/dist/highfly-origin-v020-p6-rights.json
+          test -s upstream/dist/highfly-origin-v020-p6-stage.json
+          test ! -e upstream/dist/highfly-origin-v020-p5-rights.json
+      - name: Upload tested P6 content ONLY (does not publish or change P5)
+        uses: actions/upload-artifact@v4
+        with:
+          name: highfly-origin-v020-p6-isolated
+          path: upstream/dist/
+          retention-days: 3
+          compression-level: 0
+          if-no-files-found: error
+      - name: Report P6 GREEN candidate staged for protected main Pages publication
         run: |
           echo 'HIGHFLY_P6_GREEN_CANDIDATE=YES'
-          echo 'NO_PAGES_DEPLOY_NO_ARTIFACT_NO_P5_MUTATION'
+          echo 'P6_ISOLATED_SUBDIR_READY=lab/origin-p6'
+          echo 'NO_PAGES_DEPLOY_NO_P5_MUTATION'
