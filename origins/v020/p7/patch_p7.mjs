@@ -70,7 +70,7 @@ fix('src/sim/sim.ts','grant-P7-skills',
 // On first entry only, persist four actual ability IDs with the real hotbar.
 // Preserve user changes afterward and exclude combo internals from auto-placement.
 const seed=[
-'    if(!stored && '+P7+') {',
+'    if(('+P7+') && (!stored || !Array.isArray(arr) || arr.slice(0,4).every(x=>!x))) {',
 "      arr=['charge','rend','thunder_clap','hamstring'].map(id=>({type:'ability',id}));",
 '      try{localStorage.setItem(this.slotMapKey(),JSON.stringify(arr));stored=true;}catch{}',
 '    }',
