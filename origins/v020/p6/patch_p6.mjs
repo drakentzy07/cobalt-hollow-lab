@@ -65,3 +65,34 @@ for(const [name,shape] of Object.entries(cursorArt)){
  await sharp(Buffer.from(svg)).png().toFile(path.join(cursorDir,name));
 }
 console.log('[HIGHFLY P6] Authored 2 original HIGHFLY cursor PNGs after P5 removed unverified originals');
+
+
+// Finish the removed original pointer set with distinct HIGHFLY silhouettes.
+// Six authored cursors instead of restoring the six excluded third-party PNGs.
+const extraCursorArt={
+ 'attack-sword.png':'<path d="M24 3 L29 8 L16 21 L12 17 Z" fill="#e8faff" stroke="#05152e" stroke-width="1.6"/><path d="M11 15 L17 21 M14 20 L8 26 M6 24 L10 28" fill="none" stroke="#36c7f3" stroke-width="3" stroke-linecap="round"/>',
+ 'friendly-shield.png':'<path d="M16 3 L27 8 L25 20 Q22 27 16 30 Q10 27 7 20 L5 8 Z" fill="#184c7c" stroke="#8deaff" stroke-width="2"/><path d="M16 7 L16 25 M9 15 L23 15" stroke="#d8ffff" stroke-width="2.2"/>',
+ 'hand-default.png':'<path d="M10 16 L10 5 Q10 2 13 2 Q16 2 16 5 L16 13 L18 8 Q19 5 22 7 Q24 9 22 13 L28 16 Q30 19 27 24 L22 30 L12 30 L5 22 Q3 19 5 17 Q7 15 10 16 Z" fill="#b2edff" stroke="#0a1d3c" stroke-width="1.8"/>',
+ 'hand-grab.png':'<path d="M6 18 L7 12 Q8 9 11 11 L12 15 L13 7 Q14 4 17 6 L18 14 L20 9 Q22 7 24 10 L24 18 Q27 14 29 17 L29 23 L23 30 L12 30 Z" fill="#b2edff" stroke="#0a1d3c" stroke-width="1.8"/><path d="M10 19 L16 23 L22 20" fill="none" stroke="#2870a8" stroke-width="2"/>',
+};
+for(const [name,shape] of Object.entries(extraCursorArt)){
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">'+shape+'</svg>';
+ await sharp(Buffer.from(svg)).png().toFile(path.join(cursorDir,name));
+}
+// The P5 rights scrub also intentionally removed the only old daily-reward
+// chest texture. Keep the existing gameplay, but ship a newly illustrated
+// HIGHFLY chest in its expected location. No original copyrighted art reused.
+const chestPath=path.join(root,'public','ui','daily-rewards','treasure_chest.webp');
+fs.mkdirSync(path.dirname(chestPath),{recursive:true});
+const chestSvg='<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">'+
+'<defs><linearGradient id="a" x2=".2" y2="1"><stop stop-color="#286d9e"/><stop offset="1" stop-color="#101d40"/></linearGradient></defs>'+
+'<ellipse cx="65" cy="113" rx="46" ry="9" fill="#051327" opacity=".5"/>'+
+'<path d="M22 61 L25 34 Q64 10 104 34 L107 61 Z" fill="url(#a)" stroke="#8eeaff" stroke-width="5" stroke-linejoin="round"/>'+
+'<path d="M28 48 Q66 29 100 48 L101 65 L27 65 Z" fill="#142b50" stroke="#47bde9" stroke-width="3"/>'+
+'<path d="M20 61 L108 61 L103 105 Q64 116 25 105 Z" fill="#112746" stroke="#83eaff" stroke-width="4" stroke-linejoin="round"/>'+
+'<path d="M36 63 L36 108 M92 63 L92 108 M21 78 L107 78" stroke="#28add8" stroke-width="5"/>'+
+'<path d="M58 55 L71 55 L74 81 L64 89 L54 81 Z" fill="#e7d58b" stroke="#ffe8a3" stroke-width="2"/>'+
+'<circle cx="64" cy="72" r="4" fill="#124775"/>'+
+'<path d="M49 28 L49 40 M80 28 L80 40" stroke="#6af2ff" stroke-width="4" opacity=".8"/></svg>';
+await sharp(Buffer.from(chestSvg)).webp({quality:90}).toFile(chestPath);
+console.log('[HIGHFLY P6] Restored no unlicensed pixels: 6 own cyan cursors and 1 authored daily reward chest');
