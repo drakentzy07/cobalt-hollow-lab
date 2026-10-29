@@ -45,4 +45,17 @@ const insert=[
 if(text.split(anchor).length!==2)throw Error('[P7E] unique start anchor missing');
 text=text.replace(anchor,insert);
 fs.writeFileSync(file,text);
-console.log('HIGHFLY_P7E_WORLD_PANEL=PASS');
+
+// E: a real loot-bearing LV1 wolf just outside the Eastbrook safe settlement,
+// appended AFTER all original camps to avoid changing upstream spawn ordering.
+// Uses the original cleared wolf model, original AI, damage, loot and XP engine.
+const dataFile=path.join(path.resolve(process.argv[2]||'upstream'),'src/sim/data.ts');
+let data=fs.readFileSync(dataFile,'utf8');
+const campAnchor="  { mobId: 'grix_the_tunnelking', center: { x: -95, z: -78 }, radius: 4, count: 1 },\n];";
+if(data.split(campAnchor).length!==2)throw Error('[P7E] unsafe final camp anchor');
+data=data.replace(campAnchor,
+"  { mobId: 'grix_the_tunnelking', center: { x: -95, z: -78 }, radius: 4, count: 1 },\n"+
+"  // HIGHFLY P7 E: one genuine Forest Wolf in reachable starter training area.\n"+
+"  { mobId: 'forest_wolf', center: { x: 14, z: 33 }, radius: 1, count: 1 },\n];");
+fs.writeFileSync(dataFile,data);
+console.log('HIGHFLY_P7E_WORLD_PANEL_AND_LV1_WOLF_LOOT_CAMP=PASS');
