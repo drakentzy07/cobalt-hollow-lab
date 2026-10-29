@@ -1,0 +1,180 @@
+name: "HIGHFLY REBIRTH 0.44 — R2 Combat Freedom + Nine Classes (NO DEPLOY)"
+on:
+  push:
+    branches: [highfly-rebirth-044-nine-native-classes-20261022]
+    paths:
+      - rebirth-044/r2/**
+      - .github/workflows/highfly-rebirth-044-r2-no-deploy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-rebirth-044-r2
+  cancel-in-progress: true
+jobs:
+  rebirth_r2:
+    name: "R2 native class preservation, movement, touch, WebGL"
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    steps:
+      - name: Checkout REBIRTH overlay (never Pages)
+        uses: actions/checkout@v4
+        with:
+          path: rebirth
+          filter: blob:none
+          persist-credentials: false
+      - name: Checkout exact native ClaudeCraft v0.44.7
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: v0.44.7
+          path: candidate
+          filter: blob:none
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/
+            /scripts/
+            /server/
+            /headless/
+            /bot/
+            /data/
+            /patches/
+            /private/
+            /public/
+            /tests/
+            /electron/
+            /android/
+            /package.json
+            /pnpm-lock.yaml
+            /vite.config.ts
+            /tsconfig.json
+            /tsconfig.admin.json
+            /tsconfig.bot.json
+            /svelte.config.js
+            /.browserslistrc
+            /.npmrc
+            /biome.json
+            /.gitignore
+            /index.html
+            /admin.html
+            /guide.html
+            /editor.html
+            /play.html
+            /wallet-handoff.html
+            /capacitor.config.ts
+      - name: Fetch historical HIGHFLY movement, joystick, aim math and Training
+        uses: actions/checkout@v4
+        with:
+          repository: drakentzy07/cobalt-hollow-lab
+          ref: highfly-origin-f263-collision-gesture-save-polish-20261020
+          path: legacy
+          filter: blob:none
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /src/game/input.ts
+            /src/game/mobile_controls.ts
+            /src/sim/player_motion.ts
+            /src/highfly/combat/
+            /src/highfly/training/
+            /tests/highfly_training_core.test.ts
+            /tests/highfly_training_engine.test.ts
+            /tests/highfly_training_adaptation.test.ts
+            /tests/highfly_training_periodization.test.ts
+            /tests/highfly_training_bridge.test.ts
+      - name: Apply R1 Training and selective R2 combat to donor
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate describe --tags --exact-match)" = v0.44.7
+          test -f candidate/src/sim/content/classes.ts
+          test -f candidate/src/sim/content/talents.ts
+          test -f candidate/src/editor/custom_map.ts
+          mkdir -p candidate/src/highfly/training candidate/src/highfly/rebirth
+          cp legacy/src/highfly/training/*.ts candidate/src/highfly/training/
+          cp rebirth/rebirth-044/r1/training_entry.ts candidate/src/highfly/rebirth/training_entry.ts
+          cp rebirth/rebirth-044/r1/training_style.css candidate/src/highfly/rebirth/training_style.css
+          cp rebirth/rebirth-044/r2/r2_style.css candidate/src/highfly/rebirth/r2_style.css
+          cp rebirth/rebirth-044/r1/nine_classes.test.ts candidate/tests/highfly_rebirth_nine_classes.test.ts
+          cp rebirth/rebirth-044/r2/r2_movement.test.ts candidate/tests/highfly_rebirth_r2_movement.test.ts
+          for part in core engine adaptation periodization bridge; do
+            cp "legacy/tests/highfly_training_$part.test.ts" "candidate/tests/highfly_training_$part.test.ts"
+          done
+          (cd candidate && node ../rebirth/rebirth-044/r1/apply_candidate.mjs)
+          (cd candidate && node ../rebirth/rebirth-044/r2/apply_candidate.mjs)
+          grep -q "highflyAirDashEnabled=true" candidate/src/main.ts
+          grep -q "onEvade" candidate/src/game/mobile_controls.ts
+          grep -q "highfly:open-training" candidate/src/game/mobile_controls.ts
+          grep -q "highflyAirDashEnabled === true" candidate/src/sim/player_motion.ts
+          echo "R2_NATIVE_CLASSES_AND_CREATOR_PRESERVED=1"
+      - name: Setup Node and pinned package manager
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install dependencies (frozen lockfile)
+        working-directory: candidate
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.5 --activate
+          pnpm install --frozen-lockfile --ignore-scripts
+      - name: Nine native classes, 27 specializations, movement and Training regression
+        working-directory: candidate
+        run: |
+          pnpm exec vitest run \
+            tests/highfly_rebirth_nine_classes.test.ts \
+            tests/highfly_rebirth_r2_movement.test.ts \
+            tests/highfly_training_core.test.ts \
+            tests/highfly_training_engine.test.ts \
+            tests/highfly_training_adaptation.test.ts \
+            tests/highfly_training_periodization.test.ts \
+            tests/highfly_training_bridge.test.ts \
+            tests/class_spec_kits.test.ts \
+            tests/mobile_action_ring_controller.test.ts
+      - name: Native gameplay TypeScript static checks
+        working-directory: candidate
+        run: pnpm exec tsc --noEmit --incremental false
+      - name: Compile WebGL game plus unchanged native editor
+        working-directory: candidate
+        env:
+          VITE_COBALT_OFFLINE: "1"
+          VITE_HIGHFLY_REBIRTH_PREVIEW: "1"
+        run: |
+          pnpm exec vite build --base=/cobalt-hollow-lab/
+          test -s dist/index.html
+          test -s dist/editor.html
+          test -s dist/play.html
+      - name: Always write R2 verification status (never claim device QA)
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p rebirth-report
+          {
+            echo "phase=REBIRTH_R2"
+            echo "upstream=v0.44.7"
+            echo "native_classes=9"
+            echo "specializations=27"
+            echo "level_cap=20"
+            echo "offline_preview=opt_in_only"
+            echo "origin_hunter_universal=NOT_IMPORTED"
+            echo "source_movement=highfly-origin-f263-collision-gesture-save-polish-20261020"
+            echo "production_pages=NOT_DEPLOYED"
+            echo "historic_character_saves=NOT_MODIFIED"
+            echo "Samsung_S23_physical_qa=PENDING"
+            echo "aiming_moba_runtime=NOT_YET_PASSED"
+          } > rebirth-report/r2_status.txt
+      - name: Preserve R2 audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-REBIRTH-044-R2-AUDIT
+          path: rebirth-report/
+          retention-days: 7
+      - name: Preserve candidate WebGL without publishing Pages
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIGHFLY-REBIRTH-044-R2-WEBGL-NO-DEPLOY
+          path: candidate/dist/
+          retention-days: 5
+          if-no-files-found: error
