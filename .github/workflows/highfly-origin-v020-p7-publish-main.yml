@@ -47,7 +47,7 @@ jobs:
         with:
           repository: drakentzy07/cobalt-hollow-lab
           run-id: 40801070047
-          github-token: \${{ github.token }}
+          github-token: ${{ github.token }}
           name: github-pages
           path: previous
       - name: Download fully compiled P7 Android gameplay from checked QA
@@ -55,7 +55,7 @@ jobs:
         with:
           repository: drakentzy07/cobalt-hollow-lab
           run-id: 40806216972
-          github-token: \${{ github.token }}
+          github-token: ${{ github.token }}
           name: highfly-origin-v020-p7-isolated
           path: p7
       - name: Verify both previous versions remain unchanged and append P7
