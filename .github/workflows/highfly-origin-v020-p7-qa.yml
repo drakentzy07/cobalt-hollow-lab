@@ -1,0 +1,118 @@
+name: HIGHFLY ORIGIN v0.20 P7 - A-E native Android gameplay QA (NO DEPLOY)
+on:
+  push:
+    branches: [highfly-origin-v020-p7-ae-android-overhaul-20261029]
+    paths:
+      - 'origins/v020/p7/**'
+      - '.github/workflows/highfly-origin-v020-p7-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: highfly-origin-v020-p7-qa
+  cancel-in-progress: true
+jobs:
+  p6-world-mobile-safe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout exact P6 source overlay
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify P6 descends from P5 source and ART253 GREEN
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor fed1c92b798b24beeae4dfe03b40a554dd3e31df HEAD
+          git merge-base --is-ancestor ffd1b8dc56492335c171195adcb338162ecff94d HEAD
+          node origins/v020/art/apply_validate.mjs --check-overlay
+      - name: Checkout frozen ClaudeCraft v0.20.0 full original world
+        uses: actions/checkout@v4
+        with:
+          repository: levy-street/world-of-claudecraft
+          ref: 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          path: upstream
+          persist-credentials: false
+      - name: Verify upstream pin and rights notices
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream rev-parse HEAD)" = 4cedc7fbf49e7179f4c29b3db2d0b2bc5bab3d25
+          test -s upstream/LICENSE
+          test -s upstream/CREDITS.md
+          test -s upstream/THIRD_PARTY_NOTICES.md
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: upstream/package-lock.json
+      - name: Install exact game dependency tree
+        working-directory: upstream
+        run: npm ci --no-audit --no-fund
+      - name: Capture original restricted hashes
+        run: node origins/v020/art/detect_originals.mjs --record upstream "$RUNNER_TEMP/p6-old-icons.json"
+      - name: Replay P5 GREEN unchanged original world and ART253
+        shell: bash
+        run: |
+          set -euo pipefail
+          node origins/v020/offline/patch_offline.mjs upstream
+          node origins/v020/p3/patch_lab_boot.mjs upstream
+          node origins/v020/p3/patch_touch_hud.mjs upstream
+          node origins/v020/fury/patch_fury.mjs upstream
+          node origins/v020/mobility/patch_mobility.mjs upstream
+          node origins/v020/art/apply_validate.mjs --apply upstream
+          node origins/v020/pages/p5_sanitize.mjs upstream "$RUNNER_TEMP/p6-rights.json" --sanitize
+          node origins/v020/pages/p5_public_routes.mjs upstream
+      - name: Apply isolated P6 HUD Spanish and branding patch
+        run: node origins/v020/p6/patch_p6.mjs upstream
+      - name: P7 A-B-C-D core: touch stop, Hunter intro, native skills, 4-hit combo, premium HUD
+        run: node origins/v020/p7/patch_p7.mjs upstream
+      - name: P7 E world exploration without breaking actual NPC/monster/loot content
+        run: node origins/v020/p7/patch_world_p7e.mjs upstream
+      - name: Verify physical mobility state machine and TypeScript
+        shell: bash
+        run: |
+          node --experimental-strip-types --test origins/v020/mobility/fury_mobility.test.mjs
+          cd upstream
+          npm run check:ts
+      - name: Build exact complete world under GitHub Pages test base
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('upstream/vite.config.ts')
+          s=p.read_text()
+          assert s.count("  base: '/',")==1
+          p.write_text(s.replace("  base: '/',","  base: '/cobalt-hollow-lab/',",1))
+          PY
+          cd upstream
+          npm run build
+      - name: Retest 253 authored icons and restricted-media absence
+        shell: bash
+        run: |
+          node origins/v020/art/apply_validate.mjs --verify-dist upstream/dist
+          node origins/v020/art/detect_originals.mjs --check upstream/dist "$RUNNER_TEMP/p6-old-icons.json"
+          HIGHFLY_SOURCE_SHA=ffd1b8dc56492335c171195adcb338162ecff94d node origins/v020/pages/p5_postbuild.mjs upstream/dist "$RUNNER_TEMP/p6-rights.json"
+          test -s upstream/dist/play.html
+          test -s upstream/dist/highfly-origin-v020-p5-rights.json
+          test -d upstream/dist/media/models
+          test -d upstream/dist/ui/skills
+          test -d upstream/dist/ui/items
+          test ! -d upstream/dist/audio
+      - name: Chromium full v0.20 world and P7 Samsung landscape real gameplay
+        shell: bash
+        run: |
+          cd upstream
+          npx playwright install --with-deps chromium
+          cd ..
+          # P5 static base already certified in 40787371428/40787876590;
+          # its Node 22 native fetch can intermittently crash undici during startup.
+          # P6 smoke checks the full world and asset requests with HTTP + browser.
+          node origins/v020/p7/p7_browser_smoke.mjs upstream
+      - name: Report P7 A-E integration QA (no release or site mutation)
+        run: |
+          echo 'HIGHFLY_P7_COMPILE_BROWSER_GREEN=YES'
+          echo 'P7_CONTENT_MIGRATION_FROM_V044_NOT_YET_VERIFIED'
+          echo 'NO_DEPLOY_NO_P5_P6_MUTATION'
